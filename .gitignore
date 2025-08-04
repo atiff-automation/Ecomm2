@@ -1,0 +1,178 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Prisma
+prisma/migrations/dev.db*
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Upload directories (production files)
+public/uploads/products/
+public/uploads/users/
+public/uploads/system/
+public/uploads/temp/
+
+# Keep upload directory structure but ignore files
+!public/uploads/.gitkeep
+!public/uploads/products/.gitkeep
+!public/uploads/users/.gitkeep
+!public/uploads/system/.gitkeep
+!public/uploads/temp/.gitkeep
+
+# Redis dump files
+dump.rdb
+
+# Import/Export files
+exports/
+imports/
+bulk-operations/
+
+# Backup files
+backups/
+*.backup
+
+# Test coverage
+coverage/
+
+# Sentry
+.sentryclirc
+
+# Local development
+.local/
+
+# Vercel
+.vercel
+
+# Turbo
+.turbo
+
+# Malaysian specific files
+tax-reports/
+gst-reports/
+sst-reports/
+compliance-exports/
+
+# Sensitive business data
+customer-exports/
+member-data/
+financial-reports/
+
+# Lock files (choose one)
+package-lock.json
+# yarn.lock
+
+# IDE specific
+*.code-workspace
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Local development overrides
+docker-compose.override.yml
