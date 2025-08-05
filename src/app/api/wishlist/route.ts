@@ -61,9 +61,11 @@ export async function GET() {
     // Calculate average ratings and format response
     const formattedWishlist = wishlistItems.map(item => {
       const reviews = item.product.reviews;
-      const averageRating = reviews.length > 0 
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-        : 0;
+      const averageRating =
+        reviews.length > 0
+          ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+            reviews.length
+          : 0;
 
       return {
         id: item.id,
@@ -83,7 +85,6 @@ export async function GET() {
       items: formattedWishlist,
       totalCount: formattedWishlist.length,
     });
-
   } catch (error) {
     console.error('Error fetching wishlist:', error);
     return NextResponse.json(
@@ -175,7 +176,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-
   } catch (error) {
     console.error('Error adding to wishlist:', error);
 
@@ -228,7 +228,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       message: 'Removed from wishlist successfully',
     });
-
   } catch (error) {
     console.error('Error removing from wishlist:', error);
 

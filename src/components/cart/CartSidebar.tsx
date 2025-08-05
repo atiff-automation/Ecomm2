@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,14 +23,13 @@ import {
   Plus,
   Minus,
   Trash2,
-  X,
   Award,
-  TrendingUp,
   Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import React from 'react';
 
 interface CartItem {
   id: string;
@@ -75,7 +74,11 @@ interface CartSidebarProps {
   trigger?: React.ReactNode;
 }
 
-export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps) {
+export function CartSidebar({
+  isOpen,
+  onOpenChange,
+  trigger,
+}: CartSidebarProps) {
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
@@ -86,7 +89,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
   const isMember = session?.user?.isMember;
 
   // Fetch cart data
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     if (!isLoggedIn) {
       setCartItems([]);
       setCartSummary(null);
@@ -96,7 +99,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
     try {
       setLoading(true);
       const response = await fetch('/api/cart');
-      
+
       if (response.ok) {
         const data = await response.json();
         setCartItems(data.items);
@@ -110,15 +113,17 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
     } finally {
       setLoading(false);
     }
-  };
+  }, [isLoggedIn]);
 
   // Update item quantity
   const updateQuantity = async (productId: string, newQuantity: number) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      return;
+    }
 
     try {
       setUpdatingItem(productId);
-      
+
       const response = await fetch('/api/cart', {
         method: 'PUT',
         headers: {
@@ -151,7 +156,9 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
 
   // Clear entire cart
   const clearCart = async () => {
-    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?')) return;
+    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?')) {
+      return;
+    }
 
     try {
       setLoading(true);
@@ -174,7 +181,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
     if (isOpen && isLoggedIn) {
       fetchCart();
     }
-  }, [isOpen, isLoggedIn]);
+  }, [isOpen, isLoggedIn, fetchCart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -192,7 +199,8 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
             Shopping Cart
             {cartSummary && (
               <Badge variant="secondary">
-                {cartSummary.itemCount} {cartSummary.itemCount === 1 ? 'item' : 'items'}
+                {cartSummary.itemCount}{' '}
+                {cartSummary.itemCount === 1 ? 'item' : 'items'}
               </Badge>
             )}
           </SheetTitle>
@@ -209,12 +217,11 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
           )}
         </div>
         <SheetDescription>
-          {!isLoggedIn 
+          {!isLoggedIn
             ? 'Sign in to view your cart'
-            : cartItems.length === 0 
-            ? 'Your cart is empty'
-            : 'Review your items and proceed to checkout'
-          }
+            : cartItems.length === 0
+              ? 'Your cart is empty'
+              : 'Review your items and proceed to checkout'}
         </SheetDescription>
       </SheetHeader>
 
@@ -222,7 +229,9 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
         {!isLoggedIn ? (
           <div className="text-center py-8">
             <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">Sign in to view your cart</p>
+            <p className="text-muted-foreground mb-4">
+              Sign in to view your cart
+            </p>
             <Link href="/auth/signin">
               <Button className="w-full">Sign In</Button>
             </Link>
@@ -236,8 +245,8 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
           <div className="text-center py-8">
             <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-4">Your cart is empty</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="w-full"
             >
@@ -248,7 +257,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
           <div className="space-y-4">
             {/* Cart Items */}
             <div className="space-y-3">
-              {cartItems.map((item) => (
+              {cartItems.map(item => (
                 <Card key={item.id} className="relative">
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -257,7 +266,10 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                         {item.product.primaryImage ? (
                           <Image
                             src={item.product.primaryImage.url}
-                            alt={item.product.primaryImage.altText || item.product.name}
+                            alt={
+                              item.product.primaryImage.altText ||
+                              item.product.name
+                            }
                             fill
                             className="object-cover"
                           />
@@ -270,7 +282,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
 
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <Link 
+                        <Link
                           href={`/products/${item.product.slug}`}
                           onClick={() => onOpenChange(false)}
                         >
@@ -278,7 +290,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                             {item.product.name}
                           </h4>
                         </Link>
-                        
+
                         <p className="text-xs text-muted-foreground mt-1">
                           {item.product.category.name}
                         </p>
@@ -291,7 +303,10 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                                 <span className="font-medium text-sm text-green-600">
                                   {formatPrice(item.product.memberPrice)}
                                 </span>
-                                <Badge variant="secondary" className="text-xs py-0">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs py-0"
+                                >
                                   Member
                                 </Badge>
                               </div>
@@ -312,13 +327,21 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                              disabled={updatingItem === item.product.id || item.quantity <= 1}
+                              onClick={() =>
+                                updateQuantity(
+                                  item.product.id,
+                                  item.quantity - 1
+                                )
+                              }
+                              disabled={
+                                updatingItem === item.product.id ||
+                                item.quantity <= 1
+                              }
                               className="w-7 h-7 p-0"
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
-                            
+
                             <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
                               {updatingItem === item.product.id ? (
                                 <Loader2 className="w-3 h-3 animate-spin mx-auto" />
@@ -326,13 +349,18 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                                 item.quantity
                               )}
                             </span>
-                            
+
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              onClick={() =>
+                                updateQuantity(
+                                  item.product.id,
+                                  item.quantity + 1
+                                )
+                              }
                               disabled={
-                                updatingItem === item.product.id || 
+                                updatingItem === item.product.id ||
                                 item.quantity >= item.product.stockQuantity
                               }
                               className="w-7 h-7 p-0"
@@ -375,24 +403,26 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                       Membership Progress
                     </span>
                   </div>
-                  
-                  <Progress 
-                    value={cartSummary.membershipProgress} 
+
+                  <Progress
+                    value={cartSummary.membershipProgress}
                     className="mb-2 h-2"
                   />
-                  
+
                   <div className="flex justify-between text-xs text-blue-700">
                     <span>{formatPrice(cartSummary.qualifyingTotal)}</span>
                     <span>{formatPrice(cartSummary.membershipThreshold)}</span>
                   </div>
-                  
+
                   {cartSummary.isEligibleForMembership ? (
                     <p className="text-xs text-blue-800 mt-2 font-medium">
-                      🎉 Congratulations! You're eligible for membership benefits!
+                      🎉 Congratulations! You&apos;re eligible for membership
+                      benefits!
                     </p>
                   ) : (
                     <p className="text-xs text-blue-700 mt-2">
-                      Add {formatPrice(cartSummary.amountNeededForMembership)} more to qualify for member pricing
+                      Add {formatPrice(cartSummary.amountNeededForMembership)}{' '}
+                      more to qualify for member pricing
                     </p>
                   )}
                 </CardContent>
@@ -410,28 +440,28 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
                     <span>Subtotal ({cartSummary.itemCount} items)</span>
                     <span>{formatPrice(cartSummary.subtotal)}</span>
                   </div>
-                  
+
                   {isMember && cartSummary.potentialSavings > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Member Discount</span>
                       <span>-{formatPrice(cartSummary.potentialSavings)}</span>
                     </div>
                   )}
-                  
+
                   {!isMember && cartSummary.potentialSavings > 0 && (
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Potential Member Savings</span>
                       <span>{formatPrice(cartSummary.potentialSavings)}</span>
                     </div>
                   )}
-                  
+
                   <div className="border-t pt-2">
                     <div className="flex justify-between font-medium">
                       <span>Total</span>
                       <span>{formatPrice(cartSummary.applicableSubtotal)}</span>
                     </div>
                   </div>
-                  
+
                   <p className="text-xs text-muted-foreground">
                     Shipping calculated at checkout
                   </p>
@@ -450,7 +480,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
               View Full Cart
             </Button>
           </Link>
-          
+
           <Link href="/checkout" onClick={() => onOpenChange(false)}>
             <Button className="w-full">
               Proceed to Checkout
@@ -469,9 +499,7 @@ export function CartSidebar({ isOpen, onOpenChange, trigger }: CartSidebarProps)
   if (trigger) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetTrigger asChild>
-          {trigger}
-        </SheetTrigger>
+        <SheetTrigger asChild>{trigger}</SheetTrigger>
         <SheetContent className="w-full sm:max-w-md flex flex-col">
           <CartContent />
         </SheetContent>

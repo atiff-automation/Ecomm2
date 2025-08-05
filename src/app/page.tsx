@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   ShoppingBag,
@@ -17,7 +17,6 @@ import {
   Shield,
   Award,
   ArrowRight,
-  Heart,
   TrendingUp,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -27,6 +26,7 @@ import { SearchBar } from '@/components/search/SearchBar';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { ProductRecommendations } from '@/components/product/ProductRecommendations';
+import { CompactPriceDisplay } from '@/components/pricing/PriceDisplay';
 
 interface Product {
   id: string;
@@ -92,13 +92,6 @@ export default function HomePage() {
     fetchHomeData();
   }, []);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: 'MYR',
-    }).format(price);
-  };
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -112,20 +105,28 @@ export default function HomePage() {
                 <span className="text-yellow-300">JRM E-commerce</span>
               </h1>
               <p className="text-xl text-blue-100 max-w-lg">
-                Malaysia's premier online marketplace with intelligent membership
-                benefits, dual pricing, and local payment integration.
+                Malaysia&apos;s premier online marketplace with intelligent
+                membership benefits, dual pricing, and local payment
+                integration.
               </p>
-              
+
               {!isLoggedIn ? (
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/auth/signup">
-                    <Button size="lg" className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
+                    <Button
+                      size="lg"
+                      className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
+                    >
                       Join as Member
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
                   </Link>
                   <Link href="/products">
-                    <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-blue-800">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="text-white border-white hover:bg-white hover:text-blue-800"
+                    >
                       Browse Products
                     </Button>
                   </Link>
@@ -133,7 +134,10 @@ export default function HomePage() {
               ) : (
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/products">
-                    <Button size="lg" className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
+                    <Button
+                      size="lg"
+                      className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
+                    >
                       Shop Now
                       <ShoppingBag className="ml-2 w-5 h-5" />
                     </Button>
@@ -141,15 +145,17 @@ export default function HomePage() {
                   {isMember && (
                     <div className="flex items-center gap-2 text-yellow-300">
                       <Award className="w-5 h-5" />
-                      <span className="font-medium">Member Benefits Active</span>
+                      <span className="font-medium">
+                        Member Benefits Active
+                      </span>
                     </div>
                   )}
                 </div>
               )}
-              
+
               {/* Search Bar */}
               <div className="max-w-lg mx-auto lg:mx-0 mt-6">
-                <SearchBar 
+                <SearchBar
                   placeholder="Search products, brands, categories..."
                   className="w-full"
                 />
@@ -160,19 +166,27 @@ export default function HomePage() {
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-300">10K+</div>
+                    <div className="text-3xl font-bold text-yellow-300">
+                      10K+
+                    </div>
                     <div className="text-sm text-blue-100">Happy Customers</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-300">5K+</div>
+                    <div className="text-3xl font-bold text-yellow-300">
+                      5K+
+                    </div>
                     <div className="text-sm text-blue-100">Products</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-300">98%</div>
+                    <div className="text-3xl font-bold text-yellow-300">
+                      98%
+                    </div>
                     <div className="text-sm text-blue-100">Satisfaction</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-300">24/7</div>
+                    <div className="text-3xl font-bold text-yellow-300">
+                      24/7
+                    </div>
                     <div className="text-sm text-blue-100">Support</div>
                   </div>
                 </div>
@@ -186,9 +200,12 @@ export default function HomePage() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose JRM E-commerce?</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              Why Choose JRM E-commerce?
+            </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Experience the best of Malaysian online shopping with features designed for local needs
+              Experience the best of Malaysian online shopping with features
+              designed for local needs
             </p>
           </div>
 
@@ -268,8 +285,11 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {categories.map((category) => (
-                <Link key={category.id} href={`/products?category=${category.id}`}>
+              {categories.map(category => (
+                <Link
+                  key={category.id}
+                  href={`/products?category=${category.id}`}
+                >
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                     <CardContent className="p-6 text-center">
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -321,13 +341,16 @@ export default function HomePage() {
             </div>
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.slice(0, 4).map((product) => {
-                const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
-                const showMemberPrice = isLoggedIn && isMember;
-                const savings = product.regularPrice - product.memberPrice;
+              {featuredProducts.slice(0, 4).map(product => {
+                const primaryImage =
+                  product.images.find(img => img.isPrimary) ||
+                  product.images[0];
 
                 return (
-                  <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                  <Card
+                    key={product.id}
+                    className="group hover:shadow-lg transition-shadow"
+                  >
                     <div className="relative aspect-square overflow-hidden">
                       {primaryImage ? (
                         <Image
@@ -341,11 +364,11 @@ export default function HomePage() {
                           <span className="text-gray-400">No Image</span>
                         </div>
                       )}
-                      
+
                       <div className="absolute top-2 left-2">
                         <Badge className="bg-blue-600">Featured</Badge>
                       </div>
-                      
+
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <WishlistButton
                           productId={product.id}
@@ -361,7 +384,7 @@ export default function HomePage() {
                         <p className="text-xs text-muted-foreground">
                           {product.category.name}
                         </p>
-                        
+
                         <Link href={`/products/${product.slug}`}>
                           <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
                             {product.name}
@@ -388,48 +411,21 @@ export default function HomePage() {
                           </div>
                         )}
 
-                        <div className="space-y-1">
-                          {showMemberPrice ? (
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg text-green-600">
-                                  {formatPrice(product.memberPrice)}
-                                </span>
-                                <Badge variant="secondary" className="text-xs">
-                                  Member
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {formatPrice(product.regularPrice)}
-                                </span>
-                                <span className="text-xs text-green-600 font-medium">
-                                  Save {formatPrice(savings)}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <span className="font-bold text-lg">
-                                {formatPrice(product.regularPrice)}
-                              </span>
-                              {!isLoggedIn && product.memberPrice < product.regularPrice && (
-                                <div className="text-xs text-muted-foreground">
-                                  Member price: {formatPrice(product.memberPrice)}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        <CompactPriceDisplay
+                          regularPrice={product.regularPrice}
+                          memberPrice={product.memberPrice}
+                          isMember={isMember}
+                          isLoggedIn={isLoggedIn}
+                        />
 
-                        <Button 
+                        <Button
                           className="w-full"
                           onClick={async () => {
                             if (!isLoggedIn) {
                               window.location.href = '/auth/signin';
                               return;
                             }
-                            
+
                             try {
                               const response = await fetch('/api/cart', {
                                 method: 'POST',
@@ -444,7 +440,7 @@ export default function HomePage() {
 
                               if (response.ok) {
                                 const data = await response.json();
-                                // You could add a toast notification here
+                                // TODO: Add toast notification here
                                 console.log('Added to cart:', data.message);
                               } else {
                                 const data = await response.json();
@@ -467,7 +463,9 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-600">No featured products available at the moment.</p>
+              <p className="text-gray-600">
+                No featured products available at the moment.
+              </p>
             </div>
           )}
         </div>
@@ -482,27 +480,37 @@ export default function HomePage() {
                 Unlock Member Benefits Today!
               </h2>
               <p className="text-xl text-blue-100 mb-8">
-                Spend RM 80 or more and automatically enjoy member pricing on all future purchases.
-                Save up to 15% on every order!
+                Spend RM 80 or more and automatically enjoy member pricing on
+                all future purchases. Save up to 15% on every order!
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {!isLoggedIn ? (
                   <>
                     <Link href="/auth/signup">
-                      <Button size="lg" className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
+                      <Button
+                        size="lg"
+                        className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
+                      >
                         Sign Up Now
                       </Button>
                     </Link>
                     <Link href="/auth/signin">
-                      <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-blue-800">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-white border-white hover:bg-white hover:text-blue-800"
+                      >
                         Sign In
                       </Button>
                     </Link>
                   </>
                 ) : (
                   <Link href="/products">
-                    <Button size="lg" className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
+                    <Button
+                      size="lg"
+                      className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
+                    >
                       Start Shopping
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
@@ -524,10 +532,7 @@ export default function HomePage() {
       {/* Product Recommendations */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <ProductRecommendations 
-            type="general" 
-            limit={8}
-          />
+          <ProductRecommendations type="general" limit={8} />
         </div>
       </section>
     </div>

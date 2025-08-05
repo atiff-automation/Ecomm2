@@ -9,20 +9,31 @@ import { z } from 'zod';
 
 const searchSchema = z.object({
   q: z.string().min(1, 'Search query is required'),
-  page: z.string().transform(Number).default(() => 1),
-  limit: z.string().transform(Number).default(() => 20),
+  page: z
+    .string()
+    .transform(Number)
+    .default(() => 1),
+  limit: z
+    .string()
+    .transform(Number)
+    .default(() => 20),
   category: z.string().optional(),
   minPrice: z.string().transform(Number).optional(),
   maxPrice: z.string().transform(Number).optional(),
   inStock: z.string().transform(Boolean).optional(),
   rating: z.string().transform(Number).optional(),
-  sortBy: z.enum(['relevance', 'price', 'rating', 'newest', 'popularity']).default('relevance'),
+  sortBy: z
+    .enum(['relevance', 'price', 'rating', 'newest', 'popularity'])
+    .default('relevance'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 const suggestionsSchema = z.object({
   q: z.string().min(1, 'Query is required'),
-  limit: z.string().transform(Number).default(() => 5),
+  limit: z
+    .string()
+    .transform(Number)
+    .default(() => 5),
 });
 
 /**
@@ -63,9 +74,9 @@ export async function GET(request: NextRequest) {
         { sku: { contains: q, mode: 'insensitive' } },
         {
           category: {
-            name: { contains: q, mode: 'insensitive' }
-          }
-        }
+            name: { contains: q, mode: 'insensitive' },
+          },
+        },
       ],
     };
 
@@ -76,8 +87,12 @@ export async function GET(request: NextRequest) {
 
     if (minPrice || maxPrice) {
       where.regularPrice = {};
-      if (minPrice) where.regularPrice.gte = minPrice;
-      if (maxPrice) where.regularPrice.lte = maxPrice;
+      if (minPrice) {
+        where.regularPrice.gte = minPrice;
+      }
+      if (maxPrice) {
+        where.regularPrice.lte = maxPrice;
+      }
     }
 
     if (inStock) {
@@ -85,7 +100,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy for different sort options
-    let orderBy: any = [];
+    const orderBy: any = [];
     switch (sortBy) {
       case 'price':
         orderBy.push({ regularPrice: sortOrder });
@@ -141,10 +156,14 @@ export async function GET(request: NextRequest) {
 
     // Calculate average ratings and format results
     const productsWithRatings = products.map(product => {
-      const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
-      const averageRating = product.reviews.length > 0 ? totalRating / product.reviews.length : 0;
+      const totalRating = product.reviews.reduce(
+        (sum, review) => sum + review.rating,
+        0
+      );
+      const averageRating =
+        product.reviews.length > 0 ? totalRating / product.reviews.length : 0;
 
-      const { reviews, ...productWithoutReviews } = product;
+      const { ...productWithoutReviews } = product;
 
       return {
         ...productWithoutReviews,
@@ -154,7 +173,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Filter by rating if specified
-    const filteredProducts = rating 
+    const filteredProducts = rating
       ? productsWithRatings.filter(product => product.averageRating >= rating)
       : productsWithRatings;
 
@@ -188,7 +207,6 @@ export async function GET(request: NextRequest) {
         sortOrder,
       },
     });
-
   } catch (error) {
     console.error('Search error:', error);
 
@@ -199,10 +217,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { message: 'Search failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Search failed' }, { status: 500 });
   }
 }
 
@@ -265,7 +280,6 @@ async function handleSuggestions(params: Record<string, string>) {
         popular: popularTerms,
       },
     });
-
   } catch (error) {
     console.error('Suggestions error:', error);
     return NextResponse.json(
@@ -281,14 +295,14 @@ async function handleSuggestions(params: Record<string, string>) {
 async function trackSearchAnalytics(query: string, resultCount: number) {
   // Store search analytics in system config or create a simple tracking table
   const searchKey = `search_analytics_${new Date().toISOString().slice(0, 7)}`; // Monthly tracking
-  
+
   try {
     const existing = await prisma.systemConfig.findUnique({
       where: { key: searchKey },
     });
 
-    let analytics = existing ? JSON.parse(existing.value) : {};
-    
+    const analytics = existing ? JSON.parse(existing.value) : {};
+
     if (!analytics.searches) {
       analytics.searches = {};
     }
@@ -328,7 +342,7 @@ async function getPopularSearchTerms(query: string, limit: number) {
   try {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const searchKey = `search_analytics_${currentMonth}`;
-    
+
     const analytics = await prisma.systemConfig.findUnique({
       where: { key: searchKey },
     });
@@ -342,8 +356,11 @@ async function getPopularSearchTerms(query: string, limit: number) {
 
     // Filter and sort by popularity
     const matchingTerms = Object.entries(searches)
-      .filter(([term]) => term.toLowerCase().includes(query.toLowerCase()) && term !== query)
-      .sort(([,a]: any, [,b]: any) => b.count - a.count)
+      .filter(
+        ([term]) =>
+          term.toLowerCase().includes(query.toLowerCase()) && term !== query
+      )
+      .sort(([, a]: any, [, b]: any) => b.count - a.count)
       .slice(0, limit)
       .map(([term]) => ({
         type: 'popular',

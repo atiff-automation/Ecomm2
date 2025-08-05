@@ -75,7 +75,7 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6 ml-6">
-              {navigationItems.map((item) => (
+              {navigationItems.map(item => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -89,10 +89,7 @@ export function Header() {
 
           {/* Search Bar - Desktop */}
           <div className="hidden lg:flex flex-1 max-w-md mx-8">
-            <SearchBar 
-              placeholder="Search products..."
-              className="w-full"
-            />
+            <SearchBar placeholder="Search products..." className="w-full" />
           </div>
 
           {/* Right Section */}
@@ -113,15 +110,18 @@ export function Header() {
             ) : isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-primary-foreground">
                         {session.user.name?.charAt(0)?.toUpperCase() || 'U'}
                       </span>
                     </div>
                     {isMember && (
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="absolute -top-1 -right-1 w-4 h-4 p-0 flex items-center justify-center"
                       >
                         <Award className="w-2 h-2" />
@@ -186,9 +186,7 @@ export function Header() {
                   </Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button size="sm">
-                    Sign Up
-                  </Button>
+                  <Button size="sm">Sign Up</Button>
                 </Link>
               </div>
             )}
@@ -196,11 +194,7 @@ export function Header() {
             {/* Mobile Menu */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="md:hidden"
-                  size="sm"
-                >
+                <Button variant="ghost" className="md:hidden" size="sm">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
@@ -215,7 +209,7 @@ export function Header() {
                 <div className="grid gap-4 py-4">
                   {/* Search Bar - Mobile */}
                   <div className="lg:hidden">
-                    <SearchBar 
+                    <SearchBar
                       placeholder="Search products..."
                       className="w-full"
                     />
@@ -223,7 +217,7 @@ export function Header() {
 
                   {/* Navigation Links */}
                   <div className="grid gap-2">
-                    {navigationItems.map((item) => (
+                    {navigationItems.map(item => (
                       <Link
                         key={item.href}
                         href={item.href}
@@ -240,7 +234,9 @@ export function Header() {
                     <div className="border-t pt-4 mt-4">
                       <div className="px-3 py-2 text-sm">
                         <p className="font-medium">{session.user.name}</p>
-                        <p className="text-muted-foreground">{session.user.email}</p>
+                        <p className="text-muted-foreground">
+                          {session.user.email}
+                        </p>
                         {isMember && (
                           <Badge variant="secondary" className="mt-1 text-xs">
                             <Award className="w-3 h-3 mr-1" />
@@ -296,9 +292,7 @@ export function Header() {
                         href="/auth/signup"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Button className="w-full">
-                          Sign Up
-                        </Button>
+                        <Button className="w-full">Sign Up</Button>
                       </Link>
                     </div>
                   )}

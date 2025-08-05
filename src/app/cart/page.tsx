@@ -111,7 +111,9 @@ export default function CartPage() {
 
   // Update item quantity
   const updateQuantity = async (productId: string, newQuantity: number) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      return;
+    }
 
     try {
       setUpdatingItem(productId);
@@ -148,8 +150,9 @@ export default function CartPage() {
 
   // Clear entire cart
   const clearCart = async () => {
-    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?'))
+    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?')) {
       return;
+    }
 
     try {
       setLoading(true);
@@ -229,7 +232,7 @@ export default function CartPage() {
           <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
           <p className="text-muted-foreground mb-6">
-            Looks like you haven't added anything to your cart yet
+            Looks like you haven&apos;t added anything to your cart yet
           </p>
           <Link href="/products">
             <Button className="w-full">
@@ -498,7 +501,7 @@ export default function CartPage() {
                 {cartSummary.isEligibleForMembership ? (
                   <div className="text-center">
                     <p className="text-sm text-blue-800 font-medium mb-2">
-                      🎉 Congratulations! You're eligible for membership
+                      🎉 Congratulations! You&apos;re eligible for membership
                       benefits!
                     </p>
                     <p className="text-xs text-blue-700">

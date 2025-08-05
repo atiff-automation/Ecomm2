@@ -7,16 +7,9 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Star,
-  ShoppingCart,
-  Eye,
-  Clock,
-  ArrowRight,
-  X,
-} from 'lucide-react';
+import { Star, ShoppingCart, Eye, Clock, ArrowRight, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -55,11 +48,11 @@ interface RecentlyViewedProps {
   horizontal?: boolean;
 }
 
-export function RecentlyViewed({ 
-  limit = 8, 
-  showHeader = true, 
+export function RecentlyViewed({
+  limit = 8,
+  showHeader = true,
   className = '',
-  horizontal = true 
+  horizontal = true,
 }: RecentlyViewedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);
@@ -76,9 +69,9 @@ export function RecentlyViewed({
     }
 
     try {
-      setLoading(true);
+      // setLoading(true);
       const response = await fetch(`/api/recently-viewed?limit=${limit}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setItems(data.items);
@@ -151,7 +144,9 @@ export function RecentlyViewed({
   const formatViewedTime = (dateString: string) => {
     const now = new Date();
     const viewed = new Date(dateString);
-    const diffInMinutes = Math.floor((now.getTime() - viewed.getTime()) / (1000 * 60));
+    const diffInMinutes = Math.floor(
+      (now.getTime() - viewed.getTime()) / (1000 * 60)
+    );
 
     if (diffInMinutes < 60) {
       return `${diffInMinutes}m ago`;
@@ -197,17 +192,22 @@ export function RecentlyViewed({
         </div>
       )}
 
-      <div className={`grid gap-4 ${
-        horizontal 
-          ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6' 
-          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-      }`}>
-        {items.map((item) => {
+      <div
+        className={`grid gap-4 ${
+          horizontal
+            ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        }`}
+      >
+        {items.map(item => {
           const showMemberPrice = isLoggedIn && isMember;
           const savings = item.product.regularPrice - item.product.memberPrice;
 
           return (
-            <Card key={item.id} className="group hover:shadow-lg transition-shadow">
+            <Card
+              key={item.id}
+              className="group hover:shadow-lg transition-shadow"
+            >
               <div className="relative aspect-square overflow-hidden rounded-t-lg">
                 {item.product.primaryImage ? (
                   <Image
@@ -309,32 +309,37 @@ export function RecentlyViewed({
                         <span className="font-semibold text-sm">
                           {formatPrice(item.product.regularPrice)}
                         </span>
-                        {!isLoggedIn && item.product.memberPrice < item.product.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member: {formatPrice(item.product.memberPrice)}
-                          </div>
-                        )}
+                        {!isLoggedIn &&
+                          item.product.memberPrice <
+                            item.product.regularPrice && (
+                            <div className="text-xs text-muted-foreground">
+                              Member: {formatPrice(item.product.memberPrice)}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
 
                   {/* Quick Add to Cart */}
-                  <Button 
+                  <Button
                     size="sm"
                     className="w-full text-xs h-8"
                     disabled={item.product.stockQuantity === 0}
                     onClick={() => addToCart(item.product.id)}
                   >
                     <ShoppingCart className="w-3 h-3 mr-1" />
-                    {item.product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    {item.product.stockQuantity === 0
+                      ? 'Out of Stock'
+                      : 'Add to Cart'}
                   </Button>
 
                   {/* Stock Warning */}
-                  {item.product.stockQuantity <= 5 && item.product.stockQuantity > 0 && (
-                    <p className="text-xs text-orange-600">
-                      Only {item.product.stockQuantity} left
-                    </p>
-                  )}
+                  {item.product.stockQuantity <= 5 &&
+                    item.product.stockQuantity > 0 && (
+                      <p className="text-xs text-orange-600">
+                        Only {item.product.stockQuantity} left
+                      </p>
+                    )}
                 </div>
               </CardContent>
             </Card>

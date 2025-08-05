@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,6 @@ import {
   Star,
   ShoppingCart,
   TrendingUp,
-  ArrowRight,
   Sparkles,
   RefreshCw,
 } from 'lucide-react';
@@ -66,7 +65,9 @@ export function ProductRecommendations({
   className = '',
 }: ProductRecommendationsProps) {
   const { data: session } = useSession();
-  const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedProduct[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -74,35 +75,42 @@ export function ProductRecommendations({
   const isMember = session?.user?.isMember;
 
   // Fetch recommendations
-  const fetchRecommendations = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+  const fetchRecommendations = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        const params = new URLSearchParams({
+          type,
+          limit: limit.toString(),
+        });
+
+        if (productId) {
+          params.append('productId', productId);
+        }
+        if (categoryId) {
+          params.append('categoryId', categoryId);
+        }
+
+        const response = await fetch(`/api/recommendations?${params}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          setRecommendations(data.recommendations);
+        }
+      } catch (error) {
+        console.error('Failed to fetch recommendations:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      const params = new URLSearchParams({
-        type,
-        limit: limit.toString(),
-      });
-
-      if (productId) params.append('productId', productId);
-      if (categoryId) params.append('categoryId', categoryId);
-
-      const response = await fetch(`/api/recommendations?${params}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setRecommendations(data.recommendations);
-      }
-    } catch (error) {
-      console.error('Failed to fetch recommendations:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    },
+    [type, productId, categoryId, limit]
+  );
 
   // Add to cart functionality
   const addToCart = async (productId: string) => {
@@ -124,6 +132,7 @@ export function ProductRecommendations({
       });
 
       if (response.ok) {
+        // TODO: Add toast notification
         console.log('Added to cart successfully');
       } else {
         const data = await response.json();
@@ -136,7 +145,7 @@ export function ProductRecommendations({
 
   useEffect(() => {
     fetchRecommendations();
-  }, [type, productId, categoryId, limit, isLoggedIn]);
+  }, [fetchRecommendations]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -174,12 +183,12 @@ export function ProductRecommendations({
       case 'trending':
         return 'Popular products that other customers love';
       case 'similar':
-        return 'Products similar to what you\'re viewing';
+        return "Products similar to what you're viewing";
       case 'category':
         return 'Discover more products in this category';
       default:
-        return isLoggedIn 
-          ? 'Personalized recommendations based on your preferences' 
+        return isLoggedIn
+          ? 'Personalized recommendations based on your preferences'
           : 'Handpicked products just for you';
     }
   };
@@ -220,7 +229,7 @@ export function ProductRecommendations({
               </p>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -241,12 +250,15 @@ export function ProductRecommendations({
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-        {recommendations.map((product) => {
+        {recommendations.map(product => {
           const showMemberPrice = isLoggedIn && isMember;
-          const savings = product.regularPrice - product.memberPrice;
+          // const savings = product.regularPrice - product.memberPrice;
 
           return (
-            <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+            <Card
+              key={product.id}
+              className="group hover:shadow-lg transition-shadow"
+            >
               <div className="relative aspect-square overflow-hidden rounded-t-lg">
                 {product.primaryImage ? (
                   <Image
@@ -264,7 +276,10 @@ export function ProductRecommendations({
                 {/* Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                   {product.featured && (
-                    <Badge variant="secondary" className="bg-yellow-500 text-white text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-500 text-white text-xs"
+                    >
                       Featured
                     </Badge>
                   )}
@@ -345,24 +360,27 @@ export function ProductRecommendations({
                         <span className="font-semibold text-sm">
                           {formatPrice(product.regularPrice)}
                         </span>
-                        {!isLoggedIn && product.memberPrice < product.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member: {formatPrice(product.memberPrice)}
-                          </div>
-                        )}
+                        {!isLoggedIn &&
+                          product.memberPrice < product.regularPrice && (
+                            <div className="text-xs text-muted-foreground">
+                              Member: {formatPrice(product.memberPrice)}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
 
                   {/* Quick Add to Cart */}
-                  <Button 
+                  <Button
                     size="sm"
                     className="w-full text-xs h-8"
                     disabled={product.stockQuantity === 0}
                     onClick={() => addToCart(product.id)}
                   >
                     <ShoppingCart className="w-3 h-3 mr-1" />
-                    {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    {product.stockQuantity === 0
+                      ? 'Out of Stock'
+                      : 'Add to Cart'}
                   </Button>
 
                   {/* Stock Warning */}

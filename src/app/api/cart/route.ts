@@ -8,6 +8,10 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { z } from 'zod';
+import {
+  getMembershipConfig,
+  calculateMembershipEligibility,
+} from '@/lib/membership';
 
 interface CartItemWithProduct {
   id: string;
@@ -78,7 +82,10 @@ export async function GET() {
     });
 
     // Calculate cart totals and membership eligibility
-    const cartSummary = calculateCartSummary(cartItems, session.user.isMember);
+    const cartSummary = await calculateCartSummary(
+      cartItems,
+      session.user.isMember
+    );
 
     return NextResponse.json({
       items: cartItems.map(item => ({
@@ -366,69 +373,37 @@ export async function DELETE() {
 /**
  * Calculate cart summary with membership eligibility
  */
-function calculateCartSummary(
+async function calculateCartSummary(
   cartItems: CartItemWithProduct[],
   isMember: boolean
 ) {
-  let subtotal = 0;
-  let memberSubtotal = 0;
-  let qualifyingTotal = 0;
-  let itemCount = 0;
+  // Get membership configuration
+  const config = await getMembershipConfig();
 
-  cartItems.forEach(item => {
-    const product = item.product;
-    const quantity = item.quantity;
-
-    itemCount += quantity;
-
-    const regularPrice = parseFloat(product.regularPrice.toString());
-    const memberPrice = parseFloat(product.memberPrice.toString());
-
-    subtotal += regularPrice * quantity;
-    memberSubtotal += memberPrice * quantity;
-
-    // Check if this product qualifies for membership calculation
-    if (
-      product.category.isQualifyingCategory &&
-      !product.isPromotional &&
-      product.status === 'ACTIVE'
-    ) {
-      qualifyingTotal += regularPrice * quantity;
-    }
-  });
-
-  const membershipThreshold = 80; // RM 80 - could be configurable
-  const isEligibleForMembership = qualifyingTotal >= membershipThreshold;
-  const membershipProgress = Math.min(
-    (qualifyingTotal / membershipThreshold) * 100,
-    100
+  // Calculate membership eligibility using the membership service
+  const calculation = calculateMembershipEligibility(
+    cartItems,
+    isMember,
+    config
   );
-  const amountNeededForMembership = Math.max(
-    0,
-    membershipThreshold - qualifyingTotal
-  );
-
-  // Calculate applicable total based on member status
-  const applicableSubtotal = isMember ? memberSubtotal : subtotal;
-  const potentialSavings = subtotal - memberSubtotal;
 
   return {
-    itemCount,
-    subtotal: parseFloat(subtotal.toFixed(2)),
-    memberSubtotal: parseFloat(memberSubtotal.toFixed(2)),
-    applicableSubtotal: parseFloat(applicableSubtotal.toFixed(2)),
-    potentialSavings: parseFloat(potentialSavings.toFixed(2)),
+    itemCount: calculation.totalItems,
+    subtotal: calculation.subtotal,
+    memberSubtotal: calculation.memberSubtotal,
+    applicableSubtotal: calculation.applicableSubtotal,
+    potentialSavings: calculation.potentialSavings,
 
     // Membership eligibility
-    qualifyingTotal: parseFloat(qualifyingTotal.toFixed(2)),
-    membershipThreshold,
-    isEligibleForMembership,
-    membershipProgress: parseFloat(membershipProgress.toFixed(1)),
-    amountNeededForMembership: parseFloat(amountNeededForMembership.toFixed(2)),
+    qualifyingTotal: calculation.qualifyingTotal,
+    membershipThreshold: calculation.membershipThreshold,
+    isEligibleForMembership: calculation.isEligibleForMembership,
+    membershipProgress: calculation.membershipProgress,
+    amountNeededForMembership: calculation.amountNeededForMembership,
 
     // Tax and shipping (to be calculated later)
     taxAmount: 0,
     shippingCost: 0,
-    total: parseFloat(applicableSubtotal.toFixed(2)),
+    total: calculation.applicableSubtotal,
   };
 }

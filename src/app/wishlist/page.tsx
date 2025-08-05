@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,6 @@ import {
   Star,
   ArrowLeft,
   Share2,
-  Trash2,
   Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -53,7 +52,7 @@ interface WishlistItem {
 export default function WishlistPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  
+
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
@@ -62,7 +61,7 @@ export default function WishlistPage() {
   const isMember = session?.user?.isMember;
 
   // Fetch wishlist data
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     if (!isLoggedIn) {
       setWishlistItems([]);
       setLoading(false);
@@ -72,7 +71,7 @@ export default function WishlistPage() {
     try {
       setLoading(true);
       const response = await fetch('/api/wishlist');
-      
+
       if (response.ok) {
         const data = await response.json();
         setWishlistItems(data.items);
@@ -84,7 +83,7 @@ export default function WishlistPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isLoggedIn]);
 
   // Add to cart functionality
   const addToCart = async (productId: string) => {
@@ -108,7 +107,7 @@ export default function WishlistPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // You could add a toast notification here
+        // TODO: Add toast notification here
         console.log('Added to cart:', data.message);
       } else {
         const data = await response.json();
@@ -124,7 +123,7 @@ export default function WishlistPage() {
 
   // Remove from wishlist
   const removeFromWishlist = (productId: string) => {
-    setWishlistItems(prev => 
+    setWishlistItems(prev =>
       prev.filter(item => item.product.id !== productId)
     );
   };
@@ -150,7 +149,7 @@ export default function WishlistPage() {
 
   useEffect(() => {
     fetchWishlist();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchWishlist]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -181,7 +180,9 @@ export default function WishlistPage() {
               <Button className="w-full">Sign In</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button variant="outline" className="w-full">Create Account</Button>
+              <Button variant="outline" className="w-full">
+                Create Account
+              </Button>
             </Link>
           </div>
         </div>
@@ -210,9 +211,7 @@ export default function WishlistPage() {
             Save products you love to your wishlist to buy them later
           </p>
           <Link href="/products">
-            <Button className="w-full">
-              Browse Products
-            </Button>
+            <Button className="w-full">Browse Products</Button>
           </Link>
         </div>
       </div>
@@ -224,9 +223,9 @@ export default function WishlistPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => router.back()}
             className="p-2"
           >
@@ -235,7 +234,8 @@ export default function WishlistPage() {
           <div>
             <h1 className="text-3xl font-bold">My Wishlist</h1>
             <p className="text-muted-foreground">
-              {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
+              {wishlistItems.length}{' '}
+              {wishlistItems.length === 1 ? 'item' : 'items'} saved
             </p>
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function WishlistPage() {
               Continue Shopping
             </Button>
           </Link>
-          
+
           <Button
             variant="outline"
             onClick={shareWishlist}
@@ -261,12 +261,15 @@ export default function WishlistPage() {
 
       {/* Wishlist Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {wishlistItems.map((item) => {
+        {wishlistItems.map(item => {
           const showMemberPrice = isLoggedIn && isMember;
           const savings = item.product.regularPrice - item.product.memberPrice;
 
           return (
-            <Card key={item.id} className="group hover:shadow-lg transition-shadow">
+            <Card
+              key={item.id}
+              className="group hover:shadow-lg transition-shadow"
+            >
               <div className="relative aspect-square overflow-hidden rounded-t-lg">
                 {item.product.primaryImage ? (
                   <Image
@@ -284,7 +287,10 @@ export default function WishlistPage() {
                 {/* Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                   {item.product.featured && (
-                    <Badge variant="secondary" className="bg-yellow-500 text-white">
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-500 text-white"
+                    >
                       Featured
                     </Badge>
                   )}
@@ -300,7 +306,7 @@ export default function WishlistPage() {
                   <WishlistButton
                     productId={item.product.id}
                     initialInWishlist={true}
-                    onWishlistChange={(inWishlist) => {
+                    onWishlistChange={inWishlist => {
                       if (!inWishlist) {
                         removeFromWishlist(item.product.id);
                       }
@@ -389,20 +395,26 @@ export default function WishlistPage() {
                         <span className="font-bold text-lg">
                           {formatPrice(item.product.regularPrice)}
                         </span>
-                        {!isLoggedIn && item.product.memberPrice < item.product.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member price: {formatPrice(item.product.memberPrice)}
-                          </div>
-                        )}
+                        {!isLoggedIn &&
+                          item.product.memberPrice <
+                            item.product.regularPrice && (
+                            <div className="text-xs text-muted-foreground">
+                              Member price:{' '}
+                              {formatPrice(item.product.memberPrice)}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    <Button 
+                    <Button
                       className="flex-1"
-                      disabled={item.product.stockQuantity === 0 || addingToCart === item.product.id}
+                      disabled={
+                        item.product.stockQuantity === 0 ||
+                        addingToCart === item.product.id
+                      }
                       onClick={() => addToCart(item.product.id)}
                     >
                       {addingToCart === item.product.id ? (
@@ -410,16 +422,19 @@ export default function WishlistPage() {
                       ) : (
                         <ShoppingCart className="w-4 h-4 mr-2" />
                       )}
-                      {item.product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      {item.product.stockQuantity === 0
+                        ? 'Out of Stock'
+                        : 'Add to Cart'}
                     </Button>
                   </div>
 
                   {/* Stock Warning */}
-                  {item.product.stockQuantity <= 5 && item.product.stockQuantity > 0 && (
-                    <p className="text-xs text-orange-600">
-                      Only {item.product.stockQuantity} left in stock
-                    </p>
-                  )}
+                  {item.product.stockQuantity <= 5 &&
+                    item.product.stockQuantity > 0 && (
+                      <p className="text-xs text-orange-600">
+                        Only {item.product.stockQuantity} left in stock
+                      </p>
+                    )}
                 </div>
               </CardContent>
             </Card>

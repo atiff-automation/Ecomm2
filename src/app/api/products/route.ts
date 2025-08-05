@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       const averageRating =
         product.reviews.length > 0 ? totalRating / product.reviews.length : 0;
 
-      const { reviews, ...productWithoutReviews } = product;
+      const { ...productWithoutReviews } = product;
 
       return {
         ...productWithoutReviews,

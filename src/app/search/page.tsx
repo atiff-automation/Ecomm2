@@ -26,7 +26,6 @@ import {
   Grid,
   List,
   Star,
-  Heart,
   ShoppingCart,
   X,
   Loader2,
@@ -34,6 +33,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import React from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 
@@ -102,7 +102,9 @@ export default function SearchPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<SearchFilters>(INITIAL_FILTERS);
-  const [suggestions, setSuggestions] = useState<{ [key: string]: Suggestion[] }>({});
+  const [suggestions, setSuggestions] = useState<{
+    [key: string]: Suggestion[];
+  }>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -177,11 +179,21 @@ export default function SearchPage() {
         sortOrder: filters.sortOrder,
       });
 
-      if (filters.category) params.append('category', filters.category);
-      if (filters.minPrice > 0) params.append('minPrice', filters.minPrice.toString());
-      if (filters.maxPrice < 10000) params.append('maxPrice', filters.maxPrice.toString());
-      if (filters.inStock) params.append('inStock', 'true');
-      if (filters.rating > 0) params.append('rating', filters.rating.toString());
+      if (filters.category) {
+        params.append('category', filters.category);
+      }
+      if (filters.minPrice > 0) {
+        params.append('minPrice', filters.minPrice.toString());
+      }
+      if (filters.maxPrice < 10000) {
+        params.append('maxPrice', filters.maxPrice.toString());
+      }
+      if (filters.inStock) {
+        params.append('inStock', 'true');
+      }
+      if (filters.rating > 0) {
+        params.append('rating', filters.rating.toString());
+      }
 
       const response = await fetch(`/api/search?${params}`);
 
@@ -209,7 +221,9 @@ export default function SearchPage() {
     }
 
     try {
-      const response = await fetch(`/api/search?suggestions=true&q=${encodeURIComponent(searchQuery)}&limit=8`);
+      const response = await fetch(
+        `/api/search?suggestions=true&q=${encodeURIComponent(searchQuery)}&limit=8`
+      );
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data.suggestions);
@@ -237,9 +251,11 @@ export default function SearchPage() {
   // Update URL when filters change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    
-    if (query) params.append('q', query);
-    
+
+    if (query) {
+      params.append('q', query);
+    }
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== INITIAL_FILTERS[key as keyof SearchFilters]) {
         params.append(key, value.toString());
@@ -255,7 +271,14 @@ export default function SearchPage() {
   }, [query, filters, currentPage, router]);
 
   useEffect(() => {
-    if (query || Object.keys(filters).some(key => filters[key as keyof SearchFilters] !== INITIAL_FILTERS[key as keyof SearchFilters])) {
+    if (
+      query ||
+      Object.keys(filters).some(
+        key =>
+          filters[key as keyof SearchFilters] !==
+          INITIAL_FILTERS[key as keyof SearchFilters]
+      )
+    ) {
       updateURL();
     }
   }, [updateURL, query, filters]);
@@ -307,7 +330,8 @@ export default function SearchPage() {
   }, [suggestions]);
 
   const ProductCard = ({ product }: { product: Product }) => {
-    const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+    const primaryImage =
+      product.images.find(img => img.isPrimary) || product.images[0];
     const showMemberPrice = isLoggedIn && isMember;
     const savings = product.regularPrice - product.memberPrice;
 
@@ -425,11 +449,12 @@ export default function SearchPage() {
                       <span className="font-bold text-lg">
                         {formatPrice(product.regularPrice)}
                       </span>
-                      {!isLoggedIn && product.memberPrice < product.regularPrice && (
-                        <div className="text-xs text-muted-foreground">
-                          Member price: {formatPrice(product.memberPrice)}
-                        </div>
-                      )}
+                      {!isLoggedIn &&
+                        product.memberPrice < product.regularPrice && (
+                          <div className="text-xs text-muted-foreground">
+                            Member price: {formatPrice(product.memberPrice)}
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>
@@ -437,17 +462,19 @@ export default function SearchPage() {
             </div>
 
             {/* Add to Cart Button */}
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               disabled={product.stockQuantity === 0}
               onClick={async () => {
                 if (!isLoggedIn) {
                   window.location.href = '/auth/signin';
                   return;
                 }
-                
-                if (product.stockQuantity === 0) return;
-                
+
+                if (product.stockQuantity === 0) {
+                  return;
+                }
+
                 try {
                   const response = await fetch('/api/cart', {
                     method: 'POST',
@@ -494,7 +521,7 @@ export default function SearchPage() {
               type="search"
               placeholder="Search products, brands, categories..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               className="pl-12 pr-12 h-12 text-lg"
@@ -551,10 +578,9 @@ export default function SearchPage() {
             </h1>
             {!loading && (
               <p className="text-muted-foreground">
-                {totalCount > 0 
+                {totalCount > 0
                   ? `Found ${totalCount} ${totalCount === 1 ? 'product' : 'products'}`
-                  : 'No products found'
-                }
+                  : 'No products found'}
               </p>
             )}
           </div>
@@ -598,7 +624,7 @@ export default function SearchPage() {
             {/* Sort Options */}
             <Select
               value={`${filters.sortBy}-${filters.sortOrder}`}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 const [sortBy, sortOrder] = value.split('-');
                 handleFilterChange('sortBy', sortBy);
                 handleFilterChange('sortOrder', sortOrder);
@@ -620,7 +646,9 @@ export default function SearchPage() {
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Filters Sidebar */}
-            <div className={`lg:w-80 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+            <div
+              className={`lg:w-80 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}
+            >
               <Card>
                 <CardContent className="p-6 space-y-6">
                   <div className="flex items-center justify-between">
@@ -635,7 +663,9 @@ export default function SearchPage() {
                     <label className="text-sm font-medium">Category</label>
                     <Select
                       value={filters.category}
-                      onValueChange={(value) => handleFilterChange('category', value)}
+                      onValueChange={value =>
+                        handleFilterChange('category', value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Categories" />
@@ -674,19 +704,24 @@ export default function SearchPage() {
 
                   {/* Rating Filter */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium">Minimum Rating</label>
+                    <label className="text-sm font-medium">
+                      Minimum Rating
+                    </label>
                     <div className="space-y-2">
                       {[4, 3, 2, 1].map(rating => (
-                        <div key={rating} className="flex items-center space-x-2">
+                        <div
+                          key={rating}
+                          className="flex items-center space-x-2"
+                        >
                           <Checkbox
                             id={`rating-${rating}`}
                             checked={filters.rating === rating}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={checked =>
                               handleFilterChange('rating', checked ? rating : 0)
                             }
                           />
-                          <label 
-                            htmlFor={`rating-${rating}`} 
+                          <label
+                            htmlFor={`rating-${rating}`}
                             className="flex items-center gap-1 text-sm cursor-pointer"
                           >
                             {[1, 2, 3, 4, 5].map(star => (
@@ -711,7 +746,9 @@ export default function SearchPage() {
                     <Checkbox
                       id="inStock"
                       checked={filters.inStock}
-                      onCheckedChange={(checked) => handleFilterChange('inStock', checked)}
+                      onCheckedChange={checked =>
+                        handleFilterChange('inStock', checked)
+                      }
                     />
                     <label htmlFor="inStock" className="text-sm font-medium">
                       In Stock Only
@@ -736,7 +773,9 @@ export default function SearchPage() {
               ) : products.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">
-                    {query ? `No products found for "${query}"` : 'Enter a search query to find products'}
+                    {query
+                      ? `No products found for "${query}"`
+                      : 'Enter a search query to find products'}
                   </p>
                   {query && (
                     <div className="space-y-2">
@@ -755,11 +794,13 @@ export default function SearchPage() {
               ) : (
                 <>
                   {/* Products Grid */}
-                  <div className={`grid gap-6 ${
-                    viewMode === 'grid'
-                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                      : 'grid-cols-1'
-                  }`}>
+                  <div
+                    className={`grid gap-6 ${
+                      viewMode === 'grid'
+                        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                        : 'grid-cols-1'
+                    }`}
+                  >
                     {products.map(product => (
                       <ProductCard key={product.id} product={product} />
                     ))}
@@ -771,7 +812,9 @@ export default function SearchPage() {
                       <Button
                         variant="outline"
                         disabled={currentPage <= 1}
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        onClick={() =>
+                          setCurrentPage(prev => Math.max(1, prev - 1))
+                        }
                       >
                         Previous
                       </Button>
@@ -779,12 +822,16 @@ export default function SearchPage() {
                       <div className="flex gap-1">
                         {[...Array(Math.min(5, totalPages))].map((_, i) => {
                           const page = i + Math.max(1, currentPage - 2);
-                          if (page > totalPages) return null;
+                          if (page > totalPages) {
+                            return null;
+                          }
 
                           return (
                             <Button
                               key={page}
-                              variant={currentPage === page ? 'default' : 'outline'}
+                              variant={
+                                currentPage === page ? 'default' : 'outline'
+                              }
                               size="sm"
                               onClick={() => setCurrentPage(page)}
                             >
@@ -797,7 +844,9 @@ export default function SearchPage() {
                       <Button
                         variant="outline"
                         disabled={currentPage >= totalPages}
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        onClick={() =>
+                          setCurrentPage(prev => Math.min(totalPages, prev + 1))
+                        }
                       >
                         Next
                       </Button>

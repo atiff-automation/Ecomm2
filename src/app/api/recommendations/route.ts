@@ -220,7 +220,9 @@ async function getSimilarProducts(
       },
     });
 
-    if (!product) return [];
+    if (!product) {
+      return [];
+    }
 
     const excludeProducts = [productId];
 

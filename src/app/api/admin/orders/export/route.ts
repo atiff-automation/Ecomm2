@@ -62,12 +62,20 @@ export async function POST(request: NextRequest) {
 
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
-      if (dateTo) where.createdAt.lte = new Date(dateTo);
+      if (dateFrom) {
+        where.createdAt.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        where.createdAt.lte = new Date(dateTo);
+      }
     }
 
-    if (status) where.status = status;
-    if (paymentStatus) where.paymentStatus = paymentStatus;
+    if (status) {
+      where.status = status;
+    }
+    if (paymentStatus) {
+      where.paymentStatus = paymentStatus;
+    }
 
     // Fetch orders with related data
     const orders = await prisma.order.findMany({
