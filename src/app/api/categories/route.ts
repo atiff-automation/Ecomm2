@@ -209,7 +209,14 @@ export async function POST(request: NextRequest) {
 
     // Create category
     const category = await prisma.category.create({
-      data: categoryData,
+      data: {
+        ...categoryData,
+        description: categoryData.description || null,
+        image: categoryData.image || null,
+        parentId: categoryData.parentId || null,
+        metaTitle: categoryData.metaTitle || null,
+        metaDescription: categoryData.metaDescription || null,
+      },
       include: {
         parent: {
           select: {
@@ -248,7 +255,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid category data', errors: error.errors },
+        { message: 'Invalid category data', errors: error.issues },
         { status: 400 }
       );
     }

@@ -35,8 +35,14 @@ const createProductSchema = z.object({
 });
 
 const searchProductsSchema = z.object({
-  page: z.string().transform(Number).default('1'),
-  limit: z.string().transform(Number).default('20'),
+  page: z
+    .string()
+    .transform(Number)
+    .default(() => 1),
+  limit: z
+    .string()
+    .transform(Number)
+    .default(() => 20),
   search: z.string().optional(),
   category: z.string().optional(),
   minPrice: z.string().transform(Number).optional(),
@@ -89,8 +95,12 @@ export async function GET(request: NextRequest) {
 
     if (minPrice || maxPrice) {
       where.regularPrice = {};
-      if (minPrice) where.regularPrice.gte = minPrice;
-      if (maxPrice) where.regularPrice.lte = maxPrice;
+      if (minPrice) {
+        where.regularPrice.gte = minPrice;
+      }
+      if (maxPrice) {
+        where.regularPrice.lte = maxPrice;
+      }
     }
 
     if (inStock) {
@@ -102,7 +112,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy
-    let orderBy: any = {};
+    const orderBy: any = {};
     switch (sortBy) {
       case 'name':
         orderBy.name = sortOrder;
@@ -164,7 +174,7 @@ export async function GET(request: NextRequest) {
       const averageRating =
         product.reviews.length > 0 ? totalRating / product.reviews.length : 0;
 
-      const { reviews: _, ...productWithoutReviews } = product;
+      const { reviews, ...productWithoutReviews } = product;
 
       return {
         ...productWithoutReviews,
@@ -191,7 +201,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid parameters', errors: error.errors },
+        { message: 'Invalid parameters', errors: error.issues },
         { status: 400 }
       );
     }
@@ -264,6 +274,13 @@ export async function POST(request: NextRequest) {
       data: {
         ...productData,
         status: 'ACTIVE',
+        description: productData.description || null,
+        shortDescription: productData.shortDescription || null,
+        metaTitle: productData.metaTitle || null,
+        metaDescription: productData.metaDescription || null,
+        weight: productData.weight || null,
+        dimensions: productData.dimensions || null,
+        barcode: productData.barcode || null,
       },
       include: {
         category: {
@@ -303,7 +320,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid product data', errors: error.errors },
+        { message: 'Invalid product data', errors: error.issues },
         { status: 400 }
       );
     }

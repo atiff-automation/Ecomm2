@@ -113,11 +113,12 @@ export default function ProductsPage() {
     searchParams.forEach((value, key) => {
       if (key in initialFilters) {
         if (key === 'minPrice' || key === 'maxPrice') {
-          initialFilters[key as keyof ProductFilters] = parseInt(value, 10) || 0;
+          (initialFilters as Record<string, any>)[key] =
+            parseInt(value, 10) || 0;
         } else if (key === 'inStock' || key === 'featured') {
-          initialFilters[key as keyof ProductFilters] = value === 'true';
+          (initialFilters as Record<string, any>)[key] = value === 'true';
         } else {
-          (initialFilters as any)[key] = value;
+          (initialFilters as Record<string, any>)[key] = value;
         }
       }
     });
@@ -139,14 +140,24 @@ export default function ProductsPage() {
         sortOrder: filters.sortOrder,
       });
 
-      if (filters.search) params.append('search', filters.search);
-      if (filters.category) params.append('category', filters.category);
-      if (filters.minPrice > 0)
+      if (filters.search) {
+        params.append('search', filters.search);
+      }
+      if (filters.category) {
+        params.append('category', filters.category);
+      }
+      if (filters.minPrice > 0) {
         params.append('minPrice', filters.minPrice.toString());
-      if (filters.maxPrice < 10000)
+      }
+      if (filters.maxPrice < 10000) {
         params.append('maxPrice', filters.maxPrice.toString());
-      if (filters.inStock) params.append('inStock', 'true');
-      if (filters.featured) params.append('featured', 'true');
+      }
+      if (filters.inStock) {
+        params.append('inStock', 'true');
+      }
+      if (filters.featured) {
+        params.append('featured', 'true');
+      }
 
       const response = await fetch(`/api/products?${params}`);
 
@@ -600,7 +611,9 @@ export default function ProductsPage() {
                   <div className="flex gap-1">
                     {[...Array(Math.min(5, totalPages))].map((_, i) => {
                       const page = i + Math.max(1, currentPage - 2);
-                      if (page > totalPages) return null;
+                      if (page > totalPages) {
+                        return null;
+                      }
 
                       return (
                         <Button

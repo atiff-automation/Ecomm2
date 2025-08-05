@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import React from 'react';
 import AuthProvider from '@/components/auth/AuthProvider';
+import { Header } from '@/components/layout/Header';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -33,7 +34,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
+          <Header />
+          <main>{children}</main>
           <Toaster position="top-right" />
         </AuthProvider>
       </body>

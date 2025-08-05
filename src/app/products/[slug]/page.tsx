@@ -139,7 +139,9 @@ export default function ProductDetailPage() {
   };
 
   const handleAddToCart = async () => {
-    if (!product) return;
+    if (!product) {
+      return;
+    }
 
     setAddingToCart(true);
     try {
@@ -148,7 +150,7 @@ export default function ProductDetailPage() {
       toast.success(
         `Added ${quantity} ${quantity === 1 ? 'item' : 'items'} to cart`
       );
-    } catch (err) {
+    } catch {
       toast.error('Failed to add to cart');
     } finally {
       setAddingToCart(false);
@@ -156,7 +158,9 @@ export default function ProductDetailPage() {
   };
 
   const handleQuantityChange = (newQuantity: number) => {
-    if (!product) return;
+    if (!product) {
+      return;
+    }
 
     const validQuantity = Math.max(
       1,
@@ -442,7 +446,6 @@ export default function ProductDetailPage() {
                 className="flex-1"
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || addingToCart}
-                loading={addingToCart}
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}

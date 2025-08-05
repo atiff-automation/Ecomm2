@@ -177,6 +177,19 @@ export async function PUT(
     const body = await request.json();
     const updateData = updateProductSchema.parse(body);
 
+    // Convert optional fields to null for Prisma, filter out undefined
+    const prismaUpdateData: Record<string, any> = {};
+
+    Object.entries(updateData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        if (typeof value === 'string' && value === '') {
+          prismaUpdateData[key] = null;
+        } else {
+          prismaUpdateData[key] = value;
+        }
+      }
+    });
+
     // Find existing product
     const existingProduct = await prisma.product.findUnique({
       where: { slug },
@@ -220,7 +233,7 @@ export async function PUT(
     // Update product
     const updatedProduct = await prisma.product.update({
       where: { slug },
-      data: updateData,
+      data: prismaUpdateData,
       include: {
         category: {
           select: {
@@ -259,7 +272,7 @@ export async function PUT(
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid product data', errors: error.errors },
+        { message: 'Invalid product data', errors: error.issues },
         { status: 400 }
       );
     }

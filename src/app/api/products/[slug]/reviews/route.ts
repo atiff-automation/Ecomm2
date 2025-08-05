@@ -268,7 +268,7 @@ export async function POST(
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid review data', errors: error.errors },
+        { message: 'Invalid review data', errors: error.issues },
         { status: 400 }
       );
     }
