@@ -419,19 +419,20 @@ enum AuditAction {
   BULK_IMPORT
   BULK_EXPORT
   SYSTEM_CONFIG_CHANGE
+  USER_STATUS_CHANGE
+  MAINTENANCE_MODE_TOGGLE
+  ERROR
 }
 
 model AuditLog {
-  id       String      @id @default(cuid())
-  userId   String?
-  action   AuditAction
-  resource String      // table name or resource type
-  resourceId String?   // ID of the affected resource
-  oldValues  Json?     // Previous values (for updates)
-  newValues  Json?     // New values
-  ipAddress  String?
-  userAgent  String?
-  metadata   Json?     // Additional context
+  id        String      @id @default(cuid())
+  userId    String?
+  action    String      // Changed from AuditAction enum to String for flexibility
+  resource  String      // table name or resource type
+  resourceId String?    // ID of the affected resource
+  details   Json?       // Combined old/new values and additional context
+  ipAddress String?
+  userAgent String?
   
   user User? @relation(fields: [userId], references: [id])
   
