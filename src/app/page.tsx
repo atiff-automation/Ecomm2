@@ -414,7 +414,7 @@ export default function HomePage() {
                         <CompactPriceDisplay
                           regularPrice={product.regularPrice}
                           memberPrice={product.memberPrice}
-                          isMember={isMember}
+                          isMember={isMember || false}
                           isLoggedIn={isLoggedIn}
                         />
 
@@ -439,15 +439,13 @@ export default function HomePage() {
                               });
 
                               if (response.ok) {
-                                const data = await response.json();
                                 // TODO: Add toast notification here
-                                console.log('Added to cart:', data.message);
+                                // Success handled silently for now
                               } else {
                                 const data = await response.json();
                                 alert(data.message || 'Failed to add to cart');
                               }
-                            } catch (error) {
-                              console.error('Failed to add to cart:', error);
+                            } catch {
                               alert('Failed to add to cart');
                             }
                           }}

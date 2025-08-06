@@ -100,15 +100,15 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.user.id,
         action: 'CREATE',
-        entityType: 'Membership',
-        entityId: session.user.id,
-        changes: JSON.stringify({
+        resource: 'Membership',
+        resourceId: session.user.id,
+        details: {
           membershipActivated: true,
           qualifyingAmount,
           orderId,
           activatedAt: new Date().toISOString(),
           acceptedTerms: acceptTerms,
-        }),
+        },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       },

@@ -103,7 +103,10 @@ export function WishlistButton({
           onWishlistChange?.(true);
         } else {
           const data = await response.json();
-          if (response.status === 400 && data.message.includes('already in wishlist')) {
+          if (
+            response.status === 400 &&
+            data.message.includes('already in wishlist')
+          ) {
             setInWishlist(true);
             onWishlistChange?.(true);
           } else {
@@ -132,21 +135,20 @@ export function WishlistButton({
       )}
       title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
     >
-      <Heart 
+      <Heart
         className={cn(
           'w-4 h-4',
           inWishlist && 'fill-current',
           showText && 'mr-2'
-        )} 
+        )}
       />
       {showText && (
         <span>
-          {loading 
-            ? 'Updating...' 
-            : inWishlist 
-            ? 'Remove from Wishlist' 
-            : 'Add to Wishlist'
-          }
+          {loading
+            ? 'Updating...'
+            : inWishlist
+              ? 'Remove from Wishlist'
+              : 'Add to Wishlist'}
         </span>
       )}
     </Button>

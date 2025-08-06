@@ -62,26 +62,33 @@ export async function getMembershipConfig(): Promise<MembershipConfig> {
       },
     });
 
-    const configMap = configs.reduce((acc, config) => {
-      let value: any = config.value;
-      
-      if (config.type === 'number') {
-        value = parseFloat(config.value);
-      } else if (config.type === 'boolean') {
-        value = config.value === 'true';
-      }
-      
-      acc[config.key] = value;
-      return acc;
-    }, {} as Record<string, any>);
+    const configMap = configs.reduce(
+      (acc, config) => {
+        let value: string | number | boolean = config.value;
+
+        if (config.type === 'number') {
+          value = parseFloat(config.value);
+        } else if (config.type === 'boolean') {
+          value = config.value === 'true';
+        }
+
+        acc[config.key] = value;
+        return acc;
+      },
+      {} as Record<string, string | number | boolean>
+    );
 
     return {
-      membershipThreshold: configMap.membership_threshold || 80,
-      enablePromotionalExclusion: configMap.enable_promotional_exclusion ?? true,
-      requireQualifyingCategories: configMap.require_qualifying_categories ?? true,
-      membershipBenefitsText: configMap.membership_benefits_text || 
+      membershipThreshold: Number(configMap.membership_threshold) || 80,
+      enablePromotionalExclusion:
+        Boolean(configMap.enable_promotional_exclusion) ?? true,
+      requireQualifyingCategories:
+        Boolean(configMap.require_qualifying_categories) ?? true,
+      membershipBenefitsText:
+        String(configMap.membership_benefits_text) ||
         'Enjoy exclusive member pricing on all products and special promotions.',
-      membershipTermsText: configMap.membership_terms_text || 
+      membershipTermsText:
+        String(configMap.membership_terms_text) ||
         'Membership is activated automatically when you spend the qualifying amount.',
     };
   } catch (error) {
@@ -91,8 +98,10 @@ export async function getMembershipConfig(): Promise<MembershipConfig> {
       membershipThreshold: 80,
       enablePromotionalExclusion: true,
       requireQualifyingCategories: true,
-      membershipBenefitsText: 'Enjoy exclusive member pricing on all products and special promotions.',
-      membershipTermsText: 'Membership is activated automatically when you spend the qualifying amount.',
+      membershipBenefitsText:
+        'Enjoy exclusive member pricing on all products and special promotions.',
+      membershipTermsText:
+        'Membership is activated automatically when you spend the qualifying amount.',
     };
   }
 }
@@ -114,15 +123,16 @@ export function calculateMembershipEligibility(
     const quantity = item.quantity;
     const regularPrice = item.product.regularPrice;
     const memberPrice = item.product.memberPrice;
-    
+
     totalItems += quantity;
     subtotal += regularPrice * quantity;
     memberSubtotal += memberPrice * quantity;
 
     // Check if item qualifies for membership calculation
-    const isPromotional = config.enablePromotionalExclusion && item.product.isPromotional;
-    const isQualifyingCategory = config.requireQualifyingCategories 
-      ? item.product.category.isQualifyingCategory 
+    const isPromotional =
+      config.enablePromotionalExclusion && item.product.isPromotional;
+    const isQualifyingCategory = config.requireQualifyingCategories
+      ? item.product.category.isQualifyingCategory
       : true;
 
     // Only count towards membership qualification if:
@@ -207,14 +217,14 @@ export async function activateUserMembership(
       data: {
         userId: userId,
         action: 'CREATE',
-        entityType: 'Membership',
-        entityId: userId,
-        changes: JSON.stringify({
+        resource: 'Membership',
+        resourceId: userId,
+        details: {
           membershipActivated: true,
           qualifyingAmount,
           orderId,
           activatedAt: new Date().toISOString(),
-        }),
+        },
         ipAddress: 'system',
         userAgent: 'membership-service',
       },
@@ -235,7 +245,7 @@ export async function checkUserMembershipQualification(
 ): Promise<{ qualifies: boolean; totalSpent: number; orders: number }> {
   try {
     const config = await getMembershipConfig();
-    
+
     // Get user's order history for qualification check
     const orders = await prisma.order.findMany({
       where: {
@@ -263,13 +273,14 @@ export async function checkUserMembershipQualification(
 
     orders.forEach(order => {
       order.orderItems.forEach(item => {
-        const isPromotional = config.enablePromotionalExclusion && item.product.isPromotional;
-        const isQualifyingCategory = config.requireQualifyingCategories 
-          ? item.product.category.isQualifyingCategory 
+        const isPromotional =
+          config.enablePromotionalExclusion && item.product.isPromotional;
+        const isQualifyingCategory = config.requireQualifyingCategories
+          ? item.product.category.isQualifyingCategory
           : true;
 
         if (!isPromotional && isQualifyingCategory) {
-          qualifyingTotal += item.regularPrice * item.quantity;
+          qualifyingTotal += Number(item.regularPrice) * item.quantity;
         }
       });
     });

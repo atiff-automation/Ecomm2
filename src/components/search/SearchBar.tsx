@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,17 +26,19 @@ interface SearchBarProps {
   showSuggestions?: boolean;
 }
 
-export function SearchBar({ 
-  placeholder = "Search products, brands, categories...",
-  className = "",
+export function SearchBar({
+  placeholder = 'Search products, brands, categories...',
+  className = '',
   autoFocus = false,
   showSuggestions = true,
 }: SearchBarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<{ [key: string]: Suggestion[] }>({});
+  const [suggestions, setSuggestions] = useState<{
+    [key: string]: Suggestion[];
+  }>({});
   const [showSuggestionsList, setShowSuggestionsList] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,11 @@ export function SearchBar({
   // Get search suggestions
   useEffect(() => {
     const getSuggestions = async () => {
-      if (!debouncedQuery.trim() || debouncedQuery.length < 2 || !showSuggestions) {
+      if (
+        !debouncedQuery.trim() ||
+        debouncedQuery.length < 2 ||
+        !showSuggestions
+      ) {
         setSuggestions({});
         return;
       }
@@ -55,7 +61,7 @@ export function SearchBar({
         const response = await fetch(
           `/api/search?suggestions=true&q=${encodeURIComponent(debouncedQuery)}&limit=6`
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           setSuggestions(data.suggestions);
@@ -133,13 +139,13 @@ export function SearchBar({
           type="search"
           placeholder={placeholder}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           autoFocus={autoFocus}
           className="pl-10 pr-20"
         />
-        
+
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
           {query && (
             <Button
@@ -152,7 +158,7 @@ export function SearchBar({
               <X className="w-3 h-3" />
             </Button>
           )}
-          
+
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           ) : (
@@ -176,11 +182,15 @@ export function SearchBar({
                 >
                   <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm block truncate">{suggestion.text}</span>
+                    <span className="text-sm block truncate">
+                      {suggestion.text}
+                    </span>
                     <span className="text-xs text-muted-foreground capitalize">
-                      {suggestion.type === 'product' ? 'Product' : 
-                       suggestion.type === 'category' ? 'Category' : 
-                       'Popular search'}
+                      {suggestion.type === 'product'
+                        ? 'Product'
+                        : suggestion.type === 'category'
+                          ? 'Category'
+                          : 'Popular search'}
                     </span>
                   </div>
                 </button>

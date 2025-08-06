@@ -1,34 +1,28 @@
 /**
- * Membership Configuration API - Malaysian E-commerce Platform
- * Admin API for managing membership system settings
+ * Admin Membership Configuration API - Malaysian E-commerce Platform
+ * Handles admin membership configuration management
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { z } from 'zod';
-
-const membershipConfigSchema = z.object({
-  membershipThreshold: z.number().min(1, 'Threshold must be at least RM 1'),
-  enablePromotionalExclusion: z.boolean(),
-  requireQualifyingCategories: z.boolean(),
-  membershipBenefitsText: z.string().optional(),
-  membershipTermsText: z.string().optional(),
-});
 
 /**
- * GET /api/admin/config/membership - Get membership configuration
+ * GET /api/admin/membership/config - Get membership configuration
  */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    // Check admin permissions
-    if (
-      !session?.user ||
-      !['ADMIN', 'STAFF', 'SUPERADMIN'].includes(session.user.role)
-    ) {
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -50,12 +44,10 @@ export async function GET() {
       },
     });
 
-    // Convert to object with defaults
     const configMap = configs.reduce(
       (acc, config) => {
         let value: string | number | boolean = config.value;
 
-        // Parse based on type
         if (config.type === 'number') {
           value = parseFloat(config.value);
         } else if (config.type === 'boolean') {
@@ -68,18 +60,17 @@ export async function GET() {
       {} as Record<string, string | number | boolean>
     );
 
-    // Apply defaults
     const membershipConfig = {
-      membershipThreshold: configMap.membership_threshold || 80,
+      membershipThreshold: Number(configMap.membership_threshold) || 80,
       enablePromotionalExclusion:
-        configMap.enable_promotional_exclusion ?? true,
+        Boolean(configMap.enable_promotional_exclusion) ?? true,
       requireQualifyingCategories:
-        configMap.require_qualifying_categories ?? true,
+        Boolean(configMap.require_qualifying_categories) ?? true,
       membershipBenefitsText:
-        configMap.membership_benefits_text ||
+        String(configMap.membership_benefits_text) ||
         'Enjoy exclusive member pricing on all products and special promotions.',
       membershipTermsText:
-        configMap.membership_terms_text ||
+        String(configMap.membership_terms_text) ||
         'Membership is activated automatically when you spend the qualifying amount.',
     };
 
@@ -94,17 +85,20 @@ export async function GET() {
 }
 
 /**
- * PUT /api/admin/config/membership - Update membership configuration
+ * PUT /api/admin/membership/config - Update membership configuration
  */
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    // Check admin permissions
-    if (
-      !session?.user ||
-      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
-    ) {
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -112,65 +106,105 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedConfig = membershipConfigSchema.parse(body);
+    const {
+      membershipThreshold,
+      enablePromotionalExclusion,
+      requireQualifyingCategories,
+      membershipBenefitsText,
+      membershipTermsText,
+    } = body;
 
-    // Update configuration in SystemConfig
+    // Validate membership threshold
+    if (!membershipThreshold || membershipThreshold <= 0) {
+      return NextResponse.json(
+        { message: 'Membership threshold must be greater than 0' },
+        { status: 400 }
+      );
+    }
+
+    if (membershipThreshold > 10000) {
+      return NextResponse.json(
+        { message: 'Membership threshold cannot exceed MYR 10,000' },
+        { status: 400 }
+      );
+    }
+
+    // Validate text fields
+    if (!membershipBenefitsText?.trim() || !membershipTermsText?.trim()) {
+      return NextResponse.json(
+        { message: 'Benefits and terms text are required' },
+        { status: 400 }
+      );
+    }
+
+    // Configuration updates
     const configUpdates = [
       {
         key: 'membership_threshold',
-        value: validatedConfig.membershipThreshold.toString(),
+        value: membershipThreshold.toString(),
         type: 'number',
+        description: 'Minimum amount required to qualify for membership',
       },
       {
         key: 'enable_promotional_exclusion',
-        value: validatedConfig.enablePromotionalExclusion.toString(),
+        value: enablePromotionalExclusion.toString(),
         type: 'boolean',
+        description: 'Exclude promotional items from membership qualification',
       },
       {
         key: 'require_qualifying_categories',
-        value: validatedConfig.requireQualifyingCategories.toString(),
+        value: requireQualifyingCategories.toString(),
         type: 'boolean',
+        description: 'Only qualifying categories count towards membership',
       },
       {
         key: 'membership_benefits_text',
-        value: validatedConfig.membershipBenefitsText || '',
-        type: 'string',
+        value: membershipBenefitsText.trim(),
+        type: 'text',
+        description: 'Text describing membership benefits',
       },
       {
         key: 'membership_terms_text',
-        value: validatedConfig.membershipTermsText || '',
-        type: 'string',
+        value: membershipTermsText.trim(),
+        type: 'text',
+        description: 'Text describing membership terms and conditions',
       },
     ];
 
-    // Use transaction to update all configs
-    await prisma.$transaction(
-      configUpdates.map(config =>
-        prisma.systemConfig.upsert({
+    // Update configuration using upsert for each setting
+    await Promise.all(
+      configUpdates.map(async config => {
+        await prisma.systemConfig.upsert({
           where: { key: config.key },
           update: {
             value: config.value,
-            type: config.type,
+            updatedAt: new Date(),
           },
           create: {
             key: config.key,
             value: config.value,
             type: config.type,
           },
-        })
-      )
+        });
+      })
     );
 
-    // Log the configuration change
+    // Create audit log for configuration changes
     await prisma.auditLog.create({
       data: {
         userId: session.user.id,
         action: 'UPDATE',
-        resource: 'SystemConfig',
-        resourceId: 'membership_config',
+        resource: 'MembershipConfig',
+        resourceId: 'membership-settings',
         details: {
-          old: 'Previous membership configuration',
-          new: validatedConfig,
+          configUpdates: {
+            membershipThreshold,
+            enablePromotionalExclusion,
+            requireQualifyingCategories,
+            membershipBenefitsText: membershipBenefitsText.trim(),
+            membershipTermsText: membershipTermsText.trim(),
+          },
+          updatedAt: new Date().toISOString(),
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
@@ -179,18 +213,16 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Membership configuration updated successfully',
-      config: validatedConfig,
+      config: {
+        membershipThreshold,
+        enablePromotionalExclusion,
+        requireQualifyingCategories,
+        membershipBenefitsText: membershipBenefitsText.trim(),
+        membershipTermsText: membershipTermsText.trim(),
+      },
     });
   } catch (error) {
     console.error('Error updating membership config:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: 'Invalid configuration data', errors: error.issues },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
       { message: 'Failed to update membership configuration' },
       { status: 500 }

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -56,13 +56,13 @@ export function RecentlyViewed({
 }: RecentlyViewedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
 
   // Fetch recently viewed products
-  const fetchRecentlyViewed = async () => {
+  const fetchRecentlyViewed = useCallback(async () => {
     if (!isLoggedIn) {
       setItems([]);
       return;
@@ -76,16 +76,18 @@ export function RecentlyViewed({
         const data = await response.json();
         setItems(data.items);
       }
-    } catch (error) {
-      console.error('Failed to fetch recently viewed:', error);
+    } catch {
+      // Handle error silently for now
     } finally {
       setLoading(false);
     }
-  };
+  }, [isLoggedIn, limit]);
 
   // Clear all recently viewed
   const clearRecentlyViewed = async () => {
-    if (!isLoggedIn || !confirm('Clear all recently viewed products?')) return;
+    if (!isLoggedIn || !confirm('Clear all recently viewed products?')) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/recently-viewed', {
@@ -95,8 +97,8 @@ export function RecentlyViewed({
       if (response.ok) {
         setItems([]);
       }
-    } catch (error) {
-      console.error('Failed to clear recently viewed:', error);
+    } catch {
+      // Handle error silently
     }
   };
 
@@ -120,19 +122,19 @@ export function RecentlyViewed({
       });
 
       if (response.ok) {
-        console.log('Added to cart successfully');
+        // Success handled silently for now
       } else {
         const data = await response.json();
         alert(data.message || 'Failed to add to cart');
       }
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
+    } catch {
+      // Handle error silently
     }
   };
 
   useEffect(() => {
     fetchRecentlyViewed();
-  }, [isLoggedIn, limit]);
+  }, [isLoggedIn, limit, fetchRecentlyViewed]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -201,7 +203,6 @@ export function RecentlyViewed({
       >
         {items.map(item => {
           const showMemberPrice = isLoggedIn && isMember;
-          const savings = item.product.regularPrice - item.product.memberPrice;
 
           return (
             <Card

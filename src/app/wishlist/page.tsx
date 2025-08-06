@@ -78,8 +78,8 @@ export default function WishlistPage() {
       } else if (response.status === 401) {
         setWishlistItems([]);
       }
-    } catch (error) {
-      console.error('Failed to fetch wishlist:', error);
+    } catch {
+      // Handle error silently
     } finally {
       setLoading(false);
     }
@@ -106,15 +106,13 @@ export default function WishlistPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
         // TODO: Add toast notification here
-        console.log('Added to cart:', data.message);
+        // Success handled silently for now
       } else {
         const data = await response.json();
         alert(data.message || 'Failed to add to cart');
       }
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
+    } catch {
       alert('Failed to add to cart');
     } finally {
       setAddingToCart(null);
@@ -137,8 +135,8 @@ export default function WishlistPage() {
           text: 'Check out my wishlist on JRM E-commerce!',
           url: window.location.href,
         });
-      } catch (error) {
-        console.error('Error sharing:', error);
+      } catch {
+        // Handle error silently
       }
     } else {
       // Fallback: copy to clipboard

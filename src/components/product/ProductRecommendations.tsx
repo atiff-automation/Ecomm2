@@ -102,8 +102,8 @@ export function ProductRecommendations({
           const data = await response.json();
           setRecommendations(data.recommendations);
         }
-      } catch (error) {
-        console.error('Failed to fetch recommendations:', error);
+      } catch {
+        // Handle error silently
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -133,13 +133,13 @@ export function ProductRecommendations({
 
       if (response.ok) {
         // TODO: Add toast notification
-        console.log('Added to cart successfully');
+        // Success handled silently for now
       } else {
         const data = await response.json();
         alert(data.message || 'Failed to add to cart');
       }
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
+    } catch {
+      // Handle error silently
     }
   };
 

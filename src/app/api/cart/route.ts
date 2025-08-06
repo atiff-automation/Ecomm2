@@ -18,11 +18,14 @@ interface CartItemWithProduct {
   quantity: number;
   product: {
     id: string;
+    name: string;
     regularPrice: number;
     memberPrice: number;
     isPromotional: boolean;
     status: string;
     category: {
+      id: string;
+      name: string;
       isQualifyingCategory: boolean;
     };
     images: Array<{
@@ -81,9 +84,33 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Convert Decimal prices to numbers for calculation
+    const convertedCartItems: CartItemWithProduct[] = cartItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        regularPrice: Number(item.product.regularPrice),
+        memberPrice: Number(item.product.memberPrice),
+        isPromotional: item.product.isPromotional,
+        status: item.product.status,
+        category: {
+          id: item.product.category.id,
+          name: item.product.category.name,
+          isQualifyingCategory: item.product.category.isQualifyingCategory,
+        },
+        images: item.product.images.map(img => ({
+          url: img.url,
+          altText: img.altText || '',
+          isPrimary: img.isPrimary,
+        })),
+      },
+    }));
+
     // Calculate cart totals and membership eligibility
     const cartSummary = await calculateCartSummary(
-      cartItems,
+      convertedCartItems,
       session.user.isMember
     );
 

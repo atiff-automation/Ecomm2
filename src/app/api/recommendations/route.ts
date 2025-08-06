@@ -28,16 +28,16 @@ export async function GET(request: NextRequest) {
         session.user.id,
         limit,
         type,
-        productId,
-        categoryId
+        productId || undefined,
+        categoryId || undefined
       );
     } else {
       // Generic recommendations for anonymous users
       recommendations = await getGenericRecommendations(
         limit,
         type,
-        productId,
-        categoryId
+        productId || undefined,
+        categoryId || undefined
       );
     }
 
@@ -129,11 +129,7 @@ async function getPersonalizedRecommendations(
             select: { rating: true },
           },
         },
-        orderBy: [
-          { featured: 'desc' },
-          { averageRating: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
         take: limit,
       });
     }
@@ -172,7 +168,7 @@ async function getGenericRecommendations(
     return await prisma.product.findMany({
       where: {
         status: 'ACTIVE',
-        OR: [{ featured: true }, { averageRating: { gte: 4.0 } }],
+        featured: true,
       },
       include: {
         category: {
@@ -190,11 +186,7 @@ async function getGenericRecommendations(
           select: { rating: true },
         },
       },
-      orderBy: [
-        { featured: 'desc' },
-        { averageRating: 'desc' },
-        { reviewCount: 'desc' },
-      ],
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
   } catch (error) {
@@ -237,7 +229,7 @@ async function getSimilarProducts(
     }
 
     // Find products in the same category with similar price range
-    const priceRange = product.regularPrice * 0.3; // 30% price range
+    const priceRange = Number(product.regularPrice) * 0.3; // 30% price range
 
     return await prisma.product.findMany({
       where: {
@@ -247,8 +239,8 @@ async function getSimilarProducts(
           notIn: excludeProducts,
         },
         regularPrice: {
-          gte: product.regularPrice - priceRange,
-          lte: product.regularPrice + priceRange,
+          gte: Number(product.regularPrice) - priceRange,
+          lte: Number(product.regularPrice) + priceRange,
         },
       },
       include: {
@@ -267,11 +259,7 @@ async function getSimilarProducts(
           select: { rating: true },
         },
       },
-      orderBy: [
-        { averageRating: 'desc' },
-        { reviewCount: 'desc' },
-        { featured: 'desc' },
-      ],
+      orderBy: [{ createdAt: 'desc' }, { featured: 'desc' }],
       take: limit,
     });
   } catch (error) {
@@ -325,11 +313,7 @@ async function getCategoryRecommendations(
           select: { rating: true },
         },
       },
-      orderBy: [
-        { featured: 'desc' },
-        { averageRating: 'desc' },
-        { reviewCount: 'desc' },
-      ],
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
   } catch (error) {
@@ -378,12 +362,7 @@ async function getTrendingProducts(limit: number, excludeUserId?: string) {
           select: { rating: true },
         },
       },
-      orderBy: [
-        { reviewCount: 'desc' },
-        { averageRating: 'desc' },
-        { featured: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
   } catch (error) {

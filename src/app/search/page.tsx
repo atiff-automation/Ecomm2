@@ -153,8 +153,8 @@ export default function SearchPage() {
         const data = await response.json();
         setCategories(data.categories);
       }
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
+    } catch {
+      // Handle error silently
     }
   }, []);
 
@@ -228,8 +228,8 @@ export default function SearchPage() {
         const data = await response.json();
         setSuggestions(data.suggestions);
       }
-    } catch (err) {
-      console.error('Failed to get suggestions:', err);
+    } catch {
+      // Handle error silently
     }
   }, []);
 
@@ -488,15 +488,13 @@ export default function SearchPage() {
                   });
 
                   if (response.ok) {
-                    const data = await response.json();
                     // You could add a toast notification here
-                    console.log('Added to cart:', data.message);
+                    // Success handled silently for now
                   } else {
                     const data = await response.json();
                     alert(data.message || 'Failed to add to cart');
                   }
-                } catch (error) {
-                  console.error('Failed to add to cart:', error);
+                } catch {
                   alert('Failed to add to cart');
                 }
               }}
