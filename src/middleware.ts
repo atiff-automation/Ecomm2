@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
+import { superAdminSecurity } from '@/lib/security/superadmin-security';
 
 // Rate limiting store (in-memory for development, use Redis in production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -181,13 +182,29 @@ export async function middleware(request: NextRequest) {
     // Role-based access control
     const userRole = token.role as UserRole;
 
-    // SuperAdmin routes
+    // SuperAdmin routes with enhanced security
     if (
       pathname.startsWith('/superadmin') ||
       pathname.startsWith('/api/superadmin')
     ) {
       if (userRole !== UserRole.SUPERADMIN) {
         return new NextResponse('Forbidden', { status: 403 });
+      }
+
+      // Apply enhanced SuperAdmin security checks
+      const securityCheck = await superAdminSecurity.verifySuperAdminAccess(request);
+      if (!securityCheck.passed) {
+        const status = securityCheck.requiresMFA ? 423 : 
+                       securityCheck.requiresIPWhitelist ? 403 : 401;
+        
+        return new NextResponse(JSON.stringify({
+          error: securityCheck.reason,
+          requiresMFA: securityCheck.requiresMFA,
+          requiresIPWhitelist: securityCheck.requiresIPWhitelist
+        }), {
+          status,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
     }
 
