@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { billplzService } from '@/lib/payments/billplz-service';
 import { handleApiError } from '@/lib/error-handler';
+import { emailService } from '@/lib/email/email-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -154,9 +155,59 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // TODO: Send email notification based on order status
-    // - Order confirmation for successful payments
-    // - Payment failure notification for failed payments
+    // Send email notifications based on order status
+    if (newPaymentStatus === 'PAID') {
+      // Send order confirmation email
+      await emailService.sendOrderConfirmation({
+        orderNumber: order.orderNumber,
+        customerName: order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Valued Customer',
+        customerEmail: order.user?.email || 'customer@example.com',
+        items: order.orderItems.map(item => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: Number(item.appliedPrice)
+        })),
+        subtotal: Number(order.subtotal),
+        taxAmount: Number(order.taxAmount),
+        shippingCost: Number(order.shippingCost),
+        total: Number(order.total),
+        paymentMethod: 'Billplz'
+      });
+
+      // Send member welcome email if this is their first membership
+      if (order.wasEligibleForMembership && order.user && !order.user.isMember) {
+        await emailService.sendMemberWelcome({
+          memberName: `${order.user.firstName} ${order.user.lastName}`,
+          memberEmail: order.user.email,
+          memberSince: new Date().toLocaleDateString('en-MY'),
+          benefits: [
+            'Exclusive member pricing on all products',
+            'Priority customer support',
+            'Early access to sales and promotions',
+            'Member-only special offers'
+          ]
+        });
+      }
+    } else if (newPaymentStatus === 'FAILED') {
+      // Send payment failure notification
+      if (order.user) {
+        await emailService.sendPaymentFailure({
+          orderNumber: order.orderNumber,
+          customerName: `${order.user.firstName} ${order.user.lastName}`,
+          customerEmail: order.user.email,
+          items: order.orderItems.map(item => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: Number(item.appliedPrice)
+          })),
+          subtotal: Number(order.subtotal),
+          taxAmount: Number(order.taxAmount),
+          shippingCost: Number(order.shippingCost),
+          total: Number(order.total),
+          paymentMethod: 'Billplz'
+        });
+      }
+    }
 
     console.log('Payment webhook processed successfully:', {
       orderNumber: order.orderNumber,
