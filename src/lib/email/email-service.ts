@@ -94,7 +94,7 @@ export class EmailService {
 
       // If React component provided, render it to HTML
       if (options.react && !html) {
-        html = render(options.react);
+        html = await render(options.react);
       }
 
       const result = await this.resend.emails.send({
@@ -103,7 +103,7 @@ export class EmailService {
         subject: options.subject,
         html: html || options.text || '',
         text: options.text,
-        reply_to: options.replyTo,
+        replyTo: options.replyTo,
         cc: options.cc,
         bcc: options.bcc,
       });

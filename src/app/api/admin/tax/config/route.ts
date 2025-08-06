@@ -206,7 +206,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           message: 'Validation error',
-          errors: error.errors,
+          errors: error.issues,
         },
         { status: 400 }
       );

@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const webhookData: Record<string, string> = {};
 
-    for (const [key, value] of formData.entries()) {
+    Array.from(formData.entries()).forEach(([key, value]) => {
       webhookData[key] = value.toString();
-    }
+    });
 
     // Verify webhook signature
     const signature = webhookData.x_signature;

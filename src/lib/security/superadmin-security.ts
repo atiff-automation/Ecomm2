@@ -197,11 +197,14 @@ export class SuperAdminSecurity {
   /**
    * Verify MFA token against user's secret
    */
-  async verifyMFAToken(_userId: string, _token: string): Promise<boolean> {
+  async verifyMFAToken(userId: string, token: string): Promise<boolean> {
     try {
       // In a real implementation, you'd store the MFA secret securely
       // For now, we'll use a placeholder that always returns true in development
       if (this.isDevelopmentMode()) {
+        console.log(
+          `MFA verification for user ${userId} with token ${token.slice(0, 3)}*** (dev mode)`
+        );
         return true;
       }
 

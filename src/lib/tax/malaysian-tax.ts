@@ -79,9 +79,9 @@ export class MalaysianTaxService {
         sstRate: Number(sstRate),
         serviceTaxRate: Number(serviceTaxRate),
         taxExemptThreshold: 0, // No threshold for Malaysian taxes
-        isGstActive: gstRate > 0,
-        isSstActive: sstRate > 0,
-        defaultTaxType: gstRate > 0 ? 'GST' : 'SST',
+        isGstActive: Number(gstRate) > 0,
+        isSstActive: Number(sstRate) > 0,
+        defaultTaxType: Number(gstRate) > 0 ? 'GST' : 'SST',
       };
     } catch (error) {
       console.error('Error fetching tax configuration:', error);
@@ -270,9 +270,9 @@ export class MalaysianTaxService {
     businessRegistrationNumber?: string;
   } {
     return {
-      gstNumber: process.env.GST_NUMBER,
-      sstNumber: process.env.SST_NUMBER,
-      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER,
+      gstNumber: process.env.GST_NUMBER || undefined,
+      sstNumber: process.env.SST_NUMBER || undefined,
+      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER || undefined,
     };
   }
 

@@ -72,7 +72,7 @@ export interface TrackingInfo {
 }
 
 export class EasyParcelService {
-  private apiClient: AxiosInstance;
+  private apiClient!: AxiosInstance;
   private isConfigured: boolean = false;
   private isSandbox: boolean = true;
 
