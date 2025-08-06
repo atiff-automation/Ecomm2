@@ -61,16 +61,18 @@ export async function GET() {
     );
 
     const membershipConfig = {
-      membershipThreshold: Number(configMap.membership_threshold) || 80,
+      membershipThreshold: configMap.membership_threshold
+        ? parseFloat(configMap.membership_threshold.toString())
+        : 80,
       enablePromotionalExclusion:
-        Boolean(configMap.enable_promotional_exclusion) ?? true,
+        configMap.enable_promotional_exclusion === 'true',
       requireQualifyingCategories:
-        Boolean(configMap.require_qualifying_categories) ?? true,
+        configMap.require_qualifying_categories === 'true',
       membershipBenefitsText:
-        String(configMap.membership_benefits_text) ||
+        configMap.membership_benefits_text?.toString() ||
         'Enjoy exclusive member pricing on all products and special promotions.',
       membershipTermsText:
-        String(configMap.membership_terms_text) ||
+        configMap.membership_terms_text?.toString() ||
         'Membership is activated automatically when you spend the qualifying amount.',
     };
 
@@ -143,31 +145,26 @@ export async function PUT(request: NextRequest) {
         key: 'membership_threshold',
         value: membershipThreshold.toString(),
         type: 'number',
-        description: 'Minimum amount required to qualify for membership',
       },
       {
         key: 'enable_promotional_exclusion',
         value: enablePromotionalExclusion.toString(),
         type: 'boolean',
-        description: 'Exclude promotional items from membership qualification',
       },
       {
         key: 'require_qualifying_categories',
         value: requireQualifyingCategories.toString(),
         type: 'boolean',
-        description: 'Only qualifying categories count towards membership',
       },
       {
         key: 'membership_benefits_text',
         value: membershipBenefitsText.trim(),
         type: 'text',
-        description: 'Text describing membership benefits',
       },
       {
         key: 'membership_terms_text',
         value: membershipTermsText.trim(),
         type: 'text',
-        description: 'Text describing membership terms and conditions',
       },
     ];
 

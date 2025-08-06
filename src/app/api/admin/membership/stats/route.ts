@@ -109,19 +109,27 @@ export async function GET() {
       take: 5,
     });
 
-    // Get category names for top categories
-    const categoryData = await Promise.all(
-      topCategories.map(async item => {
-        const product = await prisma.product.findUnique({
-          where: { id: item.productId },
-          include: { category: true },
-        });
-        return {
-          categoryName: product?.category?.name || 'Unknown',
-          quantity: item._sum.quantity || 0,
-        };
-      })
+    // Get category names for top categories (optimized single query)
+    const productIds = topCategories.map(item => item.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { category: true },
+    });
+
+    // Create a map for efficient lookup
+    const productMap = products.reduce(
+      (acc, product) => {
+        acc[product.id] = product;
+        return acc;
+      },
+      {} as Record<string, (typeof products)[0]>
     );
+
+    // Map the results efficiently
+    const categoryData = topCategories.map(item => ({
+      categoryName: productMap[item.productId]?.category?.name || 'Unknown',
+      quantity: item._sum.quantity || 0,
+    }));
 
     // Member growth trend (last 6 months)
     const sixMonthsAgo = new Date();

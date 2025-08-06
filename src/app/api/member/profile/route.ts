@@ -186,7 +186,24 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Create audit log for profile update
+    // Create audit log for profile update (only log field names, not sensitive values)
+    const updatedFields = [];
+    if (firstName.trim()) {
+      updatedFields.push('firstName');
+    }
+    if (lastName.trim()) {
+      updatedFields.push('lastName');
+    }
+    if (email.trim()) {
+      updatedFields.push('email');
+    }
+    if (phone && phone.trim()) {
+      updatedFields.push('phone');
+    }
+    if (parsedDateOfBirth) {
+      updatedFields.push('dateOfBirth');
+    }
+
     await prisma.auditLog.create({
       data: {
         userId: session.user.id,
@@ -194,13 +211,8 @@ export async function PUT(request: NextRequest) {
         resource: 'UserProfile',
         resourceId: session.user.id,
         details: {
-          updatedFields: {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            email: email.trim().toLowerCase(),
-            phone: phone && phone.trim() ? phone.trim() : null,
-            dateOfBirth: parsedDateOfBirth?.toISOString() || null,
-          },
+          updatedFields,
+          fieldCount: updatedFields.length,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',

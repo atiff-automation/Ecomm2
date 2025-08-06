@@ -34,15 +34,30 @@ export async function GET(request: NextRequest) {
     const offsetParam = searchParams.get('offset');
     const status = searchParams.get('status');
 
-    const limit = limitParam ? parseInt(limitParam, 10) : 10;
-    const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+    // Validate and sanitize parameters
+    const limit = limitParam
+      ? Math.min(Math.max(parseInt(limitParam, 10) || 10, 1), 100)
+      : 10;
+    const offset = offsetParam
+      ? Math.max(parseInt(offsetParam, 10) || 0, 0)
+      : 0;
 
     // Build where clause
     const whereClause: any = {
       userId: session.user.id,
     };
 
-    if (status) {
+    // Validate status against allowed values to prevent SQL injection
+    const allowedStatuses = [
+      'PENDING',
+      'CONFIRMED',
+      'PROCESSING',
+      'SHIPPED',
+      'DELIVERED',
+      'CANCELLED',
+      'REFUNDED',
+    ];
+    if (status && allowedStatuses.includes(status.toUpperCase())) {
       whereClause.status = status.toUpperCase();
     }
 
