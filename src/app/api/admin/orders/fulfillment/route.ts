@@ -17,14 +17,18 @@ const fulfillmentSchema = z.object({
   action: z.enum(['mark_processing', 'mark_shipped', 'cancel_orders']),
   trackingNumbers: z.array(z.string()).optional(),
   shippingCarrier: z.string().optional(),
-  estimatedDelivery: z.string().optional()
+  estimatedDelivery: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.SUPERADMIN)) {
+    if (
+      !session?.user ||
+      (session.user.role !== UserRole.ADMIN &&
+        session.user.role !== UserRole.SUPERADMIN)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -33,14 +37,14 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'CONFIRMED';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     // Get orders ready for fulfillment
     const orders = await prisma.order.findMany({
       where: {
         status: status as any,
-        paymentStatus: 'PAID'
+        paymentStatus: 'PAID',
       },
       include: {
         orderItems: {
@@ -49,55 +53,57 @@ export async function GET(request: NextRequest) {
               select: {
                 name: true,
                 sku: true,
-                weight: true
-              }
-            }
-          }
+                weight: true,
+              },
+            },
+          },
         },
         user: {
           select: {
             firstName: true,
             lastName: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
       take: limit,
-      skip: offset
+      skip: offset,
     });
 
     // Get total count
     const totalCount = await prisma.order.count({
       where: {
         status: status as any,
-        paymentStatus: 'PAID'
-      }
+        paymentStatus: 'PAID',
+      },
     });
 
     // Format orders for fulfillment
     const fulfillmentOrders = orders.map(order => ({
       id: order.id,
       orderNumber: order.orderNumber,
-      customerName: order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest',
+      customerName: order.user
+        ? `${order.user.firstName} ${order.user.lastName}`
+        : 'Guest',
       customerEmail: order.user?.email,
       status: order.status,
       total: Number(order.total),
       itemCount: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
       totalWeight: order.orderItems.reduce((sum, item) => {
         const weight = item.product?.weight ? Number(item.product.weight) : 0;
-        return sum + (weight * item.quantity);
+        return sum + weight * item.quantity;
       }, 0),
       items: order.orderItems.map(item => ({
         id: item.id,
         productName: item.productName,
         productSku: item.productSku,
         quantity: item.quantity,
-        weight: item.product?.weight ? Number(item.product.weight) : 0
+        weight: item.product?.weight ? Number(item.product.weight) : 0,
       })),
       createdAt: order.createdAt.toISOString(),
       trackingNumber: order.trackingNumber,
-      shippedAt: order.shippedAt?.toISOString()
+      shippedAt: order.shippedAt?.toISOString(),
     }));
 
     return NextResponse.json({
@@ -106,16 +112,24 @@ export async function GET(request: NextRequest) {
         total: totalCount,
         limit,
         offset,
-        hasMore: offset + limit < totalCount
+        hasMore: offset + limit < totalCount,
       },
       summary: {
         totalOrders: totalCount,
-        totalItems: fulfillmentOrders.reduce((sum, order) => sum + order.itemCount, 0),
-        totalWeight: fulfillmentOrders.reduce((sum, order) => sum + order.totalWeight, 0),
-        totalValue: fulfillmentOrders.reduce((sum, order) => sum + order.total, 0)
-      }
+        totalItems: fulfillmentOrders.reduce(
+          (sum, order) => sum + order.itemCount,
+          0
+        ),
+        totalWeight: fulfillmentOrders.reduce(
+          (sum, order) => sum + order.totalWeight,
+          0
+        ),
+        totalValue: fulfillmentOrders.reduce(
+          (sum, order) => sum + order.total,
+          0
+        ),
+      },
     });
-
   } catch (error) {
     console.error('Order fulfillment fetch error:', error);
     return handleApiError(error);
@@ -126,7 +140,11 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.SUPERADMIN)) {
+    if (
+      !session?.user ||
+      (session.user.role !== UserRole.ADMIN &&
+        session.user.role !== UserRole.SUPERADMIN)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -136,17 +154,23 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = fulfillmentSchema.parse(body);
 
-    const { orderIds, action, trackingNumbers, shippingCarrier, estimatedDelivery } = validatedData;
+    const {
+      orderIds,
+      action,
+      trackingNumbers,
+      shippingCarrier,
+      estimatedDelivery,
+    } = validatedData;
 
     // Get orders to process
     const orders = await prisma.order.findMany({
       where: {
-        id: { in: orderIds }
+        id: { in: orderIds },
       },
       include: {
         orderItems: true,
-        user: true
-      }
+        user: true,
+      },
     });
 
     if (orders.length !== orderIds.length) {
@@ -157,8 +181,8 @@ export async function PUT(request: NextRequest) {
     }
 
     let newStatus;
-    let updateData: any = {
-      updatedAt: new Date()
+    const updateData: any = {
+      updatedAt: new Date(),
     };
 
     // Process different actions
@@ -172,7 +196,7 @@ export async function PUT(request: NextRequest) {
         newStatus = 'SHIPPED';
         updateData.status = newStatus;
         updateData.shippedAt = new Date();
-        
+
         // Add tracking numbers if provided
         if (trackingNumbers && trackingNumbers.length > 0) {
           // Assume first tracking number for now (extend for multiple orders later)
@@ -183,7 +207,7 @@ export async function PUT(request: NextRequest) {
       case 'cancel_orders':
         newStatus = 'CANCELLED';
         updateData.status = newStatus;
-        
+
         // Restore inventory for cancelled orders
         for (const order of orders) {
           for (const item of order.orderItems) {
@@ -191,9 +215,9 @@ export async function PUT(request: NextRequest) {
               where: { id: item.productId },
               data: {
                 stockQuantity: {
-                  increment: item.quantity
-                }
-              }
+                  increment: item.quantity,
+                },
+              },
             });
           }
         }
@@ -209,9 +233,9 @@ export async function PUT(request: NextRequest) {
     // Update all orders
     await prisma.order.updateMany({
       where: {
-        id: { in: orderIds }
+        id: { in: orderIds },
       },
-      data: updateData
+      data: updateData,
     });
 
     // Send shipping notifications for shipped orders
@@ -226,7 +250,7 @@ export async function PUT(request: NextRequest) {
             items: order.orderItems.map(item => ({
               name: item.productName,
               quantity: item.quantity,
-              price: Number(item.appliedPrice)
+              price: Number(item.appliedPrice),
             })),
             subtotal: Number(order.subtotal),
             taxAmount: Number(order.taxAmount),
@@ -234,7 +258,7 @@ export async function PUT(request: NextRequest) {
             total: Number(order.total),
             paymentMethod: order.paymentMethod || 'Unknown',
             trackingNumber: trackingNumbers?.[i] || trackingNumbers?.[0],
-            estimatedDelivery
+            estimatedDelivery,
           });
         }
       }
@@ -255,26 +279,25 @@ export async function PUT(request: NextRequest) {
           shippingCarrier,
           estimatedDelivery,
           processedCount: orders.length,
-          performedBy: session.user.email
+          performedBy: session.user.email,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
     });
 
     return NextResponse.json({
       message: `Successfully ${action.replace('_', ' ')} ${orders.length} order(s)`,
       processedOrders: orders.length,
       newStatus,
-      orderNumbers: orders.map(order => order.orderNumber)
+      orderNumbers: orders.map(order => order.orderNumber),
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           message: 'Validation error',
-          errors: error.errors
+          errors: error.errors,
         },
         { status: 400 }
       );

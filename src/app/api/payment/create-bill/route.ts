@@ -13,15 +13,17 @@ import { handleApiError } from '@/lib/error-handler';
 import { z } from 'zod';
 
 const createBillSchema = z.object({
-  cartItems: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().min(1),
-    price: z.number().min(0)
-  })),
+  cartItems: z.array(
+    z.object({
+      productId: z.string(),
+      quantity: z.number().min(1),
+      price: z.number().min(0),
+    })
+  ),
   customerInfo: z.object({
     email: z.string().email(),
     name: z.string().min(1),
-    phone: z.string().optional()
+    phone: z.string().optional(),
   }),
   shippingAddress: z.object({
     firstName: z.string().min(1),
@@ -31,13 +33,17 @@ const createBillSchema = z.object({
     city: z.string().min(1),
     state: z.string().min(1),
     postalCode: z.string().min(1),
-    country: z.string().default('Malaysia')
+    country: z.string().default('Malaysia'),
   }),
-  appliedDiscounts: z.array(z.object({
-    code: z.string(),
-    amount: z.number()
-  })).optional(),
-  membershipDiscount: z.number().optional()
+  appliedDiscounts: z
+    .array(
+      z.object({
+        code: z.string(),
+        amount: z.number(),
+      })
+    )
+    .optional(),
+  membershipDiscount: z.number().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,7 +52,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createBillSchema.parse(body);
 
-    const { cartItems, customerInfo, shippingAddress, appliedDiscounts, membershipDiscount } = validatedData;
+    const {
+      cartItems,
+      customerInfo,
+      shippingAddress,
+      appliedDiscounts,
+      membershipDiscount,
+    } = validatedData;
 
     // Get session (optional for guest checkout)
     const session = await getServerSession(authOptions);
@@ -54,9 +66,9 @@ export async function POST(request: NextRequest) {
     // Check if Billplz service is configured
     if (!billplzService.isConfigured()) {
       return NextResponse.json(
-        { 
+        {
           message: 'Payment service is not properly configured',
-          debug: billplzService.getConfigStatus()
+          debug: billplzService.getConfigStatus(),
         },
         { status: 500 }
       );
@@ -67,11 +79,11 @@ export async function POST(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: {
         id: { in: productIds },
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       include: {
-        category: true
-      }
+        category: true,
+      },
     });
 
     if (products.length !== cartItems.length) {
@@ -86,15 +98,17 @@ export async function POST(request: NextRequest) {
     for (const cartItem of cartItems) {
       const product = products.find(p => p.id === cartItem.productId);
       if (product && product.stockQuantity < cartItem.quantity) {
-        stockErrors.push(`${product.name}: Only ${product.stockQuantity} items available (requested ${cartItem.quantity})`);
+        stockErrors.push(
+          `${product.name}: Only ${product.stockQuantity} items available (requested ${cartItem.quantity})`
+        );
       }
     }
 
     if (stockErrors.length > 0) {
       return NextResponse.json(
-        { 
+        {
           message: 'Insufficient stock',
-          errors: stockErrors
+          errors: stockErrors,
         },
         { status: 400 }
       );
@@ -104,7 +118,9 @@ export async function POST(request: NextRequest) {
     let subtotal = 0;
     const orderItems = cartItems.map(cartItem => {
       const product = products.find(p => p.id === cartItem.productId)!;
-      const price = session?.user?.isMember ? Number(product.memberPrice) : Number(product.regularPrice);
+      const price = session?.user?.isMember
+        ? Number(product.memberPrice)
+        : Number(product.regularPrice);
       const itemTotal = price * cartItem.quantity;
       subtotal += itemTotal;
 
@@ -116,7 +132,7 @@ export async function POST(request: NextRequest) {
         regularPrice: Number(product.regularPrice),
         memberPrice: Number(product.memberPrice),
         appliedPrice: price,
-        totalPrice: itemTotal
+        totalPrice: itemTotal,
       };
     });
 
@@ -128,21 +144,46 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
       taxCategory: 'STANDARD' as const,
       isGstApplicable: false, // GST is suspended in Malaysia
-      isSstApplicable: true   // SST is currently active
+      isSstApplicable: true, // SST is currently active
     }));
 
     const taxCalculation = await malaysianTaxService.calculateTax(taxProducts);
 
     // Calculate discounts
-    const discountAmount = (appliedDiscounts || []).reduce((sum, discount) => sum + discount.amount, 0);
+    const discountAmount = (appliedDiscounts || []).reduce(
+      (sum, discount) => sum + discount.amount,
+      0
+    );
     const memberDiscountAmount = membershipDiscount || 0;
     const totalDiscounts = discountAmount + memberDiscountAmount;
 
-    // Calculate shipping (placeholder - integrate with EasyParcel later)
-    const shippingCost = 10; // RM 10 flat rate for now
+    // Calculate shipping using EasyParcel integration
+    const { shippingCalculator } = await import(
+      '@/lib/shipping/shipping-calculator'
+    );
+
+    // Prepare items for shipping calculation
+    const shippingItems = orderItems.map((item, index) => {
+      const product = products[index];
+      return {
+        productId: item.productId,
+        name: item.productName,
+        weight: product.weight ? Number(product.weight) : 0.5, // Default 0.5kg if no weight
+        quantity: item.quantity,
+        value: item.appliedPrice,
+      };
+    });
+
+    // Calculate shipping cost
+    const shippingCost = await shippingCalculator.getCheapestShippingRate(
+      shippingItems,
+      shippingAddress,
+      subtotal
+    );
 
     // Calculate final total
-    const finalTotal = subtotal + taxCalculation.taxAmount + shippingCost - totalDiscounts;
+    const finalTotal =
+      subtotal + taxCalculation.taxAmount + shippingCost - totalDiscounts;
 
     if (finalTotal <= 0) {
       return NextResponse.json(
@@ -166,16 +207,16 @@ export async function POST(request: NextRequest) {
       reference_1_label: 'Order Number',
       reference_1: orderNumber,
       reference_2_label: 'Customer Email',
-      reference_2: customerInfo.email
+      reference_2: customerInfo.email,
     };
 
     const paymentResult = await billplzService.createBill(billData);
 
     if (!paymentResult.success) {
       return NextResponse.json(
-        { 
+        {
           message: 'Failed to create payment bill',
-          error: paymentResult.error
+          error: paymentResult.error,
         },
         { status: 500 }
       );
@@ -198,7 +239,7 @@ export async function POST(request: NextRequest) {
         paymentMethod: 'BILLPLZ',
         paymentId: paymentResult.bill_id,
         customerNotes: `Payment via Billplz. Bill ID: ${paymentResult.bill_id}`,
-        
+
         // Create order items
         orderItems: {
           create: orderItems.map(item => ({
@@ -209,13 +250,13 @@ export async function POST(request: NextRequest) {
             appliedPrice: item.appliedPrice,
             totalPrice: item.totalPrice,
             productName: item.productName,
-            productSku: item.productSku
-          }))
-        }
+            productSku: item.productSku,
+          })),
+        },
       },
       include: {
-        orderItems: true
-      }
+        orderItems: true,
+      },
     });
 
     // Log the payment creation
@@ -230,11 +271,11 @@ export async function POST(request: NextRequest) {
           billplzBillId: paymentResult.bill_id,
           amount: finalTotal,
           paymentUrl: paymentResult.payment_url,
-          customerEmail: customerInfo.email
+          customerEmail: customerInfo.email,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
     });
 
     return NextResponse.json({
@@ -243,21 +284,20 @@ export async function POST(request: NextRequest) {
         id: order.id,
         orderNumber: order.orderNumber,
         total: finalTotal,
-        taxBreakdown: taxCalculation.breakdown
+        taxBreakdown: taxCalculation.breakdown,
       },
       payment: {
         billId: paymentResult.bill_id,
         paymentUrl: paymentResult.payment_url,
-        amount: billplzService.formatAmount(finalTotal * 100) // Convert back to display format
-      }
+        amount: billplzService.formatAmount(finalTotal * 100), // Convert back to display format
+      },
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           message: 'Validation error',
-          errors: error.errors
+          errors: error.errors,
         },
         { status: 400 }
       );

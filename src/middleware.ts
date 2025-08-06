@@ -192,19 +192,26 @@ export async function middleware(request: NextRequest) {
       }
 
       // Apply enhanced SuperAdmin security checks
-      const securityCheck = await superAdminSecurity.verifySuperAdminAccess(request);
+      const securityCheck =
+        await superAdminSecurity.verifySuperAdminAccess(request);
       if (!securityCheck.passed) {
-        const status = securityCheck.requiresMFA ? 423 : 
-                       securityCheck.requiresIPWhitelist ? 403 : 401;
-        
-        return new NextResponse(JSON.stringify({
-          error: securityCheck.reason,
-          requiresMFA: securityCheck.requiresMFA,
-          requiresIPWhitelist: securityCheck.requiresIPWhitelist
-        }), {
-          status,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const status = securityCheck.requiresMFA
+          ? 423
+          : securityCheck.requiresIPWhitelist
+            ? 403
+            : 401;
+
+        return new NextResponse(
+          JSON.stringify({
+            error: securityCheck.reason,
+            requiresMFA: securityCheck.requiresMFA,
+            requiresIPWhitelist: securityCheck.requiresIPWhitelist,
+          }),
+          {
+            status,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
     }
 

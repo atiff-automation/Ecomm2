@@ -72,9 +72,9 @@ export class BillplzService {
     this.apiKey = process.env.BILLPLZ_API_KEY || '';
     this.webhookSecret = process.env.BILLPLZ_WEBHOOK_SECRET || '';
     this.isSandbox = process.env.BILLPLZ_SANDBOX === 'true';
-    
+
     // Use sandbox URL for testing
-    this.baseURL = this.isSandbox 
+    this.baseURL = this.isSandbox
       ? 'https://www.billplz-sandbox.com/api/v3'
       : 'https://www.billplz.com/api/v3';
 
@@ -87,11 +87,11 @@ export class BillplzService {
       baseURL: this.baseURL,
       auth: {
         username: this.apiKey,
-        password: ''
+        password: '',
       },
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
   }
 
@@ -104,7 +104,7 @@ export class BillplzService {
       if (!billData.collection_id || !billData.email || !billData.amount) {
         return {
           success: false,
-          error: 'Missing required fields: collection_id, email, amount'
+          error: 'Missing required fields: collection_id, email, amount',
         };
       }
 
@@ -123,7 +123,7 @@ export class BillplzService {
       if (billData.callback_url) {
         params.append('callback_url', billData.callback_url);
       }
-      
+
       if (billData.redirect_url) {
         params.append('redirect_url', billData.redirect_url);
       }
@@ -146,28 +146,27 @@ export class BillplzService {
           success: true,
           bill,
           bill_id: bill.id,
-          payment_url: bill.url
+          payment_url: bill.url,
         };
       }
 
       return {
         success: false,
-        error: 'Failed to create bill'
+        error: 'Failed to create bill',
       };
-
     } catch (error) {
       console.error('Billplz createBill error:', error);
-      
+
       if (axios.isAxiosError(error)) {
         return {
           success: false,
-          error: error.response?.data?.error || error.message
+          error: error.response?.data?.error || error.message,
         };
       }
 
       return {
         success: false,
-        error: 'Unknown error occurred while creating bill'
+        error: 'Unknown error occurred while creating bill',
       };
     }
   }
@@ -183,28 +182,27 @@ export class BillplzService {
         const bill: BillplzBill = response.data;
         return {
           success: true,
-          bill
+          bill,
         };
       }
 
       return {
         success: false,
-        error: 'Bill not found'
+        error: 'Bill not found',
       };
-
     } catch (error) {
       console.error('Billplz getBill error:', error);
-      
+
       if (axios.isAxiosError(error)) {
         return {
           success: false,
-          error: error.response?.data?.error || error.message
+          error: error.response?.data?.error || error.message,
         };
       }
 
       return {
         success: false,
-        error: 'Unknown error occurred while fetching bill'
+        error: 'Unknown error occurred while fetching bill',
       };
     }
   }
@@ -218,28 +216,27 @@ export class BillplzService {
 
       if (response.status === 200) {
         return {
-          success: true
+          success: true,
         };
       }
 
       return {
         success: false,
-        error: 'Failed to delete bill'
+        error: 'Failed to delete bill',
       };
-
     } catch (error) {
       console.error('Billplz deleteBill error:', error);
-      
+
       if (axios.isAxiosError(error)) {
         return {
           success: false,
-          error: error.response?.data?.error || error.message
+          error: error.response?.data?.error || error.message,
         };
       }
 
       return {
         success: false,
-        error: 'Unknown error occurred while deleting bill'
+        error: 'Unknown error occurred while deleting bill',
       };
     }
   }
@@ -247,7 +244,10 @@ export class BillplzService {
   /**
    * Verify webhook signature
    */
-  verifyWebhook(webhookData: Record<string, string>, signature: string): boolean {
+  verifyWebhook(
+    webhookData: Record<string, string>,
+    signature: string
+  ): boolean {
     if (!this.webhookSecret) {
       console.warn('Webhook secret not configured, skipping verification');
       return true; // Allow in development
@@ -256,7 +256,7 @@ export class BillplzService {
     try {
       // Sort the data keys
       const keys = Object.keys(webhookData).sort();
-      
+
       // Create the signature string
       let signatureString = '';
       keys.forEach(key => {
@@ -266,7 +266,9 @@ export class BillplzService {
       });
 
       // Generate the expected signature
-      const expectedSignature = crypto.HmacSHA256(signatureString, this.webhookSecret).toString();
+      const expectedSignature = crypto
+        .HmacSHA256(signatureString, this.webhookSecret)
+        .toString();
 
       return expectedSignature === signature;
     } catch (error) {
@@ -285,10 +287,10 @@ export class BillplzService {
         collection_id: webhookData.collection_id,
         paid: webhookData.paid === 'true',
         state: webhookData.state as 'due' | 'paid' | 'deleted',
-        amount: parseInt(webhookData.amount) || 0,
-        paid_amount: parseInt(webhookData.paid_amount) || 0,
+        amount: parseInt(webhookData.amount, 10) || 0,
+        paid_amount: parseInt(webhookData.paid_amount, 10) || 0,
         paid_at: webhookData.paid_at,
-        x_signature: webhookData.x_signature
+        x_signature: webhookData.x_signature,
       };
 
       return webhook;
@@ -325,7 +327,7 @@ export class BillplzService {
       'grabpay', // GrabPay
       'tng', // Touch 'n Go eWallet
       'shopeepay', // ShopeePay
-      'credit_card' // Credit/Debit Cards
+      'credit_card', // Credit/Debit Cards
     ];
   }
 
@@ -344,7 +346,7 @@ export class BillplzService {
       hasApiKey: !!this.apiKey,
       hasWebhookSecret: !!this.webhookSecret,
       isSandbox: this.isSandbox,
-      baseURL: this.baseURL
+      baseURL: this.baseURL,
     };
   }
 }

@@ -30,7 +30,7 @@ export async function GET(
       where: {
         paymentId: billId,
         // Only allow user to check their own orders, or allow guest orders
-        ...(session?.user?.id ? { userId: session.user.id } : {})
+        ...(session?.user?.id ? { userId: session.user.id } : {}),
       },
       include: {
         orderItems: {
@@ -38,12 +38,12 @@ export async function GET(
             product: {
               select: {
                 name: true,
-                images: true
-              }
-            }
-          }
-        }
-      }
+                images: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -63,12 +63,12 @@ export async function GET(
           status: order.status,
           paymentStatus: order.paymentStatus,
           total: Number(order.total),
-          createdAt: order.createdAt.toISOString()
+          createdAt: order.createdAt.toISOString(),
         },
         payment: {
           status: 'unknown',
-          message: 'Could not retrieve payment status from Billplz'
-        }
+          message: 'Could not retrieve payment status from Billplz',
+        },
       });
     }
 
@@ -95,8 +95,8 @@ export async function GET(
         data: {
           paymentStatus: newPaymentStatus,
           status: newOrderStatus,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       // If payment is confirmed, update inventory and membership
@@ -108,9 +108,9 @@ export async function GET(
               where: { id: item.productId },
               data: {
                 stockQuantity: {
-                  decrement: item.quantity
-                }
-              }
+                  decrement: item.quantity,
+                },
+              },
             });
           }
         }
@@ -119,7 +119,7 @@ export async function GET(
         if (order.wasEligibleForMembership && order.userId) {
           const user = await prisma.user.findUnique({
             where: { id: order.userId },
-            select: { isMember: true, membershipTotal: true }
+            select: { isMember: true, membershipTotal: true },
           });
 
           if (user && !user.isMember) {
@@ -128,15 +128,16 @@ export async function GET(
               data: {
                 isMember: true,
                 memberSince: new Date(),
-                membershipTotal: Number(order.total)
-              }
+                membershipTotal: Number(order.total),
+              },
             });
           } else if (user?.isMember) {
             await prisma.user.update({
               where: { id: order.userId },
               data: {
-                membershipTotal: Number(user.membershipTotal) + Number(order.total)
-              }
+                membershipTotal:
+                  Number(user.membershipTotal) + Number(order.total),
+              },
             });
           }
         }
@@ -157,11 +158,11 @@ export async function GET(
             previousOrderStatus: order.status,
             newOrderStatus,
             billplzState: bill.state,
-            billplzPaid: bill.paid
+            billplzPaid: bill.paid,
           },
           ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown'
-        }
+          userAgent: request.headers.get('user-agent') || 'unknown',
+        },
       });
     }
 
@@ -172,7 +173,7 @@ export async function GET(
       quantity: item.quantity,
       appliedPrice: Number(item.appliedPrice),
       totalPrice: Number(item.totalPrice),
-      image: item.product?.images?.[0] || null
+      image: item.product?.images?.[0] || null,
     }));
 
     return NextResponse.json({
@@ -188,7 +189,7 @@ export async function GET(
         total: Number(order.total),
         items: formattedItems,
         createdAt: order.createdAt.toISOString(),
-        updatedAt: order.updatedAt.toISOString()
+        updatedAt: order.updatedAt.toISOString(),
       },
       payment: {
         billId: bill.id,
@@ -197,11 +198,10 @@ export async function GET(
         amount: bill.amount,
         paidAmount: bill.paid_amount,
         paymentUrl: bill.url,
-        dueAt: bill.due_at
+        dueAt: bill.due_at,
       },
-      statusChanged: needsUpdate
+      statusChanged: needsUpdate,
     });
-
   } catch (error) {
     console.error('Payment status check error:', error);
     return handleApiError(error);

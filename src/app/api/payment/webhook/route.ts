@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { billplzService } from '@/lib/payments/billplz-service';
-import { handleApiError } from '@/lib/error-handler';
 import { emailService } from '@/lib/email/email-service';
 
 export async function POST(request: NextRequest) {
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Parse form data from webhook
     const formData = await request.formData();
     const webhookData: Record<string, string> = {};
-    
+
     for (const [key, value] of formData.entries()) {
       webhookData[key] = value.toString();
     }
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!billplzService.verifyWebhook(webhookData, signature)) {
       console.warn('Invalid webhook signature:', {
         signature,
-        data: webhookData
+        data: webhookData,
       });
       return NextResponse.json(
         { message: 'Invalid webhook signature' },
@@ -45,30 +44,27 @@ export async function POST(request: NextRequest) {
       billId: webhook.id,
       paid: webhook.paid,
       state: webhook.state,
-      amount: webhook.amount
+      amount: webhook.amount,
     });
 
     // Find the order by payment ID (Billplz bill ID)
     const order = await prisma.order.findFirst({
       where: {
-        paymentId: webhook.id
+        paymentId: webhook.id,
       },
       include: {
         orderItems: {
           include: {
-            product: true
-          }
+            product: true,
+          },
         },
-        user: true
-      }
+        user: true,
+      },
     });
 
     if (!order) {
       console.warn('Order not found for payment ID:', webhook.id);
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Check if order is already processed
@@ -77,8 +73,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Order already processed' });
     }
 
-    let newPaymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' = 'PENDING';
-    let newOrderStatus: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' = 'PENDING';
+    let newPaymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' =
+      'PENDING';
+    let newOrderStatus:
+      | 'PENDING'
+      | 'CONFIRMED'
+      | 'PROCESSING'
+      | 'SHIPPED'
+      | 'DELIVERED'
+      | 'CANCELLED'
+      | 'REFUNDED' = 'PENDING';
 
     // Process payment status
     if (webhook.paid && webhook.state === 'paid') {
@@ -88,48 +92,55 @@ export async function POST(request: NextRequest) {
       // Reserve inventory
       for (const item of order.orderItems) {
         if (item.product) {
-          const newStock = Math.max(0, item.product.stockQuantity - item.quantity);
+          const newStock = Math.max(
+            0,
+            item.product.stockQuantity - item.quantity
+          );
           await prisma.product.update({
             where: { id: item.productId },
-            data: { stockQuantity: newStock }
+            data: { stockQuantity: newStock },
           });
         }
       }
 
       // Update user membership if eligible
-      if (order.wasEligibleForMembership && order.user && !order.user.isMember) {
+      if (
+        order.wasEligibleForMembership &&
+        order.user &&
+        !order.user.isMember
+      ) {
         await prisma.user.update({
           where: { id: order.user.id },
           data: {
             isMember: true,
             memberSince: new Date(),
-            membershipTotal: Number(order.total)
-          }
+            membershipTotal: Number(order.total),
+          },
         });
       } else if (order.user?.isMember) {
         // Update existing member's total
-        const newTotal = Number(order.user.membershipTotal) + Number(order.total);
+        const newTotal =
+          Number(order.user.membershipTotal) + Number(order.total);
         await prisma.user.update({
           where: { id: order.user.id },
           data: {
-            membershipTotal: newTotal
-          }
+            membershipTotal: newTotal,
+          },
         });
       }
-
     } else if (webhook.state === 'deleted') {
       newPaymentStatus = 'FAILED';
       newOrderStatus = 'CANCELLED';
     }
 
     // Update order status
-    const updatedOrder = await prisma.order.update({
+    await prisma.order.update({
       where: { id: order.id },
       data: {
         paymentStatus: newPaymentStatus,
         status: newOrderStatus,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     // Create audit log for payment status change
@@ -148,11 +159,11 @@ export async function POST(request: NextRequest) {
           newOrderStatus,
           paidAmount: webhook.paid_amount,
           paidAt: webhook.paid_at,
-          webhookState: webhook.state
+          webhookState: webhook.state,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'billplz',
-        userAgent: 'Billplz Webhook'
-      }
+        userAgent: 'Billplz Webhook',
+      },
     });
 
     // Send email notifications based on order status
@@ -160,22 +171,28 @@ export async function POST(request: NextRequest) {
       // Send order confirmation email
       await emailService.sendOrderConfirmation({
         orderNumber: order.orderNumber,
-        customerName: order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Valued Customer',
+        customerName: order.user
+          ? `${order.user.firstName} ${order.user.lastName}`
+          : 'Valued Customer',
         customerEmail: order.user?.email || 'customer@example.com',
         items: order.orderItems.map(item => ({
           name: item.productName,
           quantity: item.quantity,
-          price: Number(item.appliedPrice)
+          price: Number(item.appliedPrice),
         })),
         subtotal: Number(order.subtotal),
         taxAmount: Number(order.taxAmount),
         shippingCost: Number(order.shippingCost),
         total: Number(order.total),
-        paymentMethod: 'Billplz'
+        paymentMethod: 'Billplz',
       });
 
       // Send member welcome email if this is their first membership
-      if (order.wasEligibleForMembership && order.user && !order.user.isMember) {
+      if (
+        order.wasEligibleForMembership &&
+        order.user &&
+        !order.user.isMember
+      ) {
         await emailService.sendMemberWelcome({
           memberName: `${order.user.firstName} ${order.user.lastName}`,
           memberEmail: order.user.email,
@@ -184,8 +201,8 @@ export async function POST(request: NextRequest) {
             'Exclusive member pricing on all products',
             'Priority customer support',
             'Early access to sales and promotions',
-            'Member-only special offers'
-          ]
+            'Member-only special offers',
+          ],
         });
       }
     } else if (newPaymentStatus === 'FAILED') {
@@ -198,13 +215,13 @@ export async function POST(request: NextRequest) {
           items: order.orderItems.map(item => ({
             name: item.productName,
             quantity: item.quantity,
-            price: Number(item.appliedPrice)
+            price: Number(item.appliedPrice),
           })),
           subtotal: Number(order.subtotal),
           taxAmount: Number(order.taxAmount),
           shippingCost: Number(order.shippingCost),
           total: Number(order.total),
-          paymentMethod: 'Billplz'
+          paymentMethod: 'Billplz',
         });
       }
     }
@@ -212,19 +229,18 @@ export async function POST(request: NextRequest) {
     console.log('Payment webhook processed successfully:', {
       orderNumber: order.orderNumber,
       paymentStatus: newPaymentStatus,
-      orderStatus: newOrderStatus
+      orderStatus: newOrderStatus,
     });
 
     return NextResponse.json({
       message: 'Webhook processed successfully',
       orderNumber: order.orderNumber,
       paymentStatus: newPaymentStatus,
-      orderStatus: newOrderStatus
+      orderStatus: newOrderStatus,
     });
-
   } catch (error) {
     console.error('Payment webhook processing error:', error);
-    
+
     // For webhook errors, we should return 200 to prevent retries
     // but log the error for investigation
     await prisma.auditLog.create({
@@ -234,11 +250,15 @@ export async function POST(request: NextRequest) {
         resource: 'PAYMENT',
         details: {
           error: error instanceof Error ? error.message : 'Unknown error',
-          webhookData: await request.clone().formData().then(fd => Object.fromEntries(fd.entries())).catch(() => ({}))
+          webhookData: await request
+            .clone()
+            .formData()
+            .then(fd => Object.fromEntries(fd.entries()))
+            .catch(() => ({})),
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
     });
 
     return NextResponse.json(
@@ -266,14 +286,11 @@ export async function GET(request: NextRequest) {
   const webhookData = {
     billplz_id: billplzId,
     billplz_paid: billplzPaid,
-    billplz_x_signature: billplzXSignature
+    billplz_x_signature: billplzXSignature,
   };
 
   if (!billplzService.verifyWebhook(webhookData, billplzXSignature)) {
-    return NextResponse.json(
-      { message: 'Invalid signature' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
   }
 
   // Find order and return basic status
@@ -283,21 +300,18 @@ export async function GET(request: NextRequest) {
       orderNumber: true,
       status: true,
       paymentStatus: true,
-      total: true
-    }
+      total: true,
+    },
   });
 
   if (!order) {
-    return NextResponse.json(
-      { message: 'Order not found' },
-      { status: 404 }
-    );
+    return NextResponse.json({ message: 'Order not found' }, { status: 404 });
   }
 
   return NextResponse.json({
     orderNumber: order.orderNumber,
     paymentStatus: order.paymentStatus,
     orderStatus: order.status,
-    isPaid: billplzPaid === 'true'
+    isPaid: billplzPaid === 'true',
   });
 }

@@ -165,12 +165,13 @@ export function startTransaction(
 ) {
   // Simplified transaction tracking
   console.log(`Starting transaction: ${name} (${operation})`, data);
-  
+
   return {
     transaction: null,
     finish: () => console.log(`Finished transaction: ${name}`),
     setStatus: (status: string) => console.log(`Transaction status: ${status}`),
-    setData: (key: string, value: unknown) => console.log(`Transaction data: ${key}`, value),
+    setData: (key: string, value: unknown) =>
+      console.log(`Transaction data: ${key}`, value),
   };
 }
 

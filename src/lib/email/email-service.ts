@@ -61,32 +61,37 @@ export class EmailService {
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
-    this.defaultFrom = process.env.EMAIL_FROM || 'JRM E-commerce <noreply@jrmecommerce.com>';
+    this.defaultFrom =
+      process.env.EMAIL_FROM || 'JRM E-commerce <noreply@jrmecommerce.com>';
 
     if (apiKey) {
       this.resend = new Resend(apiKey);
       this.isConfigured = true;
     } else {
-      console.warn('Resend API key not configured. Email service will use mock mode.');
+      console.warn(
+        'Resend API key not configured. Email service will use mock mode.'
+      );
     }
   }
 
   /**
    * Send a generic email
    */
-  async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendEmail(
+    options: EmailOptions
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       if (!this.isConfigured || !this.resend) {
         console.log('Mock email sent:', {
           to: options.to,
           subject: options.subject,
-          from: options.from || this.defaultFrom
+          from: options.from || this.defaultFrom,
         });
         return { success: true, messageId: 'mock-email-id' };
       }
 
       let html = options.html;
-      
+
       // If React component provided, render it to HTML
       if (options.react && !html) {
         html = render(options.react);
@@ -109,12 +114,11 @@ export class EmailService {
       }
 
       return { success: true, messageId: result.data?.id };
-
     } catch (error) {
       console.error('Email sending error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown email error'
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown email error',
       };
     }
   }
@@ -122,24 +126,29 @@ export class EmailService {
   /**
    * Send order confirmation email
    */
-  async sendOrderConfirmation(orderData: OrderEmailData): Promise<{ success: boolean; error?: string }> {
+  async sendOrderConfirmation(
+    orderData: OrderEmailData
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const subject = `Order Confirmation - ${orderData.orderNumber}`;
-      
+
       const html = this.generateOrderConfirmationHTML(orderData);
 
       const result = await this.sendEmail({
         to: orderData.customerEmail,
         subject,
-        html
+        html,
       });
 
       return result;
     } catch (error) {
       console.error('Order confirmation email error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send order confirmation'
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send order confirmation',
       };
     }
   }
@@ -147,28 +156,36 @@ export class EmailService {
   /**
    * Send shipping notification email
    */
-  async sendShippingNotification(orderData: OrderEmailData): Promise<{ success: boolean; error?: string }> {
+  async sendShippingNotification(
+    orderData: OrderEmailData
+  ): Promise<{ success: boolean; error?: string }> {
     if (!orderData.trackingNumber) {
-      return { success: false, error: 'Tracking number is required for shipping notifications' };
+      return {
+        success: false,
+        error: 'Tracking number is required for shipping notifications',
+      };
     }
 
     try {
       const subject = `Your Order is On the Way - ${orderData.orderNumber}`;
-      
+
       const html = this.generateShippingNotificationHTML(orderData);
 
       const result = await this.sendEmail({
         to: orderData.customerEmail,
         subject,
-        html
+        html,
       });
 
       return result;
     } catch (error) {
       console.error('Shipping notification email error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send shipping notification'
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send shipping notification',
       };
     }
   }
@@ -176,24 +193,29 @@ export class EmailService {
   /**
    * Send member welcome email
    */
-  async sendMemberWelcome(memberData: MemberWelcomeData): Promise<{ success: boolean; error?: string }> {
+  async sendMemberWelcome(
+    memberData: MemberWelcomeData
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const subject = 'Welcome to JRM E-commerce Membership! 🎉';
-      
+
       const html = this.generateMemberWelcomeHTML(memberData);
 
       const result = await this.sendEmail({
         to: memberData.memberEmail,
         subject,
-        html
+        html,
       });
 
       return result;
     } catch (error) {
       console.error('Member welcome email error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send member welcome email'
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send member welcome email',
       };
     }
   }
@@ -201,24 +223,29 @@ export class EmailService {
   /**
    * Send payment failure notification
    */
-  async sendPaymentFailure(orderData: OrderEmailData): Promise<{ success: boolean; error?: string }> {
+  async sendPaymentFailure(
+    orderData: OrderEmailData
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const subject = `Payment Issue - Order ${orderData.orderNumber}`;
-      
+
       const html = this.generatePaymentFailureHTML(orderData);
 
       const result = await this.sendEmail({
         to: orderData.customerEmail,
         subject,
-        html
+        html,
       });
 
       return result;
     } catch (error) {
       console.error('Payment failure email error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send payment failure notification'
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send payment failure notification',
       };
     }
   }
@@ -260,14 +287,18 @@ export class EmailService {
             <h3>Order Information</h3>
             <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
             <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
-            ${orderData.shippingAddress ? `
+            ${
+              orderData.shippingAddress
+                ? `
               <h4>Shipping Address</h4>
               <p>
                 ${orderData.shippingAddress.firstName} ${orderData.shippingAddress.lastName}<br>
                 ${orderData.shippingAddress.addressLine1}<br>
                 ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state} ${orderData.shippingAddress.postalCode}
               </p>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
           
           <h3>Order Items</h3>
@@ -281,14 +312,18 @@ export class EmailService {
               </tr>
             </thead>
             <tbody>
-              ${orderData.items.map(item => `
+              ${orderData.items
+                .map(
+                  item => `
                 <tr>
                   <td>${item.name}</td>
                   <td>${item.quantity}</td>
                   <td>RM ${item.price.toFixed(2)}</td>
                   <td>RM ${(item.price * item.quantity).toFixed(2)}</td>
                 </tr>
-              `).join('')}
+              `
+                )
+                .join('')}
             </tbody>
           </table>
           
@@ -361,13 +396,17 @@ export class EmailService {
           </div>
           
           <p>Your order will be delivered to:</p>
-          ${orderData.shippingAddress ? `
+          ${
+            orderData.shippingAddress
+              ? `
             <p style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
               ${orderData.shippingAddress.firstName} ${orderData.shippingAddress.lastName}<br>
               ${orderData.shippingAddress.addressLine1}<br>
               ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state} ${orderData.shippingAddress.postalCode}
             </p>
-          ` : ''}
+          `
+              : ''
+          }
           
           <p>If you have any questions or concerns about your delivery, please don't hesitate to contact us.</p>
         </div>
@@ -415,13 +454,17 @@ export class EmailService {
             ${memberData.benefits.map(benefit => `<div class="benefit-item">✅ ${benefit}</div>`).join('')}
           </div>
           
-          ${memberData.firstOrderDiscount ? `
+          ${
+            memberData.firstOrderDiscount
+              ? `
             <div style="background-color: #dcfce7; border: 2px solid #16a34a; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;">
               <h3 style="color: #16a34a;">Special Welcome Offer!</h3>
               <p style="font-size: 18px; font-weight: bold;">Get ${memberData.firstOrderDiscount} off your next purchase</p>
               <p>Use this exclusive member discount on your next order!</p>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
           
           <p>Start enjoying your member benefits right away by browsing our exclusive member prices throughout our store.</p>
           <p>Thank you for choosing JRM E-commerce. We're excited to serve you as a valued member!</p>
@@ -493,7 +536,7 @@ export class EmailService {
   /**
    * Check if email service is properly configured
    */
-  isConfigured(): boolean {
+  isEmailServiceConfigured(): boolean {
     return this.isConfigured;
   }
 
@@ -504,7 +547,7 @@ export class EmailService {
     return {
       configured: this.isConfigured,
       hasApiKey: !!process.env.RESEND_API_KEY,
-      defaultFrom: this.defaultFrom
+      defaultFrom: this.defaultFrom,
     };
   }
 }

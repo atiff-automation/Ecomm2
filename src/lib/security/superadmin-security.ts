@@ -83,13 +83,13 @@ export class SuperAdminSecurity {
       if (!token || token.role !== UserRole.SUPERADMIN) {
         return {
           passed: false,
-          reason: 'Invalid or missing SuperAdmin token'
+          reason: 'Invalid or missing SuperAdmin token',
         };
       }
 
       // Get client IP
       const clientIP = this.extractClientIP(request);
-      
+
       // Check IP whitelist
       if (!this.isIPWhitelisted(clientIP)) {
         // Log unauthorized access attempt
@@ -97,13 +97,13 @@ export class SuperAdminSecurity {
           clientIP,
           userEmail: token.email,
           userId: token.sub,
-          userAgent: request.headers.get('user-agent') || 'unknown'
+          userAgent: request.headers.get('user-agent') || 'unknown',
         });
 
         return {
           passed: false,
           reason: 'IP address not whitelisted for SuperAdmin access',
-          requiresIPWhitelist: true
+          requiresIPWhitelist: true,
         };
       }
 
@@ -111,12 +111,15 @@ export class SuperAdminSecurity {
       if (!this.isDevelopmentMode()) {
         const mfaRequired = await this.isMFARequired(token.sub!);
         if (mfaRequired) {
-          const mfaVerified = await this.verifyMFAFromRequest(request, token.sub!);
+          const mfaVerified = await this.verifyMFAFromRequest(
+            request,
+            token.sub!
+          );
           if (!mfaVerified) {
             return {
               passed: false,
               reason: 'MFA verification required',
-              requiresMFA: true
+              requiresMFA: true,
             };
           }
         }
@@ -127,16 +130,15 @@ export class SuperAdminSecurity {
         clientIP,
         userEmail: token.email,
         userId: token.sub,
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
       return { passed: true };
-
     } catch (error) {
       console.error('SuperAdmin security check error:', error);
       return {
         passed: false,
-        reason: 'Security check failed'
+        reason: 'Security check failed',
       };
     }
   }
@@ -167,7 +169,7 @@ export class SuperAdminSecurity {
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true }
+        select: { role: true },
       });
 
       return user?.role === UserRole.SUPERADMIN;
@@ -180,7 +182,10 @@ export class SuperAdminSecurity {
   /**
    * Verify MFA token from request headers
    */
-  async verifyMFAFromRequest(request: NextRequest, userId: string): Promise<boolean> {
+  async verifyMFAFromRequest(
+    request: NextRequest,
+    userId: string
+  ): Promise<boolean> {
     const mfaToken = request.headers.get('x-mfa-token');
     if (!mfaToken) {
       return false;
@@ -233,17 +238,17 @@ export class SuperAdminSecurity {
   generateMFASetup(): MFASetup {
     const secret = speakeasy.generateSecret({
       name: 'JRM E-commerce SuperAdmin',
-      issuer: 'JRM E-commerce'
+      issuer: 'JRM E-commerce',
     });
 
-    const backupCodes = Array.from({ length: 10 }, () => 
+    const backupCodes = Array.from({ length: 10 }, () =>
       crypto.randomBytes(4).toString('hex').toUpperCase()
     );
 
     return {
       secret: secret.base32,
       qrCode: secret.otpauth_url!,
-      backupCodes
+      backupCodes,
     };
   }
 
@@ -260,11 +265,11 @@ export class SuperAdminSecurity {
           details: {
             incidentType: type,
             ...details,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           },
           ipAddress: details.clientIP,
-          userAgent: details.userAgent
-        }
+          userAgent: details.userAgent,
+        },
       });
     } catch (error) {
       console.error('Failed to log security incident:', error);
@@ -284,11 +289,11 @@ export class SuperAdminSecurity {
           details: {
             eventType: type,
             ...details,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           },
           ipAddress: details.clientIP,
-          userAgent: details.userAgent
-        }
+          userAgent: details.userAgent,
+        },
       });
     } catch (error) {
       console.error('Failed to log security event:', error);
@@ -303,20 +308,27 @@ export const superAdminSecurity = SuperAdminSecurity.getInstance();
  * Middleware function for protecting SuperAdmin routes
  */
 export async function requireSuperAdminAccess(request: NextRequest) {
-  const securityCheck = await superAdminSecurity.verifySuperAdminAccess(request);
-  
+  const securityCheck =
+    await superAdminSecurity.verifySuperAdminAccess(request);
+
   if (!securityCheck.passed) {
-    const status = securityCheck.requiresMFA ? 423 : 
-                   securityCheck.requiresIPWhitelist ? 403 : 401;
-    
-    return new Response(JSON.stringify({
-      error: securityCheck.reason,
-      requiresMFA: securityCheck.requiresMFA,
-      requiresIPWhitelist: securityCheck.requiresIPWhitelist
-    }), {
-      status,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const status = securityCheck.requiresMFA
+      ? 423
+      : securityCheck.requiresIPWhitelist
+        ? 403
+        : 401;
+
+    return new Response(
+      JSON.stringify({
+        error: securityCheck.reason,
+        requiresMFA: securityCheck.requiresMFA,
+        requiresIPWhitelist: securityCheck.requiresIPWhitelist,
+      }),
+      {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   return null; // Access granted

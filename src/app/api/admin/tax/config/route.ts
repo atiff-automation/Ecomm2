@@ -17,10 +17,10 @@ const taxConfigSchema = z.object({
   serviceTaxRate: z.number().min(0).max(1),
   isGstActive: z.boolean(),
   isSstActive: z.boolean(),
-  defaultTaxType: z.enum(['GST', 'SST'])
+  defaultTaxType: z.enum(['GST', 'SST']),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -34,31 +34,46 @@ export async function GET(request: NextRequest) {
     // Get current tax rates from database
     const taxRates = await prisma.taxRate.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
 
     // Format tax configuration
     const config = {
-      gstRate: taxRates.find(rate => rate.name.toUpperCase().includes('GST'))?.rate || 0,
-      sstRate: taxRates.find(rate => rate.name.toUpperCase().includes('SST'))?.rate || 0,
-      serviceTaxRate: taxRates.find(rate => rate.name.toUpperCase().includes('SERVICE'))?.rate || 0,
-      isGstActive: taxRates.some(rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0),
-      isSstActive: taxRates.some(rate => rate.name.toUpperCase().includes('SST') && Number(rate.rate) > 0),
-      defaultTaxType: taxRates.some(rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0) ? 'GST' : 'SST',
+      gstRate:
+        taxRates.find(rate => rate.name.toUpperCase().includes('GST'))?.rate ||
+        0,
+      sstRate:
+        taxRates.find(rate => rate.name.toUpperCase().includes('SST'))?.rate ||
+        0,
+      serviceTaxRate:
+        taxRates.find(rate => rate.name.toUpperCase().includes('SERVICE'))
+          ?.rate || 0,
+      isGstActive: taxRates.some(
+        rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0
+      ),
+      isSstActive: taxRates.some(
+        rate => rate.name.toUpperCase().includes('SST') && Number(rate.rate) > 0
+      ),
+      defaultTaxType: taxRates.some(
+        rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0
+      )
+        ? 'GST'
+        : 'SST',
       allTaxRates: taxRates.map(rate => ({
         id: rate.id,
         name: rate.name,
         rate: Number(rate.rate),
         isActive: rate.isActive,
-        description: rate.description
-      }))
+        description: rate.description,
+      })),
     };
 
     // Get tax registration numbers
     const registrationNumbers = {
       gstNumber: process.env.GST_NUMBER || '',
       sstNumber: process.env.SST_NUMBER || '',
-      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER || ''
+      businessRegistrationNumber:
+        process.env.BUSINESS_REGISTRATION_NUMBER || '',
     };
 
     return NextResponse.json({
@@ -66,13 +81,12 @@ export async function GET(request: NextRequest) {
       registrationNumbers,
       malaysianTaxInfo: {
         currentSystem: 'SST', // Malaysia currently uses SST
-        gstSuspended: true,   // GST is suspended since 2018
+        gstSuspended: true, // GST is suspended since 2018
         sstImplemented: true, // SST was reintroduced
         standardSstRate: 0.06, // 6% SST
-        serviceTaxRate: 0.06   // 6% Service Tax
-      }
+        serviceTaxRate: 0.06, // 6% Service Tax
+      },
     });
-
   } catch (error) {
     console.error('Tax configuration fetch error:', error);
     return handleApiError(error);
@@ -93,7 +107,14 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = taxConfigSchema.parse(body);
 
-    const { gstRate, sstRate, serviceTaxRate, isGstActive, isSstActive, defaultTaxType } = validatedData;
+    const {
+      gstRate,
+      sstRate,
+      serviceTaxRate,
+      isGstActive,
+      isSstActive,
+      defaultTaxType,
+    } = validatedData;
 
     // Update or create GST tax rate
     await prisma.taxRate.upsert({
@@ -102,14 +123,14 @@ export async function PUT(request: NextRequest) {
         rate: gstRate,
         isActive: isGstActive,
         description: `Goods and Services Tax - ${isGstActive ? 'Active' : 'Suspended'}`,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       create: {
         name: 'GST',
         rate: gstRate,
         isActive: isGstActive,
-        description: `Goods and Services Tax - ${isGstActive ? 'Active' : 'Suspended'}`
-      }
+        description: `Goods and Services Tax - ${isGstActive ? 'Active' : 'Suspended'}`,
+      },
     });
 
     // Update or create SST tax rate
@@ -119,14 +140,14 @@ export async function PUT(request: NextRequest) {
         rate: sstRate,
         isActive: isSstActive,
         description: `Sales and Service Tax - ${isSstActive ? 'Active' : 'Inactive'}`,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       create: {
         name: 'SST',
         rate: sstRate,
         isActive: isSstActive,
-        description: `Sales and Service Tax - ${isSstActive ? 'Active' : 'Inactive'}`
-      }
+        description: `Sales and Service Tax - ${isSstActive ? 'Active' : 'Inactive'}`,
+      },
     });
 
     // Update or create Service Tax rate
@@ -136,14 +157,14 @@ export async function PUT(request: NextRequest) {
         rate: serviceTaxRate,
         isActive: serviceTaxRate > 0,
         description: 'Malaysian Service Tax',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       create: {
         name: 'Service Tax',
         rate: serviceTaxRate,
         isActive: serviceTaxRate > 0,
-        description: 'Malaysian Service Tax'
-      }
+        description: 'Malaysian Service Tax',
+      },
     });
 
     // Create audit log for configuration change
@@ -159,14 +180,14 @@ export async function PUT(request: NextRequest) {
             serviceTaxRate,
             isGstActive,
             isSstActive,
-            defaultTaxType
+            defaultTaxType,
           },
           updatedBy: session.user.email,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
     });
 
     return NextResponse.json({
@@ -177,16 +198,15 @@ export async function PUT(request: NextRequest) {
         serviceTaxRate,
         isGstActive,
         isSstActive,
-        defaultTaxType
-      }
+        defaultTaxType,
+      },
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           message: 'Validation error',
-          errors: error.errors
+          errors: error.errors,
         },
         { status: 400 }
       );
@@ -224,8 +244,8 @@ export async function POST(request: NextRequest) {
         name,
         rate: parseFloat(rate),
         description: description || '',
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     // Create audit log
@@ -239,11 +259,11 @@ export async function POST(request: NextRequest) {
           name,
           rate: parseFloat(rate),
           description,
-          createdBy: session.user.email
+          createdBy: session.user.email,
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      }
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
     });
 
     return NextResponse.json({
@@ -253,10 +273,9 @@ export async function POST(request: NextRequest) {
         name: taxRate.name,
         rate: Number(taxRate.rate),
         description: taxRate.description,
-        isActive: taxRate.isActive
-      }
+        isActive: taxRate.isActive,
+      },
     });
-
   } catch (error) {
     console.error('Tax rate creation error:', error);
     return handleApiError(error);

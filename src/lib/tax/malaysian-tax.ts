@@ -45,9 +45,9 @@ export interface ProductTaxInfo {
 
 export class MalaysianTaxService {
   private static instance: MalaysianTaxService;
-  
+
   private constructor() {}
-  
+
   public static getInstance(): MalaysianTaxService {
     if (!MalaysianTaxService.instance) {
       MalaysianTaxService.instance = new MalaysianTaxService();
@@ -61,12 +61,18 @@ export class MalaysianTaxService {
   async getTaxConfiguration(): Promise<TaxConfiguration> {
     try {
       const taxRates = await prisma.taxRate.findMany({
-        where: { isActive: true }
+        where: { isActive: true },
       });
 
-      const gstRate = taxRates.find(rate => rate.name.toUpperCase().includes('GST'))?.rate || 0;
-      const sstRate = taxRates.find(rate => rate.name.toUpperCase().includes('SST'))?.rate || 0;
-      const serviceTaxRate = taxRates.find(rate => rate.name.toUpperCase().includes('SERVICE'))?.rate || 0;
+      const gstRate =
+        taxRates.find(rate => rate.name.toUpperCase().includes('GST'))?.rate ||
+        0;
+      const sstRate =
+        taxRates.find(rate => rate.name.toUpperCase().includes('SST'))?.rate ||
+        0;
+      const serviceTaxRate =
+        taxRates.find(rate => rate.name.toUpperCase().includes('SERVICE'))
+          ?.rate || 0;
 
       return {
         gstRate: Number(gstRate),
@@ -75,11 +81,11 @@ export class MalaysianTaxService {
         taxExemptThreshold: 0, // No threshold for Malaysian taxes
         isGstActive: gstRate > 0,
         isSstActive: sstRate > 0,
-        defaultTaxType: gstRate > 0 ? 'GST' : 'SST'
+        defaultTaxType: gstRate > 0 ? 'GST' : 'SST',
       };
     } catch (error) {
       console.error('Error fetching tax configuration:', error);
-      
+
       // Return default Malaysian tax rates
       return {
         gstRate: 0.06, // 6% GST (currently suspended but keeping for future)
@@ -87,8 +93,8 @@ export class MalaysianTaxService {
         serviceTaxRate: 0.06, // 6% Service Tax
         taxExemptThreshold: 0,
         isGstActive: false, // GST is currently suspended in Malaysia
-        isSstActive: true,   // SST is currently active
-        defaultTaxType: 'SST'
+        isSstActive: true, // SST is currently active
+        defaultTaxType: 'SST',
       };
     }
   }
@@ -115,7 +121,7 @@ export class MalaysianTaxService {
           amount: productTotal,
           taxableAmount: taxInfo.taxableAmount,
           taxRate: taxInfo.taxRate,
-          taxAmount: taxInfo.taxAmount
+          taxAmount: taxInfo.taxAmount,
         });
       }
     }
@@ -126,7 +132,7 @@ export class MalaysianTaxService {
       totalAmount: subtotal + totalTaxAmount,
       taxRate: subtotal > 0 ? totalTaxAmount / subtotal : 0,
       taxType: config.defaultTaxType,
-      breakdown
+      breakdown,
     };
   }
 
@@ -134,11 +140,10 @@ export class MalaysianTaxService {
    * Calculate tax for a single product
    */
   private calculateProductTax(
-    product: ProductTaxInfo, 
-    productTotal: number, 
+    product: ProductTaxInfo,
+    productTotal: number,
     config: TaxConfiguration
   ): { taxableAmount: number; taxRate: number; taxAmount: number } {
-    
     // Check if product is tax exempt
     if (product.taxCategory === 'EXEMPT') {
       return { taxableAmount: 0, taxRate: 0, taxAmount: 0 };
@@ -154,13 +159,13 @@ export class MalaysianTaxService {
       return {
         taxableAmount: productTotal,
         taxRate: product.customTaxRate,
-        taxAmount: productTotal * product.customTaxRate
+        taxAmount: productTotal * product.customTaxRate,
       };
     }
 
     // Determine which tax applies
     let taxRate = 0;
-    
+
     if (product.taxCategory === 'SERVICE') {
       taxRate = config.serviceTaxRate;
     } else if (product.isGstApplicable && config.isGstActive) {
@@ -176,28 +181,44 @@ export class MalaysianTaxService {
     return {
       taxableAmount: productTotal,
       taxRate,
-      taxAmount: productTotal * taxRate
+      taxAmount: productTotal * taxRate,
     };
   }
 
   /**
    * Get tax type for a product based on configuration
    */
-  private getTaxTypeForProduct(product: ProductTaxInfo, config: TaxConfiguration): string {
-    if (product.taxCategory === 'EXEMPT') return 'TAX_EXEMPT';
-    if (product.taxCategory === 'ZERO_RATED') return 'ZERO_RATED';
-    if (product.taxCategory === 'SERVICE') return 'SERVICE_TAX';
-    
-    if (product.isGstApplicable && config.isGstActive) return 'GST';
-    if (product.isSstApplicable && config.isSstActive) return 'SST';
-    
+  private getTaxTypeForProduct(
+    product: ProductTaxInfo,
+    config: TaxConfiguration
+  ): string {
+    if (product.taxCategory === 'EXEMPT') {
+      return 'TAX_EXEMPT';
+    }
+    if (product.taxCategory === 'ZERO_RATED') {
+      return 'ZERO_RATED';
+    }
+    if (product.taxCategory === 'SERVICE') {
+      return 'SERVICE_TAX';
+    }
+
+    if (product.isGstApplicable && config.isGstActive) {
+      return 'GST';
+    }
+    if (product.isSstApplicable && config.isSstActive) {
+      return 'SST';
+    }
+
     return config.defaultTaxType;
   }
 
   /**
    * Calculate tax inclusive pricing (tax already included in price)
    */
-  calculateTaxInclusive(priceIncludingTax: number, taxRate: number): {
+  calculateTaxInclusive(
+    priceIncludingTax: number,
+    taxRate: number
+  ): {
     priceExcludingTax: number;
     taxAmount: number;
     priceIncludingTax: number;
@@ -208,14 +229,17 @@ export class MalaysianTaxService {
     return {
       priceExcludingTax: Math.round(priceExcludingTax * 100) / 100,
       taxAmount: Math.round(taxAmount * 100) / 100,
-      priceIncludingTax: Math.round(priceIncludingTax * 100) / 100
+      priceIncludingTax: Math.round(priceIncludingTax * 100) / 100,
     };
   }
 
   /**
    * Calculate tax exclusive pricing (tax to be added to price)
    */
-  calculateTaxExclusive(priceExcludingTax: number, taxRate: number): {
+  calculateTaxExclusive(
+    priceExcludingTax: number,
+    taxRate: number
+  ): {
     priceExcludingTax: number;
     taxAmount: number;
     priceIncludingTax: number;
@@ -226,7 +250,7 @@ export class MalaysianTaxService {
     return {
       priceExcludingTax: Math.round(priceExcludingTax * 100) / 100,
       taxAmount: Math.round(taxAmount * 100) / 100,
-      priceIncludingTax: Math.round(priceIncludingTax * 100) / 100
+      priceIncludingTax: Math.round(priceIncludingTax * 100) / 100,
     };
   }
 
@@ -248,14 +272,17 @@ export class MalaysianTaxService {
     return {
       gstNumber: process.env.GST_NUMBER,
       sstNumber: process.env.SST_NUMBER,
-      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER
+      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER,
     };
   }
 
   /**
    * Generate tax report data for compliance
    */
-  async generateTaxReport(startDate: Date, endDate: Date): Promise<{
+  async generateTaxReport(
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
     totalSales: number;
     totalTaxCollected: number;
     totalTaxExempt: number;
@@ -268,7 +295,7 @@ export class MalaysianTaxService {
       // This would typically query your orders/sales data
       // For now, returning placeholder structure
       const reportPeriod = `${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`;
-      
+
       return {
         totalSales: 0,
         totalTaxCollected: 0,
@@ -276,7 +303,7 @@ export class MalaysianTaxService {
         gstSales: 0,
         sstSales: 0,
         serviceTaxSales: 0,
-        reportPeriod
+        reportPeriod,
       };
     } catch (error) {
       console.error('Error generating tax report:', error);
@@ -313,13 +340,17 @@ export class MalaysianTaxService {
 
       // Check tax registration numbers
       const registration = this.getTaxRegistrationNumbers();
-      
+
       if (config.isGstActive && !registration.gstNumber) {
-        warnings.push('GST is active but GST registration number is not configured');
+        warnings.push(
+          'GST is active but GST registration number is not configured'
+        );
       }
 
       if (config.isSstActive && !registration.sstNumber) {
-        warnings.push('SST is active but SST registration number is not configured');
+        warnings.push(
+          'SST is active but SST registration number is not configured'
+        );
       }
 
       if (!registration.businessRegistrationNumber) {
@@ -329,13 +360,13 @@ export class MalaysianTaxService {
       return {
         isValid: errors.length === 0,
         errors,
-        warnings
+        warnings,
       };
     } catch (error) {
       return {
         isValid: false,
         errors: ['Failed to validate tax configuration'],
-        warnings: []
+        warnings: [],
       };
     }
   }
