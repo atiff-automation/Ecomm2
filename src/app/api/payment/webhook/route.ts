@@ -1,0 +1,252 @@
+/**
+ * Billplz Payment Webhook Handler
+ * Processes payment status updates from Billplz
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { billplzService } from '@/lib/payments/billplz-service';
+import { handleApiError } from '@/lib/error-handler';
+
+export async function POST(request: NextRequest) {
+  try {
+    // Parse form data from webhook
+    const formData = await request.formData();
+    const webhookData: Record<string, string> = {};
+    
+    for (const [key, value] of formData.entries()) {
+      webhookData[key] = value.toString();
+    }
+
+    // Verify webhook signature
+    const signature = webhookData.x_signature;
+    if (!billplzService.verifyWebhook(webhookData, signature)) {
+      console.warn('Invalid webhook signature:', {
+        signature,
+        data: webhookData
+      });
+      return NextResponse.json(
+        { message: 'Invalid webhook signature' },
+        { status: 401 }
+      );
+    }
+
+    // Process webhook data
+    const webhook = billplzService.processWebhook(webhookData);
+    if (!webhook) {
+      return NextResponse.json(
+        { message: 'Invalid webhook data' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Processing payment webhook:', {
+      billId: webhook.id,
+      paid: webhook.paid,
+      state: webhook.state,
+      amount: webhook.amount
+    });
+
+    // Find the order by payment ID (Billplz bill ID)
+    const order = await prisma.order.findFirst({
+      where: {
+        paymentId: webhook.id
+      },
+      include: {
+        orderItems: {
+          include: {
+            product: true
+          }
+        },
+        user: true
+      }
+    });
+
+    if (!order) {
+      console.warn('Order not found for payment ID:', webhook.id);
+      return NextResponse.json(
+        { message: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if order is already processed
+    if (order.paymentStatus === 'PAID' && webhook.paid) {
+      console.log('Order already processed:', order.orderNumber);
+      return NextResponse.json({ message: 'Order already processed' });
+    }
+
+    let newPaymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' = 'PENDING';
+    let newOrderStatus: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' = 'PENDING';
+
+    // Process payment status
+    if (webhook.paid && webhook.state === 'paid') {
+      newPaymentStatus = 'PAID';
+      newOrderStatus = 'CONFIRMED';
+
+      // Reserve inventory
+      for (const item of order.orderItems) {
+        if (item.product) {
+          const newStock = Math.max(0, item.product.stockQuantity - item.quantity);
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: { stockQuantity: newStock }
+          });
+        }
+      }
+
+      // Update user membership if eligible
+      if (order.wasEligibleForMembership && order.user && !order.user.isMember) {
+        await prisma.user.update({
+          where: { id: order.user.id },
+          data: {
+            isMember: true,
+            memberSince: new Date(),
+            membershipTotal: Number(order.total)
+          }
+        });
+      } else if (order.user?.isMember) {
+        // Update existing member's total
+        const newTotal = Number(order.user.membershipTotal) + Number(order.total);
+        await prisma.user.update({
+          where: { id: order.user.id },
+          data: {
+            membershipTotal: newTotal
+          }
+        });
+      }
+
+    } else if (webhook.state === 'deleted') {
+      newPaymentStatus = 'FAILED';
+      newOrderStatus = 'CANCELLED';
+    }
+
+    // Update order status
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentStatus: newPaymentStatus,
+        status: newOrderStatus,
+        updatedAt: new Date()
+      }
+    });
+
+    // Create audit log for payment status change
+    await prisma.auditLog.create({
+      data: {
+        userId: order.userId,
+        action: 'PAYMENT_STATUS_UPDATED',
+        resource: 'ORDER',
+        resourceId: order.id,
+        details: {
+          orderNumber: order.orderNumber,
+          billplzBillId: webhook.id,
+          previousPaymentStatus: order.paymentStatus,
+          newPaymentStatus,
+          previousOrderStatus: order.status,
+          newOrderStatus,
+          paidAmount: webhook.paid_amount,
+          paidAt: webhook.paid_at,
+          webhookState: webhook.state
+        },
+        ipAddress: request.headers.get('x-forwarded-for') || 'billplz',
+        userAgent: 'Billplz Webhook'
+      }
+    });
+
+    // TODO: Send email notification based on order status
+    // - Order confirmation for successful payments
+    // - Payment failure notification for failed payments
+
+    console.log('Payment webhook processed successfully:', {
+      orderNumber: order.orderNumber,
+      paymentStatus: newPaymentStatus,
+      orderStatus: newOrderStatus
+    });
+
+    return NextResponse.json({
+      message: 'Webhook processed successfully',
+      orderNumber: order.orderNumber,
+      paymentStatus: newPaymentStatus,
+      orderStatus: newOrderStatus
+    });
+
+  } catch (error) {
+    console.error('Payment webhook processing error:', error);
+    
+    // For webhook errors, we should return 200 to prevent retries
+    // but log the error for investigation
+    await prisma.auditLog.create({
+      data: {
+        userId: null,
+        action: 'WEBHOOK_ERROR',
+        resource: 'PAYMENT',
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          webhookData: await request.clone().formData().then(fd => Object.fromEntries(fd.entries())).catch(() => ({}))
+        },
+        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      }
+    });
+
+    return NextResponse.json(
+      { message: 'Webhook processing failed' },
+      { status: 200 } // Return 200 to prevent Billplz retries
+    );
+  }
+}
+
+// GET method for webhook verification (Billplz may use this for verification)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const billplzId = searchParams.get('billplz_id');
+  const billplzPaid = searchParams.get('billplz_paid');
+  const billplzXSignature = searchParams.get('billplz_x_signature');
+
+  if (!billplzId || !billplzPaid || !billplzXSignature) {
+    return NextResponse.json(
+      { message: 'Missing required parameters' },
+      { status: 400 }
+    );
+  }
+
+  // Verify the signature
+  const webhookData = {
+    billplz_id: billplzId,
+    billplz_paid: billplzPaid,
+    billplz_x_signature: billplzXSignature
+  };
+
+  if (!billplzService.verifyWebhook(webhookData, billplzXSignature)) {
+    return NextResponse.json(
+      { message: 'Invalid signature' },
+      { status: 401 }
+    );
+  }
+
+  // Find order and return basic status
+  const order = await prisma.order.findFirst({
+    where: { paymentId: billplzId },
+    select: {
+      orderNumber: true,
+      status: true,
+      paymentStatus: true,
+      total: true
+    }
+  });
+
+  if (!order) {
+    return NextResponse.json(
+      { message: 'Order not found' },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    orderNumber: order.orderNumber,
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.status,
+    isPaid: billplzPaid === 'true'
+  });
+}

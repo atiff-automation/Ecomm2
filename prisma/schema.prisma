@@ -260,9 +260,9 @@ model Order {
   id       String @id @default(cuid())
   orderNumber String @unique // Format: ORD-YYYYMMDD-XXXX
   
-  // Customer information
-  userId  String
-  user    User   @relation(fields: [userId], references: [id])
+  // Customer information (nullable for guest checkout)
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
   
   // Order status
   status        OrderStatus   @default(PENDING)
@@ -501,7 +501,7 @@ model ImportExportJob {
 
 model TaxRate {
   id          String  @id @default(cuid())
-  name        String  // SST, GST, Service Tax
+  name        String  @unique // SST, GST, Service Tax
   rate        Decimal @db.Decimal(5, 4) // 0.0600 for 6%
   isActive    Boolean @default(true)
   description String?
