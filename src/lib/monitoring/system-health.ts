@@ -3,7 +3,7 @@
  * Provides system health checks and metrics collection
  */
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { errorLogger } from './error-logger';
 
 export interface SystemHealthStatus {

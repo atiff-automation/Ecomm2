@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import React from 'react';
 import AuthProvider from '@/components/auth/AuthProvider';
-import { Header } from '@/components/layout/Header';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -10,11 +10,15 @@ const geistSans = localFont({
   src: './fonts/GeistVF.woff',
   variable: '--font-geist-sans',
   weight: '100 900',
+  display: 'swap',
+  fallback: ['system-ui', 'arial'],
 });
 const geistMono = localFont({
   src: './fonts/GeistMonoVF.woff',
   variable: '--font-geist-mono',
   weight: '100 900',
+  display: 'swap',
+  fallback: ['monospace'],
 });
 
 export const metadata: Metadata = {
@@ -34,8 +38,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Header />
-          <main>{children}</main>
+          <MainLayout>{children}</MainLayout>
           <Toaster position="top-right" />
         </AuthProvider>
       </body>

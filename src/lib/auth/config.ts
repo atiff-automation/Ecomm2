@@ -2,7 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole, UserStatus } from '@prisma/client';
 
 export const authOptions: NextAuthOptions = {
@@ -85,6 +85,17 @@ export const authOptions: NextAuthOptions = {
         session.user.memberSince = token.memberSince as Date | null;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
     },
   },
   pages: {

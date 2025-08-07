@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { handleApiError } from '@/lib/error-handler';
 import { emailService } from '@/lib/email/email-service';
 import { UserRole } from '@prisma/client';
@@ -257,8 +257,8 @@ export async function PUT(request: NextRequest) {
             shippingCost: Number(order.shippingCost),
             total: Number(order.total),
             paymentMethod: order.paymentMethod || 'Unknown',
-            trackingNumber: trackingNumbers?.[i] || trackingNumbers?.[0],
-            estimatedDelivery,
+            trackingNumber: trackingNumbers?.[i] || trackingNumbers?.[0] || '',
+            estimatedDelivery: estimatedDelivery || '',
           });
         }
       }

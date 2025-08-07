@@ -47,6 +47,9 @@ export function Header() {
   const isMember = session?.user?.isMember;
   const loading = status === 'loading';
 
+  // Debug logging
+  console.log('Header render:', { status, isLoggedIn, session: !!session });
+
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
   };
@@ -105,9 +108,7 @@ export function Header() {
             <CartButton />
 
             {/* User Menu */}
-            {loading ? (
-              <div className="w-8 h-8 bg-muted animate-pulse rounded-full" />
-            ) : isLoggedIn ? (
+            {isLoggedIn && !loading ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -148,29 +149,41 @@ export function Header() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">
+                    <Link href="/member/dashboard">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      <span>Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/orders">
+                    <Link href="/member/orders">
                       <Package className="mr-2 h-4 w-4" />
                       <span>Orders</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/wishlist">
+                    <Link href="/member/wishlist">
                       <Heart className="mr-2 h-4 w-4" />
                       <span>Wishlist</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">
+                    <Link href="/member/profile">
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                      <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
+                  {(session.user.role === 'ADMIN' ||
+                    session.user.role === 'STAFF') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -180,6 +193,9 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
+                {loading && (
+                  <div className="w-6 h-6 bg-muted animate-pulse rounded-full mr-2" />
+                )}
                 <Link href="/auth/signin">
                   <Button variant="ghost" size="sm">
                     Sign In
@@ -246,15 +262,15 @@ export function Header() {
                       </div>
                       <div className="grid gap-1 mt-2">
                         <Link
-                          href="/profile"
+                          href="/member/dashboard"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                         >
                           <User className="mr-2 h-4 w-4" />
-                          Profile
+                          Dashboard
                         </Link>
                         <Link
-                          href="/orders"
+                          href="/member/orders"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                         >
@@ -262,13 +278,32 @@ export function Header() {
                           Orders
                         </Link>
                         <Link
-                          href="/wishlist"
+                          href="/member/wishlist"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                         >
                           <Heart className="mr-2 h-4 w-4" />
                           Wishlist
                         </Link>
+                        <Link
+                          href="/member/profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          Profile
+                        </Link>
+                        {(session.user.role === 'ADMIN' ||
+                          session.user.role === 'STAFF') && (
+                          <Link
+                            href="/admin/dashboard"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
+                          >
+                            <Settings className="mr-2 h-4 w-4" />
+                            Admin Panel
+                          </Link>
+                        )}
                         <button
                           onClick={handleSignOut}
                           className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md w-full text-left"

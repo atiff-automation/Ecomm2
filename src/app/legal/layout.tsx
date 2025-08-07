@@ -18,32 +18,32 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
       href: '/legal/terms',
       title: 'Terms of Service',
       icon: FileText,
-      description: 'Terms and conditions for using our platform'
+      description: 'Terms and conditions for using our platform',
     },
     {
       href: '/legal/privacy',
       title: 'Privacy Policy',
       icon: Shield,
-      description: 'How we protect and handle your personal data'
+      description: 'How we protect and handle your personal data',
     },
     {
       href: '/legal/returns',
       title: 'Return & Refund Policy',
       icon: RotateCcw,
-      description: 'Return, refund, and exchange policies'
+      description: 'Return, refund, and exchange policies',
     },
     {
       href: '/legal/shipping',
       title: 'Shipping Policy',
       icon: Truck,
-      description: 'Delivery information and shipping terms'
+      description: 'Delivery information and shipping terms',
     },
     {
       href: '/legal/cookies',
       title: 'Cookie Policy',
       icon: Cookie,
-      description: 'How we use cookies and tracking technologies'
-    }
+      description: 'How we use cookies and tracking technologies',
+    },
   ];
 
   return (
@@ -52,7 +52,10 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex items-center justify-between">
-            <Link href="/" className="text-lg font-semibold text-gray-900 hover:text-blue-600">
+            <Link
+              href="/"
+              className="text-lg font-semibold text-gray-900 hover:text-blue-600"
+            >
               ← Back to JRM E-commerce
             </Link>
             <div className="text-sm text-gray-600">
@@ -68,9 +71,11 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
           <div className="lg:col-span-1">
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4 text-gray-900">Legal Information</h3>
+                <h3 className="font-semibold mb-4 text-gray-900">
+                  Legal Information
+                </h3>
                 <nav className="space-y-2">
-                  {legalPages.map((page) => {
+                  {legalPages.map(page => {
                     const IconComponent = page.icon;
                     return (
                       <Link
@@ -104,15 +109,26 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
 
                 {/* Quick Links */}
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-2">Quick Links</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Quick Links
+                  </h4>
                   <div className="space-y-2">
-                    <Link href="/support" className="block text-sm text-blue-600 hover:text-blue-800">
+                    <Link
+                      href="/support"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
                       Customer Support
                     </Link>
-                    <Link href="/faq" className="block text-sm text-blue-600 hover:text-blue-800">
+                    <Link
+                      href="/faq"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
                       FAQ
                     </Link>
-                    <Link href="/contact" className="block text-sm text-blue-600 hover:text-blue-800">
+                    <Link
+                      href="/contact"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
                       Contact Us
                     </Link>
                   </div>
@@ -122,9 +138,7 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
-            {children}
-          </div>
+          <div className="lg:col-span-3">{children}</div>
         </div>
       </div>
 
@@ -133,13 +147,31 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-sm text-gray-600">
             <p className="mb-2">
-              These policies are effective as of August 6, 2025 and comply with Malaysian laws and international standards.
+              These policies are effective as of August 6, 2025 and comply with
+              Malaysian laws and international standards.
             </p>
             <p>
-              © 2025 JRM E-commerce Sdn Bhd. All rights reserved. | 
-              <Link href="/legal/terms" className="text-blue-600 hover:underline ml-1">Terms</Link> | 
-              <Link href="/legal/privacy" className="text-blue-600 hover:underline ml-1">Privacy</Link> | 
-              <Link href="/legal/cookies" className="text-blue-600 hover:underline ml-1">Cookies</Link>
+              © 2025 JRM E-commerce Sdn Bhd. All rights reserved. |
+              <Link
+                href="/legal/terms"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                Terms
+              </Link>{' '}
+              |
+              <Link
+                href="/legal/privacy"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                Privacy
+              </Link>{' '}
+              |
+              <Link
+                href="/legal/cookies"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                Cookies
+              </Link>
             </p>
           </div>
         </div>

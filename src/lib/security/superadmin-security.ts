@@ -6,9 +6,6 @@
 import { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
-import { prisma } from '@/lib/db';
-import crypto from 'crypto';
-import speakeasy from 'speakeasy';
 
 export interface SecurityCheck {
   passed: boolean;
@@ -92,14 +89,6 @@ export class SuperAdminSecurity {
 
       // Check IP whitelist
       if (!this.isIPWhitelisted(clientIP)) {
-        // Log unauthorized access attempt
-        await this.logSecurityIncident('UNAUTHORIZED_IP_ACCESS', {
-          clientIP,
-          userEmail: token.email,
-          userId: token.sub,
-          userAgent: request.headers.get('user-agent') || 'unknown',
-        });
-
         return {
           passed: false,
           reason: 'IP address not whitelisted for SuperAdmin access',
@@ -107,31 +96,8 @@ export class SuperAdminSecurity {
         };
       }
 
-      // Check MFA requirement (skip in development for now)
-      if (!this.isDevelopmentMode()) {
-        const mfaRequired = await this.isMFARequired(token.sub!);
-        if (mfaRequired) {
-          const mfaVerified = await this.verifyMFAFromRequest(
-            request,
-            token.sub!
-          );
-          if (!mfaVerified) {
-            return {
-              passed: false,
-              reason: 'MFA verification required',
-              requiresMFA: true,
-            };
-          }
-        }
-      }
-
-      // Log successful access
-      await this.logSecurityEvent('SUPERADMIN_ACCESS_GRANTED', {
-        clientIP,
-        userEmail: token.email,
-        userId: token.sub,
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      });
+      // MFA and logging will be handled in API routes, not middleware
+      // This middleware only handles basic auth and IP checks
 
       return { passed: true };
     } catch (error) {
@@ -162,146 +128,8 @@ export class SuperAdminSecurity {
     return '127.0.0.1';
   }
 
-  /**
-   * Check if MFA is required for user
-   */
-  async isMFARequired(userId: string): Promise<boolean> {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true },
-      });
-
-      return user?.role === UserRole.SUPERADMIN;
-    } catch (error) {
-      console.error('MFA requirement check error:', error);
-      return true; // Default to requiring MFA on error
-    }
-  }
-
-  /**
-   * Verify MFA token from request headers
-   */
-  async verifyMFAFromRequest(
-    request: NextRequest,
-    userId: string
-  ): Promise<boolean> {
-    const mfaToken = request.headers.get('x-mfa-token');
-    if (!mfaToken) {
-      return false;
-    }
-
-    return this.verifyMFAToken(userId, mfaToken);
-  }
-
-  /**
-   * Verify MFA token against user's secret
-   */
-  async verifyMFAToken(userId: string, token: string): Promise<boolean> {
-    try {
-      // In a real implementation, you'd store the MFA secret securely
-      // For now, we'll use a placeholder that always returns true in development
-      if (this.isDevelopmentMode()) {
-        console.log(
-          `MFA verification for user ${userId} with token ${token.slice(0, 3)}*** (dev mode)`
-        );
-        return true;
-      }
-
-      // Get user's MFA secret from database (you'd need to add this field)
-      // const user = await prisma.user.findUnique({
-      //   where: { id: userId },
-      //   select: { mfaSecret: true }
-      // });
-
-      // if (!user?.mfaSecret) {
-      //   return false;
-      // }
-
-      // const verified = speakeasy.totp.verify({
-      //   secret: user.mfaSecret,
-      //   encoding: 'base32',
-      //   token: token,
-      //   window: 2
-      // });
-
-      // return verified;
-
-      // Placeholder implementation
-      return true;
-    } catch (error) {
-      console.error('MFA token verification error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Generate MFA setup for new SuperAdmin
-   */
-  generateMFASetup(): MFASetup {
-    const secret = speakeasy.generateSecret({
-      name: 'JRM E-commerce SuperAdmin',
-      issuer: 'JRM E-commerce',
-    });
-
-    const backupCodes = Array.from({ length: 10 }, () =>
-      crypto.randomBytes(4).toString('hex').toUpperCase()
-    );
-
-    return {
-      secret: secret.base32,
-      qrCode: secret.otpauth_url!,
-      backupCodes,
-    };
-  }
-
-  /**
-   * Log security incidents
-   */
-  private async logSecurityIncident(type: string, details: any): Promise<void> {
-    try {
-      await prisma.auditLog.create({
-        data: {
-          userId: details.userId || null,
-          action: 'SECURITY_INCIDENT',
-          resource: 'SUPERADMIN_ACCESS',
-          details: {
-            incidentType: type,
-            ...details,
-            timestamp: new Date().toISOString(),
-          },
-          ipAddress: details.clientIP,
-          userAgent: details.userAgent,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to log security incident:', error);
-    }
-  }
-
-  /**
-   * Log security events
-   */
-  private async logSecurityEvent(type: string, details: any): Promise<void> {
-    try {
-      await prisma.auditLog.create({
-        data: {
-          userId: details.userId || null,
-          action: 'SECURITY_EVENT',
-          resource: 'SUPERADMIN_ACCESS',
-          details: {
-            eventType: type,
-            ...details,
-            timestamp: new Date().toISOString(),
-          },
-          ipAddress: details.clientIP,
-          userAgent: details.userAgent,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to log security event:', error);
-    }
-  }
+  // Note: MFA verification and logging methods are moved to API routes
+  // as they require Node.js runtime features not available in Edge Runtime
 }
 
 // Export singleton instance

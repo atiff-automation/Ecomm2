@@ -1,10 +1,11 @@
 /**
  * Shopping Cart API - Malaysian E-commerce Platform
  * Handles cart operations with membership eligibility calculation
+ * Supports both authenticated users and guest checkout
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { z } from 'zod';
@@ -12,6 +13,12 @@ import {
   getMembershipConfig,
   calculateMembershipEligibility,
 } from '@/lib/membership';
+import {
+  getGuestCartWithProducts,
+  addToGuestCart,
+  updateGuestCartItem,
+  clearGuestCart,
+} from '@/lib/cart/guest-cart';
 
 interface CartItemWithProduct {
   id: string;
@@ -47,20 +54,19 @@ const updateCartSchema = z.object({
 });
 
 /**
- * GET /api/cart - Get user's cart with membership eligibility calculation
+ * GET /api/cart - Get cart (authenticated user or guest)
  */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
+    // Handle guest cart
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
+      const guestCartData = await getGuestCartWithProducts();
+      return NextResponse.json(guestCartData);
     }
 
-    // Get cart items with product details
+    // Handle authenticated user cart
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: session.user.id },
       include: {
@@ -136,19 +142,11 @@ export async function GET() {
 }
 
 /**
- * POST /api/cart - Add item to cart
+ * POST /api/cart - Add item to cart (authenticated user or guest)
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { productId, quantity } = addToCartSchema.parse(body);
 
@@ -178,7 +176,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add or update cart item
+    // Handle guest cart
+    if (!session?.user) {
+      const guestCart = addToGuestCart(productId, quantity);
+      return NextResponse.json(
+        {
+          message: 'Added to cart successfully',
+          cartItem: {
+            id: `guest_${productId}`,
+            quantity:
+              guestCart.items.find(item => item.productId === productId)
+                ?.quantity || quantity,
+            product: {
+              id: product.id,
+              name: product.name,
+              regularPrice: Number(product.regularPrice),
+              memberPrice: Number(product.memberPrice),
+            },
+          },
+        },
+        { status: 201 }
+      );
+    }
+
+    // Handle authenticated user cart
     const cartItem = await prisma.cartItem.upsert({
       where: {
         userId_productId: {
@@ -262,22 +283,67 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * PUT /api/cart - Update cart item quantity
+ * PUT /api/cart - Update cart item quantity (authenticated user or guest)
  */
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { productId, quantity } = updateCartSchema.parse(body);
 
+    // Handle guest cart
+    if (!session?.user) {
+      if (quantity === 0) {
+        updateGuestCartItem(productId, 0);
+        return NextResponse.json({
+          message: 'Item removed from cart',
+        });
+      }
+
+      // Verify product exists and check stock
+      const product = await prisma.product.findFirst({
+        where: {
+          id: productId,
+          status: 'ACTIVE',
+        },
+      });
+
+      if (!product) {
+        return NextResponse.json(
+          { message: 'Product not found or unavailable' },
+          { status: 404 }
+        );
+      }
+
+      if (product.stockQuantity < quantity) {
+        return NextResponse.json(
+          {
+            message: 'Insufficient stock',
+            availableStock: product.stockQuantity,
+          },
+          { status: 400 }
+        );
+      }
+
+      const guestCart = updateGuestCartItem(productId, quantity);
+      return NextResponse.json({
+        message: 'Cart updated successfully',
+        cartItem: {
+          id: `guest_${productId}`,
+          quantity:
+            guestCart.items.find(item => item.productId === productId)
+              ?.quantity || quantity,
+          product: {
+            id: product.id,
+            name: product.name,
+            regularPrice: Number(product.regularPrice),
+            memberPrice: Number(product.memberPrice),
+          },
+        },
+      });
+    }
+
+    // Handle authenticated user cart
     // If quantity is 0, remove the item
     if (quantity === 0) {
       await prisma.cartItem.deleteMany({
@@ -368,19 +434,21 @@ export async function PUT(request: NextRequest) {
 }
 
 /**
- * DELETE /api/cart - Clear entire cart
+ * DELETE /api/cart - Clear entire cart (authenticated user or guest)
  */
 export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
 
+    // Handle guest cart
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
+      clearGuestCart();
+      return NextResponse.json({
+        message: 'Cart cleared successfully',
+      });
     }
 
+    // Handle authenticated user cart
     await prisma.cartItem.deleteMany({
       where: { userId: session.user.id },
     });

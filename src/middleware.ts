@@ -10,8 +10,8 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 // Rate limiting configuration
 const RATE_LIMIT_CONFIG = {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 100, // Maximum requests per window
-  apiMaxRequests: 50, // Stricter limit for API routes
+  maxRequests: process.env.NODE_ENV === 'development' ? 1000 : 100, // More generous in dev
+  apiMaxRequests: process.env.NODE_ENV === 'development' ? 500 : 50, // More generous in dev
 };
 
 /**
@@ -113,23 +113,33 @@ export async function middleware(request: NextRequest) {
   // Set security headers
   setSecurityHeaders(response);
 
-  // Rate limiting
+  // Rate limiting (skip for auth routes in development)
   const isApiRoute = pathname.startsWith('/api');
-  const maxRequests = isApiRoute
-    ? RATE_LIMIT_CONFIG.apiMaxRequests
-    : RATE_LIMIT_CONFIG.maxRequests;
+  const isAuthRoute = pathname.startsWith('/api/auth');
+  const shouldSkipRateLimit =
+    process.env.NODE_ENV === 'development' && isAuthRoute;
 
-  if (!checkRateLimit(ip, maxRequests, RATE_LIMIT_CONFIG.windowMs)) {
-    return new NextResponse('Too Many Requests', {
-      status: 429,
-      headers: {
-        'Retry-After': Math.ceil(RATE_LIMIT_CONFIG.windowMs / 1000).toString(),
-      },
-    });
+  if (!shouldSkipRateLimit) {
+    const maxRequests = isApiRoute
+      ? RATE_LIMIT_CONFIG.apiMaxRequests
+      : RATE_LIMIT_CONFIG.maxRequests;
+
+    if (!checkRateLimit(ip, maxRequests, RATE_LIMIT_CONFIG.windowMs)) {
+      return new NextResponse('Too Many Requests', {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(
+            RATE_LIMIT_CONFIG.windowMs / 1000
+          ).toString(),
+        },
+      });
+    }
   }
 
   // CSRF protection for API routes (except auth routes)
+  // Skip CSRF in development for easier testing
   if (
+    process.env.NODE_ENV === 'production' &&
     isApiRoute &&
     !pathname.startsWith('/api/auth') &&
     request.method !== 'GET'
@@ -217,7 +227,11 @@ export async function middleware(request: NextRequest) {
 
     // Admin routes
     if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-      if (userRole !== UserRole.ADMIN && userRole !== UserRole.SUPERADMIN) {
+      if (
+        userRole !== UserRole.ADMIN &&
+        userRole !== UserRole.SUPERADMIN &&
+        userRole !== UserRole.STAFF
+      ) {
         return new NextResponse('Forbidden', { status: 403 });
       }
     }

@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { handleApiError } from '@/lib/error-handler';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 

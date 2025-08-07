@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { handleApiError } from '@/lib/error-handler';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 
 interface RouteParams {
   params: {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             deliveredAt:
               trackingInfo.status.toLowerCase() === 'delivered'
                 ? new Date()
-                : undefined,
+                : null,
           },
         });
       }
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         data: {
           status: newStatus as any,
           deliveredAt:
-            status?.toLowerCase() === 'delivered' ? new Date() : undefined,
+            status?.toLowerCase() === 'delivered' ? new Date() : null,
           updatedAt: new Date(),
         },
       });

@@ -29,30 +29,38 @@ export function CartButton({
 
   const isLoggedIn = !!session?.user;
 
-  // Fetch cart count
+  // Fetch cart count (works for both guest and authenticated users)
   const fetchCartCount = useCallback(async () => {
-    if (!isLoggedIn) {
-      setCartCount(0);
-      return;
-    }
-
     try {
       const response = await fetch('/api/cart');
 
       if (response.ok) {
         const data = await response.json();
         setCartCount(data.summary?.itemCount || 0);
-      } else if (response.status === 401) {
+      } else {
         setCartCount(0);
       }
     } catch (error) {
       console.error('Failed to fetch cart count:', error);
+      setCartCount(0);
     }
-  }, [isLoggedIn]);
+  }, []);
 
   useEffect(() => {
     fetchCartCount();
-  }, [isLoggedIn, fetchCartCount]);
+  }, [fetchCartCount]);
+
+  // Listen for cart updates
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      fetchCartCount();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, [fetchCartCount]);
 
   // Refresh cart count when cart sidebar opens/closes
   useEffect(() => {

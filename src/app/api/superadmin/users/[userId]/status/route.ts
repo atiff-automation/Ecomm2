@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole, UserStatus } from '@prisma/client';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { handleApiError } from '@/lib/error-handler';
 
 export async function PUT(

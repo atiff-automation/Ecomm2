@@ -6,9 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { billplzService } from '@/lib/payments/billplz-service';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
+import { discountService } from '@/lib/discounts/discount-service';
 import { handleApiError } from '@/lib/error-handler';
 import { z } from 'zod';
 
@@ -175,9 +176,22 @@ export async function POST(request: NextRequest) {
     });
 
     // Calculate shipping cost
+    const cleanedShippingAddress = {
+      firstName: shippingAddress.firstName,
+      lastName: shippingAddress.lastName,
+      addressLine1: shippingAddress.addressLine1,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      postalCode: shippingAddress.postalCode,
+      country: shippingAddress.country,
+      ...(shippingAddress.addressLine2 && {
+        addressLine2: shippingAddress.addressLine2,
+      }),
+    };
+
     const shippingCost = await shippingCalculator.getCheapestShippingRate(
       shippingItems,
-      shippingAddress,
+      cleanedShippingAddress,
       subtotal
     );
 
@@ -237,7 +251,7 @@ export async function POST(request: NextRequest) {
         memberDiscount: memberDiscountAmount,
         wasEligibleForMembership: !!session?.user?.isMember,
         paymentMethod: 'BILLPLZ',
-        paymentId: paymentResult.bill_id,
+        paymentId: paymentResult.bill_id || null,
         customerNotes: `Payment via Billplz. Bill ID: ${paymentResult.bill_id}`,
 
         // Create order items
@@ -258,6 +272,30 @@ export async function POST(request: NextRequest) {
         orderItems: true,
       },
     });
+
+    // Record discount usage if discounts were applied
+    if (appliedDiscounts && appliedDiscounts.length > 0 && session?.user?.id) {
+      for (const discount of appliedDiscounts) {
+        try {
+          // Find the discount code to get its ID
+          const discountCode = await prisma.discountCode.findUnique({
+            where: { code: discount.code.toUpperCase() },
+          });
+
+          if (discountCode) {
+            await discountService.applyDiscountToOrder(
+              discountCode.id,
+              order.id,
+              session.user.id,
+              discount.amount
+            );
+          }
+        } catch (discountError) {
+          console.error('Error recording discount usage:', discountError);
+          // Don't fail the order creation for discount tracking errors
+        }
+      }
+    }
 
     // Log the payment creation
     await prisma.auditLog.create({

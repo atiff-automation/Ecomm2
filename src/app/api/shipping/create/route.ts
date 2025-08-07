@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { handleApiError } from '@/lib/error-handler';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
@@ -132,7 +132,9 @@ export async function POST(request: NextRequest) {
       totalValue,
       courierId: validatedData.courierId,
       orderNumber: order.orderNumber,
-      specialInstructions: validatedData.specialInstructions,
+      ...(validatedData.specialInstructions && {
+        specialInstructions: validatedData.specialInstructions,
+      }),
       insuranceRequired: validatedData.insuranceRequired,
     });
 
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
         status: 'SHIPPED',
         trackingNumber: shipment.trackingNumber,
         shippedAt: new Date(),
-        courierName: validatedData.courierId,
+        // courierName: validatedData.courierId, // Remove if not in schema
         updatedAt: new Date(),
       },
     });

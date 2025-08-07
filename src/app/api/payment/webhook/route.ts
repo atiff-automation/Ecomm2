@@ -4,9 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { billplzService } from '@/lib/payments/billplz-service';
 import { emailService } from '@/lib/email/email-service';
+import { activateUserMembership } from '@/lib/membership';
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
           },
         },
         user: true,
+        pendingMembership: true,
       },
     });
 
@@ -103,20 +105,30 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update user membership if eligible
-      if (
-        order.wasEligibleForMembership &&
-        order.user &&
-        !order.user.isMember
-      ) {
-        await prisma.user.update({
-          where: { id: order.user.id },
-          data: {
-            isMember: true,
-            memberSince: new Date(),
-            membershipTotal: Number(order.total),
-          },
-        });
+      // Activate pending membership if exists
+      if (order.pendingMembership && order.user && !order.user.isMember) {
+        const pending = order.pendingMembership;
+
+        // Activate the membership
+        const activated = await activateUserMembership(
+          order.user.id,
+          Number(pending.qualifyingAmount),
+          order.id
+        );
+
+        if (activated) {
+          // Remove the pending membership record
+          await prisma.pendingMembership.delete({
+            where: { id: pending.id },
+          });
+
+          console.log(
+            'Membership activated for user:',
+            order.user.id,
+            'Order:',
+            order.id
+          );
+        }
       } else if (order.user?.isMember) {
         // Update existing member's total
         const newTotal =
@@ -253,7 +265,16 @@ export async function POST(request: NextRequest) {
           webhookData: await request
             .clone()
             .formData()
-            .then(fd => Object.fromEntries(fd.entries()))
+            .then(fd => {
+              const entries = Object.fromEntries(fd.entries());
+              // Convert FormDataEntryValue to string to ensure JSON compatibility
+              const sanitizedEntries: Record<string, any> = {};
+              for (const [key, value] of Object.entries(entries)) {
+                sanitizedEntries[key] =
+                  typeof value === 'string' ? value : value.toString();
+              }
+              return sanitizedEntries;
+            })
             .catch(() => ({})),
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',

@@ -3,7 +3,7 @@
  * Handles GST, SST, and other Malaysian tax calculations
  */
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 
 export interface TaxCalculation {
   subtotal: number;
@@ -269,11 +269,24 @@ export class MalaysianTaxService {
     sstNumber?: string;
     businessRegistrationNumber?: string;
   } {
-    return {
-      gstNumber: process.env.GST_NUMBER || undefined,
-      sstNumber: process.env.SST_NUMBER || undefined,
-      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER || undefined,
-    };
+    const result: {
+      gstNumber?: string;
+      sstNumber?: string;
+      businessRegistrationNumber?: string;
+    } = {};
+
+    if (process.env.GST_NUMBER) {
+      result.gstNumber = process.env.GST_NUMBER;
+    }
+    if (process.env.SST_NUMBER) {
+      result.sstNumber = process.env.SST_NUMBER;
+    }
+    if (process.env.BUSINESS_REGISTRATION_NUMBER) {
+      result.businessRegistrationNumber =
+        process.env.BUSINESS_REGISTRATION_NUMBER;
+    }
+
+    return result;
   }
 
   /**

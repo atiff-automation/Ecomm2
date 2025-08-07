@@ -3,7 +3,7 @@
  * Provides centralized error handling and logging for the application
  */
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 
 export interface ErrorLogEntry {
   level: 'error' | 'warn' | 'info' | 'debug';

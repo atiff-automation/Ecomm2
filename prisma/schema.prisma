@@ -55,6 +55,14 @@ model User {
   recentlyViewed RecentlyViewed[]
   importExportJobs ImportExportJob[]
   complianceReports ComplianceReport[]
+  pendingMembership PendingMembership?
+  
+  // Promotional relationships
+  discountCodesCreated DiscountCode[]
+  discountUsage        DiscountUsage[]
+  
+  // Notification preferences
+  notificationPreferences NotificationPreference[]
   
   // Timestamps
   createdAt DateTime @default(now())
@@ -66,6 +74,26 @@ model User {
   @@index([role])
   @@index([status])
   @@index([isMember])
+}
+
+model PendingMembership {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  orderId           String   @unique // Link to the qualifying order
+  qualifyingAmount  Decimal  @db.Decimal(10, 2)
+  registrationData  Json?    // Store form data like acceptTerms, etc.
+  expiresAt         DateTime // Auto-expire if not confirmed within timeframe
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("pending_memberships")
+  @@index([userId])
+  @@index([orderId])
+  @@index([expiresAt])
 }
 
 model Address {
@@ -293,6 +321,8 @@ model Order {
   
   // Relationships
   orderItems OrderItem[]
+  discountUsage DiscountUsage[]
+  pendingMembership PendingMembership?
   
   // Special notes
   customerNotes String?
@@ -323,6 +353,10 @@ model OrderItem {
   // Product snapshot at time of purchase
   productName   String
   productSku    String
+  
+  // Discount applied to this item
+  discountCodeId String?
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
   
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
@@ -528,6 +562,141 @@ model ComplianceReport {
   @@index([reportType])
   @@index([reportPeriod])
   @@index([generatedById])
+}
+
+// ==================== PROMOTIONAL & DISCOUNT SYSTEM ====================
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+  BUY_X_GET_Y
+}
+
+enum DiscountStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  USED_UP
+}
+
+model DiscountCode {
+  id               String         @id @default(cuid())
+  code             String         @unique
+  name             String
+  description      String?
+  
+  // Discount configuration
+  discountType     DiscountType
+  discountValue    Decimal        @db.Decimal(10, 2) // Percentage (0-100) or fixed amount
+  
+  // Usage restrictions
+  minimumOrderValue Decimal?      @db.Decimal(10, 2)
+  maximumDiscount   Decimal?      @db.Decimal(10, 2)
+  usageLimit        Int?          // Total usage limit
+  usageCount        Int           @default(0)
+  perUserLimit      Int?          // Per user limit
+  
+  // Member restrictions
+  memberOnly        Boolean       @default(false)
+  
+  // Product/Category restrictions
+  applicableToCategories String[] // Category IDs
+  applicableToProducts   String[] // Product IDs
+  excludeCategories      String[] // Excluded categories
+  excludeProducts        String[] // Excluded products
+  
+  // Time restrictions
+  startsAt         DateTime
+  expiresAt        DateTime?
+  
+  // Status and metadata
+  status           DiscountStatus @default(ACTIVE)
+  isPublic         Boolean        @default(true) // Public codes vs private/targeted
+  
+  // Relationships
+  createdById      String
+  createdBy        User           @relation(fields: [createdById], references: [id])
+  
+  // Usage tracking
+  usageHistory     DiscountUsage[]
+  orderItems       OrderItem[]
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  @@map("discount_codes")
+  @@index([code])
+  @@index([status])
+  @@index([memberOnly])
+  @@index([startsAt])
+  @@index([expiresAt])
+  @@index([createdById])
+}
+
+model DiscountUsage {
+  id             String      @id @default(cuid())
+  discountCodeId String
+  userId         String
+  orderId        String
+  discountAmount Decimal     @db.Decimal(10, 2)
+  
+  discountCode   DiscountCode @relation(fields: [discountCodeId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime     @default(now())
+  
+  @@map("discount_usage")
+  @@index([discountCodeId])
+  @@index([userId])
+  @@index([orderId])
+  @@unique([discountCodeId, orderId]) // One discount per order
+}
+
+// ==================== NOTIFICATION PREFERENCES ====================
+
+enum NotificationType {
+  ORDER_CONFIRMATION
+  ORDER_STATUS_UPDATE
+  SHIPPING_UPDATE
+  DELIVERY_UPDATE
+  PAYMENT_CONFIRMATION
+  PROMOTIONAL_OFFERS
+  MEMBER_BENEFITS
+  STOCK_ALERTS
+  PRICE_DROP_ALERTS
+  NEW_ARRIVALS
+  NEWSLETTER
+  SYSTEM_UPDATES
+}
+
+enum NotificationFrequency {
+  IMMEDIATE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model NotificationPreference {
+  id               String              @id @default(cuid())
+  userId           String
+  notificationType NotificationType
+  emailEnabled     Boolean             @default(true)
+  smsEnabled       Boolean             @default(false)
+  pushEnabled      Boolean             @default(true)
+  inAppEnabled     Boolean             @default(true)
+  frequency        NotificationFrequency @default(IMMEDIATE)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("notification_preferences")
+  @@index([userId])
+  @@index([notificationType])
+  @@unique([userId, notificationType])
 }
 
 // Add the missing relation for ImportExportJob and ComplianceReport to User model

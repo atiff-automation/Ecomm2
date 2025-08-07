@@ -97,16 +97,31 @@ export class EmailService {
         html = await render(options.react);
       }
 
-      const result = await this.resend.emails.send({
+      const emailData: any = {
         from: options.from || this.defaultFrom,
         to: options.to,
         subject: options.subject,
         html: html || options.text || '',
-        text: options.text,
-        replyTo: options.replyTo,
-        cc: options.cc,
-        bcc: options.bcc,
-      });
+      };
+
+      // Only add optional fields if they have values
+      if (options.text) {
+        emailData.text = options.text;
+      }
+      if (options.replyTo) {
+        emailData.replyTo = options.replyTo;
+      }
+      if (options.cc) {
+        emailData.cc = options.cc;
+      }
+      if (options.bcc) {
+        emailData.bcc = options.bcc;
+      }
+      if (options.react) {
+        emailData.react = options.react;
+      }
+
+      const result = await this.resend.emails.send(emailData);
 
       if (result.error) {
         console.error('Resend API error:', result.error);

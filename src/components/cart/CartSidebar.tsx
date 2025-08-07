@@ -88,39 +88,31 @@ export function CartSidebar({
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
 
-  // Fetch cart data
+  // Fetch cart data (works for both guest and authenticated users)
   const fetchCart = useCallback(async () => {
-    if (!isLoggedIn) {
-      setCartItems([]);
-      setCartSummary(null);
-      return;
-    }
-
     try {
       setLoading(true);
       const response = await fetch('/api/cart');
 
       if (response.ok) {
         const data = await response.json();
-        setCartItems(data.items);
+        setCartItems(data.items || []);
         setCartSummary(data.summary);
-      } else if (response.status === 401) {
+      } else {
         setCartItems([]);
         setCartSummary(null);
       }
     } catch (error) {
       console.error('Failed to fetch cart:', error);
+      setCartItems([]);
+      setCartSummary(null);
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn]);
+  }, []);
 
-  // Update item quantity
+  // Update item quantity (works for both guest and authenticated users)
   const updateQuantity = async (productId: string, newQuantity: number) => {
-    if (!isLoggedIn) {
-      return;
-    }
-
     try {
       setUpdatingItem(productId);
 
@@ -154,9 +146,9 @@ export function CartSidebar({
     updateQuantity(productId, 0);
   };
 
-  // Clear entire cart
+  // Clear entire cart (works for both guest and authenticated users)
   const clearCart = async () => {
-    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?')) {
+    if (!confirm('Are you sure you want to clear your cart?')) {
       return;
     }
 
@@ -178,10 +170,10 @@ export function CartSidebar({
   };
 
   useEffect(() => {
-    if (isOpen && isLoggedIn) {
+    if (isOpen) {
       fetchCart();
     }
-  }, [isOpen, isLoggedIn, fetchCart]);
+  }, [isOpen, fetchCart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -217,26 +209,14 @@ export function CartSidebar({
           )}
         </div>
         <SheetDescription>
-          {!isLoggedIn
-            ? 'Sign in to view your cart'
-            : cartItems.length === 0
-              ? 'Your cart is empty'
-              : 'Review your items and proceed to checkout'}
+          {cartItems.length === 0
+            ? 'Your cart is empty'
+            : 'Review your items and proceed to checkout'}
         </SheetDescription>
       </SheetHeader>
 
       <div className="flex-1 overflow-y-auto py-4">
-        {!isLoggedIn ? (
-          <div className="text-center py-8">
-            <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Sign in to view your cart
-            </p>
-            <Link href="/auth/signin">
-              <Button className="w-full">Sign In</Button>
-            </Link>
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
             <span>Loading cart...</span>
@@ -475,6 +455,19 @@ export function CartSidebar({
       {/* Footer Actions */}
       {cartItems.length > 0 && (
         <div className="border-t pt-4 space-y-2">
+          {!isLoggedIn && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+              <p className="text-sm text-blue-800 mb-2">
+                Sign in to save your cart and get member benefits!
+              </p>
+              <Link href="/auth/signin" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" size="sm" className="w-full">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+          )}
+          
           <Link href="/cart" onClick={() => onOpenChange(false)}>
             <Button variant="outline" className="w-full">
               View Full Cart

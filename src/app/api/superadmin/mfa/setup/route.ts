@@ -6,9 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { handleApiError } from '@/lib/error-handler';
 import { superAdminSecurity } from '@/lib/security/superadmin-security';
+import { mfaService } from '@/lib/security/mfa-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate MFA setup
-    const mfaSetup = superAdminSecurity.generateMFASetup();
+    const mfaSetup = mfaService.generateMFASetup();
 
     // In a real implementation, you would:
     // 1. Store the secret in the database (encrypted)
@@ -104,10 +105,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify the MFA token
-    const isValid = await superAdminSecurity.verifyMFAToken(
-      token.sub!,
-      mfaToken
-    );
+    const isValid = await mfaService.verifyMFAToken(token.sub!, mfaToken);
 
     if (!isValid) {
       return NextResponse.json(

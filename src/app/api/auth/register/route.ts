@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import {
   hashPassword,
   validatePassword,
   sanitizeInput,
 } from '@/lib/auth/utils';
 import { validateMalaysianPhoneNumber } from '@/lib/utils';
+import { activateUserMembership } from '@/lib/membership';
 import { UserStatus } from '@prisma/client';
+
+interface CartItem {
+  productId: string;
+  quantity: number;
+}
 
 interface RegisterRequest {
   email: string;
@@ -14,18 +20,45 @@ interface RegisterRequest {
   firstName: string;
   lastName: string;
   phone?: string;
+  acceptTerms?: boolean;
+  acceptMarketing?: boolean;
+  registerAsMember?: boolean;
+  cartItems?: CartItem[];
+  qualifyingAmount?: number;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: RegisterRequest = await request.json();
 
-    const { email, password, firstName, lastName, phone } = body;
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      acceptTerms,
+      acceptMarketing,
+      registerAsMember,
+      cartItems,
+      qualifyingAmount,
+    } = body;
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
         { message: 'All required fields must be provided' },
+        { status: 400 }
+      );
+    }
+
+    // Validate terms acceptance for membership registration
+    if (registerAsMember && !acceptTerms) {
+      return NextResponse.json(
+        {
+          message:
+            'You must accept the terms and conditions to register as a member',
+        },
         { status: 400 }
       );
     }
@@ -82,7 +115,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user without activating membership yet (will be activated after payment)
     const user = await prisma.user.create({
       data: {
         email: sanitizedData.email,
@@ -92,12 +125,18 @@ export async function POST(request: NextRequest) {
         phone: sanitizedData.phone,
         status: UserStatus.ACTIVE, // Auto-activate for now, implement email verification later
         emailVerified: new Date(), // Set as verified for now
+        // NOTE: Membership will be activated AFTER successful payment, not here
+        isMember: false,
+        memberSince: null,
+        membershipTotal: 0,
       },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
+        isMember: true,
+        memberSince: true,
         createdAt: true,
       },
     });
@@ -113,6 +152,10 @@ export async function POST(request: NextRequest) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          registerAsMember: registerAsMember || false,
+          membershipActivated: user.isMember || false,
+          qualifyingAmount: qualifyingAmount || 0,
+          acceptMarketing: acceptMarketing || false,
         },
         ipAddress:
           request.ip || request.headers.get('x-forwarded-for') || 'unknown',
@@ -127,7 +170,17 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           name: `${user.firstName} ${user.lastName}`,
+          isMember: user.isMember,
+          memberSince: user.memberSince,
         },
+        // NOTE: Membership will be pending until payment confirmation
+        membership: registerAsMember
+          ? {
+              status: 'pending_payment',
+              qualifyingAmount: qualifyingAmount,
+              message: 'Membership will be activated after successful payment',
+            }
+          : null,
       },
       { status: 201 }
     );

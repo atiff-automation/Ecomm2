@@ -63,11 +63,25 @@ export async function POST(request: NextRequest) {
     // Get shipping rates from EasyParcel
     const shippingRates = await easyParcelService.getShippingRates({
       pickupAddress,
-      deliveryAddress: validatedData.deliveryAddress,
+      deliveryAddress: {
+        name: validatedData.deliveryAddress.name,
+        phone: validatedData.deliveryAddress.phone,
+        addressLine1: validatedData.deliveryAddress.addressLine1,
+        city: validatedData.deliveryAddress.city,
+        state: validatedData.deliveryAddress.state,
+        postalCode: validatedData.deliveryAddress.postalCode,
+        country: validatedData.deliveryAddress.country,
+        ...(validatedData.deliveryAddress.email && {
+          email: validatedData.deliveryAddress.email,
+        }),
+        ...(validatedData.deliveryAddress.addressLine2 && {
+          addressLine2: validatedData.deliveryAddress.addressLine2,
+        }),
+      },
       items: validatedData.items,
       totalWeight,
       totalValue,
-      courier: validatedData.courier,
+      ...(validatedData.courier && { courier: validatedData.courier }),
     });
 
     // Apply free shipping threshold if configured

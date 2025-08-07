@@ -32,6 +32,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 interface Product {
   id: string;
@@ -117,6 +118,9 @@ export default function ProductsPage() {
             parseInt(value, 10) || 0;
         } else if (key === 'inStock' || key === 'featured') {
           (initialFilters as Record<string, any>)[key] = value === 'true';
+        } else if (key === 'category' && !value) {
+          // Skip empty category values from URL
+          return;
         } else {
           (initialFilters as Record<string, any>)[key] = value;
         }
@@ -220,6 +224,10 @@ export default function ProductsPage() {
   }, [updateURL]);
 
   const handleFilterChange = (key: keyof ProductFilters, value: any) => {
+    // Handle "all" categories as empty string
+    if (key === 'category' && value === 'all') {
+      value = '';
+    }
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -227,6 +235,35 @@ export default function ProductsPage() {
   const clearFilters = () => {
     setFilters(INITIAL_FILTERS);
     setCurrentPage(1);
+  };
+
+  const handleAddToCart = async (productId: string) => {
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          quantity: 1,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message || "Added to cart successfully");
+        
+        // Trigger cart refresh by dispatching custom event
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error("Failed to add item to cart. Please try again.");
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -371,7 +408,11 @@ export default function ProductsPage() {
             </div>
 
             {/* Add to Cart Button */}
-            <Button className="w-full" disabled={product.stockQuantity === 0}>
+            <Button 
+              className="w-full" 
+              disabled={product.stockQuantity === 0}
+              onClick={() => handleAddToCart(product.id)}
+            >
               <ShoppingCart className="w-4 h-4 mr-2" />
               {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
@@ -457,14 +498,14 @@ export default function ProductsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
                 <Select
-                  value={filters.category}
+                  value={filters.category || 'all'}
                   onValueChange={value => handleFilterChange('category', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map(category => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name} ({category.productCount || 0})

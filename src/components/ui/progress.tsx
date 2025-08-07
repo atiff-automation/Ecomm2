@@ -1,4 +1,7 @@
-'use client';
+/**
+ * Progress Component - JRM E-commerce Platform
+ * Progress bar for loading states and file uploads
+ */
 
 import * as React from 'react';
 import * as ProgressPrimitive from '@radix-ui/react-progress';

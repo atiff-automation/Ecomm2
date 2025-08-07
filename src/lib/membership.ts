@@ -3,7 +3,7 @@
  * Core membership logic and qualification system
  */
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 
 export interface MembershipConfig {
   membershipThreshold: number;

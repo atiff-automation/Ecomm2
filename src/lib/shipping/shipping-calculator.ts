@@ -159,8 +159,8 @@ export class ShippingCalculator {
           itemCount,
           freeShippingThreshold: this.freeShippingThreshold,
           freeShippingEligible,
-          cheapestRate: cheapestRate ?? undefined,
-          fastestService: fastestService ?? undefined,
+          ...(cheapestRate !== undefined && { cheapestRate }),
+          ...(fastestService && { fastestService }),
         },
         businessAddress: {
           city: pickupAddress.city,
