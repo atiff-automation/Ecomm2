@@ -519,12 +519,12 @@
   - [ ] Create navigation management
   - [ ] Implement page versioning
 
-- [ ] **Legal Pages** (Priority: High)
-  - [ ] Create Terms of Service page
-  - [ ] Implement Privacy Policy (PDPA compliant)
-  - [ ] Setup Return/Refund Policy page
-  - [ ] Create Shipping Policy page
-  - [ ] Implement Cookie Policy page
+- [x] **Legal Pages** (Priority: High) ✅ **COMPLETED AUGUST 2025**
+  - [x] Create Terms of Service page
+  - [x] Implement Privacy Policy (PDPA compliant)
+  - [x] Setup Return/Refund Policy page
+  - [x] Create Shipping Policy page
+  - [x] Implement Cookie Policy page
 
 - [ ] **Marketing Content** (Priority: Medium)
   - [ ] Create About Us page
