@@ -373,7 +373,7 @@ export function CartSidebar({
             </div>
 
             {/* Membership Progress */}
-            {cartSummary && !isMember && cartSummary.qualifyingTotal > 0 && (
+            {cartSummary && !isMember && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -399,10 +399,19 @@ export function CartSidebar({
                       benefits!
                     </p>
                   ) : (
-                    <p className="text-xs text-blue-700 mt-2">
-                      Add {formatPrice(cartSummary.amountNeededForMembership)}{' '}
-                      more to qualify for member pricing
-                    </p>
+                    <div className="mt-2">
+                      <p className="text-xs text-blue-700">
+                        {cartSummary.qualifyingTotal > 0 
+                          ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more to qualify`
+                          : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items`
+                        }
+                      </p>
+                      {cartSummary.qualifyingTotal === 0 && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          💡 Promotional items don't count - add regular items!
+                        </p>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>

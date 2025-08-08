@@ -23,6 +23,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
 
 interface Product {
   id: string;
@@ -34,6 +35,10 @@ interface Product {
   stockQuantity: number;
   featured: boolean;
   isPromotional: boolean;
+  isQualifyingForMembership: boolean;
+  promotionalPrice?: number | null;
+  promotionStartDate?: string | null;
+  promotionEndDate?: string | null;
   averageRating: number;
   reviewCount: number;
   category: {
@@ -190,9 +195,12 @@ export default function ProductsPage() {
     const primaryImage =
       product.images.find(img => img.isPrimary) || product.images[0];
     const isLoggedIn = !!session?.user;
-    const isMember = session?.user?.isMember;
-    const showMemberPrice = isLoggedIn && isMember;
-    const savings = product.regularPrice - product.memberPrice;
+    const isMember = session?.user?.isMember || false;
+    
+    // Calculate best price using promotional logic
+    const priceInfo = getBestPrice(product, isMember);
+    const promotionStatus = calculatePromotionStatus(product);
+    const promotionText = getPromotionDisplayText(promotionStatus);
 
     return (
       <Card className="group hover:shadow-lg transition-shadow duration-200">
@@ -217,8 +225,15 @@ export default function ProductsPage() {
                 Featured
               </Badge>
             )}
-            {product.isPromotional && (
-              <Badge variant="destructive">Promo</Badge>
+            {promotionStatus.isActive && (
+              <Badge variant="destructive" className="bg-red-500 text-white">
+                {promotionText || 'Special Price'}
+              </Badge>
+            )}
+            {promotionStatus.isScheduled && (
+              <Badge variant="outline" className="bg-blue-500 text-white border-blue-500">
+                {promotionText || 'Coming Soon'}
+              </Badge>
             )}
             {product.stockQuantity === 0 && (
               <Badge variant="outline" className="bg-white">
@@ -274,38 +289,48 @@ export default function ProductsPage() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  {showMemberPrice ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg text-green-600">
-                          {formatPrice(product.memberPrice)}
-                        </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold text-lg ${
+                        priceInfo.priceType === 'promotional' ? 'text-red-600' : 
+                        priceInfo.priceType === 'member' ? 'text-green-600' : 
+                        'text-gray-900'
+                      }`}>
+                        {formatPrice(priceInfo.price)}
+                      </span>
+                      {priceInfo.priceType === 'promotional' && (
+                        <Badge variant="destructive" className="text-xs">
+                          Special
+                        </Badge>
+                      )}
+                      {priceInfo.priceType === 'member' && (
                         <Badge variant="secondary" className="text-xs">
                           Member
                         </Badge>
-                      </div>
+                      )}
+                    </div>
+                    
+                    {/* Show original price and savings */}
+                    {priceInfo.savings > 0 && (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground line-through">
-                          {formatPrice(product.regularPrice)}
+                          {formatPrice(priceInfo.originalPrice)}
                         </span>
-                        <span className="text-xs text-green-600 font-medium">
-                          Save {formatPrice(savings)}
+                        <span className={`text-xs font-medium ${
+                          priceInfo.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          Save {formatPrice(priceInfo.savings)}
                         </span>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <span className="font-bold text-lg">
-                        {formatPrice(product.regularPrice)}
-                      </span>
-                      {!isLoggedIn &&
-                        product.memberPrice < product.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member price: {formatPrice(product.memberPrice)}
-                          </div>
-                        )}
-                    </div>
-                  )}
+                    )}
+                    
+                    {/* Show member price preview for non-members */}
+                    {!isMember && priceInfo.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && (
+                      <div className="text-xs text-muted-foreground">
+                        Member price: {formatPrice(product.memberPrice)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

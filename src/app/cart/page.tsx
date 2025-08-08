@@ -479,7 +479,7 @@ export default function CartPage() {
         {/* Order Summary Sidebar */}
         <div className="space-y-6">
           {/* Membership Progress */}
-          {cartSummary && !isMember && cartSummary.qualifyingTotal > 0 && (
+          {cartSummary && !isMember && (
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -509,10 +509,19 @@ export default function CartPage() {
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-blue-700 text-center">
-                    Add {formatPrice(cartSummary.amountNeededForMembership)}{' '}
-                    more qualifying items to unlock member pricing
-                  </p>
+                  <div className="text-center">
+                    <p className="text-sm text-blue-700 mb-1">
+                      {cartSummary.qualifyingTotal > 0 
+                        ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more qualifying items to unlock member pricing`
+                        : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items to unlock member pricing`
+                      }
+                    </p>
+                    {cartSummary.qualifyingTotal === 0 && (
+                      <p className="text-xs text-blue-600">
+                        💡 Promotional items don't count toward membership - add regular items to qualify!
+                      </p>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
