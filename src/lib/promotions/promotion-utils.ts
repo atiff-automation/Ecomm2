@@ -3,12 +3,23 @@
  * Handles promotional pricing calculations and membership qualification overrides
  */
 
+import {
+  EarlyAccessProduct,
+  canUserAccessProduct,
+  canUserAccessPromotionalPrice,
+  calculateEarlyAccessStatus,
+  getEarlyAccessDisplayText,
+  getEarlyAccessPrice
+} from '@/lib/member/early-access-utils';
+
 export interface PromotionData {
   isPromotional: boolean;
   promotionalPrice?: number | null;
   promotionStartDate?: Date | string | null;
   promotionEndDate?: Date | string | null;
   isQualifyingForMembership: boolean;
+  memberOnlyUntil?: Date | string | null;
+  earlyAccessStart?: Date | string | null;
 }
 
 export interface PromotionStatus {
@@ -119,7 +130,7 @@ export function calculatePromotionStatus(
 }
 
 /**
- * Get the best price for a user (considering member status and promotions)
+ * Get the best price for a user (considering member status, promotions, and early access)
  */
 export function getBestPrice(
   product: PromotionData & {
@@ -131,8 +142,42 @@ export function getBestPrice(
   price: number;
   originalPrice: number;
   savings: number;
-  priceType: 'regular' | 'member' | 'promotional';
+  priceType: 'regular' | 'member' | 'promotional' | 'early-access';
+  hasEarlyAccess?: boolean;
+  earlyAccessText?: string | null;
 } {
+  // Check if user can access the product at all
+  if (!canUserAccessProduct(product as EarlyAccessProduct, isMember)) {
+    // Return regular price but user won't be able to purchase
+    return {
+      price: product.regularPrice,
+      originalPrice: product.regularPrice,
+      savings: 0,
+      priceType: 'regular'
+    };
+  }
+
+  // Use early access pricing if available
+  const earlyAccessPrice = getEarlyAccessPrice(
+    product as EarlyAccessProduct & { regularPrice: number; memberPrice: number },
+    isMember
+  );
+
+  if (earlyAccessPrice.hasEarlyAccess) {
+    const earlyAccessStatus = calculateEarlyAccessStatus(product as EarlyAccessProduct);
+    const earlyAccessText = getEarlyAccessDisplayText(earlyAccessStatus);
+    
+    return {
+      price: earlyAccessPrice.price,
+      originalPrice: product.regularPrice,
+      savings: product.regularPrice - earlyAccessPrice.price,
+      priceType: earlyAccessPrice.priceType as 'regular' | 'member' | 'promotional' | 'early-access',
+      hasEarlyAccess: true,
+      earlyAccessText
+    };
+  }
+
+  // Fall back to existing promotional pricing logic
   const promotionStatus = calculatePromotionStatus(product);
 
   if (promotionStatus.isActive && product.promotionalPrice) {

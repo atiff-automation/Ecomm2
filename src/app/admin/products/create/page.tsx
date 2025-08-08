@@ -58,6 +58,8 @@ interface ProductFormData {
   promotionalPrice?: number;
   promotionStartDate?: Date;
   promotionEndDate?: Date;
+  memberOnlyUntil?: Date;
+  earlyAccessStart?: Date;
   images: ProductImage[];
 }
 
@@ -88,6 +90,8 @@ export default function CreateProductPage() {
     promotionalPrice: undefined,
     promotionStartDate: undefined,
     promotionEndDate: undefined,
+    memberOnlyUntil: undefined,
+    earlyAccessStart: undefined,
     images: [],
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -254,6 +258,12 @@ export default function CreateProductPage() {
           : undefined,
         promotionEndDate: formData.promotionEndDate
           ? formData.promotionEndDate.toISOString()
+          : undefined,
+        memberOnlyUntil: formData.memberOnlyUntil
+          ? formData.memberOnlyUntil.toISOString()
+          : undefined,
+        earlyAccessStart: formData.earlyAccessStart
+          ? formData.earlyAccessStart.toISOString()
           : undefined,
       };
 
@@ -653,6 +663,79 @@ export default function CreateProductPage() {
                     <p>Enable promotion to configure special pricing</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Member Early Access Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Member Early Access</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure member-only access periods and early promotional
+                  access
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="memberOnlyUntil">
+                    Member-Only Until (Optional)
+                  </Label>
+                  <CustomDateRangePicker
+                    startDate={formData.memberOnlyUntil}
+                    endDate={undefined}
+                    onStartDateChange={date =>
+                      handleInputChange('memberOnlyUntil', date)
+                    }
+                    onEndDateChange={() => {}} // Not used for single date
+                    placeholder="Select member-only period end date"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Product will be visible only to members until this date
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="earlyAccessStart">
+                    Early Access Start (Optional)
+                  </Label>
+                  <CustomDateRangePicker
+                    startDate={formData.earlyAccessStart}
+                    endDate={undefined}
+                    onStartDateChange={date =>
+                      handleInputChange('earlyAccessStart', date)
+                    }
+                    onEndDateChange={() => {}} // Not used for single date
+                    placeholder="Select early access start date"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Members get early access to promotions from this date
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium mb-1">Early Access System</p>
+                      <ul className="space-y-1 text-sm">
+                        <li>
+                          • <strong>Member-Only Until</strong>: Product is
+                          completely hidden from non-members
+                        </li>
+                        <li>
+                          • <strong>Early Access Start</strong>: Members see
+                          promotional pricing before public launch
+                        </li>
+                        <li>
+                          • Works with promotional pricing to create member
+                          exclusivity
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

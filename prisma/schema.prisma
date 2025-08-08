@@ -176,6 +176,10 @@ model Product {
   promotionStartDate DateTime? // When promotion becomes active
   promotionEndDate   DateTime? // When promotion expires
   
+  // Member early access system
+  memberOnlyUntil    DateTime? // Product visible only to members until this date
+  earlyAccessStart   DateTime? // Early access to promotions for members starts
+  
   // Inventory
   stockQuantity   Int     @default(0)
   lowStockAlert   Int     @default(10)
@@ -215,6 +219,8 @@ model Product {
   @@index([promotionStartDate])
   @@index([promotionEndDate])
   @@index([memberPrice])
+  @@index([memberOnlyUntil])
+  @@index([earlyAccessStart])
 }
 
 model ProductImage {

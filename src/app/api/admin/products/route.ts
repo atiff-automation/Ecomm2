@@ -34,6 +34,11 @@ const createProductSchema = z.object({
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
   isQualifyingForMembership: z.boolean().default(true),
+  promotionalPrice: z.number().optional(),
+  promotionStartDate: z.string().optional(),
+  promotionEndDate: z.string().optional(),
+  memberOnlyUntil: z.string().optional(),
+  earlyAccessStart: z.string().optional(),
   images: z
     .array(
       z.object({
@@ -122,6 +127,19 @@ export async function POST(request: NextRequest) {
           featured: productData.featured,
           isPromotional: productData.isPromotional,
           isQualifyingForMembership: productData.isQualifyingForMembership,
+          promotionalPrice: productData.promotionalPrice || null,
+          promotionStartDate: productData.promotionStartDate
+            ? new Date(productData.promotionStartDate)
+            : null,
+          promotionEndDate: productData.promotionEndDate
+            ? new Date(productData.promotionEndDate)
+            : null,
+          memberOnlyUntil: productData.memberOnlyUntil
+            ? new Date(productData.memberOnlyUntil)
+            : null,
+          earlyAccessStart: productData.earlyAccessStart
+            ? new Date(productData.earlyAccessStart)
+            : null,
         },
       });
 
