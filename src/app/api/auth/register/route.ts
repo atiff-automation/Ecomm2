@@ -7,6 +7,7 @@ import {
 } from '@/lib/auth/utils';
 import { validateMalaysianPhoneNumber } from '@/lib/utils';
 // import { activateUserMembership } from '@/lib/membership'; // Removed - not used in current flow
+import { processReferralRegistration } from '@/lib/referrals/referral-utils';
 import { UserStatus } from '@prisma/client';
 
 interface CartItem {
@@ -25,6 +26,7 @@ interface RegisterRequest {
   registerAsMember?: boolean;
   cartItems?: CartItem[];
   qualifyingAmount?: number;
+  referralCode?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -38,6 +40,7 @@ export async function POST(request: NextRequest) {
       lastName,
       phone,
       acceptTerms,
+      referralCode,
       acceptMarketing,
       registerAsMember,
       // cartItems, // Disabled for now
@@ -140,6 +143,16 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     });
+
+    // Process referral if referral code was provided
+    if (referralCode) {
+      try {
+        await processReferralRegistration(sanitizedData.email, user.id);
+      } catch (error) {
+        console.error('Referral processing error:', error);
+        // Don't fail registration if referral processing fails
+      }
+    }
 
     // Log the registration
     await prisma.auditLog.create({
