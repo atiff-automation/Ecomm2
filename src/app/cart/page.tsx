@@ -43,7 +43,7 @@ interface CartItem {
       id: string;
       name: string;
       slug: string;
-      isQualifyingCategory: boolean;
+      
     };
     primaryImage?: {
       url: string;

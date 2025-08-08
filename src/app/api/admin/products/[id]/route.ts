@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { UserRole, ProductStatus } from '@prisma/client';
+import { UserRole } from '@prisma/client';
+// import { ProductStatus } from '@prisma/client'; // Not currently used
 import { z } from 'zod';
 
 const updateProductSchema = z.object({
@@ -35,6 +36,8 @@ const updateProductSchema = z.object({
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).optional(),
   featured: z.boolean().optional(),
+  isPromotional: z.boolean().optional(),
+  isQualifyingForMembership: z.boolean().optional(),
   images: z
     .array(
       z.object({
@@ -233,6 +236,12 @@ export async function PUT(
           ...(productData.status && { status: productData.status }),
           ...(productData.featured !== undefined && {
             featured: productData.featured,
+          }),
+          ...(productData.isPromotional !== undefined && {
+            isPromotional: productData.isPromotional,
+          }),
+          ...(productData.isQualifyingForMembership !== undefined && {
+            isQualifyingForMembership: productData.isQualifyingForMembership,
           }),
         },
         include: {

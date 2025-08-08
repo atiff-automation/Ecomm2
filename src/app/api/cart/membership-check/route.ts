@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            isQualifyingCategory: true,
           },
         },
       },
@@ -82,6 +81,7 @@ export async function POST(request: NextRequest) {
       const subtotal = price * cartItem.quantity;
 
       // Check if product qualifies for membership calculation
+      // New logic: Product-level control - all products qualify by default unless specifically excluded
       if (product.isPromotional) {
         // Promotional products don't count toward membership
         nonQualifyingItems.push({
@@ -91,17 +91,17 @@ export async function POST(request: NextRequest) {
           price,
           quantity: cartItem.quantity,
         });
-      } else if (!product.category?.isQualifyingCategory) {
-        // Category doesn't qualify for membership
+      } else if (!product.isQualifyingForMembership) {
+        // Product specifically marked as non-qualifying for membership
         nonQualifyingItems.push({
           productId: product.id,
           name: product.name,
-          reason: 'Category not eligible for membership',
+          reason: 'Product marked as non-qualifying for membership',
           price,
           quantity: cartItem.quantity,
         });
       } else {
-        // Product qualifies
+        // Product qualifies (default behavior)
         qualifyingTotal += subtotal;
         qualifyingItems.push({
           productId: product.id,

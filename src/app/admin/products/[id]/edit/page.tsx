@@ -52,6 +52,8 @@ interface ProductFormData {
   dimensions: string;
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
   featured: boolean;
+  isPromotional: boolean;
+  isQualifyingForMembership: boolean;
   images: ProductImage[];
 }
 
@@ -81,6 +83,8 @@ export default function EditProductPage() {
     dimensions: '',
     status: 'DRAFT',
     featured: false,
+    isPromotional: false,
+    isQualifyingForMembership: true,
     images: [],
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -141,6 +145,11 @@ export default function EditProductPage() {
           dimensions: product.dimensions || '',
           status: product.status,
           featured: product.featured,
+          isPromotional: product.isPromotional || false,
+          isQualifyingForMembership:
+            product.isQualifyingForMembership !== undefined
+              ? product.isQualifyingForMembership
+              : true,
           images: product.images || [],
         });
       } else {
@@ -192,7 +201,7 @@ export default function EditProductPage() {
     handleInputChange('images', productImages);
   };
 
-  const handleImageRemove = (index: number) => {
+  const handleImageRemove = () => {
     // This will be handled by the ImageUpload component
     // The component will call handleImagesUpload with the updated list
   };
@@ -270,6 +279,7 @@ export default function EditProductPage() {
         }
       }
     } catch (error) {
+      console.error('Product update error:', error);
       setErrors({ general: 'An error occurred while updating the product' });
     } finally {
       setSaving(false);
@@ -299,6 +309,7 @@ export default function EditProductPage() {
         setErrors({ general: data.message || 'Failed to delete product' });
       }
     } catch (error) {
+      console.error('Product delete error:', error);
       setErrors({ general: 'An error occurred while deleting the product' });
     } finally {
       setSaving(false);
@@ -611,7 +622,7 @@ export default function EditProductPage() {
                     onChange={e =>
                       handleInputChange(
                         'stockQuantity',
-                        parseInt(e.target.value) || 0
+                        parseInt(e.target.value, 10) || 0
                       )
                     }
                   />
@@ -631,7 +642,7 @@ export default function EditProductPage() {
                     onChange={e =>
                       handleInputChange(
                         'lowStockAlert',
-                        parseInt(e.target.value) || 0
+                        parseInt(e.target.value, 10) || 0
                       )
                     }
                   />
@@ -670,6 +681,36 @@ export default function EditProductPage() {
                     }
                   />
                   <Label htmlFor="featured">Featured Product</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isPromotional"
+                    checked={formData.isPromotional}
+                    onCheckedChange={checked =>
+                      handleInputChange('isPromotional', checked)
+                    }
+                  />
+                  <Label htmlFor="isPromotional">Promotional Product</Label>
+                  <span className="text-sm text-gray-500">
+                    (excluded from membership calculation)
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isQualifyingForMembership"
+                    checked={formData.isQualifyingForMembership}
+                    onCheckedChange={checked =>
+                      handleInputChange('isQualifyingForMembership', checked)
+                    }
+                  />
+                  <Label htmlFor="isQualifyingForMembership">
+                    Membership Qualifying
+                  </Label>
+                  <span className="text-sm text-gray-500">
+                    (counts toward RM80 threshold)
+                  </span>
                 </div>
               </CardContent>
             </Card>

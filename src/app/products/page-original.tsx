@@ -1,11 +1,11 @@
 /**
  * Products Listing Page - Malaysian E-commerce Platform
- * Responsive product grid with filtering and search - Fixed infinite loop issues
+ * Responsive product grid with advanced filtering and search
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, Grid, Star, ShoppingCart } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Search,
+  Filter,
+  Grid,
+  List,
+  Star,
+  Heart,
+  ShoppingCart,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -56,6 +66,28 @@ interface Category {
   productCount?: number;
 }
 
+interface ProductFilters {
+  search: string;
+  category: string;
+  minPrice: number;
+  maxPrice: number;
+  inStock: boolean;
+  featured: boolean;
+  sortBy: 'name' | 'price' | 'created' | 'rating';
+  sortOrder: 'asc' | 'desc';
+}
+
+const INITIAL_FILTERS: ProductFilters = {
+  search: '',
+  category: '',
+  minPrice: 0,
+  maxPrice: 10000,
+  inStock: false,
+  featured: false,
+  sortBy: 'created',
+  sortOrder: 'desc',
+};
+
 export default function ProductsPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -63,47 +95,72 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filters, setFilters] = useState<ProductFilters>(INITIAL_FILTERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Simple state management without complex filtering
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get('search') || ''
-  );
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get('category') || 'all'
-  );
-  const [sortBy, setSortBy] = useState(
-    searchParams.get('sortBy') || 'created-desc'
-  );
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 20;
 
-  // Fetch products function
-  const fetchProducts = async () => {
+  // Initialize filters from URL params
+  useEffect(() => {
+    const initialFilters = { ...INITIAL_FILTERS };
+
+    searchParams.forEach((value, key) => {
+      if (key in initialFilters) {
+        if (key === 'minPrice' || key === 'maxPrice') {
+          (initialFilters as Record<string, any>)[key] =
+            parseInt(value, 10) || 0;
+        } else if (key === 'inStock' || key === 'featured') {
+          (initialFilters as Record<string, any>)[key] = value === 'true';
+        } else if (key === 'category' && !value) {
+          // Skip empty category values from URL
+          return;
+        } else {
+          (initialFilters as Record<string, any>)[key] = value;
+        }
+      }
+    });
+
+    setFilters(initialFilters);
+    setCurrentPage(parseInt(searchParams.get('page') || '1', 10));
+  }, [searchParams]);
+
+  // Fetch products
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '20',
+        limit: itemsPerPage.toString(),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
       });
 
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (filters.search) {
+        params.append('search', filters.search);
       }
-      if (selectedCategory && selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
+      if (filters.category) {
+        params.append('category', filters.category);
       }
-
-      if (sortBy) {
-        const [sortField, sortOrder] = sortBy.split('-');
-        params.append('sortBy', sortField);
-        params.append('sortOrder', sortOrder);
+      if (filters.minPrice > 0) {
+        params.append('minPrice', filters.minPrice.toString());
+      }
+      if (filters.maxPrice < 10000) {
+        params.append('maxPrice', filters.maxPrice.toString());
+      }
+      if (filters.inStock) {
+        params.append('inStock', 'true');
+      }
+      if (filters.featured) {
+        params.append('featured', 'true');
       }
 
       const response = await fetch(`/api/products?${params}`);
@@ -121,34 +178,64 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, currentPage]);
 
-  // Fetch categories function
-  const fetchCategories = async () => {
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories?includeProductCount=true');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.categories || []);
+        setCategories(data.categories);
       }
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     }
-  };
+  }, []);
 
-  // Initial data fetch
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
-  }, []); // Empty dependency array for initial load only
+  }, [fetchProducts]);
 
-  // Refetch products when filters change
   useEffect(() => {
-    if (!loading) {
-      // Only refetch if not in initial loading
-      fetchProducts();
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Update URL when filters change (with debounce to prevent infinite loops)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== INITIAL_FILTERS[key as keyof ProductFilters]) {
+          params.append(key, value.toString());
+        }
+      });
+
+      if (currentPage > 1) {
+        params.append('page', currentPage.toString());
+      }
+
+      const newURL = `/products${params.toString() ? `?${params}` : ''}`;
+      router.replace(newURL, { scroll: false });
+    }, 100); // 100ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [filters, currentPage, router]);
+
+  const handleFilterChange = (key: keyof ProductFilters, value: any) => {
+    // Handle "all" categories as empty string
+    if (key === 'category' && value === 'all') {
+      value = '';
     }
-  }, [searchTerm, selectedCategory, sortBy, currentPage]);
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilters(INITIAL_FILTERS);
+    setCurrentPage(1);
+  };
 
   const handleAddToCart = async (productId: string) => {
     try {
@@ -167,7 +254,7 @@ export default function ProductsPage() {
         const data = await response.json();
         toast.success(data.message || 'Added to cart successfully');
 
-        // Trigger cart refresh
+        // Trigger cart refresh by dispatching custom event
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       } else {
         const errorData = await response.json();
@@ -226,14 +313,24 @@ export default function ProductsPage() {
               </Badge>
             )}
           </div>
+
+          {/* Quick Actions */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="sm" variant="secondary" className="w-8 h-8 p-0">
+              <Heart className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <CardContent className="p-4">
           <div className="space-y-2">
             {/* Category */}
-            <span className="text-xs text-muted-foreground">
+            <Link
+              href={`/products?category=${product.category.id}`}
+              className="text-xs text-muted-foreground hover:text-primary"
+            >
               {product.category.name}
-            </span>
+            </Link>
 
             {/* Product Name */}
             <Link href={`/products/${product.slug}`}>
@@ -337,25 +434,48 @@ export default function ProductsPage() {
               : 'No products found'}
           </p>
         </div>
+
+        <div className="flex items-center gap-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Mobile Filter Toggle */}
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="lg:hidden"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters Sidebar */}
-        <div className="lg:w-80 space-y-6">
+        <div
+          className={`lg:w-80 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}
+        >
           <Card>
             <CardContent className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Filters</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('all');
-                    setSortBy('created-desc');
-                    setCurrentPage(1);
-                  }}
-                >
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
                   Clear All
                 </Button>
               </div>
@@ -367,8 +487,8 @@ export default function ProductsPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
+                    value={filters.search}
+                    onChange={e => handleFilterChange('search', e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -378,8 +498,8 @@ export default function ProductsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
                 <Select
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
+                  value={filters.category || 'all'}
+                  onValueChange={value => handleFilterChange('category', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All Categories" />
@@ -395,10 +515,67 @@ export default function ProductsPage() {
                 </Select>
               </div>
 
+              {/* Price Range */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Price Range</label>
+                <div className="px-2">
+                  <Slider
+                    value={[filters.minPrice, filters.maxPrice]}
+                    onValueChange={([min, max]) => {
+                      handleFilterChange('minPrice', min);
+                      handleFilterChange('maxPrice', max);
+                    }}
+                    max={10000}
+                    step={50}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{formatPrice(filters.minPrice)}</span>
+                  <span>{formatPrice(filters.maxPrice)}</span>
+                </div>
+              </div>
+
+              {/* Checkboxes */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="inStock"
+                    checked={filters.inStock}
+                    onCheckedChange={checked =>
+                      handleFilterChange('inStock', checked)
+                    }
+                  />
+                  <label htmlFor="inStock" className="text-sm font-medium">
+                    In Stock Only
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="featured"
+                    checked={filters.featured}
+                    onCheckedChange={checked =>
+                      handleFilterChange('featured', checked)
+                    }
+                  />
+                  <label htmlFor="featured" className="text-sm font-medium">
+                    Featured Products
+                  </label>
+                </div>
+              </div>
+
               {/* Sort By */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Sort By</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select
+                  value={`${filters.sortBy}-${filters.sortOrder}`}
+                  onValueChange={value => {
+                    const [sortBy, sortOrder] = value.split('-');
+                    handleFilterChange('sortBy', sortBy);
+                    handleFilterChange('sortOrder', sortOrder);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -442,11 +619,18 @@ export default function ProductsPage() {
               <p className="text-muted-foreground mb-4">
                 No products found matching your criteria.
               </p>
+              <Button onClick={clearFilters}>Clear Filters</Button>
             </div>
           ) : (
             <>
               {/* Products Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                className={`grid gap-6 ${
+                  viewMode === 'grid'
+                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                    : 'grid-cols-1'
+                }`}
+              >
                 {products.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

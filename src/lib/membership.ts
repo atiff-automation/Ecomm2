@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
 
 export interface MembershipConfig {
   membershipThreshold: number;
@@ -22,10 +23,13 @@ export interface CartItemWithProduct {
     regularPrice: number;
     memberPrice: number;
     isPromotional: boolean;
+    isQualifyingForMembership: boolean;
+    promotionalPrice?: number | null;
+    promotionStartDate?: Date | string | null;
+    promotionEndDate?: Date | string | null;
     category: {
       id: string;
       name: string;
-      isQualifyingCategory: boolean;
     };
   };
 }
@@ -128,17 +132,16 @@ export function calculateMembershipEligibility(
     subtotal += regularPrice * quantity;
     memberSubtotal += memberPrice * quantity;
 
-    // Check if item qualifies for membership calculation
-    const isPromotional =
-      config.enablePromotionalExclusion && item.product.isPromotional;
-    const isQualifyingCategory = config.requireQualifyingCategories
-      ? item.product.category.isQualifyingCategory
-      : true;
+    // Check if item qualifies for membership calculation using new promotional system
+    const qualifiesForMembership = productQualifiesForMembership({
+      isPromotional: item.product.isPromotional,
+      promotionalPrice: item.product.promotionalPrice,
+      promotionStartDate: item.product.promotionStartDate,
+      promotionEndDate: item.product.promotionEndDate,
+      isQualifyingForMembership: item.product.isQualifyingForMembership
+    });
 
-    // Only count towards membership qualification if:
-    // 1. Not promotional (when exclusion is enabled)
-    // 2. From qualifying category (when category requirement is enabled)
-    if (!isPromotional && isQualifyingCategory) {
+    if (qualifiesForMembership) {
       qualifyingTotal += regularPrice * quantity;
     }
   });
@@ -259,7 +262,8 @@ export async function checkUserMembershipQualification(
               include: {
                 category: {
                   select: {
-                    isQualifyingCategory: true,
+                    id: true,
+                    name: true,
                   },
                 },
               },
@@ -273,13 +277,16 @@ export async function checkUserMembershipQualification(
 
     orders.forEach(order => {
       order.orderItems.forEach(item => {
-        const isPromotional =
-          config.enablePromotionalExclusion && item.product.isPromotional;
-        const isQualifyingCategory = config.requireQualifyingCategories
-          ? item.product.category.isQualifyingCategory
-          : true;
+        // Use new promotional system for membership qualification
+        const qualifiesForMembership = productQualifiesForMembership({
+          isPromotional: item.product.isPromotional,
+          promotionalPrice: item.product.promotionalPrice,
+          promotionStartDate: item.product.promotionStartDate,
+          promotionEndDate: item.product.promotionEndDate,
+          isQualifyingForMembership: item.product.isQualifyingForMembership
+        });
 
-        if (!isPromotional && isQualifyingCategory) {
+        if (qualifiesForMembership) {
           qualifyingTotal += Number(item.regularPrice) * item.quantity;
         }
       });

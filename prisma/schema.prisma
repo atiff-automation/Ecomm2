@@ -98,8 +98,8 @@ model PendingMembership {
 
 model Address {
   id           String  @id @default(cuid())
-  userId       String
-  type         String  // HOME, WORK, OTHER
+  userId       String?  // Nullable for guest addresses
+  type         String  // HOME, WORK, OTHER, SHIPPING, BILLING
   firstName    String
   lastName     String
   company      String?
@@ -112,8 +112,9 @@ model Address {
   phone        String?
   isDefault    Boolean @default(false)
   
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[]
+  user              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders    Order[] @relation("ShippingAddress")
+  billingOrders     Order[] @relation("BillingAddress")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -140,7 +141,6 @@ model Category {
   description          String?
   image                String?
   parentId             String?
-  isQualifyingCategory Boolean   @default(false) // For membership qualification
   metaTitle            String?
   metaDescription      String?
   
@@ -154,7 +154,6 @@ model Category {
   @@map("categories")
   @@index([slug])
   @@index([parentId])
-  @@index([isQualifyingCategory])
 }
 
 model Product {
@@ -172,6 +171,11 @@ model Product {
   memberPrice     Decimal @db.Decimal(10, 2)
   costPrice       Decimal @db.Decimal(10, 2)
   
+  // Promotional pricing system
+  promotionalPrice   Decimal?  @db.Decimal(10, 2) // Special promotion price
+  promotionStartDate DateTime? // When promotion becomes active
+  promotionEndDate   DateTime? // When promotion expires
+  
   // Inventory
   stockQuantity   Int     @default(0)
   lowStockAlert   Int     @default(10)
@@ -183,6 +187,7 @@ model Product {
   metaDescription String?
   featured        Boolean @default(false)
   isPromotional   Boolean @default(false) // Excluded from membership calculation
+  isQualifyingForMembership Boolean @default(true) // Product-level membership qualification control
   
   // Relationships
   categoryId String
@@ -207,6 +212,8 @@ model Product {
   @@index([featured])
   @@index([isPromotional])
   @@index([regularPrice])
+  @@index([promotionStartDate])
+  @@index([promotionEndDate])
   @@index([memberPrice])
 }
 
@@ -292,6 +299,10 @@ model Order {
   userId  String?
   user    User?   @relation(fields: [userId], references: [id])
   
+  // Guest checkout fields
+  guestEmail String? // For guest orders
+  guestMembershipIntent Json? // Store guest membership registration intent
+  
   // Order status
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
@@ -310,7 +321,8 @@ model Order {
   // Addresses
   shippingAddressId String?
   billingAddressId  String?
-  shippingAddress   Address? @relation(fields: [shippingAddressId], references: [id])
+  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
   
   // Payment & Shipping
   paymentMethod   String?    // BILLPLZ, BANK_TRANSFER, etc.

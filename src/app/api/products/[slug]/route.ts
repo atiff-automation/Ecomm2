@@ -38,6 +38,13 @@ const updateProductSchema = z.object({
   metaDescription: z.string().optional(),
   featured: z.boolean().optional(),
   isPromotional: z.boolean().optional(),
+  isQualifyingForMembership: z.boolean().optional(),
+  promotionalPrice: z
+    .number()
+    .positive('Promotional price must be positive')
+    .optional(),
+  promotionStartDate: z.string().datetime().optional(),
+  promotionEndDate: z.string().datetime().optional(),
   status: z
     .enum(['DRAFT', 'ACTIVE', 'INACTIVE', 'OUT_OF_STOCK', 'DISCONTINUED'])
     .optional(),
@@ -61,7 +68,6 @@ export async function GET(
             id: true,
             name: true,
             slug: true,
-            isQualifyingCategory: true,
           },
         },
         images: {
@@ -184,6 +190,9 @@ export async function PUT(
       if (value !== undefined) {
         if (typeof value === 'string' && value === '') {
           prismaUpdateData[key] = null;
+        } else if (key === 'promotionStartDate' || key === 'promotionEndDate') {
+          // Convert date strings to Date objects
+          prismaUpdateData[key] = value ? new Date(value as string) : null;
         } else {
           prismaUpdateData[key] = value;
         }

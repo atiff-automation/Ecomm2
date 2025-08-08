@@ -25,6 +25,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import ContextualNavigation from '@/components/admin/ContextualNavigation';
 
 interface Order {
   id: string;
@@ -182,6 +183,14 @@ export default function AdminOrders() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ContextualNavigation
+        items={[
+          { label: 'Orders', href: '/admin/orders' },
+          { label: 'Fulfillment', href: '/admin/orders/fulfillment' },
+          { label: 'Export', href: '/admin/orders/export' },
+        ]}
+      />
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">

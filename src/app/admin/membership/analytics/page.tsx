@@ -24,7 +24,7 @@ import {
   PieChart,
   Download,
   RefreshCw,
-  Settings,
+  // Settings, // Not currently used
 } from 'lucide-react';
 
 interface MemberStats {

@@ -27,7 +27,6 @@ interface CategoryWithHierarchy {
   description: string | null;
   image: string | null;
   parentId: string | null;
-  isQualifyingCategory: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   createdAt: Date;
@@ -238,7 +237,6 @@ export async function POST(request: NextRequest) {
         details: {
           categoryName: category.name,
           slug: category.slug,
-          isQualifyingCategory: category.isQualifyingCategory,
         },
       },
     });

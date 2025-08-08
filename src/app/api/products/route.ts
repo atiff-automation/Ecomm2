@@ -32,6 +32,13 @@ const createProductSchema = z.object({
   metaDescription: z.string().optional(),
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
+  isQualifyingForMembership: z.boolean().default(true),
+  promotionalPrice: z
+    .number()
+    .positive('Promotional price must be positive')
+    .optional(),
+  promotionStartDate: z.string().datetime().optional(),
+  promotionEndDate: z.string().datetime().optional(),
 });
 
 const searchProductsSchema = z.object({
@@ -281,6 +288,12 @@ export async function POST(request: NextRequest) {
         weight: productData.weight || null,
         dimensions: productData.dimensions || null,
         barcode: productData.barcode || null,
+        promotionStartDate: productData.promotionStartDate
+          ? new Date(productData.promotionStartDate)
+          : null,
+        promotionEndDate: productData.promotionEndDate
+          ? new Date(productData.promotionEndDate)
+          : null,
       },
       include: {
         category: {

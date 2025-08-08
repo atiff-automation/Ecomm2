@@ -29,11 +29,11 @@ interface CartItemWithProduct {
     regularPrice: number;
     memberPrice: number;
     isPromotional: boolean;
+    isQualifyingForMembership: boolean;
     status: string;
     category: {
       id: string;
       name: string;
-      isQualifyingCategory: boolean;
     };
     images: Array<{
       url: string;
@@ -77,7 +77,6 @@ export async function GET() {
                 id: true,
                 name: true,
                 slug: true,
-                isQualifyingCategory: true,
               },
             },
             images: {
@@ -100,11 +99,11 @@ export async function GET() {
         regularPrice: Number(item.product.regularPrice),
         memberPrice: Number(item.product.memberPrice),
         isPromotional: item.product.isPromotional,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
         status: item.product.status,
         category: {
           id: item.product.category.id,
           name: item.product.category.name,
-          isQualifyingCategory: item.product.category.isQualifyingCategory,
         },
         images: item.product.images.map(img => ({
           url: img.url,

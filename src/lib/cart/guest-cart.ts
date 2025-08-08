@@ -185,7 +185,6 @@ export async function getGuestCartWithProducts() {
           id: true,
           name: true,
           slug: true,
-          isQualifyingCategory: true,
         },
       },
       images: {
@@ -220,11 +219,11 @@ export async function getGuestCartWithProducts() {
           memberPrice: Number(product.memberPrice),
           stockQuantity: product.stockQuantity,
           isPromotional: product.isPromotional,
+          isQualifyingForMembership: product.isQualifyingForMembership,
           category: {
             id: product.category.id,
             name: product.category.name,
             slug: product.category.slug,
-            isQualifyingCategory: product.category.isQualifyingCategory,
           },
           primaryImage:
             product.images.find(img => img.isPrimary) ||
@@ -253,10 +252,10 @@ export async function getGuestCartWithProducts() {
     subtotal += regularPrice;
     memberSubtotal += memberPrice;
 
-    // Check if item qualifies for membership
+    // Check if item qualifies for membership using product-level control
     if (
       !item.product.isPromotional &&
-      item.product.category.isQualifyingCategory
+      item.product.isQualifyingForMembership
     ) {
       qualifyingTotal += regularPrice;
     }

@@ -135,7 +135,6 @@ async function seedCategories() {
       name: 'Electronics',
       slug: 'electronics',
       description: 'Electronic devices and accessories',
-      isQualifyingCategory: true,
     },
   });
 
@@ -146,7 +145,6 @@ async function seedCategories() {
       name: 'Fashion',
       slug: 'fashion',
       description: 'Clothing, shoes, and accessories',
-      isQualifyingCategory: true,
     },
   });
 
@@ -157,7 +155,6 @@ async function seedCategories() {
       name: 'Home & Living',
       slug: 'home-living',
       description: 'Home decor, furniture, and living essentials',
-      isQualifyingCategory: false,
     },
   });
 
@@ -170,7 +167,6 @@ async function seedCategories() {
       slug: 'smartphones',
       description: 'Mobile phones and accessories',
       parentId: electronicsCategory.id,
-      isQualifyingCategory: true,
     },
   });
 
@@ -182,7 +178,6 @@ async function seedCategories() {
       slug: 'laptops',
       description: 'Laptops and computers',
       parentId: electronicsCategory.id,
-      isQualifyingCategory: true,
     },
   });
 

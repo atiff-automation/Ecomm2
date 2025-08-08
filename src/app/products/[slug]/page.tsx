@@ -79,7 +79,7 @@ interface Product {
     id: string;
     name: string;
     slug: string;
-    isQualifyingCategory: boolean;
+    
   };
   images: ProductImage[];
   reviews: Review[];

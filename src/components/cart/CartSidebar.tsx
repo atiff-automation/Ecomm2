@@ -43,7 +43,6 @@ interface CartItem {
     stockQuantity: number;
     category: {
       name: string;
-      isQualifyingCategory: boolean;
     };
     primaryImage?: {
       url: string;
@@ -467,7 +466,7 @@ export function CartSidebar({
               </Link>
             </div>
           )}
-          
+
           <Link href="/cart" onClick={() => onOpenChange(false)}>
             <Button variant="outline" className="w-full">
               View Full Cart

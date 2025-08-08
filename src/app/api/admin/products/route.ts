@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { UserRole, ProductStatus } from '@prisma/client';
+import { UserRole } from '@prisma/client';
+// import { ProductStatus } from '@prisma/client'; // Not currently used
 import { z } from 'zod';
 
 const createProductSchema = z.object({
@@ -31,6 +32,8 @@ const createProductSchema = z.object({
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).default('DRAFT'),
   featured: z.boolean().default(false),
+  isPromotional: z.boolean().default(false),
+  isQualifyingForMembership: z.boolean().default(true),
   images: z
     .array(
       z.object({
@@ -117,6 +120,8 @@ export async function POST(request: NextRequest) {
           dimensions: productData.dimensions || null,
           status: productData.status,
           featured: productData.featured,
+          isPromotional: productData.isPromotional,
+          isQualifyingForMembership: productData.isQualifyingForMembership,
         },
       });
 
@@ -192,8 +197,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const search = searchParams.get('search');
     const category = searchParams.get('category');
     const status = searchParams.get('status');

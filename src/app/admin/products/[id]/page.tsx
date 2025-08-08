@@ -6,7 +6,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+// import { useRouter } from 'next/navigation'; // Not currently used
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,12 +18,12 @@ import {
   Eye,
   Package,
   DollarSign,
-  Users,
-  Calendar,
+  // Users, // Not currently used
+  // Calendar, // Not currently used
   AlertCircle,
   CheckCircle,
   Clock,
-  BarChart3,
+  // BarChart3, // Not currently used
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -59,7 +60,7 @@ interface Product {
 }
 
 export default function ProductViewPage() {
-  const router = useRouter();
+  // const router = useRouter(); // Not currently used
   const params = useParams();
   const productId = params.id as string;
 

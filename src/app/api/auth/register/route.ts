@@ -6,7 +6,7 @@ import {
   sanitizeInput,
 } from '@/lib/auth/utils';
 import { validateMalaysianPhoneNumber } from '@/lib/utils';
-import { activateUserMembership } from '@/lib/membership';
+// import { activateUserMembership } from '@/lib/membership'; // Removed - not used in current flow
 import { UserStatus } from '@prisma/client';
 
 interface CartItem {
@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
       acceptTerms,
       acceptMarketing,
       registerAsMember,
-      cartItems,
-      qualifyingAmount,
+      // cartItems, // Disabled for now
+      qualifyingAmount = 0, // Default value
     } = body;
 
     // Validate required fields

@@ -156,11 +156,6 @@ export default function CheckoutPage() {
 
   // Fetch checkout data
   const fetchCheckoutData = useCallback(async () => {
-    if (!isLoggedIn) {
-      router.push('/auth/signin?redirect=/checkout');
-      return;
-    }
-
     try {
       setLoading(true);
       const response = await fetch('/api/cart');
@@ -195,15 +190,15 @@ export default function CheckoutPage() {
             email: session.user.email || '',
           }));
         }
-      } else if (response.status === 401) {
-        router.push('/auth/signin?redirect=/checkout');
+      } else {
+        console.error('Failed to fetch cart data:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch checkout data:', error);
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn, router, session?.user]);
+  }, [router, session?.user]);
 
   // Handle membership activation callback
   const handleMembershipActivated = (membershipData: any) => {
@@ -302,22 +297,7 @@ export default function CheckoutPage() {
     }).format(price);
   };
 
-  if (!isLoggedIn) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <User className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
-          <p className="text-muted-foreground mb-6">
-            Please sign in to proceed to checkout
-          </p>
-          <Link href="/auth/signin?redirect=/checkout">
-            <Button className="w-full">Sign In</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Remove this authentication check - allow guest checkout
 
   if (loading) {
     return (

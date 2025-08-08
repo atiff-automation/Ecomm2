@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -52,6 +53,11 @@ interface ProductFormData {
   dimensions: string;
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
   featured: boolean;
+  isPromotional: boolean;
+  isQualifyingForMembership: boolean;
+  promotionalPrice?: number;
+  promotionStartDate?: Date;
+  promotionEndDate?: Date;
   images: ProductImage[];
 }
 
@@ -77,6 +83,11 @@ export default function CreateProductPage() {
     dimensions: '',
     status: 'DRAFT',
     featured: false,
+    isPromotional: false,
+    isQualifyingForMembership: true, // Default: qualify for membership
+    promotionalPrice: undefined,
+    promotionStartDate: undefined,
+    promotionEndDate: undefined,
     images: [],
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -135,16 +146,16 @@ export default function CreateProductPage() {
     setUploadedImages(images);
 
     // Convert uploaded images to product image format
-    const productImages: ProductImage[] = images.map((img, index) => ({
+    const productImages: ProductImage[] = images.map((img, imgIndex) => ({
       url: img.url,
       altText: formData.name || 'Product image',
-      isPrimary: index === 0, // First image is primary by default
+      isPrimary: imgIndex === 0, // First image is primary by default
     }));
 
     handleInputChange('images', productImages);
   };
 
-  const handleImageRemove = (index: number) => {
+  const handleImageRemove = () => {
     // This will be handled by the ImageUpload component
     // The component will call handleImagesUpload with the updated list
   };
@@ -181,6 +192,39 @@ export default function CreateProductPage() {
         'Member price should not be higher than regular price';
     }
 
+    // Promotional pricing validation
+    if (formData.isPromotional) {
+      if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
+        newErrors.promotionalPrice =
+          'Promotional price is required and must be greater than 0';
+      } else if (formData.promotionalPrice >= formData.regularPrice) {
+        newErrors.promotionalPrice =
+          'Promotional price must be less than regular price';
+      }
+
+      if (!formData.promotionStartDate) {
+        newErrors.promotionStartDate = 'Please select a promotion start date';
+      }
+
+      if (!formData.promotionEndDate) {
+        newErrors.promotionEndDate = 'Please select a promotion end date';
+      }
+
+      if (formData.promotionStartDate && formData.promotionEndDate) {
+        const startDate = formData.promotionStartDate;
+        const endDate = formData.promotionEndDate;
+        const now = new Date();
+
+        if (startDate >= endDate) {
+          newErrors.promotionEndDate = 'End date must be after start date';
+        }
+
+        if (endDate <= now) {
+          newErrors.promotionEndDate = 'End date must be in the future';
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -202,6 +246,15 @@ export default function CreateProductPage() {
         memberPrice: Number(formData.memberPrice),
         costPrice: Number(formData.costPrice),
         weight: formData.weight ? Number(formData.weight) : undefined,
+        promotionalPrice: formData.promotionalPrice
+          ? Number(formData.promotionalPrice)
+          : undefined,
+        promotionStartDate: formData.promotionStartDate
+          ? formData.promotionStartDate.toISOString()
+          : undefined,
+        promotionEndDate: formData.promotionEndDate
+          ? formData.promotionEndDate.toISOString()
+          : undefined,
       };
 
       const response = await fetch('/api/admin/products', {
@@ -222,6 +275,7 @@ export default function CreateProductPage() {
         }
       }
     } catch (error) {
+      console.error('Product creation error:', error);
       setErrors({ general: 'An error occurred while creating the product' });
     } finally {
       setLoading(false);
@@ -499,6 +553,109 @@ export default function CreateProductPage() {
               </CardContent>
             </Card>
 
+            {/* Promotional Pricing Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      Promotional Pricing
+                      <Switch
+                        checked={formData.isPromotional}
+                        onCheckedChange={checked =>
+                          handleInputChange('isPromotional', checked)
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                      Enable special pricing with automatic membership override
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {formData.isPromotional && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="promotionalPrice">
+                        Promotional Price (RM) *
+                      </Label>
+                      <Input
+                        id="promotionalPrice"
+                        type="number"
+                        step="0.01"
+                        value={formData.promotionalPrice || ''}
+                        onChange={e =>
+                          handleInputChange(
+                            'promotionalPrice',
+                            parseFloat(e.target.value) || undefined
+                          )
+                        }
+                        placeholder="Enter promotional price"
+                      />
+                      {errors.promotionalPrice && (
+                        <p className="text-sm text-red-600">
+                          {errors.promotionalPrice}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Promotion Period *</Label>
+                      <CustomDateRangePicker
+                        startDate={formData.promotionStartDate}
+                        endDate={formData.promotionEndDate}
+                        onStartDateChange={date =>
+                          handleInputChange('promotionStartDate', date)
+                        }
+                        onEndDateChange={date =>
+                          handleInputChange('promotionEndDate', date)
+                        }
+                        placeholder="Select promotion start and end dates"
+                      />
+                      {(errors.promotionStartDate ||
+                        errors.promotionEndDate) && (
+                        <p className="text-sm text-red-600">
+                          {errors.promotionStartDate || errors.promotionEndDate}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium mb-1">
+                            How Promotional Pricing Works
+                          </p>
+                          <ul className="space-y-1 text-sm">
+                            <li>
+                              • When promotion is <strong>active</strong>{' '}
+                              (within date range): Uses promotional price
+                            </li>
+                            <li>
+                              • When promotion is <strong>inactive</strong>:
+                              Uses regular/member pricing
+                            </li>
+                            <li>
+                              • <strong>Membership override</strong>: Active
+                              promotions exclude product from RM80 threshold
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!formData.isPromotional && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Enable promotion to configure special pricing</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Inventory</CardTitle>
@@ -513,7 +670,7 @@ export default function CreateProductPage() {
                     onChange={e =>
                       handleInputChange(
                         'stockQuantity',
-                        parseInt(e.target.value) || 0
+                        parseInt(e.target.value, 10) || 0
                       )
                     }
                   />
@@ -533,7 +690,7 @@ export default function CreateProductPage() {
                     onChange={e =>
                       handleInputChange(
                         'lowStockAlert',
-                        parseInt(e.target.value) || 0
+                        parseInt(e.target.value, 10) || 0
                       )
                     }
                   />
@@ -572,6 +729,24 @@ export default function CreateProductPage() {
                     }
                   />
                   <Label htmlFor="featured">Featured Product</Label>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isQualifyingForMembership"
+                      checked={formData.isQualifyingForMembership}
+                      onCheckedChange={checked =>
+                        handleInputChange('isQualifyingForMembership', checked)
+                      }
+                    />
+                    <Label htmlFor="isQualifyingForMembership">
+                      Membership Qualifying
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500 ml-7">
+                    Counts toward RM80 threshold when not on promotion
+                  </p>
                 </div>
               </CardContent>
             </Card>

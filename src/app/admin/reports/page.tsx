@@ -24,6 +24,7 @@ import {
   FileText,
   Crown,
 } from 'lucide-react';
+import ContextualNavigation from '@/components/admin/ContextualNavigation';
 
 interface ReportData {
   salesReport: {
@@ -158,6 +159,14 @@ export default function AdminReports() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ContextualNavigation
+        items={[
+          { label: 'Analytics', href: '/admin/reports' },
+          { label: 'Sales Reports', href: '/admin/reports/sales' },
+          { label: 'Member Analytics', href: '/admin/reports/membership' },
+        ]}
+      />
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
