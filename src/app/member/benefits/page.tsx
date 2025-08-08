@@ -23,6 +23,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import MemberPromotions from '@/components/member/MemberPromotions';
 
 export default function MemberBenefitsPage() {
   const { data: session } = useSession();
@@ -258,6 +259,13 @@ export default function MemberBenefitsPage() {
           })}
         </div>
       </div>
+
+      {/* Member Promotions - Only show for active members */}
+      {isMember && (
+        <div>
+          <MemberPromotions />
+        </div>
+      )}
 
       {/* How to Become a Member */}
       {!isMember && (
