@@ -38,6 +38,12 @@ const updateProductSchema = z.object({
   featured: z.boolean().optional(),
   isPromotional: z.boolean().optional(),
   isQualifyingForMembership: z.boolean().optional(),
+  // Promotional pricing fields
+  promotionalPrice: z.number().min(0, 'Promotional price must be positive').optional(),
+  promotionStartDate: z.string().datetime().optional(),
+  promotionEndDate: z.string().datetime().optional(),
+  memberOnlyUntil: z.string().datetime().optional(),
+  earlyAccessStart: z.string().datetime().optional(),
   images: z
     .array(
       z.object({
@@ -242,6 +248,22 @@ export async function PUT(
           }),
           ...(productData.isQualifyingForMembership !== undefined && {
             isQualifyingForMembership: productData.isQualifyingForMembership,
+          }),
+          // Promotional pricing fields
+          ...(productData.promotionalPrice !== undefined && {
+            promotionalPrice: productData.promotionalPrice || null,
+          }),
+          ...(productData.promotionStartDate !== undefined && {
+            promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
+          }),
+          ...(productData.promotionEndDate !== undefined && {
+            promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
+          }),
+          ...(productData.memberOnlyUntil !== undefined && {
+            memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
+          }),
+          ...(productData.earlyAccessStart !== undefined && {
+            earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
           }),
         },
         include: {

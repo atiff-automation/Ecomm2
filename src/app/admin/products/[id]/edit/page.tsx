@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
 import { ArrowLeft, Save, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -54,6 +55,11 @@ interface ProductFormData {
   featured: boolean;
   isPromotional: boolean;
   isQualifyingForMembership: boolean;
+  promotionalPrice?: number;
+  promotionStartDate?: Date;
+  promotionEndDate?: Date;
+  memberOnlyUntil?: Date;
+  earlyAccessStart?: Date;
   images: ProductImage[];
 }
 
@@ -85,6 +91,11 @@ export default function EditProductPage() {
     featured: false,
     isPromotional: false,
     isQualifyingForMembership: true,
+    promotionalPrice: undefined,
+    promotionStartDate: undefined,
+    promotionEndDate: undefined,
+    memberOnlyUntil: undefined,
+    earlyAccessStart: undefined,
     images: [],
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -150,6 +161,12 @@ export default function EditProductPage() {
             product.isQualifyingForMembership !== undefined
               ? product.isQualifyingForMembership
               : true,
+          // Load promotional pricing data
+          promotionalPrice: product.promotionalPrice || undefined,
+          promotionStartDate: product.promotionStartDate ? new Date(product.promotionStartDate) : undefined,
+          promotionEndDate: product.promotionEndDate ? new Date(product.promotionEndDate) : undefined,
+          memberOnlyUntil: product.memberOnlyUntil ? new Date(product.memberOnlyUntil) : undefined,
+          earlyAccessStart: product.earlyAccessStart ? new Date(product.earlyAccessStart) : undefined,
           images: product.images || [],
         });
       } else {
@@ -238,6 +255,39 @@ export default function EditProductPage() {
         'Member price should not be higher than regular price';
     }
 
+    // Promotional pricing validation
+    if (formData.isPromotional) {
+      if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
+        newErrors.promotionalPrice =
+          'Promotional price is required and must be greater than 0';
+      } else if (formData.promotionalPrice >= formData.regularPrice) {
+        newErrors.promotionalPrice =
+          'Promotional price must be less than regular price';
+      }
+
+      if (!formData.promotionStartDate) {
+        newErrors.promotionStartDate = 'Please select a promotion start date';
+      }
+
+      if (!formData.promotionEndDate) {
+        newErrors.promotionEndDate = 'Please select a promotion end date';
+      }
+
+      if (formData.promotionStartDate && formData.promotionEndDate) {
+        const startDate = formData.promotionStartDate;
+        const endDate = formData.promotionEndDate;
+        const now = new Date();
+
+        if (startDate >= endDate) {
+          newErrors.promotionEndDate = 'End date must be after start date';
+        }
+
+        if (endDate <= now) {
+          newErrors.promotionEndDate = 'End date must be in the future';
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -259,6 +309,21 @@ export default function EditProductPage() {
         memberPrice: Number(formData.memberPrice),
         costPrice: Number(formData.costPrice),
         weight: formData.weight ? Number(formData.weight) : undefined,
+        promotionalPrice: formData.promotionalPrice
+          ? Number(formData.promotionalPrice)
+          : undefined,
+        promotionStartDate: formData.promotionStartDate
+          ? formData.promotionStartDate.toISOString()
+          : undefined,
+        promotionEndDate: formData.promotionEndDate
+          ? formData.promotionEndDate.toISOString()
+          : undefined,
+        memberOnlyUntil: formData.memberOnlyUntil
+          ? formData.memberOnlyUntil.toISOString()
+          : undefined,
+        earlyAccessStart: formData.earlyAccessStart
+          ? formData.earlyAccessStart.toISOString()
+          : undefined,
       };
 
       const response = await fetch(`/api/admin/products/${productId}`, {
@@ -608,6 +673,182 @@ export default function EditProductPage() {
               </CardContent>
             </Card>
 
+            {/* Promotional Pricing Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      Promotional Pricing
+                      <Switch
+                        checked={formData.isPromotional}
+                        onCheckedChange={checked =>
+                          handleInputChange('isPromotional', checked)
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                      Enable special pricing with automatic membership override
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {formData.isPromotional && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="promotionalPrice">
+                        Promotional Price (RM) *
+                      </Label>
+                      <Input
+                        id="promotionalPrice"
+                        type="number"
+                        step="0.01"
+                        value={formData.promotionalPrice || ''}
+                        onChange={e =>
+                          handleInputChange(
+                            'promotionalPrice',
+                            parseFloat(e.target.value) || undefined
+                          )
+                        }
+                        placeholder="Enter promotional price"
+                      />
+                      {errors.promotionalPrice && (
+                        <p className="text-sm text-red-600">
+                          {errors.promotionalPrice}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Promotion Period *</Label>
+                      <CustomDateRangePicker
+                        startDate={formData.promotionStartDate}
+                        endDate={formData.promotionEndDate}
+                        onStartDateChange={date =>
+                          handleInputChange('promotionStartDate', date)
+                        }
+                        onEndDateChange={date =>
+                          handleInputChange('promotionEndDate', date)
+                        }
+                        placeholder="Select promotion start and end dates"
+                      />
+                      {(errors.promotionStartDate ||
+                        errors.promotionEndDate) && (
+                        <p className="text-sm text-red-600">
+                          {errors.promotionStartDate || errors.promotionEndDate}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium mb-1">
+                            How Promotional Pricing Works
+                          </p>
+                          <ul className="space-y-1 text-sm">
+                            <li>
+                              • When promotion is <strong>active</strong>{' '}
+                              (within date range): Uses promotional price
+                            </li>
+                            <li>
+                              • When promotion is <strong>inactive</strong>:
+                              Uses regular/member pricing
+                            </li>
+                            <li>
+                              • <strong>Membership override</strong>: Active
+                              promotions exclude product from RM80 threshold
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!formData.isPromotional && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Enable promotion to configure special pricing</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Member Early Access Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Member Early Access</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure member-only access periods and early promotional
+                  access
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="memberOnlyUntil">
+                    Member-Only Until (Optional)
+                  </Label>
+                  <CustomDateRangePicker
+                    startDate={formData.memberOnlyUntil}
+                    endDate={undefined}
+                    onStartDateChange={date =>
+                      handleInputChange('memberOnlyUntil', date)
+                    }
+                    onEndDateChange={() => {}} // Not used for single date
+                    placeholder="Select member-only period end date"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Product will be visible only to members until this date
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="earlyAccessStart">
+                    Early Access Start (Optional)
+                  </Label>
+                  <CustomDateRangePicker
+                    startDate={formData.earlyAccessStart}
+                    endDate={undefined}
+                    onStartDateChange={date =>
+                      handleInputChange('earlyAccessStart', date)
+                    }
+                    onEndDateChange={() => {}} // Not used for single date
+                    placeholder="Select early access start date"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Members get early access to promotions from this date
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium mb-1">Early Access System</p>
+                      <ul className="space-y-1 text-sm">
+                        <li>
+                          • <strong>Member-Only Until</strong>: Product is
+                          completely hidden from non-members
+                        </li>
+                        <li>
+                          • <strong>Early Access Start</strong>: Members see
+                          promotional pricing before public launch
+                        </li>
+                        <li>
+                          • Works with promotional pricing to create member
+                          exclusivity
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Inventory</CardTitle>
@@ -683,34 +924,22 @@ export default function EditProductPage() {
                   <Label htmlFor="featured">Featured Product</Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isPromotional"
-                    checked={formData.isPromotional}
-                    onCheckedChange={checked =>
-                      handleInputChange('isPromotional', checked)
-                    }
-                  />
-                  <Label htmlFor="isPromotional">Promotional Product</Label>
-                  <span className="text-sm text-gray-500">
-                    (excluded from membership calculation)
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isQualifyingForMembership"
-                    checked={formData.isQualifyingForMembership}
-                    onCheckedChange={checked =>
-                      handleInputChange('isQualifyingForMembership', checked)
-                    }
-                  />
-                  <Label htmlFor="isQualifyingForMembership">
-                    Membership Qualifying
-                  </Label>
-                  <span className="text-sm text-gray-500">
-                    (counts toward RM80 threshold)
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isQualifyingForMembership"
+                      checked={formData.isQualifyingForMembership}
+                      onCheckedChange={checked =>
+                        handleInputChange('isQualifyingForMembership', checked)
+                      }
+                    />
+                    <Label htmlFor="isQualifyingForMembership">
+                      Membership Qualifying
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500 ml-7">
+                    Counts toward RM80 threshold when not on promotion
+                  </p>
                 </div>
               </CardContent>
             </Card>
