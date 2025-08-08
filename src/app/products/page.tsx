@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
+import { canUserAccessProduct, getEarlyAccessPrice, calculateEarlyAccessStatus } from '@/lib/member/early-access-utils';
 
 interface Product {
   id: string;
@@ -39,6 +40,8 @@ interface Product {
   promotionalPrice?: number | null;
   promotionStartDate?: string | null;
   promotionEndDate?: string | null;
+  memberOnlyUntil?: string | null;
+  earlyAccessStart?: string | null;
   averageRating: number;
   reviewCount: number;
   category: {
@@ -197,10 +200,23 @@ export default function ProductsPage() {
     const isLoggedIn = !!session?.user;
     const isMember = session?.user?.isMember || false;
     
-    // Calculate best price using promotional logic
+    // Check early access permissions
+    const canAccess = canUserAccessProduct(product, isMember);
+    const earlyAccessStatus = calculateEarlyAccessStatus(product);
+    
+    // Calculate best price using promotional and early access logic
     const priceInfo = getBestPrice(product, isMember);
+    const earlyAccessPrice = getEarlyAccessPrice(product, isMember);
     const promotionStatus = calculatePromotionStatus(product);
     const promotionText = getPromotionDisplayText(promotionStatus);
+    
+    // Use early access price if applicable
+    const finalPrice = earlyAccessPrice.hasEarlyAccess ? earlyAccessPrice : priceInfo;
+    
+    // Don't show product if user doesn't have access
+    if (!canAccess) {
+      return null;
+    }
 
     return (
       <Card className="group hover:shadow-lg transition-shadow duration-200">
@@ -223,6 +239,16 @@ export default function ProductsPage() {
             {product.featured && (
               <Badge variant="secondary" className="bg-yellow-500 text-white">
                 Featured
+              </Badge>
+            )}
+            {earlyAccessStatus.isMemberOnly && !isMember && (
+              <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-500">
+                Members Only
+              </Badge>
+            )}
+            {earlyAccessStatus.isEarlyAccessPromotion && isMember && (
+              <Badge variant="secondary" className="bg-purple-500 text-white">
+                Early Access
               </Badge>
             )}
             {promotionStatus.isActive && (
@@ -292,18 +318,24 @@ export default function ProductsPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className={`font-bold text-lg ${
-                        priceInfo.priceType === 'promotional' ? 'text-red-600' : 
-                        priceInfo.priceType === 'member' ? 'text-green-600' : 
+                        finalPrice.priceType === 'early-access' ? 'text-purple-600' :
+                        finalPrice.priceType === 'promotional' ? 'text-red-600' : 
+                        finalPrice.priceType === 'member' ? 'text-green-600' : 
                         'text-gray-900'
                       }`}>
-                        {formatPrice(priceInfo.price)}
+                        {formatPrice(finalPrice.price)}
                       </span>
-                      {priceInfo.priceType === 'promotional' && (
+                      {finalPrice.priceType === 'early-access' && (
+                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                          Early Access
+                        </Badge>
+                      )}
+                      {finalPrice.priceType === 'promotional' && (
                         <Badge variant="destructive" className="text-xs">
                           Special
                         </Badge>
                       )}
-                      {priceInfo.priceType === 'member' && (
+                      {finalPrice.priceType === 'member' && (
                         <Badge variant="secondary" className="text-xs">
                           Member
                         </Badge>
@@ -311,23 +343,31 @@ export default function ProductsPage() {
                     </div>
                     
                     {/* Show original price and savings */}
-                    {priceInfo.savings > 0 && (
+                    {finalPrice.savings > 0 && (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground line-through">
-                          {formatPrice(priceInfo.originalPrice)}
+                          {formatPrice(finalPrice.originalPrice)}
                         </span>
                         <span className={`text-xs font-medium ${
-                          priceInfo.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
+                          finalPrice.priceType === 'early-access' ? 'text-purple-600' :
+                          finalPrice.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
                         }`}>
-                          Save {formatPrice(priceInfo.savings)}
+                          Save {formatPrice(finalPrice.savings)}
                         </span>
                       </div>
                     )}
                     
                     {/* Show member price preview for non-members */}
-                    {!isMember && priceInfo.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && (
+                    {!isMember && finalPrice.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && !earlyAccessStatus.isMemberOnly && (
                       <div className="text-xs text-muted-foreground">
                         Member price: {formatPrice(product.memberPrice)}
+                      </div>
+                    )}
+                    
+                    {/* Show early access message for non-members */}
+                    {!isMember && earlyAccessStatus.isMemberOnly && (
+                      <div className="text-xs text-purple-600 font-medium">
+                        🔒 Members-only until {new Date(product.memberOnlyUntil!).toLocaleDateString('en-MY')}
                       </div>
                     )}
                   </div>

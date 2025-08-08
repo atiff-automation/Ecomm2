@@ -39,6 +39,8 @@ const createProductSchema = z.object({
     .optional(),
   promotionStartDate: z.string().datetime().optional(),
   promotionEndDate: z.string().datetime().optional(),
+  memberOnlyUntil: z.string().datetime().optional(),
+  earlyAccessStart: z.string().datetime().optional(),
 });
 
 const searchProductsSchema = z.object({
