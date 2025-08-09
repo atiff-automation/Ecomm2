@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
@@ -69,12 +69,7 @@ export default function AdminInventory() {
     totalPages: 0,
   });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, [filters, pagination.page]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -100,9 +95,9 @@ export default function AdminInventory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.page, pagination.limit]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories');
       if (response.ok) {
@@ -114,7 +109,12 @@ export default function AdminInventory() {
       console.error('Failed to fetch categories:', error);
       setCategories([]); // Ensure we always have an array
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const handleExport = async () => {
     try {

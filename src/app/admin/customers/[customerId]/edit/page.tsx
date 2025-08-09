@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,11 +56,7 @@ export default function AdminCustomerEdit({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
-  useEffect(() => {
-    fetchCustomer();
-  }, [params.customerId]);
-
-  const fetchCustomer = async () => {
+  const fetchCustomer = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/customers/${params.customerId}`);
@@ -86,7 +82,11 @@ export default function AdminCustomerEdit({
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.customerId, router]);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [fetchCustomer]);
 
   const handleInputChange = (
     field: keyof CustomerFormData,
@@ -115,7 +115,7 @@ export default function AdminCustomerEdit({
       newErrors.email = 'Invalid email format';
     }
 
-    if (formData.phone && !/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
+    if (formData.phone && !/^[\d\s\-+()]+$/.test(formData.phone)) {
       newErrors.phone = 'Invalid phone number format';
     }
 
@@ -186,7 +186,7 @@ export default function AdminCustomerEdit({
             Customer not found
           </h2>
           <p className="text-gray-600 mt-2">
-            The customer you're looking for doesn't exist.
+            The customer you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/admin/customers">
             <Button className="mt-4">
@@ -347,7 +347,7 @@ export default function AdminCustomerEdit({
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-yellow-800 text-sm">
                     <strong>Note:</strong> Granting membership status will apply
-                    member pricing and benefits to this customer's future
+                    member pricing and benefits to this customer&apos;s future
                     orders.
                   </p>
                 </div>

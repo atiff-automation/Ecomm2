@@ -19,15 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Crown,
   Gift,
   Calendar,
   Plus,
   Sparkles,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 interface MemberPromotionForm {
@@ -43,7 +42,7 @@ interface MemberPromotionForm {
 
 const seasonalPromotions = [
   { key: 'NEW_YEAR', label: 'New Year Special', icon: '🎊' },
-  { key: 'VALENTINE', label: 'Valentine\'s Day', icon: '💝' },
+  { key: 'VALENTINE', label: "Valentine's Day", icon: '💝' },
   { key: 'RAYA', label: 'Hari Raya', icon: '🌙' },
   { key: 'MERDEKA', label: 'Merdeka Day', icon: '🇲🇾' },
   { key: 'CHRISTMAS', label: 'Christmas', icon: '🎄' },
@@ -52,8 +51,10 @@ const seasonalPromotions = [
 export default function AdminMemberPromotionsPage() {
   const [activeTab, setActiveTab] = useState<'custom' | 'seasonal'>('custom');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [customForm, setCustomForm] = useState<MemberPromotionForm>({
     name: '',
     description: '',
@@ -62,7 +63,10 @@ export default function AdminMemberPromotionsPage() {
     autoApply: false,
   });
 
-  const handleCustomFormChange = (field: keyof MemberPromotionForm, value: any) => {
+  const handleCustomFormChange = (
+    field: keyof MemberPromotionForm,
+    value: string | number | boolean | undefined
+  ) => {
     setCustomForm(prev => ({ ...prev, [field]: value }));
   };
 
@@ -81,7 +85,10 @@ export default function AdminMemberPromotionsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: 'success', text: `Member promotion created successfully! Code: ${data.code}` });
+        setMessage({
+          type: 'success',
+          text: `Member promotion created successfully! Code: ${data.code}`,
+        });
         setCustomForm({
           name: '',
           description: '',
@@ -90,10 +97,16 @@ export default function AdminMemberPromotionsPage() {
           autoApply: false,
         });
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to create promotion' });
+        setMessage({
+          type: 'error',
+          text: data.message || 'Failed to create promotion',
+        });
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to create promotion' });
+    } catch {
+      setMessage({
+        type: 'error',
+        text: 'Failed to create promotion',
+      });
     } finally {
       setLoading(false);
     }
@@ -104,21 +117,33 @@ export default function AdminMemberPromotionsPage() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/admin/member-promotions?type=seasonal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ season }),
-      });
+      const response = await fetch(
+        '/api/admin/member-promotions?type=seasonal',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ season }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: 'success', text: `Seasonal promotion created successfully! Code: ${data.code}` });
+        setMessage({
+          type: 'success',
+          text: `Seasonal promotion created successfully! Code: ${data.code}`,
+        });
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to create seasonal promotion' });
+        setMessage({
+          type: 'error',
+          text: data.message || 'Failed to create seasonal promotion',
+        });
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to create seasonal promotion' });
+    } catch {
+      setMessage({
+        type: 'error',
+        text: 'Failed to create seasonal promotion',
+      });
     } finally {
       setLoading(false);
     }
@@ -133,7 +158,9 @@ export default function AdminMemberPromotionsPage() {
             <Crown className="h-8 w-8 text-purple-600" />
             <div>
               <h1 className="text-3xl font-bold">Member Promotions</h1>
-              <p className="text-gray-600">Create exclusive offers for your valued members</p>
+              <p className="text-gray-600">
+                Create exclusive offers for your valued members
+              </p>
             </div>
           </div>
         </div>
@@ -141,7 +168,9 @@ export default function AdminMemberPromotionsPage() {
 
       {/* Message Display */}
       {message && (
-        <Card className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+        <Card
+          className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+        >
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               {message.type === 'success' ? (
@@ -149,7 +178,11 @@ export default function AdminMemberPromotionsPage() {
               ) : (
                 <AlertCircle className="h-5 w-5 text-red-600" />
               )}
-              <span className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+              <span
+                className={
+                  message.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }
+              >
                 {message.text}
               </span>
             </div>
@@ -198,7 +231,9 @@ export default function AdminMemberPromotionsPage() {
                     <Input
                       id="name"
                       value={customForm.name}
-                      onChange={e => handleCustomFormChange('name', e.target.value)}
+                      onChange={e =>
+                        handleCustomFormChange('name', e.target.value)
+                      }
                       placeholder="e.g., VIP Member Flash Sale"
                       required
                     />
@@ -209,7 +244,9 @@ export default function AdminMemberPromotionsPage() {
                     <Textarea
                       id="description"
                       value={customForm.description}
-                      onChange={e => handleCustomFormChange('description', e.target.value)}
+                      onChange={e =>
+                        handleCustomFormChange('description', e.target.value)
+                      }
                       placeholder="Describe the promotion benefits..."
                       rows={3}
                       required
@@ -220,32 +257,53 @@ export default function AdminMemberPromotionsPage() {
                     <Label>Discount Type *</Label>
                     <Select
                       value={customForm.discountType}
-                      onValueChange={value => handleCustomFormChange('discountType', value)}
+                      onValueChange={value =>
+                        handleCustomFormChange('discountType', value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PERCENTAGE">Percentage Off</SelectItem>
-                        <SelectItem value="FIXED_AMOUNT">Fixed Amount Off</SelectItem>
-                        <SelectItem value="FREE_SHIPPING">Free Shipping</SelectItem>
+                        <SelectItem value="PERCENTAGE">
+                          Percentage Off
+                        </SelectItem>
+                        <SelectItem value="FIXED_AMOUNT">
+                          Fixed Amount Off
+                        </SelectItem>
+                        <SelectItem value="FREE_SHIPPING">
+                          Free Shipping
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
                     <Label htmlFor="discountValue">
-                      Discount Value * 
-                      {customForm.discountType === 'PERCENTAGE' ? ' (%)' : ' (RM)'}
+                      Discount Value *{' '}
+                      {customForm.discountType === 'PERCENTAGE'
+                        ? ' (%)'
+                        : ' (RM)'}
                     </Label>
                     <Input
                       id="discountValue"
                       type="number"
-                      step={customForm.discountType === 'PERCENTAGE' ? '1' : '0.01'}
+                      step={
+                        customForm.discountType === 'PERCENTAGE' ? '1' : '0.01'
+                      }
                       min="0"
-                      max={customForm.discountType === 'PERCENTAGE' ? '100' : undefined}
+                      max={
+                        customForm.discountType === 'PERCENTAGE'
+                          ? '100'
+                          : undefined
+                      }
                       value={customForm.discountValue}
-                      onChange={e => handleCustomFormChange('discountValue', parseFloat(e.target.value) || 0)}
+                      onChange={e =>
+                        handleCustomFormChange(
+                          'discountValue',
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       required
                     />
                   </div>
@@ -253,27 +311,45 @@ export default function AdminMemberPromotionsPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="minimumOrderValue">Minimum Order Value (RM)</Label>
+                    <Label htmlFor="minimumOrderValue">
+                      Minimum Order Value (RM)
+                    </Label>
                     <Input
                       id="minimumOrderValue"
                       type="number"
                       step="0.01"
                       min="0"
                       value={customForm.minimumOrderValue || ''}
-                      onChange={e => handleCustomFormChange('minimumOrderValue', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      onChange={e =>
+                        handleCustomFormChange(
+                          'minimumOrderValue',
+                          e.target.value
+                            ? parseFloat(e.target.value)
+                            : undefined
+                        )
+                      }
                       placeholder="Optional"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="maximumDiscount">Maximum Discount (RM)</Label>
+                    <Label htmlFor="maximumDiscount">
+                      Maximum Discount (RM)
+                    </Label>
                     <Input
                       id="maximumDiscount"
                       type="number"
                       step="0.01"
                       min="0"
                       value={customForm.maximumDiscount || ''}
-                      onChange={e => handleCustomFormChange('maximumDiscount', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      onChange={e =>
+                        handleCustomFormChange(
+                          'maximumDiscount',
+                          e.target.value
+                            ? parseFloat(e.target.value)
+                            : undefined
+                        )
+                      }
                       placeholder="Optional - for percentage discounts"
                     />
                   </div>
@@ -284,7 +360,12 @@ export default function AdminMemberPromotionsPage() {
                       id="expiresAt"
                       type="datetime-local"
                       value={customForm.expiresAt || ''}
-                      onChange={e => handleCustomFormChange('expiresAt', e.target.value || undefined)}
+                      onChange={e =>
+                        handleCustomFormChange(
+                          'expiresAt',
+                          e.target.value || undefined
+                        )
+                      }
                     />
                   </div>
 
@@ -292,15 +373,23 @@ export default function AdminMemberPromotionsPage() {
                     <Switch
                       id="autoApply"
                       checked={customForm.autoApply}
-                      onCheckedChange={checked => handleCustomFormChange('autoApply', checked)}
+                      onCheckedChange={checked =>
+                        handleCustomFormChange('autoApply', checked)
+                      }
                     />
-                    <Label htmlFor="autoApply">Auto-apply (no code needed)</Label>
+                    <Label htmlFor="autoApply">
+                      Auto-apply (no code needed)
+                    </Label>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={loading} className="flex items-center gap-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
                   {loading ? (
                     'Creating...'
                   ) : (
@@ -330,13 +419,17 @@ export default function AdminMemberPromotionsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {seasonalPromotions.map((season) => (
-                <Card key={season.key} className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors">
+              {seasonalPromotions.map(season => (
+                <Card
+                  key={season.key}
+                  className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
+                >
                   <CardContent className="p-6 text-center">
                     <div className="text-4xl mb-3">{season.icon}</div>
                     <h3 className="font-semibold mb-2">{season.label}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Create a special member promotion for {season.label.toLowerCase()}
+                      Create a special member promotion for{' '}
+                      {season.label.toLowerCase()}
                     </p>
                     <Button
                       onClick={() => handleCreateSeasonalPromotion(season.key)}
@@ -357,9 +450,10 @@ export default function AdminMemberPromotionsPage() {
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-1">About Seasonal Promotions</p>
                   <p>
-                    Seasonal promotions come with pre-configured discount values, expiry dates, 
-                    and descriptions tailored for Malaysian celebrations and holidays. They are 
-                    automatically set as member-only promotions.
+                    Seasonal promotions come with pre-configured discount
+                    values, expiry dates, and descriptions tailored for
+                    Malaysian celebrations and holidays. They are automatically
+                    set as member-only promotions.
                   </p>
                 </div>
               </div>

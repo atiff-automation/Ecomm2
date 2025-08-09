@@ -81,40 +81,36 @@ export default function CartPage() {
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
 
-  // Fetch cart data
+  // Fetch cart data (works for both guest and authenticated users)
   const fetchCart = useCallback(async () => {
-    if (!isLoggedIn) {
-      setCartItems([]);
-      setCartSummary(null);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       const response = await fetch('/api/cart');
 
       if (response.ok) {
         const data = await response.json();
-        setCartItems(data.items);
+        setCartItems(data.items || []);
         setCartSummary(data.summary);
       } else if (response.status === 401) {
+        // Handle unauthorized case
+        setCartItems([]);
+        setCartSummary(null);
+      } else {
+        // Handle other errors
         setCartItems([]);
         setCartSummary(null);
       }
     } catch (error) {
       console.error('Failed to fetch cart:', error);
+      setCartItems([]);
+      setCartSummary(null);
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn]);
+  }, []);
 
-  // Update item quantity
+  // Update item quantity (works for both guest and authenticated users)
   const updateQuantity = async (productId: string, newQuantity: number) => {
-    if (!isLoggedIn) {
-      return;
-    }
-
     try {
       setUpdatingItem(productId);
 
@@ -131,6 +127,9 @@ export default function CartPage() {
 
       if (response.ok) {
         await fetchCart(); // Refresh cart
+        // Emit storage event to notify other components
+        localStorage.setItem('cart_updated', Date.now().toString());
+        window.dispatchEvent(new Event('cart_updated'));
       } else {
         const data = await response.json();
         alert(data.message || 'Failed to update cart');
@@ -148,9 +147,9 @@ export default function CartPage() {
     updateQuantity(productId, 0);
   };
 
-  // Clear entire cart
+  // Clear entire cart (works for both guest and authenticated users)
   const clearCart = async () => {
-    if (!isLoggedIn || !confirm('Are you sure you want to clear your cart?')) {
+    if (!confirm('Are you sure you want to clear your cart?')) {
       return;
     }
 
@@ -163,6 +162,9 @@ export default function CartPage() {
       if (response.ok) {
         setCartItems([]);
         setCartSummary(null);
+        // Emit storage event to notify other components
+        localStorage.setItem('cart_updated', Date.now().toString());
+        window.dispatchEvent(new Event('cart_updated'));
       }
     } catch (error) {
       console.error('Failed to clear cart:', error);
@@ -181,7 +183,7 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart();
-  }, [isLoggedIn, fetchCart]);
+  }, [fetchCart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -190,29 +192,7 @@ export default function CartPage() {
     }).format(price);
   };
 
-  if (!isLoggedIn) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
-          <p className="text-muted-foreground mb-6">
-            Please sign in to view your shopping cart
-          </p>
-          <div className="space-y-3">
-            <Link href="/auth/signin">
-              <Button className="w-full">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button variant="outline" className="w-full">
-                Create Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Remove login requirement - allow guest users to view cart
 
   if (loading) {
     return (

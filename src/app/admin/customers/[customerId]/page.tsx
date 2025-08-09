@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,11 +64,7 @@ export default function AdminCustomerView({
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchCustomer();
-  }, [params.customerId]);
-
-  const fetchCustomer = async () => {
+  const fetchCustomer = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/customers/${params.customerId}`);
@@ -85,7 +81,11 @@ export default function AdminCustomerView({
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.customerId, router]);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [fetchCustomer]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -148,7 +148,7 @@ export default function AdminCustomerView({
             Customer not found
           </h2>
           <p className="text-gray-600 mt-2">
-            The customer you're looking for doesn't exist.
+            The customer you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/admin/customers">
             <Button className="mt-4">

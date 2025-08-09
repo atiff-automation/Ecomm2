@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,13 @@ interface ImportResult {
 }
 
 interface ImportProgress {
-  stage: 'idle' | 'uploading' | 'validating' | 'importing' | 'completed' | 'error';
+  stage:
+    | 'idle'
+    | 'uploading'
+    | 'validating'
+    | 'importing'
+    | 'completed'
+    | 'error';
   progress: number;
   message: string;
 }
@@ -94,7 +100,7 @@ export default function ProductImportPage() {
       'memberOnlyUntil',
       'earlyAccessStart',
       'metaTitle',
-      'metaDescription'
+      'metaDescription',
     ];
 
     const sampleRow = [
@@ -119,7 +125,7 @@ export default function ProductImportPage() {
       '',
       '',
       'Sample Product - Best Quality',
-      'High quality sample product for your needs'
+      'High quality sample product for your needs',
     ];
 
     const csvContent = [headers.join(','), sampleRow.join(',')].join('\n');
@@ -135,7 +141,9 @@ export default function ProductImportPage() {
   };
 
   const handleImport = async () => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     setImporting(true);
     setResult(null);
@@ -213,7 +221,9 @@ export default function ProductImportPage() {
     setResult(null);
     // Reset file input
     const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   return (
@@ -253,9 +263,11 @@ export default function ProductImportPage() {
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                   <li>Download the template file to see the required format</li>
-                  <li>Fill in your product data following the template structure</li>
+                  <li>
+                    Fill in your product data following the template structure
+                  </li>
                   <li>Save your file as CSV or Excel format</li>
-                  <li>Upload and import your file</li>
+                  <li>Upload your filled and import your file</li>
                 </ol>
               </div>
               <Alert>
@@ -283,7 +295,9 @@ export default function ProductImportPage() {
                     <Upload className="w-10 h-10 mb-3 text-gray-400" />
                     {file ? (
                       <div className="text-center">
-                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {file.name}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
@@ -291,9 +305,12 @@ export default function ProductImportPage() {
                     ) : (
                       <div className="text-center">
                         <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Click to upload</span> or drag and drop
+                          <span className="font-semibold">Click to upload</span>{' '}
+                          or drag and drop
                         </p>
-                        <p className="text-xs text-gray-500">CSV or Excel files only</p>
+                        <p className="text-xs text-gray-500">
+                          CSV or Excel files only
+                        </p>
                       </div>
                     )}
                   </div>
@@ -324,7 +341,9 @@ export default function ProductImportPage() {
                     </span>
                   </div>
                   <Progress value={progress.progress} className="h-2" />
-                  <p className="text-xs text-muted-foreground">{progress.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {progress.message}
+                  </p>
                 </div>
               )}
 
@@ -387,22 +406,32 @@ export default function ProductImportPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{result.success}</div>
-                    <div className="text-sm text-muted-foreground">Successful</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {result.success}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Successful
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">{result.errors}</div>
+                    <div className="text-2xl font-bold text-red-600">
+                      {result.errors}
+                    </div>
                     <div className="text-sm text-muted-foreground">Errors</div>
                   </div>
                 </div>
-                
+
                 <div className="pt-2 border-t">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-muted-foreground">Total Processed</span>
+                    <span className="text-sm text-muted-foreground">
+                      Total Processed
+                    </span>
                     <Badge variant="outline">{result.total}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Success Rate</span>
+                    <span className="text-sm text-muted-foreground">
+                      Success Rate
+                    </span>
                     <Badge variant="secondary">
                       {Math.round((result.success / result.total) * 100)}%
                     </Badge>
@@ -479,10 +508,12 @@ export default function ProductImportPage() {
                           <span className="text-sm font-medium text-red-800">
                             Row {error.row}: {error.field}
                           </span>
-                          <p className="text-sm text-red-700 mt-1">{error.message}</p>
+                          <p className="text-sm text-red-700 mt-1">
+                            {error.message}
+                          </p>
                           {error.value && (
                             <p className="text-xs text-red-600 mt-1">
-                              Value: "{error.value}"
+                              Value: &quot;{error.value}&quot;
                             </p>
                           )}
                         </div>

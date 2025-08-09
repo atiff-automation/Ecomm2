@@ -206,7 +206,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                   {hasSubmenu && isExpanded && (
                     <div className="ml-6 mt-1 space-y-1">
-                      {item.submenu!.map(subItem => (
+                      {item.submenu?.map(subItem => (
                         <Link
                           key={subItem.href}
                           href={subItem.href}

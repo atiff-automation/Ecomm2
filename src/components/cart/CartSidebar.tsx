@@ -128,6 +128,9 @@ export function CartSidebar({
 
       if (response.ok) {
         await fetchCart(); // Refresh cart
+        // Emit storage event to notify other components (like checkout page)
+        localStorage.setItem('cart_updated', Date.now().toString());
+        window.dispatchEvent(new Event('cart_updated'));
       } else {
         const data = await response.json();
         alert(data.message || 'Failed to update cart');
@@ -160,6 +163,9 @@ export function CartSidebar({
       if (response.ok) {
         setCartItems([]);
         setCartSummary(null);
+        // Emit storage event to notify other components (like checkout page)
+        localStorage.setItem('cart_updated', Date.now().toString());
+        window.dispatchEvent(new Event('cart_updated'));
       }
     } catch (error) {
       console.error('Failed to clear cart:', error);

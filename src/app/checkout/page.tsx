@@ -290,6 +290,47 @@ export default function CheckoutPage() {
     fetchCheckoutData();
   }, [fetchCheckoutData]);
 
+  // Add cart synchronization - refresh when cart is updated elsewhere
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Listen for cart updates from other tabs/components
+      if (e.key === 'cart_updated' || e.key === 'cart_items') {
+        fetchCheckoutData();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      // Refresh cart data when user returns to the page
+      if (!document.hidden) {
+        fetchCheckoutData();
+      }
+    };
+
+    const handleFocus = () => {
+      // Refresh cart data when window gains focus
+      fetchCheckoutData();
+    };
+
+    const handleCartUpdated = () => {
+      // Listen for direct cart_updated events from other components
+      fetchCheckoutData();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cart_updated', handleCartUpdated);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cart_updated', handleCartUpdated);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchCheckoutData]);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
       style: 'currency',

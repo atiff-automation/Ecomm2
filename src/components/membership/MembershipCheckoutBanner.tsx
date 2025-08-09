@@ -217,11 +217,12 @@ export default function MembershipCheckoutBanner({
               size="sm"
               className="border-blue-300 text-blue-700 hover:bg-blue-50"
               onClick={() => {
-                /* Navigate to products or show more info */
+                // Navigate back to shopping to add more items
+                window.location.href = '/products';
               }}
             >
               <ArrowRight className="h-4 w-4 mr-2" />
-              {isClose ? 'Add More Items' : 'Learn More'}
+              Add More Items
             </Button>
           </div>
         </div>

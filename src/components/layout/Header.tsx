@@ -47,8 +47,6 @@ export function Header() {
   const isMember = session?.user?.isMember;
   const loading = status === 'loading';
 
-  // Debug logging
-  console.log('Header render:', { status, isLoggedIn, session: !!session });
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
