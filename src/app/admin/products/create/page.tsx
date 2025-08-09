@@ -489,7 +489,7 @@ export default function CreateProductPage() {
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(category => (
+                          {Array.isArray(categories) && categories.map(category => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
                             </SelectItem>
@@ -924,57 +924,6 @@ export default function CreateProductPage() {
                 </CardContent>
               </Card>
 
-              {/* Product Preview */}
-              {(formData.name || formData.images.length > 0) && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      Preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {formData.images.length > 0 && (
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={formData.images[0].url} 
-                          alt={formData.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="space-y-1">
-                      {formData.name && (
-                        <h3 className="font-medium text-sm">{formData.name}</h3>
-                      )}
-                      {formData.shortDescription && (
-                        <p className="text-xs text-gray-600 line-clamp-2">{formData.shortDescription}</p>
-                      )}
-                      
-                      <div className="flex items-center gap-2 pt-2">
-                        {formData.regularPrice > 0 && (
-                          <span className="text-sm font-bold">RM{formData.regularPrice}</span>
-                        )}
-                        {formData.memberPrice > 0 && formData.memberPrice < formData.regularPrice && (
-                          <Badge variant="secondary" className="text-xs">
-                            Member: RM{formData.memberPrice}
-                          </Badge>
-                        )}
-                        {formData.isPromotional && formData.promotionalPrice && (
-                          <Badge variant="default" className="text-xs bg-red-500">
-                            Promo: RM{formData.promotionalPrice}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {formData.featured && (
-                        <Badge variant="outline" className="text-xs w-fit">Featured</Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Action Buttons */}
               <Card>

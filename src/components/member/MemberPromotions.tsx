@@ -37,7 +37,7 @@ interface MemberPromotion {
   discountValue: number;
   minimumOrderValue: number | null;
   expiresAt: string | null;
-  isAutoApply: boolean;
+  isPublic: boolean;
 }
 
 interface MemberBenefits {
@@ -278,7 +278,7 @@ export default function MemberPromotions() {
                         <div className="flex items-center gap-2 mb-2">
                           {getDiscountIcon(promotion.discountType)}
                           <h3 className="font-semibold text-lg">{promotion.name}</h3>
-                          {promotion.isAutoApply && (
+                          {!promotion.isPublic && (
                             <Badge variant="secondary" className="text-xs">
                               Auto-Apply
                             </Badge>

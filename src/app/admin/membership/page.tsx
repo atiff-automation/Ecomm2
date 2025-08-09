@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Button } from '@/components/ui/button';
@@ -103,7 +103,7 @@ export default function AdminMembership() {
     {
       label: 'Membership',
       href: '/admin/membership',
-      icon: Crown,
+      icon: Crown as React.ComponentType<{ className?: string }>,
     },
   ];
 

@@ -304,7 +304,7 @@ export class MemberPromotionService {
     discountValue: Decimal;
     minimumOrderValue: Decimal | null;
     expiresAt: Date | null;
-    isAutoApply: boolean;
+    isPublic: boolean;
   }>> {
     const now = new Date();
 
@@ -313,19 +313,23 @@ export class MemberPromotionService {
         status: DiscountStatus.ACTIVE,
         memberOnly: true,
         startsAt: { lte: now },
-        OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
         AND: [
+          {
+            OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+          },
           {
             OR: [
               { usageLimit: null },
               { usageLimit: { gt: prisma.discountCode.fields.usageCount } },
             ],
           },
-        ],
-        // Either public member promotions or private ones created for this user
-        OR: [
-          { isPublic: true },
-          { createdById: userId },
+          {
+            // Either public member promotions or private ones created for this user
+            OR: [
+              { isPublic: true },
+              { createdById: userId },
+            ],
+          },
         ],
         // Ensure user hasn't used this code if there's a per-user limit
         NOT: {

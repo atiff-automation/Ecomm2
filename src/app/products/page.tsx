@@ -266,6 +266,11 @@ export default function ProductsPage() {
                 Out of Stock
               </Badge>
             )}
+            {product.isQualifyingForMembership && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                Membership Qualifying
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -451,7 +456,7 @@ export default function ProductsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
+                    {Array.isArray(categories) && categories.map(category => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name} ({category.productCount || 0})
                       </SelectItem>

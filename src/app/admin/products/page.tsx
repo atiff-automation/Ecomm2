@@ -71,6 +71,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -103,13 +104,34 @@ export default function AdminProductsPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
+      setCategoriesLoading(true);
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data);
+        console.log('Categories API Response:', data); // Debug log
+        
+        // Handle different response structures
+        let categoriesData = [];
+        if (Array.isArray(data)) {
+          categoriesData = data;
+        } else if (data.categories && Array.isArray(data.categories)) {
+          categoriesData = data.categories;
+        } else if (data.data && Array.isArray(data.data)) {
+          categoriesData = data.data;
+        }
+        
+        console.log('Processed categories data:', categoriesData); // Debug log
+        console.log('Is categories data an array?', Array.isArray(categoriesData)); // Debug log
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      } else {
+        console.error('Categories API failed:', response.status, response.statusText);
+        setCategories([]);
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
     }
   }, []);
 
@@ -275,15 +297,28 @@ export default function AdminProductsPage() {
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={categoriesLoading ? "Loading..." : "Category"} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
+              {categoriesLoading && (
+                <SelectItem value="loading" disabled>
+                  Loading categories...
                 </SelectItem>
-              ))}
+              )}
+              {!categoriesLoading && Array.isArray(categories) && categories.length > 0 && (() => {
+                console.log('About to map categories:', categories, 'isArray:', Array.isArray(categories));
+                return categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ));
+              })()}
+              {!categoriesLoading && (!Array.isArray(categories) || categories.length === 0) && (
+                <SelectItem value="no-categories" disabled>
+                  No categories available
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -397,8 +432,8 @@ export default function AdminProductsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Link href={`/products/${product.slug}`}>
-                            <Button variant="ghost" size="sm">
+                          <Link href={`/products/${product.slug}`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="sm" title="Live View Product">
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>

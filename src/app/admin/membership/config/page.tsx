@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -177,12 +177,12 @@ export default function MembershipConfigPage() {
     {
       label: 'Membership',
       href: '/admin/membership',
-      icon: Users,
+      icon: Users as React.ComponentType<{ className?: string }>,
     },
     {
       label: 'Configuration',
       href: '/admin/membership/config',
-      icon: Settings,
+      icon: Settings as React.ComponentType<{ className?: string }>,
     },
   ];
 
@@ -421,10 +421,10 @@ export default function MembershipConfigPage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
                     <h4 className="font-semibold">
-                      Require Qualifying Categories
+                      Require Qualifying Products
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Only items from qualifying categories count towards
+                      Only products marked as qualifying count towards
                       membership
                     </p>
                   </div>

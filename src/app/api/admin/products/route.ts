@@ -35,10 +35,10 @@ const createProductSchema = z.object({
   isPromotional: z.boolean().default(false),
   isQualifyingForMembership: z.boolean().default(true),
   promotionalPrice: z.number().optional(),
-  promotionStartDate: z.string().optional(),
-  promotionEndDate: z.string().optional(),
-  memberOnlyUntil: z.string().optional(),
-  earlyAccessStart: z.string().optional(),
+  promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
+  promotionEndDate: z.union([z.string().datetime(), z.null()]).optional(),
+  memberOnlyUntil: z.union([z.string().datetime(), z.null()]).optional(),
+  earlyAccessStart: z.union([z.string().datetime(), z.null()]).optional(),
   images: z
     .array(
       z.object({

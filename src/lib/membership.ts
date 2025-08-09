@@ -135,11 +135,11 @@ export function calculateMembershipEligibility(
     // Check if item qualifies for membership calculation using new promotional system
     const qualifiesForMembership = productQualifiesForMembership({
       isPromotional: item.product.isPromotional,
-      promotionalPrice: item.product.promotionalPrice,
+      promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
       promotionStartDate: item.product.promotionStartDate,
       promotionEndDate: item.product.promotionEndDate,
       isQualifyingForMembership: item.product.isQualifyingForMembership
-    });
+    }, config.enablePromotionalExclusion);
 
     if (qualifiesForMembership) {
       qualifyingTotal += regularPrice * quantity;
@@ -280,11 +280,11 @@ export async function checkUserMembershipQualification(
         // Use new promotional system for membership qualification
         const qualifiesForMembership = productQualifiesForMembership({
           isPromotional: item.product.isPromotional,
-          promotionalPrice: item.product.promotionalPrice,
+          promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
           promotionStartDate: item.product.promotionStartDate,
           promotionEndDate: item.product.promotionEndDate,
           isQualifyingForMembership: item.product.isQualifyingForMembership
-        });
+        }, config.enablePromotionalExclusion);
 
         if (qualifiesForMembership) {
           qualifyingTotal += Number(item.regularPrice) * item.quantity;

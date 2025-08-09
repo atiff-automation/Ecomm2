@@ -1,6 +1,6 @@
 /**
  * Admin Product Edit Page - JRM E-commerce Platform
- * Edit existing products with full details and images
+ * Modern tabbed interface for editing existing products with full functionality preservation
  */
 
 'use client';
@@ -20,9 +20,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
-import { ArrowLeft, Save, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Save,
+  AlertCircle,
+  Loader2,
+  Package,
+  DollarSign,
+  Archive,
+  ImageIcon,
+  Settings,
+  CheckCircle,
+  Clock,
+  Trash2,
+  Eye,
+  Calendar,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface Category {
@@ -50,8 +69,8 @@ interface ProductFormData {
   stockQuantity: number;
   lowStockAlert: number;
   weight?: number;
-  dimensions: string;
-  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+  dimensions?: string;
+  status: string;
   featured: boolean;
   isPromotional: boolean;
   isQualifyingForMembership: boolean;
@@ -68,6 +87,7 @@ export default function EditProductPage() {
   const params = useParams();
   const productId = params.id as string;
 
+  const [activeTab, setActiveTab] = useState('basic');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -100,11 +120,15 @@ export default function EditProductPage() {
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
+  // Utility function to safely format prices
+  const formatPrice = (price: any): string => {
+    const numPrice = Number(price);
+    return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
+  };
+
   useEffect(() => {
     fetchCategories();
-    if (productId) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [productId]);
 
   const fetchCategories = async () => {
@@ -126,55 +150,59 @@ export default function EditProductPage() {
         const data = await response.json();
         const product = data.product;
 
-        // Convert existing images to UploadedImage format for the component
+        // Convert existing images to uploaded images format
         const existingUploadedImages: UploadedImage[] = (
           product.images || []
-        ).map((img, index) => ({
+        ).map((img: ProductImage, index: number) => ({
           url: img.url,
-          filename: img.url.split('/').pop() || `image-${index}`,
-          width: 400, // Default dimensions - these would ideally come from the database
-          height: 400,
-          size: 0, // Size not available from existing data
+          filename: `existing-image-${index}`, // Placeholder filename for existing images
+          width: 800, // Default dimensions - could be fetched from image metadata
+          height: 600,
+          size: 0, // Size unknown for existing images
         }));
 
         setUploadedImages(existingUploadedImages);
 
         setFormData({
-          name: product.name,
-          slug: product.slug,
+          name: product.name || '',
+          slug: product.slug || '',
           description: product.description || '',
           shortDescription: product.shortDescription || '',
-          sku: product.sku,
+          sku: product.sku || '',
           barcode: product.barcode || '',
-          categoryId: product.category.id,
-          regularPrice: product.regularPrice,
-          memberPrice: product.memberPrice,
-          costPrice: product.costPrice,
-          stockQuantity: product.stockQuantity,
-          lowStockAlert: product.lowStockAlert,
-          weight: product.weight,
+          categoryId: product.categoryId || '',
+          regularPrice: Number(product.regularPrice) || 0,
+          memberPrice: Number(product.memberPrice) || 0,
+          costPrice: Number(product.costPrice) || 0,
+          stockQuantity: product.stockQuantity || 0,
+          lowStockAlert: product.lowStockAlert || 10,
+          weight: product.weight || 0,
           dimensions: product.dimensions || '',
-          status: product.status,
-          featured: product.featured,
+          status: product.status || 'DRAFT',
+          featured: product.featured || false,
           isPromotional: product.isPromotional || false,
-          isQualifyingForMembership:
-            product.isQualifyingForMembership !== undefined
-              ? product.isQualifyingForMembership
-              : true,
-          // Load promotional pricing data
-          promotionalPrice: product.promotionalPrice || undefined,
-          promotionStartDate: product.promotionStartDate ? new Date(product.promotionStartDate) : undefined,
-          promotionEndDate: product.promotionEndDate ? new Date(product.promotionEndDate) : undefined,
-          memberOnlyUntil: product.memberOnlyUntil ? new Date(product.memberOnlyUntil) : undefined,
-          earlyAccessStart: product.earlyAccessStart ? new Date(product.earlyAccessStart) : undefined,
+          isQualifyingForMembership: product.isQualifyingForMembership ?? true,
+          promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : undefined,
+          promotionStartDate: product.promotionStartDate
+            ? new Date(product.promotionStartDate)
+            : undefined,
+          promotionEndDate: product.promotionEndDate
+            ? new Date(product.promotionEndDate)
+            : undefined,
+          memberOnlyUntil: product.memberOnlyUntil
+            ? new Date(product.memberOnlyUntil)
+            : undefined,
+          earlyAccessStart: product.earlyAccessStart
+            ? new Date(product.earlyAccessStart)
+            : undefined,
           images: product.images || [],
         });
       } else {
-        setErrors({ general: 'Failed to load product' });
+        throw new Error('Product not found');
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
-      setErrors({ general: 'Failed to load product' });
+      router.push('/admin/products');
     } finally {
       setLoading(false);
     }
@@ -187,50 +215,58 @@ export default function EditProductPage() {
       .replace(/(^-|-$)/g, '');
   };
 
-  const handleInputChange = (field: keyof ProductFormData, value: any) => {
+  const handleInputChange = (
+    field: string,
+    value: string | number | boolean | Date | undefined
+  ) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
 
-      // Auto-generate slug when name changes (only if slug hasn't been manually edited)
-      if (field === 'name' && updated.slug === generateSlug(prev.name)) {
-        updated.slug = generateSlug(value);
+      // Auto-generate slug when name changes
+      if (field === 'name' && value) {
+        updated.slug = generateSlug(value as string);
+      }
+
+      // Clear promotional fields when promotional is disabled
+      if (field === 'isPromotional' && !value) {
+        updated.promotionalPrice = undefined;
+        updated.promotionStartDate = undefined;
+        updated.promotionEndDate = undefined;
       }
 
       return updated;
     });
 
-    // Clear error when field is modified
+    // Clear field-specific errors
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
   const handleImagesUpload = (images: UploadedImage[]) => {
     setUploadedImages(images);
 
-    // Convert uploaded images to product image format
+    // Convert uploaded images to product images format
     const productImages: ProductImage[] = images.map((img, index) => ({
-      url: img.url,
-      altText: formData.name || 'Product image',
-      isPrimary: index === 0, // First image is primary by default
+      url: img.url, // Use the actual uploaded URL, not preview
+      altText: '', // Will be set separately if needed
+      isPrimary: index === 0, // First image is primary
     }));
 
-    handleInputChange('images', productImages);
+    setFormData(prev => ({ ...prev, images: productImages }));
   };
 
-  const handleImageRemove = () => {
-    // This will be handled by the ImageUpload component
-    // The component will call handleImagesUpload with the updated list
-  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Basic validation
     if (!formData.name.trim()) {
       newErrors.name = 'Product name is required';
-    }
-    if (!formData.slug.trim()) {
-      newErrors.slug = 'Product slug is required';
     }
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
@@ -244,15 +280,14 @@ export default function EditProductPage() {
     if (formData.memberPrice <= 0) {
       newErrors.memberPrice = 'Member price must be greater than 0';
     }
+    if (formData.memberPrice >= formData.regularPrice) {
+      newErrors.memberPrice = 'Member price must be less than regular price';
+    }
     if (formData.costPrice < 0) {
       newErrors.costPrice = 'Cost price cannot be negative';
     }
     if (formData.stockQuantity < 0) {
       newErrors.stockQuantity = 'Stock quantity cannot be negative';
-    }
-    if (formData.memberPrice > formData.regularPrice) {
-      newErrors.memberPrice =
-        'Member price should not be higher than regular price';
     }
 
     // Promotional pricing validation
@@ -260,17 +295,9 @@ export default function EditProductPage() {
       if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
         newErrors.promotionalPrice =
           'Promotional price is required and must be greater than 0';
-      } else if (formData.promotionalPrice >= formData.regularPrice) {
+      } else if (formData.promotionalPrice >= formData.memberPrice) {
         newErrors.promotionalPrice =
-          'Promotional price must be less than regular price';
-      }
-
-      if (!formData.promotionStartDate) {
-        newErrors.promotionStartDate = 'Please select a promotion start date';
-      }
-
-      if (!formData.promotionEndDate) {
-        newErrors.promotionEndDate = 'Please select a promotion end date';
+          'Promotional price must be less than member price';
       }
 
       if (formData.promotionStartDate && formData.promotionEndDate) {
@@ -278,7 +305,7 @@ export default function EditProductPage() {
         const endDate = formData.promotionEndDate;
         const now = new Date();
 
-        if (startDate >= endDate) {
+        if (endDate <= startDate) {
           newErrors.promotionEndDate = 'End date must be after start date';
         }
 
@@ -302,28 +329,26 @@ export default function EditProductPage() {
     setSaving(true);
 
     try {
-      // Convert string numbers to actual numbers for validation
       const processedFormData = {
         ...formData,
         regularPrice: Number(formData.regularPrice),
         memberPrice: Number(formData.memberPrice),
         costPrice: Number(formData.costPrice),
-        weight: formData.weight ? Number(formData.weight) : undefined,
+        stockQuantity: Number(formData.stockQuantity),
+        lowStockAlert: Number(formData.lowStockAlert),
+        weight: formData.weight ? Number(formData.weight) : null,
         promotionalPrice: formData.promotionalPrice
           ? Number(formData.promotionalPrice)
-          : undefined,
-        promotionStartDate: formData.promotionStartDate
-          ? formData.promotionStartDate.toISOString()
-          : undefined,
-        promotionEndDate: formData.promotionEndDate
-          ? formData.promotionEndDate.toISOString()
-          : undefined,
-        memberOnlyUntil: formData.memberOnlyUntil
-          ? formData.memberOnlyUntil.toISOString()
-          : undefined,
-        earlyAccessStart: formData.earlyAccessStart
-          ? formData.earlyAccessStart.toISOString()
-          : undefined,
+          : null,
+        promotionStartDate: formData.promotionStartDate || null,
+        promotionEndDate: formData.promotionEndDate || null,
+        memberOnlyUntil: formData.memberOnlyUntil || null,
+        earlyAccessStart: formData.earlyAccessStart || null,
+        images: uploadedImages.map((img, index) => ({
+          url: img.url,
+          altText: '',
+          isPrimary: index === 0,
+        })),
       };
 
       const response = await fetch(`/api/admin/products/${productId}`, {
@@ -335,17 +360,12 @@ export default function EditProductPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push(`/admin/products/${productId}?success=updated`);
+        router.push('/admin/products');
       } else {
-        if (data.field) {
-          setErrors({ [data.field]: data.message });
-        } else {
-          setErrors({ general: data.message || 'Failed to update product' });
-        }
+        throw new Error(data.message || 'Failed to update product');
       }
-    } catch (error) {
-      console.error('Product update error:', error);
-      setErrors({ general: 'An error occurred while updating the product' });
+    } catch (error: any) {
+      setErrors({ submit: error.message });
     } finally {
       setSaving(false);
     }
@@ -360,604 +380,758 @@ export default function EditProductPage() {
       return;
     }
 
-    setSaving(true);
-
     try {
+      setSaving(true);
       const response = await fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        router.push('/admin/inventory?success=deleted');
+        router.push('/admin/products');
       } else {
-        const data = await response.json();
-        setErrors({ general: data.message || 'Failed to delete product' });
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete product');
       }
-    } catch (error) {
-      console.error('Product delete error:', error);
-      setErrors({ general: 'An error occurred while deleting the product' });
+    } catch (error: any) {
+      setErrors({ delete: error.message });
     } finally {
       setSaving(false);
     }
   };
 
+  const getTabStatus = (tabId: string): 'completed' | 'current' | 'pending' => {
+    if (tabId === activeTab) {
+      return 'current';
+    }
+
+    switch (tabId) {
+      case 'basic':
+        return formData.name && formData.sku && formData.categoryId
+          ? 'completed'
+          : 'pending';
+      case 'pricing':
+        return formData.regularPrice > 0 &&
+          formData.memberPrice > 0 &&
+          formData.memberPrice < formData.regularPrice
+          ? 'completed'
+          : 'pending';
+      case 'inventory':
+        return formData.stockQuantity >= 0 ? 'completed' : 'pending';
+      case 'media':
+        return uploadedImages.length > 0 ? 'completed' : 'pending';
+      case 'advanced':
+        return 'completed'; // Advanced settings are optional
+      default:
+        return 'pending';
+    }
+  };
+
+  const TabStatusIcon = ({
+    status,
+  }: {
+    status: 'completed' | 'current' | 'pending';
+  }) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'current':
+        return <Clock className="h-4 w-4 text-blue-600" />;
+      default:
+        return <div className="h-2 w-2 bg-gray-300 rounded-full" />;
+    }
+  };
+
+  const calculateProgress = () => {
+    const tabs = ['basic', 'pricing', 'inventory', 'media', 'advanced'];
+    const completedTabs = tabs.filter(
+      tab => getTabStatus(tab) === 'completed'
+    ).length;
+    return (completedTabs / tabs.length) * 100;
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-gray-600">Loading product...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Link href={`/admin/products/${productId}`}>
+          <Link href="/admin/products">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Product
+              Back to Products
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold">Edit Product</h1>
-            <p className="text-gray-600">
-              Update product information and settings
+            <p className="text-gray-600 mt-1">
+              Update your product information and settings
             </p>
           </div>
         </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={saving}
-          >
-            Delete Product
-          </Button>
-        </div>
+
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Product Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {errors.general && (
-                  <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-md">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-sm">{errors.general}</span>
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={e => handleInputChange('name', e.target.value)}
-                    placeholder="Enter product name"
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="slug">URL Slug *</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug}
-                    onChange={e => handleInputChange('slug', e.target.value)}
-                    placeholder="product-url-slug"
-                  />
-                  {errors.slug && (
-                    <p className="text-sm text-red-600 mt-1">{errors.slug}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="shortDescription">Short Description</Label>
-                  <Textarea
-                    id="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={e =>
-                      handleInputChange('shortDescription', e.target.value)
-                    }
-                    placeholder="Brief product description"
-                    rows={2}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Full Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={e =>
-                      handleInputChange('description', e.target.value)
-                    }
-                    placeholder="Detailed product description"
-                    rows={4}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="sku">SKU *</Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={e => handleInputChange('sku', e.target.value)}
-                      placeholder="PROD-001"
-                    />
-                    {errors.sku && (
-                      <p className="text-sm text-red-600 mt-1">{errors.sku}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="barcode">Barcode</Label>
-                    <Input
-                      id="barcode"
-                      value={formData.barcode}
-                      onChange={e =>
-                        handleInputChange('barcode', e.target.value)
-                      }
-                      placeholder="123456789012"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="category">Category *</Label>
-                  <Select
-                    value={formData.categoryId}
-                    onValueChange={value =>
-                      handleInputChange('categoryId', value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.categoryId && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.categoryId}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      step="0.01"
-                      value={formData.weight || ''}
-                      onChange={e =>
-                        handleInputChange(
-                          'weight',
-                          e.target.value
-                            ? parseFloat(e.target.value)
-                            : undefined
-                        )
-                      }
-                      placeholder="0.5"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dimensions">Dimensions (L x W x H)</Label>
-                    <Input
-                      id="dimensions"
-                      value={formData.dimensions}
-                      onChange={e =>
-                        handleInputChange('dimensions', e.target.value)
-                      }
-                      placeholder="10 x 5 x 2 cm"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Product Images */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Images</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ImageUpload
-                  onUpload={handleImagesUpload}
-                  onRemove={handleImageRemove}
-                  maxFiles={5}
-                  maxSize={10}
-                  initialImages={uploadedImages}
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
+      {/* Error Messages */}
+      {(errors.submit || errors.delete) && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-2 mt-0.5" />
+            <div>
+              <p className="font-medium text-red-800">Error</p>
+              <p className="text-red-700 mt-1">
+                {errors.submit || errors.delete}
+              </p>
+            </div>
           </div>
+        </div>
+      )}
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="regularPrice">Regular Price (RM) *</Label>
-                  <Input
-                    id="regularPrice"
-                    type="number"
-                    step="0.01"
-                    value={formData.regularPrice}
-                    onChange={e =>
-                      handleInputChange(
-                        'regularPrice',
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                  />
-                  {errors.regularPrice && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.regularPrice}
-                    </p>
-                  )}
-                </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Form Area (3/4 width) */}
+          <div className="lg:col-span-3">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="space-y-6"
+            >
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="basic" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Basic
+                  <TabStatusIcon status={getTabStatus('basic')} />
+                </TabsTrigger>
+                <TabsTrigger
+                  value="pricing"
+                  className="flex items-center gap-2"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Pricing
+                  <TabStatusIcon status={getTabStatus('pricing')} />
+                </TabsTrigger>
+                <TabsTrigger
+                  value="inventory"
+                  className="flex items-center gap-2"
+                >
+                  <Archive className="h-4 w-4" />
+                  Inventory
+                  <TabStatusIcon status={getTabStatus('inventory')} />
+                </TabsTrigger>
+                <TabsTrigger value="media" className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Images
+                  <TabStatusIcon status={getTabStatus('media')} />
+                </TabsTrigger>
+                <TabsTrigger
+                  value="advanced"
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Advanced
+                  <TabStatusIcon status={getTabStatus('advanced')} />
+                </TabsTrigger>
+              </TabsList>
 
-                <div>
-                  <Label htmlFor="memberPrice">Member Price (RM) *</Label>
-                  <Input
-                    id="memberPrice"
-                    type="number"
-                    step="0.01"
-                    value={formData.memberPrice}
-                    onChange={e =>
-                      handleInputChange(
-                        'memberPrice',
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                  />
-                  {errors.memberPrice && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.memberPrice}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="costPrice">Cost Price (RM) *</Label>
-                  <Input
-                    id="costPrice"
-                    type="number"
-                    step="0.01"
-                    value={formData.costPrice}
-                    onChange={e =>
-                      handleInputChange(
-                        'costPrice',
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                  />
-                  {errors.costPrice && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.costPrice}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Promotional Pricing Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      Promotional Pricing
-                      <Switch
-                        checked={formData.isPromotional}
-                        onCheckedChange={checked =>
-                          handleInputChange('isPromotional', checked)
-                        }
-                      />
-                    </div>
-                    <p className="text-sm text-muted-foreground font-normal mt-1">
-                      Enable special pricing with automatic membership override
-                    </p>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {formData.isPromotional && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="promotionalPrice">
-                        Promotional Price (RM) *
-                      </Label>
-                      <Input
-                        id="promotionalPrice"
-                        type="number"
-                        step="0.01"
-                        value={formData.promotionalPrice || ''}
-                        onChange={e =>
-                          handleInputChange(
-                            'promotionalPrice',
-                            parseFloat(e.target.value) || undefined
-                          )
-                        }
-                        placeholder="Enter promotional price"
-                      />
-                      {errors.promotionalPrice && (
-                        <p className="text-sm text-red-600">
-                          {errors.promotionalPrice}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Promotion Period *</Label>
-                      <CustomDateRangePicker
-                        startDate={formData.promotionStartDate}
-                        endDate={formData.promotionEndDate}
-                        onStartDateChange={date =>
-                          handleInputChange('promotionStartDate', date)
-                        }
-                        onEndDateChange={date =>
-                          handleInputChange('promotionEndDate', date)
-                        }
-                        placeholder="Select promotion start and end dates"
-                      />
-                      {(errors.promotionStartDate ||
-                        errors.promotionEndDate) && (
-                        <p className="text-sm text-red-600">
-                          {errors.promotionStartDate || errors.promotionEndDate}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start space-x-2">
-                        <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                        <div className="text-sm text-blue-800">
-                          <p className="font-medium mb-1">
-                            How Promotional Pricing Works
+              {/* Basic Information Tab */}
+              <TabsContent value="basic" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Basic Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <Label htmlFor="name">Product Name *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={e =>
+                            handleInputChange('name', e.target.value)
+                          }
+                          placeholder="Enter product name"
+                        />
+                        {errors.name && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.name}
                           </p>
-                          <ul className="space-y-1 text-sm">
-                            <li>
-                              • When promotion is <strong>active</strong>{' '}
-                              (within date range): Uses promotional price
-                            </li>
-                            <li>
-                              • When promotion is <strong>inactive</strong>:
-                              Uses regular/member pricing
-                            </li>
-                            <li>
-                              • <strong>Membership override</strong>: Active
-                              promotions exclude product from RM80 threshold
-                            </li>
-                          </ul>
-                        </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="slug">URL Slug</Label>
+                        <Input
+                          id="slug"
+                          value={formData.slug}
+                          onChange={e =>
+                            handleInputChange('slug', e.target.value)
+                          }
+                          placeholder="product-url-slug"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="sku">SKU *</Label>
+                        <Input
+                          id="sku"
+                          value={formData.sku}
+                          onChange={e =>
+                            handleInputChange('sku', e.target.value)
+                          }
+                          placeholder="PROD-001"
+                        />
+                        {errors.sku && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.sku}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="barcode">Barcode</Label>
+                        <Input
+                          id="barcode"
+                          value={formData.barcode}
+                          onChange={e =>
+                            handleInputChange('barcode', e.target.value)
+                          }
+                          placeholder="123456789012"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="category">Category *</Label>
+                        <Select
+                          value={formData.categoryId}
+                          onValueChange={value =>
+                            handleInputChange('categoryId', value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(categories) && categories.map(category => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.categoryId && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.categoryId}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </>
-                )}
 
-                {!formData.isPromotional && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Enable promotion to configure special pricing</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    <div>
+                      <Label htmlFor="shortDescription">
+                        Short Description
+                      </Label>
+                      <Textarea
+                        id="shortDescription"
+                        value={formData.shortDescription}
+                        onChange={e =>
+                          handleInputChange('shortDescription', e.target.value)
+                        }
+                        placeholder="Brief product description for listings"
+                        rows={3}
+                      />
+                    </div>
 
-            {/* Member Early Access Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Member Early Access</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Configure member-only access periods and early promotional
-                  access
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="memberOnlyUntil">
-                    Member-Only Until (Optional)
-                  </Label>
-                  <CustomDateRangePicker
-                    startDate={formData.memberOnlyUntil}
-                    endDate={undefined}
-                    onStartDateChange={date =>
-                      handleInputChange('memberOnlyUntil', date)
-                    }
-                    onEndDateChange={() => {}} // Not used for single date
-                    placeholder="Select member-only period end date"
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Product will be visible only to members until this date
-                  </p>
-                </div>
+                    <div>
+                      <Label htmlFor="description">Full Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={e =>
+                          handleInputChange('description', e.target.value)
+                        }
+                        placeholder="Detailed product description"
+                        rows={6}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="earlyAccessStart">
-                    Early Access Start (Optional)
-                  </Label>
-                  <CustomDateRangePicker
-                    startDate={formData.earlyAccessStart}
-                    endDate={undefined}
-                    onStartDateChange={date =>
-                      handleInputChange('earlyAccessStart', date)
-                    }
-                    onEndDateChange={() => {}} // Not used for single date
-                    placeholder="Select early access start date"
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Members get early access to promotions from this date
-                  </p>
-                </div>
+              {/* Pricing Tab */}
+              <TabsContent value="pricing" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Pricing Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="regularPrice">
+                          Regular Price (RM) *
+                        </Label>
+                        <Input
+                          id="regularPrice"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.regularPrice}
+                          onChange={e =>
+                            handleInputChange(
+                              'regularPrice',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder="0.00"
+                        />
+                        {errors.regularPrice && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.regularPrice}
+                          </p>
+                        )}
+                      </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div className="text-sm text-amber-800">
-                      <p className="font-medium mb-1">Early Access System</p>
-                      <ul className="space-y-1 text-sm">
-                        <li>
-                          • <strong>Member-Only Until</strong>: Product is
-                          completely hidden from non-members
-                        </li>
-                        <li>
-                          • <strong>Early Access Start</strong>: Members see
-                          promotional pricing before public launch
-                        </li>
-                        <li>
-                          • Works with promotional pricing to create member
-                          exclusivity
-                        </li>
-                      </ul>
+                      <div>
+                        <Label htmlFor="memberPrice">Member Price (RM) *</Label>
+                        <Input
+                          id="memberPrice"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.memberPrice}
+                          onChange={e =>
+                            handleInputChange(
+                              'memberPrice',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder="0.00"
+                        />
+                        {errors.memberPrice && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.memberPrice}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="costPrice">Cost Price (RM)</Label>
+                        <Input
+                          id="costPrice"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.costPrice}
+                          onChange={e =>
+                            handleInputChange(
+                              'costPrice',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder="0.00"
+                        />
+                        {errors.costPrice && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.costPrice}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Membership Qualification */}
+                    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded-full">
+                          <Sparkles className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-blue-900">
+                            Membership Qualification
+                          </p>
+                          <p className="text-sm text-blue-700">
+                            Allow this product to count towards membership
+                            qualification
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.isQualifyingForMembership}
+                        onCheckedChange={value =>
+                          handleInputChange('isQualifyingForMembership', value)
+                        }
+                      />
+                    </div>
+
+                    {/* Promotional Pricing */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-orange-100 rounded-full">
+                            <Calendar className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-orange-900">
+                              Promotional Pricing
+                            </p>
+                            <p className="text-sm text-orange-700">
+                              Enable special promotional pricing for limited
+                              time
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={formData.isPromotional}
+                          onCheckedChange={value =>
+                            handleInputChange('isPromotional', value)
+                          }
+                        />
+                      </div>
+
+                      {formData.isPromotional && (
+                        <div className="space-y-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                          <div>
+                            <Label htmlFor="promotionalPrice">
+                              Promotional Price (RM) *
+                            </Label>
+                            <Input
+                              id="promotionalPrice"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.promotionalPrice || ''}
+                              onChange={e =>
+                                handleInputChange(
+                                  'promotionalPrice',
+                                  parseFloat(e.target.value) || undefined
+                                )
+                              }
+                              placeholder="0.00"
+                            />
+                            {errors.promotionalPrice && (
+                              <p className="text-sm text-red-600 mt-1">
+                                {errors.promotionalPrice}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <Label>Promotion Period</Label>
+                            <CustomDateRangePicker
+                              startDate={formData.promotionStartDate}
+                              endDate={formData.promotionEndDate}
+                              onDateChange={(startDate, endDate) => {
+                                handleInputChange(
+                                  'promotionStartDate',
+                                  startDate
+                                );
+                                handleInputChange('promotionEndDate', endDate);
+                              }}
+                              placeholder="Select promotion period"
+                            />
+                            {errors.promotionEndDate && (
+                              <p className="text-sm text-red-600 mt-1">
+                                {errors.promotionEndDate}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Inventory Tab */}
+              <TabsContent value="inventory" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Archive className="h-5 w-5" />
+                      Inventory Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="stockQuantity">Stock Quantity *</Label>
+                        <Input
+                          id="stockQuantity"
+                          type="number"
+                          min="0"
+                          value={formData.stockQuantity}
+                          onChange={e =>
+                            handleInputChange(
+                              'stockQuantity',
+                              parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          placeholder="0"
+                        />
+                        {errors.stockQuantity && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.stockQuantity}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="lowStockAlert">Low Stock Alert</Label>
+                        <Input
+                          id="lowStockAlert"
+                          type="number"
+                          min="0"
+                          value={formData.lowStockAlert}
+                          onChange={e =>
+                            handleInputChange(
+                              'lowStockAlert',
+                              parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          placeholder="10"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.weight || ''}
+                          onChange={e =>
+                            handleInputChange(
+                              'weight',
+                              parseFloat(e.target.value) || undefined
+                            )
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="dimensions">
+                          Dimensions (L×W×H cm)
+                        </Label>
+                        <Input
+                          id="dimensions"
+                          value={formData.dimensions || ''}
+                          onChange={e =>
+                            handleInputChange('dimensions', e.target.value)
+                          }
+                          placeholder="20×15×10"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Images Tab */}
+              <TabsContent value="media" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Product Images
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ImageUpload
+                      initialImages={uploadedImages}
+                      onUpload={handleImagesUpload}
+                      maxFiles={5}
+                      maxSize={10}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Advanced Tab */}
+              <TabsContent value="advanced" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Advanced Settings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label htmlFor="status">Product Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={value =>
+                          handleInputChange('status', value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DRAFT">Draft</SelectItem>
+                          <SelectItem value="ACTIVE">Active</SelectItem>
+                          <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-yellow-100 rounded-full">
+                          <Sparkles className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-yellow-900">
+                            Featured Product
+                          </p>
+                          <p className="text-sm text-yellow-700">
+                            Display this product in featured sections
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.featured}
+                        onCheckedChange={value =>
+                          handleInputChange('featured', value)
+                        }
+                      />
+                    </div>
+
+                    {/* Member Early Access */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Member Early Access Period</Label>
+                        <CustomDateRangePicker
+                          startDate={formData.earlyAccessStart}
+                          endDate={formData.memberOnlyUntil}
+                          onDateChange={(startDate, endDate) => {
+                            handleInputChange('earlyAccessStart', startDate);
+                            handleInputChange('memberOnlyUntil', endDate);
+                          }}
+                          placeholder="Select member early access period"
+                        />
+                        <p className="text-sm text-gray-600 mt-1">
+                          Product will be available to members only during this
+                          period
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar (1/4 width) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6 space-y-6">
+              {/* Progress Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Update Progress</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span>Completion</span>
+                        <span>{Math.round(calculateProgress())}%</span>
+                      </div>
+                      <Progress value={calculateProgress()} className="h-2" />
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div
+                        className={`flex items-center gap-2 ${getTabStatus('basic') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
+                      >
+                        <TabStatusIcon status={getTabStatus('basic')} />
+                        Basic Information
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${getTabStatus('pricing') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
+                      >
+                        <TabStatusIcon status={getTabStatus('pricing')} />
+                        Pricing Setup
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${getTabStatus('inventory') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
+                      >
+                        <TabStatusIcon status={getTabStatus('inventory')} />
+                        Inventory Details
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${getTabStatus('media') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
+                      >
+                        <TabStatusIcon status={getTabStatus('media')} />
+                        Product Images
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${getTabStatus('advanced') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
+                      >
+                        <TabStatusIcon status={getTabStatus('advanced')} />
+                        Advanced Settings
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventory</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="stockQuantity">Stock Quantity *</Label>
-                  <Input
-                    id="stockQuantity"
-                    type="number"
-                    value={formData.stockQuantity}
-                    onChange={e =>
-                      handleInputChange(
-                        'stockQuantity',
-                        parseInt(e.target.value, 10) || 0
-                      )
-                    }
-                  />
-                  {errors.stockQuantity && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.stockQuantity}
-                    </p>
-                  )}
-                </div>
 
-                <div>
-                  <Label htmlFor="lowStockAlert">Low Stock Alert</Label>
-                  <Input
-                    id="lowStockAlert"
-                    type="number"
-                    value={formData.lowStockAlert}
-                    onChange={e =>
-                      handleInputChange(
-                        'lowStockAlert',
-                        parseInt(e.target.value, 10) || 0
-                      )
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              {/* Actions Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button type="submit" className="w-full" disabled={saving}>
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Update Product
+                      </>
+                    )}
+                  </Button>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Status & Visibility</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={value => handleInputChange('status', value)}
+                  <Link href={`/products/${formData.slug}`} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Live View Product
+                    </Button>
+                  </Link>
+
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDelete}
+                    disabled={saving}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="featured"
-                    checked={formData.featured}
-                    onCheckedChange={checked =>
-                      handleInputChange('featured', checked)
-                    }
-                  />
-                  <Label htmlFor="featured">Featured Product</Label>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isQualifyingForMembership"
-                      checked={formData.isQualifyingForMembership}
-                      onCheckedChange={checked =>
-                        handleInputChange('isQualifyingForMembership', checked)
-                      }
-                    />
-                    <Label htmlFor="isQualifyingForMembership">
-                      Membership Qualifying
-                    </Label>
-                  </div>
-                  <p className="text-xs text-gray-500 ml-7">
-                    Counts toward RM80 threshold when not on promotion
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="sticky top-4">
-              <Button type="submit" disabled={saving} className="w-full">
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Update Product
-                  </>
-                )}
-              </Button>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Product
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -33,6 +33,7 @@ interface Product {
   id: string;
   name: string;
   sku: string;
+  slug: string;
   stock: number;
   price: number;
   memberPrice: number | null;
@@ -186,7 +187,7 @@ export default function AdminInventory() {
     {
       label: 'Inventory',
       href: '/admin/inventory',
-      icon: Package,
+      icon: Package as React.ComponentType<{ className?: string }>,
     },
   ];
 
@@ -464,8 +465,8 @@ export default function AdminInventory() {
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline" asChild>
-                                <Link href={`/admin/products/${product.id}`}>
+                              <Button size="sm" variant="outline" asChild title="Live View Product">
+                                <Link href={`/products/${product.slug}`} target="_blank" rel="noopener noreferrer">
                                   <Eye className="h-4 w-4" />
                                 </Link>
                               </Button>

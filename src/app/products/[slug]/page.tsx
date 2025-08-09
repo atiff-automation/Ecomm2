@@ -460,6 +460,11 @@ export default function ProductDetailPage() {
                     {promotionText || 'Coming Soon'}
                   </Badge>
                 )}
+                {product.isQualifyingForMembership && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    ✓ Membership Qualifying
+                  </Badge>
+                )}
               </div>
               
               {/* Original price and savings */}

@@ -22,12 +22,14 @@ interface ReferralMetrics {
 interface ReferralWithDetails extends MemberReferral {
   referrer: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   referred?: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   } | null;
 }
@@ -66,14 +68,15 @@ export async function createReferral(
   if (!referralCode) {
     const referrer = await prisma.user.findUnique({
       where: { id: referrerId },
-      select: { name: true }
+      select: { firstName: true, lastName: true }
     });
     
     if (!referrer) {
       throw new Error('Referrer not found');
     }
     
-    referralCode = await generateReferralCode(referrerId, referrer.name || 'USER');
+    const fullName = `${referrer.firstName} ${referrer.lastName}`.trim();
+    referralCode = await generateReferralCode(referrerId, fullName || 'USER');
   }
   
   const referral = await prisma.memberReferral.create({
@@ -193,7 +196,7 @@ export async function createReferralRewards(
       rewardType: referralSettings.referrerRewardType,
       rewardAmount: referralSettings.referrerRewardAmount,
       status: RewardStatus.PENDING,
-      description: `Referral reward for bringing in ${referral.referred.name}`,
+      description: `Referral reward for bringing in ${referral.referred.firstName} ${referral.referred.lastName}`,
       expiresAt: expiryDate,
     }
   });
@@ -206,7 +209,7 @@ export async function createReferralRewards(
       rewardType: referralSettings.refereeRewardType,
       rewardAmount: referralSettings.refereeRewardAmount,
       status: RewardStatus.PENDING,
-      description: `Welcome reward for joining through ${referral.referrer.name}'s referral`,
+      description: `Welcome reward for joining through ${referral.referrer.firstName} ${referral.referrer.lastName}'s referral`,
       expiresAt: expiryDate,
     }
   });
@@ -259,14 +262,16 @@ export async function getUserReferralHistory(
         referrer: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
           }
         },
         referred: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
           }
         }
@@ -304,7 +309,8 @@ export async function getUserReferralRewards(
         include: {
           referred: {
             select: {
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
             }
           }
@@ -372,7 +378,8 @@ export async function validateReferralCode(code: string): Promise<MemberReferral
       referrer: {
         select: {
           id: true,
-          name: true,
+          firstName: true,
+          lastName: true,
           email: true,
         }
       }

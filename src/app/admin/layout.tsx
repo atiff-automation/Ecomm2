@@ -43,6 +43,18 @@ const navigationItems = [
     roles: [UserRole.ADMIN, UserRole.STAFF],
   },
   {
+    label: 'Products',
+    href: '/admin/products',
+    icon: Package,
+    roles: [UserRole.ADMIN, UserRole.STAFF],
+    submenu: [
+      { label: 'All Products', href: '/admin/products' },
+      { label: 'Add Product', href: '/admin/products/create' },
+      { label: 'Categories', href: '/admin/categories' },
+      { label: 'Import Products', href: '/admin/products/import' },
+    ],
+  },
+  {
     label: 'Inventory',
     href: '/admin/inventory',
     icon: Package,

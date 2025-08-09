@@ -86,20 +86,8 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl, token }) {
-      // Role-based redirects after login
-      if (token && (url === baseUrl || url === `${baseUrl}/`)) {
-        // Admin users go directly to admin dashboard
-        if (token.role === UserRole.ADMIN) {
-          return `${baseUrl}/admin/dashboard`;
-        }
-        // Staff users go to admin dashboard (same as admin for now)
-        if (token.role === 'STAFF') {
-          return `${baseUrl}/admin/dashboard`;
-        }
-        // Regular customers go to homepage
-        return `${baseUrl}/`;
-      }
+    async redirect({ url, baseUrl }) {
+      // Role-based redirects are handled in the signin page
 
       // Allows relative callback URLs
       if (url.startsWith('/')) {

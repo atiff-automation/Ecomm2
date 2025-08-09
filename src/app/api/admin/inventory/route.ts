@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
       id: product.id,
       name: product.name,
       sku: product.sku,
+      slug: product.slug,
       stock: product.stockQuantity,
       price: product.regularPrice,
       memberPrice: product.memberPrice,

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -163,12 +163,12 @@ export default function MemberAnalyticsPage() {
     {
       label: 'Membership',
       href: '/admin/membership',
-      icon: Users,
+      icon: Users as React.ComponentType<{ className?: string }>,
     },
     {
       label: 'Analytics',
       href: '/admin/membership/analytics',
-      icon: BarChart3,
+      icon: BarChart3 as React.ComponentType<{ className?: string }>,
     },
   ];
 

@@ -40,10 +40,10 @@ const updateProductSchema = z.object({
   isQualifyingForMembership: z.boolean().optional(),
   // Promotional pricing fields
   promotionalPrice: z.number().min(0, 'Promotional price must be positive').optional(),
-  promotionStartDate: z.string().datetime().optional(),
-  promotionEndDate: z.string().datetime().optional(),
-  memberOnlyUntil: z.string().datetime().optional(),
-  earlyAccessStart: z.string().datetime().optional(),
+  promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
+  promotionEndDate: z.union([z.string().datetime(), z.null()]).optional(),
+  memberOnlyUntil: z.union([z.string().datetime(), z.null()]).optional(),
+  earlyAccessStart: z.union([z.string().datetime(), z.null()]).optional(),
   images: z
     .array(
       z.object({

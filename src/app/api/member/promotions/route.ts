@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
           ? Number(promo.minimumOrderValue) 
           : null,
         expiresAt: promo.expiresAt,
-        isAutoApply: !promo.isPublic, // Private codes are auto-apply
+        isPublic: promo.isPublic,
       }));
 
       return NextResponse.json({

@@ -118,14 +118,14 @@ export function calculatePromotionStatus(
     : product.isQualifyingForMembership;
 
   return {
-    isActive,
-    isScheduled,
-    isExpired,
+    isActive: Boolean(isActive),
+    isScheduled: Boolean(isScheduled),
+    isExpired: Boolean(isExpired),
     daysUntilStart,
     daysUntilEnd,
     effectivePrice,
-    qualifiesForMembership,
-    overridesQualification
+    qualifiesForMembership: Boolean(qualifiesForMembership),
+    overridesQualification: Boolean(overridesQualification)
   };
 }
 
@@ -242,7 +242,16 @@ export function getPromotionDisplayText(status: PromotionStatus): string | null 
 /**
  * Utility to check if a product qualifies for membership (with promotional override)
  */
-export function productQualifiesForMembership(product: PromotionData): boolean {
+export function productQualifiesForMembership(
+  product: PromotionData, 
+  enablePromotionalExclusion: boolean = true
+): boolean {
+  // If promotional exclusion is disabled, promotional products can qualify
+  if (!enablePromotionalExclusion) {
+    return product.isQualifyingForMembership;
+  }
+
+  // If promotional exclusion is enabled, check promotion status
   const promotionStatus = calculatePromotionStatus({
     ...product,
     regularPrice: 0, // Not needed for qualification check
