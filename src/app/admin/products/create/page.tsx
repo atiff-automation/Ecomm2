@@ -80,6 +80,13 @@ interface ProductFormData {
 
 export default function CreateProductPage() {
   const router = useRouter();
+
+  // Utility function to safely format prices
+  const formatPrice = (price: any): string => {
+    const numPrice = Number(price);
+    return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
+  };
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -209,7 +216,7 @@ export default function CreateProductPage() {
     // Price validation
     if (formData.regularPrice <= 0) newErrors.regularPrice = 'Regular price must be greater than 0';
     if (formData.memberPrice <= 0) newErrors.memberPrice = 'Member price must be greater than 0';
-    if (formData.costPrice <= 0) newErrors.costPrice = 'Cost price must be greater than 0';
+    if (formData.costPrice < 0) newErrors.costPrice = 'Cost price cannot be negative';
     if (formData.memberPrice >= formData.regularPrice) {
       newErrors.memberPrice = 'Member price must be less than regular price';
     }
@@ -221,8 +228,8 @@ export default function CreateProductPage() {
     if (formData.isPromotional) {
       if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
         newErrors.promotionalPrice = 'Promotional price is required and must be greater than 0';
-      } else if (formData.promotionalPrice >= formData.regularPrice) {
-        newErrors.promotionalPrice = 'Promotional price must be less than regular price';
+      } else if (formData.promotionalPrice >= formData.memberPrice) {
+        newErrors.promotionalPrice = 'Promotional price must be less than member price';
       }
 
       if (!formData.promotionStartDate) {
@@ -297,7 +304,7 @@ export default function CreateProductPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/admin/inventory?success=created');
+        router.push('/admin/products?success=created');
       } else {
         if (data.field) {
           setErrors({ [data.field]: data.message });
@@ -379,15 +386,15 @@ export default function CreateProductPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <Link href="/admin/inventory">
+          <Link href="/admin/products">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Inventory
+              Back to Products
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold">Create Product</h1>
-            <p className="text-gray-600">Add a new product to your inventory</p>
+            <p className="text-gray-600">Add a new product to your catalog</p>
           </div>
         </div>
       </div>

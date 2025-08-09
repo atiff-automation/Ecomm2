@@ -68,6 +68,7 @@ const navigationItems = [
     submenu: [
       { label: 'Analytics', href: '/admin/membership/analytics' },
       { label: 'Configuration', href: '/admin/membership/config' },
+      { label: 'Member Promotions', href: '/admin/member-promotions' },
     ],
   },
   {
