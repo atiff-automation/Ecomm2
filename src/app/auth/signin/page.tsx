@@ -43,8 +43,16 @@ function SignInForm() {
         setError('Invalid email or password');
       } else {
         // Refresh session to get updated user data
-        await getSession();
-        router.push(callbackUrl);
+        const session = await getSession();
+        
+        // Role-based redirect logic
+        if (session?.user?.role === 'ADMIN') {
+          router.push('/admin/dashboard');
+        } else if (session?.user?.role === 'STAFF') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push(callbackUrl);
+        }
       }
     } catch {
       setError('An error occurred. Please try again.');

@@ -102,8 +102,10 @@ export function Header() {
               </Button>
             </Link>
 
-            {/* Cart Button */}
-            <CartButton />
+            {/* Cart Button - only for non-admin users */}
+            {(!isLoggedIn || (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'STAFF')) && (
+              <CartButton />
+            )}
 
             {/* User Menu */}
             {isLoggedIn && !loading ? (
@@ -146,30 +148,38 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/member/dashboard">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/member/orders">
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/member/wishlist">
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>Wishlist</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/member/profile">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  
+                  {/* Customer navigation - only for non-admin users */}
+                  {session.user.role !== 'ADMIN' && session.user.role !== 'STAFF' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/member/dashboard">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/member/orders">
+                          <Package className="mr-2 h-4 w-4" />
+                          <span>Orders</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/member/wishlist">
+                          <Heart className="mr-2 h-4 w-4" />
+                          <span>Wishlist</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/member/profile">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {/* Admin/Staff navigation */}
                   {(session.user.role === 'ADMIN' ||
                     session.user.role === 'STAFF') && (
                     <>
