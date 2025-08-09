@@ -73,7 +73,7 @@ export function CustomDateRangePicker({
       // Set end date
       if (date >= startDate) {
         onEndDateChange(date);
-        setOpen(false);
+        // Keep calendar open after selecting end date for user review
       } else {
         // If selected date is before start date, make it the new start date
         onStartDateChange(date);
@@ -212,7 +212,9 @@ export function CustomDateRangePicker({
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span className="text-gray-600">Promotion Period</span>
+              <span className="text-gray-600">
+                {startDate && endDate ? 'Selected Period' : 'Promotion Period'}
+              </span>
             </div>
             {getDaysCount() && (
               <span className="font-medium text-gray-900">

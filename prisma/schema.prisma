@@ -153,7 +153,7 @@ model Category {
   
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
-  products Product[]
+  products ProductCategory[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,6 +161,23 @@ model Category {
   @@map("categories")
   @@index([slug])
   @@index([parentId])
+}
+
+// Junction table for many-to-many relationship between Products and Categories
+model ProductCategory {
+  id         String @id @default(cuid())
+  productId  String
+  categoryId String
+  
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([productId, categoryId])
+  @@map("product_categories")
+  @@index([productId])
+  @@index([categoryId])
 }
 
 model Product {
@@ -200,9 +217,8 @@ model Product {
   isPromotional   Boolean @default(false) // Excluded from membership calculation
   isQualifyingForMembership Boolean @default(true) // Product-level membership qualification control
   
-  // Relationships
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  // Relationships - Multiple categories support
+  categories    ProductCategory[]
   
   images        ProductImage[]
   variants      ProductVariant[]
@@ -218,7 +234,6 @@ model Product {
   @@map("products")
   @@index([slug])
   @@index([sku])
-  @@index([categoryId])
   @@index([status])
   @@index([featured])
   @@index([isPromotional])

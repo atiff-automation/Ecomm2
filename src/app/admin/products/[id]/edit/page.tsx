@@ -62,14 +62,16 @@ interface ProductFormData {
   shortDescription: string;
   sku: string;
   barcode: string;
-  categoryId: string;
+  categoryIds: string[];
   regularPrice: number;
   memberPrice: number;
   costPrice: number;
   stockQuantity: number;
   lowStockAlert: number;
-  weight?: number;
-  dimensions?: string;
+  weight?: number | string;
+  length?: number | string;
+  width?: number | string;
+  height?: number | string;
   status: string;
   featured: boolean;
   isPromotional: boolean;
@@ -99,14 +101,16 @@ export default function EditProductPage() {
     shortDescription: '',
     sku: '',
     barcode: '',
-    categoryId: '',
+    categoryIds: [],
     regularPrice: 0,
     memberPrice: 0,
     costPrice: 0,
     stockQuantity: 0,
     lowStockAlert: 10,
     weight: 0,
-    dimensions: '',
+    length: '',
+    width: '',
+    height: '',
     status: 'DRAFT',
     featured: false,
     isPromotional: false,
@@ -124,6 +128,30 @@ export default function EditProductPage() {
   const formatPrice = (price: any): string => {
     const numPrice = Number(price);
     return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
+  };
+
+  // Utility function to parse dimensions string (e.g., "10x20x30" or "10 x 20 x 30")
+  const parseDimensions = (dimensionString: string) => {
+    if (!dimensionString || typeof dimensionString !== 'string') {
+      return { length: '', width: '', height: '' };
+    }
+    
+    const parts = dimensionString.split(/[x×\s*×\s*]/).map(part => part.trim()).filter(part => part);
+    return {
+      length: parts[0] || '',
+      width: parts[1] || '',
+      height: parts[2] || '',
+    };
+  };
+
+  // Utility function to format dimensions for storage
+  const formatDimensions = (length: string | number, width: string | number, height: string | number): string => {
+    const l = length?.toString().trim() || '';
+    const w = width?.toString().trim() || '';
+    const h = height?.toString().trim() || '';
+    
+    if (!l && !w && !h) return '';
+    return `${l || '0'} × ${w || '0'} × ${h || '0'}`;
   };
 
   useEffect(() => {
@@ -170,14 +198,16 @@ export default function EditProductPage() {
           shortDescription: product.shortDescription || '',
           sku: product.sku || '',
           barcode: product.barcode || '',
-          categoryId: product.categoryId || '',
+          categoryIds: product.categories?.map((pc: any) => pc.category.id) || [],
           regularPrice: Number(product.regularPrice) || 0,
           memberPrice: Number(product.memberPrice) || 0,
           costPrice: Number(product.costPrice) || 0,
           stockQuantity: product.stockQuantity || 0,
           lowStockAlert: product.lowStockAlert || 10,
           weight: product.weight || 0,
-          dimensions: product.dimensions || '',
+          length: product.dimensions ? parseDimensions(product.dimensions).length : '',
+          width: product.dimensions ? parseDimensions(product.dimensions).width : '',
+          height: product.dimensions ? parseDimensions(product.dimensions).height : '',
           status: product.status || 'DRAFT',
           featured: product.featured || false,
           isPromotional: product.isPromotional || false,
@@ -271,8 +301,8 @@ export default function EditProductPage() {
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     }
-    if (!formData.categoryId) {
-      newErrors.categoryId = 'Category is required';
+    if (formData.categoryIds.length === 0) {
+      newErrors.categoryIds = 'At least one category is required';
     }
     if (formData.regularPrice <= 0) {
       newErrors.regularPrice = 'Regular price must be greater than 0';
@@ -336,7 +366,8 @@ export default function EditProductPage() {
         costPrice: Number(formData.costPrice),
         stockQuantity: Number(formData.stockQuantity),
         lowStockAlert: Number(formData.lowStockAlert),
-        weight: formData.weight ? Number(formData.weight) : null,
+        weight: formData.weight && formData.weight !== '' ? Number(formData.weight) : null,
+        dimensions: formatDimensions(formData.length || '', formData.width || '', formData.height || '') || null,
         promotionalPrice: formData.promotionalPrice
           ? Number(formData.promotionalPrice)
           : null,
@@ -614,29 +645,70 @@ export default function EditProductPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="category">Category *</Label>
-                        <Select
-                          value={formData.categoryId}
-                          onValueChange={value =>
-                            handleInputChange('categoryId', value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.isArray(categories) && categories.map(category => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.categoryId && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {errors.categoryId}
-                          </p>
-                        )}
+                        <Label htmlFor="categories">Categories *</Label>
+                        <div className="space-y-2">
+                          {/* Category Container with Selected Tags and Dropdown */}
+                          <div className="border rounded-md p-3 bg-white">
+                            {/* Selected Categories Tags */}
+                            {formData.categoryIds.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {formData.categoryIds.map(categoryId => {
+                                  const category = categories.find(c => c.id === categoryId);
+                                  if (!category) return null;
+                                  return (
+                                    <Badge 
+                                      key={categoryId}
+                                      variant="secondary" 
+                                      className="flex items-center gap-1"
+                                    >
+                                      {category.name}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newCategoryIds = formData.categoryIds.filter(id => id !== categoryId);
+                                          handleInputChange('categoryIds', newCategoryIds);
+                                        }}
+                                        className="ml-1 hover:bg-gray-200 rounded-full p-1"
+                                      >
+                                        ✕
+                                      </button>
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            
+                            {/* Category Selector */}
+                            <Select
+                              value=""
+                              onValueChange={value => {
+                                if (value && !formData.categoryIds.includes(value)) {
+                                  const newCategoryIds = [...formData.categoryIds, value];
+                                  handleInputChange('categoryIds', newCategoryIds);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                                <SelectValue placeholder="+ Add a category..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.isArray(categories) && categories
+                                  .filter(category => !formData.categoryIds.includes(category.id))
+                                  .map(category => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {errors.categoryIds && (
+                            <p className="text-sm text-red-600 mt-1">
+                              {errors.categoryIds}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -835,13 +907,12 @@ export default function EditProductPage() {
                             <CustomDateRangePicker
                               startDate={formData.promotionStartDate}
                               endDate={formData.promotionEndDate}
-                              onDateChange={(startDate, endDate) => {
-                                handleInputChange(
-                                  'promotionStartDate',
-                                  startDate
-                                );
-                                handleInputChange('promotionEndDate', endDate);
-                              }}
+                              onStartDateChange={(startDate) =>
+                                handleInputChange('promotionStartDate', startDate)
+                              }
+                              onEndDateChange={(endDate) =>
+                                handleInputChange('promotionEndDate', endDate)
+                              }
                               placeholder="Select promotion period"
                             />
                             {errors.promotionEndDate && (
@@ -916,27 +987,64 @@ export default function EditProductPage() {
                           min="0"
                           value={formData.weight || ''}
                           onChange={e =>
-                            handleInputChange(
-                              'weight',
-                              parseFloat(e.target.value) || undefined
-                            )
+                            handleInputChange('weight', e.target.value)
                           }
                           placeholder="0.00"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="dimensions">
-                          Dimensions (L×W×H cm)
-                        </Label>
-                        <Input
-                          id="dimensions"
-                          value={formData.dimensions || ''}
-                          onChange={e =>
-                            handleInputChange('dimensions', e.target.value)
-                          }
-                          placeholder="20×15×10"
-                        />
+                        <Label>Dimensions (cm)</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label htmlFor="length" className="text-xs text-gray-500">
+                              Length
+                            </Label>
+                            <Input
+                              id="length"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.length || ''}
+                              onChange={e =>
+                                handleInputChange('length', e.target.value)
+                              }
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="width" className="text-xs text-gray-500">
+                              Width
+                            </Label>
+                            <Input
+                              id="width"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.width || ''}
+                              onChange={e =>
+                                handleInputChange('width', e.target.value)
+                              }
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="height" className="text-xs text-gray-500">
+                              Height
+                            </Label>
+                            <Input
+                              id="height"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.height || ''}
+                              onChange={e =>
+                                handleInputChange('height', e.target.value)
+                              }
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -1021,10 +1129,12 @@ export default function EditProductPage() {
                         <CustomDateRangePicker
                           startDate={formData.earlyAccessStart}
                           endDate={formData.memberOnlyUntil}
-                          onDateChange={(startDate, endDate) => {
-                            handleInputChange('earlyAccessStart', startDate);
-                            handleInputChange('memberOnlyUntil', endDate);
-                          }}
+                          onStartDateChange={(startDate) =>
+                            handleInputChange('earlyAccessStart', startDate)
+                          }
+                          onEndDateChange={(endDate) =>
+                            handleInputChange('memberOnlyUntil', endDate)
+                          }
                           placeholder="Select member early access period"
                         />
                         <p className="text-sm text-gray-600 mt-1">

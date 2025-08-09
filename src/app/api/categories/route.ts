@@ -14,7 +14,7 @@ const createCategorySchema = z.object({
   slug: z.string().min(1, 'Category slug is required'),
   description: z.string().optional(),
   image: z.string().optional(),
-  parentId: z.string().optional(),
+  parentId: z.union([z.string(), z.null()]).optional(),
   isQualifyingCategory: z.boolean().default(false),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
@@ -209,12 +209,19 @@ export async function POST(request: NextRequest) {
     // Create category
     const category = await prisma.category.create({
       data: {
-        ...categoryData,
+        name: categoryData.name,
+        slug: categoryData.slug,
         description: categoryData.description || null,
         image: categoryData.image || null,
-        parentId: categoryData.parentId || null,
         metaTitle: categoryData.metaTitle || null,
         metaDescription: categoryData.metaDescription || null,
+        ...(categoryData.parentId && {
+          parent: {
+            connect: {
+              id: categoryData.parentId,
+            },
+          },
+        }),
       },
       include: {
         parent: {

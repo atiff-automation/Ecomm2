@@ -18,7 +18,7 @@ const updateProductSchema = z.object({
   shortDescription: z.string().optional(),
   sku: z.string().min(1, 'SKU is required').optional(),
   barcode: z.string().optional(),
-  categoryId: z.string().min(1, 'Category is required').optional(),
+  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required').optional(),
   regularPrice: z.number().min(0, 'Regular price must be positive').optional(),
   memberPrice: z.number().min(0, 'Member price must be positive').optional(),
   costPrice: z.number().min(0, 'Cost price must be positive').optional(),
@@ -78,10 +78,14 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: { id: params.id },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         images: {
@@ -185,15 +189,18 @@ export async function PUT(
       }
     }
 
-    // Verify category exists (if category is being updated)
-    if (productData.categoryId) {
-      const category = await prisma.category.findUnique({
-        where: { id: productData.categoryId },
+    // Verify categories exist (if categories are being updated)
+    let categories: any[] = [];
+    if (productData.categoryIds) {
+      categories = await prisma.category.findMany({
+        where: { id: { in: productData.categoryIds } },
       });
 
-      if (!category) {
+      if (categories.length !== productData.categoryIds.length) {
+        const foundIds = categories.map(c => c.id);
+        const missingIds = productData.categoryIds.filter(id => !foundIds.includes(id));
         return NextResponse.json(
-          { message: 'Category not found', field: 'categoryId' },
+          { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
           { status: 400 }
         );
       }
@@ -217,7 +224,6 @@ export async function PUT(
           ...(productData.barcode !== undefined && {
             barcode: productData.barcode || null,
           }),
-          ...(productData.categoryId && { categoryId: productData.categoryId }),
           ...(productData.regularPrice !== undefined && {
             regularPrice: productData.regularPrice,
           }),
@@ -267,14 +273,34 @@ export async function PUT(
           }),
         },
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
       });
+
+      // Update product categories if provided
+      if (productData.categoryIds) {
+        // Remove existing category relationships
+        await tx.productCategory.deleteMany({
+          where: { productId: params.id },
+        });
+
+        // Create new category relationships
+        await tx.productCategory.createMany({
+          data: productData.categoryIds.map(categoryId => ({
+            productId: params.id,
+            categoryId: categoryId,
+          })),
+        });
+      }
 
       // Update product images if provided
       if (productData.images) {

@@ -83,12 +83,13 @@ interface Product {
   earlyAccessStart?: string | null;
   metaTitle?: string;
   metaDescription?: string;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-    
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   images: ProductImage[];
   reviews: Review[];
   averageRating: number;
@@ -266,13 +267,17 @@ export default function ProductDetailPage() {
           <Link href="/products" className="hover:text-primary">
             Products
           </Link>
-          <span>/</span>
-          <Link
-            href={`/products?category=${product.category.id}`}
-            className="hover:text-primary"
-          >
-            {product.category.name}
-          </Link>
+          {product.categories.length > 0 && (
+            <>
+              <span>/</span>
+              <Link
+                href={`/products?category=${product.categories[0].category.id}`}
+                className="hover:text-primary"
+              >
+                {product.categories[0].category.name}
+              </Link>
+            </>
+          )}
           <span>/</span>
           <span className="text-foreground">{product.name}</span>
         </div>
@@ -564,7 +569,7 @@ export default function ProductDetailPage() {
               <Shield className="w-4 h-4 text-blue-600" />
               <span>1 year warranty included</span>
             </div>
-            {product.category.isQualifyingCategory && (
+            {product.isQualifyingForMembership && (
               <div className="flex items-center gap-2 text-sm">
                 <Award className="w-4 h-4 text-purple-600" />
                 <span>Qualifies for membership benefits</span>
@@ -622,8 +627,14 @@ export default function ProductDetailPage() {
                       <span>{product.sku}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Category:</span>
-                      <span>{product.category.name}</span>
+                      <span>Categories:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {product.categories.map((cat) => (
+                          <Badge key={cat.category.id} variant="outline" className="text-xs">
+                            {cat.category.name}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                     {product.weight && (
                       <div className="flex justify-between">

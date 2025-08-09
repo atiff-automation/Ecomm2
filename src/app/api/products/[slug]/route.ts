@@ -33,7 +33,7 @@ const updateProductSchema = z.object({
     .optional(),
   weight: z.number().positive().optional(),
   dimensions: z.string().optional(),
-  categoryId: z.string().min(1, 'Category is required').optional(),
+  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required').optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   featured: z.boolean().optional(),
@@ -63,11 +63,15 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {
@@ -125,14 +129,32 @@ export async function GET(
     const averageRating =
       approvedReviews.length > 0 ? totalRating / approvedReviews.length : 0;
 
-    // Get related products from same category
+    // Get related products from same categories
+    const productCategoryIds = product.categories.map(cat => cat.category.id);
     const relatedProducts = await prisma.product.findMany({
       where: {
-        categoryId: product.categoryId,
+        categories: {
+          some: {
+            categoryId: {
+              in: productCategoryIds,
+            },
+          },
+        },
         status: 'ACTIVE',
         id: { not: product.id },
       },
       include: {
+        categories: {
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
         images: {
           where: { isPrimary: true },
           take: 1,
@@ -225,15 +247,17 @@ export async function PUT(
       }
     }
 
-    // Verify category exists if being updated
-    if (updateData.categoryId) {
-      const category = await prisma.category.findUnique({
-        where: { id: updateData.categoryId },
+    // Verify categories exist if being updated
+    if (updateData.categoryIds) {
+      const categories = await prisma.category.findMany({
+        where: { id: { in: updateData.categoryIds } },
       });
 
-      if (!category) {
+      if (categories.length !== updateData.categoryIds.length) {
+        const foundIds = categories.map(c => c.id);
+        const missingIds = updateData.categoryIds.filter(id => !foundIds.includes(id));
         return NextResponse.json(
-          { message: 'Category not found', field: 'categoryId' },
+          { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
           { status: 400 }
         );
       }
@@ -244,11 +268,15 @@ export async function PUT(
       where: { slug },
       data: prismaUpdateData,
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {

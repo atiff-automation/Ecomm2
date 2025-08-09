@@ -35,6 +35,8 @@ import {
   Package,
   Filter,
   Download,
+  AlertTriangle,
+  TrendingDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -51,13 +53,15 @@ interface Product {
   featured: boolean;
   isPromotional: boolean;
   createdAt: string;
-  category: {
-    id: string;
-    name: string;
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   images: Array<{
-    id: string;
     url: string;
+    altText: string;
     isPrimary: boolean;
   }>;
 }
@@ -75,6 +79,7 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStockLevel, setSelectedStockLevel] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -85,22 +90,24 @@ export default function AdminProductsPage() {
         page: currentPage.toString(),
         limit: '20',
         ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory !== 'all' && { categoryId: selectedCategory }),
+        ...(selectedCategory !== 'all' && { category: selectedCategory }),
         ...(selectedStatus !== 'all' && { status: selectedStatus }),
+        ...(selectedStockLevel !== 'all' && { stockLevel: selectedStockLevel }),
       });
 
       const response = await fetch(`/api/admin/products?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setProducts(data.products);
-        setTotalPages(data.totalPages);
+        console.log('Products API Response:', data); // Debug log
+        setProducts(data.products || []);
+        setTotalPages(data.pagination?.totalPages || 1);
       }
     } catch (error) {
       console.error('Failed to fetch products:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, selectedCategory, selectedStatus]);
+  }, [currentPage, searchTerm, selectedCategory, selectedStatus, selectedStockLevel]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -189,7 +196,7 @@ export default function AdminProductsPage() {
     try {
       const params = new URLSearchParams({
         ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory !== 'all' && { categoryId: selectedCategory }),
+        ...(selectedCategory !== 'all' && { category: selectedCategory }),
         ...(selectedStatus !== 'all' && { status: selectedStatus }),
       });
 
@@ -263,22 +270,22 @@ export default function AdminProductsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {products.filter(p => p.stockQuantity < 10).length}
+              <div className="text-2xl font-bold text-yellow-600">
+                {products.filter(p => p.stockQuantity < 10 && p.stockQuantity > 0).length}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Featured</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+              <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {products.filter(p => p.featured).length}
+              <div className="text-2xl font-bold text-red-600">
+                {products.filter(p => p.stockQuantity === 0).length}
               </div>
             </CardContent>
           </Card>
@@ -330,6 +337,17 @@ export default function AdminProductsPage() {
               <SelectItem value="ACTIVE">Active</SelectItem>
               <SelectItem value="DRAFT">Draft</SelectItem>
               <SelectItem value="INACTIVE">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedStockLevel} onValueChange={setSelectedStockLevel}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Stock Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stock Levels</SelectItem>
+              <SelectItem value="in-stock">In Stock</SelectItem>
+              <SelectItem value="low-stock">Low Stock</SelectItem>
+              <SelectItem value="out-of-stock">Out of Stock</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={exportProducts}>
@@ -402,7 +420,15 @@ export default function AdminProductsPage() {
                       <TableCell className="font-mono text-sm">
                         {product.sku}
                       </TableCell>
-                      <TableCell>{product.category.name}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {product.categories?.map((cat, index) => (
+                            <Badge key={cat.category.id} variant="outline" className="mr-1">
+                              {cat.category.name}
+                            </Badge>
+                          )) || <span className="text-gray-400">No categories</span>}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium">
@@ -416,11 +442,26 @@ export default function AdminProductsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={product.stockQuantity < 10 ? 'destructive' : 'secondary'}
-                        >
-                          {product.stockQuantity}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={product.stockQuantity === 0 ? 'destructive' : product.stockQuantity < 10 ? 'secondary' : 'outline'}
+                            className={
+                              product.stockQuantity === 0 
+                                ? 'bg-red-100 text-red-800' 
+                                : product.stockQuantity < 10 
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-green-100 text-green-800'
+                            }
+                          >
+                            {product.stockQuantity}
+                          </Badge>
+                          {product.stockQuantity < 10 && product.stockQuantity > 0 && (
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                          )}
+                          {product.stockQuantity === 0 && (
+                            <TrendingDown className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge

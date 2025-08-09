@@ -31,10 +31,13 @@ interface CartItemWithProduct {
     isPromotional: boolean;
     isQualifyingForMembership: boolean;
     status: string;
-    category: {
-      id: string;
-      name: string;
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    }>;
     images: Array<{
       url: string;
       altText?: string;
@@ -72,11 +75,15 @@ export async function GET() {
       include: {
         product: {
           include: {
-            category: {
+            categories: {
               select: {
-                id: true,
-                name: true,
-                slug: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
               },
             },
             images: {
@@ -101,10 +108,13 @@ export async function GET() {
         isPromotional: item.product.isPromotional,
         isQualifyingForMembership: item.product.isQualifyingForMembership,
         status: item.product.status,
-        category: {
-          id: item.product.category.id,
-          name: item.product.category.name,
-        },
+        categories: item.product.categories.map(cat => ({
+          category: {
+            id: cat.category.id,
+            name: cat.category.name,
+            slug: cat.category.slug,
+          },
+        })),
         images: item.product.images.map(img => ({
           url: img.url,
           altText: img.altText || '',
@@ -219,7 +229,17 @@ export async function POST(request: NextRequest) {
       include: {
         product: {
           include: {
-            category: true,
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
             images: {
               where: { isPrimary: true },
               take: 1,
@@ -394,7 +414,17 @@ export async function PUT(request: NextRequest) {
       include: {
         product: {
           include: {
-            category: true,
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
             images: {
               where: { isPrimary: true },
               take: 1,

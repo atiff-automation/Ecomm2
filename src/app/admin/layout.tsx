@@ -55,12 +55,6 @@ const navigationItems = [
     ],
   },
   {
-    label: 'Inventory',
-    href: '/admin/inventory',
-    icon: Package,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
-  },
-  {
     label: 'Customers',
     href: '/admin/customers',
     icon: Users,

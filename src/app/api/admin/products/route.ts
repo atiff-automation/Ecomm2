@@ -18,7 +18,7 @@ const createProductSchema = z.object({
   shortDescription: z.string().optional(),
   sku: z.string().min(1, 'SKU is required'),
   barcode: z.string().optional(),
-  categoryId: z.string().min(1, 'Category is required'),
+  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required'),
   regularPrice: z.number().min(0, 'Regular price must be positive'),
   memberPrice: z.number().min(0, 'Member price must be positive'),
   costPrice: z.number().min(0, 'Cost price must be positive'),
@@ -92,14 +92,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify category exists
-    const category = await prisma.category.findUnique({
-      where: { id: productData.categoryId },
+    // Verify all categories exist
+    const categories = await prisma.category.findMany({
+      where: { id: { in: productData.categoryIds } },
     });
 
-    if (!category) {
+    if (categories.length !== productData.categoryIds.length) {
+      const foundIds = categories.map(c => c.id);
+      const missingIds = productData.categoryIds.filter(id => !foundIds.includes(id));
       return NextResponse.json(
-        { message: 'Category not found', field: 'categoryId' },
+        { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
         { status: 400 }
       );
     }
@@ -115,7 +117,6 @@ export async function POST(request: NextRequest) {
           shortDescription: productData.shortDescription || null,
           sku: productData.sku,
           barcode: productData.barcode || null,
-          categoryId: productData.categoryId,
           regularPrice: productData.regularPrice,
           memberPrice: productData.memberPrice,
           costPrice: productData.costPrice,
@@ -141,6 +142,14 @@ export async function POST(request: NextRequest) {
             ? new Date(productData.earlyAccessStart)
             : null,
         },
+      });
+
+      // Create product-category relationships
+      await tx.productCategory.createMany({
+        data: productData.categoryIds.map(categoryId => ({
+          productId: product.id,
+          categoryId: categoryId,
+        })),
       });
 
       // Create product images if provided
@@ -169,7 +178,7 @@ export async function POST(request: NextRequest) {
         details: {
           productName: result.name,
           sku: result.sku,
-          category: category.name,
+          categories: categories.map(c => c.name).join(', '),
           status: result.status,
         },
       },
@@ -233,30 +242,30 @@ export async function GET(request: NextRequest) {
     }
 
     if (category && category !== 'all') {
-      where.categoryId = category;
+      where.categories = {
+        some: {
+          categoryId: category,
+        },
+      };
     }
 
     if (status && status !== 'all') {
       where.status = status;
     }
 
-    if (stockLevel) {
+    if (stockLevel && stockLevel !== 'all') {
       switch (stockLevel) {
-        case 'low':
+        case 'low-stock':
           where.AND = [
-            {
-              stockQuantity: {
-                lte: { stockQuantity: { lte: 'lowStockAlert' } },
-              },
-            },
+            { stockQuantity: { lte: 10 } }, // Low stock threshold
             { stockQuantity: { gt: 0 } },
           ];
           break;
-        case 'out':
+        case 'out-of-stock':
           where.stockQuantity = 0;
           break;
-        case 'in':
-          where.stockQuantity = { gt: 0 };
+        case 'in-stock':
+          where.stockQuantity = { gt: 10 }; // Above low stock threshold
           break;
       }
     }
@@ -269,10 +278,14 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           images: {
