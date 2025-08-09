@@ -21,6 +21,7 @@ import {
   User,
   Bell,
   ChevronDown,
+  ExternalLink,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
@@ -252,6 +253,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
               {/* Right side */}
               <div className="flex items-center space-x-4">
+                {/* View Live Site */}
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  title="View Live Site"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Live Site
+                </a>
+
                 {/* Notifications */}
                 <button className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md">
                   <Bell className="h-5 w-5" />
