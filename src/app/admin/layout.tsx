@@ -15,6 +15,7 @@ import {
   BarChart3,
   Truck,
   Gift,
+  Palette,
   Menu,
   X,
   LogOut,
@@ -82,6 +83,22 @@ const navigationItems = [
     href: '/admin/shipping',
     icon: Truck,
     roles: [UserRole.ADMIN, UserRole.STAFF],
+  },
+  {
+    label: 'Site Customization',
+    href: '/admin/site-customization',
+    icon: Palette,
+    roles: [UserRole.ADMIN],
+    submenu: [
+      {
+        label: 'Hero Section',
+        href: '/admin/site-customization/hero',
+      },
+      {
+        label: 'Theme Colors',
+        href: '/admin/site-customization/theme',
+      },
+    ],
   },
   {
     label: 'Settings',

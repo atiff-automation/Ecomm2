@@ -60,10 +60,39 @@ interface Category {
   productCount?: number;
 }
 
+interface SiteTheme {
+  id: string;
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  isActive: boolean;
+}
+
+interface HeroSection {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  ctaPrimaryText: string;
+  ctaPrimaryLink: string;
+  ctaSecondaryText: string;
+  ctaSecondaryLink: string;
+  backgroundType: 'IMAGE' | 'VIDEO';
+  backgroundImage?: string | null;
+  backgroundVideo?: string | null;
+  overlayOpacity: number;
+  textAlignment: 'left' | 'center' | 'right';
+  isActive: boolean;
+}
+
 export default function HomePage() {
   const { data: session } = useSession();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [siteTheme, setSiteTheme] = useState<SiteTheme | null>(null);
+  const [heroSection, setHeroSection] = useState<HeroSection | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isLoggedIn = !!session?.user;
@@ -75,9 +104,10 @@ export default function HomePage() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [productsResponse, categoriesResponse] = await Promise.all([
+        const [productsResponse, categoriesResponse, customizationResponse] = await Promise.all([
           fetch('/api/products?featured=true&limit=8'),
           fetch('/api/categories?includeProductCount=true'),
+          fetch('/api/site-customization/current'),
         ]);
 
         if (productsResponse.ok) {
@@ -88,6 +118,12 @@ export default function HomePage() {
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json();
           setCategories(categoriesData.categories.slice(0, 6));
+        }
+
+        if (customizationResponse.ok) {
+          const customizationData = await customizationResponse.json();
+          setSiteTheme(customizationData.theme);
+          setHeroSection(customizationData.heroSection);
         }
       } catch (error) {
         console.error('Failed to fetch home data:', error);

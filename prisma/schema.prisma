@@ -71,6 +71,11 @@ model User {
   rewardsProcessed  ReferralReward[] @relation("RewardsProcessed")
   referralSettings  ReferralSetting[]
   
+  // Site customization relationships
+  themesCreated     SiteTheme[] @relation("ThemeCreator")
+  heroSectionsCreated HeroSection[] @relation("HeroCreator")
+  mediaUploads      MediaUpload[] @relation("MediaUploader")
+  
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -862,6 +867,68 @@ enum RewardStatus {
   USED         // Reward has been used
   EXPIRED      // Reward expired unused
   CANCELLED    // Reward cancelled
+}
+
+// ==================== SITE CUSTOMIZATION ====================
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model SiteTheme {
+  id                String    @id @default(cuid())
+  name              String    @unique // Theme name (e.g., "default", "custom")
+  primaryColor      String    @default("#3B82F6") // Primary color (blue by default)
+  secondaryColor    String    @default("#FDE047") // Secondary/accent color (yellow by default)
+  backgroundColor   String    @default("#F8FAFC") // Page background color
+  textColor         String    @default("#1E293B") // Primary text color
+  isActive          Boolean   @default(false) // Only one theme can be active
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdBy         String?
+  creator           User?     @relation("ThemeCreator", fields: [createdBy], references: [id])
+
+  @@map("site_themes")
+}
+
+model HeroSection {
+  id                String    @id @default(cuid())
+  title             String    @default("Welcome to JRM E-commerce")
+  subtitle          String    @default("Malaysia's premier online marketplace")
+  description       String    @default("Intelligent membership benefits, dual pricing, and local payment integration.")
+  ctaPrimaryText    String    @default("Join as Member")
+  ctaPrimaryLink    String    @default("/auth/signup")
+  ctaSecondaryText  String    @default("Browse Products")
+  ctaSecondaryLink  String    @default("/products")
+  backgroundType    MediaType @default(IMAGE)
+  backgroundImage   String?   // URL to background image
+  backgroundVideo   String?   // URL to background video
+  overlayOpacity    Float     @default(0.1) // Background overlay opacity (0-1)
+  textAlignment     String    @default("left") // left, center, right
+  isActive          Boolean   @default(false) // Only one hero section can be active
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdBy         String?
+  creator           User?     @relation("HeroCreator", fields: [createdBy], references: [id])
+
+  @@map("hero_sections")
+}
+
+model MediaUpload {
+  id            String    @id @default(cuid())
+  filename      String    // Original filename
+  originalName  String    // User's original filename
+  mimeType      String    // File MIME type
+  size          Int       // File size in bytes
+  url           String    // Storage URL
+  mediaType     MediaType // IMAGE or VIDEO
+  usage         String?   // Usage context (e.g., "hero_background", "theme_asset")
+  uploadedBy    String?
+  uploader      User?     @relation("MediaUploader", fields: [uploadedBy], references: [id])
+  createdAt     DateTime  @default(now())
+
+  @@map("media_uploads")
 }
 
 // Add the missing relation for ImportExportJob and ComplianceReport to User model
