@@ -106,19 +106,27 @@ async function getPersonalizedRecommendations(
       return await prisma.product.findMany({
         where: {
           status: 'ACTIVE',
-          categoryId: {
-            in: userInteractions.categories,
+          categories: {
+            some: {
+              categoryId: {
+                in: userInteractions.categories,
+              },
+            },
           },
           id: {
             notIn: userInteractions.viewedProducts,
           },
         },
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
-              slug: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
             },
           },
           images: {
@@ -171,11 +179,15 @@ async function getGenericRecommendations(
         featured: true,
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {
@@ -207,7 +219,15 @@ async function getSimilarProducts(
     const product = await prisma.product.findUnique({
       where: { id: productId },
       select: {
-        categoryId: true,
+        categories: {
+          select: {
+            category: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
         regularPrice: true,
       },
     });
@@ -228,13 +248,20 @@ async function getSimilarProducts(
       excludeProducts.push(...recentlyViewed.map(item => item.productId));
     }
 
-    // Find products in the same category with similar price range
+    // Find products in the same categories with similar price range
+    const categoryIds = product.categories.map(cat => cat.category.id);
     const priceRange = Number(product.regularPrice) * 0.3; // 30% price range
 
     return await prisma.product.findMany({
       where: {
         status: 'ACTIVE',
-        categoryId: product.categoryId,
+        categories: {
+          some: {
+            categoryId: {
+              in: categoryIds,
+            },
+          },
+        },
         id: {
           notIn: excludeProducts,
         },
@@ -244,11 +271,15 @@ async function getSimilarProducts(
         },
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {
@@ -292,17 +323,25 @@ async function getCategoryRecommendations(
     return await prisma.product.findMany({
       where: {
         status: 'ACTIVE',
-        categoryId: categoryId,
+        categories: {
+          some: {
+            categoryId: categoryId,
+          },
+        },
         id: {
           notIn: excludeProducts,
         },
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {
@@ -347,11 +386,15 @@ async function getTrendingProducts(limit: number, excludeUserId?: string) {
         },
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: {
@@ -382,7 +425,15 @@ async function getUserInteractions(userId: string) {
       include: {
         product: {
           select: {
-            categoryId: true,
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -396,7 +447,15 @@ async function getUserInteractions(userId: string) {
       include: {
         product: {
           select: {
-            categoryId: true,
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -409,27 +468,49 @@ async function getUserInteractions(userId: string) {
       include: {
         product: {
           select: {
-            categoryId: true,
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
 
-    // Combine all interactions
-    const allInteractions = [
-      ...recentlyViewed.map(item => ({
-        categoryId: item.product.categoryId,
-        productId: item.productId,
-      })),
-      ...wishlist.map(item => ({
-        categoryId: item.product.categoryId,
-        productId: item.productId,
-      })),
-      ...cart.map(item => ({
-        categoryId: item.product.categoryId,
-        productId: item.productId,
-      })),
-    ];
+    // Combine all interactions with multi-category support
+    const allInteractions: Array<{ categoryId: string; productId: string }> = [];
+    
+    recentlyViewed.forEach(item => {
+      item.product.categories.forEach(cat => {
+        allInteractions.push({
+          categoryId: cat.category.id,
+          productId: item.productId,
+        });
+      });
+    });
+    
+    wishlist.forEach(item => {
+      item.product.categories.forEach(cat => {
+        allInteractions.push({
+          categoryId: cat.category.id,
+          productId: item.productId,
+        });
+      });
+    });
+    
+    cart.forEach(item => {
+      item.product.categories.forEach(cat => {
+        allInteractions.push({
+          categoryId: cat.category.id,
+          productId: item.productId,
+        });
+      });
+    });
 
     // Count category preferences
     const categoryCount: { [key: string]: number } = {};

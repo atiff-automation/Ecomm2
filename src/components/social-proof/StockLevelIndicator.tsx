@@ -40,6 +40,7 @@ export default function StockLevelIndicator({
     if (productId) {
       fetchStockData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchStockData = async () => {

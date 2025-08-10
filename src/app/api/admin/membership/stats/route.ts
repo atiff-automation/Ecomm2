@@ -48,11 +48,11 @@ export async function GET() {
       },
     });
 
-    // Get member orders for calculations
+    // Get member orders for calculations (count paid orders, not just delivered)
     const memberOrders = await prisma.order.findMany({
       where: {
         user: { isMember: true },
-        status: 'DELIVERED',
+        paymentStatus: 'PAID', // Count all paid orders
       },
       select: {
         total: true,
@@ -76,7 +76,23 @@ export async function GET() {
 
     // Calculate conversion rate (members vs total users)
     const totalUsers = await prisma.user.count();
-    const conversionRate = totalUsers > 0 ? totalMembers / totalUsers : 0;
+    const memberConversionRate = totalUsers > 0 ? (totalMembers / totalUsers) * 100 : 0;
+    
+    // Calculate retention rate (members with orders this month vs total members)
+    const activeMembers = await prisma.user.count({
+      where: {
+        isMember: true,
+        orders: {
+          some: {
+            createdAt: {
+              gte: firstDayOfMonth,
+            },
+            paymentStatus: 'PAID',
+          },
+        },
+      },
+    });
+    const retentionRate = totalMembers > 0 ? (activeMembers / totalMembers) * 100 : 0;
 
     // Additional member insights
     const memberOrdersThisMonth = await prisma.order.count({
@@ -85,7 +101,7 @@ export async function GET() {
         createdAt: {
           gte: firstDayOfMonth,
         },
-        status: 'DELIVERED',
+        paymentStatus: 'PAID',
       },
     });
 
@@ -95,7 +111,7 @@ export async function GET() {
       where: {
         order: {
           user: { isMember: true },
-          status: 'DELIVERED',
+          paymentStatus: 'PAID',
         },
       },
       _sum: {
@@ -113,7 +129,17 @@ export async function GET() {
     const productIds = topCategories.map(item => item.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      include: { category: true },
+      include: { 
+        categories: {
+          select: {
+            category: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Create a map for efficient lookup
@@ -126,10 +152,15 @@ export async function GET() {
     );
 
     // Map the results efficiently
-    const categoryData = topCategories.map(item => ({
-      categoryName: productMap[item.productId]?.category?.name || 'Unknown',
-      quantity: item._sum.quantity || 0,
-    }));
+    const categoryData = topCategories.map(item => {
+      const product = productMap[item.productId];
+      // For products with multiple categories, use the first one
+      const firstCategory = product?.categories?.[0]?.category?.name || 'Unknown';
+      return {
+        categoryName: firstCategory,
+        quantity: item._sum.quantity || 0,
+      };
+    });
 
     // Member growth trend (last 6 months)
     const sixMonthsAgo = new Date();
@@ -167,9 +198,11 @@ export async function GET() {
     const stats = {
       totalMembers,
       newMembersThisMonth,
+      totalRevenue: Math.round(totalOrderValue * 100) / 100,
       averageOrderValue: Math.round(averageOrderValue * 100) / 100,
       totalSavingsGiven: Math.round(totalSavingsGiven * 100) / 100,
-      conversionRate: Math.round(conversionRate * 10000) / 10000, // 4 decimal places
+      memberConversionRate: Math.round(memberConversionRate * 100) / 100,
+      retentionRate: Math.round(retentionRate * 100) / 100,
       memberOrdersThisMonth,
       topCategories: categoryData,
       memberGrowthTrend,

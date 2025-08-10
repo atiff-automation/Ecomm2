@@ -180,11 +180,15 @@ export async function getGuestCartWithProducts() {
       status: 'ACTIVE',
     },
     include: {
-      category: {
+      categories: {
         select: {
-          id: true,
-          name: true,
-          slug: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
         },
       },
       images: {
@@ -221,9 +225,9 @@ export async function getGuestCartWithProducts() {
           isPromotional: product.isPromotional,
           isQualifyingForMembership: product.isQualifyingForMembership,
           category: {
-            id: product.category.id,
-            name: product.category.name,
-            slug: product.category.slug,
+            id: product.categories?.[0]?.category?.id || '',
+            name: product.categories?.[0]?.category?.name || 'Uncategorized',
+            slug: product.categories?.[0]?.category?.slug || '',
           },
           primaryImage:
             product.images.find(img => img.isPrimary) ||
@@ -319,8 +323,25 @@ export async function transferGuestCartToUser(userId: string): Promise<void> {
       select: { productId: true, quantity: true },
     });
 
-    // Transfer guest cart items to user's cart
+    // Validate that all guest cart products exist in the database
+    const guestProductIds = guestCart.items.map(item => item.productId);
+    const validProducts = await prisma.product.findMany({
+      where: {
+        id: { in: guestProductIds },
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+    const validProductIds = new Set(validProducts.map(p => p.id));
+
+    // Transfer only valid guest cart items to user's cart
     for (const guestItem of guestCart.items) {
+      // Skip items with invalid product IDs
+      if (!validProductIds.has(guestItem.productId)) {
+        console.warn(`Skipping invalid product ID: ${guestItem.productId}`);
+        continue;
+      }
+
       const existingItem = existingCartItems.find(
         item => item.productId === guestItem.productId
       );

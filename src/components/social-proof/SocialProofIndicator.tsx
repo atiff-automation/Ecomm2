@@ -47,6 +47,7 @@ export function SocialProofIndicator({
 
   useEffect(() => {
     fetchSocialProofData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchSocialProofData = async () => {

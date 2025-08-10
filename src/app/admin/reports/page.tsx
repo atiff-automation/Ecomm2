@@ -73,6 +73,7 @@ export default function AdminReports() {
 
   useEffect(() => {
     fetchReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange]);
 
   const fetchReportData = async () => {

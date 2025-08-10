@@ -22,12 +22,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!session.user.isMember) {
-      return NextResponse.json(
-        { message: 'Member access required' },
-        { status: 403 }
-      );
-    }
+    // Note: Changed to allow all authenticated users to see their orders
+    // Members get additional benefits, but all users can view order history
 
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get('limit');
@@ -92,9 +88,11 @@ export async function GET(request: NextRequest) {
       orderNumber: order.orderNumber,
       createdAt: order.createdAt.toISOString(),
       status: order.status,
+      paymentStatus: order.paymentStatus,
       total: Number(order.total),
       memberSavings: Number(order.memberDiscount || 0),
       itemCount: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+      trackingNumber: order.trackingNumber,
       items: order.orderItems.map(item => ({
         id: item.id,
         productName: item.productName,

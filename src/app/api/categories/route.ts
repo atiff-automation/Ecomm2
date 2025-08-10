@@ -66,7 +66,11 @@ export async function GET(request: NextRequest) {
             _count: {
               select: {
                 products: {
-                  where: { status: 'ACTIVE' },
+                  where: { 
+                    product: {
+                      status: 'ACTIVE'
+                    }
+                  },
                 },
               },
             },
@@ -131,7 +135,11 @@ export async function GET(request: NextRequest) {
           _count: {
             select: {
               products: {
-                where: { status: 'ACTIVE' },
+                where: { 
+                  product: {
+                    status: 'ACTIVE'
+                  }
+                },
               },
             },
           },

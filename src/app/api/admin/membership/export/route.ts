@@ -34,13 +34,17 @@ export async function GET() {
       where: { isMember: true },
       include: {
         orders: {
-          where: { status: 'DELIVERED' },
+          where: { paymentStatus: 'PAID' },
           include: {
             orderItems: {
               include: {
                 product: {
                   include: {
-                    category: true,
+                    categories: {
+                      include: {
+                        category: true,
+                      },
+                    },
                   },
                 },
               },
@@ -100,7 +104,7 @@ export async function GET() {
       const categoryCount = new Map<string, number>();
       member.orders.forEach(order => {
         order.orderItems.forEach(item => {
-          const categoryName = item.product.category.name;
+          const categoryName = item.product.categories?.[0]?.category?.name || 'Uncategorized';
           categoryCount.set(
             categoryName,
             (categoryCount.get(categoryName) || 0) + 1

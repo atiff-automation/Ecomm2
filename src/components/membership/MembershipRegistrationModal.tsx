@@ -136,6 +136,20 @@ export default function MembershipRegistrationModal({
       });
 
       if (loginResult?.ok) {
+        // Transfer guest cart to user account after successful login
+        try {
+          const transferResponse = await fetch('/api/cart/transfer-guest-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          
+          if (!transferResponse.ok) {
+            console.warn('Failed to transfer guest cart to user account');
+          }
+        } catch (error) {
+          console.warn('Error transferring guest cart:', error);
+        }
+
         // Show success with pending status
         onSuccess({
           ...result,
@@ -178,6 +192,20 @@ export default function MembershipRegistrationModal({
       });
 
       if (result?.ok) {
+        // Transfer guest cart to user account after successful login
+        try {
+          const transferResponse = await fetch('/api/cart/transfer-guest-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          
+          if (!transferResponse.ok) {
+            console.warn('Failed to transfer guest cart to user account');
+          }
+        } catch (error) {
+          console.warn('Error transferring guest cart:', error);
+        }
+
         // Activate membership for existing user
         const membershipResponse = await fetch('/api/membership/register', {
           method: 'POST',

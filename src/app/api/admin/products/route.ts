@@ -34,7 +34,10 @@ const createProductSchema = z.object({
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
   isQualifyingForMembership: z.boolean().default(true),
-  promotionalPrice: z.number().optional(),
+  promotionalPrice: z.union([
+    z.number().min(0, 'Promotional price must be positive'),
+    z.string().transform(val => val === '' ? undefined : parseFloat(val)).refine(val => val === undefined || (!isNaN(val) && val >= 0), 'Promotional price must be a positive number')
+  ]).optional(),
   promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
   promotionEndDate: z.union([z.string().datetime(), z.null()]).optional(),
   memberOnlyUntil: z.union([z.string().datetime(), z.null()]).optional(),

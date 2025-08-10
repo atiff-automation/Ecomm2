@@ -85,10 +85,14 @@ export async function POST(request: NextRequest) {
         status: 'ACTIVE',
       },
       include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -306,6 +310,27 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Save as default address for authenticated users if they don't have one
+      if (!isGuest) {
+        const existingDefaultAddress = await tx.address.findFirst({
+          where: {
+            userId: session!.user.id,
+            isDefault: true,
+          },
+        });
+
+        // If user has no default address, mark this shipping address as default
+        if (!existingDefaultAddress) {
+          await tx.address.update({
+            where: { id: shippingAddr.id },
+            data: {
+              isDefault: true,
+              type: 'HOME', // Change from SHIPPING to HOME for future use
+            },
+          });
+        }
+      }
+
       // Create audit log (only for authenticated users)
       if (!isGuest) {
         await tx.auditLog.create({
@@ -349,7 +374,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Order created successfully',
       orderId: result.id,
-      orderNumber: result.id,
+      orderNumber: result.orderNumber,
       totalAmount,
       paymentUrl,
       membershipPending:

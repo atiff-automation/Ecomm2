@@ -89,6 +89,17 @@ const navigationItems = [
     icon: Settings,
     roles: [UserRole.ADMIN],
   },
+  // Development only - Test tools
+  ...(process.env.NODE_ENV === 'development'
+    ? [
+        {
+          label: '🧪 Payment Tests',
+          href: '/admin/test/payment-flow',
+          icon: Settings,
+          roles: [UserRole.ADMIN, UserRole.STAFF],
+        },
+      ]
+    : []),
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -147,7 +158,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
@@ -170,70 +181,102 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </button>
         </div>
 
-        <nav className="mt-6 px-3">
-          <div className="space-y-1">
-            {filteredNavigationItems.map(item => {
-              const Icon = item.icon;
-              const isActive = isActiveRoute(item.href);
-              const hasSubmenu = item.submenu && item.submenu.length > 0;
-              const isExpanded = expandedMenus.includes(item.label);
+        <div className="flex flex-col flex-1">
+          <nav className="mt-6 px-3 flex-1 overflow-y-auto">
+            <div className="space-y-1">
+              {filteredNavigationItems.map(item => {
+                const Icon = item.icon;
+                const isActive = isActiveRoute(item.href);
+                const hasSubmenu = item.submenu && item.submenu.length > 0;
+                const isExpanded = expandedMenus.includes(item.label);
 
-              return (
-                <div key={item.label}>
-                  <div className="flex items-center">
-                    <Link
-                      href={item.href}
-                      className={`flex-1 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                        isActive
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon
-                        className={`mr-3 h-5 w-5 ${
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center">
+                      <Link
+                        href={item.href}
+                        className={`flex-1 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                           isActive
-                            ? 'text-blue-500'
-                            : 'text-gray-400 group-hover:text-gray-500'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                         }`}
-                      />
-                      {item.label}
-                    </Link>
-                    {hasSubmenu && (
-                      <button
-                        onClick={() => toggleSubmenu(item.label)}
-                        className="p-1 ml-1 rounded text-gray-400 hover:text-gray-500"
                       >
-                        <ChevronDown
-                          className={`h-4 w-4 transform transition-transform ${
-                            isExpanded ? 'rotate-180' : ''
+                        <Icon
+                          className={`mr-3 h-5 w-5 ${
+                            isActive
+                              ? 'text-blue-500'
+                              : 'text-gray-400 group-hover:text-gray-500'
                           }`}
                         />
-                      </button>
+                        {item.label}
+                      </Link>
+                      {hasSubmenu && (
+                        <button
+                          onClick={() => toggleSubmenu(item.label)}
+                          className="p-1 ml-1 rounded text-gray-400 hover:text-gray-500"
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transform transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+                      )}
+                    </div>
+
+                    {hasSubmenu && isExpanded && (
+                      <div className="ml-6 mt-1 space-y-1">
+                        {item.submenu?.map(subItem => (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === subItem.href
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                            }`}
+                          >
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
                     )}
                   </div>
+                );
+              })}
+            </div>
+          </nav>
 
-                  {hasSubmenu && isExpanded && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      {item.submenu?.map(subItem => (
-                        <Link
-                          key={subItem.href}
-                          href={subItem.href}
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === subItem.href
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                          }`}
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+          {/* User Profile Section at Bottom */}
+          <div className="border-t border-gray-200 p-3">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="h-6 w-6 text-blue-600" />
                 </div>
-              );
-            })}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {session.user.name}
+                </p>
+                <div className="flex items-center">
+                  <Badge variant="outline" className="text-xs">
+                    {session.user.role}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <LogOut className="h-4 w-4 mr-3" />
+              Sign Out
+            </Button>
           </div>
-        </nav>
+        </div>
       </div>
 
       {/* Sidebar overlay for mobile */}
@@ -276,36 +319,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <button className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md">
                   <Bell className="h-5 w-5" />
                 </button>
-
-                {/* User menu */}
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-600" />
-                      </div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {session.user.name}
-                      </p>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs">
-                          {session.user.role}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSignOut}
-                    className="ml-3"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
               </div>
             </div>
           </div>

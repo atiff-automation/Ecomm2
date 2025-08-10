@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
     }
     
     if (categoryId) {
-      where.categoryId = categoryId;
+      where.categories = {
+        some: {
+          categoryId: categoryId,
+        },
+      };
     }
     
     if (status) {
@@ -47,10 +51,14 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         images: {
@@ -104,8 +112,8 @@ export async function GET(request: NextRequest) {
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.description || '').replace(/"/g, '""')}"`,
           `"${(product.shortDescription || '').replace(/"/g, '""')}"`,
-          `"${product.category.name || ''}"`,
-          `"${product.category.id || ''}"`,
+          `"${product.categories?.[0]?.category?.name || ''}"`,
+          `"${product.categories?.[0]?.category?.id || ''}"`,
           product.regularPrice || 0,
           product.memberPrice || 0,
           product.costPrice || 0,

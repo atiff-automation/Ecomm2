@@ -56,9 +56,9 @@ export function CartButton({
       fetchCartCount();
     };
 
-    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('cart_updated', handleCartUpdate);
     return () => {
-      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('cart_updated', handleCartUpdate);
     };
   }, [fetchCartCount]);
 

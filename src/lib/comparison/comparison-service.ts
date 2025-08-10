@@ -13,10 +13,12 @@ export interface ComparisonProduct {
   regularPrice: number;
   memberPrice: number;
   images: string[];
-  category: {
-    id: string;
-    name: string;
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   specifications: Record<string, string>;
   stockQuantity: number;
   averageRating: number;
@@ -47,10 +49,14 @@ export class ComparisonService {
           status: 'ACTIVE',
         },
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           reviews: {
@@ -81,10 +87,12 @@ export class ComparisonService {
           regularPrice: Number(product.regularPrice),
           memberPrice: Number(product.memberPrice),
           images: product.images.map(img => img.url),
-          category: {
-            id: product.category.id,
-            name: product.category.name,
-          },
+          categories: product.categories.map(cat => ({
+            category: {
+              id: cat.category.id,
+              name: cat.category.name,
+            },
+          })),
           specifications: {},
           stockQuantity: product.stockQuantity,
           averageRating: Math.round(averageRating * 10) / 10,
@@ -154,7 +162,7 @@ export class ComparisonService {
                 acc[product.id] = product.reviewCount;
                 break;
               case 'category':
-                acc[product.id] = product.category.name;
+                acc[product.id] = product.categories?.[0]?.category?.name || 'Uncategorized';
                 break;
               default:
                 acc[product.id] = null;
@@ -201,14 +209,18 @@ export class ComparisonService {
     }>
   > {
     try {
-      // Get the current product's category
+      // Get the current product's categories
       const currentProduct = await prisma.product.findUnique({
         where: { id: productId },
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -218,10 +230,17 @@ export class ComparisonService {
         return [];
       }
 
-      // Get similar products from the same category
+      // Get similar products from the same categories
+      const categoryIds = currentProduct.categories.map(cat => cat.category.id);
       const similarProducts = await prisma.product.findMany({
         where: {
-          categoryId: currentProduct.categoryId,
+          categories: {
+            some: {
+              categoryId: {
+                in: categoryIds,
+              },
+            },
+          },
           id: {
             not: productId, // Exclude the current product
           },
@@ -238,9 +257,13 @@ export class ComparisonService {
               url: true,
             },
           },
-          category: {
+          categories: {
             select: {
-              name: true,
+              category: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -257,7 +280,7 @@ export class ComparisonService {
         regularPrice: Number(product.regularPrice),
         memberPrice: Number(product.memberPrice),
         images: product.images.map(img => img.url),
-        category: product.category.name,
+        category: product.categories?.[0]?.category?.name || 'Uncategorized',
       }));
     } catch (error) {
       console.error('Error fetching similar products:', error);

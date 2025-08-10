@@ -41,9 +41,13 @@ interface CartItem {
     regularPrice: number;
     memberPrice: number;
     stockQuantity: number;
-    category: {
-      name: string;
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    }>;
     primaryImage?: {
       url: string;
       altText?: string;
@@ -180,6 +184,30 @@ export function CartSidebar({
     }
   }, [isOpen, fetchCart]);
 
+  // Listen for cart updates from other components (like payment completion)
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      fetchCart();
+    };
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'cart_items' && event.newValue === null) {
+        // Cart was cleared from localStorage
+        fetchCart();
+      }
+    };
+
+    // Listen for custom cart update events
+    window.addEventListener('cart_updated', handleCartUpdate);
+    // Listen for localStorage changes (like cart clearing after payment)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('cart_updated', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [fetchCart]);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
       style: 'currency',
@@ -277,7 +305,7 @@ export function CartSidebar({
                         </Link>
 
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.product.category.name}
+                          {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
                         </p>
 
                         {/* Pricing */}

@@ -182,6 +182,7 @@ export default function MembershipTestingPage() {
 
   useEffect(() => {
     fetchPendingOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Production check

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           gte: startDate,
           lte: endDate,
         },
-        status: 'DELIVERED',
+        paymentStatus: 'PAID',
       },
       select: {
         total: true,
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
           gte: previousStartDate,
           lt: startDate,
         },
-        status: 'DELIVERED',
+        paymentStatus: 'PAID',
       },
       select: {
         total: true,

@@ -124,19 +124,16 @@ export default function EditProductPage() {
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
-  // Utility function to safely format prices
-  const formatPrice = (price: any): string => {
-    const numPrice = Number(price);
-    return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
-  };
-
   // Utility function to parse dimensions string (e.g., "10x20x30" or "10 x 20 x 30")
   const parseDimensions = (dimensionString: string) => {
     if (!dimensionString || typeof dimensionString !== 'string') {
       return { length: '', width: '', height: '' };
     }
-    
-    const parts = dimensionString.split(/[x×\s*×\s*]/).map(part => part.trim()).filter(part => part);
+
+    const parts = dimensionString
+      .split(/[x×\s*×\s*]/)
+      .map(part => part.trim())
+      .filter(part => part);
     return {
       length: parts[0] || '',
       width: parts[1] || '',
@@ -145,18 +142,25 @@ export default function EditProductPage() {
   };
 
   // Utility function to format dimensions for storage
-  const formatDimensions = (length: string | number, width: string | number, height: string | number): string => {
+  const formatDimensions = (
+    length: string | number,
+    width: string | number,
+    height: string | number
+  ): string => {
     const l = length?.toString().trim() || '';
     const w = width?.toString().trim() || '';
     const h = height?.toString().trim() || '';
-    
-    if (!l && !w && !h) return '';
+
+    if (!l && !w && !h) {
+      return '';
+    }
     return `${l || '0'} × ${w || '0'} × ${h || '0'}`;
   };
 
   useEffect(() => {
     fetchCategories();
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchCategories = async () => {
@@ -198,21 +202,32 @@ export default function EditProductPage() {
           shortDescription: product.shortDescription || '',
           sku: product.sku || '',
           barcode: product.barcode || '',
-          categoryIds: product.categories?.map((pc: any) => pc.category.id) || [],
+          categoryIds:
+            product.categories?.map(
+              (pc: { category: { id: string } }) => pc.category.id
+            ) || [],
           regularPrice: Number(product.regularPrice) || 0,
           memberPrice: Number(product.memberPrice) || 0,
           costPrice: Number(product.costPrice) || 0,
           stockQuantity: product.stockQuantity || 0,
           lowStockAlert: product.lowStockAlert || 10,
           weight: product.weight || 0,
-          length: product.dimensions ? parseDimensions(product.dimensions).length : '',
-          width: product.dimensions ? parseDimensions(product.dimensions).width : '',
-          height: product.dimensions ? parseDimensions(product.dimensions).height : '',
+          length: product.dimensions
+            ? parseDimensions(product.dimensions).length
+            : '',
+          width: product.dimensions
+            ? parseDimensions(product.dimensions).width
+            : '',
+          height: product.dimensions
+            ? parseDimensions(product.dimensions).height
+            : '',
           status: product.status || 'DRAFT',
           featured: product.featured || false,
           isPromotional: product.isPromotional || false,
           isQualifyingForMembership: product.isQualifyingForMembership ?? true,
-          promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : undefined,
+          promotionalPrice: product.promotionalPrice
+            ? Number(product.promotionalPrice)
+            : undefined,
           promotionStartDate: product.promotionStartDate
             ? new Date(product.promotionStartDate)
             : undefined,
@@ -290,7 +305,6 @@ export default function EditProductPage() {
     setFormData(prev => ({ ...prev, images: productImages }));
   };
 
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -366,8 +380,16 @@ export default function EditProductPage() {
         costPrice: Number(formData.costPrice),
         stockQuantity: Number(formData.stockQuantity),
         lowStockAlert: Number(formData.lowStockAlert),
-        weight: formData.weight && formData.weight !== '' ? Number(formData.weight) : null,
-        dimensions: formatDimensions(formData.length || '', formData.width || '', formData.height || '') || null,
+        weight:
+          formData.weight && formData.weight !== ''
+            ? Number(formData.weight)
+            : null,
+        dimensions:
+          formatDimensions(
+            formData.length || '',
+            formData.width || '',
+            formData.height || ''
+          ) || null,
         promotionalPrice: formData.promotionalPrice
           ? Number(formData.promotionalPrice)
           : null,
@@ -395,8 +417,10 @@ export default function EditProductPage() {
       } else {
         throw new Error(data.message || 'Failed to update product');
       }
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      setErrors({ submit: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -423,8 +447,10 @@ export default function EditProductPage() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete product');
       }
-    } catch (error: any) {
-      setErrors({ delete: error.message });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to delete product';
+      setErrors({ delete: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -437,7 +463,7 @@ export default function EditProductPage() {
 
     switch (tabId) {
       case 'basic':
-        return formData.name && formData.sku && formData.categoryId
+        return formData.name && formData.sku && formData.categoryIds.length > 0
           ? 'completed'
           : 'pending';
       case 'pricing':
@@ -511,7 +537,6 @@ export default function EditProductPage() {
             </p>
           </div>
         </div>
-
       </div>
 
       {/* Error Messages */}
@@ -653,20 +678,30 @@ export default function EditProductPage() {
                             {formData.categoryIds.length > 0 && (
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {formData.categoryIds.map(categoryId => {
-                                  const category = categories.find(c => c.id === categoryId);
-                                  if (!category) return null;
+                                  const category = categories.find(
+                                    c => c.id === categoryId
+                                  );
+                                  if (!category) {
+                                    return null;
+                                  }
                                   return (
-                                    <Badge 
+                                    <Badge
                                       key={categoryId}
-                                      variant="secondary" 
+                                      variant="secondary"
                                       className="flex items-center gap-1"
                                     >
                                       {category.name}
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          const newCategoryIds = formData.categoryIds.filter(id => id !== categoryId);
-                                          handleInputChange('categoryIds', newCategoryIds);
+                                          const newCategoryIds =
+                                            formData.categoryIds.filter(
+                                              id => id !== categoryId
+                                            );
+                                          handleInputChange(
+                                            'categoryIds',
+                                            newCategoryIds
+                                          );
                                         }}
                                         className="ml-1 hover:bg-gray-200 rounded-full p-1"
                                       >
@@ -677,14 +712,22 @@ export default function EditProductPage() {
                                 })}
                               </div>
                             )}
-                            
                             {/* Category Selector */}
                             <Select
                               value=""
                               onValueChange={value => {
-                                if (value && !formData.categoryIds.includes(value)) {
-                                  const newCategoryIds = [...formData.categoryIds, value];
-                                  handleInputChange('categoryIds', newCategoryIds);
+                                if (
+                                  value &&
+                                  !formData.categoryIds.includes(value)
+                                ) {
+                                  const newCategoryIds = [
+                                    ...formData.categoryIds,
+                                    value,
+                                  ];
+                                  handleInputChange(
+                                    'categoryIds',
+                                    newCategoryIds
+                                  );
                                 }
                               }}
                             >
@@ -692,17 +735,25 @@ export default function EditProductPage() {
                                 <SelectValue placeholder="+ Add a category..." />
                               </SelectTrigger>
                               <SelectContent>
-                                {Array.isArray(categories) && categories
-                                  .filter(category => !formData.categoryIds.includes(category.id))
-                                  .map(category => (
-                                    <SelectItem key={category.id} value={category.id}>
-                                      {category.name}
-                                    </SelectItem>
-                                  ))}
+                                {Array.isArray(categories) &&
+                                  categories
+                                    .filter(
+                                      category =>
+                                        !formData.categoryIds.includes(
+                                          category.id
+                                        )
+                                    )
+                                    .map(category => (
+                                      <SelectItem
+                                        key={category.id}
+                                        value={category.id}
+                                      >
+                                        {category.name}
+                                      </SelectItem>
+                                    ))}
                               </SelectContent>
                             </Select>
                           </div>
-                          
                           {errors.categoryIds && (
                             <p className="text-sm text-red-600 mt-1">
                               {errors.categoryIds}
@@ -907,10 +958,13 @@ export default function EditProductPage() {
                             <CustomDateRangePicker
                               startDate={formData.promotionStartDate}
                               endDate={formData.promotionEndDate}
-                              onStartDateChange={(startDate) =>
-                                handleInputChange('promotionStartDate', startDate)
+                              onStartDateChange={startDate =>
+                                handleInputChange(
+                                  'promotionStartDate',
+                                  startDate
+                                )
                               }
-                              onEndDateChange={(endDate) =>
+                              onEndDateChange={endDate =>
                                 handleInputChange('promotionEndDate', endDate)
                               }
                               placeholder="Select promotion period"
@@ -997,7 +1051,10 @@ export default function EditProductPage() {
                         <Label>Dimensions (cm)</Label>
                         <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <Label htmlFor="length" className="text-xs text-gray-500">
+                            <Label
+                              htmlFor="length"
+                              className="text-xs text-gray-500"
+                            >
                               Length
                             </Label>
                             <Input
@@ -1013,7 +1070,10 @@ export default function EditProductPage() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="width" className="text-xs text-gray-500">
+                            <Label
+                              htmlFor="width"
+                              className="text-xs text-gray-500"
+                            >
                               Width
                             </Label>
                             <Input
@@ -1029,7 +1089,10 @@ export default function EditProductPage() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="height" className="text-xs text-gray-500">
+                            <Label
+                              htmlFor="height"
+                              className="text-xs text-gray-500"
+                            >
                               Height
                             </Label>
                             <Input
@@ -1129,10 +1192,10 @@ export default function EditProductPage() {
                         <CustomDateRangePicker
                           startDate={formData.earlyAccessStart}
                           endDate={formData.memberOnlyUntil}
-                          onStartDateChange={(startDate) =>
+                          onStartDateChange={startDate =>
                             handleInputChange('earlyAccessStart', startDate)
                           }
-                          onEndDateChange={(endDate) =>
+                          onEndDateChange={endDate =>
                             handleInputChange('memberOnlyUntil', endDate)
                           }
                           placeholder="Select member early access period"
@@ -1202,8 +1265,6 @@ export default function EditProductPage() {
                   </div>
                 </CardContent>
               </Card>
-
-
               {/* Actions Card */}
               <Card>
                 <CardHeader>
@@ -1224,7 +1285,11 @@ export default function EditProductPage() {
                     )}
                   </Button>
 
-                  <Link href={`/products/${formData.slug}`} target="_blank" rel="noopener noreferrer">
+                  <Link
+                    href={`/products/${formData.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Button variant="outline" className="w-full">
                       <Eye className="h-4 w-4 mr-2" />
                       Live View Product

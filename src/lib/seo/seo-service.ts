@@ -23,7 +23,7 @@ export interface ProductSEO extends SEOData {
   currency?: string;
   availability?: 'in_stock' | 'out_of_stock' | 'limited_stock';
   brand?: string | undefined;
-  category?: string | undefined;
+  category?: string | undefined; // Primary category name
   sku?: string;
   rating?: number | undefined;
   reviewCount?: number | undefined;
@@ -77,7 +77,7 @@ export class SEOService {
     regularPrice: number;
     memberPrice: number;
     images?: string[];
-    category?: string;
+    category?: string; // Primary category name
     brand?: string;
     sku: string;
     stock: number;
@@ -96,7 +96,7 @@ export class SEOService {
         : `Buy ${product.name} online in Malaysia. Member price from RM${product.memberPrice}. ${availability === 'in_stock' ? 'In stock' : 'Currently unavailable'}.`,
       keywords: [
         product.name.toLowerCase(),
-        product.category?.toLowerCase() || '',
+        '', // Category keywords should be provided as primary category name
         product.brand?.toLowerCase() || '',
         'Malaysia',
         'online shopping',
@@ -113,7 +113,7 @@ export class SEOService {
       currency: 'MYR',
       availability,
       brand: product.brand || undefined,
-      category: product.category || undefined,
+      category: product.category || undefined, // Expects primary category name to be passed in
       sku: product.sku,
       rating: product.rating || undefined,
       reviewCount: product.reviewCount || undefined,

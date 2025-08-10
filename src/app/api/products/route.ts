@@ -99,7 +99,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      where.categoryId = category;
+      where.categories = {
+        some: {
+          categoryId: category,
+        },
+      };
     }
 
     if (minPrice || maxPrice) {
@@ -145,11 +149,15 @@ export async function GET(request: NextRequest) {
       prisma.product.findMany({
         where,
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
-              slug: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
             },
           },
           images: {

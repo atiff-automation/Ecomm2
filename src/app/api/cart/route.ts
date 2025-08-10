@@ -19,6 +19,7 @@ import {
   updateGuestCartItem,
   clearGuestCart,
 } from '@/lib/cart/guest-cart';
+import { getBestPrice, productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
 
 interface CartItemWithProduct {
   id: string;
@@ -29,7 +30,12 @@ interface CartItemWithProduct {
     regularPrice: number;
     memberPrice: number;
     isPromotional: boolean;
+    promotionalPrice?: number | null;
+    promotionStartDate?: Date | null;
+    promotionEndDate?: Date | null;
     isQualifyingForMembership: boolean;
+    memberOnlyUntil?: Date | null;
+    earlyAccessStart?: Date | null;
     status: string;
     categories: Array<{
       category: {
@@ -106,7 +112,12 @@ export async function GET() {
         regularPrice: Number(item.product.regularPrice),
         memberPrice: Number(item.product.memberPrice),
         isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
         isQualifyingForMembership: item.product.isQualifyingForMembership,
+        memberOnlyUntil: item.product.memberOnlyUntil,
+        earlyAccessStart: item.product.earlyAccessStart,
         status: item.product.status,
         categories: item.product.categories.map(cat => ({
           category: {
@@ -495,39 +506,96 @@ export async function DELETE() {
 }
 
 /**
- * Calculate cart summary with membership eligibility
+ * Calculate cart summary with membership eligibility using comprehensive promotional logic
  */
 async function calculateCartSummary(
   cartItems: CartItemWithProduct[],
   isMember: boolean
 ) {
-  // Get membership configuration
-  const config = await getMembershipConfig();
+  // Get membership threshold from system config (consistent with membership-check endpoint)
+  const thresholdConfig = await prisma.systemConfig.findFirst({
+    where: {
+      key: 'membership_threshold',
+    },
+  });
+  const membershipThreshold = Number(thresholdConfig?.value) || 80;
 
-  // Calculate membership eligibility using the membership service
-  const calculation = calculateMembershipEligibility(
-    cartItems,
-    isMember,
-    config
-  );
+  let totalItems = 0;
+  let subtotal = 0;
+  let memberSubtotal = 0;
+  let applicableSubtotal = 0;
+  let qualifyingTotal = 0;
+
+  // Calculate totals using comprehensive promotional logic
+  for (const cartItem of cartItems) {
+    const { product, quantity } = cartItem;
+    totalItems += quantity;
+
+    // Use comprehensive pricing logic that considers promotions, membership, and early access
+    const priceInfo = getBestPrice({
+      isPromotional: product.isPromotional,
+      promotionalPrice: product.promotionalPrice,
+      promotionStartDate: product.promotionStartDate,
+      promotionEndDate: product.promotionEndDate,
+      isQualifyingForMembership: product.isQualifyingForMembership,
+      memberOnlyUntil: product.memberOnlyUntil,
+      earlyAccessStart: product.earlyAccessStart,
+      regularPrice: product.regularPrice,
+      memberPrice: product.memberPrice,
+    }, isMember);
+
+    const itemSubtotal = product.regularPrice * quantity;
+    const memberItemSubtotal = product.memberPrice * quantity;
+    const applicableItemSubtotal = priceInfo.price * quantity;
+
+    subtotal += itemSubtotal;
+    memberSubtotal += memberItemSubtotal;
+    applicableSubtotal += applicableItemSubtotal;
+
+    // Check if product qualifies for membership calculation using comprehensive promotional logic
+    const qualifiesForMembership = productQualifiesForMembership({
+      isPromotional: product.isPromotional,
+      promotionalPrice: product.promotionalPrice,
+      promotionStartDate: product.promotionStartDate,
+      promotionEndDate: product.promotionEndDate,
+      isQualifyingForMembership: product.isQualifyingForMembership,
+      memberOnlyUntil: product.memberOnlyUntil,
+      earlyAccessStart: product.earlyAccessStart,
+    });
+
+    // CRITICAL: If the user is getting promotional pricing, the product should NOT qualify
+    // This ensures consistency between pricing and qualification
+    const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
+    const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+
+    if (finalQualification) {
+      qualifyingTotal += applicableItemSubtotal;
+    }
+  }
+
+  // Calculate potential savings and membership progress
+  const potentialSavings = isMember ? subtotal - applicableSubtotal : subtotal - memberSubtotal;
+  const membershipProgress = Math.min((qualifyingTotal / membershipThreshold) * 100, 100);
+  const isEligibleForMembership = qualifyingTotal >= membershipThreshold;
+  const amountNeededForMembership = Math.max(0, membershipThreshold - qualifyingTotal);
 
   return {
-    itemCount: calculation.totalItems,
-    subtotal: calculation.subtotal,
-    memberSubtotal: calculation.memberSubtotal,
-    applicableSubtotal: calculation.applicableSubtotal,
-    potentialSavings: calculation.potentialSavings,
+    itemCount: totalItems,
+    subtotal,
+    memberSubtotal,
+    applicableSubtotal,
+    potentialSavings: Math.max(0, potentialSavings),
 
-    // Membership eligibility
-    qualifyingTotal: calculation.qualifyingTotal,
-    membershipThreshold: calculation.membershipThreshold,
-    isEligibleForMembership: calculation.isEligibleForMembership,
-    membershipProgress: calculation.membershipProgress,
-    amountNeededForMembership: calculation.amountNeededForMembership,
+    // Membership eligibility using comprehensive promotional logic
+    qualifyingTotal,
+    membershipThreshold,
+    isEligibleForMembership,
+    membershipProgress,
+    amountNeededForMembership,
 
     // Tax and shipping (to be calculated later)
     taxAmount: 0,
     shippingCost: 0,
-    total: calculation.applicableSubtotal,
+    total: applicableSubtotal,
   };
 }

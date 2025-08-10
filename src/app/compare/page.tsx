@@ -18,10 +18,12 @@ interface ComparisonProduct {
   regularPrice: number;
   memberPrice: number;
   images: string[];
-  category: {
-    id: string;
-    name: string;
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+    };
+  }>;
   stockQuantity: number;
   averageRating: number;
   reviewCount: number;
@@ -187,7 +189,7 @@ export default function ComparisonPage() {
                     {product.name}
                   </h3>
                   <Badge variant="outline" className="text-xs mb-3">
-                    {product.category.name}
+                    {product.categories?.[0]?.category?.name || 'Uncategorized'}
                   </Badge>
                   <div className="flex items-center gap-1 mb-3">
                     <div className="flex items-center">

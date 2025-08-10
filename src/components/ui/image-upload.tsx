@@ -170,6 +170,7 @@ export default function ImageUpload({
       setUploading(false);
       setUploadProgress(0);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [images, disabled, maxFiles, maxSize, acceptedTypes, onUpload]
   );
 

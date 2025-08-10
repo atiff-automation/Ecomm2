@@ -14,7 +14,7 @@ const discountValidationSchema = z.object({
   cartItems: z.array(
     z.object({
       productId: z.string(),
-      categoryId: z.string(),
+      categoryId: z.string(), // Primary category ID for discount validation
       quantity: z.number().min(1),
       regularPrice: z.number(),
       memberPrice: z.number(),

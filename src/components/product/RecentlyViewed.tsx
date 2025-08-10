@@ -255,10 +255,10 @@ export function RecentlyViewed({
                 <div className="space-y-2">
                   {/* Category */}
                   <Link
-                    href={`/products?category=${item.product.category.id}`}
+                    href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
                     className="text-xs text-muted-foreground hover:text-primary"
                   >
-                    {item.product.category.name}
+                    {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
                   </Link>
 
                   {/* Product Name */}

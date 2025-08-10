@@ -35,6 +35,7 @@ export default function DiscountBanner({
 
   useEffect(() => {
     fetchActiveDiscounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchActiveDiscounts = async () => {

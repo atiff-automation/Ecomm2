@@ -36,9 +36,13 @@ interface WishlistItem {
       altText?: string;
       isPrimary: boolean;
     }>;
-    category: {
-      name: string;
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    }>;
     averageRating?: number;
     reviewCount?: number;
   };
@@ -118,7 +122,7 @@ export default function MemberWishlistPage() {
   const filteredItems = wishlistItems.filter(
     item =>
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.product.category.name
+      (item.product.categories?.[0]?.category?.name || '')
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
   );
@@ -216,7 +220,7 @@ export default function MemberWishlistPage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-gray-500">
-                        {item.product.category.name}
+                        {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
                       </p>
                       <Link href={`/products/${item.product.slug}`}>
                         <h3 className="font-semibold line-clamp-2 hover:text-blue-600 transition-colors">

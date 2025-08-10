@@ -48,11 +48,13 @@ interface Product {
   featured: boolean;
   averageRating: number;
   reviewCount: number;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   images: Array<{
     id: string;
     url: string;
@@ -380,10 +382,10 @@ export default function SearchPage() {
           <div className="space-y-2">
             {/* Category */}
             <Link
-              href={`/products?category=${product.category.id}`}
+              href={`/products?category=${product.categories?.[0]?.category?.id || ''}`}
               className="text-xs text-muted-foreground hover:text-primary"
             >
-              {product.category.name}
+              {product.categories?.[0]?.category?.name || 'Uncategorized'}
             </Link>
 
             {/* Product Name */}

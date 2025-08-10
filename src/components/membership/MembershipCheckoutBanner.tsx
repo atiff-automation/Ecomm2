@@ -39,18 +39,57 @@ export default function MembershipCheckoutBanner({
   onMembershipActivated,
   className = '',
 }: MembershipCheckoutBannerProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [eligibility, setEligibility] = useState<MembershipEligibility | null>(
     null
   );
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [hasJustRegistered, setHasJustRegistered] = useState(false);
 
   useEffect(() => {
     if (cartItems.length > 0) {
       checkEligibility();
     }
-  }, [cartItems]);
+    
+    // Check if user just registered for membership
+    const registrationFlag = sessionStorage.getItem('membershipJustRegistered');
+    const registrationTimestamp = sessionStorage.getItem('membershipJustRegisteredTime');
+    
+    if (registrationFlag === 'true') {
+      // Check if registration flag is older than 5 minutes (300000 ms) - reduced time
+      const now = Date.now();
+      const registrationTime = registrationTimestamp ? parseInt(registrationTimestamp) : 0;
+      const timeElapsed = now - registrationTime;
+      
+      // Also check if there's no timestamp (old format) or elapsed time is too long
+      if (!registrationTimestamp || timeElapsed > 300000) { // 5 minutes
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🧹 Clearing expired or invalid membershipJustRegistered flag');
+        }
+        sessionStorage.removeItem('membershipJustRegistered');
+        sessionStorage.removeItem('membershipJustRegisteredTime');
+        setHasJustRegistered(false);
+      } else {
+        // Additional validation: check if user is actually signed in
+        // If showing registration complete but user isn't signed in, it's stale
+        if (!session?.user) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🧹 Clearing membershipJustRegistered flag - user not signed in');
+          }
+          sessionStorage.removeItem('membershipJustRegistered');
+          sessionStorage.removeItem('membershipJustRegisteredTime');
+          setHasJustRegistered(false);
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 Found valid membershipJustRegistered flag, setting hasJustRegistered to true');
+          }
+          setHasJustRegistered(true);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems, session]);
 
   const checkEligibility = async () => {
     try {
@@ -79,7 +118,35 @@ export default function MembershipCheckoutBanner({
     }).format(amount);
   };
 
-  const handleMembershipSuccess = (membershipData: any) => {
+  const handleMembershipSuccess = async (membershipData: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 handleMembershipSuccess called', membershipData);
+    }
+    
+    // Mark that user just registered for membership
+    setHasJustRegistered(true);
+    
+    // Persist registration state across component re-renders with timestamp
+    const now = Date.now().toString();
+    sessionStorage.setItem('membershipJustRegistered', 'true');
+    sessionStorage.setItem('membershipJustRegisteredTime', now);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Set membershipJustRegistered flag in sessionStorage with timestamp');
+    }
+    
+    // Refresh session to get updated user data
+    try {
+      await update();
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Session updated');
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to refresh session:', error);
+      }
+    }
+    
     // Refresh eligibility status
     checkEligibility();
     // Notify parent component
@@ -103,66 +170,160 @@ export default function MembershipCheckoutBanner({
   }
 
   if (!eligibility || eligibility.isExistingMember) {
+    // Clear registration flag if user is now an actual member
+    if (session?.user?.isMember) {
+      sessionStorage.removeItem('membershipJustRegistered');
+    }
     return null;
   }
 
-  if (eligibility.eligible) {
-    // User qualifies for membership
+  // If user just registered, show success message instead of join button
+  if (hasJustRegistered) {
     return (
-      <>
+      <div
+        className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
+      >
+        <div className="flex items-start space-x-3">
+          <div className="p-2 bg-green-100 rounded-full">
+            <Crown className="h-6 w-6 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-green-800">
+                🎉 Registration Complete!
+              </h3>
+              <Sparkles className="h-4 w-4 text-green-600" />
+            </div>
+            <p className="text-green-700 text-sm">
+              Your membership will be activated after completing this purchase. You'll enjoy member benefits starting immediately after payment!
+            </p>
+            {/* Debug info - development only */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500">
+                  Debug: hasJustRegistered={hasJustRegistered ? 'true' : 'false'}, 
+                  isMember={session?.user?.isMember ? 'true' : 'false'},
+                  isExistingMember={eligibility.isExistingMember ? 'true' : 'false'}
+                </p>
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem('membershipJustRegistered');
+                    sessionStorage.removeItem('membershipJustRegisteredTime');
+                    setHasJustRegistered(false);
+                    console.log('🧹 Manually cleared membership registration flags');
+                  }}
+                  className="text-xs text-red-600 hover:text-red-800 underline mt-1"
+                >
+                  Reset Registration State
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (eligibility.eligible) {
+    // Check if user is logged in
+    if (session?.user) {
+      // Logged-in user qualifies - show automatic activation message
+      return (
         <div
-          className={`bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 ${className}`}
+          className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
         >
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-yellow-100 rounded-full">
-              <Crown className="h-6 w-6 text-yellow-600" />
+            <div className="p-2 bg-green-100 rounded-full">
+              <Crown className="h-6 w-6 text-green-600" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold text-yellow-800">
-                  🎉 You Qualify for Membership!
+                <h3 className="font-semibold text-green-800">
+                  🎉 Membership Will Be Activated!
                 </h3>
-                <Sparkles className="h-4 w-4 text-yellow-600" />
+                <Sparkles className="h-4 w-4 text-green-600" />
               </div>
-              <p className="text-yellow-700 text-sm mb-3">
-                With {formatCurrency(eligibility.qualifyingTotal)} in eligible
-                purchases, you can join as a member and unlock exclusive pricing
-                on all future orders!
+              <p className="text-green-700 text-sm mb-3">
+                Great news! With {formatCurrency(eligibility.qualifyingTotal)} in eligible purchases, 
+                your membership will be automatically activated when your payment is completed successfully.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => setShowModal(true)}
-                  size="sm"
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                >
-                  <Crown className="h-4 w-4 mr-2" />
-                  Join Now
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                  onClick={() => {
-                    /* Show benefits details */
-                  }}
-                >
-                  <Gift className="h-4 w-4 mr-2" />
-                  View Benefits
-                </Button>
+              <div className="bg-green-100 rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Gift className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">What happens next:</span>
+                </div>
+                <ul className="text-sm text-green-700 space-y-1 ml-6 list-disc">
+                  <li>Complete your purchase to activate membership</li>
+                  <li>Log in for future orders to enjoy member pricing</li>
+                  <li>Access exclusive deals and early product releases</li>
+                </ul>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-green-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Membership activation is subject to successful payment completion</span>
               </div>
             </div>
           </div>
         </div>
+      );
+    } else {
+      // Guest user qualifies - show join modal option
+      return (
+        <>
+          <div
+            className={`bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 ${className}`}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-yellow-100 rounded-full">
+                <Crown className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-semibold text-yellow-800">
+                    🎉 You Qualify for Membership!
+                  </h3>
+                  <Sparkles className="h-4 w-4 text-yellow-600" />
+                </div>
+                <p className="text-yellow-700 text-sm mb-3">
+                  With {formatCurrency(eligibility.qualifyingTotal)} in eligible
+                  purchases, you can create an account and unlock exclusive member pricing
+                  on all future orders!
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => setShowModal(true)}
+                    size="sm"
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    Create Account & Join
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => {
+                      /* Show benefits details */
+                    }}
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    View Benefits
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <MembershipRegistrationModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          onSuccess={handleMembershipSuccess}
-          eligibility={eligibility}
-          cartItems={cartItems}
-        />
-      </>
-    );
+          <MembershipRegistrationModal
+            isOpen={showModal}
+            onClose={() => setShowModal(false)}
+            onSuccess={handleMembershipSuccess}
+            eligibility={eligibility}
+            cartItems={cartItems}
+          />
+        </>
+      );
+    }
   } else {
     // User is close to qualifying or needs more to qualify
     const progress =

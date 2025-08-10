@@ -43,6 +43,7 @@ export default function RecentPurchasePopup({
       return;
     }
     fetchRecentPurchases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, productId]);
 
   useEffect(() => {

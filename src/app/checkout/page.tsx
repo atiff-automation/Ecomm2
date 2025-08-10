@@ -47,11 +47,13 @@ interface CheckoutItem {
     slug: string;
     regularPrice: number;
     memberPrice: number;
-    category: {
-      id: string;
-      name: string;
-      qualifiesForMembership: boolean;
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        qualifiesForMembership: boolean;
+      };
+    }>;
     primaryImage?: {
       url: string;
       altText?: string;
@@ -87,7 +89,7 @@ interface ShippingAddress {
 }
 
 export default function CheckoutPage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const router = useRouter();
 
   const [cartItems, setCartItems] = useState<CheckoutItem[]>([]);
@@ -129,6 +131,14 @@ export default function CheckoutPage() {
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [membershipPending, setMembershipPending] = useState(false);
   const [pendingMembershipMessage, setPendingMembershipMessage] = useState('');
+  const [paymentProcessed, setPaymentProcessed] = useState(() => {
+    // Check if we have payment result parameters on initial load
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.has('payment');
+    }
+    return false;
+  });
 
   const isLoggedIn = !!session?.user;
   const isMember =
@@ -158,6 +168,13 @@ export default function CheckoutPage() {
   const fetchCheckoutData = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // If we're processing payment, don't fetch cart or redirect
+      if (paymentProcessed) {
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/cart');
 
       if (response.ok) {
@@ -165,30 +182,81 @@ export default function CheckoutPage() {
         setCartItems(data.items);
         setCheckoutSummary(data.summary);
 
-        // Redirect to cart if empty
+        // Only redirect to cart if empty AND not processing payment
         if (data.items.length === 0) {
           router.push('/cart');
           return;
         }
 
-        // Pre-fill user info if available
+        // Pre-fill user info and default address if available
         if (session?.user) {
-          const [firstName, lastName] = session.user.name?.split(' ') || [
-            '',
-            '',
-          ];
-          setShippingAddress(prev => ({
-            ...prev,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            email: session.user.email || '',
-          }));
-          setBillingAddress(prev => ({
-            ...prev,
-            firstName: firstName || '',
-            lastName: lastName || '',
-            email: session.user.email || '',
-          }));
+          try {
+            // Try to fetch user's default address
+            const addressResponse = await fetch('/api/user/default-address');
+            if (addressResponse.ok) {
+              const { address } = await addressResponse.json();
+              
+              if (address) {
+                // Use saved address
+                setShippingAddress(address);
+                if (useSameAddress) {
+                  setBillingAddress(address);
+                }
+              } else {
+                // Fallback to basic user info
+                const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+                const basicInfo = {
+                  firstName: firstName || '',
+                  lastName: lastName || '',
+                  email: session.user.email || '',
+                  phone: '',
+                  address: '',
+                  address2: '',
+                  city: '',
+                  state: '',
+                  postcode: '',
+                  country: 'MY',
+                };
+                setShippingAddress(prev => ({ ...prev, ...basicInfo }));
+                setBillingAddress(prev => ({ ...prev, ...basicInfo }));
+              }
+            } else {
+              // Fallback to basic user info if API fails
+              const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+              const basicInfo = {
+                firstName: firstName || '',
+                lastName: lastName || '',
+                email: session.user.email || '',
+                phone: '',
+                address: '',
+                address2: '',
+                city: '',
+                state: '',
+                postcode: '',
+                country: 'MY',
+              };
+              setShippingAddress(prev => ({ ...prev, ...basicInfo }));
+              setBillingAddress(prev => ({ ...prev, ...basicInfo }));
+            }
+          } catch (error) {
+            console.error('Error fetching default address:', error);
+            // Fallback to basic user info
+            const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+            const basicInfo = {
+              firstName: firstName || '',
+              lastName: lastName || '',
+              email: session.user.email || '',
+              phone: '',
+              address: '',
+              address2: '',
+              city: '',
+              state: '',
+              postcode: '',
+              country: 'MY',
+            };
+            setShippingAddress(prev => ({ ...prev, ...basicInfo }));
+            setBillingAddress(prev => ({ ...prev, ...basicInfo }));
+          }
         }
       } else {
         console.error('Failed to fetch cart data:', response.status);
@@ -198,7 +266,7 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  }, [router, session?.user]);
+  }, [router, session?.user, paymentProcessed]);
 
   // Handle membership activation callback
   const handleMembershipActivated = (membershipData: any) => {
@@ -246,6 +314,49 @@ export default function CheckoutPage() {
     setProcessing(true);
 
     try {
+      // For testing purposes, create order first then redirect to test payment gateway
+      if (process.env.NODE_ENV === 'development') {
+        // Create the order first in development mode
+        const orderData = {
+          cartItems: cartItems.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+          shippingAddress,
+          billingAddress: useSameAddress ? shippingAddress : billingAddress,
+          paymentMethod,
+          orderNotes,
+          membershipActivated,
+        };
+
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          
+          // Now redirect to test payment gateway with the actual order ID
+          const paymentParams = new URLSearchParams({
+            amount: checkoutSummary?.total.toString() || '100',
+            currency: 'MYR',
+            orderRef: result.orderNumber,
+            returnUrl: '/checkout'
+          });
+          
+          router.push(`/test-payment-gateway?${paymentParams.toString()}`);
+        } else {
+          const error = await response.json();
+          alert(error.message || 'Failed to create order');
+        }
+        return;
+      }
+
+      // Production flow - create order and get real payment URL
       const orderData = {
         cartItems: cartItems.map(item => ({
           productId: item.product.id,
@@ -286,50 +397,87 @@ export default function CheckoutPage() {
     }
   };
 
+  // Handle payment result from test gateway - prevent multiple processing
+  // This MUST run before fetchCheckoutData to prevent empty cart redirect
+  useEffect(() => {
+    const handlePaymentResult = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentResult = urlParams.get('payment');
+      const orderRef = urlParams.get('orderRef');
+      const amount = urlParams.get('amount');
+
+      if (paymentResult && orderRef && !paymentProcessed) {
+        setPaymentProcessed(true);
+        
+        // Clear URL params immediately to prevent re-processing
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        if (paymentResult === 'success') {
+          // Clear cart immediately
+          localStorage.removeItem('cart_items');
+          
+          // Clear cart via API as well to ensure it's empty
+          try {
+            await fetch('/api/cart', { method: 'DELETE' });
+          } catch (error) {
+            console.error('Failed to clear cart via API:', error);
+          }
+          
+          // Dispatch cart update event to refresh cart sidebar
+          window.dispatchEvent(new Event('cart_updated'));
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'cart_items',
+            newValue: null,
+            oldValue: 'cleared'
+          }));
+          
+          const isQualifying = parseFloat(amount || '0') >= 80;
+          
+          if (isQualifying) {
+            // For qualifying purchases, update session and redirect to membership page
+            alert(`🎉 Payment Successful!\n\nOrder: ${orderRef}\nAmount: MYR ${amount}\n\n✅ Membership Activated!\nYou now have member access and pricing.`);
+            
+            // Update session to refresh membership status
+            updateSession().then(() => {
+              router.replace('/account/membership');
+            });
+          } else {
+            // For non-qualifying purchases, normal flow
+            alert(`✅ Payment Successful!\n\nOrder: ${orderRef}\nAmount: MYR ${amount}\n\nThank you for your purchase!`);
+            router.replace('/');
+          }
+          
+        } else if (paymentResult === 'failed') {
+          alert(`❌ Payment Failed\n\nOrder: ${orderRef}\nPlease try again or use a different payment method.`);
+          setPaymentProcessed(false); // Allow retry
+        }
+      }
+    };
+
+    handlePaymentResult();
+  }, [router, paymentProcessed, updateSession]);
+
+  // Fetch checkout data after payment processing is set up
   useEffect(() => {
     fetchCheckoutData();
   }, [fetchCheckoutData]);
 
-  // Add cart synchronization - refresh when cart is updated elsewhere
+  // Simplified cart synchronization - only listen for essential updates
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      // Listen for cart updates from other tabs/components
-      if (e.key === 'cart_updated' || e.key === 'cart_items') {
-        fetchCheckoutData();
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      // Refresh cart data when user returns to the page
-      if (!document.hidden) {
-        fetchCheckoutData();
-      }
-    };
-
-    const handleFocus = () => {
-      // Refresh cart data when window gains focus
-      fetchCheckoutData();
-    };
-
     const handleCartUpdated = () => {
-      // Listen for direct cart_updated events from other components
-      fetchCheckoutData();
+      // Only refresh if we're not processing a payment
+      if (!processing) {
+        fetchCheckoutData();
+      }
     };
 
-    // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
+    // Only listen for direct cart updates, not all storage/focus changes
     window.addEventListener('cart_updated', handleCartUpdated);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
 
-    // Cleanup event listeners
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('cart_updated', handleCartUpdated);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
     };
-  }, [fetchCheckoutData]);
+  }, [fetchCheckoutData, processing]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -412,9 +560,9 @@ export default function CheckoutPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="shippingFirstName">First Name *</Label>
                   <Input
-                    id="firstName"
+                    id="shippingFirstName"
                     value={shippingAddress.firstName}
                     onChange={e =>
                       handleAddressChange(
@@ -427,9 +575,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="shippingLastName">Last Name *</Label>
                   <Input
-                    id="lastName"
+                    id="shippingLastName"
                     value={shippingAddress.lastName}
                     onChange={e =>
                       handleAddressChange(
@@ -445,9 +593,9 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="shippingEmail">Email *</Label>
                   <Input
-                    id="email"
+                    id="shippingEmail"
                     type="email"
                     value={shippingAddress.email}
                     onChange={e =>
@@ -457,9 +605,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone *</Label>
+                  <Label htmlFor="shippingPhone">Phone *</Label>
                   <Input
-                    id="phone"
+                    id="shippingPhone"
                     type="tel"
                     placeholder="+60123456789"
                     value={shippingAddress.phone}
@@ -472,9 +620,9 @@ export default function CheckoutPage() {
               </div>
 
               <div>
-                <Label htmlFor="address">Address *</Label>
+                <Label htmlFor="shippingAddress">Address *</Label>
                 <Input
-                  id="address"
+                  id="shippingAddress"
                   value={shippingAddress.address}
                   onChange={e =>
                     handleAddressChange('shipping', 'address', e.target.value)
@@ -484,11 +632,11 @@ export default function CheckoutPage() {
               </div>
 
               <div>
-                <Label htmlFor="address2">
+                <Label htmlFor="shippingAddress2">
                   Apartment, suite, etc. (optional)
                 </Label>
                 <Input
-                  id="address2"
+                  id="shippingAddress2"
                   value={shippingAddress.address2}
                   onChange={e =>
                     handleAddressChange('shipping', 'address2', e.target.value)
@@ -498,9 +646,9 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="city">City *</Label>
+                  <Label htmlFor="shippingCity">City *</Label>
                   <Input
-                    id="city"
+                    id="shippingCity"
                     value={shippingAddress.city}
                     onChange={e =>
                       handleAddressChange('shipping', 'city', e.target.value)
@@ -509,7 +657,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="state">State *</Label>
+                  <Label htmlFor="shippingState">State *</Label>
                   <Select
                     value={shippingAddress.state}
                     onValueChange={value =>
@@ -529,9 +677,9 @@ export default function CheckoutPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="postcode">Postcode *</Label>
+                  <Label htmlFor="shippingPostcode">Postcode *</Label>
                   <Input
-                    id="postcode"
+                    id="shippingPostcode"
                     value={shippingAddress.postcode}
                     onChange={e =>
                       handleAddressChange(
@@ -786,7 +934,7 @@ export default function CheckoutPage() {
                       {item.product.name}
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.category.name}
+                      {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
                     </p>
                   </div>
                   <div className="text-sm font-medium">

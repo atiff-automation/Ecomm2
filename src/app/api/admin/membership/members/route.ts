@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         memberSince: true,
         membershipTotal: true,
         orders: {
-          where: { status: 'DELIVERED' },
+          where: { paymentStatus: 'PAID' }, // Count all paid orders, not just delivered
           select: {
             id: true,
             total: true,
@@ -106,8 +106,12 @@ export async function GET(request: NextRequest) {
               select: {
                 product: {
                   select: {
-                    category: {
-                      select: { name: true },
+                    categories: {
+                      select: {
+                        category: {
+                          select: { name: true },
+                        },
+                      },
                     },
                   },
                 },
@@ -142,11 +146,14 @@ export async function GET(request: NextRequest) {
       const categoryCount = new Map<string, number>();
       member.orders.forEach(order => {
         order.orderItems.forEach(item => {
-          const categoryName = item.product.category.name;
-          categoryCount.set(
-            categoryName,
-            (categoryCount.get(categoryName) || 0) + 1
-          );
+          // Handle multiple categories per product
+          item.product.categories.forEach(productCategory => {
+            const categoryName = productCategory.category.name;
+            categoryCount.set(
+              categoryName,
+              (categoryCount.get(categoryName) || 0) + 1
+            );
+          });
         });
       });
 

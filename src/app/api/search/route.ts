@@ -73,8 +73,12 @@ export async function GET(request: NextRequest) {
         { shortDescription: { contains: q, mode: 'insensitive' } },
         { sku: { contains: q, mode: 'insensitive' } },
         {
-          category: {
-            name: { contains: q, mode: 'insensitive' },
+          categories: {
+            some: {
+              category: {
+                name: { contains: q, mode: 'insensitive' },
+              },
+            },
           },
         },
       ],
@@ -82,7 +86,11 @@ export async function GET(request: NextRequest) {
 
     // Apply additional filters
     if (category) {
-      where.categoryId = category;
+      where.categories = {
+        some: {
+          categoryId: category,
+        },
+      };
     }
 
     if (minPrice || maxPrice) {
@@ -129,11 +137,15 @@ export async function GET(request: NextRequest) {
       prisma.product.findMany({
         where,
         include: {
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
-              slug: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
             },
           },
           images: {

@@ -40,10 +40,12 @@ interface Product {
   featured: boolean;
   averageRating: number;
   reviewCount: number;
-  category: {
-    name: string;
-    slug: string;
-  };
+  categories: Array<{
+    category: {
+      name: string;
+      slug: string;
+    };
+  }>;
   images: Array<{
     url: string;
     altText?: string;
@@ -391,7 +393,7 @@ export default function HomePage() {
                       <CardContent className="p-4">
                         <div className="space-y-2">
                           <p className="text-xs text-muted-foreground">
-                            {product.category.name}
+                            {product.categories?.[0]?.category?.name || 'Uncategorized'}
                           </p>
 
                           <Link href={`/products/${product.slug}`}>

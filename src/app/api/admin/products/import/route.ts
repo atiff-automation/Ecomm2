@@ -281,16 +281,24 @@ export async function POST(request: NextRequest) {
         
         if (isUpdate) {
           // Update existing product
+          const { categoryId, ...updateData } = productData;
           await prisma.product.update({
             where: { sku: productData.sku },
             data: {
-              ...productData,
+              ...updateData,
               slug,
               promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
               promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
               memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
               earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
               updatedAt: new Date(),
+              // Update categories - replace existing with new primary category
+              categories: {
+                deleteMany: {}, // Remove all existing category associations
+                create: {
+                  categoryId: categoryId,
+                },
+              },
             },
           });
 
@@ -301,15 +309,22 @@ export async function POST(request: NextRequest) {
           });
         } else {
           // Create new product
+          const { categoryId, ...createData } = productData;
           await prisma.product.create({
             data: {
-              ...productData,
+              ...createData,
               slug,
               promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
               promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
               memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
               earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
               status: 'ACTIVE',
+              // Create category association using the new many-to-many structure
+              categories: {
+                create: {
+                  categoryId: categoryId,
+                },
+              },
             },
           });
 

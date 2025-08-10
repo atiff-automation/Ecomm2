@@ -40,8 +40,12 @@ export async function GET() {
             product: {
               select: {
                 name: true,
-                category: {
-                  select: { name: true },
+                categories: {
+                  select: {
+                    category: {
+                      select: { name: true },
+                    },
+                  },
                 },
               },
             },
@@ -84,7 +88,7 @@ export async function GET() {
           `"${orderDate}"`,
           `"${order.status}"`,
           `"${item.productName}"`,
-          `"${item.product?.category?.name || 'N/A'}"`,
+          `"${item.product?.categories?.[0]?.category?.name || 'N/A'}"`,
           `"${item.productSku || 'N/A'}"`,
           item.quantity,
           regularPrice.toFixed(2),

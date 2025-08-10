@@ -46,7 +46,7 @@ export async function GET() {
     const orders = await prisma.order.findMany({
       where: {
         userId: session.user.id,
-        status: 'DELIVERED', // Only count completed orders
+        paymentStatus: 'PAID', // Count all paid orders, not just delivered
       },
       select: {
         id: true,
@@ -57,8 +57,12 @@ export async function GET() {
           select: {
             product: {
               select: {
-                category: {
-                  select: { name: true },
+                categories: {
+                  select: {
+                    category: {
+                      select: { name: true },
+                    },
+                  },
                 },
               },
             },
@@ -83,7 +87,8 @@ export async function GET() {
     const categoryCount = new Map<string, number>();
     orders.forEach(order => {
       order.orderItems.forEach(item => {
-        const categoryName = item.product.category.name;
+        // Handle multiple categories - use primary category (first one)
+        const categoryName = item.product.categories?.[0]?.category?.name || 'Uncategorized';
         categoryCount.set(
           categoryName,
           (categoryCount.get(categoryName) || 0) + 1

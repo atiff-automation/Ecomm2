@@ -71,13 +71,14 @@ export async function GET(
       );
     }
 
-    // Calculate total spent from orders
+    // Calculate total spent and count from paid orders
     const orderStats = await prisma.order.aggregate({
       where: {
         userId: customer.id,
-        status: {
-          in: ['DELIVERED'],
-        },
+        paymentStatus: 'PAID', // Count all paid orders, not just delivered
+      },
+      _count: {
+        id: true, // Count paid orders
       },
       _sum: {
         total: true,
@@ -97,7 +98,7 @@ export async function GET(
       memberSince: customer.memberSince,
       status: customer.status,
       createdAt: customer.createdAt,
-      totalOrders: customer._count.orders,
+      totalOrders: orderStats._count.id || 0, // Use count of paid orders
       totalSpent: orderStats._sum.total || 0,
       lastOrderAt: orderStats._max.createdAt,
       addresses: customer.addresses.map(addr => ({

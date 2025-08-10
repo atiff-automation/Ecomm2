@@ -159,7 +159,9 @@ export default function AdminCategoriesPage() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -175,7 +177,10 @@ export default function AdminCategoriesPage() {
         },
         body: JSON.stringify({
           ...formData,
-          parentId: formData.parentId === "root" || !formData.parentId ? null : formData.parentId,
+          parentId:
+            formData.parentId === 'root' || !formData.parentId
+              ? null
+              : formData.parentId,
         }),
       });
 

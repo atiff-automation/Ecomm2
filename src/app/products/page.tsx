@@ -44,11 +44,13 @@ interface Product {
   earlyAccessStart?: string | null;
   averageRating: number;
   reviewCount: number;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  categories: Array<{
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   images: Array<{
     id: string;
     url: string;
@@ -148,6 +150,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array for initial load only
 
   // Refetch products when filters change
@@ -156,6 +159,7 @@ export default function ProductsPage() {
       // Only refetch if not in initial loading
       fetchProducts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, selectedCategory, sortBy, currentPage]);
 
   const handleAddToCart = async (productId: string) => {
@@ -278,7 +282,7 @@ export default function ProductsPage() {
           <div className="space-y-2">
             {/* Category */}
             <span className="text-xs text-muted-foreground">
-              {product.category.name}
+              {product.categories?.[0]?.category?.name || 'Uncategorized'}
             </span>
 
             {/* Product Name */}

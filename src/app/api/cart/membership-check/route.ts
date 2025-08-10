@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
+import { calculatePromotionStatus, productQualifiesForMembership, getBestPrice } from '@/lib/promotions/promotion-utils';
 
 interface CartItem {
   productId: string;
@@ -40,10 +41,14 @@ export async function POST(request: NextRequest) {
         status: 'ACTIVE',
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -74,34 +79,95 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const price = session?.user?.isMember
-        ? Number(product.memberPrice || product.regularPrice)
-        : Number(product.regularPrice);
+      // Use comprehensive pricing logic that considers promotions, membership, and early access
+      const isMember = session?.user?.isMember || false;
+      const priceInfo = getBestPrice({
+        isPromotional: product.isPromotional,
+        promotionalPrice: product.promotionalPrice,
+        promotionStartDate: product.promotionStartDate,
+        promotionEndDate: product.promotionEndDate,
+        isQualifyingForMembership: product.isQualifyingForMembership,
+        memberOnlyUntil: product.memberOnlyUntil,
+        earlyAccessStart: product.earlyAccessStart,
+        regularPrice: Number(product.regularPrice),
+        memberPrice: Number(product.memberPrice || product.regularPrice),
+      }, isMember);
 
+      const price = priceInfo.price;
       const subtotal = price * cartItem.quantity;
 
-      // Check if product qualifies for membership calculation
-      // New logic: Product-level control - all products qualify by default unless specifically excluded
-      if (product.isPromotional) {
-        // Promotional products don't count toward membership
+      // Debug logging - always show in development
+      console.log(`🔍 Product: ${product.name}`);
+      console.log(`   - isPromotional: ${product.isPromotional}`);
+      console.log(`   - promotionalPrice: ${product.promotionalPrice}`);
+      console.log(`   - regularPrice: ${product.regularPrice}`);
+      console.log(`   - memberPrice: ${product.memberPrice}`);
+      console.log(`   - priceInfo.priceType: ${priceInfo.priceType}`);
+      console.log(`   - priceInfo.price: ${priceInfo.price}`);
+      console.log(`   - isMember: ${isMember}`);
+      console.log(`   - promotionStartDate: ${product.promotionStartDate}`);
+      console.log(`   - promotionEndDate: ${product.promotionEndDate}`);
+
+      // Check if product qualifies for membership calculation using comprehensive promotional logic
+      const qualifiesForMembership = productQualifiesForMembership({
+        isPromotional: product.isPromotional,
+        promotionalPrice: product.promotionalPrice,
+        promotionStartDate: product.promotionStartDate,
+        promotionEndDate: product.promotionEndDate,
+        isQualifyingForMembership: product.isQualifyingForMembership,
+        memberOnlyUntil: product.memberOnlyUntil,
+        earlyAccessStart: product.earlyAccessStart,
+      });
+
+      // CRITICAL: If the user is getting promotional pricing, the product should NOT qualify
+      // This ensures consistency between pricing and qualification
+      const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
+      const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+
+      // More debug logging
+      console.log(`   - qualifiesForMembership: ${qualifiesForMembership}`);
+      console.log(`   - isUsingPromotionalPrice: ${isUsingPromotionalPrice}`);
+      console.log(`   - finalQualification: ${finalQualification}`);
+      console.log('---');
+
+      if (!finalQualification) {
+        // Determine the specific reason for non-qualification
+        let reason = 'Product not eligible for membership calculation';
+        
+        if (isUsingPromotionalPrice) {
+          reason = 'Currently using promotional pricing (promotional products do not qualify for membership)';
+        } else if (!qualifiesForMembership) {
+          // Check if it's due to promotional product configuration
+          const promotionStatus = calculatePromotionStatus({
+            isPromotional: product.isPromotional,
+            promotionalPrice: product.promotionalPrice,
+            promotionStartDate: product.promotionStartDate,
+            promotionEndDate: product.promotionEndDate,
+            isQualifyingForMembership: product.isQualifyingForMembership,
+            memberOnlyUntil: product.memberOnlyUntil,
+            earlyAccessStart: product.earlyAccessStart,
+            regularPrice: Number(product.regularPrice),
+            memberPrice: Number(product.memberPrice || product.regularPrice),
+          });
+
+          if (promotionStatus.isActive) {
+            reason = 'Active promotional pricing (promotional products do not qualify)';
+          } else if (product.isPromotional) {
+            reason = 'Product marked as promotional';
+          } else if (!product.isQualifyingForMembership) {
+            reason = 'Product specifically excluded from membership qualification';
+          }
+        }
+
         nonQualifyingItems.push({
           productId: product.id,
           name: product.name,
-          reason: 'Promotional product',
-          price,
-          quantity: cartItem.quantity,
-        });
-      } else if (!product.isQualifyingForMembership) {
-        // Product specifically marked as non-qualifying for membership
-        nonQualifyingItems.push({
-          productId: product.id,
-          name: product.name,
-          reason: 'Product marked as non-qualifying for membership',
+          reason,
           price,
           quantity: cartItem.quantity,
         });
       } else {
-        // Product qualifies (default behavior)
+        // Product qualifies for membership calculation
         qualifyingTotal += subtotal;
         qualifyingItems.push({
           productId: product.id,

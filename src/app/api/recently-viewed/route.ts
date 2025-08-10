@@ -34,11 +34,15 @@ export async function GET(request: NextRequest) {
       include: {
         product: {
           include: {
-            category: {
+            categories: {
               select: {
-                id: true,
-                name: true,
-                slug: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
               },
             },
             images: {

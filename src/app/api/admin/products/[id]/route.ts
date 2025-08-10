@@ -39,7 +39,27 @@ const updateProductSchema = z.object({
   isPromotional: z.boolean().optional(),
   isQualifyingForMembership: z.boolean().optional(),
   // Promotional pricing fields
-  promotionalPrice: z.number().min(0, 'Promotional price must be positive').optional(),
+  promotionalPrice: z
+    .union([
+      z.number().min(0, 'Promotional price must be positive'),
+      z.string(),
+      z.null(),
+    ])
+    .optional()
+    .transform((val) => {
+      if (val === null || val === undefined || val === '') {
+        return null;
+      }
+      if (typeof val === 'string') {
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? null : parsed;
+      }
+      return val;
+    })
+    .refine(
+      (val) => val === null || (typeof val === 'number' && val >= 0),
+      'Promotional price must be a positive number or empty'
+    ),
   promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
   promotionEndDate: z.union([z.string().datetime(), z.null()]).optional(),
   memberOnlyUntil: z.union([z.string().datetime(), z.null()]).optional(),

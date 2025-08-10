@@ -39,12 +39,14 @@ interface CartItem {
     regularPrice: number;
     memberPrice: number;
     stockQuantity: number;
-    category: {
-      id: string;
-      name: string;
-      slug: string;
-      
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+        isQualifyingCategory?: boolean;
+      };
+    }>;
     primaryImage?: {
       url: string;
       altText?: string;
@@ -306,10 +308,10 @@ export default function CartPage() {
                         </Link>
 
                         <Link
-                          href={`/products?category=${item.product.category.id}`}
+                          href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
                           className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
-                          {item.product.category.name}
+                          {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
                         </Link>
 
                         {item.product.shortDescription && (
@@ -319,7 +321,7 @@ export default function CartPage() {
                         )}
 
                         {/* Qualifying Category Badge */}
-                        {item.product.category.isQualifyingCategory && (
+                        {item.product.categories?.[0]?.category?.isQualifyingCategory && (
                           <Badge variant="outline" className="mt-2">
                             <Award className="w-3 h-3 mr-1" />
                             Membership Qualifying

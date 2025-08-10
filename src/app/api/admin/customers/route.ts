@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
             total: true,
             createdAt: true,
             status: true,
+            paymentStatus: true,
           },
         },
         _count: {
@@ -83,14 +84,18 @@ export async function GET(request: NextRequest) {
     });
 
     const formattedCustomers = customers.map(customer => {
-      const completedOrders = customer.orders.filter(
-        order => order.status === 'DELIVERED'
+      // Count all paid orders, not just delivered ones
+      const paidOrders = customer.orders.filter(
+        order => order.paymentStatus === 'PAID'
       );
-
-      const totalSpent = completedOrders.reduce(
+      
+      // Calculate total spent from paid orders
+      const totalSpent = paidOrders.reduce(
         (sum, order) => sum + Number(order.total),
         0
       );
+      
+      // Get the most recent order
       const lastOrder =
         customer.orders.length > 0
           ? customer.orders.sort(
@@ -108,7 +113,7 @@ export async function GET(request: NextRequest) {
         phone: customer.phone,
         isMember: customer.isMember,
         memberSince: customer.memberSince?.toISOString() || null,
-        totalOrders: completedOrders.length,
+        totalOrders: paidOrders.length,
         totalSpent,
         lastOrderAt: lastOrder?.createdAt.toISOString() || null,
         status: customer.status,
