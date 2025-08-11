@@ -90,7 +90,21 @@ export default function HeroSectionManagement() {
       if (response.ok) {
         const data = await response.json();
         setHeroSection(data.heroSection);
-        setFormData(data.heroSection);
+        // Only set form data with content fields, not metadata
+        setFormData({
+          title: data.heroSection.title,
+          subtitle: data.heroSection.subtitle,
+          description: data.heroSection.description,
+          ctaPrimaryText: data.heroSection.ctaPrimaryText,
+          ctaPrimaryLink: data.heroSection.ctaPrimaryLink,
+          ctaSecondaryText: data.heroSection.ctaSecondaryText,
+          ctaSecondaryLink: data.heroSection.ctaSecondaryLink,
+          backgroundType: data.heroSection.backgroundType,
+          backgroundImage: data.heroSection.backgroundImage,
+          backgroundVideo: data.heroSection.backgroundVideo,
+          overlayOpacity: data.heroSection.overlayOpacity,
+          textAlignment: data.heroSection.textAlignment,
+        });
       }
     } catch (error) {
       console.error('Error fetching hero section:', error);
@@ -117,10 +131,28 @@ export default function HeroSectionManagement() {
     setMessage(null);
 
     try {
+      // Only send the fields required by the API schema
+      const submitData = {
+        title: formData.title || '',
+        subtitle: formData.subtitle || '',
+        description: formData.description || '',
+        ctaPrimaryText: formData.ctaPrimaryText || '',
+        ctaPrimaryLink: formData.ctaPrimaryLink || '',
+        ctaSecondaryText: formData.ctaSecondaryText || '',
+        ctaSecondaryLink: formData.ctaSecondaryLink || '',
+        backgroundType: formData.backgroundType || 'IMAGE',
+        backgroundImage: formData.backgroundImage || null,
+        backgroundVideo: formData.backgroundVideo || null,
+        overlayOpacity: formData.overlayOpacity ?? 0.1,
+        textAlignment: formData.textAlignment || 'left',
+      };
+
+      console.log('Submitting hero section data:', submitData);
+
       const response = await fetch('/api/admin/site-customization/hero', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       const data = await response.json();
@@ -151,7 +183,21 @@ export default function HeroSectionManagement() {
 
       if (response.ok) {
         setHeroSection(data.heroSection);
-        setFormData(data.heroSection);
+        // Only set form data with content fields, not metadata
+        setFormData({
+          title: data.heroSection.title,
+          subtitle: data.heroSection.subtitle,
+          description: data.heroSection.description,
+          ctaPrimaryText: data.heroSection.ctaPrimaryText,
+          ctaPrimaryLink: data.heroSection.ctaPrimaryLink,
+          ctaSecondaryText: data.heroSection.ctaSecondaryText,
+          ctaSecondaryLink: data.heroSection.ctaSecondaryLink,
+          backgroundType: data.heroSection.backgroundType,
+          backgroundImage: data.heroSection.backgroundImage,
+          backgroundVideo: data.heroSection.backgroundVideo,
+          overlayOpacity: data.heroSection.overlayOpacity,
+          textAlignment: data.heroSection.textAlignment,
+        });
         setMessage({ type: 'success', text: 'Hero section reset to default!' });
       } else {
         throw new Error(data.message || 'Failed to reset hero section');

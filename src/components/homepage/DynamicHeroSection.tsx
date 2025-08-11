@@ -97,7 +97,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   };
 
   return (
-    <section className="relative text-white min-h-[600px] flex items-center" style={backgroundStyle}>
+    <section className="relative text-white min-h-[700px] flex items-center" style={backgroundStyle}>
       {/* Background Media */}
       {hero.backgroundImage && hero.backgroundType === 'IMAGE' && (
         <div className="absolute inset-0 overflow-hidden">
@@ -105,9 +105,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
             src={hero.backgroundImage}
             alt="Hero background"
             fill
-            className="object-cover"
-            style={{ width: 'auto', height: 'auto' }}
+            className="object-cover object-center"
             priority
+            sizes="100vw"
           />
         </div>
       )}
@@ -144,9 +144,11 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
                 : 'text-left'
             }`}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              {hero.title}
-            </h1>
+            {hero.title && (
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                {hero.title}
+              </h1>
+            )}
             
             {hero.subtitle && (
               <h2 className="text-xl text-blue-100 max-w-lg">
@@ -154,131 +156,141 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
               </h2>
             )}
 
-            <p className="text-xl text-blue-100 max-w-lg">
-              {hero.description}
-            </p>
-
-            {/* Dynamic CTAs based on login status */}
-            {!isLoggedIn ? (
-              <div className={`flex flex-col sm:flex-row gap-4 ${
-                hero.textAlignment === 'center' ? 'justify-center' : 
-                hero.textAlignment === 'right' ? 'justify-end' : 'justify-start'
-              }`}>
-                <Link href={hero.ctaPrimaryLink}>
-                  <Button
-                    size="lg"
-                    style={{
-                      backgroundColor: theme.secondaryColor,
-                      color: theme.textColor,
-                    }}
-                    className="hover:opacity-90 transition-opacity"
-                  >
-                    {hero.ctaPrimaryText}
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <Link href={hero.ctaSecondaryLink}>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-white border-white hover:bg-white hover:text-blue-800"
-                  >
-                    {hero.ctaSecondaryText}
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className={`flex flex-col sm:flex-row gap-4 ${
-                hero.textAlignment === 'center' ? 'justify-center' : 
-                hero.textAlignment === 'right' ? 'justify-end' : 'justify-start'
-              }`}>
-                <Link href="/products">
-                  <Button
-                    size="lg"
-                    style={{
-                      backgroundColor: theme.secondaryColor,
-                      color: theme.textColor,
-                    }}
-                    className="hover:opacity-90 transition-opacity"
-                  >
-                    Shop Now
-                    <ShoppingBag className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                {isMember && (
-                  <div className="flex items-center gap-2 text-yellow-300">
-                    <Award className="w-5 h-5" />
-                    <span className="font-medium">
-                      Member Benefits Active
-                    </span>
-                  </div>
-                )}
-              </div>
+            {hero.description && (
+              <p className="text-xl text-blue-100 max-w-lg">
+                {hero.description}
+              </p>
             )}
 
-            {/* Search Bar */}
-            <div className={`max-w-lg mt-6 ${
-              hero.textAlignment === 'center' ? 'mx-auto' : 
-              hero.textAlignment === 'right' ? 'ml-auto' : 'mx-auto lg:mx-0'
-            }`}>
-              <SearchBar
-                placeholder="Search products, brands, categories..."
-                className="w-full"
-              />
-            </div>
+            {/* Dynamic CTAs based on login status - only show if there's content */}
+            {(hero.title || hero.subtitle || hero.description) && (
+              <>
+                {!isLoggedIn ? (
+                  <div className={`flex flex-col sm:flex-row gap-4 ${
+                    hero.textAlignment === 'center' ? 'justify-center' : 
+                    hero.textAlignment === 'right' ? 'justify-end' : 'justify-start'
+                  }`}>
+                    <Link href={hero.ctaPrimaryLink}>
+                      <Button
+                        size="lg"
+                        style={{
+                          backgroundColor: theme.secondaryColor,
+                          color: theme.textColor,
+                        }}
+                        className="hover:opacity-90 transition-opacity"
+                      >
+                        {hero.ctaPrimaryText}
+                        <ArrowRight className="ml-2 w-5 h-5" />
+                      </Button>
+                    </Link>
+                    <Link href={hero.ctaSecondaryLink}>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-white border-white hover:bg-white hover:text-blue-800"
+                      >
+                        {hero.ctaSecondaryText}
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className={`flex flex-col sm:flex-row gap-4 ${
+                    hero.textAlignment === 'center' ? 'justify-center' : 
+                    hero.textAlignment === 'right' ? 'justify-end' : 'justify-start'
+                  }`}>
+                    <Link href="/products">
+                      <Button
+                        size="lg"
+                        style={{
+                          backgroundColor: theme.secondaryColor,
+                          color: theme.textColor,
+                        }}
+                        className="hover:opacity-90 transition-opacity"
+                      >
+                        Shop Now
+                        <ShoppingBag className="ml-2 w-5 h-5" />
+                      </Button>
+                    </Link>
+                    {isMember && (
+                      <div className="flex items-center gap-2 text-yellow-300">
+                        <Award className="w-5 h-5" />
+                        <span className="font-medium">
+                          Member Benefits Active
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Search Bar - only show if there's content */}
+            {(hero.title || hero.subtitle || hero.description) && (
+              <div className={`max-w-lg mt-6 ${
+                hero.textAlignment === 'center' ? 'mx-auto' : 
+                hero.textAlignment === 'right' ? 'ml-auto' : 'mx-auto lg:mx-0'
+              }`}>
+                <SearchBar
+                  placeholder="Search products, brands, categories..."
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Stats Panel */}
-          <div className="relative">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div 
-                    className="text-3xl font-bold"
-                    style={{ color: theme.secondaryColor }}
-                  >
-                    10K+
+          {/* Stats Panel - only show if there's content */}
+          {(hero.title || hero.subtitle || hero.description) && (
+            <div className="relative">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <div 
+                      className="text-3xl font-bold"
+                      style={{ color: theme.secondaryColor }}
+                    >
+                      10K+
+                    </div>
+                    <div className="text-sm text-blue-100">
+                      Happy Customers
+                    </div>
                   </div>
-                  <div className="text-sm text-blue-100">
-                    Happy Customers
+                  <div className="text-center">
+                    <div 
+                      className="text-3xl font-bold"
+                      style={{ color: theme.secondaryColor }}
+                    >
+                      5K+
+                    </div>
+                    <div className="text-sm text-blue-100">
+                      Products
+                    </div>
                   </div>
-                </div>
-                <div className="text-center">
-                  <div 
-                    className="text-3xl font-bold"
-                    style={{ color: theme.secondaryColor }}
-                  >
-                    5K+
+                  <div className="text-center">
+                    <div 
+                      className="text-3xl font-bold"
+                      style={{ color: theme.secondaryColor }}
+                    >
+                      50+
+                    </div>
+                    <div className="text-sm text-blue-100">
+                      Categories
+                    </div>
                   </div>
-                  <div className="text-sm text-blue-100">
-                    Products
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div 
-                    className="text-3xl font-bold"
-                    style={{ color: theme.secondaryColor }}
-                  >
-                    50+
-                  </div>
-                  <div className="text-sm text-blue-100">
-                    Categories
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div 
-                    className="text-3xl font-bold"
-                    style={{ color: theme.secondaryColor }}
-                  >
-                    24/7
-                  </div>
-                  <div className="text-sm text-blue-100">
-                    Support
+                  <div className="text-center">
+                    <div 
+                      className="text-3xl font-bold"
+                      style={{ color: theme.secondaryColor }}
+                    >
+                      24/7
+                    </div>
+                    <div className="text-sm text-blue-100">
+                      Support
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

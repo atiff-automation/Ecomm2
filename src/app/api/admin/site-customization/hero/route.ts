@@ -10,9 +10,9 @@ import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 
 const heroSectionSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  subtitle: z.string().min(1, 'Subtitle is required'),
-  description: z.string().min(1, 'Description is required'),
+  title: z.string(),
+  subtitle: z.string(),
+  description: z.string(),
   ctaPrimaryText: z.string().min(1, 'Primary CTA text is required'),
   ctaPrimaryLink: z.string().min(1, 'Primary CTA link is required'),
   ctaSecondaryText: z.string().min(1, 'Secondary CTA text is required'),
@@ -111,7 +111,28 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = heroSectionSchema.parse(body);
+    console.log('Hero section update request body:', JSON.stringify(body, null, 2));
+    
+    let validatedData;
+    try {
+      validatedData = heroSectionSchema.parse(body);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        console.error('Validation error details:', validationError.issues);
+        return NextResponse.json(
+          {
+            message: 'Validation error',
+            errors: validationError.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+              receivedValue: issue.path.length > 0 ? JSON.stringify(issue.path.reduce((obj, key) => obj?.[key], body)) : 'N/A',
+            })),
+          },
+          { status: 400 }
+        );
+      }
+      throw validationError;
+    }
 
     // Get current active hero section
     const currentHero = await prisma.heroSection.findFirst({
@@ -181,19 +202,6 @@ export async function PUT(request: NextRequest) {
       message: 'Hero section updated successfully',
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          message: 'Validation error',
-          errors: error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message,
-          })),
-        },
-        { status: 400 }
-      );
-    }
-
     console.error('Error updating hero section:', error);
     return NextResponse.json(
       { message: 'Failed to update hero section' },

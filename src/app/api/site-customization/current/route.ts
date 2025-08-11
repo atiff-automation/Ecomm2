@@ -74,20 +74,12 @@ export async function GET() {
       isActive: true,
     };
 
-    // Add cache headers for better performance
-    const response = NextResponse.json({
+    // Return without caching for immediate updates
+    return NextResponse.json({
       theme,
       heroSection,
       message: 'Site customization retrieved successfully',
     });
-
-    // Cache for 5 minutes
-    response.headers.set(
-      'Cache-Control',
-      'public, max-age=300, stale-while-revalidate=60'
-    );
-
-    return response;
   } catch (error) {
     console.error('Error fetching site customization:', error);
     
