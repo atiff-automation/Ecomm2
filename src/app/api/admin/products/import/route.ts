@@ -286,6 +286,7 @@ export async function POST(request: NextRequest) {
             where: { sku: productData.sku },
             data: {
               ...updateData,
+              memberPrice: updateData.memberPrice || updateData.regularPrice,
               slug,
               promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
               promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
@@ -313,6 +314,7 @@ export async function POST(request: NextRequest) {
           await prisma.product.create({
             data: {
               ...createData,
+              memberPrice: createData.memberPrice || createData.regularPrice,
               slug,
               promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
               promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,

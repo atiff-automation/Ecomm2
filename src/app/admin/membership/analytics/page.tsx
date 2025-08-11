@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -69,6 +72,8 @@ export default function MemberAnalyticsPage() {
   const [recentMembers, setRecentMembers] = useState<MemberDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<'3M' | '6M' | '1Y' | 'ALL'>('6M');
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -149,6 +154,46 @@ export default function MemberAnalyticsPage() {
       month: 'long',
       day: 'numeric',
     }).format(new Date(dateString));
+  };
+
+  // Helper function to filter growth data based on selected period
+  const getFilteredGrowthData = () => {
+    if (!stats?.memberGrowthTrend) return [];
+    
+    const data = [...stats.memberGrowthTrend];
+    const monthsToShow = selectedPeriod === '3M' ? 3 : selectedPeriod === '6M' ? 6 : selectedPeriod === '1Y' ? 12 : data.length;
+    
+    return data.slice(-monthsToShow);
+  };
+
+  // Helper function to calculate growth rate
+  const calculateGrowthRate = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  // Helper function to get growth insights
+  const getGrowthInsights = () => {
+    const data = getFilteredGrowthData();
+    if (data.length < 2) return { trend: 'stable', totalGrowth: 0, avgGrowth: 0 };
+
+    const totalCurrent = data[data.length - 1]?.newMembers || 0;
+    const totalPrevious = data[data.length - 2]?.newMembers || 0;
+    const totalGrowth = calculateGrowthRate(totalCurrent, totalPrevious);
+
+    let positiveMonths = 0;
+    let totalChange = 0;
+
+    for (let i = 1; i < data.length; i++) {
+      const change = calculateGrowthRate(data[i].newMembers, data[i - 1].newMembers);
+      totalChange += change;
+      if (change > 0) positiveMonths++;
+    }
+
+    const avgGrowth = totalChange / (data.length - 1);
+    const trend = avgGrowth > 10 ? 'growing' : avgGrowth < -10 ? 'declining' : 'stable';
+
+    return { trend, totalGrowth, avgGrowth };
   };
 
   if (status === 'loading' || loading) {
@@ -399,33 +444,186 @@ export default function MemberAnalyticsPage() {
               <TabsContent value="growth" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      Member Growth Trend (Last 6 Months)
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5" />
+                        Member Growth Trend
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {['3M', '6M', '1Y', 'ALL'].map((period) => (
+                          <Button
+                            key={period}
+                            variant={selectedPeriod === period ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedPeriod(period as any)}
+                            className="text-xs"
+                          >
+                            {period}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {stats.memberGrowthTrend.map((trend, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 border rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium">{trend.month}</span>
+                    {(() => {
+                      const filteredData = getFilteredGrowthData();
+                      const insights = getGrowthInsights();
+                      const maxValue = Math.max(...filteredData.map(d => d.newMembers));
+                      
+                      return (
+                        <div className="space-y-6">
+                          {/* Growth Insights */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+                              <CardContent className="pt-6 text-center">
+                                <Badge 
+                                  variant={insights.trend === 'growing' ? 'default' : insights.trend === 'declining' ? 'destructive' : 'secondary'}
+                                  className="mb-2"
+                                >
+                                  {insights.trend === 'growing' ? '📈' : insights.trend === 'declining' ? '📉' : '➡️'}
+                                  {insights.trend.charAt(0).toUpperCase() + insights.trend.slice(1)} Trend
+                                </Badge>
+                                <div className="mt-2">
+                                  <p className="text-xs text-muted-foreground">Overall Direction</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-emerald-100">
+                              <CardContent className="pt-6 text-center">
+                                <p className="text-xs text-muted-foreground mb-1">Month-over-Month</p>
+                                <p className={`text-2xl font-bold ${insights.totalGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                  {insights.totalGrowth >= 0 ? '+' : ''}{insights.totalGrowth.toFixed(1)}%
+                                </p>
+                                <Progress 
+                                  value={Math.min(Math.abs(insights.totalGrowth), 100)} 
+                                  className="mt-3 h-2"
+                                />
+                              </CardContent>
+                            </Card>
+                            
+                            <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100">
+                              <CardContent className="pt-6 text-center">
+                                <p className="text-xs text-muted-foreground mb-1">Average Growth</p>
+                                <p className={`text-2xl font-bold ${insights.avgGrowth >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                                  {insights.avgGrowth >= 0 ? '+' : ''}{insights.avgGrowth.toFixed(1)}%
+                                </p>
+                                <Progress 
+                                  value={Math.min(Math.abs(insights.avgGrowth), 100)} 
+                                  className="mt-3 h-2"
+                                />
+                              </CardContent>
+                            </Card>
                           </div>
-                          <div className="text-right">
-                            <span className="font-semibold text-lg">
-                              {trend.newMembers}
-                            </span>
-                            <span className="text-sm text-gray-600 ml-1">
-                              new members
-                            </span>
+
+                          <Separator />
+                          
+                          {/* Interactive Chart */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2 text-base">
+                                <BarChart3 className="h-4 w-4" />
+                                Visual Trend Analysis
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              {/* Chart Container */}
+                              <div className="relative p-4 bg-muted/30 rounded-lg">
+                                <div className="h-48 flex items-end justify-between gap-1">
+                                  {filteredData.map((item, index) => {
+                                    const height = maxValue > 0 ? (item.newMembers / maxValue) * 160 : 16;
+                                    const previousValue = index > 0 ? filteredData[index - 1].newMembers : item.newMembers;
+                                    const growthRate = calculateGrowthRate(item.newMembers, previousValue);
+                                    
+                                    return (
+                                      <div key={index} className="flex-1 flex flex-col items-center relative group">
+                                        {/* Tooltip */}
+                                        {hoveredPoint === index && (
+                                          <Alert className="absolute bottom-full mb-2 z-20 min-w-40 shadow-lg">
+                                            <AlertDescription className="text-center p-1">
+                                              <div className="font-semibold">{item.month}</div>
+                                              <div className="text-lg font-bold text-primary">{item.newMembers}</div>
+                                              <div className="text-xs text-muted-foreground">new members</div>
+                                              {index > 0 && (
+                                                <Badge size="sm" variant={growthRate >= 0 ? 'default' : 'destructive'} className="mt-1">
+                                                  {growthRate >= 0 ? '+' : ''}{growthRate.toFixed(1)}%
+                                                </Badge>
+                                              )}
+                                            </AlertDescription>
+                                          </Alert>
+                                        )}
+                                        
+                                        {/* Bar */}
+                                        <div 
+                                          className={`w-full max-w-8 rounded-t-md cursor-pointer transition-all ${
+                                            hoveredPoint === index 
+                                              ? 'bg-primary shadow-lg scale-110' 
+                                              : 'bg-primary/70 hover:bg-primary hover:scale-105'
+                                          }`}
+                                          style={{ height: `${height}px`, minHeight: '8px' }}
+                                          onMouseEnter={() => setHoveredPoint(index)}
+                                          onMouseLeave={() => setHoveredPoint(null)}
+                                        />
+                                        
+                                        {/* Labels */}
+                                        <div className="mt-2 text-center space-y-1">
+                                          <div className="text-xs font-medium">{item.newMembers}</div>
+                                          <div className="text-xs text-muted-foreground">{item.month}</div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Separator className="my-6" />
+
+                          {/* Detailed Breakdown */}
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-lg font-semibold text-foreground">Detailed Breakdown</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {selectedPeriod} Period
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {filteredData.map((item, index) => {
+                                const previousValue = index > 0 ? filteredData[index - 1].newMembers : item.newMembers;
+                                const growthRate = index > 0 ? calculateGrowthRate(item.newMembers, previousValue) : 0;
+                                
+                                return (
+                                  <Card key={index} className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                                    <CardContent className="pt-4">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <span className="font-medium text-foreground">{item.month}</span>
+                                        {index > 0 && (
+                                          <Badge 
+                                            variant={growthRate >= 0 ? 'default' : 'destructive'}
+                                            className="text-xs"
+                                          >
+                                            {growthRate >= 0 ? '+' : ''}{growthRate.toFixed(1)}%
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="space-y-2">
+                                        <p className="text-3xl font-bold text-primary">{item.newMembers}</p>
+                                        <p className="text-sm text-muted-foreground">new members</p>
+                                        <Progress 
+                                          value={(item.newMembers / maxValue) * 100} 
+                                          className="h-2 mt-3"
+                                        />
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </TabsContent>

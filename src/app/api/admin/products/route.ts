@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
           sku: productData.sku,
           barcode: productData.barcode || null,
           regularPrice: productData.regularPrice,
-          memberPrice: productData.memberPrice || null,
+          memberPrice: productData.memberPrice || productData.regularPrice,
           costPrice: productData.costPrice || 0,
           stockQuantity: productData.stockQuantity,
           lowStockAlert: productData.lowStockAlert,

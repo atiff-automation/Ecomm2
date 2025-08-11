@@ -14,19 +14,17 @@ import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Settings,
-  DollarSign,
   Users,
-  Shield,
   Save,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
-  Info,
-  Award,
-  Target,
 } from 'lucide-react';
 
 interface MembershipConfig {
@@ -37,13 +35,6 @@ interface MembershipConfig {
   membershipTermsText: string;
 }
 
-interface MemberStats {
-  totalMembers: number;
-  newMembersThisMonth: number;
-  averageOrderValue: number;
-  totalSavingsGiven: number;
-  conversionRate: number;
-}
 
 export default function MembershipConfigPage() {
   const { data: session, status } = useSession();
@@ -57,7 +48,6 @@ export default function MembershipConfigPage() {
     membershipTermsText: '',
   });
 
-  const [memberStats, setMemberStats] = useState<MemberStats | null>(null);
   const [originalConfig, setOriginalConfig] = useState<MembershipConfig | null>(
     null
   );
@@ -88,20 +78,17 @@ export default function MembershipConfigPage() {
 
   const fetchData = async () => {
     try {
-      const [configResponse, statsResponse] = await Promise.all([
-        fetch('/api/admin/membership/config'),
-        fetch('/api/admin/membership/stats'),
-      ]);
+      const configResponse = await fetch('/api/admin/membership/config');
 
       if (configResponse.ok) {
         const configData = await configResponse.json();
         setConfig(configData.config);
         setOriginalConfig(configData.config);
-      }
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setMemberStats(statsData.stats);
+      } else {
+        setMessage({
+          type: 'error',
+          text: 'Failed to load membership configuration',
+        });
       }
     } catch {
       setMessage({
@@ -191,365 +178,170 @@ export default function MembershipConfigPage() {
       <ContextualNavigation items={breadcrumbItems} />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Settings className="w-8 h-8 text-blue-600" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Settings className="h-6 w-6 text-primary" />
               Membership Configuration
             </h1>
-            <p className="text-gray-600 mt-2">
-              Manage membership settings, thresholds, and benefits
+            <p className="text-muted-foreground text-sm">
+              Configure membership settings and requirements
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={handleReset}
               disabled={!hasChanges || saving}
-              className="flex items-center gap-2"
             >
-              <RefreshCw className="w-4 h-4" />
-              Reset Changes
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reset
             </Button>
             <Button
+              size="sm"
               onClick={handleSave}
               disabled={!hasChanges || saving}
-              className="flex items-center gap-2"
             >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>
 
         {/* Message Alert */}
         {message && (
-          <div
-            className={`mb-6 p-4 rounded-md border ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
-          >
-            <div className="flex items-center gap-2">
-              {message.type === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <p
-                className={
-                  message.type === 'success' ? 'text-green-800' : 'text-red-800'
-                }
-              >
-                {message.text}
-              </p>
-            </div>
-          </div>
+          <Alert variant={message.type === 'success' ? 'default' : 'destructive'} className="mb-6">
+            {message.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription>{message.text}</AlertDescription>
+          </Alert>
         )}
 
-        {/* Member Stats Overview */}
-        {memberStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Members</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {memberStats.totalMembers.toLocaleString()}
+
+        {/* Configuration Settings */}
+        <div className="space-y-6">
+          {/* Membership Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Membership Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Threshold Setting */}
+              <div className="space-y-2">
+                <Label htmlFor="threshold">Minimum Qualifying Amount (MYR)</Label>
+                <Input
+                  id="threshold"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={config.membershipThreshold}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      membershipThreshold: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Customers must spend at least {formatPrice(config.membershipThreshold)} to qualify
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Qualification Rules */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Qualification Rules</h4>
+                
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-normal">Exclude Promotional Items</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Promotional items won't count towards membership
                     </p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Target className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">New This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {memberStats.newMembersThisMonth}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Avg Order Value</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {formatPrice(memberStats.averageOrderValue)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Award className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Savings</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {formatPrice(memberStats.totalSavingsGiven)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Conversion Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {(memberStats.conversionRate * 100).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Configuration Tabs */}
-        <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="settings">Membership Settings</TabsTrigger>
-            <TabsTrigger value="content">Content & Messaging</TabsTrigger>
-          </TabsList>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
-                  Membership Threshold
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="threshold">
-                    Minimum Qualifying Amount (MYR)
-                  </Label>
-                  <Input
-                    id="threshold"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    value={config.membershipThreshold}
-                    onChange={e =>
-                      setConfig({
-                        ...config,
-                        membershipThreshold: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    Customers must spend at least this amount to qualify for
-                    membership
-                  </p>
-                </div>
-
-                <div className="p-4 border border-blue-200 bg-blue-50 rounded-md">
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-blue-600" />
-                    <div className="text-blue-800">
-                      <p>
-                        Current threshold:{' '}
-                        <strong>
-                          {formatPrice(config.membershipThreshold)}
-                        </strong>
-                        <br />
-                        Changing this will affect future membership
-                        qualifications only.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Qualification Rules
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">Exclude Promotional Items</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Promotional items will not count towards membership
-                      qualification
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={config.enablePromotionalExclusion}
-                    onChange={e =>
+                    onCheckedChange={(checked) =>
                       setConfig({
                         ...config,
-                        enablePromotionalExclusion: e.target.checked,
+                        enablePromotionalExclusion: checked,
                       })
                     }
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">
-                      Require Qualifying Products
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Only products marked as qualifying count towards
-                      membership
+                <div className="flex items-center justify-between space-x-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-normal">Require Qualifying Products</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Only products marked as qualifying count towards membership
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={config.requireQualifyingCategories}
-                    onChange={e =>
+                    onCheckedChange={(checked) =>
                       setConfig({
                         ...config,
-                        requireQualifyingCategories: e.target.checked,
+                        requireQualifyingCategories: checked,
                       })
                     }
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                <div className="p-4 border border-blue-200 bg-blue-50 rounded-md">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                    <div className="text-blue-800">
-                      <p>
-                        <strong>Current Configuration:</strong>
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        <li className="flex items-center gap-2">
-                          • Promotional exclusion:
-                          <Badge
-                            className={
-                              config.enablePromotionalExclusion
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-300 text-gray-700'
-                            }
-                          >
-                            {config.enablePromotionalExclusion
-                              ? 'Enabled'
-                              : 'Disabled'}
-                          </Badge>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          • Category requirement:
-                          <Badge
-                            className={
-                              config.requireQualifyingCategories
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-300 text-gray-700'
-                            }
-                          >
-                            {config.requireQualifyingCategories
-                              ? 'Enabled'
-                              : 'Disabled'}
-                          </Badge>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* Content & Messaging */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Content & Messaging</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="benefits">Membership Benefits</Label>
+                <Textarea
+                  id="benefits"
+                  rows={3}
+                  value={config.membershipBenefitsText}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      membershipBenefitsText: e.target.value,
+                    })
+                  }
+                  placeholder="Describe the benefits members receive..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Displayed to customers explaining membership benefits
+                </p>
+              </div>
 
-          {/* Content Tab */}
-          <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Membership Benefits Text
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label htmlFor="benefits">Benefits Description</Label>
-                  <textarea
-                    id="benefits"
-                    rows={4}
-                    value={config.membershipBenefitsText}
-                    onChange={e =>
-                      setConfig({
-                        ...config,
-                        membershipBenefitsText: e.target.value,
-                      })
-                    }
-                    placeholder="Describe the benefits members receive..."
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    This text will be displayed to customers explaining
-                    membership benefits
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="w-5 h-5" />
-                  Membership Terms Text
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label htmlFor="terms">Terms & Conditions</Label>
-                  <textarea
-                    id="terms"
-                    rows={4}
-                    value={config.membershipTermsText}
-                    onChange={e =>
-                      setConfig({
-                        ...config,
-                        membershipTermsText: e.target.value,
-                      })
-                    }
-                    placeholder="Explain how membership activation works..."
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    This text explains the terms and conditions for membership
-                    activation
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              <div className="space-y-2">
+                <Label htmlFor="terms">Terms & Conditions</Label>
+                <Textarea
+                  id="terms"
+                  rows={3}
+                  value={config.membershipTermsText}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      membershipTermsText: e.target.value,
+                    })
+                  }
+                  placeholder="Explain how membership activation works..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Terms and conditions for membership activation
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

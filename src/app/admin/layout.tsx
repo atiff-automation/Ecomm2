@@ -71,6 +71,7 @@ const navigationItems = [
       { label: 'Analytics', href: '/admin/membership/analytics' },
       { label: 'Configuration', href: '/admin/membership/config' },
       { label: 'Member Promotions', href: '/admin/member-promotions' },
+      { label: 'Discount Codes', href: '/admin/discount-codes' },
     ],
   },
   {

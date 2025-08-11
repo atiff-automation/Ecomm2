@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import {
   Crown,
   Gift,
@@ -36,7 +37,8 @@ interface MemberPromotionForm {
   discountValue: number;
   minimumOrderValue?: number;
   maximumDiscount?: number;
-  expiresAt?: string;
+  startsAt?: Date;
+  expiresAt?: Date;
   autoApply: boolean;
 }
 
@@ -65,7 +67,7 @@ export default function AdminMemberPromotionsPage() {
 
   const handleCustomFormChange = (
     field: keyof MemberPromotionForm,
-    value: string | number | boolean | undefined
+    value: string | number | boolean | Date | undefined
   ) => {
     setCustomForm(prev => ({ ...prev, [field]: value }));
   };
@@ -76,18 +78,28 @@ export default function AdminMemberPromotionsPage() {
     setMessage(null);
 
     try {
+      const formDataToSubmit = {
+        ...customForm,
+        startsAt: customForm.startsAt?.toISOString(),
+        expiresAt: customForm.expiresAt?.toISOString(),
+      };
+
       const response = await fetch('/api/admin/member-promotions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(customForm),
+        body: JSON.stringify(formDataToSubmit),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        const successText = customForm.autoApply
+          ? `Member promotion created successfully! The discount will auto-apply for qualifying members.`
+          : `Member promotion created successfully! Coupon Code: ${data.code}`;
+
         setMessage({
           type: 'success',
-          text: `Member promotion created successfully! Code: ${data.code}`,
+          text: successText,
         });
         setCustomForm({
           name: '',
@@ -355,31 +367,66 @@ export default function AdminMemberPromotionsPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="expiresAt">Expiry Date</Label>
-                    <Input
-                      id="expiresAt"
-                      type="datetime-local"
-                      value={customForm.expiresAt || ''}
-                      onChange={e =>
-                        handleCustomFormChange(
-                          'expiresAt',
-                          e.target.value || undefined
-                        )
+                    <Label>Promotion Period</Label>
+                    <CustomDateRangePicker
+                      startDate={customForm.startsAt}
+                      endDate={customForm.expiresAt}
+                      onStartDateChange={date =>
+                        handleCustomFormChange('startsAt', date)
                       }
+                      onEndDateChange={date =>
+                        handleCustomFormChange('expiresAt', date)
+                      }
+                      placeholder="Select promotion period"
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="autoApply"
-                      checked={customForm.autoApply}
-                      onCheckedChange={checked =>
-                        handleCustomFormChange('autoApply', checked)
-                      }
-                    />
-                    <Label htmlFor="autoApply">
-                      Auto-apply (no code needed)
-                    </Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="autoApply"
+                        checked={customForm.autoApply}
+                        onCheckedChange={checked =>
+                          handleCustomFormChange('autoApply', checked)
+                        }
+                      />
+                      <Label htmlFor="autoApply">
+                        Auto-apply discount at checkout
+                      </Label>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p className="mb-2 font-medium">How it works:</p>
+                      {customForm.autoApply ? (
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="flex items-center gap-2 text-blue-800">
+                            <CheckCircle className="h-4 w-4" />
+                            <strong>Auto-apply mode:</strong> Discount applies
+                            automatically to qualifying members at checkout
+                          </p>
+                          <p className="text-blue-700 mt-1">
+                            • No coupon code needed
+                            <br />
+                            • Private promotion (not shareable)
+                            <br />• System applies discount based on member
+                            status
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <p className="flex items-center gap-2 text-amber-800">
+                            <Gift className="h-4 w-4" />
+                            <strong>Coupon code mode:</strong> System will
+                            generate a unique coupon code
+                          </p>
+                          <p className="text-amber-700 mt-1">
+                            • Members must enter the code at checkout
+                            <br />
+                            • Code can be shared among members
+                            <br />• Example: MEMBERVIP1ABC2XYZ
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -452,10 +499,35 @@ export default function AdminMemberPromotionsPage() {
                   <p>
                     Seasonal promotions come with pre-configured discount
                     values, expiry dates, and descriptions tailored for
-                    Malaysian celebrations and holidays. They are automatically
-                    set as member-only promotions.
+                    Malaysian celebrations and holidays. They automatically
+                    generate coupon codes that members can use at checkout.
                   </p>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-2">
+                  <Gift className="h-5 w-5 text-gray-600 mt-0.5" />
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium mb-1">Managing Coupon Codes</p>
+                    <p>
+                      All generated coupon codes are automatically saved to the
+                      discount codes system. Members can view their available
+                      codes in their account dashboard.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('/admin/discount-codes', '_blank')}
+                  className="ml-4"
+                >
+                  <Gift className="h-4 w-4 mr-2" />
+                  Manage All Codes
+                </Button>
               </div>
             </div>
           </CardContent>

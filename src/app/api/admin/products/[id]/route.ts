@@ -248,7 +248,7 @@ export async function PUT(
             regularPrice: productData.regularPrice,
           }),
           ...(productData.memberPrice !== undefined && {
-            memberPrice: productData.memberPrice,
+            memberPrice: productData.memberPrice || productData.regularPrice || 0,
           }),
           ...(productData.costPrice !== undefined && {
             costPrice: productData.costPrice,
