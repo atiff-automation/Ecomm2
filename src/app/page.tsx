@@ -29,6 +29,7 @@ import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { ProductRecommendations } from '@/components/product/ProductRecommendations';
 import { CompactPriceDisplay } from '@/components/pricing/PriceDisplay';
+import { DynamicHeroSection } from '@/components/homepage/DynamicHeroSection';
 
 interface Product {
   id: string;
@@ -139,110 +140,13 @@ export default function HomePage() {
     <>
       <SEOHead seo={seoData} />
       <div className="min-h-screen">
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white">
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="relative container mx-auto px-4 py-20">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  Welcome to{' '}
-                  <span className="text-yellow-300">JRM E-commerce</span>
-                </h1>
-                <p className="text-xl text-blue-100 max-w-lg">
-                  Malaysia&apos;s premier online marketplace with intelligent
-                  membership benefits, dual pricing, and local payment
-                  integration.
-                </p>
-
-                {!isLoggedIn ? (
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/auth/signup">
-                      <Button
-                        size="lg"
-                        className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
-                      >
-                        Join as Member
-                        <ArrowRight className="ml-2 w-5 h-5" />
-                      </Button>
-                    </Link>
-                    <Link href="/products">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="text-white border-white hover:bg-white hover:text-blue-800"
-                      >
-                        Browse Products
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/products">
-                      <Button
-                        size="lg"
-                        className="bg-yellow-500 text-blue-900 hover:bg-yellow-400"
-                      >
-                        Shop Now
-                        <ShoppingBag className="ml-2 w-5 h-5" />
-                      </Button>
-                    </Link>
-                    {isMember && (
-                      <div className="flex items-center gap-2 text-yellow-300">
-                        <Award className="w-5 h-5" />
-                        <span className="font-medium">
-                          Member Benefits Active
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Search Bar */}
-                <div className="max-w-lg mx-auto lg:mx-0 mt-6">
-                  <SearchBar
-                    placeholder="Search products, brands, categories..."
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-300">
-                        10K+
-                      </div>
-                      <div className="text-sm text-blue-100">
-                        Happy Customers
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-300">
-                        5K+
-                      </div>
-                      <div className="text-sm text-blue-100">Products</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-300">
-                        98%
-                      </div>
-                      <div className="text-sm text-blue-100">Satisfaction</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-300">
-                        24/7
-                      </div>
-                      <div className="text-sm text-blue-100">Support</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
+        {/* Dynamic Hero Section */}
+        <DynamicHeroSection
+          heroSection={heroSection}
+          siteTheme={siteTheme}
+          isLoggedIn={isLoggedIn}
+          isMember={isMember}
+        />
         {/* Features Section */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">

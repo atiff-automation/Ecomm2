@@ -18,8 +18,8 @@ const heroSectionSchema = z.object({
   ctaSecondaryText: z.string().min(1, 'Secondary CTA text is required'),
   ctaSecondaryLink: z.string().min(1, 'Secondary CTA link is required'),
   backgroundType: z.enum(['IMAGE', 'VIDEO']),
-  backgroundImage: z.string().url().optional().nullable(),
-  backgroundVideo: z.string().url().optional().nullable(),
+  backgroundImage: z.string().optional().nullable(),
+  backgroundVideo: z.string().optional().nullable(),
   overlayOpacity: z.number().min(0).max(1),
   textAlignment: z.enum(['left', 'center', 'right']),
 });
