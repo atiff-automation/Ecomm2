@@ -86,7 +86,6 @@ export default function ProductImportPage() {
       'categoryId',
       'regularPrice',
       'memberPrice',
-      'costPrice',
       'stockQuantity',
       'lowStockAlert',
       'weight',

@@ -20,7 +20,7 @@ const updateProductSchema = z.object({
   barcode: z.string().optional(),
   categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required').optional(),
   regularPrice: z.number().min(0, 'Regular price must be positive').optional(),
-  memberPrice: z.number().min(0, 'Member price must be positive').optional(),
+  memberPrice: z.number().min(0, 'Member price must be positive').nullable().optional(),
   costPrice: z.number().min(0, 'Cost price must be positive').optional(),
   stockQuantity: z
     .number()

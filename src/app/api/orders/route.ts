@@ -11,6 +11,7 @@ import { getMembershipConfig } from '@/lib/membership';
 // import { activateUserMembership } from '@/lib/membership'; // Not used in current flow
 import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
+import { telegramService } from '@/lib/telegram/telegram-service';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (products.length !== orderData.cartItems.length) {
+    if (products.length !== cartItems.length) {
       return NextResponse.json(
         { message: 'Some products are not available' },
         { status: 400 }
@@ -116,16 +117,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isMember: true, memberSince: true },
-    });
+    let user = null;
+    let isMember = false;
 
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    if (!isGuest && session?.user) {
+      user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { isMember: true, memberSince: true },
+      });
+
+      if (!user) {
+        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+      }
+
+      isMember = user.isMember || orderData.membershipActivated;
+    } else {
+      // Guest user - membership can only be activated during checkout
+      isMember = Boolean(orderData.membershipActivated);
     }
-
-    const isMember = user.isMember || orderData.membershipActivated;
 
     // Calculate order totals
     let subtotal = 0;
@@ -271,7 +280,7 @@ export async function POST(request: NextRequest) {
       if (
         orderData.membershipActivated &&
         qualifyingTotal >= membershipConfig.membershipThreshold &&
-        (!user || !user.isMember)
+        (!user || !user?.isMember)
       ) {
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24); // Expire if not paid within 24 hours
@@ -361,6 +370,30 @@ export async function POST(request: NextRequest) {
       clearGuestCart();
     }
 
+    // Send Telegram notification for new order
+    try {
+      const customerName = `${orderData.shippingAddress.firstName} ${orderData.shippingAddress.lastName}`;
+      
+      // Prepare detailed items for notification
+      const notificationItems = cartItems.map(item => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.finalPrice, // This is the actual price used (regular/member/promotional)
+      }));
+      
+      await telegramService.sendNewOrderNotification({
+        orderNumber: result.orderNumber,
+        customerName,
+        total: totalAmount,
+        items: notificationItems,
+        paymentMethod: orderData.paymentMethod.toUpperCase(),
+        createdAt: new Date(),
+      });
+    } catch (telegramError) {
+      // Log error but don't fail the order creation
+      console.error('Failed to send Telegram notification:', telegramError);
+    }
+
     // Create payment URL based on payment method
     let paymentUrl = null;
     if (orderData.paymentMethod === 'stripe') {
@@ -385,8 +418,54 @@ export async function POST(request: NextRequest) {
     console.error('Error creating order:', error);
 
     if (error instanceof z.ZodError) {
+      // Create user-friendly error messages
+      const fieldErrors: Record<string, string> = {};
+      const friendlyFieldNames: Record<string, string> = {
+        'shippingAddress.firstName': 'Shipping First Name',
+        'shippingAddress.lastName': 'Shipping Last Name',
+        'shippingAddress.email': 'Shipping Email',
+        'shippingAddress.phone': 'Shipping Phone',
+        'shippingAddress.address': 'Shipping Address',
+        'shippingAddress.city': 'Shipping City',
+        'shippingAddress.state': 'Shipping State',
+        'shippingAddress.postcode': 'Shipping Postcode',
+        'billingAddress.firstName': 'Billing First Name',
+        'billingAddress.lastName': 'Billing Last Name', 
+        'billingAddress.email': 'Billing Email',
+        'billingAddress.phone': 'Billing Phone',
+        'billingAddress.address': 'Billing Address',
+        'billingAddress.city': 'Billing City',
+        'billingAddress.state': 'Billing State',
+        'billingAddress.postcode': 'Billing Postcode',
+      };
+
+      error.issues.forEach(issue => {
+        const fieldPath = issue.path.join('.');
+        const friendlyName = friendlyFieldNames[fieldPath] || fieldPath;
+        
+        if (issue.code === 'too_small' && issue.type === 'string') {
+          fieldErrors[fieldPath] = `${friendlyName} is required`;
+        } else if (issue.code === 'invalid_type') {
+          fieldErrors[fieldPath] = `${friendlyName} is required`;
+        } else if (issue.code === 'invalid_string' && issue.validation === 'email') {
+          fieldErrors[fieldPath] = `Please enter a valid email address`;
+        } else {
+          fieldErrors[fieldPath] = `${friendlyName}: ${issue.message}`;
+        }
+      });
+
+      // Create summary message
+      const missingFields = Object.values(fieldErrors);
+      const summaryMessage = missingFields.length === 1 
+        ? missingFields[0]
+        : `Please fill in the following required fields: ${missingFields.join(', ')}`;
+
       return NextResponse.json(
-        { message: 'Invalid order data', errors: error.issues },
+        { 
+          message: summaryMessage,
+          fieldErrors,
+          errors: error.issues // Keep original for debugging
+        },
         { status: 400 }
       );
     }

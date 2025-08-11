@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   ShoppingCart,
   CreditCard,
@@ -31,6 +32,7 @@ import {
   Truck,
   Award,
   Check,
+  AlertTriangle,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -127,6 +129,8 @@ export default function CheckoutPage() {
 
   const [useSameAddress, setUseSameAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [orderError, setOrderError] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState('');
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [membershipPending, setMembershipPending] = useState(false);
@@ -286,11 +290,47 @@ export default function CheckoutPage() {
   };
 
   // Handle address input change
+  // Helper function to render field errors
+  const renderFieldError = (fieldPath: string) => {
+    const error = fieldErrors[fieldPath];
+    if (!error) return null;
+    
+    return (
+      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+        <AlertTriangle className="w-3 h-3" />
+        {error}
+      </p>
+    );
+  };
+
+  // Clear field errors when user starts typing
+  const clearFieldError = (fieldPath: string) => {
+    if (fieldErrors[fieldPath]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldPath];
+        return newErrors;
+      });
+    }
+    
+    // Clear general order error when user starts fixing issues
+    if (orderError) {
+      setOrderError('');
+    }
+  };
+
   const handleAddressChange = (
     type: 'shipping' | 'billing',
     field: keyof ShippingAddress,
     value: string
   ) => {
+    // Clear field-specific error
+    clearFieldError(`${type}Address.${field}`);
+    
+    // Clear general error
+    if (orderError) {
+      setOrderError('');
+    }
     if (type === 'shipping') {
       setShippingAddress(prev => ({ ...prev, [field]: value }));
       if (useSameAddress) {
@@ -351,7 +391,11 @@ export default function CheckoutPage() {
           router.push(`/test-payment-gateway?${paymentParams.toString()}`);
         } else {
           const error = await response.json();
-          alert(error.message || 'Failed to create order');
+          setOrderError(error.message || 'Failed to create order');
+          setFieldErrors(error.fieldErrors || {});
+          
+          // Scroll to top to show error message
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         return;
       }
@@ -387,11 +431,19 @@ export default function CheckoutPage() {
         }
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to create order');
+        setOrderError(error.message || 'Failed to create order');
+        setFieldErrors(error.fieldErrors || {});
+        
+        // Scroll to top to show error message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
       console.error('Order submission error:', error);
-      alert('Failed to submit order');
+      setOrderError('Failed to submit order. Please check your connection and try again.');
+      setFieldErrors({});
+      
+      // Scroll to top to show error message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setProcessing(false);
     }
@@ -535,6 +587,16 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Error Display */}
+      {orderError && (
+        <Alert className="mb-6 border-red-200 bg-red-50">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {orderError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Checkout Form */}
         <div className="lg:col-span-2 space-y-8">
@@ -615,7 +677,9 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'phone', e.target.value)
                     }
                     required
+                    className={fieldErrors['shippingAddress.phone'] ? 'border-red-300 focus:border-red-500' : ''}
                   />
+                  {renderFieldError('shippingAddress.phone')}
                 </div>
               </div>
 
@@ -628,7 +692,9 @@ export default function CheckoutPage() {
                     handleAddressChange('shipping', 'address', e.target.value)
                   }
                   required
+                  className={fieldErrors['shippingAddress.address'] ? 'border-red-300 focus:border-red-500' : ''}
                 />
+                {renderFieldError('shippingAddress.address')}
               </div>
 
               <div>

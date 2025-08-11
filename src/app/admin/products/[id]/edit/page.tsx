@@ -63,9 +63,8 @@ interface ProductFormData {
   sku: string;
   barcode: string;
   categoryIds: string[];
-  regularPrice: number;
-  memberPrice: number;
-  costPrice: number;
+  regularPrice: number | string;
+  memberPrice: number | string;
   stockQuantity: number;
   lowStockAlert: number;
   weight?: number | string;
@@ -102,9 +101,8 @@ export default function EditProductPage() {
     sku: '',
     barcode: '',
     categoryIds: [],
-    regularPrice: 0,
-    memberPrice: 0,
-    costPrice: 0,
+    regularPrice: '',
+    memberPrice: '',
     stockQuantity: 0,
     lowStockAlert: 10,
     weight: 0,
@@ -206,9 +204,8 @@ export default function EditProductPage() {
             product.categories?.map(
               (pc: { category: { id: string } }) => pc.category.id
             ) || [],
-          regularPrice: Number(product.regularPrice) || 0,
-          memberPrice: Number(product.memberPrice) || 0,
-          costPrice: Number(product.costPrice) || 0,
+          regularPrice: product.regularPrice || '',
+          memberPrice: product.memberPrice || '',
           stockQuantity: product.stockQuantity || 0,
           lowStockAlert: product.lowStockAlert || 10,
           weight: product.weight || 0,
@@ -279,6 +276,7 @@ export default function EditProductPage() {
         updated.promotionEndDate = undefined;
       }
 
+
       return updated;
     });
 
@@ -318,32 +316,38 @@ export default function EditProductPage() {
     if (formData.categoryIds.length === 0) {
       newErrors.categoryIds = 'At least one category is required';
     }
-    if (formData.regularPrice <= 0) {
-      newErrors.regularPrice = 'Regular price must be greater than 0';
+    const regularPrice = parseFloat(formData.regularPrice as string) || 0;
+    const memberPrice = parseFloat(formData.memberPrice as string) || 0;
+    
+    if (!formData.regularPrice || regularPrice <= 0) {
+      newErrors.regularPrice = 'Regular price is required and must be greater than 0';
     }
-    if (formData.memberPrice <= 0) {
+    if (formData.memberPrice && memberPrice <= 0) {
       newErrors.memberPrice = 'Member price must be greater than 0';
     }
-    if (formData.memberPrice >= formData.regularPrice) {
+    if (memberPrice >= regularPrice && formData.memberPrice && formData.regularPrice) {
       newErrors.memberPrice = 'Member price must be less than regular price';
-    }
-    if (formData.costPrice < 0) {
-      newErrors.costPrice = 'Cost price cannot be negative';
     }
     if (formData.stockQuantity < 0) {
       newErrors.stockQuantity = 'Stock quantity cannot be negative';
     }
 
-    // Promotional pricing validation
-    if (formData.isPromotional) {
-      if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
-        newErrors.promotionalPrice =
-          'Promotional price is required and must be greater than 0';
-      } else if (formData.promotionalPrice >= formData.memberPrice) {
-        newErrors.promotionalPrice =
-          'Promotional price must be less than member price';
+    // Sale pricing validation (only when sale price is provided)
+    if (formData.promotionalPrice) {
+      const promoPrice = parseFloat(formData.promotionalPrice.toString()) || 0;
+      
+      if (promoPrice <= 0) {
+        newErrors.promotionalPrice = 'Sale price must be greater than 0';
       }
-
+      
+      // Check against regular price
+      if (promoPrice >= regularPrice && formData.regularPrice) {
+        newErrors.promotionalPrice = 'Sale price must be less than regular price';
+      }
+      
+      // Note: Promotional price can be higher than member price
+      // System will automatically select the lowest price for members
+      
       if (formData.promotionStartDate && formData.promotionEndDate) {
         const startDate = formData.promotionStartDate;
         const endDate = formData.promotionEndDate;
@@ -375,9 +379,8 @@ export default function EditProductPage() {
     try {
       const processedFormData = {
         ...formData,
-        regularPrice: Number(formData.regularPrice),
-        memberPrice: Number(formData.memberPrice),
-        costPrice: Number(formData.costPrice),
+        regularPrice: parseFloat(formData.regularPrice as string) || 0,
+        memberPrice: formData.memberPrice ? parseFloat(formData.memberPrice as string) : null,
         stockQuantity: Number(formData.stockQuantity),
         lowStockAlert: Number(formData.lowStockAlert),
         weight:
@@ -456,54 +459,92 @@ export default function EditProductPage() {
     }
   };
 
-  const getTabStatus = (tabId: string): 'completed' | 'current' | 'pending' => {
-    if (tabId === activeTab) {
-      return 'current';
+  const getTabStatus = (tab: string) => {
+    const tabErrors = {
+      basic: ['name', 'slug', 'sku', 'categoryIds'],
+      pricing: [
+        'regularPrice',
+        'memberPrice', 
+        'promotionalPrice',
+        'promotionStartDate',
+        'promotionEndDate',
+      ],
+      inventory: ['stockQuantity', 'lowStockAlert'],
+      media: ['images'],
+    };
+
+    const hasErrors = tabErrors[tab as keyof typeof tabErrors]?.some(
+      field => errors[field]
+    );
+
+    if (hasErrors) {
+      return 'error';
     }
 
-    switch (tabId) {
-      case 'basic':
-        return formData.name && formData.sku && formData.categoryIds.length > 0
-          ? 'completed'
-          : 'pending';
-      case 'pricing':
-        return formData.regularPrice > 0 &&
-          formData.memberPrice > 0 &&
-          formData.memberPrice < formData.regularPrice
-          ? 'completed'
-          : 'pending';
-      case 'inventory':
-        return formData.stockQuantity >= 0 ? 'completed' : 'pending';
-      case 'media':
-        return uploadedImages.length > 0 ? 'completed' : 'pending';
-      case 'advanced':
-        return 'completed'; // Advanced settings are optional
-      default:
-        return 'pending';
+    // Check completion
+    if (tab === 'basic') {
+      return formData.name && formData.sku && formData.categoryIds.length > 0
+        ? 'complete'
+        : 'incomplete';
+    } else if (tab === 'pricing') {
+      return parseFloat(formData.regularPrice as string) > 0 &&
+        true && // Member price is optional
+        true
+        ? 'complete'
+        : 'incomplete';
+    } else if (tab === 'inventory') {
+      return formData.stockQuantity >= 0 ? 'complete' : 'incomplete';
+    } else if (tab === 'media') {
+      return formData.images.length > 0 ? 'complete' : 'incomplete';
     }
+
+    return 'incomplete';
   };
 
-  const TabStatusIcon = ({
-    status,
-  }: {
-    status: 'completed' | 'current' | 'pending';
-  }) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'current':
-        return <Clock className="h-4 w-4 text-blue-600" />;
-      default:
-        return <div className="h-2 w-2 bg-gray-300 rounded-full" />;
+  const TabStatusIcon = ({ status }: { status: string }) => {
+    if (status === 'complete') {
+      return <CheckCircle className="h-3 w-3 text-green-600" />;
     }
+    if (status === 'error') {
+      return <AlertCircle className="h-3 w-3 text-red-600" />;
+    }
+    return null;
   };
 
-  const calculateProgress = () => {
-    const tabs = ['basic', 'pricing', 'inventory', 'media', 'advanced'];
-    const completedTabs = tabs.filter(
-      tab => getTabStatus(tab) === 'completed'
-    ).length;
-    return (completedTabs / tabs.length) * 100;
+  // Calculate completion percentage
+  const getCompletionPercentage = () => {
+    const requiredFields = [
+      formData.name,
+      formData.sku,
+      formData.categoryIds.length > 0,
+      parseFloat(formData.regularPrice as string) > 0,
+      true, // Member price is optional
+    ];
+
+    const completedRequired = requiredFields.filter(Boolean).length;
+    const totalRequired = requiredFields.length;
+
+    const optionalFields = [
+      formData.description,
+      formData.shortDescription,
+      formData.images.length > 0,
+      formData.barcode,
+      formData.weight,
+      formatDimensions(
+        formData.length || '',
+        formData.width || '',
+        formData.height || ''
+      ),
+    ];
+
+    const completedOptional = optionalFields.filter(Boolean).length;
+    const totalOptional = optionalFields.length;
+
+    return Math.round(
+      ((completedRequired + completedOptional * 0.5) /
+        (totalRequired + totalOptional * 0.5)) *
+        100
+    );
   };
 
   if (loading) {
@@ -581,7 +622,7 @@ export default function EditProductPage() {
                   value="inventory"
                   className="flex items-center gap-2"
                 >
-                  <Archive className="h-4 w-4" />
+                  <Settings className="h-4 w-4" />
                   Inventory
                   <TabStatusIcon status={getTabStatus('inventory')} />
                 </TabsTrigger>
@@ -594,7 +635,7 @@ export default function EditProductPage() {
                   value="advanced"
                   className="flex items-center gap-2"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Sparkles className="h-4 w-4" />
                   Advanced
                   <TabStatusIcon status={getTabStatus('advanced')} />
                 </TabsTrigger>
@@ -786,264 +827,23 @@ export default function EditProductPage() {
                         onChange={e =>
                           handleInputChange('description', e.target.value)
                         }
-                        placeholder="Detailed product description"
-                        rows={6}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Pricing Tab */}
-              <TabsContent value="pricing" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
-                      Pricing Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="regularPrice">
-                          Regular Price (RM) *
-                        </Label>
-                        <Input
-                          id="regularPrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.regularPrice}
-                          onChange={e =>
-                            handleInputChange(
-                              'regularPrice',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="0.00"
-                        />
-                        {errors.regularPrice && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {errors.regularPrice}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="memberPrice">Member Price (RM) *</Label>
-                        <Input
-                          id="memberPrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.memberPrice}
-                          onChange={e =>
-                            handleInputChange(
-                              'memberPrice',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="0.00"
-                        />
-                        {errors.memberPrice && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {errors.memberPrice}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="costPrice">Cost Price (RM)</Label>
-                        <Input
-                          id="costPrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.costPrice}
-                          onChange={e =>
-                            handleInputChange(
-                              'costPrice',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="0.00"
-                        />
-                        {errors.costPrice && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {errors.costPrice}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Membership Qualification */}
-                    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 rounded-full">
-                          <Sparkles className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-blue-900">
-                            Membership Qualification
-                          </p>
-                          <p className="text-sm text-blue-700">
-                            Allow this product to count towards membership
-                            qualification
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={formData.isQualifyingForMembership}
-                        onCheckedChange={value =>
-                          handleInputChange('isQualifyingForMembership', value)
-                        }
+                        placeholder="Detailed product description (shown on product page)"
+                        rows={4}
                       />
                     </div>
 
-                    {/* Promotional Pricing */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-orange-100 rounded-full">
-                            <Calendar className="h-4 w-4 text-orange-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-orange-900">
-                              Promotional Pricing
-                            </p>
-                            <p className="text-sm text-orange-700">
-                              Enable special promotional pricing for limited
-                              time
-                            </p>
-                          </div>
-                        </div>
-                        <Switch
-                          checked={formData.isPromotional}
-                          onCheckedChange={value =>
-                            handleInputChange('isPromotional', value)
-                          }
-                        />
-                      </div>
-
-                      {formData.isPromotional && (
-                        <div className="space-y-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                          <div>
-                            <Label htmlFor="promotionalPrice">
-                              Promotional Price (RM) *
-                            </Label>
-                            <Input
-                              id="promotionalPrice"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={formData.promotionalPrice || ''}
-                              onChange={e =>
-                                handleInputChange(
-                                  'promotionalPrice',
-                                  parseFloat(e.target.value) || undefined
-                                )
-                              }
-                              placeholder="0.00"
-                            />
-                            {errors.promotionalPrice && (
-                              <p className="text-sm text-red-600 mt-1">
-                                {errors.promotionalPrice}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label>Promotion Period</Label>
-                            <CustomDateRangePicker
-                              startDate={formData.promotionStartDate}
-                              endDate={formData.promotionEndDate}
-                              onStartDateChange={startDate =>
-                                handleInputChange(
-                                  'promotionStartDate',
-                                  startDate
-                                )
-                              }
-                              onEndDateChange={endDate =>
-                                handleInputChange('promotionEndDate', endDate)
-                              }
-                              placeholder="Select promotion period"
-                            />
-                            {errors.promotionEndDate && (
-                              <p className="text-sm text-red-600 mt-1">
-                                {errors.promotionEndDate}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Inventory Tab */}
-              <TabsContent value="inventory" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Archive className="h-5 w-5" />
-                      Inventory Management
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="stockQuantity">Stock Quantity *</Label>
-                        <Input
-                          id="stockQuantity"
-                          type="number"
-                          min="0"
-                          value={formData.stockQuantity}
-                          onChange={e =>
-                            handleInputChange(
-                              'stockQuantity',
-                              parseInt(e.target.value, 10) || 0
-                            )
-                          }
-                          placeholder="0"
-                        />
-                        {errors.stockQuantity && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {errors.stockQuantity}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="lowStockAlert">Low Stock Alert</Label>
-                        <Input
-                          id="lowStockAlert"
-                          type="number"
-                          min="0"
-                          value={formData.lowStockAlert}
-                          onChange={e =>
-                            handleInputChange(
-                              'lowStockAlert',
-                              parseInt(e.target.value, 10) || 0
-                            )
-                          }
-                          placeholder="10"
-                        />
-                      </div>
-
                       <div>
                         <Label htmlFor="weight">Weight (kg)</Label>
                         <Input
                           id="weight"
                           type="number"
                           step="0.01"
-                          min="0"
                           value={formData.weight || ''}
                           onChange={e =>
                             handleInputChange('weight', e.target.value)
                           }
-                          placeholder="0.00"
+                          placeholder="0.50"
                         />
                       </div>
 
@@ -1114,22 +914,301 @@ export default function EditProductPage() {
                 </Card>
               </TabsContent>
 
+              {/* Pricing Tab */}
+              <TabsContent value="pricing" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Pricing Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-6">
+                      {/* Clean Pricing Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <Label htmlFor="regularPrice">
+                            Regular Price (RM) *
+                          </Label>
+                          <Input
+                            id="regularPrice"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={formData.regularPrice}
+                            onChange={e =>
+                              handleInputChange(
+                                'regularPrice',
+                                e.target.value
+                              )
+                            }
+                            placeholder="150.00"
+                          />
+                          {errors.regularPrice && (
+                            <p className="text-sm text-red-600 mt-1">
+                              {errors.regularPrice}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="memberPrice">
+                            Member Price (RM)
+                          </Label>
+                          <Input
+                            id="memberPrice"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={formData.memberPrice}
+                            onChange={e =>
+                              handleInputChange(
+                                'memberPrice',
+                                e.target.value
+                              )
+                            }
+                            placeholder="120.00 (optional)"
+                          />
+                          {errors.memberPrice && (
+                            <p className="text-sm text-red-600 mt-1">
+                              {errors.memberPrice}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500 mt-1">
+                            Special discounted price for approved members
+                          </p>
+                        </div>
+
+                      </div>
+
+                      {/* Settings Section */}
+                      <div className="pt-4 border-t border-gray-200">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="isQualifyingForMembership"
+                            checked={formData.isQualifyingForMembership}
+                            onCheckedChange={checked =>
+                              handleInputChange(
+                                'isQualifyingForMembership',
+                                checked
+                              )
+                            }
+                          />
+                          <Label htmlFor="isQualifyingForMembership" className="font-normal">
+                            Counts toward membership qualification
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1 ml-7">
+                          Helps customers reach RM80 threshold to become members
+                        </p>
+                      </div>
+
+                      {/* Promotional Pricing */}
+                      <div className="space-y-3 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-1.5 bg-amber-100 rounded">
+                              <Calendar className="h-4 w-4 text-amber-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-amber-900 text-sm">
+                                Promotional Pricing
+                              </p>
+                              <p className="text-xs text-amber-700">
+                                Set special pricing for limited time
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={formData.isPromotional}
+                            onCheckedChange={value =>
+                              handleInputChange('isPromotional', value)
+                            }
+                          />
+                        </div>
+                        {formData.isPromotional && (
+                          <div className="space-y-4 p-4 bg-white rounded-lg border border-amber-200">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="promotionalPrice">
+                                  Promotional Price (RM) *
+                                </Label>
+                                <Input
+                                  id="promotionalPrice"
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={formData.promotionalPrice || ''}
+                                  onChange={e =>
+                                    handleInputChange(
+                                      'promotionalPrice',
+                                      parseFloat(e.target.value) || undefined
+                                    )
+                                  }
+                                  placeholder="Enter promotional price"
+                                />
+                                {errors.promotionalPrice && (
+                                  <p className="text-sm text-red-600 mt-1">
+                                    {errors.promotionalPrice}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <Label>Promotional Period *</Label>
+                                <CustomDateRangePicker
+                                  startDate={formData.promotionStartDate}
+                                  endDate={formData.promotionEndDate}
+                                  onStartDateChange={date =>
+                                    handleInputChange('promotionStartDate', date)
+                                  }
+                                  onEndDateChange={date =>
+                                    handleInputChange('promotionEndDate', date)
+                                  }
+                                  placeholder="Select promotion period"
+                                />
+                                {(errors.promotionStartDate ||
+                                  errors.promotionEndDate) && (
+                                  <p className="text-sm text-red-600 mt-1">
+                                    {errors.promotionStartDate ||
+                                      errors.promotionEndDate}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Inventory Tab */}
+              <TabsContent value="inventory" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Stock Management</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Manage inventory levels and stock alerts
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="stockQuantity">Stock Quantity *</Label>
+                        <Input
+                          id="stockQuantity"
+                          type="number"
+                          min="0"
+                          value={formData.stockQuantity}
+                          onChange={e =>
+                            handleInputChange(
+                              'stockQuantity',
+                              parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          placeholder="100"
+                        />
+                        {errors.stockQuantity && (
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.stockQuantity}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="lowStockAlert">Low Stock Alert</Label>
+                        <Input
+                          id="lowStockAlert"
+                          type="number"
+                          min="0"
+                          value={formData.lowStockAlert}
+                          onChange={e =>
+                            handleInputChange(
+                              'lowStockAlert',
+                              parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          placeholder="10"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Receive alerts when stock falls below this level
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="status">Product Status</Label>
+                        <Select
+                          value={formData.status}
+                          onValueChange={value =>
+                            handleInputChange('status', value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="DRAFT">
+                              Draft - Not visible
+                            </SelectItem>
+                            <SelectItem value="ACTIVE">
+                              Active - Public
+                            </SelectItem>
+                            <SelectItem value="INACTIVE">
+                              Inactive - Hidden
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center space-x-2 pt-8">
+                        <Switch
+                          id="featured"
+                          checked={formData.featured}
+                          onCheckedChange={checked =>
+                            handleInputChange('featured', checked)
+                          }
+                        />
+                        <Label htmlFor="featured">Featured Product</Label>
+                      </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {/* Images Tab */}
               <TabsContent value="media" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5" />
-                      Product Images
-                    </CardTitle>
+                    <CardTitle>Product Images</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Upload high-quality images to showcase your product
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <ImageUpload
                       initialImages={uploadedImages}
                       onUpload={handleImagesUpload}
                       maxFiles={5}
-                      maxSize={10}
+                      className="w-full"
                     />
+                    <div className="mt-4 text-sm text-gray-600">
+                      <p className="font-medium mb-2">Image Guidelines:</p>
+                      <ul className="space-y-1 text-xs">
+                        <li>
+                          • First image will be used as the primary product
+                          image
+                        </li>
+                        <li>• Recommended size: 800x800px or larger</li>
+                        <li>• Supported formats: JPG, PNG, WebP</li>
+                        <li>• Maximum file size: 5MB per image</li>
+                      </ul>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1138,72 +1217,73 @@ export default function EditProductPage() {
               <TabsContent value="advanced" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Advanced Settings
-                    </CardTitle>
+                    <CardTitle>Member Early Access</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Configure member-only access periods and early promotional
+                      access
+                    </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="status">Product Status</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={value =>
-                          handleInputChange('status', value)
+                    <div className="space-y-2">
+                      <Label htmlFor="memberOnlyUntil">
+                        Member-Only Until (Optional)
+                      </Label>
+                      <CustomDateRangePicker
+                        startDate={formData.memberOnlyUntil}
+                        endDate={undefined}
+                        onStartDateChange={date =>
+                          handleInputChange('memberOnlyUntil', date)
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="DRAFT">Draft</SelectItem>
-                          <SelectItem value="ACTIVE">Active</SelectItem>
-                          <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-yellow-100 rounded-full">
-                          <Sparkles className="h-4 w-4 text-yellow-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-yellow-900">
-                            Featured Product
-                          </p>
-                          <p className="text-sm text-yellow-700">
-                            Display this product in featured sections
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={formData.featured}
-                        onCheckedChange={value =>
-                          handleInputChange('featured', value)
-                        }
+                        onEndDateChange={() => {}}
+                        placeholder="Select member-only period end date"
+                        className="w-full"
                       />
+                      <p className="text-xs text-gray-500">
+                        Product will be visible only to members until this date
+                      </p>
                     </div>
 
-                    {/* Member Early Access */}
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Member Early Access Period</Label>
-                        <CustomDateRangePicker
-                          startDate={formData.earlyAccessStart}
-                          endDate={formData.memberOnlyUntil}
-                          onStartDateChange={startDate =>
-                            handleInputChange('earlyAccessStart', startDate)
-                          }
-                          onEndDateChange={endDate =>
-                            handleInputChange('memberOnlyUntil', endDate)
-                          }
-                          placeholder="Select member early access period"
-                        />
-                        <p className="text-sm text-gray-600 mt-1">
-                          Product will be available to members only during this
-                          period
-                        </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="earlyAccessStart">
+                        Early Access Start (Optional)
+                      </Label>
+                      <CustomDateRangePicker
+                        startDate={formData.earlyAccessStart}
+                        endDate={undefined}
+                        onStartDateChange={date =>
+                          handleInputChange('earlyAccessStart', date)
+                        }
+                        onEndDateChange={() => {}}
+                        placeholder="Select early access start date"
+                        className="w-full"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Members get early access to promotions from this date
+                      </p>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="text-sm text-amber-800">
+                          <p className="font-medium mb-1">
+                            Early Access System
+                          </p>
+                          <ul className="space-y-1 text-sm">
+                            <li>
+                              • <strong>Member-Only Until</strong>: Product is
+                              completely hidden from non-members
+                            </li>
+                            <li>
+                              • <strong>Early Access Start</strong>: Members see
+                              promotional pricing before public launch
+                            </li>
+                            <li>
+                              • Works with promotional pricing to create member
+                              exclusivity
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -1212,71 +1292,62 @@ export default function EditProductPage() {
             </Tabs>
           </div>
 
-          {/* Sidebar (1/4 width) */}
+          {/* Sticky Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-4 space-y-6">
               {/* Progress Card */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Update Progress</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
+                    Product Update Progress
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Completion</span>
-                        <span>{Math.round(calculateProgress())}%</span>
-                      </div>
-                      <Progress value={calculateProgress()} className="h-2" />
-                    </div>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Completion</span>
+                    <span className="text-sm text-muted-foreground">
+                      {getCompletionPercentage()}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${getCompletionPercentage()}%` }}
+                    />
+                  </div>
 
-                    <div className="space-y-2 text-sm">
-                      <div
-                        className={`flex items-center gap-2 ${getTabStatus('basic') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
-                      >
-                        <TabStatusIcon status={getTabStatus('basic')} />
-                        Basic Information
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${getTabStatus('pricing') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
-                      >
-                        <TabStatusIcon status={getTabStatus('pricing')} />
-                        Pricing Setup
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${getTabStatus('inventory') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
-                      >
-                        <TabStatusIcon status={getTabStatus('inventory')} />
-                        Inventory Details
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${getTabStatus('media') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
-                      >
-                        <TabStatusIcon status={getTabStatus('media')} />
-                        Product Images
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${getTabStatus('advanced') === 'completed' ? 'text-green-600' : 'text-gray-600'}`}
-                      >
-                        <TabStatusIcon status={getTabStatus('advanced')} />
-                        Advanced Settings
-                      </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Basic Info</span>
+                      <TabStatusIcon status={getTabStatus('basic')} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Pricing</span>
+                      <TabStatusIcon status={getTabStatus('pricing')} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Inventory</span>
+                      <TabStatusIcon status={getTabStatus('inventory')} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Images</span>
+                      <TabStatusIcon status={getTabStatus('media')} />
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              {/* Actions Card */}
+
+              {/* Action Buttons */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button type="submit" className="w-full" disabled={saving}>
+                <CardContent className="p-4 space-y-3">
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full"
+                    size="lg"
+                  >
                     {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
-                      </>
+                      'Updating...'
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
@@ -1297,6 +1368,16 @@ export default function EditProductPage() {
                   </Link>
 
                   <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                    className="w-full"
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
                     variant="destructive"
                     className="w-full"
                     onClick={handleDelete}
@@ -1305,6 +1386,13 @@ export default function EditProductPage() {
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Product
                   </Button>
+
+                  {Object.keys(errors).length > 0 && (
+                    <div className="text-xs text-red-600 text-center">
+                      Please fix {Object.keys(errors).length} error
+                      {Object.keys(errors).length > 1 ? 's' : ''} before saving
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

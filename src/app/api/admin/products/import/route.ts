@@ -18,8 +18,8 @@ const productSchema = z.object({
   shortDescription: z.string().optional(),
   categoryId: z.string().min(1, 'Category ID is required'),
   regularPrice: z.number().positive('Regular price must be positive'),
-  memberPrice: z.number().positive('Member price must be positive'),
-  costPrice: z.number().positive('Cost price must be positive'),
+  memberPrice: z.number().positive('Member price must be positive').nullable().optional(),
+  costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity cannot be negative'),
   lowStockAlert: z.number().int().min(0, 'Low stock alert cannot be negative').default(10),
   weight: z.number().positive().optional(),
@@ -85,7 +85,7 @@ function convertToProduct(row: any, rowIndex: number): { data?: any; errors: Imp
     });
     
     // Convert numeric fields
-    const numericFields = ['regularPrice', 'memberPrice', 'costPrice', 'stockQuantity', 'lowStockAlert', 'weight', 'promotionalPrice'];
+    const numericFields = ['regularPrice', 'memberPrice', 'stockQuantity', 'lowStockAlert', 'weight', 'promotionalPrice'];
     numericFields.forEach(field => {
       if (row[field] !== undefined && row[field] !== '') {
         const numValue = parseFloat(String(row[field]).replace(/[^\d.-]/g, ''));

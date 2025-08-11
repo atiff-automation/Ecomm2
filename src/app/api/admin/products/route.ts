@@ -20,8 +20,8 @@ const createProductSchema = z.object({
   barcode: z.string().optional(),
   categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required'),
   regularPrice: z.number().min(0, 'Regular price must be positive'),
-  memberPrice: z.number().min(0, 'Member price must be positive'),
-  costPrice: z.number().min(0, 'Cost price must be positive'),
+  memberPrice: z.number().min(0, 'Member price must be positive').nullable().optional(),
+  costPrice: z.number().min(0, 'Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity must be non-negative'),
   lowStockAlert: z
     .number()
@@ -121,8 +121,8 @@ export async function POST(request: NextRequest) {
           sku: productData.sku,
           barcode: productData.barcode || null,
           regularPrice: productData.regularPrice,
-          memberPrice: productData.memberPrice,
-          costPrice: productData.costPrice,
+          memberPrice: productData.memberPrice || null,
+          costPrice: productData.costPrice || 0,
           stockQuantity: productData.stockQuantity,
           lowStockAlert: productData.lowStockAlert,
           weight: productData.weight || null,

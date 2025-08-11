@@ -179,9 +179,20 @@ export function getBestPrice(
 
   // Fall back to existing promotional pricing logic
   const promotionStatus = calculatePromotionStatus(product);
-
-  if (promotionStatus.isActive && product.promotionalPrice) {
-    // Promotional price takes priority
+  
+  // For members: compare promotional price vs member price and select the lowest
+  if (isMember && promotionStatus.isActive && product.promotionalPrice && product.memberPrice) {
+    const lowestPrice = Math.min(product.promotionalPrice, product.memberPrice);
+    const priceType = lowestPrice === product.promotionalPrice ? 'promotional' : 'member';
+    
+    return {
+      price: lowestPrice,
+      originalPrice: product.regularPrice,
+      savings: product.regularPrice - lowestPrice,
+      priceType: priceType as 'promotional' | 'member'
+    };
+  } else if (promotionStatus.isActive && product.promotionalPrice) {
+    // Non-members get promotional price if active
     return {
       price: product.promotionalPrice,
       originalPrice: product.regularPrice,
@@ -189,7 +200,7 @@ export function getBestPrice(
       priceType: 'promotional'
     };
   } else if (isMember && product.memberPrice < product.regularPrice) {
-    // Member price (if not overridden by promotion)
+    // Members get member price when no active promotion
     return {
       price: product.memberPrice,
       originalPrice: product.regularPrice,
@@ -197,7 +208,7 @@ export function getBestPrice(
       priceType: 'member'
     };
   } else {
-    // Regular price
+    // Regular price for non-members or when no discounts apply
     return {
       price: product.regularPrice,
       originalPrice: product.regularPrice,

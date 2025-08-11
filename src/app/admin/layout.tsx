@@ -23,6 +23,7 @@ import {
   Bell,
   ChevronDown,
   ExternalLink,
+  MessageCircle,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
@@ -99,6 +100,12 @@ const navigationItems = [
         href: '/admin/site-customization/theme',
       },
     ],
+  },
+  {
+    label: 'Notifications',
+    href: '/admin/notifications',
+    icon: MessageCircle,
+    roles: [UserRole.ADMIN],
   },
   {
     label: 'Settings',
