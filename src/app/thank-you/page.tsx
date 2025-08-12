@@ -1,6 +1,6 @@
 /**
  * Thank You Page - JRM E-commerce Platform
- * Post-purchase confirmation with order summary and invoice download
+ * Post-purchase confirmation with order summary and receipt download
  */
 
 'use client';
@@ -89,7 +89,7 @@ function ThankYouContent() {
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
@@ -155,37 +155,37 @@ function ThankYouContent() {
     }
   };
 
-  const handleDownloadInvoice = async () => {
+  const handleDownloadReceipt = async () => {
     if (!orderData) return;
 
     try {
-      setDownloadingInvoice(true);
+      setDownloadingReceipt(true);
 
-      const response = await fetch(`/api/orders/${orderData.id}/invoice?format=html&download=true`);
+      const response = await fetch(`/api/orders/${orderData.id}/receipt?format=pdf&download=true`);
       
       if (!response.ok) {
-        throw new Error('Failed to generate invoice');
+        throw new Error('Failed to generate receipt');
       }
 
-      const htmlContent = await response.text();
+      const pdfBuffer = await response.arrayBuffer();
       
       // Create a blob and download
-      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice_${orderData.orderNumber}.html`;
+      link.download = `Receipt_${orderData.orderNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading invoice:', error);
-      alert('Failed to download invoice. Please try again or contact support.');
+      console.error('Error downloading receipt:', error);
+      alert('Failed to download receipt. Please try again or contact support.');
     } finally {
-      setDownloadingInvoice(false);
+      setDownloadingReceipt(false);
     }
   };
 
@@ -419,24 +419,24 @@ function ThankYouContent() {
               </CardContent>
             </Card>
 
-            {/* Download Invoice */}
+            {/* Download Receipt */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  Invoice
+                  Receipt
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-gray-600">
-                  Download your official invoice for records and tax purposes.
+                  Download your official receipt as PDF for records and tax purposes.
                 </p>
                 <Button 
-                  onClick={handleDownloadInvoice}
-                  disabled={downloadingInvoice}
+                  onClick={handleDownloadReceipt}
+                  disabled={downloadingReceipt}
                   className="w-full"
                 >
-                  {downloadingInvoice ? (
+                  {downloadingReceipt ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Generating...
@@ -444,7 +444,7 @@ function ThankYouContent() {
                   ) : (
                     <>
                       <Download className="w-4 h-4 mr-2" />
-                      Download Invoice
+                      Download Receipt
                     </>
                   )}
                 </Button>

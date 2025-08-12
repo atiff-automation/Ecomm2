@@ -1,12 +1,12 @@
 /**
- * Invoice Generation Service for Malaysian E-commerce
- * Generates PDF invoices with Malaysian tax compliance
+ * Receipt Generation Service for Malaysian E-commerce
+ * Generates PDF receipts with Malaysian tax compliance
  */
 
 import { prisma } from '@/lib/db/prisma';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
 
-export interface InvoiceData {
+export interface ReceiptData {
   order: {
     id: string;
     orderNumber: string;
@@ -68,7 +68,7 @@ export interface InvoiceData {
   };
 }
 
-export class InvoiceService {
+export class ReceiptService {
   private readonly COMPANY_INFO = {
     name: process.env.COMPANY_NAME || 'JRM E-commerce Sdn Bhd',
     address: process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia',
@@ -79,12 +79,12 @@ export class InvoiceService {
   };
 
   /**
-   * Get invoice data for an order
+   * Get receipt data for an order
    */
-  async getInvoiceData(
+  async getReceiptData(
     orderId: string,
     userId?: string
-  ): Promise<InvoiceData | null> {
+  ): Promise<ReceiptData | null> {
     try {
       const order = await prisma.order.findFirst({
         where: {
@@ -154,7 +154,7 @@ export class InvoiceService {
 
       const taxBreakdown = await malaysianTaxService.calculateTax(taxProducts);
 
-      const invoiceData: InvoiceData = {
+      const receiptData: ReceiptData = {
         order: {
           id: order.id,
           orderNumber: order.orderNumber,
@@ -224,19 +224,19 @@ export class InvoiceService {
         },
       };
 
-      return invoiceData;
+      return receiptData;
     } catch (error) {
-      console.error('Error fetching invoice data:', error);
+      console.error('Error fetching receipt data:', error);
       return null;
     }
   }
 
   /**
-   * Generate HTML invoice template
+   * Generate HTML receipt template
    */
-  generateInvoiceHTML(invoiceData: InvoiceData): string {
+  generateReceiptHTML(receiptData: ReceiptData): string {
     const { order, customer, orderItems, shippingAddress, taxBreakdown } =
-      invoiceData;
+      receiptData;
 
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-MY', {
@@ -256,7 +256,7 @@ export class InvoiceService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Invoice - ${order.orderNumber}</title>
+        <title>Receipt - ${order.orderNumber}</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -266,7 +266,7 @@ export class InvoiceService {
             margin: 0 auto;
             padding: 20px;
           }
-          .invoice-header {
+          .receipt-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -287,17 +287,17 @@ export class InvoiceService {
             font-size: 14px;
             color: #666;
           }
-          .invoice-details {
+          .receipt-details {
             text-align: right;
             flex: 1;
           }
-          .invoice-number {
+          .receipt-number {
             font-size: 28px;
             font-weight: bold;
             color: #2563eb;
             margin: 0;
           }
-          .invoice-date {
+          .receipt-date {
             font-size: 14px;
             color: #666;
             margin: 5px 0;
@@ -410,13 +410,13 @@ export class InvoiceService {
           }
           @media print {
             body { margin: 0; padding: 15px; }
-            .invoice-header { page-break-after: avoid; }
+            .receipt-header { page-break-after: avoid; }
             .items-table { page-break-inside: avoid; }
           }
         </style>
       </head>
       <body>
-        <div class="invoice-header">
+        <div class="receipt-header">
           <div class="company-info">
             <h1>${this.COMPANY_INFO.name}</h1>
             <p>Registration No: ${this.COMPANY_INFO.registrationNo}</p>
@@ -425,10 +425,10 @@ export class InvoiceService {
             <p>Phone: ${this.COMPANY_INFO.phone}</p>
             <p>Email: ${this.COMPANY_INFO.email}</p>
           </div>
-          <div class="invoice-details">
-            <div class="invoice-number">INVOICE</div>
-            <div class="invoice-number" style="font-size: 18px; margin-top: 5px;">${order.orderNumber}</div>
-            <div class="invoice-date">Date: ${formatDate(order.createdAt)}</div>
+          <div class="receipt-details">
+            <div class="receipt-number">RECEIPT</div>
+            <div class="receipt-number" style="font-size: 18px; margin-top: 5px;">${order.orderNumber}</div>
+            <div class="receipt-date">Date: ${formatDate(order.createdAt)}</div>
             <div class="status-badge">${order.paymentStatus}</div>
           </div>
         </div>
@@ -547,8 +547,8 @@ export class InvoiceService {
           ${order.customerNotes ? `<p><strong>Notes:</strong> ${order.customerNotes}</p>` : ''}
           <br>
           <p><strong>Terms & Conditions:</strong></p>
-          <p>• This invoice is computer generated and does not require a physical signature.</p>
-          <p>• Payment is due within 30 days from the invoice date.</p>
+          <p>• This receipt is computer generated and does not require a physical signature.</p>
+          <p>• Payment has been successfully completed for this order.</p>
           <p>• Goods sold are not returnable unless defective.</p>
           <p>• All prices include applicable taxes as per Malaysian tax regulations.</p>
           <br>
@@ -563,17 +563,17 @@ export class InvoiceService {
   }
 
   /**
-   * Get invoice filename for download
+   * Get receipt filename for download
    */
-  getInvoiceFilename(orderNumber: string): string {
+  getReceiptFilename(orderNumber: string): string {
     const date = new Date().toISOString().split('T')[0];
-    return `Invoice_${orderNumber}_${date}.pdf`;
+    return `Receipt_${orderNumber}_${date}.pdf`;
   }
 
   /**
-   * Generate invoice number (for future use)
+   * Generate receipt number (for future use)
    */
-  generateInvoiceNumber(orderNumber: string): string {
+  generateReceiptNumber(orderNumber: string): string {
     const year = new Date().getFullYear();
     const month = new Date().getMonth() + 1;
     return `INV-${year}${month.toString().padStart(2, '0')}-${orderNumber}`;
@@ -581,4 +581,7 @@ export class InvoiceService {
 }
 
 // Export singleton instance
-export const invoiceService = new InvoiceService();
+export const receiptService = new ReceiptService();
+
+// Keep backward compatibility
+export const invoiceService = receiptService;

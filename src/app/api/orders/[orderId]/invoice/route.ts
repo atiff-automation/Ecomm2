@@ -1,6 +1,6 @@
 /**
- * Invoice Generation API
- * Generates PDF invoices for orders with Malaysian tax compliance
+ * Receipt Generation API
+ * Generates PDF receipts for orders with Malaysian tax compliance
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { invoiceService } from '@/lib/invoices/invoice-service';
 import { UserRole } from '@prisma/client';
+import puppeteer from 'puppeteer';
 
 interface RouteParams {
   params: {
@@ -39,8 +40,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get invoice data
-    const invoiceData = await invoiceService.getInvoiceData(orderId, userId);
+    // Get receipt data
+    const invoiceData = await invoiceService.getReceiptData(orderId, userId);
 
     if (!invoiceData) {
       return NextResponse.json(
@@ -49,43 +50,83 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check if order is paid (invoices should only be generated for paid orders)
+    // Check if order is paid (receipts should only be generated for paid orders)
     if (invoiceData.order.paymentStatus !== 'PAID') {
       return NextResponse.json(
-        { message: 'Invoice can only be generated for paid orders' },
+        { message: 'Receipt can only be generated for paid orders' },
         { status: 400 }
       );
     }
 
     if (format === 'html') {
-      // Return HTML invoice for preview or client-side PDF generation
-      const htmlInvoice = invoiceService.generateInvoiceHTML(invoiceData);
+      // Return HTML receipt for preview 
+      const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
 
-      return new Response(htmlInvoice, {
+      return new Response(htmlReceipt, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           ...(download && {
-            'Content-Disposition': `attachment; filename="Invoice_${invoiceData.order.orderNumber}.html"`,
+            'Content-Disposition': `attachment; filename="Receipt_${invoiceData.order.orderNumber}.html"`,
           }),
         },
       });
     }
 
-    // For PDF generation, we'll return the HTML and let the client handle PDF conversion
-    // This avoids the complexity of server-side PDF generation
-    const htmlInvoice = invoiceService.generateInvoiceHTML(invoiceData);
+    if (format === 'pdf') {
+      // Generate PDF using Puppeteer
+      const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
+      
+      let browser;
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        await page.setContent(htmlReceipt);
+        
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '1cm',
+            right: '1cm',
+            bottom: '1cm',
+            left: '1cm'
+          }
+        });
+        
+        await browser.close();
+        
+        return new Response(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="Receipt_${invoiceData.order.orderNumber}.pdf"`,
+          },
+        });
+        
+      } catch (error) {
+        if (browser) await browser.close();
+        console.error('PDF generation error:', error);
+        throw error;
+      }
+    }
+
+    // Default: Return JSON with receipt data
+    const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
 
     return NextResponse.json({
       success: true,
-      invoiceData: {
+      receiptData: {
         orderNumber: invoiceData.order.orderNumber,
         customerName:
           `${invoiceData.customer.firstName || ''} ${invoiceData.customer.lastName || ''}`.trim(),
         total: invoiceData.order.total,
         createdAt: invoiceData.order.createdAt,
       },
-      htmlContent: htmlInvoice,
-      filename: invoiceService.getInvoiceFilename(
+      htmlContent: htmlReceipt,
+      filename: invoiceService.getReceiptFilename(
         invoiceData.order.orderNumber
       ),
     });
@@ -121,8 +162,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       userId = session.user.id;
     }
 
-    // Get invoice data
-    const invoiceData = await invoiceService.getInvoiceData(orderId, userId);
+    // Get receipt data
+    const invoiceData = await invoiceService.getReceiptData(orderId, userId);
 
     if (!invoiceData) {
       return NextResponse.json(
