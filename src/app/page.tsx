@@ -142,6 +142,7 @@ export default function HomePage() {
       <div className="min-h-screen">
         {/* Dynamic Hero Section */}
         <DynamicHeroSection
+          key={heroSection?.id || 'default'}
           heroSection={heroSection}
           siteTheme={siteTheme}
           isLoggedIn={isLoggedIn}

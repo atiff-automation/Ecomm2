@@ -47,8 +47,10 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   isLoggedIn,
   isMember,
 }) => {
-  // Use defaults if no data
-  const hero = heroSection || {
+  // Use defaults if no data, but preserve backgroundImage if provided
+  const hero = heroSection ? {
+    ...heroSection
+  } : {
     id: 'default',
     title: 'Welcome to JRM E-commerce',
     subtitle: "Malaysia's premier online marketplace",
