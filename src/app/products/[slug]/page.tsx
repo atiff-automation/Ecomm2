@@ -465,7 +465,7 @@ export default function ProductDetailPage() {
                     {promotionText || 'Coming Soon'}
                   </Badge>
                 )}
-                {product.isQualifyingForMembership && (
+                {product.isQualifyingForMembership && !promotionStatus.isActive && !promotionStatus.isScheduled && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                     ✓ Membership Qualifying
                   </Badge>

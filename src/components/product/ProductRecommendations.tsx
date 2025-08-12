@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -257,10 +257,10 @@ export function ProductRecommendations({
           // const savings = product.regularPrice - product.memberPrice;
 
           return (
-            <Card
-              key={product.id}
-              className="group hover:shadow-lg transition-shadow"
-            >
+            <Link href={`/products/${product.slug}`} key={product.id}>
+              <Card
+                className="group hover:shadow-lg transition-shadow cursor-pointer"
+              >
               <div className="relative aspect-square overflow-hidden rounded-t-lg">
                 {product.primaryImage ? (
                   <Image
@@ -293,7 +293,10 @@ export function ProductRecommendations({
                 </div>
 
                 {/* Quick Actions */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.preventDefault()}
+                >
                   <WishlistButton
                     productId={product.id}
                     size="sm"
@@ -306,19 +309,20 @@ export function ProductRecommendations({
               <CardContent className="p-3">
                 <div className="space-y-2">
                   {/* Category */}
-                  <Link
-                    href={`/products?category=${product.categories?.[0]?.category?.id || ''}`}
-                    className="text-xs text-muted-foreground hover:text-primary"
+                  <div 
+                    className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/products?category=${product.categories?.[0]?.category?.id || ''}`;
+                    }}
                   >
                     {product.categories?.[0]?.category?.name || 'Uncategorized'}
-                  </Link>
+                  </div>
 
                   {/* Product Name */}
-                  <Link href={`/products/${product.slug}`}>
-                    <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
-                      {product.name}
-                    </h3>
-                  </Link>
+                  <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
 
                   {/* Rating */}
                   {product.averageRating > 0 && (
@@ -377,7 +381,11 @@ export function ProductRecommendations({
                     size="sm"
                     className="w-full text-xs h-8"
                     disabled={product.stockQuantity === 0}
-                    onClick={() => addToCart(product.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart(product.id);
+                    }}
                   >
                     <ShoppingCart className="w-3 h-3 mr-1" />
                     {product.stockQuantity === 0
@@ -394,6 +402,7 @@ export function ProductRecommendations({
                 </div>
               </CardContent>
             </Card>
+            </Link>
           );
         })}
       </div>

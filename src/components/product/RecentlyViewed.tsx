@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -205,10 +205,10 @@ export function RecentlyViewed({
           const showMemberPrice = isLoggedIn && isMember;
 
           return (
-            <Card
-              key={item.id}
-              className="group hover:shadow-lg transition-shadow"
-            >
+            <Link href={`/products/${item.product.slug}`} key={item.id}>
+              <Card
+                className="group hover:shadow-lg transition-shadow cursor-pointer"
+              >
               <div className="relative aspect-square overflow-hidden rounded-t-lg">
                 {item.product.primaryImage ? (
                   <Image
@@ -232,7 +232,10 @@ export function RecentlyViewed({
                 </div>
 
                 {/* Quick Actions */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.preventDefault()}
+                >
                   <WishlistButton
                     productId={item.product.id}
                     size="sm"
@@ -254,19 +257,20 @@ export function RecentlyViewed({
               <CardContent className="p-3">
                 <div className="space-y-2">
                   {/* Category */}
-                  <Link
-                    href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
-                    className="text-xs text-muted-foreground hover:text-primary"
+                  <div 
+                    className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/products?category=${item.product.categories?.[0]?.category?.id || ''}`;
+                    }}
                   >
                     {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
-                  </Link>
+                  </div>
 
                   {/* Product Name */}
-                  <Link href={`/products/${item.product.slug}`}>
-                    <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
-                      {item.product.name}
-                    </h3>
-                  </Link>
+                  <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
+                    {item.product.name}
+                  </h3>
 
                   {/* Rating */}
                   {item.product.averageRating > 0 && (
@@ -326,7 +330,11 @@ export function RecentlyViewed({
                     size="sm"
                     className="w-full text-xs h-8"
                     disabled={item.product.stockQuantity === 0}
-                    onClick={() => addToCart(item.product.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart(item.product.id);
+                    }}
                   >
                     <ShoppingCart className="w-3 h-3 mr-1" />
                     {item.product.stockQuantity === 0
@@ -344,6 +352,7 @@ export function RecentlyViewed({
                 </div>
               </CardContent>
             </Card>
+            </Link>
           );
         })}
       </div>

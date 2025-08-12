@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import SEOHead from '@/components/seo/SEOHead';
 import { SEOService } from '@/lib/seo/seo-service';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { ProductRecommendations } from '@/components/product/ProductRecommendations';
 import { CompactPriceDisplay } from '@/components/pricing/PriceDisplay';
 import { DynamicHeroSection } from '@/components/homepage/DynamicHeroSection';
+import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
+import { canUserAccessProduct, getEarlyAccessPrice, calculateEarlyAccessStatus } from '@/lib/member/early-access-utils';
 
 interface Product {
   id: string;
@@ -41,6 +43,14 @@ interface Product {
   featured: boolean;
   averageRating: number;
   reviewCount: number;
+  isPromotional: boolean;
+  isQualifyingForMembership: boolean;
+  promotionalPrice?: number | null;
+  promotionStartDate?: string | null;
+  promotionEndDate?: string | null;
+  memberOnlyUntil?: string | null;
+  earlyAccessStart?: string | null;
+  stockQuantity: number;
   categories: Array<{
     category: {
       name: string;
@@ -137,7 +147,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <>
+    <div>
       <SEOHead seo={seoData} />
       <div className="min-h-screen">
         {/* Dynamic Hero Section */}
@@ -298,11 +308,40 @@ export default function HomePage() {
                     product.images.find(img => img.isPrimary) ||
                     product.images[0];
 
+                  // Calculate promotional pricing
+                  const isLoggedInUser = !!session?.user;
+                  const isMemberUser = session?.user?.isMember || false;
+                  
+                  // Check early access permissions
+                  const canAccess = canUserAccessProduct(product, isMemberUser);
+                  const earlyAccessStatus = calculateEarlyAccessStatus(product);
+                  
+                  // Calculate best price using promotional and early access logic
+                  const priceInfo = getBestPrice(product, isMemberUser);
+                  const earlyAccessPrice = getEarlyAccessPrice(product, isMemberUser);
+                  const promotionStatus = calculatePromotionStatus(product);
+                  const promotionText = getPromotionDisplayText(promotionStatus);
+                  
+                  // Use early access price if applicable
+                  const finalPrice = earlyAccessPrice.hasEarlyAccess ? earlyAccessPrice : priceInfo;
+
+                  const formatPrice = (price: number) => {
+                    return new Intl.NumberFormat('en-MY', {
+                      style: 'currency',
+                      currency: 'MYR',
+                    }).format(price);
+                  };
+
+                  // Don't show product if user doesn't have access
+                  if (!canAccess) {
+                    return null;
+                  }
+
                   return (
-                    <Card
-                      key={product.id}
-                      className="group hover:shadow-lg transition-shadow"
-                    >
+                    <Link href={`/products/${product.slug}`} key={product.id}>
+                      <Card
+                        className="group hover:shadow-lg transition-shadow cursor-pointer"
+                      >
                       <div className="relative aspect-square overflow-hidden">
                         {primaryImage ? (
                           <Image
@@ -317,11 +356,45 @@ export default function HomePage() {
                           </div>
                         )}
 
-                        <div className="absolute top-2 left-2">
+                        {/* Badges */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
                           <Badge className="bg-blue-600">Featured</Badge>
+                          {earlyAccessStatus.isMemberOnly && !isMemberUser && (
+                            <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-500">
+                              Members Only
+                            </Badge>
+                          )}
+                          {earlyAccessStatus.isEarlyAccessPromotion && isMemberUser && (
+                            <Badge variant="secondary" className="bg-purple-500 text-white">
+                              Early Access
+                            </Badge>
+                          )}
+                          {promotionStatus.isActive && (
+                            <Badge variant="destructive" className="bg-red-500 text-white">
+                              {promotionText || 'Special Price'}
+                            </Badge>
+                          )}
+                          {promotionStatus.isScheduled && (
+                            <Badge variant="outline" className="bg-blue-500 text-white border-blue-500">
+                              {promotionText || 'Coming Soon'}
+                            </Badge>
+                          )}
+                          {product.stockQuantity === 0 && (
+                            <Badge variant="outline" className="bg-white">
+                              Out of Stock
+                            </Badge>
+                          )}
+                          {product.isQualifyingForMembership && !promotionStatus.isActive && !promotionStatus.isScheduled && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Membership Qualifying
+                            </Badge>
+                          )}
                         </div>
 
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div 
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.preventDefault()}
+                        >
                           <WishlistButton
                             productId={product.id}
                             size="sm"
@@ -337,11 +410,9 @@ export default function HomePage() {
                             {product.categories?.[0]?.category?.name || 'Uncategorized'}
                           </p>
 
-                          <Link href={`/products/${product.slug}`}>
-                            <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
-                              {product.name}
-                            </h3>
-                          </Link>
+                          <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
 
                           {product.averageRating > 0 && (
                             <div className="flex items-center gap-1">
@@ -363,17 +434,64 @@ export default function HomePage() {
                             </div>
                           )}
 
-                          <CompactPriceDisplay
-                            regularPrice={product.regularPrice}
-                            memberPrice={product.memberPrice}
-                            isMember={isMember || false}
-                            isLoggedIn={isLoggedIn}
-                          />
+                          {/* Enhanced Pricing */}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-bold text-base ${
+                                finalPrice.priceType === 'early-access' ? 'text-purple-600' :
+                                finalPrice.priceType === 'promotional' ? 'text-red-600' : 
+                                finalPrice.priceType === 'member' ? 'text-green-600' : 
+                                'text-gray-900'
+                              }`}>
+                                {formatPrice(finalPrice.price)}
+                              </span>
+                              {finalPrice.priceType === 'early-access' && (
+                                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                                  Early Access
+                                </Badge>
+                              )}
+                              {finalPrice.priceType === 'promotional' && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Special
+                                </Badge>
+                              )}
+                              {finalPrice.priceType === 'member' && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Member
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Show original price and savings */}
+                            {finalPrice.savings > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatPrice(finalPrice.originalPrice)}
+                                </span>
+                                <span className={`text-xs font-medium ${
+                                  finalPrice.priceType === 'early-access' ? 'text-purple-600' :
+                                  finalPrice.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
+                                }`}>
+                                  Save {formatPrice(finalPrice.savings)}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Show member price preview for non-members */}
+                            {!isMemberUser && finalPrice.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && !earlyAccessStatus.isMemberOnly && (
+                              <div className="text-xs text-muted-foreground">
+                                Member price: {formatPrice(product.memberPrice)}
+                              </div>
+                            )}
+                          </div>
 
                           <Button
                             className="w-full"
-                            onClick={async () => {
-                              if (!isLoggedIn) {
+                            disabled={product.stockQuantity === 0}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!isLoggedInUser) {
                                 window.location.href = '/auth/signin';
                                 return;
                               }
@@ -405,11 +523,12 @@ export default function HomePage() {
                             }}
                           >
                             <ShoppingBag className="w-4 h-4 mr-2" />
-                            Add to Cart
+                            {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
+                    </Link>
                   );
                 })}
               </div>
@@ -488,6 +607,6 @@ export default function HomePage() {
           </div>
         </section>
       </div>
-    </>
+    </div>
   );
 }
