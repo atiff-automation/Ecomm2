@@ -64,10 +64,8 @@ export async function GET() {
       membershipThreshold: configMap.membership_threshold
         ? parseFloat(configMap.membership_threshold.toString())
         : 80,
-      enablePromotionalExclusion:
-        configMap.enable_promotional_exclusion === 'true',
-      requireQualifyingCategories:
-        configMap.require_qualifying_categories === 'true',
+      enablePromotionalExclusion: Boolean(configMap.enable_promotional_exclusion),
+      requireQualifyingCategories: Boolean(configMap.require_qualifying_categories),
       membershipBenefitsText:
         configMap.membership_benefits_text?.toString() ||
         'Enjoy exclusive member pricing on all products and special promotions.',

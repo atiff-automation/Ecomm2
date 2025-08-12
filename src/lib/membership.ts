@@ -85,9 +85,13 @@ export async function getMembershipConfig(): Promise<MembershipConfig> {
     return {
       membershipThreshold: Number(configMap.membership_threshold) || 80,
       enablePromotionalExclusion:
-        Boolean(configMap.enable_promotional_exclusion) ?? true,
+        configMap.enable_promotional_exclusion !== undefined 
+          ? Boolean(configMap.enable_promotional_exclusion) 
+          : true,
       requireQualifyingCategories:
-        Boolean(configMap.require_qualifying_categories) ?? true,
+        configMap.require_qualifying_categories !== undefined 
+          ? Boolean(configMap.require_qualifying_categories) 
+          : true,
       membershipBenefitsText:
         String(configMap.membership_benefits_text) ||
         'Enjoy exclusive member pricing on all products and special promotions.',
