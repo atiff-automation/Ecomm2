@@ -515,10 +515,10 @@ export default function AdminOrderDetailsPage() {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => window.open(`/api/orders/${order.id}/invoice?format=html&download=true`)}
+                    onClick={() => window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`)}
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Download Invoice
+                    Download Receipt
                   </Button>
                 </div>
               </CardContent>

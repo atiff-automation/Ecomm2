@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Eye, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface InvoiceViewerProps {
+interface ReceiptViewerProps {
   orderId: string;
   orderNumber: string;
   orderStatus: string;
@@ -24,7 +24,7 @@ interface InvoiceViewerProps {
   className?: string;
 }
 
-export default function InvoiceViewer({
+export default function ReceiptViewer({
   orderId,
   orderNumber,
   paymentStatus,
@@ -32,15 +32,15 @@ export default function InvoiceViewer({
   canDownload = true,
   variant = 'button',
   className = '',
-}: InvoiceViewerProps) {
+}: ReceiptViewerProps) {
   const [loading, setLoading] = useState(false);
-  const [invoiceHtml, setInvoiceHtml] = useState<string>('');
+  const [receiptHtml, setReceiptHtml] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // Check if invoice can be generated (order must be paid)
-  const canGenerateInvoice = paymentStatus === 'PAID';
+  // Check if receipt can be generated (order must be paid)
+  const canGenerateReceipt = paymentStatus === 'PAID';
 
-  const fetchInvoiceHTML = async () => {
+  const fetchReceiptHTML = async () => {
     try {
       setLoading(true);
 
@@ -50,15 +50,15 @@ export default function InvoiceViewer({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate invoice');
+        throw new Error(errorData.message || 'Failed to generate receipt');
       }
 
       const htmlContent = await response.text();
-      setInvoiceHtml(htmlContent);
+      setReceiptHtml(htmlContent);
       return htmlContent;
     } catch (error) {
-      console.error('Error fetching invoice:', error);
-      toast.error('Failed to generate invoice');
+      console.error('Error fetching receipt:', error);
+      toast.error('Failed to generate receipt');
       throw error;
     } finally {
       setLoading(false);
@@ -66,27 +66,27 @@ export default function InvoiceViewer({
   };
 
   const handlePreview = async () => {
-    if (!canGenerateInvoice) {
-      toast.error('Invoice can only be generated for paid orders');
+    if (!canGenerateReceipt) {
+      toast.error('Receipt can only be generated for paid orders');
       return;
     }
 
     try {
-      await fetchInvoiceHTML();
+      await fetchReceiptHTML();
       setIsPreviewOpen(true);
     } catch {
-      // Error already handled in fetchInvoiceHTML
+      // Error already handled in fetchReceiptHTML
     }
   };
 
   const handleDownload = async () => {
-    if (!canGenerateInvoice) {
-      toast.error('Invoice can only be generated for paid orders');
+    if (!canGenerateReceipt) {
+      toast.error('Receipt can only be generated for paid orders');
       return;
     }
 
     try {
-      const htmlContent = invoiceHtml || (await fetchInvoiceHTML());
+      const htmlContent = receiptHtml || (await fetchReceiptHTML());
 
       // Create a blob with the HTML content
       const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -95,7 +95,7 @@ export default function InvoiceViewer({
       // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice_${orderNumber}_${new Date().toISOString().split('T')[0]}.html`;
+      link.download = `Receipt_${orderNumber}_${new Date().toISOString().split('T')[0]}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -103,20 +103,20 @@ export default function InvoiceViewer({
       // Clean up
       URL.revokeObjectURL(url);
 
-      toast.success('Invoice downloaded successfully');
+      toast.success('Receipt downloaded successfully');
     } catch {
-      // Error already handled in fetchInvoiceHTML
+      // Error already handled in fetchReceiptHTML
     }
   };
 
   const handlePrint = async () => {
-    if (!canGenerateInvoice) {
-      toast.error('Invoice can only be generated for paid orders');
+    if (!canGenerateReceipt) {
+      toast.error('Receipt can only be generated for paid orders');
       return;
     }
 
     try {
-      const htmlContent = invoiceHtml || (await fetchInvoiceHTML());
+      const htmlContent = receiptHtml || (await fetchReceiptHTML());
 
       // Open in new window for printing
       const printWindow = window.open('', '_blank');
@@ -127,7 +127,7 @@ export default function InvoiceViewer({
         printWindow.print();
       }
     } catch {
-      // Error already handled in fetchInvoiceHTML
+      // Error already handled in fetchReceiptHTML
     }
   };
 
@@ -150,7 +150,7 @@ export default function InvoiceViewer({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Invoice
+            Receipt
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -162,7 +162,7 @@ export default function InvoiceViewer({
             <Badge variant={getStatusBadgeVariant()}>{paymentStatus}</Badge>
           </div>
 
-          {canGenerateInvoice ? (
+          {canGenerateReceipt ? (
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -196,7 +196,7 @@ export default function InvoiceViewer({
             </div>
           ) : (
             <p className="text-sm text-gray-500">
-              Invoice will be available once payment is completed
+              Receipt will be available once payment is completed
             </p>
           )}
         </CardContent>
@@ -207,7 +207,7 @@ export default function InvoiceViewer({
   if (variant === 'inline') {
     return (
       <div className={`flex gap-2 ${className}`}>
-        {canGenerateInvoice ? (
+        {canGenerateReceipt ? (
           <>
             <Button
               variant="outline"
@@ -216,7 +216,7 @@ export default function InvoiceViewer({
               disabled={loading}
             >
               <FileText className="h-4 w-4 mr-1" />
-              Invoice
+              Receipt
             </Button>
             {canDownload && (
               <Button
@@ -238,7 +238,7 @@ export default function InvoiceViewer({
             className="text-gray-400"
           >
             <FileText className="h-4 w-4 mr-1" />
-            Invoice Pending
+            Receipt Pending
           </Button>
         )}
       </div>
@@ -251,11 +251,11 @@ export default function InvoiceViewer({
       <Button
         variant="outline"
         onClick={handlePreview}
-        disabled={loading || !canGenerateInvoice}
+        disabled={loading || !canGenerateReceipt}
         className={className}
       >
         <FileText className="h-4 w-4 mr-2" />
-        {loading ? 'Generating...' : 'View Invoice'}
+        {loading ? 'Generating...' : 'View Receipt'}
       </Button>
 
       {/* Preview Dialog */}
@@ -263,7 +263,7 @@ export default function InvoiceViewer({
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>Invoice Preview - {orderNumber}</span>
+              <span>Receipt Preview - {orderNumber}</span>
               <div className="flex gap-2">
                 {canDownload && (
                   <Button
@@ -290,11 +290,11 @@ export default function InvoiceViewer({
           </DialogHeader>
 
           <div className="overflow-y-auto max-h-[70vh] border rounded-lg">
-            {invoiceHtml && (
+            {receiptHtml && (
               <iframe
-                srcDoc={invoiceHtml}
+                srcDoc={receiptHtml}
                 className="w-full h-[70vh] border-0"
-                title="Invoice Preview"
+                title="Receipt Preview"
               />
             )}
           </div>

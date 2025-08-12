@@ -206,7 +206,7 @@ export default function MemberOrdersPage() {
                       {order.status === 'DELIVERED' && (
                         <Button variant="outline" size="sm">
                           <Download className="h-4 w-4 mr-2" />
-                          Invoice
+                          Receipt
                         </Button>
                       )}
                     </div>

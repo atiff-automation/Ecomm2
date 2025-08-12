@@ -131,18 +131,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       ),
     });
   } catch (error) {
-    console.error('Invoice generation error:', error);
+    console.error('Receipt generation error:', error);
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : 'Failed to generate invoice',
+          error instanceof Error ? error.message : 'Failed to generate receipt',
       },
       { status: 500 }
     );
   }
 }
 
-// GET invoice data only (without generating HTML)
+// GET receipt data only (without generating HTML)
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -192,13 +192,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('Invoice data fetch error:', error);
+    console.error('Receipt data fetch error:', error);
     return NextResponse.json(
       {
         message:
           error instanceof Error
             ? error.message
-            : 'Failed to fetch invoice data',
+            : 'Failed to fetch receipt data',
       },
       { status: 500 }
     );
