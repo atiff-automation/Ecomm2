@@ -197,27 +197,6 @@ export default function MembershipCheckoutBanner({
             <p className="text-green-700 text-sm">
               Your membership will be activated after completing this purchase. You'll enjoy member benefits starting immediately after payment!
             </p>
-            {/* Debug info - development only */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-2">
-                <p className="text-xs text-gray-500">
-                  Debug: hasJustRegistered={hasJustRegistered ? 'true' : 'false'}, 
-                  isMember={session?.user?.isMember ? 'true' : 'false'},
-                  isExistingMember={eligibility.isExistingMember ? 'true' : 'false'}
-                </p>
-                <button
-                  onClick={() => {
-                    sessionStorage.removeItem('membershipJustRegistered');
-                    sessionStorage.removeItem('membershipJustRegisteredTime');
-                    setHasJustRegistered(false);
-                    console.log('🧹 Manually cleared membership registration flags');
-                  }}
-                  className="text-xs text-red-600 hover:text-red-800 underline mt-1"
-                >
-                  Reset Registration State
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

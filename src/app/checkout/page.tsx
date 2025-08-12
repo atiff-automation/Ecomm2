@@ -485,19 +485,19 @@ export default function CheckoutPage() {
           
           const isQualifying = parseFloat(amount || '0') >= 80;
           
+          // Update session to refresh membership status for qualifying purchases
           if (isQualifying) {
-            // For qualifying purchases, update session and redirect to membership page
-            alert(`🎉 Payment Successful!\n\nOrder: ${orderRef}\nAmount: MYR ${amount}\n\n✅ Membership Activated!\nYou now have member access and pricing.`);
-            
-            // Update session to refresh membership status
-            updateSession().then(() => {
-              router.replace('/account/membership');
-            });
-          } else {
-            // For non-qualifying purchases, normal flow
-            alert(`✅ Payment Successful!\n\nOrder: ${orderRef}\nAmount: MYR ${amount}\n\nThank you for your purchase!`);
-            router.replace('/');
+            updateSession();
           }
+          
+          // Redirect to thank you page with order details
+          const thankYouParams = new URLSearchParams({
+            orderRef: orderRef,
+            amount: amount || '0',
+            ...(isQualifying && { membership: 'true' })
+          });
+          
+          router.replace(`/thank-you?${thankYouParams.toString()}`);
           
         } else if (paymentResult === 'failed') {
           alert(`❌ Payment Failed\n\nOrder: ${orderRef}\nPlease try again or use a different payment method.`);

@@ -157,6 +157,13 @@ export default function MembershipRegistrationModal({
           message:
             'Account created! Your membership will be activated after successful payment.',
         });
+        
+        // Ensure user stays on checkout page after registration
+        if (typeof window !== 'undefined' && window.location.pathname === '/checkout') {
+          // Stay on checkout page - don't navigate away
+          window.history.replaceState(null, '', '/checkout');
+        }
+        
         onClose();
       } else {
         setErrors({
@@ -220,6 +227,13 @@ export default function MembershipRegistrationModal({
 
         if (membershipResponse.ok) {
           onSuccess(membershipResult);
+          
+          // Ensure user stays on checkout page after login
+          if (typeof window !== 'undefined' && window.location.pathname === '/checkout') {
+            // Stay on checkout page - don't navigate away
+            window.history.replaceState(null, '', '/checkout');
+          }
+          
           onClose();
         } else {
           setErrors({

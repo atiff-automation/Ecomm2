@@ -46,6 +46,7 @@ import {
   CheckCircle2,
   Crown,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface DiscountCode {
   id: string;
@@ -216,6 +217,15 @@ export default function DiscountCodesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        items={[
+          { label: 'Membership', href: '/admin/membership' },
+          { label: 'Discount Codes' }
+        ]}
+        className="mb-6"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

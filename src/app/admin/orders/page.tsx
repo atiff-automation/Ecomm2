@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface Order {
   id: string;
@@ -193,6 +194,14 @@ export default function AdminOrders() {
       />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs 
+          items={[
+            { label: 'Orders' }
+          ]}
+          className="mb-6"
+        />
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>

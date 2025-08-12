@@ -29,6 +29,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface MemberPromotionForm {
   name: string;
@@ -42,16 +43,47 @@ interface MemberPromotionForm {
   autoApply: boolean;
 }
 
-const seasonalPromotions = [
-  { key: 'NEW_YEAR', label: 'New Year Special', icon: '🎊' },
-  { key: 'VALENTINE', label: "Valentine's Day", icon: '💝' },
-  { key: 'RAYA', label: 'Hari Raya', icon: '🌙' },
-  { key: 'MERDEKA', label: 'Merdeka Day', icon: '🇲🇾' },
-  { key: 'CHRISTMAS', label: 'Christmas', icon: '🎄' },
+const quickTemplates = [
+  { 
+    key: 'welcome', 
+    label: 'Welcome Bonus', 
+    icon: '👋',
+    description: '15% off for new members',
+    discountType: 'PERCENTAGE' as const,
+    discountValue: 15,
+    minimumOrderValue: 50,
+  },
+  { 
+    key: 'birthday', 
+    label: 'Birthday Special', 
+    icon: '🎂',
+    description: '25% off birthday month',
+    discountType: 'PERCENTAGE' as const,
+    discountValue: 25,
+    maximumDiscount: 100,
+  },
+  { 
+    key: 'loyalty', 
+    label: 'Loyalty Reward', 
+    icon: '⭐',
+    description: 'RM50 off for VIP members',
+    discountType: 'FIXED_AMOUNT' as const,
+    discountValue: 50,
+    minimumOrderValue: 200,
+  },
+  { 
+    key: 'flash', 
+    label: 'Flash Sale', 
+    icon: '⚡',
+    description: '30% off limited time',
+    discountType: 'PERCENTAGE' as const,
+    discountValue: 30,
+    maximumDiscount: 150,
+  },
 ];
 
 export default function AdminMemberPromotionsPage() {
-  const [activeTab, setActiveTab] = useState<'custom' | 'seasonal'>('custom');
+  const [activeTab, setActiveTab] = useState<'custom' | 'templates'>('custom');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
@@ -124,37 +156,53 @@ export default function AdminMemberPromotionsPage() {
     }
   };
 
-  const handleCreateSeasonalPromotion = async (season: string) => {
+  const handleCreateFromTemplate = async (templateKey: string) => {
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch(
-        '/api/admin/member-promotions?type=seasonal',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ season }),
-        }
-      );
+      const template = quickTemplates.find(t => t.key === templateKey);
+      if (!template) {
+        throw new Error('Template not found');
+      }
+
+      // Create discount code using template data
+      const response = await fetch('/api/admin/discount-codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: `${template.key.toUpperCase()}${Date.now().toString(36).toUpperCase()}`,
+          name: template.label,
+          description: template.description,
+          discountType: template.discountType,
+          discountValue: template.discountValue,
+          minimumOrderValue: template.minimumOrderValue || undefined,
+          maximumDiscount: template.maximumDiscount || undefined,
+          memberOnly: true, // Templates are for member promotions
+          isPublic: false,
+          startsAt: new Date().toISOString(),
+          // Set expiry to 30 days from now by default
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        }),
+      });
 
       const data = await response.json();
 
       if (response.ok) {
         setMessage({
           type: 'success',
-          text: `Seasonal promotion created successfully! Code: ${data.code}`,
+          text: `${template.label} discount code created successfully! Code: ${data.code.code}`,
         });
       } else {
         setMessage({
           type: 'error',
-          text: data.message || 'Failed to create seasonal promotion',
+          text: data.message || 'Failed to create discount code from template',
         });
       }
-    } catch {
+    } catch (error) {
       setMessage({
         type: 'error',
-        text: 'Failed to create seasonal promotion',
+        text: 'Failed to create discount code from template',
       });
     } finally {
       setLoading(false);
@@ -163,6 +211,15 @@ export default function AdminMemberPromotionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        items={[
+          { label: 'Membership', href: '/admin/membership' },
+          { label: 'Member Promotions' }
+        ]}
+        className="mb-6"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -213,12 +270,12 @@ export default function AdminMemberPromotionsPage() {
           Custom Promotion
         </Button>
         <Button
-          variant={activeTab === 'seasonal' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('seasonal')}
+          variant={activeTab === 'templates' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('templates')}
           className="flex items-center gap-2"
         >
           <Calendar className="h-4 w-4" />
-          Seasonal Promotions
+          Quick Templates
         </Button>
       </div>
 
@@ -452,56 +509,92 @@ export default function AdminMemberPromotionsPage() {
         </Card>
       )}
 
-      {/* Seasonal Promotions */}
-      {activeTab === 'seasonal' && (
+      {/* Quick Templates */}
+      {activeTab === 'templates' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Seasonal Member Promotions
+              <Sparkles className="h-5 w-5" />
+              Quick Discount Templates
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Create pre-configured seasonal promotions for special occasions
+              Create member-exclusive discount codes using pre-configured templates
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {seasonalPromotions.map(season => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {quickTemplates.map(template => (
                 <Card
-                  key={season.key}
-                  className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
+                  key={template.key}
+                  className="border-2 hover:border-purple-300 transition-colors"
                 >
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-3">{season.icon}</div>
-                    <h3 className="font-semibold mb-2">{season.label}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Create a special member promotion for{' '}
-                      {season.label.toLowerCase()}
-                    </p>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{template.icon}</div>
+                        <div>
+                          <h3 className="font-semibold">{template.label}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {template.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Discount:</span>
+                        <span className="font-medium">
+                          {template.discountType === 'PERCENTAGE'
+                            ? `${template.discountValue}% off`
+                            : `RM${template.discountValue} off`}
+                        </span>
+                      </div>
+                      {template.minimumOrderValue && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Min. order:</span>
+                          <span className="font-medium">RM{template.minimumOrderValue}</span>
+                        </div>
+                      )}
+                      {template.maximumDiscount && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Max. discount:</span>
+                          <span className="font-medium">RM{template.maximumDiscount}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Member only:</span>
+                        <span className="font-medium text-purple-600">
+                          <Crown className="h-3 w-3 inline mr-1" />
+                          Yes
+                        </span>
+                      </div>
+                    </div>
+
                     <Button
-                      onClick={() => handleCreateSeasonalPromotion(season.key)}
+                      onClick={() => handleCreateFromTemplate(template.key)}
                       disabled={loading}
-                      size="sm"
                       className="w-full"
+                      variant="outline"
                     >
-                      Create Promotion
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Discount Code
                     </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <div className="flex items-start space-x-2">
-                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">About Seasonal Promotions</p>
-                  <p>
-                    Seasonal promotions come with pre-configured discount
-                    values, expiry dates, and descriptions tailored for
-                    Malaysian celebrations and holidays. They automatically
-                    generate coupon codes that members can use at checkout.
-                  </p>
+                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">How Templates Work</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>Each template creates a unique discount code with 30-day expiry</li>
+                    <li>Codes are automatically set as member-only and private</li>
+                    <li>Template values can be customized after creation if needed</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -511,11 +604,11 @@ export default function AdminMemberPromotionsPage() {
                 <div className="flex items-start space-x-2">
                   <Gift className="h-5 w-5 text-gray-600 mt-0.5" />
                   <div className="text-sm text-gray-700">
-                    <p className="font-medium mb-1">Managing Coupon Codes</p>
+                    <p className="font-medium mb-1">Managing Discount Codes</p>
                     <p>
-                      All generated coupon codes are automatically saved to the
-                      discount codes system. Members can view their available
-                      codes in their account dashboard.
+                      All created discount codes are managed in the comprehensive
+                      discount codes system. You can view usage, modify settings,
+                      and track performance there.
                     </p>
                   </div>
                 </div>

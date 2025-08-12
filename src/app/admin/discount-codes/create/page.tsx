@@ -34,6 +34,7 @@ import {
   DollarSign,
   Truck,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface CreateDiscountCodeForm {
   code: string;
@@ -241,6 +242,16 @@ export default function CreateDiscountCodePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        items={[
+          { label: 'Membership', href: '/admin/membership' },
+          { label: 'Discount Codes', href: '/admin/discount-codes' },
+          { label: 'Create' }
+        ]}
+        className="mb-6"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">

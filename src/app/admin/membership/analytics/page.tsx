@@ -29,6 +29,7 @@ import {
   RefreshCw,
   // Settings, // Not currently used
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface MemberStats {
   totalMembers: number;
@@ -204,23 +205,16 @@ export default function MemberAnalyticsPage() {
     );
   }
 
-  const breadcrumbItems = [
-    {
-      label: 'Membership',
-      href: '/admin/membership',
-      icon: Users as React.ComponentType<{ className?: string }>,
-    },
-    {
-      label: 'Analytics',
-      href: '/admin/membership/analytics',
-      icon: BarChart3 as React.ComponentType<{ className?: string }>,
-    },
-  ];
-
   return (
-    <div>
-      <ContextualNavigation items={breadcrumbItems} />
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        items={[
+          { label: 'Membership', href: '/admin/membership' },
+          { label: 'Analytics' }
+        ]}
+        className="mb-6"
+      />
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

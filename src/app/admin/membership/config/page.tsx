@@ -26,6 +26,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 interface MembershipConfig {
   membershipThreshold: number;
@@ -174,11 +175,18 @@ export default function MembershipConfigPage() {
   ];
 
   return (
-    <div>
-      <ContextualNavigation items={breadcrumbItems} />
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumbs */}
+      <Breadcrumbs 
+        items={[
+          { label: 'Membership', href: '/admin/membership' },
+          { label: 'Configuration' }
+        ]}
+        className="mb-6"
+      />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Settings className="h-6 w-6 text-primary" />
