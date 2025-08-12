@@ -42,10 +42,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               select: {
                 name: true,
                 slug: true,
-                primaryImage: {
+                images: {
                   select: {
                     url: true,
                     altText: true,
+                    isPrimary: true,
                   },
                 },
               },
@@ -98,10 +99,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         product: {
           name: item.product.name,
           slug: item.product.slug,
-          primaryImage: item.product.primaryImage ? {
-            url: item.product.primaryImage.url,
-            altText: item.product.primaryImage.altText,
-          } : null,
+          primaryImage: item.product.images?.find(img => img.isPrimary) ? {
+            url: item.product.images.find(img => img.isPrimary)!.url,
+            altText: item.product.images.find(img => img.isPrimary)!.altText,
+          } : (item.product.images?.[0] ? {
+            url: item.product.images[0].url,
+            altText: item.product.images[0].altText,
+          } : null),
         },
       })),
       shippingAddress: order.shippingAddress ? {
@@ -190,10 +194,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               select: {
                 name: true,
                 slug: true,
-                primaryImage: {
+                images: {
                   select: {
                     url: true,
                     altText: true,
+                    isPrimary: true,
                   },
                 },
               },
@@ -239,10 +244,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         product: {
           name: item.product.name,
           slug: item.product.slug,
-          primaryImage: item.product.primaryImage ? {
-            url: item.product.primaryImage.url,
-            altText: item.product.primaryImage.altText,
-          } : null,
+          primaryImage: item.product.images?.find(img => img.isPrimary) ? {
+            url: item.product.images.find(img => img.isPrimary)!.url,
+            altText: item.product.images.find(img => img.isPrimary)!.altText,
+          } : (item.product.images?.[0] ? {
+            url: item.product.images[0].url,
+            altText: item.product.images[0].altText,
+          } : null),
         },
       })),
       shippingAddress: updatedOrder.shippingAddress ? {
