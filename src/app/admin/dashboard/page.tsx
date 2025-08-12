@@ -135,6 +135,15 @@ export default function AdminDashboard() {
     }).format(amount);
   };
 
+  const formatCurrencyCompact = (amount: number) => {
+    if (amount >= 1000000) {
+      return `RM${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `RM${(amount / 1000).toFixed(1)}K`;
+    }
+    return `RM${amount.toFixed(0)}`;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -345,7 +354,10 @@ export default function AdminDashboard() {
                             })
                           }
                         />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           labelFormatter={value =>
                             new Date(value).toLocaleDateString('en-MY')
@@ -434,7 +446,7 @@ export default function AdminDashboard() {
                         {stats.pendingOrders} pending orders
                       </span>
                       <Button size="sm" variant="outline" asChild>
-                        <Link href="/admin/orders?status=pending">Review</Link>
+                        <Link href="/admin/orders?status=PENDING">Review</Link>
                       </Button>
                     </div>
                   )}
@@ -652,7 +664,8 @@ export default function AdminDashboard() {
                         <YAxis
                           yAxisId="revenue"
                           orientation="left"
-                          tickFormatter={value => formatCurrency(value)}
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
                         />
                         <YAxis yAxisId="orders" orientation="right" />
                         <Tooltip
@@ -709,10 +722,13 @@ export default function AdminDashboard() {
                         <XAxis
                           dataKey="name"
                           tickFormatter={value =>
-                            value.length > 15
-                              ? value.substring(0, 15) + '...'
+                            value.length > 12
+                              ? value.substring(0, 12) + '...'
                               : value
                           }
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
                         />
                         <YAxis />
                         <Tooltip
@@ -747,7 +763,10 @@ export default function AdminDashboard() {
                       <BarChart data={analytics.categoryPerformance}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           formatter={value => formatCurrency(Number(value))}
                         />
@@ -781,7 +800,10 @@ export default function AdminDashboard() {
                       <BarChart data={analytics.membershipComparison}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="customerType" />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           formatter={(value, name) => [
                             name === 'revenue' || name === 'avgOrderValue'

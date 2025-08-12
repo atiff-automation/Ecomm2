@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { headers } from 'next/headers';
+import { telegramService } from '@/lib/telegram/telegram-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -195,6 +196,30 @@ export async function POST(request: NextRequest) {
 
       membershipActivated = true;
       console.log('✅ Membership activated for user:', order.userId);
+    }
+
+    // Send Telegram notification for successful order
+    try {
+      const customerName = order.user 
+        ? `${order.user.firstName} ${order.user.lastName}`
+        : 'Valued Customer';
+      
+      await telegramService.sendNewOrderNotification({
+        orderNumber: order.orderNumber,
+        customerName,
+        total: Number(order.total),
+        items: order.orderItems.map(item => ({
+          name: item.productName || item.product.name,
+          quantity: item.quantity,
+          price: Number(item.appliedPrice),
+        })),
+        paymentMethod: 'PAYMENT_GATEWAY',
+        createdAt: new Date(),
+      });
+      console.log('✅ Telegram notification sent for order:', order.orderNumber);
+    } catch (telegramError) {
+      console.error('Failed to send Telegram notification:', telegramError);
+      // Don't fail the webhook if Telegram fails
     }
 
     console.log('✅ Payment webhook processed successfully');

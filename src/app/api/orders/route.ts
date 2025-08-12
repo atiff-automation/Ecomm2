@@ -370,29 +370,8 @@ export async function POST(request: NextRequest) {
       clearGuestCart();
     }
 
-    // Send Telegram notification for new order
-    try {
-      const customerName = `${orderData.shippingAddress.firstName} ${orderData.shippingAddress.lastName}`;
-      
-      // Prepare detailed items for notification
-      const notificationItems = cartItems.map(item => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.finalPrice, // This is the actual price used (regular/member/promotional)
-      }));
-      
-      await telegramService.sendNewOrderNotification({
-        orderNumber: result.orderNumber,
-        customerName,
-        total: totalAmount,
-        items: notificationItems,
-        paymentMethod: orderData.paymentMethod.toUpperCase(),
-        createdAt: new Date(),
-      });
-    } catch (telegramError) {
-      // Log error but don't fail the order creation
-      console.error('Failed to send Telegram notification:', telegramError);
-    }
+    // Note: Telegram notifications are sent after successful payment in webhook handlers
+    console.log('Order created, awaiting payment confirmation:', result.orderNumber);
 
     // Create payment URL based on payment method
     let paymentUrl = null;

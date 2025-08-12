@@ -9,6 +9,7 @@ import { billplzService } from '@/lib/payments/billplz-service';
 import { emailService } from '@/lib/email/email-service';
 import { activateUserMembership } from '@/lib/membership';
 import { processReferralOrderCompletion } from '@/lib/referrals/referral-utils';
+import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -156,60 +157,25 @@ export async function POST(request: NextRequest) {
       newOrderStatus = 'CANCELLED';
     }
 
-    // Update order status
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        paymentStatus: newPaymentStatus,
-        status: newOrderStatus,
-        updatedAt: new Date(),
-      },
-    });
+    // Use universal status handler - this will handle Telegram notifications automatically
+    await updateOrderStatus(
+      order.id,
+      newOrderStatus,
+      newPaymentStatus,
+      'billplz-webhook',
+      {
+        paymentMethod: 'BILLPLZ',
+        billplzBillId: webhook.id,
+        paidAmount: webhook.paid_amount,
+        paidAt: webhook.paid_at,
+        webhookState: webhook.state,
+      }
+    );
 
-    // Create audit log for payment status change
-    await prisma.auditLog.create({
-      data: {
-        userId: order.userId,
-        action: 'PAYMENT_STATUS_UPDATED',
-        resource: 'ORDER',
-        resourceId: order.id,
-        details: {
-          orderNumber: order.orderNumber,
-          billplzBillId: webhook.id,
-          previousPaymentStatus: order.paymentStatus,
-          newPaymentStatus,
-          previousOrderStatus: order.status,
-          newOrderStatus,
-          paidAmount: webhook.paid_amount,
-          paidAt: webhook.paid_at,
-          webhookState: webhook.state,
-        },
-        ipAddress: request.headers.get('x-forwarded-for') || 'billplz',
-        userAgent: 'Billplz Webhook',
-      },
-    });
+    // Note: Audit logs are automatically created by updateOrderStatus function
 
-    // Send email notifications based on order status
+    // Send additional notifications if needed
     if (newPaymentStatus === 'PAID') {
-      // Send order confirmation email
-      await emailService.sendOrderConfirmation({
-        orderNumber: order.orderNumber,
-        customerName: order.user
-          ? `${order.user.firstName} ${order.user.lastName}`
-          : 'Valued Customer',
-        customerEmail: order.user?.email || 'customer@example.com',
-        items: order.orderItems.map(item => ({
-          name: item.productName,
-          quantity: item.quantity,
-          price: Number(item.appliedPrice),
-        })),
-        subtotal: Number(order.subtotal),
-        taxAmount: Number(order.taxAmount),
-        shippingCost: Number(order.shippingCost),
-        total: Number(order.total),
-        paymentMethod: 'Billplz',
-      });
-
       // Send member welcome email if this is their first membership
       if (
         order.wasEligibleForMembership &&

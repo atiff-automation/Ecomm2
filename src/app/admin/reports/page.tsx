@@ -183,6 +183,15 @@ export default function AdminReports() {
     }).format(amount);
   };
 
+  const formatCurrencyCompact = (amount: number) => {
+    if (amount >= 1000000) {
+      return `RM${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `RM${(amount / 1000).toFixed(1)}K`;
+    }
+    return `RM${amount.toFixed(0)}`;
+  };
+
   const formatPercentage = (value: number) => {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
@@ -434,7 +443,10 @@ export default function AdminReports() {
                             })
                           }
                         />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           labelFormatter={value =>
                             new Date(value).toLocaleDateString('en-MY')
@@ -629,7 +641,8 @@ export default function AdminReports() {
                         <YAxis
                           yAxisId="revenue"
                           orientation="left"
-                          tickFormatter={value => formatCurrency(value)}
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
                         />
                         <YAxis yAxisId="orders" orientation="right" />
                         <Tooltip
@@ -794,7 +807,10 @@ export default function AdminReports() {
                       <BarChart data={analyticsData.membershipComparison}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="customerType" />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           formatter={(value, name) => [
                             name === 'revenue' || name === 'avgOrderValue'
@@ -838,7 +854,10 @@ export default function AdminReports() {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
-                        <YAxis tickFormatter={value => formatCurrency(value)} />
+                        <YAxis 
+                          tickFormatter={value => formatCurrencyCompact(value)}
+                          width={60}
+                        />
                         <Tooltip
                           formatter={value => formatCurrency(Number(value))}
                         />
@@ -956,10 +975,13 @@ export default function AdminReports() {
                         <XAxis
                           dataKey="name"
                           tickFormatter={value =>
-                            value.length > 15
-                              ? value.substring(0, 15) + '...'
+                            value.length > 12
+                              ? value.substring(0, 12) + '...'
                               : value
                           }
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
                         />
                         <YAxis />
                         <Tooltip

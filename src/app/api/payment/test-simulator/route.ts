@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { activateUserMembership } from '@/lib/membership';
+import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,15 +50,26 @@ export async function POST(request: NextRequest) {
 
     // Simulate payment success
     if (paymentStatus === 'success') {
-      // Update order status
+      // Update payment ID first
       await prisma.order.update({
         where: { id: orderId },
         data: {
-          paymentStatus: 'PAID',
-          status: 'CONFIRMED',
           paymentId: `test_payment_${Date.now()}`,
         },
       });
+
+      // Use universal status handler - this triggers Telegram automatically
+      await updateOrderStatus(
+        orderId,
+        'CONFIRMED',
+        'PAID',
+        'test-simulator',
+        {
+          paymentMethod: 'TEST_PAYMENT',
+          simulatedAt: new Date().toISOString(),
+          testEnvironment: true,
+        }
+      );
 
       // Activate pending membership if exists
       if (order.pendingMembership && order.user && !order.user.isMember) {
@@ -93,13 +105,19 @@ export async function POST(request: NextRequest) {
 
     // Simulate payment failure
     if (paymentStatus === 'failure') {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          paymentStatus: 'FAILED',
-          status: 'CANCELLED',
-        },
-      });
+      // Use universal status handler for failures too
+      await updateOrderStatus(
+        orderId,
+        'CANCELLED',
+        'FAILED',
+        'test-simulator',
+        {
+          paymentMethod: 'TEST_PAYMENT',
+          simulatedAt: new Date().toISOString(),
+          testEnvironment: true,
+          failed: true,
+        }
+      );
 
       return NextResponse.json({
         message: 'Payment failed - Order cancelled',
