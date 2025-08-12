@@ -94,8 +94,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       items: order.orderItems.map(item => ({
         id: item.id,
         quantity: item.quantity,
-        price: Number(item.price),
-        finalPrice: Number(item.finalPrice),
+        price: Number(item.regularPrice),
+        finalPrice: Number(item.appliedPrice),
         product: {
           name: item.product.name,
           slug: item.product.slug,
@@ -239,8 +239,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       items: updatedOrder.orderItems.map(item => ({
         id: item.id,
         quantity: item.quantity,
-        price: Number(item.price),
-        finalPrice: Number(item.finalPrice),
+        price: Number(item.regularPrice),
+        finalPrice: Number(item.appliedPrice),
         product: {
           name: item.product.name,
           slug: item.product.slug,
