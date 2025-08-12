@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import React from 'react';
 import AuthProvider from '@/components/auth/AuthProvider';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { TelegramHealthCheck } from '@/components/system/TelegramHealthCheck';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -39,6 +40,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <MainLayout>{children}</MainLayout>
+          <TelegramHealthCheck />
           <Toaster position="top-right" />
         </AuthProvider>
       </body>

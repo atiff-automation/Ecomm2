@@ -45,6 +45,12 @@ export class TelegramService {
     
     // Initialize cron jobs (only once)
     this.initializeCronJobs();
+    
+    // Ensure singleton behavior - prevent multiple instances
+    if (typeof window === 'undefined' && !global.__telegramServiceInitialized) {
+      global.__telegramServiceInitialized = true;
+      console.log('🤖 TelegramService singleton initialized');
+    }
   }
 
   /**
