@@ -26,11 +26,20 @@ export async function POST(request: NextRequest) {
     const mockOrderData = {
       orderNumber: 'ORD-20250811-TEST',
       customerName: 'John Doe',
-      customerEmail: 'john.doe@example.com',
       total: 125.50,
-      itemCount: 3,
+      items: [
+        {
+          name: 'Wireless Bluetooth Headphones',
+          quantity: 1,
+          price: 89.90,
+        },
+        {
+          name: 'Phone Case - Clear TPU',
+          quantity: 2,
+          price: 17.80,
+        },
+      ],
       paymentMethod: 'BILLPLZ',
-      isMember: true,
       createdAt: new Date(),
     };
 
