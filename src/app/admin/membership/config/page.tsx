@@ -10,7 +10,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -230,126 +229,125 @@ export default function MembershipConfigPage() {
         )}
 
 
-        {/* Configuration Settings */}
-        <div className="space-y-6">
-          {/* Membership Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Membership Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Threshold Setting */}
-              <div className="space-y-2">
-                <Label htmlFor="threshold">Minimum Qualifying Amount (MYR)</Label>
-                <Input
-                  id="threshold"
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={config.membershipThreshold}
-                  onChange={e =>
-                    setConfig({
-                      ...config,
-                      membershipThreshold: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Customers must spend at least {formatPrice(config.membershipThreshold)} to qualify
-                </p>
-              </div>
+      {/* Configuration Settings */}
+      <div className="space-y-6">
+        {/* Membership Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Membership Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Threshold Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="threshold">Minimum Qualifying Amount (MYR)</Label>
+              <Input
+                id="threshold"
+                type="number"
+                min="1"
+                step="0.01"
+                value={config.membershipThreshold}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    membershipThreshold: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Customers must spend at least {formatPrice(config.membershipThreshold)} to qualify
+              </p>
+            </div>
 
-              <Separator />
+            <Separator />
 
-              {/* Qualification Rules */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm">Qualification Rules</h4>
-                
-                <div className="flex items-center justify-between space-x-2">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-normal">Exclude Promotional Items</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Promotional items won't count towards membership
-                    </p>
-                  </div>
-                  <Switch
-                    checked={config.enablePromotionalExclusion}
-                    onCheckedChange={(checked) =>
-                      setConfig({
-                        ...config,
-                        enablePromotionalExclusion: checked,
-                      })
-                    }
-                  />
+            {/* Qualification Rules */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm">Qualification Rules</h4>
+              
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-normal">Exclude Promotional Items</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Promotional items won't count towards membership
+                  </p>
                 </div>
+                <Switch
+                  checked={config.enablePromotionalExclusion}
+                  onCheckedChange={(checked) =>
+                    setConfig({
+                      ...config,
+                      enablePromotionalExclusion: checked,
+                    })
+                  }
+                />
+              </div>
 
-                <div className="flex items-center justify-between space-x-2">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-normal">Require Qualifying Products</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Only products marked as qualifying count towards membership
-                    </p>
-                  </div>
-                  <Switch
-                    checked={config.requireQualifyingCategories}
-                    onCheckedChange={(checked) =>
-                      setConfig({
-                        ...config,
-                        requireQualifyingCategories: checked,
-                      })
-                    }
-                  />
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-normal">Require Qualifying Products</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Only products marked as qualifying count towards membership
+                  </p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Content & Messaging */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Content & Messaging</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="benefits">Membership Benefits</Label>
-                <Textarea
-                  id="benefits"
-                  rows={3}
-                  value={config.membershipBenefitsText}
-                  onChange={e =>
+                <Switch
+                  checked={config.requireQualifyingCategories}
+                  onCheckedChange={(checked) =>
                     setConfig({
                       ...config,
-                      membershipBenefitsText: e.target.value,
+                      requireQualifyingCategories: checked,
                     })
                   }
-                  placeholder="Describe the benefits members receive..."
                 />
-                <p className="text-xs text-muted-foreground">
-                  Displayed to customers explaining membership benefits
-                </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="terms">Terms & Conditions</Label>
-                <Textarea
-                  id="terms"
-                  rows={3}
-                  value={config.membershipTermsText}
-                  onChange={e =>
-                    setConfig({
-                      ...config,
-                      membershipTermsText: e.target.value,
-                    })
-                  }
-                  placeholder="Explain how membership activation works..."
-                />
-                <p className="text-xs text-muted-foreground">
-                  Terms and conditions for membership activation
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Content & Messaging */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Content & Messaging</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="benefits">Membership Benefits</Label>
+              <Textarea
+                id="benefits"
+                rows={3}
+                value={config.membershipBenefitsText}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    membershipBenefitsText: e.target.value,
+                  })
+                }
+                placeholder="Describe the benefits members receive..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Displayed to customers explaining membership benefits
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="terms">Terms & Conditions</Label>
+              <Textarea
+                id="terms"
+                rows={3}
+                value={config.membershipTermsText}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    membershipTermsText: e.target.value,
+                  })
+                }
+                placeholder="Explain how membership activation works..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Terms and conditions for membership activation
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

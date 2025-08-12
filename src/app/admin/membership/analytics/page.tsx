@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Users,
@@ -215,38 +214,39 @@ export default function MemberAnalyticsPage() {
         ]}
         className="mb-6"
       />
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-              Member Analytics
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Comprehensive insights into membership program performance
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-              />
-              Refresh Data
-            </Button>
-            <Button
-              onClick={handleExportData}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export Analytics
-            </Button>
-          </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <BarChart3 className="w-8 h-8 text-blue-600" />
+            Member Analytics
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Comprehensive insights into membership program performance
+          </p>
         </div>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+            />
+            Refresh Data
+          </Button>
+          <Button
+            onClick={handleExportData}
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export Analytics
+          </Button>
+        </div>
+      </div>
 
         {stats && (
           <>
@@ -758,7 +758,6 @@ export default function MemberAnalyticsPage() {
             </Tabs>
           </>
         )}
-      </div>
     </div>
   );
 }

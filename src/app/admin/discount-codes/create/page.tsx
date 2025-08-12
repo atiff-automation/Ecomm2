@@ -79,7 +79,9 @@ export default function CreateDiscountCodePage() {
 
   // Redirect if not authenticated or not admin/staff
   React.useEffect(() => {
-    if (status === 'loading') return;
+    if (status === 'loading') {
+      return;
+    }
 
     if (!session?.user) {
       router.push('/auth/signin?callbackUrl=/admin/discount-codes/create');
@@ -97,7 +99,7 @@ export default function CreateDiscountCodePage() {
     value: string | number | boolean | Date | undefined
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -134,7 +136,10 @@ export default function CreateDiscountCodePage() {
       newErrors.discountValue = 'Discount value must be greater than 0';
     }
 
-    if (formData.discountType === 'PERCENTAGE' && formData.discountValue > 100) {
+    if (
+      formData.discountType === 'PERCENTAGE' &&
+      formData.discountValue > 100
+    ) {
       newErrors.discountValue = 'Percentage cannot exceed 100%';
     }
 
@@ -150,7 +155,11 @@ export default function CreateDiscountCodePage() {
       newErrors.usageLimit = 'Usage limit must be greater than 0';
     }
 
-    if (formData.expiresAt && formData.startsAt && formData.expiresAt <= formData.startsAt) {
+    if (
+      formData.expiresAt &&
+      formData.startsAt &&
+      formData.expiresAt <= formData.startsAt
+    ) {
       newErrors.expiresAt = 'Expiry date must be after start date';
     }
 
@@ -160,7 +169,7 @@ export default function CreateDiscountCodePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -186,7 +195,7 @@ export default function CreateDiscountCodePage() {
           type: 'success',
           text: `Discount code "${formData.code}" created successfully!`,
         });
-        
+
         // Reset form
         setFormData({
           code: '',
@@ -243,11 +252,11 @@ export default function CreateDiscountCodePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumbs */}
-      <Breadcrumbs 
+      <Breadcrumbs
         items={[
           { label: 'Membership', href: '/admin/membership' },
           { label: 'Discount Codes', href: '/admin/discount-codes' },
-          { label: 'Create' }
+          { label: 'Create' },
         ]}
         className="mb-6"
       />
@@ -277,13 +286,19 @@ export default function CreateDiscountCodePage() {
 
       {/* Message Display */}
       {message && (
-        <Alert className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+        <Alert
+          className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+        >
           {message.type === 'success' ? (
             <CheckCircle2 className="h-4 w-4 text-green-600" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-600" />
           )}
-          <AlertDescription className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+          <AlertDescription
+            className={
+              message.type === 'success' ? 'text-green-800' : 'text-red-800'
+            }
+          >
             {message.text}
           </AlertDescription>
         </Alert>
@@ -302,7 +317,7 @@ export default function CreateDiscountCodePage() {
                 {/* Basic Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Basic Information</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="code">Discount Code *</Label>
@@ -310,20 +325,29 @@ export default function CreateDiscountCodePage() {
                         <Input
                           id="code"
                           value={formData.code}
-                          onChange={e => handleInputChange('code', e.target.value.toUpperCase())}
+                          onChange={e =>
+                            handleInputChange(
+                              'code',
+                              e.target.value.toUpperCase()
+                            )
+                          }
                           placeholder="SUMMER2024"
                           className="font-mono"
                         />
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleInputChange('code', generateDiscountCode())}
+                          onClick={() =>
+                            handleInputChange('code', generateDiscountCode())
+                          }
                         >
                           Generate
                         </Button>
                       </div>
                       {errors.code && (
-                        <p className="text-sm text-red-600 mt-1">{errors.code}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.code}
+                        </p>
                       )}
                     </div>
 
@@ -332,11 +356,15 @@ export default function CreateDiscountCodePage() {
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={e => handleInputChange('name', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('name', e.target.value)
+                        }
                         placeholder="Summer Sale 2024"
                       />
                       {errors.name && (
-                        <p className="text-sm text-red-600 mt-1">{errors.name}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.name}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -346,26 +374,34 @@ export default function CreateDiscountCodePage() {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={e => handleInputChange('description', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('description', e.target.value)
+                      }
                       placeholder="Get 20% off all summer items"
                       rows={3}
                     />
                     {errors.description && (
-                      <p className="text-sm text-red-600 mt-1">{errors.description}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.description}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {/* Discount Configuration */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Discount Configuration</h3>
-                  
+                  <h3 className="text-lg font-semibold">
+                    Discount Configuration
+                  </h3>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="discountType">Discount Type *</Label>
                       <Select
                         value={formData.discountType}
-                        onValueChange={value => handleInputChange('discountType', value as any)}
+                        onValueChange={value =>
+                          handleInputChange('discountType', value as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING')
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -396,20 +432,38 @@ export default function CreateDiscountCodePage() {
                     {formData.discountType !== 'FREE_SHIPPING' && (
                       <div>
                         <Label htmlFor="discountValue">
-                          Discount Value * {formData.discountType === 'PERCENTAGE' ? '(%)' : '(RM)'}
+                          Discount Value *{' '}
+                          {formData.discountType === 'PERCENTAGE'
+                            ? '(%)'
+                            : '(RM)'}
                         </Label>
                         <Input
                           id="discountValue"
                           type="number"
                           step="0.01"
                           min="0"
-                          max={formData.discountType === 'PERCENTAGE' ? '100' : undefined}
+                          max={
+                            formData.discountType === 'PERCENTAGE'
+                              ? '100'
+                              : undefined
+                          }
                           value={formData.discountValue}
-                          onChange={e => handleInputChange('discountValue', parseFloat(e.target.value) || 0)}
-                          placeholder={formData.discountType === 'PERCENTAGE' ? '20' : '50.00'}
+                          onChange={e =>
+                            handleInputChange(
+                              'discountValue',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder={
+                            formData.discountType === 'PERCENTAGE'
+                              ? '20'
+                              : '50.00'
+                          }
                         />
                         {errors.discountValue && (
-                          <p className="text-sm text-red-600 mt-1">{errors.discountValue}</p>
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.discountValue}
+                          </p>
                         )}
                       </div>
                     )}
@@ -417,35 +471,57 @@ export default function CreateDiscountCodePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="minimumOrderValue">Minimum Order Value (RM)</Label>
+                      <Label htmlFor="minimumOrderValue">
+                        Minimum Order Value (RM)
+                      </Label>
                       <Input
                         id="minimumOrderValue"
                         type="number"
                         step="0.01"
                         min="0"
                         value={formData.minimumOrderValue || ''}
-                        onChange={e => handleInputChange('minimumOrderValue', e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={e =>
+                          handleInputChange(
+                            'minimumOrderValue',
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                         placeholder="100.00 (optional)"
                       />
                       {errors.minimumOrderValue && (
-                        <p className="text-sm text-red-600 mt-1">{errors.minimumOrderValue}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.minimumOrderValue}
+                        </p>
                       )}
                     </div>
 
                     {formData.discountType === 'PERCENTAGE' && (
                       <div>
-                        <Label htmlFor="maximumDiscount">Maximum Discount (RM)</Label>
+                        <Label htmlFor="maximumDiscount">
+                          Maximum Discount (RM)
+                        </Label>
                         <Input
                           id="maximumDiscount"
                           type="number"
                           step="0.01"
                           min="0"
                           value={formData.maximumDiscount || ''}
-                          onChange={e => handleInputChange('maximumDiscount', e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={e =>
+                            handleInputChange(
+                              'maximumDiscount',
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                           placeholder="200.00 (optional)"
                         />
                         {errors.maximumDiscount && (
-                          <p className="text-sm text-red-600 mt-1">{errors.maximumDiscount}</p>
+                          <p className="text-sm text-red-600 mt-1">
+                            {errors.maximumDiscount}
+                          </p>
                         )}
                       </div>
                     )}
@@ -455,7 +531,7 @@ export default function CreateDiscountCodePage() {
                 {/* Usage & Dates */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Usage & Validity</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="usageLimit">Usage Limit</Label>
@@ -464,11 +540,20 @@ export default function CreateDiscountCodePage() {
                         type="number"
                         min="1"
                         value={formData.usageLimit || ''}
-                        onChange={e => handleInputChange('usageLimit', e.target.value ? parseInt(e.target.value) : undefined)}
+                        onChange={e =>
+                          handleInputChange(
+                            'usageLimit',
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                         placeholder="Unlimited"
                       />
                       {errors.usageLimit && (
-                        <p className="text-sm text-red-600 mt-1">{errors.usageLimit}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.usageLimit}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -478,7 +563,9 @@ export default function CreateDiscountCodePage() {
                       <Label>Start Date</Label>
                       <DatePicker
                         date={formData.startsAt}
-                        onDateChange={date => handleInputChange('startsAt', date)}
+                        onDateChange={date =>
+                          handleInputChange('startsAt', date)
+                        }
                         placeholder="Select start date"
                       />
                     </div>
@@ -487,11 +574,15 @@ export default function CreateDiscountCodePage() {
                       <Label>Expiry Date</Label>
                       <DatePicker
                         date={formData.expiresAt}
-                        onDateChange={date => handleInputChange('expiresAt', date)}
+                        onDateChange={date =>
+                          handleInputChange('expiresAt', date)
+                        }
                         placeholder="No expiry (optional)"
                       />
                       {errors.expiresAt && (
-                        <p className="text-sm text-red-600 mt-1">{errors.expiresAt}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.expiresAt}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -500,15 +591,20 @@ export default function CreateDiscountCodePage() {
                 {/* Settings */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Settings</h3>
-                  
+
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <Switch
                         id="memberOnly"
                         checked={formData.memberOnly}
-                        onCheckedChange={checked => handleInputChange('memberOnly', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('memberOnly', checked)
+                        }
                       />
-                      <Label htmlFor="memberOnly" className="flex items-center gap-2">
+                      <Label
+                        htmlFor="memberOnly"
+                        className="flex items-center gap-2"
+                      >
                         <Crown className="h-4 w-4 text-purple-600" />
                         Member-only discount
                       </Label>
@@ -518,10 +614,13 @@ export default function CreateDiscountCodePage() {
                       <Switch
                         id="isPublic"
                         checked={formData.isPublic}
-                        onCheckedChange={checked => handleInputChange('isPublic', checked)}
+                        onCheckedChange={checked =>
+                          handleInputChange('isPublic', checked)
+                        }
                       />
                       <Label htmlFor="isPublic">
-                        Public discount code (customers can search and find this code)
+                        Public discount code (customers can search and find this
+                        code)
                       </Label>
                     </div>
                   </div>
@@ -555,38 +654,52 @@ export default function CreateDiscountCodePage() {
               <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   {getDiscountIcon()}
-                  <span className="font-mono font-bold text-lg">{formData.code || 'CODE'}</span>
+                  <span className="font-mono font-bold text-lg">
+                    {formData.code || 'CODE'}
+                  </span>
                   {formData.memberOnly && (
                     <Crown className="h-4 w-4 text-purple-600" />
                   )}
                 </div>
-                <h3 className="font-semibold">{formData.name || 'Discount Name'}</h3>
+                <h3 className="font-semibold">
+                  {formData.name || 'Discount Name'}
+                </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   {formData.description || 'Discount description'}
                 </p>
-                
+
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="text-sm space-y-1">
                     <p>
                       <strong>Discount:</strong>{' '}
-                      {formData.discountType === 'FREE_SHIPPING' 
+                      {formData.discountType === 'FREE_SHIPPING'
                         ? 'Free Shipping'
                         : formData.discountType === 'PERCENTAGE'
                           ? `${formData.discountValue}% off`
-                          : `RM${formData.discountValue} off`
-                      }
+                          : `RM${formData.discountValue} off`}
                     </p>
                     {formData.minimumOrderValue && (
-                      <p><strong>Min. order:</strong> RM{formData.minimumOrderValue}</p>
+                      <p>
+                        <strong>Min. order:</strong> RM
+                        {formData.minimumOrderValue}
+                      </p>
                     )}
                     {formData.maximumDiscount && (
-                      <p><strong>Max. discount:</strong> RM{formData.maximumDiscount}</p>
+                      <p>
+                        <strong>Max. discount:</strong> RM
+                        {formData.maximumDiscount}
+                      </p>
                     )}
                     {formData.usageLimit && (
-                      <p><strong>Usage limit:</strong> {formData.usageLimit} uses</p>
+                      <p>
+                        <strong>Usage limit:</strong> {formData.usageLimit} uses
+                      </p>
                     )}
                     {formData.expiresAt && (
-                      <p><strong>Expires:</strong> {formData.expiresAt.toLocaleDateString()}</p>
+                      <p>
+                        <strong>Expires:</strong>{' '}
+                        {formData.expiresAt.toLocaleDateString()}
+                      </p>
                     )}
                   </div>
                 </div>
