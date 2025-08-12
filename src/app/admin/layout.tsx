@@ -114,17 +114,6 @@ const navigationItems = [
     icon: Settings,
     roles: [UserRole.ADMIN],
   },
-  // Development only - Test tools
-  ...(process.env.NODE_ENV === 'development'
-    ? [
-        {
-          label: '🧪 Payment Tests',
-          href: '/admin/test/payment-flow',
-          icon: Settings,
-          roles: [UserRole.ADMIN, UserRole.STAFF],
-        },
-      ]
-    : []),
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
