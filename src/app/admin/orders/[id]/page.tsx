@@ -256,6 +256,16 @@ export default function AdminOrderDetailsPage() {
     return null;
   }
 
+  // Debug log to help identify the issue
+  console.log('Order data:', {
+    memberDiscount: order.memberDiscount,
+    discountAmount: order.discountAmount,
+    subtotal: order.subtotal,
+    shippingCost: order.shippingCost,
+    taxAmount: order.taxAmount,
+    total: order.total
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
