@@ -27,8 +27,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
-import { canUserAccessProduct, getEarlyAccessPrice, calculateEarlyAccessStatus } from '@/lib/member/early-access-utils';
+import { usePricing } from '@/hooks/use-pricing';
 
 interface ProductImage {
   id: string;
@@ -140,12 +139,6 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: 'MYR',
-    }).format(price);
-  };
 
   const handleAddToCart = async () => {
     if (!product) {
@@ -214,21 +207,11 @@ export default function ProductDetailPage() {
 
   const isOutOfStock = product.stockQuantity === 0;
   
-  // Check early access permissions
-  const canAccess = canUserAccessProduct(product, isMember);
-  const earlyAccessStatus = calculateEarlyAccessStatus(product);
-  
-  // Calculate best price using promotional and early access logic
-  const priceInfo = getBestPrice(product, isMember);
-  const earlyAccessPrice = getEarlyAccessPrice(product, isMember);
-  const promotionStatus = calculatePromotionStatus(product);
-  const promotionText = getPromotionDisplayText(promotionStatus);
-  
-  // Use early access price if applicable
-  const finalPrice = earlyAccessPrice.hasEarlyAccess ? earlyAccessPrice : priceInfo;
+  // Get centralized pricing information
+  const pricing = usePricing(product);
   
   // Handle restricted access
-  if (!canAccess) {
+  if (pricing.effectivePrice === 0 && pricing.priceDescription.includes('restricted')) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
@@ -368,15 +351,18 @@ export default function ProductDetailPage() {
           {/* Header */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              {product.featured && (
-                <Badge variant="secondary" className="bg-yellow-500 text-white">
-                  <Award className="w-3 h-3 mr-1" />
-                  Featured
+              {/* Centralized badges from pricing service */}
+              {pricing.badges.map((badge, index) => (
+                <Badge
+                  key={`${badge.type}-${index}`}
+                  variant={badge.variant}
+                  className={badge.className}
+                >
+                  {badge.type === 'featured' && <Award className="w-3 h-3 mr-1" />}
+                  {badge.text}
                 </Badge>
-              )}
-              {product.isPromotional && (
-                <Badge variant="destructive">Promotion</Badge>
-              )}
+              ))}
+              {/* Stock status badges */}
               {isLowStock && (
                 <Badge
                   variant="outline"
@@ -423,92 +409,50 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Price */}
-          <div className="space-y-2">
+          {/* Centralized Price Display */}
+          <div className="space-y-2" aria-label={pricing.priceDescription}>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className={`text-3xl font-bold ${
-                  finalPrice.priceType === 'early-access' ? 'text-purple-600' :
-                  finalPrice.priceType === 'promotional' ? 'text-red-600' : 
-                  finalPrice.priceType === 'member' ? 'text-green-600' : 
-                  'text-gray-900'
-                }`}>
-                  {formatPrice(finalPrice.price)}
+                <span className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}>
+                  {pricing.formattedPrice}
                 </span>
-                {finalPrice.priceType === 'early-access' && (
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                    Early Access
-                  </Badge>
-                )}
-                {finalPrice.priceType === 'promotional' && (
-                  <Badge variant="destructive" className="bg-red-500 text-white">
-                    {promotionText || 'Special Price'}
-                  </Badge>
-                )}
-                {finalPrice.priceType === 'member' && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    Member Price
-                  </Badge>
-                )}
-                {earlyAccessStatus.isMemberOnly && !isMember && (
-                  <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-500">
-                    Members Only
-                  </Badge>
-                )}
-                {earlyAccessStatus.isEarlyAccessPromotion && isMember && (
-                  <Badge variant="secondary" className="bg-purple-500 text-white">
-                    Early Access Active
-                  </Badge>
-                )}
-                {promotionStatus.isScheduled && (
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                    {promotionText || 'Coming Soon'}
-                  </Badge>
-                )}
-                {product.isQualifyingForMembership && !promotionStatus.isActive && !promotionStatus.isScheduled && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    ✓ Membership Qualifying
-                  </Badge>
-                )}
+                {/* Price type badges already handled by centralized badges above */}
               </div>
               
               {/* Original price and savings */}
-              {priceInfo.savings > 0 && (
+              {pricing.showSavings && (
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl text-muted-foreground line-through">
-                    {formatPrice(finalPrice.originalPrice)}
+                    {pricing.formattedOriginalPrice}
                   </span>
-                  <span className={`font-medium ${
-                    finalPrice.priceType === 'early-access' ? 'text-purple-600' :
-                    finalPrice.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    You save {formatPrice(finalPrice.savings)}
+                  <span className={`font-medium ${pricing.displayClasses.savingsColor}`}>
+                    You save {pricing.formattedSavings}
                   </span>
                 </div>
               )}
               
               {/* Member price preview for non-members */}
-              {!isMember && finalPrice.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && !earlyAccessStatus.isMemberOnly && (
+              {pricing.showMemberPreview && (
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
                     <strong>
-                      Member price: {formatPrice(product.memberPrice)}
+                      {pricing.memberPreviewText}
                     </strong>
                     <br />
-                    Save {formatPrice(product.regularPrice - product.memberPrice)} with membership
+                    Save {pricing.formattedSavings} with membership
                   </p>
                 </div>
               )}
               
               {/* Early access information */}
-              {earlyAccessStatus.isEarlyAccessPromotion && (
+              {pricing.priceType === 'early-access' && (
                 <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <p className="text-sm text-purple-800">
                     <strong>🎆 Early Access Promotion</strong>
                     <br />
                     {isMember 
                       ? 'You have early access to this promotion!' 
-                      : `Members get early access starting ${earlyAccessStatus.earlyAccessStart?.toLocaleDateString('en-MY')}`
+                      : 'Members get early access to special promotions'
                     }
                   </p>
                 </div>
@@ -778,12 +722,18 @@ export default function ProductDetailPage() {
                     </Link>
                     <div className="mt-2">
                       <span className="font-bold">
-                        {formatPrice(relatedProduct.regularPrice)}
+                        {new Intl.NumberFormat('en-MY', {
+                          style: 'currency',
+                          currency: 'MYR',
+                        }).format(relatedProduct.regularPrice)}
                       </span>
                       {relatedProduct.memberPrice <
                         relatedProduct.regularPrice && (
                         <div className="text-xs text-muted-foreground">
-                          Member: {formatPrice(relatedProduct.memberPrice)}
+                          Member: {new Intl.NumberFormat('en-MY', {
+                            style: 'currency',
+                            currency: 'MYR',
+                          }).format(relatedProduct.memberPrice)}
                         </div>
                       )}
                     </div>

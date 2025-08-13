@@ -30,8 +30,7 @@ import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { ProductRecommendations } from '@/components/product/ProductRecommendations';
 import { CompactPriceDisplay } from '@/components/pricing/PriceDisplay';
 import { DynamicHeroSection } from '@/components/homepage/DynamicHeroSection';
-import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
-import { canUserAccessProduct, getEarlyAccessPrice, calculateEarlyAccessStatus } from '@/lib/member/early-access-utils';
+import { ProductCard } from '@/components/product/ProductCard';
 
 interface Product {
   id: string;
@@ -304,231 +303,47 @@ export default function HomePage() {
             ) : featuredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {featuredProducts.slice(0, 4).map(product => {
-                  const primaryImage =
-                    product.images.find(img => img.isPrimary) ||
-                    product.images[0];
+                  const handleAddToCart = async (productId: string) => {
+                    const isLoggedInUser = !!session?.user;
+                    
+                    if (!isLoggedInUser) {
+                      window.location.href = '/auth/signin';
+                      return;
+                    }
 
-                  // Calculate promotional pricing
-                  const isLoggedInUser = !!session?.user;
-                  const isMemberUser = session?.user?.isMember || false;
-                  
-                  // Check early access permissions
-                  const canAccess = canUserAccessProduct(product, isMemberUser);
-                  const earlyAccessStatus = calculateEarlyAccessStatus(product);
-                  
-                  // Calculate best price using promotional and early access logic
-                  const priceInfo = getBestPrice(product, isMemberUser);
-                  const earlyAccessPrice = getEarlyAccessPrice(product, isMemberUser);
-                  const promotionStatus = calculatePromotionStatus(product);
-                  const promotionText = getPromotionDisplayText(promotionStatus);
-                  
-                  // Use early access price if applicable
-                  const finalPrice = earlyAccessPrice.hasEarlyAccess ? earlyAccessPrice : priceInfo;
+                    try {
+                      const response = await fetch('/api/cart', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          productId,
+                          quantity: 1,
+                        }),
+                      });
 
-                  const formatPrice = (price: number) => {
-                    return new Intl.NumberFormat('en-MY', {
-                      style: 'currency',
-                      currency: 'MYR',
-                    }).format(price);
+                      if (response.ok) {
+                        // TODO: Add toast notification here
+                        // Success handled silently for now
+                      } else {
+                        const data = await response.json();
+                        alert(data.message || 'Failed to add to cart');
+                      }
+                    } catch {
+                      alert('Failed to add to cart');
+                    }
                   };
 
-                  // Don't show product if user doesn't have access
-                  if (!canAccess) {
-                    return null;
-                  }
-
                   return (
-                    <Link href={`/products/${product.slug}`} key={product.id}>
-                      <Card
-                        className="group hover:shadow-lg transition-shadow cursor-pointer"
-                      >
-                      <div className="relative aspect-square overflow-hidden">
-                        {primaryImage ? (
-                          <Image
-                            src={primaryImage.url}
-                            alt={primaryImage.altText || product.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-400">No Image</span>
-                          </div>
-                        )}
-
-                        {/* Badges */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1">
-                          <Badge className="bg-blue-600">Featured</Badge>
-                          {earlyAccessStatus.isMemberOnly && !isMemberUser && (
-                            <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-500">
-                              Members Only
-                            </Badge>
-                          )}
-                          {earlyAccessStatus.isEarlyAccessPromotion && isMemberUser && (
-                            <Badge variant="secondary" className="bg-purple-500 text-white">
-                              Early Access
-                            </Badge>
-                          )}
-                          {promotionStatus.isActive && (
-                            <Badge variant="destructive" className="bg-red-500 text-white">
-                              {promotionText || 'Special Price'}
-                            </Badge>
-                          )}
-                          {promotionStatus.isScheduled && (
-                            <Badge variant="outline" className="bg-blue-500 text-white border-blue-500">
-                              {promotionText || 'Coming Soon'}
-                            </Badge>
-                          )}
-                          {product.stockQuantity === 0 && (
-                            <Badge variant="outline" className="bg-white">
-                              Out of Stock
-                            </Badge>
-                          )}
-                          {product.isQualifyingForMembership && !promotionStatus.isActive && !promotionStatus.isScheduled && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Membership Qualifying
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          <WishlistButton
-                            productId={product.id}
-                            size="sm"
-                            variant="secondary"
-                            className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      <CardContent className="p-4">
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">
-                            {product.categories?.[0]?.category?.name || 'Uncategorized'}
-                          </p>
-
-                          <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
-                            {product.name}
-                          </h3>
-
-                          {product.averageRating > 0 && (
-                            <div className="flex items-center gap-1">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                  <Star
-                                    key={star}
-                                    className={`w-3 h-3 ${
-                                      star <= product.averageRating
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                ({product.reviewCount})
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Enhanced Pricing */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-bold text-base ${
-                                finalPrice.priceType === 'early-access' ? 'text-purple-600' :
-                                finalPrice.priceType === 'promotional' ? 'text-red-600' : 
-                                finalPrice.priceType === 'member' ? 'text-green-600' : 
-                                'text-gray-900'
-                              }`}>
-                                {formatPrice(finalPrice.price)}
-                              </span>
-                              {finalPrice.priceType === 'early-access' && (
-                                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
-                                  Early Access
-                                </Badge>
-                              )}
-                              {finalPrice.priceType === 'promotional' && (
-                                <Badge variant="destructive" className="text-xs">
-                                  Special
-                                </Badge>
-                              )}
-                              {finalPrice.priceType === 'member' && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Member
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {/* Show original price and savings */}
-                            {finalPrice.savings > 0 && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground line-through">
-                                  {formatPrice(finalPrice.originalPrice)}
-                                </span>
-                                <span className={`text-xs font-medium ${
-                                  finalPrice.priceType === 'early-access' ? 'text-purple-600' :
-                                  finalPrice.priceType === 'promotional' ? 'text-red-600' : 'text-green-600'
-                                }`}>
-                                  Save {formatPrice(finalPrice.savings)}
-                                </span>
-                              </div>
-                            )}
-                            
-                            {/* Show member price preview for non-members */}
-                            {!isMemberUser && finalPrice.priceType === 'regular' && product.memberPrice < product.regularPrice && !promotionStatus.isActive && !earlyAccessStatus.isMemberOnly && (
-                              <div className="text-xs text-muted-foreground">
-                                Member price: {formatPrice(product.memberPrice)}
-                              </div>
-                            )}
-                          </div>
-
-                          <Button
-                            className="w-full"
-                            disabled={product.stockQuantity === 0}
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (!isLoggedInUser) {
-                                window.location.href = '/auth/signin';
-                                return;
-                              }
-
-                              try {
-                                const response = await fetch('/api/cart', {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    productId: product.id,
-                                    quantity: 1,
-                                  }),
-                                });
-
-                                if (response.ok) {
-                                  // TODO: Add toast notification here
-                                  // Success handled silently for now
-                                } else {
-                                  const data = await response.json();
-                                  alert(
-                                    data.message || 'Failed to add to cart'
-                                  );
-                                }
-                              } catch {
-                                alert('Failed to add to cart');
-                              }
-                            }}
-                          >
-                            <ShoppingBag className="w-4 h-4 mr-2" />
-                            {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    </Link>
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                      size="md"
+                      showDescription={false}
+                      showRating={true}
+                    />
                   );
                 })}
               </div>

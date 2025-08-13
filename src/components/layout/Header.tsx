@@ -35,17 +35,13 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth';
 import { SearchBar } from '@/components/search/SearchBar';
 import { CartButton } from '@/components/cart/CartButton';
 
 export function Header() {
-  const { data: session, status } = useSession();
+  const { isLoggedIn, isMember, isLoading, signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const isLoggedIn = !!session?.user;
-  const isMember = session?.user?.isMember;
-  const loading = status === 'loading';
 
 
   const handleSignOut = async () => {
@@ -103,12 +99,12 @@ export function Header() {
             </Link>
 
             {/* Cart Button - only for non-admin users */}
-            {(!isLoggedIn || (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'STAFF')) && (
+            {(!isLoggedIn || (user?.role !== 'ADMIN' && user?.role !== 'STAFF')) && (
               <CartButton />
             )}
 
             {/* User Menu */}
-            {isLoggedIn && !loading ? (
+            {isLoggedIn && !isLoading ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -117,7 +113,7 @@ export function Header() {
                   >
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-primary-foreground">
-                        {session.user.name?.charAt(0)?.toUpperCase() || 'U'}
+                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </span>
                     </div>
                     {isMember && (
@@ -134,10 +130,10 @@ export function Header() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {session.user.name}
+                        {user?.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {session.user.email}
+                        {user?.email}
                       </p>
                       {isMember && (
                         <Badge variant="secondary" className="w-fit text-xs">
@@ -150,7 +146,7 @@ export function Header() {
                   <DropdownMenuSeparator />
                   
                   {/* Customer navigation - only for non-admin users */}
-                  {session.user.role !== 'ADMIN' && session.user.role !== 'STAFF' && (
+                  {user?.role !== 'ADMIN' && user?.role !== 'STAFF' && (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href="/member/dashboard">
@@ -180,8 +176,8 @@ export function Header() {
                   )}
 
                   {/* Admin/Staff navigation */}
-                  {(session.user.role === 'ADMIN' ||
-                    session.user.role === 'STAFF') && (
+                  {(user?.role === 'ADMIN' ||
+                    user?.role === 'STAFF') && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -201,7 +197,7 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                {loading && (
+                {isLoading && (
                   <div className="w-6 h-6 bg-muted animate-pulse rounded-full mr-2" />
                 )}
                 <Link href="/auth/signin">
@@ -257,9 +253,9 @@ export function Header() {
                   {isLoggedIn ? (
                     <div className="border-t pt-4 mt-4">
                       <div className="px-3 py-2 text-sm">
-                        <p className="font-medium">{session.user.name}</p>
+                        <p className="font-medium">{user?.name}</p>
                         <p className="text-muted-foreground">
-                          {session.user.email}
+                          {user?.email}
                         </p>
                         {isMember && (
                           <Badge variant="secondary" className="mt-1 text-xs">
@@ -301,8 +297,8 @@ export function Header() {
                           <Settings className="mr-2 h-4 w-4" />
                           Profile
                         </Link>
-                        {(session.user.role === 'ADMIN' ||
-                          session.user.role === 'STAFF') && (
+                        {(user?.role === 'ADMIN' ||
+                          user?.role === 'STAFF') && (
                           <Link
                             href="/admin/dashboard"
                             onClick={() => setIsMobileMenuOpen(false)}
