@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { usePricing } from '@/hooks/use-pricing';
+import { productService } from '@/lib/services/product-service';
 
 interface ProductImage {
   id: string;
@@ -116,17 +117,12 @@ export default function ProductDetailPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/products/${slug}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Product not found');
-          }
-          throw new Error('Failed to load product');
-        }
-
-        const data = await response.json();
-        setProduct(data.product);
+        // Use service layer with built-in error handling and caching
+        const product = await productService.getProduct(slug);
+        setProduct(product);
+        
+        // Track product view for analytics
+        productService.trackProductView(product.id);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load product');
       } finally {

@@ -24,6 +24,8 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { ProductCard } from '@/components/product/ProductCard';
+import { productService } from '@/lib/services/product-service';
+import { categoryService } from '@/lib/services/category-service';
 
 interface Product {
   id: string;
@@ -91,40 +93,29 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Fetch products function
+  // Fetch products function using service layer
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '20',
-      });
+      // Build parameters for service call
+      const [sortField, sortOrder] = sortBy.split('-');
+      const params = {
+        page: currentPage,
+        limit: 20,
+        search: searchTerm || undefined,
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        sortBy: sortField as 'created' | 'name' | 'price' | 'rating',
+        sortOrder: sortOrder as 'asc' | 'desc'
+      };
 
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-      if (selectedCategory && selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
-      }
-
-      if (sortBy) {
-        const [sortField, sortOrder] = sortBy.split('-');
-        params.append('sortBy', sortField);
-        params.append('sortOrder', sortOrder);
-      }
-
-      const response = await fetch(`/api/products?${params}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-
-      const data = await response.json();
-      setProducts(data.products);
-      setTotalPages(data.pagination.totalPages);
-      setTotalCount(data.pagination.totalCount);
+      // Use service layer with built-in error handling and caching
+      const result = await productService.getProducts(params);
+      
+      setProducts(result.products);
+      setTotalPages(result.pagination.totalPages);
+      setTotalCount(result.pagination.totalCount);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
     } finally {
@@ -132,14 +123,11 @@ export default function ProductsPage() {
     }
   };
 
-  // Fetch categories function
+  // Fetch categories function using service layer
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories?includeProductCount=true');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || []);
-      }
+      const categories = await categoryService.getCategories({ includeProductCount: true });
+      setCategories(categories);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     }

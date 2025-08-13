@@ -31,6 +31,8 @@ import { ProductRecommendations } from '@/components/product/ProductRecommendati
 import { CompactPriceDisplay } from '@/components/pricing/PriceDisplay';
 import { DynamicHeroSection } from '@/components/homepage/DynamicHeroSection';
 import { ProductCard } from '@/components/product/ProductCard';
+import { productService } from '@/lib/services/product-service';
+import { categoryService } from '@/lib/services/category-service';
 
 interface Product {
   id: string;
@@ -114,21 +116,15 @@ export default function HomePage() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [productsResponse, categoriesResponse, customizationResponse] = await Promise.all([
-          fetch('/api/products?featured=true&limit=8'),
-          fetch('/api/categories?includeProductCount=true'),
-          fetch('/api/site-customization/current'),
+        // Use service layer for data fetching with built-in error handling and caching
+        const [products, categories, customizationResponse] = await Promise.all([
+          productService.getFeaturedProducts(8),
+          categoryService.getCategories({ includeProductCount: true }),
+          fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
         ]);
 
-        if (productsResponse.ok) {
-          const productsData = await productsResponse.json();
-          setFeaturedProducts(productsData.products);
-        }
-
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          setCategories(categoriesData.categories.slice(0, 6));
-        }
+        setFeaturedProducts(products);
+        setCategories(categories.slice(0, 6));
 
         if (customizationResponse.ok) {
           const customizationData = await customizationResponse.json();
