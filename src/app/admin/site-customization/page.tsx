@@ -28,7 +28,8 @@ export default function SiteCustomizationOverview() {
   const customizationFeatures = [
     {
       title: 'Hero Section',
-      description: 'Customize your homepage hero section with custom images, videos, and content',
+      description:
+        'Customize your homepage hero section with custom images, videos, and content',
       icon: Camera,
       href: '/admin/site-customization/hero',
       color: 'blue',
@@ -41,7 +42,7 @@ export default function SiteCustomizationOverview() {
     },
     {
       title: 'Theme Colors',
-      description: 'Manage your site\'s color scheme and create custom themes',
+      description: "Manage your site's color scheme and create custom themes",
       icon: Palette,
       href: '/admin/site-customization/theme',
       color: 'purple',
@@ -57,7 +58,7 @@ export default function SiteCustomizationOverview() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ContextualNavigation items={breadcrumbItems} />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -79,13 +80,15 @@ export default function SiteCustomizationOverview() {
                   <Camera className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Hero Section</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Hero Section
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">Active</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center">
@@ -93,13 +96,15 @@ export default function SiteCustomizationOverview() {
                   <Palette className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Theme</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Active Theme
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">Default</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center">
@@ -107,7 +112,9 @@ export default function SiteCustomizationOverview() {
                   <ImageIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Media Files</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Media Files
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">Ready</p>
                 </div>
               </div>
@@ -128,20 +135,23 @@ export default function SiteCustomizationOverview() {
               <Card key={index} className="overflow-hidden">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
-                    <div className={`p-3 rounded-lg ${colorClasses[feature.color as keyof typeof colorClasses]}`}>
+                    <div
+                      className={`p-3 rounded-lg ${colorClasses[feature.color as keyof typeof colorClasses]}`}
+                    >
                       <IconComponent className="h-6 w-6" />
                     </div>
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-gray-600">
-                    {feature.description}
-                  </p>
-                  
+                  <p className="text-gray-600">{feature.description}</p>
+
                   <ul className="space-y-2">
                     {feature.features.map((featureItem, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                      <li
+                        key={featureIndex}
+                        className="flex items-center gap-2 text-sm text-gray-600"
+                      >
                         <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                         {featureItem}
                       </li>
@@ -179,9 +189,10 @@ export default function SiteCustomizationOverview() {
                   Getting Started with Site Customization
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Personalize your e-commerce site to match your brand identity. 
-                  Start with updating your hero section to showcase your products and value proposition, 
-                  then customize the color theme to align with your brand colors.
+                  Personalize your e-commerce site to match your brand identity.
+                  Start with updating your hero section to showcase your
+                  products and value proposition, then customize the color theme
+                  to align with your brand colors.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link href="/admin/site-customization/hero">

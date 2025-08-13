@@ -70,23 +70,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const transformed = {
       ...discountCode,
       discountValue: Number(discountCode.discountValue),
-      minimumOrderValue: discountCode.minimumOrderValue 
-        ? Number(discountCode.minimumOrderValue) 
+      minimumOrderValue: discountCode.minimumOrderValue
+        ? Number(discountCode.minimumOrderValue)
         : null,
-      maximumDiscount: discountCode.maximumDiscount 
-        ? Number(discountCode.maximumDiscount) 
+      maximumDiscount: discountCode.maximumDiscount
+        ? Number(discountCode.maximumDiscount)
         : null,
-      createdBy: discountCode.createdBy ? {
-        name: `${discountCode.createdBy.firstName} ${discountCode.createdBy.lastName}`.trim(),
-      } : null,
+      createdBy: discountCode.createdBy
+        ? {
+            name: `${discountCode.createdBy.firstName} ${discountCode.createdBy.lastName}`.trim(),
+          }
+        : null,
       usageHistory: discountCode.usageHistory.map(usage => ({
         ...usage,
         orderValue: Number(usage.orderValue),
         discountAmount: Number(usage.discountAmount),
-        user: usage.user ? {
-          name: `${usage.user.firstName} ${usage.user.lastName}`.trim(),
-          email: usage.user.email,
-        } : null,
+        user: usage.user
+          ? {
+              name: `${usage.user.firstName} ${usage.user.lastName}`.trim(),
+              email: usage.user.email,
+            }
+          : null,
       })),
     };
 
@@ -116,14 +120,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    
+
     const allowedUpdates = [
       'name',
       'description',
       'status',
       'usageLimit',
       'expiresAt',
-      'isPublic'
+      'isPublic',
     ];
 
     // Filter only allowed updates
@@ -185,7 +189,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       });
 
       return NextResponse.json({
-        message: 'Discount code has been deactivated (cannot delete used codes)',
+        message:
+          'Discount code has been deactivated (cannot delete used codes)',
       });
     }
 

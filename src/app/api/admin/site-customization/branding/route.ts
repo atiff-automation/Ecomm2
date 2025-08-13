@@ -28,8 +28,12 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const type = formData.get('type') as string; // 'logo' or 'favicon'
-    const width = formData.get('width') ? parseInt(formData.get('width') as string) : undefined;
-    const height = formData.get('height') ? parseInt(formData.get('height') as string) : undefined;
+    const width = formData.get('width')
+      ? parseInt(formData.get('width') as string)
+      : undefined;
+    const height = formData.get('height')
+      ? parseInt(formData.get('height') as string)
+      : undefined;
 
     if (!file) {
       return NextResponse.json(
@@ -46,13 +50,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = type === 'logo' 
-      ? ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp']
-      : ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'];
+    const allowedTypes =
+      type === 'logo'
+        ? [
+            'image/png',
+            'image/jpeg',
+            'image/jpg',
+            'image/svg+xml',
+            'image/webp',
+          ]
+        : ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'];
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { message: `Invalid file type for ${type}. Allowed: ${allowedTypes.join(', ')}` },
+        {
+          message: `Invalid file type for ${type}. Allowed: ${allowedTypes.join(', ')}`,
+        },
         { status: 400 }
       );
     }
@@ -112,8 +125,12 @@ export async function POST(request: NextRequest) {
     const updateData: any = {};
     if (type === 'logo') {
       updateData.logoUrl = fileUrl;
-      if (width) updateData.logoWidth = width;
-      if (height) updateData.logoHeight = height;
+      if (width) {
+        updateData.logoWidth = width;
+      }
+      if (height) {
+        updateData.logoHeight = height;
+      }
     } else {
       updateData.faviconUrl = fileUrl;
     }
@@ -148,7 +165,9 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (error) {
-      console.log('Media upload record creation failed, but file upload succeeded');
+      console.log(
+        'Media upload record creation failed, but file upload succeeded'
+      );
     }
 
     // Create audit log (optional, skip on error)
@@ -179,7 +198,6 @@ export async function POST(request: NextRequest) {
       fileUrl,
       theme: updatedTheme,
     });
-
   } catch (error) {
     console.error('Error uploading branding asset:', error);
     return NextResponse.json(
@@ -259,7 +277,6 @@ export async function DELETE(request: NextRequest) {
       message: `${type === 'logo' ? 'Logo' : 'Favicon'} removed successfully!`,
       theme: updatedTheme,
     });
-
   } catch (error) {
     console.error('Error removing branding asset:', error);
     return NextResponse.json(

@@ -47,9 +47,10 @@ export async function GET(request: NextRequest) {
       });
     } else if (type === 'check-benefits') {
       // Check and create automated benefits
-      const createdCodes = await memberPromotionService.checkAndCreateAutomatedBenefits(
-        session.user.id
-      );
+      const createdCodes =
+        await memberPromotionService.checkAndCreateAutomatedBenefits(
+          session.user.id
+        );
 
       return NextResponse.json({
         message: 'Benefits checked',
@@ -58,9 +59,10 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Get available member promotions
-      const promotions = await memberPromotionService.getAvailableMemberPromotions(
-        session.user.id
-      );
+      const promotions =
+        await memberPromotionService.getAvailableMemberPromotions(
+          session.user.id
+        );
 
       // Format response
       const formattedPromotions = promotions.map(promo => ({
@@ -69,8 +71,8 @@ export async function GET(request: NextRequest) {
         description: promo.description,
         discountType: promo.discountType,
         discountValue: Number(promo.discountValue),
-        minimumOrderValue: promo.minimumOrderValue 
-          ? Number(promo.minimumOrderValue) 
+        minimumOrderValue: promo.minimumOrderValue
+          ? Number(promo.minimumOrderValue)
           : null,
         expiresAt: promo.expiresAt,
         isPublic: promo.isPublic,

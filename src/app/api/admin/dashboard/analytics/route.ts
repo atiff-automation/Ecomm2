@@ -15,7 +15,8 @@ export async function GET() {
 
     if (
       !session?.user ||
-      (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.STAFF)
+      (session.user.role !== UserRole.ADMIN &&
+        session.user.role !== UserRole.STAFF)
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -25,7 +26,7 @@ export async function GET() {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     // Revenue trend over last 30 days
-    const revenueTrend = await prisma.$queryRaw`
+    const revenueTrend = (await prisma.$queryRaw`
       SELECT 
         DATE_TRUNC('day', "createdAt") as date,
         COUNT(*) as orders,
@@ -35,7 +36,7 @@ export async function GET() {
         AND "paymentStatus" = 'PAID'
       GROUP BY DATE_TRUNC('day', "createdAt")
       ORDER BY date
-    ` as Array<{ date: Date; orders: bigint; revenue: number }>;
+    `) as Array<{ date: Date; orders: bigint; revenue: number }>;
 
     // Order status distribution
     const orderStatusData = await prisma.order.groupBy({
@@ -51,7 +52,7 @@ export async function GET() {
     });
 
     // Top selling products (last 30 days)
-    const topProducts = await prisma.$queryRaw`
+    const topProducts = (await prisma.$queryRaw`
       SELECT 
         p.name,
         p.sku,
@@ -65,10 +66,15 @@ export async function GET() {
       GROUP BY p.id, p.name, p.sku
       ORDER BY total_sold DESC
       LIMIT 10
-    ` as Array<{ name: string; sku: string; total_sold: bigint; revenue: number }>;
+    `) as Array<{
+      name: string;
+      sku: string;
+      total_sold: bigint;
+      revenue: number;
+    }>;
 
     // Member vs Non-member sales comparison
-    const membershipComparison = await prisma.$queryRaw`
+    const membershipComparison = (await prisma.$queryRaw`
       SELECT 
         CASE WHEN u."isMember" = true THEN 'Member' ELSE 'Non-Member' END as customer_type,
         COUNT(*) as orders,
@@ -79,10 +85,15 @@ export async function GET() {
       WHERE o."createdAt" >= ${thirtyDaysAgo}
         AND o."paymentStatus" = 'PAID'
       GROUP BY u."isMember"
-    ` as Array<{ customer_type: string; orders: bigint; revenue: number; avg_order_value: number }>;
+    `) as Array<{
+      customer_type: string;
+      orders: bigint;
+      revenue: number;
+      avg_order_value: number;
+    }>;
 
     // Category performance
-    const categoryPerformance = await prisma.$queryRaw`
+    const categoryPerformance = (await prisma.$queryRaw`
       SELECT 
         c.name as category,
         COUNT(DISTINCT oi."orderId") as orders,
@@ -98,10 +109,15 @@ export async function GET() {
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
       LIMIT 8
-    ` as Array<{ category: string; orders: bigint; units_sold: bigint; revenue: number }>;
+    `) as Array<{
+      category: string;
+      orders: bigint;
+      units_sold: bigint;
+      revenue: number;
+    }>;
 
     // Recent membership activations
-    const membershipGrowth = await prisma.$queryRaw`
+    const membershipGrowth = (await prisma.$queryRaw`
       SELECT 
         DATE_TRUNC('day', "memberSince") as date,
         COUNT(*) as new_members
@@ -110,7 +126,7 @@ export async function GET() {
         AND "isMember" = true
       GROUP BY DATE_TRUNC('day', "memberSince")
       ORDER BY date
-    ` as Array<{ date: Date; new_members: bigint }>;
+    `) as Array<{ date: Date; new_members: bigint }>;
 
     // Format the data for frontend consumption
     const analytics = {
@@ -122,7 +138,11 @@ export async function GET() {
       orderStatusData: orderStatusData.map(item => ({
         status: item.status,
         count: item._count.id,
-        percentage: Math.round((item._count.id / orderStatusData.reduce((sum, curr) => sum + curr._count.id, 0)) * 100),
+        percentage: Math.round(
+          (item._count.id /
+            orderStatusData.reduce((sum, curr) => sum + curr._count.id, 0)) *
+            100
+        ),
       })),
       topProducts: topProducts.map(item => ({
         name: item.name,

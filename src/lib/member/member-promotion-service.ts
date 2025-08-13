@@ -45,7 +45,7 @@ export class MemberPromotionService {
     createdById: string
   ): Promise<string> {
     const code = this.generateMemberPromotionCode(config.name);
-    
+
     await prisma.discountCode.create({
       data: {
         code,
@@ -53,11 +53,11 @@ export class MemberPromotionService {
         description: config.description,
         discountType: config.discountType,
         discountValue: new Decimal(config.discountValue),
-        minimumOrderValue: config.minimumOrderValue 
-          ? new Decimal(config.minimumOrderValue) 
+        minimumOrderValue: config.minimumOrderValue
+          ? new Decimal(config.minimumOrderValue)
           : null,
-        maximumDiscount: config.maximumDiscount 
-          ? new Decimal(config.maximumDiscount) 
+        maximumDiscount: config.maximumDiscount
+          ? new Decimal(config.maximumDiscount)
           : null,
         memberOnly: true, // All member promotions are member-only
         applicableToCategories: config.applicableToCategories || [],
@@ -88,7 +88,8 @@ export class MemberPromotionService {
 
     const config: MemberPromotionConfig = {
       name: `Welcome Offer for ${user.firstName}`,
-      description: 'Welcome to our membership program! Enjoy 15% off your first order.',
+      description:
+        'Welcome to our membership program! Enjoy 15% off your first order.',
       discountType: DiscountType.PERCENTAGE,
       discountValue: 15,
       minimumOrderValue: 50,
@@ -171,7 +172,8 @@ export class MemberPromotionService {
       case 'FIRST_ORDER':
         config = {
           name: `First Order Bonus - ${user.firstName}`,
-          description: 'Congratulations on your first order! Here\'s 10% off your next purchase.',
+          description:
+            "Congratulations on your first order! Here's 10% off your next purchase.",
           discountType: DiscountType.PERCENTAGE,
           discountValue: 10,
           minimumOrderValue: 30,
@@ -183,7 +185,8 @@ export class MemberPromotionService {
       case 'FIFTH_ORDER':
         config = {
           name: `5th Order Celebration - ${user.firstName}`,
-          description: 'You\'re a valued customer! Enjoy RM25 off your next order.',
+          description:
+            "You're a valued customer! Enjoy RM25 off your next order.",
           discountType: DiscountType.FIXED_AMOUNT,
           discountValue: 25,
           minimumOrderValue: 100,
@@ -195,7 +198,8 @@ export class MemberPromotionService {
       case 'TENTH_ORDER':
         config = {
           name: `Loyalty Reward - ${user.firstName}`,
-          description: '10 orders and counting! Here\'s 25% off your next purchase.',
+          description:
+            "10 orders and counting! Here's 25% off your next purchase.",
           discountType: DiscountType.PERCENTAGE,
           discountValue: 25,
           maximumDiscount: 150,
@@ -207,7 +211,8 @@ export class MemberPromotionService {
       case 'HIGH_SPENDER':
         config = {
           name: `VIP Appreciation - ${user.firstName}`,
-          description: 'Thank you for being a valued customer! Enjoy exclusive VIP pricing.',
+          description:
+            'Thank you for being a valued customer! Enjoy exclusive VIP pricing.',
           discountType: DiscountType.PERCENTAGE,
           discountValue: 30,
           minimumOrderValue: 200,
@@ -251,8 +256,14 @@ export class MemberPromotionService {
 
     const orders = user.orders;
     const orderCount = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + Number(order.total), 0);
-    const totalSavings = orders.reduce((sum, order) => sum + Number(order.discountAmount), 0);
+    const totalSpent = orders.reduce(
+      (sum, order) => sum + Number(order.total),
+      0
+    );
+    const totalSavings = orders.reduce(
+      (sum, order) => sum + Number(order.discountAmount),
+      0
+    );
     const averageOrderValue = orderCount > 0 ? totalSpent / orderCount : 0;
 
     // Get exclusive offers count
@@ -296,16 +307,18 @@ export class MemberPromotionService {
   /**
    * Get available member promotions for a user
    */
-  async getAvailableMemberPromotions(userId: string): Promise<Array<{
-    code: string;
-    name: string;
-    description: string | null;
-    discountType: DiscountType;
-    discountValue: Decimal;
-    minimumOrderValue: Decimal | null;
-    expiresAt: Date | null;
-    isPublic: boolean;
-  }>> {
+  async getAvailableMemberPromotions(userId: string): Promise<
+    Array<{
+      code: string;
+      name: string;
+      description: string | null;
+      discountType: DiscountType;
+      discountValue: Decimal;
+      minimumOrderValue: Decimal | null;
+      expiresAt: Date | null;
+      isPublic: boolean;
+    }>
+  > {
     const now = new Date();
 
     return await prisma.discountCode.findMany({
@@ -325,10 +338,7 @@ export class MemberPromotionService {
           },
           {
             // Either public member promotions or private ones created for this user
-            OR: [
-              { isPublic: true },
-              { createdById: userId },
-            ],
+            OR: [{ isPublic: true }, { createdById: userId }],
           },
         ],
         // Ensure user hasn't used this code if there's a per-user limit
@@ -377,19 +387,28 @@ export class MemberPromotionService {
 
       // First order bonus
       if (orderCount === 1) {
-        const firstOrderCode = await this.createLoyaltyMilestonePromotion(userId, 'FIRST_ORDER');
+        const firstOrderCode = await this.createLoyaltyMilestonePromotion(
+          userId,
+          'FIRST_ORDER'
+        );
         createdCodes.push(firstOrderCode);
       }
 
       // Fifth order celebration
       if (orderCount === 5) {
-        const fifthOrderCode = await this.createLoyaltyMilestonePromotion(userId, 'FIFTH_ORDER');
+        const fifthOrderCode = await this.createLoyaltyMilestonePromotion(
+          userId,
+          'FIFTH_ORDER'
+        );
         createdCodes.push(fifthOrderCode);
       }
 
       // Tenth order loyalty reward
       if (orderCount === 10) {
-        const tenthOrderCode = await this.createLoyaltyMilestonePromotion(userId, 'TENTH_ORDER');
+        const tenthOrderCode = await this.createLoyaltyMilestonePromotion(
+          userId,
+          'TENTH_ORDER'
+        );
         createdCodes.push(tenthOrderCode);
       }
 
@@ -413,7 +432,10 @@ export class MemberPromotionService {
         });
 
         if (!existingVIP) {
-          const vipCode = await this.createLoyaltyMilestonePromotion(userId, 'HIGH_SPENDER');
+          const vipCode = await this.createLoyaltyMilestonePromotion(
+            userId,
+            'HIGH_SPENDER'
+          );
           createdCodes.push(vipCode);
         }
       }
@@ -436,7 +458,7 @@ export class MemberPromotionService {
       .slice(0, 4);
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substr(2, 3).toUpperCase();
-    
+
     return `${prefix}${nameCode}${timestamp}${random}`;
   }
 
@@ -464,7 +486,7 @@ export class MemberPromotionService {
 
       case 'VALENTINE':
         config = {
-          name: 'Valentine\'s Day Member Love',
+          name: "Valentine's Day Member Love",
           description: 'Share the love! Members get RM30 off romantic gifts.',
           discountType: DiscountType.FIXED_AMOUNT,
           discountValue: 30,
@@ -500,7 +522,8 @@ export class MemberPromotionService {
       case 'CHRISTMAS':
         config = {
           name: 'Christmas Member Joy',
-          description: 'Merry Christmas! Members get RM50 off holiday shopping.',
+          description:
+            'Merry Christmas! Members get RM50 off holiday shopping.',
           discountType: DiscountType.FIXED_AMOUNT,
           discountValue: 50,
           minimumOrderValue: 200,

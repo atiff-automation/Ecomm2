@@ -35,7 +35,6 @@ interface MembershipConfig {
   membershipTermsText: string;
 }
 
-
 export default function MembershipConfigPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -176,58 +175,60 @@ export default function MembershipConfigPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumbs */}
-      <Breadcrumbs 
+      <Breadcrumbs
         items={[
           { label: 'Membership', href: '/admin/membership' },
-          { label: 'Configuration' }
+          { label: 'Configuration' },
         ]}
         className="mb-6"
       />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Settings className="h-6 w-6 text-primary" />
-              Membership Configuration
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Configure membership settings and requirements
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              disabled={!hasChanges || saving}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!hasChanges || saving}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Settings className="h-6 w-6 text-primary" />
+            Membership Configuration
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Configure membership settings and requirements
+          </p>
         </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            disabled={!hasChanges || saving}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || saving}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </div>
 
-        {/* Message Alert */}
-        {message && (
-          <Alert variant={message.type === 'success' ? 'default' : 'destructive'} className="mb-6">
-            {message.type === 'success' ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertDescription>{message.text}</AlertDescription>
-          </Alert>
-        )}
-
+      {/* Message Alert */}
+      {message && (
+        <Alert
+          variant={message.type === 'success' ? 'default' : 'destructive'}
+          className="mb-6"
+        >
+          {message.type === 'success' ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Configuration Settings */}
       <div className="space-y-6">
@@ -254,7 +255,8 @@ export default function MembershipConfigPage() {
                 }
               />
               <p className="text-xs text-muted-foreground">
-                Customers must spend at least {formatPrice(config.membershipThreshold)} to qualify
+                Customers must spend at least{' '}
+                {formatPrice(config.membershipThreshold)} to qualify
               </p>
             </div>
 
@@ -263,17 +265,19 @@ export default function MembershipConfigPage() {
             {/* Qualification Rules */}
             <div className="space-y-4">
               <h4 className="font-medium text-sm">Qualification Rules</h4>
-              
+
               <div className="flex items-center justify-between space-x-2">
                 <div className="space-y-0.5">
-                  <Label className="text-sm font-normal">Exclude Promotional Items</Label>
+                  <Label className="text-sm font-normal">
+                    Exclude Promotional Items
+                  </Label>
                   <p className="text-xs text-muted-foreground">
                     Promotional items won't count towards membership
                   </p>
                 </div>
                 <Switch
                   checked={config.enablePromotionalExclusion}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setConfig({
                       ...config,
                       enablePromotionalExclusion: checked,
@@ -284,14 +288,16 @@ export default function MembershipConfigPage() {
 
               <div className="flex items-center justify-between space-x-2">
                 <div className="space-y-0.5">
-                  <Label className="text-sm font-normal">Require Qualifying Products</Label>
+                  <Label className="text-sm font-normal">
+                    Require Qualifying Products
+                  </Label>
                   <p className="text-xs text-muted-foreground">
                     Only products marked as qualifying count towards membership
                   </p>
                 </div>
                 <Switch
                   checked={config.requireQualifyingCategories}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     setConfig({
                       ...config,
                       requireQualifyingCategories: checked,

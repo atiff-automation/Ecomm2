@@ -107,7 +107,13 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, selectedCategory, selectedStatus, selectedStockLevel]);
+  }, [
+    currentPage,
+    searchTerm,
+    selectedCategory,
+    selectedStatus,
+    selectedStockLevel,
+  ]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -116,7 +122,7 @@ export default function AdminProductsPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('Categories API Response:', data); // Debug log
-        
+
         // Handle different response structures
         let categoriesData = [];
         if (Array.isArray(data)) {
@@ -126,12 +132,19 @@ export default function AdminProductsPage() {
         } else if (data.data && Array.isArray(data.data)) {
           categoriesData = data.data;
         }
-        
+
         console.log('Processed categories data:', categoriesData); // Debug log
-        console.log('Is categories data an array?', Array.isArray(categoriesData)); // Debug log
+        console.log(
+          'Is categories data an array?',
+          Array.isArray(categoriesData)
+        ); // Debug log
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } else {
-        console.error('Categories API failed:', response.status, response.statusText);
+        console.error(
+          'Categories API failed:',
+          response.status,
+          response.statusText
+        );
         setCategories([]);
       }
     } catch (error) {
@@ -249,7 +262,9 @@ export default function AdminProductsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Products
+              </CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -258,7 +273,9 @@ export default function AdminProductsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Active Products
+              </CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -274,13 +291,19 @@ export default function AdminProductsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                {products.filter(p => p.stockQuantity < 10 && p.stockQuantity > 0).length}
+                {
+                  products.filter(
+                    p => p.stockQuantity < 10 && p.stockQuantity > 0
+                  ).length
+                }
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Out of Stock
+              </CardTitle>
               <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
@@ -298,13 +321,15 @@ export default function AdminProductsPage() {
             <Input
               placeholder="Search products..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder={categoriesLoading ? "Loading..." : "Category"} />
+              <SelectValue
+                placeholder={categoriesLoading ? 'Loading...' : 'Category'}
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -313,19 +338,28 @@ export default function AdminProductsPage() {
                   Loading categories...
                 </SelectItem>
               )}
-              {!categoriesLoading && Array.isArray(categories) && categories.length > 0 && (() => {
-                console.log('About to map categories:', categories, 'isArray:', Array.isArray(categories));
-                return categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+              {!categoriesLoading &&
+                Array.isArray(categories) &&
+                categories.length > 0 &&
+                (() => {
+                  console.log(
+                    'About to map categories:',
+                    categories,
+                    'isArray:',
+                    Array.isArray(categories)
+                  );
+                  return categories.map(category => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ));
+                })()}
+              {!categoriesLoading &&
+                (!Array.isArray(categories) || categories.length === 0) && (
+                  <SelectItem value="no-categories" disabled>
+                    No categories available
                   </SelectItem>
-                ));
-              })()}
-              {!categoriesLoading && (!Array.isArray(categories) || categories.length === 0) && (
-                <SelectItem value="no-categories" disabled>
-                  No categories available
-                </SelectItem>
-              )}
+                )}
             </SelectContent>
           </Select>
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -339,7 +373,10 @@ export default function AdminProductsPage() {
               <SelectItem value="INACTIVE">Inactive</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={selectedStockLevel} onValueChange={setSelectedStockLevel}>
+          <Select
+            value={selectedStockLevel}
+            onValueChange={setSelectedStockLevel}
+          >
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Stock Level" />
             </SelectTrigger>
@@ -382,14 +419,16 @@ export default function AdminProductsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {products.map(product => (
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                             {product.images.find(img => img.isPrimary) ? (
                               <Image
-                                src={product.images.find(img => img.isPrimary)!.url}
+                                src={
+                                  product.images.find(img => img.isPrimary)!.url
+                                }
                                 alt={product.name}
                                 fill
                                 className="object-cover"
@@ -409,7 +448,10 @@ export default function AdminProductsPage() {
                                 </Badge>
                               )}
                               {product.isPromotional && (
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   Promo
                                 </Badge>
                               )}
@@ -423,10 +465,16 @@ export default function AdminProductsPage() {
                       <TableCell>
                         <div className="space-y-1">
                           {product.categories?.map((cat, index) => (
-                            <Badge key={cat.category.id} variant="outline" className="mr-1">
+                            <Badge
+                              key={cat.category.id}
+                              variant="outline"
+                              className="mr-1"
+                            >
                               {cat.category.name}
                             </Badge>
-                          )) || <span className="text-gray-400">No categories</span>}
+                          )) || (
+                            <span className="text-gray-400">No categories</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -444,20 +492,27 @@ export default function AdminProductsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={product.stockQuantity === 0 ? 'destructive' : product.stockQuantity < 10 ? 'secondary' : 'outline'}
+                            variant={
+                              product.stockQuantity === 0
+                                ? 'destructive'
+                                : product.stockQuantity < 10
+                                  ? 'secondary'
+                                  : 'outline'
+                            }
                             className={
-                              product.stockQuantity === 0 
-                                ? 'bg-red-100 text-red-800' 
-                                : product.stockQuantity < 10 
+                              product.stockQuantity === 0
+                                ? 'bg-red-100 text-red-800'
+                                : product.stockQuantity < 10
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-green-100 text-green-800'
                             }
                           >
                             {product.stockQuantity}
                           </Badge>
-                          {product.stockQuantity < 10 && product.stockQuantity > 0 && (
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                          )}
+                          {product.stockQuantity < 10 &&
+                            product.stockQuantity > 0 && (
+                              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            )}
                           {product.stockQuantity === 0 && (
                             <TrendingDown className="h-4 w-4 text-red-500" />
                           )}
@@ -473,8 +528,16 @@ export default function AdminProductsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Link href={`/products/${product.slug}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" title="Live View Product">
+                          <Link
+                            href={`/products/${product.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Live View Product"
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>

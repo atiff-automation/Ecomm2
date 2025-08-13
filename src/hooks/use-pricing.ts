@@ -1,7 +1,7 @@
 /**
  * usePricing Hook - Malaysian E-commerce Platform
  * React hook for accessing centralized pricing logic
- * 
+ *
  * This hook provides a clean React interface to the PricingService,
  * handling all pricing calculations and business logic centrally.
  */
@@ -9,7 +9,11 @@
 import { useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { PricingService } from '@/lib/services/pricing-service';
-import { ProductPricing, ProductPricingData, UserPricingContext } from '@/lib/types/pricing';
+import {
+  ProductPricing,
+  ProductPricingData,
+  UserPricingContext,
+} from '@/lib/types/pricing';
 
 /**
  * Hook for getting complete pricing information for a product
@@ -17,11 +21,14 @@ import { ProductPricing, ProductPricingData, UserPricingContext } from '@/lib/ty
 export function usePricing(product: ProductPricingData): ProductPricing {
   const { data: session } = useSession();
 
-  const userContext: UserPricingContext = useMemo(() => ({
-    isLoggedIn: !!session?.user,
-    isMember: session?.user?.isMember || false,
-    userId: session?.user?.id
-  }), [session]);
+  const userContext: UserPricingContext = useMemo(
+    () => ({
+      isLoggedIn: !!session?.user,
+      isMember: session?.user?.isMember || false,
+      userId: session?.user?.id,
+    }),
+    [session]
+  );
 
   const pricing = useMemo(() => {
     return PricingService.calculateProductPricing(product, userContext);
@@ -36,11 +43,14 @@ export function usePricing(product: ProductPricingData): ProductPricing {
 export function useSimplePrice(product: ProductPricingData): string {
   const { data: session } = useSession();
 
-  const userContext: UserPricingContext = useMemo(() => ({
-    isLoggedIn: !!session?.user,
-    isMember: session?.user?.isMember || false,
-    userId: session?.user?.id
-  }), [session]);
+  const userContext: UserPricingContext = useMemo(
+    () => ({
+      isLoggedIn: !!session?.user,
+      isMember: session?.user?.isMember || false,
+      userId: session?.user?.id,
+    }),
+    [session]
+  );
 
   return useMemo(() => {
     return PricingService.getSimplePrice(product, userContext);
@@ -62,11 +72,14 @@ export function useHasPromotion(product: ProductPricingData): boolean {
 export function useSavings(product: ProductPricingData): number {
   const { data: session } = useSession();
 
-  const userContext: UserPricingContext = useMemo(() => ({
-    isLoggedIn: !!session?.user,
-    isMember: session?.user?.isMember || false,
-    userId: session?.user?.id
-  }), [session]);
+  const userContext: UserPricingContext = useMemo(
+    () => ({
+      isLoggedIn: !!session?.user,
+      isMember: session?.user?.isMember || false,
+      userId: session?.user?.id,
+    }),
+    [session]
+  );
 
   return useMemo(() => {
     return PricingService.getSavings(product, userContext);
@@ -79,27 +92,35 @@ export function useSavings(product: ProductPricingData): number {
 export function useUserPricingContext(): UserPricingContext {
   const { data: session } = useSession();
 
-  return useMemo(() => ({
-    isLoggedIn: !!session?.user,
-    isMember: session?.user?.isMember || false,
-    userId: session?.user?.id
-  }), [session]);
+  return useMemo(
+    () => ({
+      isLoggedIn: !!session?.user,
+      isMember: session?.user?.isMember || false,
+      userId: session?.user?.id,
+    }),
+    [session]
+  );
 }
 
 /**
  * Hook for multiple products pricing (optimized for lists)
  */
-export function useMultiplePricing(products: ProductPricingData[]): ProductPricing[] {
+export function useMultiplePricing(
+  products: ProductPricingData[]
+): ProductPricing[] {
   const { data: session } = useSession();
 
-  const userContext: UserPricingContext = useMemo(() => ({
-    isLoggedIn: !!session?.user,
-    isMember: session?.user?.isMember || false,
-    userId: session?.user?.id
-  }), [session]);
+  const userContext: UserPricingContext = useMemo(
+    () => ({
+      isLoggedIn: !!session?.user,
+      isMember: session?.user?.isMember || false,
+      userId: session?.user?.id,
+    }),
+    [session]
+  );
 
   return useMemo(() => {
-    return products.map(product => 
+    return products.map(product =>
       PricingService.calculateProductPricing(product, userContext)
     );
   }, [products, userContext]);

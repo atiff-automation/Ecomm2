@@ -88,13 +88,13 @@ export async function GET(request: NextRequest) {
       const paidOrders = customer.orders.filter(
         order => order.paymentStatus === 'PAID'
       );
-      
+
       // Calculate total spent from paid orders
       const totalSpent = paidOrders.reduce(
         (sum, order) => sum + Number(order.total),
         0
       );
-      
+
       // Get the most recent order
       const lastOrder =
         customer.orders.length > 0

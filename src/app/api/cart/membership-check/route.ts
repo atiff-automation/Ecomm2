@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { calculatePromotionStatus, productQualifiesForMembership, getBestPrice } from '@/lib/promotions/promotion-utils';
+import {
+  calculatePromotionStatus,
+  productQualifiesForMembership,
+  getBestPrice,
+} from '@/lib/promotions/promotion-utils';
 
 interface CartItem {
   productId: string;
@@ -81,17 +85,20 @@ export async function POST(request: NextRequest) {
 
       // Use comprehensive pricing logic that considers promotions, membership, and early access
       const isMember = session?.user?.isMember || false;
-      const priceInfo = getBestPrice({
-        isPromotional: product.isPromotional,
-        promotionalPrice: product.promotionalPrice,
-        promotionStartDate: product.promotionStartDate,
-        promotionEndDate: product.promotionEndDate,
-        isQualifyingForMembership: product.isQualifyingForMembership,
-        memberOnlyUntil: product.memberOnlyUntil,
-        earlyAccessStart: product.earlyAccessStart,
-        regularPrice: Number(product.regularPrice),
-        memberPrice: Number(product.memberPrice || product.regularPrice),
-      }, isMember);
+      const priceInfo = getBestPrice(
+        {
+          isPromotional: product.isPromotional,
+          promotionalPrice: product.promotionalPrice,
+          promotionStartDate: product.promotionStartDate,
+          promotionEndDate: product.promotionEndDate,
+          isQualifyingForMembership: product.isQualifyingForMembership,
+          memberOnlyUntil: product.memberOnlyUntil,
+          earlyAccessStart: product.earlyAccessStart,
+          regularPrice: Number(product.regularPrice),
+          memberPrice: Number(product.memberPrice || product.regularPrice),
+        },
+        isMember
+      );
 
       const price = priceInfo.price;
       const subtotal = price * cartItem.quantity;
@@ -122,7 +129,8 @@ export async function POST(request: NextRequest) {
       // CRITICAL: If the user is getting promotional pricing, the product should NOT qualify
       // This ensures consistency between pricing and qualification
       const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
-      const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+      const finalQualification =
+        qualifiesForMembership && !isUsingPromotionalPrice;
 
       // More debug logging
       console.log(`   - qualifiesForMembership: ${qualifiesForMembership}`);
@@ -133,9 +141,10 @@ export async function POST(request: NextRequest) {
       if (!finalQualification) {
         // Determine the specific reason for non-qualification
         let reason = 'Product not eligible for membership calculation';
-        
+
         if (isUsingPromotionalPrice) {
-          reason = 'Currently using promotional pricing (promotional products do not qualify for membership)';
+          reason =
+            'Currently using promotional pricing (promotional products do not qualify for membership)';
         } else if (!qualifiesForMembership) {
           // Check if it's due to promotional product configuration
           const promotionStatus = calculatePromotionStatus({
@@ -151,11 +160,13 @@ export async function POST(request: NextRequest) {
           });
 
           if (promotionStatus.isActive) {
-            reason = 'Active promotional pricing (promotional products do not qualify)';
+            reason =
+              'Active promotional pricing (promotional products do not qualify)';
           } else if (product.isPromotional) {
             reason = 'Product marked as promotional';
           } else if (!product.isQualifyingForMembership) {
-            reason = 'Product specifically excluded from membership qualification';
+            reason =
+              'Product specifically excluded from membership qualification';
           }
         }
 

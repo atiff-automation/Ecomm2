@@ -483,8 +483,9 @@ async function getUserInteractions(userId: string) {
     });
 
     // Combine all interactions with multi-category support
-    const allInteractions: Array<{ categoryId: string; productId: string }> = [];
-    
+    const allInteractions: Array<{ categoryId: string; productId: string }> =
+      [];
+
     recentlyViewed.forEach(item => {
       item.product.categories.forEach(cat => {
         allInteractions.push({
@@ -493,7 +494,7 @@ async function getUserInteractions(userId: string) {
         });
       });
     });
-    
+
     wishlist.forEach(item => {
       item.product.categories.forEach(cat => {
         allInteractions.push({
@@ -502,7 +503,7 @@ async function getUserInteractions(userId: string) {
         });
       });
     });
-    
+
     cart.forEach(item => {
       item.product.categories.forEach(cat => {
         allInteractions.push({

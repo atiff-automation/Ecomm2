@@ -443,7 +443,7 @@ export default function AdminReports() {
                             })
                           }
                         />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />
@@ -807,7 +807,7 @@ export default function AdminReports() {
                       <BarChart data={analyticsData.membershipComparison}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="customerType" />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />
@@ -854,7 +854,7 @@ export default function AdminReports() {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />

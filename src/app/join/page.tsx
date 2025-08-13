@@ -36,7 +36,7 @@ export default function JoinPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const [referralCode, setReferralCode] = useState<string>('');
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,11 +73,19 @@ export default function JoinPage() {
         const data = await response.json();
         setReferralInfo(data);
       } else {
-        setReferralInfo({ referralCode: code, referrer: { name: '', email: '' }, isValid: false });
+        setReferralInfo({
+          referralCode: code,
+          referrer: { name: '', email: '' },
+          isValid: false,
+        });
       }
     } catch (error) {
       console.error('Error validating referral code:', error);
-      setReferralInfo({ referralCode: code, referrer: { name: '', email: '' }, isValid: false });
+      setReferralInfo({
+        referralCode: code,
+        referrer: { name: '', email: '' },
+        isValid: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -93,40 +101,40 @@ export default function JoinPage() {
 
   const validateForm = () => {
     const newErrors: any = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setRegistering(true);
-    
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -141,7 +149,7 @@ export default function JoinPage() {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Auto sign in after registration
         const result = await signIn('credentials', {
           email: formData.email,
@@ -152,7 +160,9 @@ export default function JoinPage() {
         if (result?.ok) {
           router.push('/member/dashboard?welcome=true');
         } else {
-          router.push('/auth/signin?message=Registration successful, please sign in');
+          router.push(
+            '/auth/signin?message=Registration successful, please sign in'
+          );
         }
       } else {
         const error = await response.json();
@@ -185,8 +195,7 @@ export default function JoinPage() {
           <p className="text-muted-foreground">
             {referralInfo?.isValid
               ? `${referralInfo.referrer.name} invited you to join!`
-              : 'Create your account and start shopping'
-            }
+              : 'Create your account and start shopping'}
           </p>
         </div>
 
@@ -210,7 +219,10 @@ export default function JoinPage() {
                       You'll get exclusive welcome rewards!
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800"
+                  >
                     {referralCode}
                   </Badge>
                 </div>
@@ -218,8 +230,8 @@ export default function JoinPage() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    The referral code "{referralCode}" is not valid or has expired.
-                    You can still register normally.
+                    The referral code "{referralCode}" is not valid or has
+                    expired. You can still register normally.
                   </AlertDescription>
                 </Alert>
               )}
@@ -286,7 +298,7 @@ export default function JoinPage() {
                   id="name"
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={e => handleInputChange('name', e.target.value)}
                   placeholder="Enter your full name"
                   disabled={registering}
                 />
@@ -303,7 +315,7 @@ export default function JoinPage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={e => handleInputChange('email', e.target.value)}
                   placeholder="Enter your email address"
                   disabled={registering}
                 />
@@ -320,7 +332,7 @@ export default function JoinPage() {
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={e => handleInputChange('password', e.target.value)}
                   placeholder="Create a strong password"
                   disabled={registering}
                 />
@@ -330,27 +342,30 @@ export default function JoinPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-medium">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-medium"
+                >
                   Confirm Password *
                 </label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onChange={e =>
+                    handleInputChange('confirmPassword', e.target.value)
+                  }
                   placeholder="Confirm your password"
                   disabled={registering}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="text-sm text-red-600">
+                    {errors.confirmPassword}
+                  </p>
                 )}
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={registering}
-              >
+              <Button type="submit" className="w-full" disabled={registering}>
                 {registering ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

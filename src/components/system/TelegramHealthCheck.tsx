@@ -13,7 +13,7 @@ export function TelegramHealthCheck() {
       try {
         const response = await fetch('/api/health/telegram');
         const data = await response.json();
-        
+
         if (data.telegram?.configured) {
           console.log('✅ Telegram service is configured and running');
         } else {

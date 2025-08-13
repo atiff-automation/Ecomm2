@@ -26,17 +26,17 @@ export async function POST(request: NextRequest) {
     const mockOrderData = {
       orderNumber: 'ORD-20250811-TEST',
       customerName: 'John Doe',
-      total: 125.50,
+      total: 125.5,
       items: [
         {
           name: 'Wireless Bluetooth Headphones',
           quantity: 1,
-          price: 89.90,
+          price: 89.9,
         },
         {
           name: 'Phone Case - Clear TPU',
           quantity: 2,
-          price: 17.80,
+          price: 17.8,
         },
       ],
       paymentMethod: 'BILLPLZ',
@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Send the test notification
-    const success = await telegramService.sendNewOrderNotification(mockOrderData);
+    const success =
+      await telegramService.sendNewOrderNotification(mockOrderData);
 
     if (success) {
       return NextResponse.json({
@@ -53,12 +54,14 @@ export async function POST(request: NextRequest) {
         data: mockOrderData,
       });
     } else {
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to send test order notification',
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Failed to send test order notification',
+        },
+        { status: 500 }
+      );
     }
-
   } catch (error) {
     console.error('Error sending test order notification:', error);
     return NextResponse.json(

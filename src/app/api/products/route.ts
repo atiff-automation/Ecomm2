@@ -17,7 +17,11 @@ const createProductSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   barcode: z.string().optional(),
   regularPrice: z.number().positive('Regular price must be positive'),
-  memberPrice: z.number().positive('Member price must be positive').nullable().optional(),
+  memberPrice: z
+    .number()
+    .positive('Member price must be positive')
+    .nullable()
+    .optional(),
   costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity cannot be negative'),
   lowStockAlert: z

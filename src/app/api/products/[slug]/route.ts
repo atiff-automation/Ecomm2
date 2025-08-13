@@ -19,7 +19,11 @@ const updateProductSchema = z.object({
     .number()
     .positive('Regular price must be positive')
     .optional(),
-  memberPrice: z.number().positive('Member price must be positive').nullable().optional(),
+  memberPrice: z
+    .number()
+    .positive('Member price must be positive')
+    .nullable()
+    .optional(),
   costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z
     .number()
@@ -33,7 +37,10 @@ const updateProductSchema = z.object({
     .optional(),
   weight: z.number().positive().optional(),
   dimensions: z.string().optional(),
-  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required').optional(),
+  categoryIds: z
+    .array(z.string().min(1, 'Category ID is required'))
+    .min(1, 'At least one category is required')
+    .optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   featured: z.boolean().optional(),
@@ -255,9 +262,14 @@ export async function PUT(
 
       if (categories.length !== updateData.categoryIds.length) {
         const foundIds = categories.map(c => c.id);
-        const missingIds = updateData.categoryIds.filter(id => !foundIds.includes(id));
+        const missingIds = updateData.categoryIds.filter(
+          id => !foundIds.includes(id)
+        );
         return NextResponse.json(
-          { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
+          {
+            message: `Categories not found: ${missingIds.join(', ')}`,
+            field: 'categoryIds',
+          },
           { status: 400 }
         );
       }

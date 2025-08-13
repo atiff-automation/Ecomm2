@@ -11,7 +11,7 @@ export default function TestPaymentGatewayPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [processing, setProcessing] = useState(false);
-  
+
   // Extract payment details from URL params (normally from checkout)
   const amount = searchParams.get('amount') || '100.00';
   const currency = searchParams.get('currency') || 'MYR';
@@ -27,13 +27,15 @@ export default function TestPaymentGatewayPage() {
 
   const handlePaymentAction = async (success: boolean) => {
     setProcessing(true);
-    
+
     // Simulate payment processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Simulate webhook callback to your backend
-    const webhookUrl = success ? '/api/webhooks/payment-success' : '/api/webhooks/payment-failed';
-    
+    const webhookUrl = success
+      ? '/api/webhooks/payment-success'
+      : '/api/webhooks/payment-failed';
+
     try {
       const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
@@ -45,7 +47,7 @@ export default function TestPaymentGatewayPage() {
           status: success ? 'PAID' : 'FAILED',
           transactionId: `txn_${Date.now()}`,
           timestamp: new Date().toISOString(),
-        })
+        }),
       });
 
       if (webhookResponse.ok) {
@@ -53,9 +55,9 @@ export default function TestPaymentGatewayPage() {
         const params = new URLSearchParams({
           payment: success ? 'success' : 'failed',
           orderRef,
-          amount
+          amount,
         });
-        
+
         router.push(`${returnUrl}?${params.toString()}`);
       } else {
         alert('Webhook failed - check server logs');
@@ -76,7 +78,9 @@ export default function TestPaymentGatewayPage() {
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               <h2 className="text-xl font-semibold">Processing Payment...</h2>
-              <p className="text-gray-600">Please wait while we process your payment</p>
+              <p className="text-gray-600">
+                Please wait while we process your payment
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -90,7 +94,9 @@ export default function TestPaymentGatewayPage() {
         {process.env.NODE_ENV === 'development' && (
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6">
             <p className="text-sm font-medium">🧪 TEST PAYMENT GATEWAY</p>
-            <p className="text-xs">This simulates a real payment gateway for testing</p>
+            <p className="text-xs">
+              This simulates a real payment gateway for testing
+            </p>
           </div>
         )}
 
@@ -108,7 +114,9 @@ export default function TestPaymentGatewayPage() {
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between">
                 <span className="font-medium">Amount:</span>
-                <span className="font-bold text-lg">{formatCurrency(amount)}</span>
+                <span className="font-bold text-lg">
+                  {formatCurrency(amount)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Order Reference:</span>
@@ -122,16 +130,18 @@ export default function TestPaymentGatewayPage() {
 
             {/* Test Payment Buttons */}
             <div className="space-y-3">
-              <h3 className="font-medium text-center">Choose Payment Outcome:</h3>
-              
+              <h3 className="font-medium text-center">
+                Choose Payment Outcome:
+              </h3>
+
               <Button
                 onClick={() => handlePaymentAction(true)}
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                 size="lg"
                 disabled={processing}
               >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                ✅ Simulate Successful Payment
+                <CheckCircle className="w-5 h-5 mr-2" />✅ Simulate Successful
+                Payment
               </Button>
 
               <Button
@@ -141,8 +151,7 @@ export default function TestPaymentGatewayPage() {
                 size="lg"
                 disabled={processing}
               >
-                <XCircle className="w-5 h-5 mr-2" />
-                ❌ Simulate Failed Payment
+                <XCircle className="w-5 h-5 mr-2" />❌ Simulate Failed Payment
               </Button>
 
               <Button

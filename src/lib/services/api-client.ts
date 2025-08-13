@@ -1,7 +1,7 @@
 /**
  * Centralized API Client Service - Malaysian E-commerce Platform
  * Single source of truth for ALL API operations with comprehensive error handling
- * 
+ *
  * This service consolidates all API calls that were previously
  * scattered across 50+ components into one maintainable location.
  */
@@ -17,7 +17,7 @@ import {
   APIMetrics,
   APIEvent,
   APIEventPayload,
-  APIEventListener
+  APIEventListener,
 } from '@/lib/types/api';
 
 export class APIClient {
@@ -36,7 +36,7 @@ export class APIClient {
       enableCache: true,
       defaultCacheTTL: 5 * 60 * 1000, // 5 minutes
       enableLogging: process.env.NODE_ENV === 'development',
-      enableMetrics: true
+      enableMetrics: true,
     };
 
     this.cache = this.createCacheManager();
@@ -64,20 +64,20 @@ export class APIClient {
     const startTime = Date.now();
     const method = config.method || 'GET';
     const url = `${this.config.baseURL}${endpoint}`;
-    
+
     this.emitEvent('REQUEST_START', { url, method });
 
     // Check cache for GET requests
     if (method === 'GET' && config.cache !== false && this.config.enableCache) {
       const cacheKey = this.generateCacheKey(url, config);
       const cachedData = this.cache.get<APIResponse<T>>(cacheKey);
-      
+
       if (cachedData) {
         this.emitEvent('CACHE_HIT', { url, method, cacheKey });
         this.metrics.totalRequests++;
         return cachedData;
       }
-      
+
       this.emitEvent('CACHE_MISS', { url, method, cacheKey });
     }
 
@@ -88,14 +88,20 @@ export class APIClient {
       try {
         if (attempt > 0) {
           this.emitEvent('RETRY_ATTEMPT', { url, method, retryCount: attempt });
-          await this.delay(config.retryDelay ?? this.config.retryDelay * attempt);
+          await this.delay(
+            config.retryDelay ?? this.config.retryDelay * attempt
+          );
         }
 
         const response = await this.executeRequest<T>(url, config);
         const duration = Date.now() - startTime;
 
         // Cache successful GET responses
-        if (method === 'GET' && config.cache !== false && this.config.enableCache) {
+        if (
+          method === 'GET' &&
+          config.cache !== false &&
+          this.config.enableCache
+        ) {
           const cacheKey = this.generateCacheKey(url, config);
           const cacheTTL = config.cacheTTL ?? this.config.defaultCacheTTL;
           this.cache.set(cacheKey, response, cacheTTL);
@@ -105,10 +111,9 @@ export class APIClient {
         this.emitEvent('REQUEST_SUCCESS', { url, method, duration });
 
         return response;
-
       } catch (error) {
         lastError = this.normalizeError(error, url, method);
-        
+
         if (!this.shouldRetry(lastError, attempt, maxRetries)) {
           break;
         }
@@ -118,7 +123,12 @@ export class APIClient {
     // Request failed after all retries
     const duration = Date.now() - startTime;
     this.updateMetrics(false, duration, url, lastError!.code as APIErrorCode);
-    this.emitEvent('REQUEST_ERROR', { url, method, duration, error: lastError! });
+    this.emitEvent('REQUEST_ERROR', {
+      url,
+      method,
+      duration,
+      error: lastError!,
+    });
 
     throw lastError;
   }
@@ -138,19 +148,20 @@ export class APIClient {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...config.headers
+        ...config.headers,
       };
 
       const fetchConfig: RequestInit = {
         method: config.method || 'GET',
         headers,
-        signal: controller.signal
+        signal: controller.signal,
       };
 
       if (config.body && config.method !== 'GET') {
-        fetchConfig.body = typeof config.body === 'string' 
-          ? config.body 
-          : JSON.stringify(config.body);
+        fetchConfig.body =
+          typeof config.body === 'string'
+            ? config.body
+            : JSON.stringify(config.body);
       }
 
       const response = await fetch(url, fetchConfig);
@@ -161,10 +172,9 @@ export class APIClient {
       }
 
       const data = await response.json();
-      
+
       // Ensure response follows our API format
       return this.normalizeResponse<T>(data);
-
     } catch (error) {
       clearTimeout(timeoutId);
       throw error;
@@ -179,7 +189,7 @@ export class APIClient {
     if (data && typeof data.success === 'boolean') {
       return {
         timestamp: new Date().toISOString(),
-        ...data
+        ...data,
       };
     }
 
@@ -187,7 +197,7 @@ export class APIClient {
     return {
       success: true,
       data: data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -200,7 +210,7 @@ export class APIClient {
     method: string
   ): Promise<APIError> {
     let errorData: any = {};
-    
+
     try {
       errorData = await response.json();
     } catch {
@@ -208,14 +218,18 @@ export class APIClient {
     }
 
     const code = this.mapHTTPStatusToErrorCode(response.status);
-    
+
     return {
       code,
-      message: errorData.message || errorData.error || response.statusText || 'Request failed',
+      message:
+        errorData.message ||
+        errorData.error ||
+        response.statusText ||
+        'Request failed',
       details: errorData,
       timestamp: new Date().toISOString(),
       path: url,
-      method
+      method,
     };
   }
 
@@ -224,17 +238,25 @@ export class APIClient {
    */
   private mapHTTPStatusToErrorCode(status: number): APIErrorCode {
     switch (status) {
-      case 400: return 'VALIDATION_ERROR';
-      case 401: return 'AUTHENTICATION_ERROR';
-      case 403: return 'AUTHORIZATION_ERROR';
-      case 404: return 'NOT_FOUND';
-      case 409: return 'CONFLICT';
-      case 429: return 'RATE_LIMIT_EXCEEDED';
+      case 400:
+        return 'VALIDATION_ERROR';
+      case 401:
+        return 'AUTHENTICATION_ERROR';
+      case 403:
+        return 'AUTHORIZATION_ERROR';
+      case 404:
+        return 'NOT_FOUND';
+      case 409:
+        return 'CONFLICT';
+      case 429:
+        return 'RATE_LIMIT_EXCEEDED';
       case 500:
       case 502:
       case 503:
-      case 504: return 'SERVER_ERROR';
-      default: return 'UNKNOWN_ERROR';
+      case 504:
+        return 'SERVER_ERROR';
+      default:
+        return 'UNKNOWN_ERROR';
     }
   }
 
@@ -248,7 +270,7 @@ export class APIClient {
         message: 'Request timed out',
         timestamp: new Date().toISOString(),
         path: url,
-        method
+        method,
       };
     }
 
@@ -262,22 +284,28 @@ export class APIClient {
       details: error,
       timestamp: new Date().toISOString(),
       path: url,
-      method
+      method,
     };
   }
 
   /**
    * Determine if request should be retried
    */
-  private shouldRetry(error: APIError, attempt: number, maxRetries: number): boolean {
-    if (attempt >= maxRetries) return false;
+  private shouldRetry(
+    error: APIError,
+    attempt: number,
+    maxRetries: number
+  ): boolean {
+    if (attempt >= maxRetries) {
+      return false;
+    }
 
     // Don't retry client errors (4xx)
     const retryableErrors: APIErrorCode[] = [
       'NETWORK_ERROR',
       'TIMEOUT_ERROR',
       'SERVER_ERROR',
-      'RATE_LIMIT_EXCEEDED'
+      'RATE_LIMIT_EXCEEDED',
     ];
 
     return retryableErrors.includes(error.code as APIErrorCode);
@@ -294,7 +322,8 @@ export class APIClient {
    * Generate cache key for requests
    */
   private generateCacheKey(url: string, config: APIRequestConfig): string {
-    const key = config.cacheKey || `${url}:${JSON.stringify(config.body || {})}`;
+    const key =
+      config.cacheKey || `${url}:${JSON.stringify(config.body || {})}`;
     return btoa(key); // Base64 encode for safe cache keys
   }
 
@@ -307,7 +336,9 @@ export class APIClient {
     return {
       get<T>(key: string): T | null {
         const item = cache.get(key);
-        if (!item) return null;
+        if (!item) {
+          return null;
+        }
 
         if (Date.now() > item.timestamp + item.ttl) {
           cache.delete(key);
@@ -317,12 +348,16 @@ export class APIClient {
         return item.data;
       },
 
-      set<T>(key: string, data: T, ttl: number = this.config.defaultCacheTTL): void {
+      set<T>(
+        key: string,
+        data: T,
+        ttl: number = this.config.defaultCacheTTL
+      ): void {
         cache.set(key, {
           data,
           timestamp: Date.now(),
           ttl,
-          key
+          key,
         });
       },
 
@@ -340,7 +375,7 @@ export class APIClient {
 
       size(): number {
         return cache.size;
-      }
+      },
     };
   }
 
@@ -355,7 +390,7 @@ export class APIClient {
       averageResponseTime: 0,
       cacheHitRate: 0,
       errorsByCode: {} as Record<APIErrorCode, number>,
-      requestsByEndpoint: {}
+      requestsByEndpoint: {},
     };
   }
 
@@ -368,39 +403,57 @@ export class APIClient {
     url: string,
     errorCode?: APIErrorCode
   ): void {
-    if (!this.config.enableMetrics) return;
+    if (!this.config.enableMetrics) {
+      return;
+    }
 
     this.metrics.totalRequests++;
-    
+
     if (success) {
       this.metrics.successfulRequests++;
     } else {
       this.metrics.failedRequests++;
       if (errorCode) {
-        this.metrics.errorsByCode[errorCode] = (this.metrics.errorsByCode[errorCode] || 0) + 1;
+        this.metrics.errorsByCode[errorCode] =
+          (this.metrics.errorsByCode[errorCode] || 0) + 1;
       }
     }
 
     // Update average response time
-    this.metrics.averageResponseTime = 
-      (this.metrics.averageResponseTime * (this.metrics.totalRequests - 1) + duration) / 
+    this.metrics.averageResponseTime =
+      (this.metrics.averageResponseTime * (this.metrics.totalRequests - 1) +
+        duration) /
       this.metrics.totalRequests;
 
     // Track requests by endpoint
-    const endpoint = new URL(url).pathname;
-    this.metrics.requestsByEndpoint[endpoint] = (this.metrics.requestsByEndpoint[endpoint] || 0) + 1;
+    try {
+      // Handle both relative and absolute URLs
+      const endpoint = url.startsWith('http') 
+        ? new URL(url).pathname 
+        : url.split('?')[0]; // For relative URLs, just get the path part before query params
+      
+      this.metrics.requestsByEndpoint[endpoint] =
+        (this.metrics.requestsByEndpoint[endpoint] || 0) + 1;
+    } catch (error) {
+      // Fallback: use the URL as-is if URL parsing fails
+      this.metrics.requestsByEndpoint[url] =
+        (this.metrics.requestsByEndpoint[url] || 0) + 1;
+    }
   }
 
   /**
    * Event management
    */
-  private emitEvent(event: APIEvent, payload: Omit<APIEventPayload, 'event' | 'timestamp'>): void {
+  private emitEvent(
+    event: APIEvent,
+    payload: Omit<APIEventPayload, 'event' | 'timestamp'>
+  ): void {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       const eventPayload: APIEventPayload = {
         ...payload,
         event,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       listeners.forEach(listener => listener(eventPayload));
     }
@@ -409,25 +462,47 @@ export class APIClient {
   /**
    * Public API methods
    */
-  
+
   // HTTP method shortcuts
-  async get<T>(endpoint: string, config?: Omit<APIRequestConfig, 'method'>): Promise<APIResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    config?: Omit<APIRequestConfig, 'method'>
+  ): Promise<APIResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any, config?: Omit<APIRequestConfig, 'method' | 'body'>): Promise<APIResponse<T>> {
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    config?: Omit<APIRequestConfig, 'method' | 'body'>
+  ): Promise<APIResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'POST', body: data });
   }
 
-  async put<T>(endpoint: string, data?: any, config?: Omit<APIRequestConfig, 'method' | 'body'>): Promise<APIResponse<T>> {
+  async put<T>(
+    endpoint: string,
+    data?: any,
+    config?: Omit<APIRequestConfig, 'method' | 'body'>
+  ): Promise<APIResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'PUT', body: data });
   }
 
-  async patch<T>(endpoint: string, data?: any, config?: Omit<APIRequestConfig, 'method' | 'body'>): Promise<APIResponse<T>> {
-    return this.request<T>(endpoint, { ...config, method: 'PATCH', body: data });
+  async patch<T>(
+    endpoint: string,
+    data?: any,
+    config?: Omit<APIRequestConfig, 'method' | 'body'>
+  ): Promise<APIResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...config,
+      method: 'PATCH',
+      body: data,
+    });
   }
 
-  async delete<T>(endpoint: string, config?: Omit<APIRequestConfig, 'method'>): Promise<APIResponse<T>> {
+  async delete<T>(
+    endpoint: string,
+    config?: Omit<APIRequestConfig, 'method'>
+  ): Promise<APIResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'DELETE' });
   }
 

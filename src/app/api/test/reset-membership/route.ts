@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: 'User must be logged in' },
@@ -30,30 +30,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { isMember = false } = body;
 
-    console.log(`🧪 TEST: ${isMember ? 'Activating' : 'Deactivating'} membership for user...`);
+    console.log(
+      `🧪 TEST: ${isMember ? 'Activating' : 'Deactivating'} membership for user...`
+    );
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { 
+      data: {
         isMember,
-        memberSince: isMember ? new Date() : null
-      }
+        memberSince: isMember ? new Date() : null,
+      },
     });
 
     // Note: Test orders cleanup skipped for simplicity
     console.log('🧪 TEST: Membership status updated successfully');
 
-    console.log(`✅ TEST: Membership ${isMember ? 'activated' : 'deactivated'}!`);
+    console.log(
+      `✅ TEST: Membership ${isMember ? 'activated' : 'deactivated'}!`
+    );
 
     return NextResponse.json({
       success: true,
       message: `Membership ${isMember ? 'activated' : 'deactivated'} successfully`,
       user: {
         ...session.user,
-        isMember
-      }
+        isMember,
+      },
     });
-
   } catch (error) {
     console.error('TEST: Error resetting membership:', error);
     return NextResponse.json(

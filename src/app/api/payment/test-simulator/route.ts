@@ -59,17 +59,11 @@ export async function POST(request: NextRequest) {
       });
 
       // Use universal status handler - this triggers Telegram automatically
-      await updateOrderStatus(
-        orderId,
-        'CONFIRMED',
-        'PAID',
-        'test-simulator',
-        {
-          paymentMethod: 'TEST_PAYMENT',
-          simulatedAt: new Date().toISOString(),
-          testEnvironment: true,
-        }
-      );
+      await updateOrderStatus(orderId, 'CONFIRMED', 'PAID', 'test-simulator', {
+        paymentMethod: 'TEST_PAYMENT',
+        simulatedAt: new Date().toISOString(),
+        testEnvironment: true,
+      });
 
       // Activate pending membership if exists
       if (order.pendingMembership && order.user && !order.user.isMember) {

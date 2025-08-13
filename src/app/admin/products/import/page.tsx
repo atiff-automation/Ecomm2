@@ -272,8 +272,8 @@ export default function ProductImportPage() {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Important:</strong> Make sure all required fields are filled and
-                  category IDs exist in your system before importing.
+                  <strong>Important:</strong> Make sure all required fields are
+                  filled and category IDs exist in your system before importing.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -379,7 +379,8 @@ export default function ProductImportPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Download the template file to ensure your data is in the correct format.
+                Download the template file to ensure your data is in the correct
+                format.
               </p>
               <Button
                 variant="outline"
@@ -447,7 +448,8 @@ export default function ProductImportPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Import history and logs will be displayed here in future updates.
+                Import history and logs will be displayed here in future
+                updates.
               </p>
             </CardContent>
           </Card>
@@ -479,7 +481,9 @@ export default function ProductImportPage() {
                         </span>
                       </div>
                       <Badge
-                        variant={product.action === 'created' ? 'default' : 'secondary'}
+                        variant={
+                          product.action === 'created' ? 'default' : 'secondary'
+                        }
                       >
                         {product.action === 'created' ? 'Created' : 'Updated'}
                       </Badge>

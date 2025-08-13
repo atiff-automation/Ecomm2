@@ -1,7 +1,7 @@
 /**
  * Centralized Category Service - Malaysian E-commerce Platform
  * Single source of truth for ALL category-related operations
- * 
+ *
  * This service consolidates all category API calls and business logic
  * that were previously scattered across multiple components.
  */
@@ -41,7 +41,10 @@ export interface CategoryWithProducts extends CategoryResponse {
 
 export class CategoryService {
   private static instance: CategoryService;
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
   private readonly DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 minutes (categories change less frequently)
 
   private constructor() {}
@@ -56,25 +59,41 @@ export class CategoryService {
   /**
    * Get all categories with optional filtering and hierarchy
    */
-  async getCategories(options: CategoryListOptions = {}): Promise<CategoryResponse[]> {
+  async getCategories(
+    options: CategoryListOptions = {}
+  ): Promise<CategoryResponse[]> {
     const cacheKey = `categories:${JSON.stringify(options)}`;
     const cached = this.getFromCache<CategoryResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams();
-      
-      if (options.includeProductCount) queryParams.append('includeProductCount', 'true');
-      if (options.includeChildren) queryParams.append('includeChildren', 'true');
+
+      if (options.includeProductCount) {
+        queryParams.append('includeProductCount', 'true');
+      }
+      if (options.includeChildren) {
+        queryParams.append('includeChildren', 'true');
+      }
       if (options.parentId !== undefined) {
         queryParams.append('parentId', options.parentId || 'null');
       }
-      if (options.onlyActive) queryParams.append('onlyActive', 'true');
-      if (options.sortBy) queryParams.append('sortBy', options.sortBy);
-      if (options.sortOrder) queryParams.append('sortOrder', options.sortOrder);
+      if (options.onlyActive) {
+        queryParams.append('onlyActive', 'true');
+      }
+      if (options.sortBy) {
+        queryParams.append('sortBy', options.sortBy);
+      }
+      if (options.sortOrder) {
+        queryParams.append('sortOrder', options.sortOrder);
+      }
 
       const endpoint = `/api/categories?${queryParams.toString()}`;
-      const response = await apiClient.get<{ categories: CategoryResponse[] }>(endpoint);
+      const response = await apiClient.get<{ categories: CategoryResponse[] }>(
+        endpoint
+      );
 
       if (response.success && response.data?.categories) {
         this.setCache(cacheKey, response.data.categories);
@@ -94,10 +113,14 @@ export class CategoryService {
   async getCategory(slugOrId: string): Promise<CategoryResponse> {
     const cacheKey = `category:${slugOrId}`;
     const cached = this.getFromCache<CategoryResponse>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
-      const response = await apiClient.get<{ category: CategoryResponse }>(`/api/categories/${slugOrId}`);
+      const response = await apiClient.get<{ category: CategoryResponse }>(
+        `/api/categories/${slugOrId}`
+      );
 
       if (response.success && response.data?.category) {
         this.setCache(cacheKey, response.data.category);
@@ -120,16 +143,20 @@ export class CategoryService {
   ): Promise<CategoryWithProducts> {
     const cacheKey = `category-with-products:${slugOrId}:${productLimit}`;
     const cached = this.getFromCache<CategoryWithProducts>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams({
         includeProducts: 'true',
-        productLimit: productLimit.toString()
+        productLimit: productLimit.toString(),
       });
 
       const endpoint = `/api/categories/${slugOrId}?${queryParams.toString()}`;
-      const response = await apiClient.get<{ category: CategoryWithProducts }>(endpoint);
+      const response = await apiClient.get<{ category: CategoryWithProducts }>(
+        endpoint
+      );
 
       if (response.success && response.data?.category) {
         this.setCache(cacheKey, response.data.category, 5 * 60 * 1000); // Shorter cache for product data
@@ -146,13 +173,15 @@ export class CategoryService {
   /**
    * Get root categories (top-level categories without parent)
    */
-  async getRootCategories(includeProductCount: boolean = true): Promise<CategoryResponse[]> {
+  async getRootCategories(
+    includeProductCount: boolean = true
+  ): Promise<CategoryResponse[]> {
     return this.getCategories({
       parentId: null,
       includeProductCount,
       onlyActive: true,
       sortBy: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -162,13 +191,15 @@ export class CategoryService {
   async getCategoryHierarchy(): Promise<CategoryHierarchy[]> {
     const cacheKey = 'category-hierarchy';
     const cached = this.getFromCache<CategoryHierarchy[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const allCategories = await this.getCategories({
         includeChildren: true,
         includeProductCount: true,
-        onlyActive: true
+        onlyActive: true,
       });
 
       const hierarchy = this.buildCategoryTree(allCategories);
@@ -186,10 +217,14 @@ export class CategoryService {
   async getCategoryBreadcrumb(slugOrId: string): Promise<CategoryResponse[]> {
     const cacheKey = `category-breadcrumb:${slugOrId}`;
     const cached = this.getFromCache<CategoryResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
-      const response = await apiClient.get<{ breadcrumb: CategoryResponse[] }>(`/api/categories/${slugOrId}/breadcrumb`);
+      const response = await apiClient.get<{ breadcrumb: CategoryResponse[] }>(
+        `/api/categories/${slugOrId}/breadcrumb`
+      );
 
       if (response.success && response.data?.breadcrumb) {
         this.setCache(cacheKey, response.data.breadcrumb);
@@ -217,7 +252,7 @@ export class CategoryService {
       includeProductCount,
       onlyActive: true,
       sortBy: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     });
   }
 
@@ -227,16 +262,20 @@ export class CategoryService {
   async searchCategories(query: string): Promise<CategoryResponse[]> {
     const cacheKey = `category-search:${query}`;
     const cached = this.getFromCache<CategoryResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams({
         search: query,
-        includeProductCount: 'true'
+        includeProductCount: 'true',
       });
 
       const endpoint = `/api/categories/search?${queryParams.toString()}`;
-      const response = await apiClient.get<{ categories: CategoryResponse[] }>(endpoint);
+      const response = await apiClient.get<{ categories: CategoryResponse[] }>(
+        endpoint
+      );
 
       if (response.success && response.data?.categories) {
         this.setCache(cacheKey, response.data.categories, 5 * 60 * 1000); // Shorter cache for searches
@@ -256,16 +295,20 @@ export class CategoryService {
   async getPopularCategories(limit: number = 6): Promise<CategoryResponse[]> {
     const cacheKey = `popular-categories:${limit}`;
     const cached = this.getFromCache<CategoryResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams({
         limit: limit.toString(),
-        includeProductCount: 'true'
+        includeProductCount: 'true',
       });
 
       const endpoint = `/api/categories/popular?${queryParams.toString()}`;
-      const response = await apiClient.get<{ categories: CategoryResponse[] }>(endpoint);
+      const response = await apiClient.get<{ categories: CategoryResponse[] }>(
+        endpoint
+      );
 
       if (response.success && response.data?.categories) {
         this.setCache(cacheKey, response.data.categories, 20 * 60 * 1000); // Cache for 20 minutes
@@ -295,7 +338,9 @@ export class CategoryService {
   }> {
     const cacheKey = 'category-stats';
     const cached = this.getFromCache(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const response = await apiClient.get<{
@@ -311,17 +356,26 @@ export class CategoryService {
       }
 
       // Fallback: calculate basic stats
-      const allCategories = await this.getCategories({ includeProductCount: true });
+      const allCategories = await this.getCategories({
+        includeProductCount: true,
+      });
       const rootCategories = allCategories.filter(cat => !cat.parentId);
-      const totalProducts = allCategories.reduce((sum, cat) => sum + (cat.productCount || 0), 0);
-      const mostPopular = allCategories.reduce((max, cat) => 
-        (cat.productCount || 0) > (max?.productCount || 0) ? cat : max, null as CategoryResponse | null);
+      const totalProducts = allCategories.reduce(
+        (sum, cat) => sum + (cat.productCount || 0),
+        0
+      );
+      const mostPopular = allCategories.reduce(
+        (max, cat) =>
+          (cat.productCount || 0) > (max?.productCount || 0) ? cat : max,
+        null as CategoryResponse | null
+      );
 
       const stats = {
         totalCategories: allCategories.length,
         rootCategories: rootCategories.length,
-        averageProductsPerCategory: allCategories.length > 0 ? totalProducts / allCategories.length : 0,
-        mostPopularCategory: mostPopular
+        averageProductsPerCategory:
+          allCategories.length > 0 ? totalProducts / allCategories.length : 0,
+        mostPopularCategory: mostPopular,
       };
 
       this.setCache(cacheKey, stats, 30 * 60 * 1000);
@@ -335,7 +389,9 @@ export class CategoryService {
   /**
    * Build category tree from flat array
    */
-  private buildCategoryTree(categories: CategoryResponse[]): CategoryHierarchy[] {
+  private buildCategoryTree(
+    categories: CategoryResponse[]
+  ): CategoryHierarchy[] {
     const categoryMap = new Map<string, CategoryHierarchy>();
     const rootCategories: CategoryHierarchy[] = [];
 
@@ -345,14 +401,14 @@ export class CategoryService {
         ...category,
         children: [],
         level: 0,
-        path: []
+        path: [],
       });
     });
 
     // Second pass: build the tree structure
     categories.forEach(category => {
       const categoryNode = categoryMap.get(category.id)!;
-      
+
       if (!category.parentId) {
         // Root category
         categoryNode.level = 0;
@@ -377,7 +433,9 @@ export class CategoryService {
    */
   private getFromCache<T>(key: string): T | null {
     const item = this.cache.get(key);
-    if (!item) return null;
+    if (!item) {
+      return null;
+    }
 
     if (Date.now() > item.timestamp + item.ttl) {
       this.cache.delete(key);
@@ -387,11 +445,15 @@ export class CategoryService {
     return item.data;
   }
 
-  private setCache<T>(key: string, data: T, ttl: number = this.DEFAULT_CACHE_TTL): void {
+  private setCache<T>(
+    key: string,
+    data: T,
+    ttl: number = this.DEFAULT_CACHE_TTL
+  ): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -408,7 +470,11 @@ export class CategoryService {
   invalidateCategoryCache(categoryId: string): void {
     const keysToDelete: string[] = [];
     this.cache.forEach((_, key) => {
-      if (key.includes(categoryId) || key.includes('category-hierarchy') || key.includes('category-stats')) {
+      if (
+        key.includes(categoryId) ||
+        key.includes('category-hierarchy') ||
+        key.includes('category-stats')
+      ) {
         keysToDelete.push(key);
       }
     });
@@ -421,7 +487,7 @@ export class CategoryService {
   getCacheStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 }

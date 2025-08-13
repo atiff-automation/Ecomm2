@@ -220,7 +220,8 @@ export default function MemberWishlistPage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-gray-500">
-                        {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+                        {item.product.categories?.[0]?.category?.name ||
+                          'Uncategorized'}
                       </p>
                       <Link href={`/products/${item.product.slug}`}>
                         <h3 className="font-semibold line-clamp-2 hover:text-blue-600 transition-colors">

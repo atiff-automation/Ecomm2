@@ -1,24 +1,32 @@
 /**
  * Centralized Pricing Service - Malaysian E-commerce Platform
  * Single source of truth for ALL pricing calculations and business logic
- * 
+ *
  * This service consolidates all pricing logic that was previously
  * scattered across 8+ frontend components into one maintainable location.
  */
 
-import { 
-  ProductPricing, 
-  ProductPricingData, 
-  UserPricingContext, 
-  PricingBadge, 
+import {
+  ProductPricing,
+  ProductPricingData,
+  UserPricingContext,
+  PricingBadge,
   PricingDisplayClasses,
   PriceType,
   PricingServiceConfig,
   PromotionStatus,
-  EarlyAccessStatus
+  EarlyAccessStatus,
 } from '@/lib/types/pricing';
-import { getBestPrice, calculatePromotionStatus, getPromotionDisplayText } from '@/lib/promotions/promotion-utils';
-import { canUserAccessProduct, getEarlyAccessPrice, calculateEarlyAccessStatus } from '@/lib/member/early-access-utils';
+import {
+  getBestPrice,
+  calculatePromotionStatus,
+  getPromotionDisplayText,
+} from '@/lib/promotions/promotion-utils';
+import {
+  canUserAccessProduct,
+  getEarlyAccessPrice,
+  calculateEarlyAccessStatus,
+} from '@/lib/member/early-access-utils';
 import { formatCurrency } from '@/lib/utils';
 
 export class PricingService {
@@ -26,14 +34,14 @@ export class PricingService {
     currency: 'MYR',
     locale: 'en-MY',
     timezone: 'Asia/Kuala_Lumpur',
-    showCents: true
+    showCents: true,
   };
 
   /**
    * Main entry point - calculates complete pricing information for a product
    */
   static calculateProductPricing(
-    product: ProductPricingData, 
+    product: ProductPricingData,
     userContext: UserPricingContext
   ): ProductPricing {
     // 1. Check access permissions
@@ -49,12 +57,19 @@ export class PricingService {
     // 3. Calculate best price using existing utilities
     const priceInfo = getBestPrice(product, userContext.isMember);
     const earlyAccessPrice = getEarlyAccessPrice(product, userContext.isMember);
-    
+
     // 4. Determine final price (early access takes precedence)
-    const finalPrice = earlyAccessPrice.hasEarlyAccess ? earlyAccessPrice : priceInfo;
+    const finalPrice = earlyAccessPrice.hasEarlyAccess
+      ? earlyAccessPrice
+      : priceInfo;
 
     // 5. Generate badges
-    const badges = this.generatePricingBadges(product, promotionStatus, earlyAccessStatus, userContext);
+    const badges = this.generatePricingBadges(
+      product,
+      promotionStatus,
+      earlyAccessStatus,
+      userContext
+    );
 
     // 6. Calculate display classes
     const displayClasses = this.getDisplayClasses(finalPrice.priceType);
@@ -65,14 +80,22 @@ export class PricingService {
     const formattedSavings = this.formatPrice(finalPrice.savings);
 
     // 8. Generate member preview for non-members
-    const memberPreview = this.generateMemberPreview(product, userContext, promotionStatus, earlyAccessStatus);
+    const memberPreview = this.generateMemberPreview(
+      product,
+      userContext,
+      promotionStatus,
+      earlyAccessStatus
+    );
 
     return {
       effectivePrice: finalPrice.price,
       originalPrice: finalPrice.originalPrice,
       priceType: finalPrice.priceType as PriceType,
       savings: finalPrice.savings,
-      savingsPercentage: this.calculateSavingsPercentage(finalPrice.originalPrice, finalPrice.price),
+      savingsPercentage: this.calculateSavingsPercentage(
+        finalPrice.originalPrice,
+        finalPrice.price
+      ),
       badges,
       displayClasses,
       formattedPrice,
@@ -82,7 +105,7 @@ export class PricingService {
       showSavings: finalPrice.savings > 0,
       showMemberPreview: memberPreview.show,
       memberPreviewText: memberPreview.text,
-      priceDescription: this.generatePriceDescription(finalPrice, product)
+      priceDescription: this.generatePriceDescription(finalPrice, product),
     };
   }
 
@@ -97,13 +120,13 @@ export class PricingService {
    * Check if user can access this product (early access, member-only, etc.)
    */
   private static checkUserAccess(
-    product: ProductPricingData, 
+    product: ProductPricingData,
     userContext: UserPricingContext
   ): { allowed: boolean; reason?: string } {
     const canAccess = canUserAccessProduct(product, userContext.isMember);
     return {
       allowed: canAccess,
-      reason: canAccess ? undefined : 'Member access required'
+      reason: canAccess ? undefined : 'Member access required',
     };
   }
 
@@ -124,7 +147,7 @@ export class PricingService {
         type: 'featured',
         text: 'Featured',
         variant: 'default',
-        className: 'bg-blue-600 text-white'
+        className: 'bg-blue-600 text-white',
       });
     }
 
@@ -134,7 +157,7 @@ export class PricingService {
         type: 'members-only',
         text: 'Members Only',
         variant: 'outline',
-        className: 'bg-purple-100 text-purple-800 border-purple-500'
+        className: 'bg-purple-100 text-purple-800 border-purple-500',
       });
     }
 
@@ -143,7 +166,7 @@ export class PricingService {
         type: 'early-access',
         text: 'Early Access',
         variant: 'secondary',
-        className: 'bg-purple-500 text-white'
+        className: 'bg-purple-500 text-white',
       });
     }
 
@@ -154,7 +177,7 @@ export class PricingService {
         type: 'promotional',
         text: promotionText || 'Special Price',
         variant: 'destructive',
-        className: 'bg-red-500 text-white'
+        className: 'bg-red-500 text-white',
       });
     }
 
@@ -164,7 +187,7 @@ export class PricingService {
         type: 'coming-soon',
         text: promotionText || 'Coming Soon',
         variant: 'outline',
-        className: 'bg-blue-500 text-white border-blue-500'
+        className: 'bg-blue-500 text-white border-blue-500',
       });
     }
 
@@ -174,19 +197,21 @@ export class PricingService {
         type: 'out-of-stock',
         text: 'Out of Stock',
         variant: 'outline',
-        className: 'bg-white text-gray-600'
+        className: 'bg-white text-gray-600',
       });
     }
 
     // Qualifying badge (only if no promotions active)
-    if (product.isQualifyingForMembership && 
-        !promotionStatus.isActive && 
-        !promotionStatus.isScheduled) {
+    if (
+      product.isQualifyingForMembership &&
+      !promotionStatus.isActive &&
+      !promotionStatus.isScheduled
+    ) {
       badges.push({
         type: 'qualifying',
         text: 'Membership Qualifying',
         variant: 'outline',
-        className: 'bg-blue-50 text-blue-700 border-blue-200'
+        className: 'bg-blue-50 text-blue-700 border-blue-200',
       });
     }
 
@@ -201,23 +226,23 @@ export class PricingService {
       'early-access': {
         priceColor: 'text-purple-600',
         badgeVariant: 'secondary',
-        savingsColor: 'text-purple-600'
+        savingsColor: 'text-purple-600',
       },
-      'promotional': {
+      promotional: {
         priceColor: 'text-red-600',
         badgeVariant: 'destructive',
-        savingsColor: 'text-red-600'
+        savingsColor: 'text-red-600',
       },
-      'member': {
+      member: {
         priceColor: 'text-green-600',
         badgeVariant: 'secondary',
-        savingsColor: 'text-green-600'
+        savingsColor: 'text-green-600',
       },
-      'regular': {
+      regular: {
         priceColor: 'text-gray-900',
         badgeVariant: 'default',
-        savingsColor: 'text-green-600'
-      }
+        savingsColor: 'text-green-600',
+      },
     };
 
     return classMap[priceType as keyof typeof classMap] || classMap.regular;
@@ -250,24 +275,32 @@ export class PricingService {
     const memberPriceFormatted = this.formatPrice(product.memberPrice);
     return {
       show: true,
-      text: `Member price: ${memberPriceFormatted}`
+      text: `Member price: ${memberPriceFormatted}`,
     };
   }
 
   /**
    * Calculate savings percentage
    */
-  private static calculateSavingsPercentage(original: number, effective: number): number {
-    if (original <= 0) return 0;
+  private static calculateSavingsPercentage(
+    original: number,
+    effective: number
+  ): number {
+    if (original <= 0) {
+      return 0;
+    }
     return Math.round(((original - effective) / original) * 100);
   }
 
   /**
    * Generate accessible price description for screen readers
    */
-  private static generatePriceDescription(finalPrice: any, product: ProductPricingData): string {
+  private static generatePriceDescription(
+    finalPrice: any,
+    product: ProductPricingData
+  ): string {
     let description = `Price: ${this.formatPrice(finalPrice.price)}`;
-    
+
     if (finalPrice.savings > 0) {
       description += `, reduced from ${this.formatPrice(finalPrice.originalPrice)}, save ${this.formatPrice(finalPrice.savings)}`;
     }
@@ -286,23 +319,28 @@ export class PricingService {
   /**
    * Create pricing object for access-denied products
    */
-  private static createAccessDeniedPricing(product: ProductPricingData, reason: string): ProductPricing {
+  private static createAccessDeniedPricing(
+    product: ProductPricingData,
+    reason: string
+  ): ProductPricing {
     return {
       effectivePrice: 0,
       originalPrice: product.regularPrice,
       priceType: 'regular',
       savings: 0,
       savingsPercentage: 0,
-      badges: [{
-        type: 'members-only',
-        text: 'Members Only',
-        variant: 'outline',
-        className: 'bg-purple-100 text-purple-800 border-purple-500'
-      }],
+      badges: [
+        {
+          type: 'members-only',
+          text: 'Members Only',
+          variant: 'outline',
+          className: 'bg-purple-100 text-purple-800 border-purple-500',
+        },
+      ],
       displayClasses: {
         priceColor: 'text-gray-400',
         badgeVariant: 'outline',
-        savingsColor: 'text-gray-400'
+        savingsColor: 'text-gray-400',
       },
       formattedPrice: 'Members Only',
       formattedOriginalPrice: this.formatPrice(product.regularPrice),
@@ -310,14 +348,17 @@ export class PricingService {
       showOriginalPrice: false,
       showSavings: false,
       showMemberPreview: false,
-      priceDescription: `Access restricted: ${reason}`
+      priceDescription: `Access restricted: ${reason}`,
     };
   }
 
   /**
    * Get simplified pricing for components that only need basic price info
    */
-  static getSimplePrice(product: ProductPricingData, userContext: UserPricingContext): string {
+  static getSimplePrice(
+    product: ProductPricingData,
+    userContext: UserPricingContext
+  ): string {
     const pricing = this.calculateProductPricing(product, userContext);
     return pricing.formattedPrice;
   }
@@ -333,7 +374,10 @@ export class PricingService {
   /**
    * Get savings amount for a product
    */
-  static getSavings(product: ProductPricingData, userContext: UserPricingContext): number {
+  static getSavings(
+    product: ProductPricingData,
+    userContext: UserPricingContext
+  ): number {
     const pricing = this.calculateProductPricing(product, userContext);
     return pricing.savings;
   }

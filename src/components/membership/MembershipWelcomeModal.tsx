@@ -93,21 +93,21 @@ export default function MembershipWelcomeModal({
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               <Crown className="h-10 w-10 text-yellow-300" />
             </div>
-            
+
             <h1 className="text-2xl font-bold mb-2">
               🎉 Welcome to Membership!
             </h1>
-            
+
             {memberInfo?.name && (
               <p className="text-lg opacity-90 mb-1">
                 Congratulations, {memberInfo.name}!
               </p>
             )}
-            
+
             <p className="text-sm opacity-75">
               Your membership has been activated successfully
             </p>
-            
+
             {memberInfo?.orderValue && (
               <div className="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
                 <Zap className="h-4 w-4 text-yellow-300" />
@@ -125,7 +125,7 @@ export default function MembershipWelcomeModal({
             <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
               Your Exclusive Member Benefits
             </h3>
-            
+
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -198,8 +198,9 @@ export default function MembershipWelcomeModal({
                   Important: Login Required
                 </p>
                 <p className="text-yellow-700">
-                  To enjoy member pricing on future orders, make sure to log in to your account before shopping. 
-                  Your member benefits are tied to your account!
+                  To enjoy member pricing on future orders, make sure to log in
+                  to your account before shopping. Your member benefits are tied
+                  to your account!
                 </p>
               </div>
             </div>
@@ -207,14 +208,14 @@ export default function MembershipWelcomeModal({
 
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
+            <Button
               onClick={handleViewBenefits}
               className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               <Crown className="h-4 w-4 mr-2" />
               View My Account
             </Button>
-            <Button 
+            <Button
               onClick={handleContinueShopping}
               variant="outline"
               className="flex-1"

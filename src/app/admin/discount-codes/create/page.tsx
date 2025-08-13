@@ -400,7 +400,13 @@ export default function CreateDiscountCodePage() {
                       <Select
                         value={formData.discountType}
                         onValueChange={value =>
-                          handleInputChange('discountType', value as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING')
+                          handleInputChange(
+                            'discountType',
+                            value as
+                              | 'PERCENTAGE'
+                              | 'FIXED_AMOUNT'
+                              | 'FREE_SHIPPING'
+                          )
                         }
                       >
                         <SelectTrigger>

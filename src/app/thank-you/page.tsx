@@ -117,16 +117,18 @@ function ThankYouContent() {
   const fetchOrderData = async () => {
     try {
       setLoading(true);
-      
+
       // Search for order by order number
-      const response = await fetch(`/api/member/orders?orderNumber=${orderRef}`);
-      
+      const response = await fetch(
+        `/api/member/orders?orderNumber=${orderRef}`
+      );
+
       if (!response.ok) {
         throw new Error('Order not found');
       }
 
       const data = await response.json();
-      
+
       if (data.orders && data.orders.length > 0) {
         setOrderData(data.orders[0]);
       } else {
@@ -145,7 +147,7 @@ function ThankYouContent() {
       // Update session to get latest user data
       await updateSession();
       setMembershipActivated(true);
-      
+
       // Show welcome modal after a short delay
       setTimeout(() => {
         setShowWelcomeModal(true);
@@ -156,30 +158,34 @@ function ThankYouContent() {
   };
 
   const handleDownloadReceipt = async () => {
-    if (!orderData) return;
+    if (!orderData) {
+      return;
+    }
 
     try {
       setDownloadingReceipt(true);
 
-      const response = await fetch(`/api/orders/${orderData.id}/receipt?format=pdf&download=true`);
-      
+      const response = await fetch(
+        `/api/orders/${orderData.id}/receipt?format=pdf&download=true`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to generate receipt');
       }
 
       const pdfBuffer = await response.arrayBuffer();
-      
+
       // Create a blob and download
       const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `Receipt_${orderData.orderNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading receipt:', error);
@@ -267,8 +273,8 @@ function ThankYouContent() {
                 <div>
                   <strong>🎉 Membership Activated!</strong>
                   <p className="text-sm mt-1">
-                    You now have access to exclusive member pricing and benefits. 
-                    Login on future visits to enjoy member discounts!
+                    You now have access to exclusive member pricing and
+                    benefits. Login on future visits to enjoy member discounts!
                   </p>
                 </div>
                 <Button
@@ -297,13 +303,19 @@ function ThankYouContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {orderData?.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 py-4 border-b last:border-b-0">
+                {orderData?.items.map(item => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 py-4 border-b last:border-b-0"
+                  >
                     <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       {item.product.primaryImage ? (
                         <Image
                           src={item.product.primaryImage.url}
-                          alt={item.product.primaryImage.altText || item.product.name}
+                          alt={
+                            item.product.primaryImage.altText ||
+                            item.product.name
+                          }
                           fill
                           className="object-cover"
                         />
@@ -316,7 +328,9 @@ function ThankYouContent() {
                     <div className="flex-1">
                       <h4 className="font-medium">{item.product.name}</h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
+                        <span className="text-sm text-gray-600">
+                          Qty: {item.quantity}
+                        </span>
                         {item.finalPrice < item.price && (
                           <Badge variant="secondary" className="text-xs">
                             Member Price
@@ -325,7 +339,9 @@ function ThankYouContent() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">{formatPrice(item.finalPrice * item.quantity)}</p>
+                      <p className="font-medium">
+                        {formatPrice(item.finalPrice * item.quantity)}
+                      </p>
                       {item.finalPrice < item.price && (
                         <p className="text-sm text-gray-500 line-through">
                           {formatPrice(item.price * item.quantity)}
@@ -349,14 +365,17 @@ function ThankYouContent() {
                 <CardContent>
                   <div className="space-y-1">
                     <p className="font-medium">
-                      {orderData.shippingAddress.firstName} {orderData.shippingAddress.lastName}
+                      {orderData.shippingAddress.firstName}{' '}
+                      {orderData.shippingAddress.lastName}
                     </p>
                     <p>{orderData.shippingAddress.address}</p>
                     {orderData.shippingAddress.address2 && (
                       <p>{orderData.shippingAddress.address2}</p>
                     )}
                     <p>
-                      {orderData.shippingAddress.postcode} {orderData.shippingAddress.city}, {orderData.shippingAddress.state}
+                      {orderData.shippingAddress.postcode}{' '}
+                      {orderData.shippingAddress.city},{' '}
+                      {orderData.shippingAddress.state}
                     </p>
                     <p>{orderData.shippingAddress.country}</p>
                   </div>
@@ -429,9 +448,10 @@ function ThankYouContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-gray-600">
-                  Download your official receipt as PDF for records and tax purposes.
+                  Download your official receipt as PDF for records and tax
+                  purposes.
                 </p>
-                <Button 
+                <Button
                   onClick={handleDownloadReceipt}
                   disabled={downloadingReceipt}
                   className="w-full"
@@ -467,7 +487,9 @@ function ThankYouContent() {
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>We'll send shipping updates as your order is processed</p>
+                    <p>
+                      We'll send shipping updates as your order is processed
+                    </p>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -477,8 +499,8 @@ function ThankYouContent() {
 
                 <div className="pt-3 space-y-2">
                   {session?.user ? (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => router.push('/member/orders')}
                       className="w-full"
                     >
@@ -486,8 +508,8 @@ function ThankYouContent() {
                       View My Orders
                     </Button>
                   ) : null}
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => router.push('/products')}
                     className="w-full"
                   >
@@ -505,7 +527,9 @@ function ThankYouContent() {
           isOpen={showWelcomeModal}
           onClose={() => setShowWelcomeModal(false)}
           memberInfo={{
-            name: orderData?.customer ? `${orderData.customer.firstName} ${orderData.customer.lastName}` : undefined,
+            name: orderData?.customer
+              ? `${orderData.customer.firstName} ${orderData.customer.lastName}`
+              : undefined,
             memberSince: orderData?.customer?.memberSince,
             orderValue: orderData?.total,
           }}
@@ -517,11 +541,13 @@ function ThankYouContent() {
 
 export default function ThankYouPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      }
+    >
       <ThankYouContent />
     </Suspense>
   );

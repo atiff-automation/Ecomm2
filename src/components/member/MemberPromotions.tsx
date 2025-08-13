@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
+import {
   Gift,
   Crown,
   Clock,
@@ -18,7 +18,7 @@ import {
   TrendingUp,
   Calendar,
   Percent,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
 // Local utility function
 const formatPrice = (price: number): string => {
@@ -94,7 +94,9 @@ export default function MemberPromotions() {
   const checkForNewBenefits = async () => {
     setCheckingBenefits(true);
     try {
-      const response = await fetch('/api/member/promotions?type=check-benefits');
+      const response = await fetch(
+        '/api/member/promotions?type=check-benefits'
+      );
       if (response.ok) {
         const data = await response.json();
         if (data.newBenefits > 0) {
@@ -136,17 +138,25 @@ export default function MemberPromotions() {
   };
 
   const formatExpiryDate = (expiresAt: string | null) => {
-    if (!expiresAt) return 'No expiry';
-    
+    if (!expiresAt) {
+      return 'No expiry';
+    }
+
     const date = new Date(expiresAt);
     const now = new Date();
     const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 1) return 'Expires today';
-    if (diffDays === 1) return 'Expires tomorrow';
-    if (diffDays <= 7) return `Expires in ${diffDays} days`;
-    
+
+    if (diffDays < 1) {
+      return 'Expires today';
+    }
+    if (diffDays === 1) {
+      return 'Expires tomorrow';
+    }
+    if (diffDays <= 7) {
+      return `Expires in ${diffDays} days`;
+    }
+
     return date.toLocaleDateString('en-MY');
   };
 
@@ -195,7 +205,9 @@ export default function MemberPromotions() {
                 <div className="text-2xl font-bold text-blue-600">
                   {benefits.exclusiveOffers}
                 </div>
-                <div className="text-sm text-gray-600">Exclusive Offers Used</div>
+                <div className="text-sm text-gray-600">
+                  Exclusive Offers Used
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
@@ -228,14 +240,19 @@ export default function MemberPromotions() {
                   </Button>
                 </div>
                 <div className="mb-2">
-                  <Progress 
-                    value={(benefits.nextBenefitUnlock.progress / benefits.nextBenefitUnlock.target) * 100} 
+                  <Progress
+                    value={
+                      (benefits.nextBenefitUnlock.progress /
+                        benefits.nextBenefitUnlock.target) *
+                      100
+                    }
                     className="h-2"
                   />
                 </div>
                 <div className="text-sm text-gray-600">
-                  {benefits.nextBenefitUnlock.requirement} 
-                  ({benefits.nextBenefitUnlock.progress}/{benefits.nextBenefitUnlock.target})
+                  {benefits.nextBenefitUnlock.requirement}(
+                  {benefits.nextBenefitUnlock.progress}/
+                  {benefits.nextBenefitUnlock.target})
                 </div>
               </div>
             )}
@@ -270,43 +287,55 @@ export default function MemberPromotions() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {promotions.map((promotion) => (
-                <Card key={promotion.code} className="border-l-4 border-l-green-500">
+              {promotions.map(promotion => (
+                <Card
+                  key={promotion.code}
+                  className="border-l-4 border-l-green-500"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           {getDiscountIcon(promotion.discountType)}
-                          <h3 className="font-semibold text-lg">{promotion.name}</h3>
+                          <h3 className="font-semibold text-lg">
+                            {promotion.name}
+                          </h3>
                           {!promotion.isPublic && (
                             <Badge variant="secondary" className="text-xs">
                               Auto-Apply
                             </Badge>
                           )}
                         </div>
-                        
-                        <p className="text-gray-600 mb-3">{promotion.description}</p>
-                        
+
+                        <p className="text-gray-600 mb-3">
+                          {promotion.description}
+                        </p>
+
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <span className="font-medium">
-                              {formatDiscountValue(promotion.discountType, promotion.discountValue)}
+                              {formatDiscountValue(
+                                promotion.discountType,
+                                promotion.discountValue
+                              )}
                             </span>
                           </div>
-                          
+
                           {promotion.minimumOrderValue && (
                             <div className="flex items-center gap-1">
-                              <span>Min: {formatPrice(promotion.minimumOrderValue)}</span>
+                              <span>
+                                Min: {formatPrice(promotion.minimumOrderValue)}
+                              </span>
                             </div>
                           )}
-                          
+
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{formatExpiryDate(promotion.expiresAt)}</span>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="ml-4 text-right">
                         <div className="font-mono text-lg font-bold text-green-600 mb-2">
                           {promotion.code}

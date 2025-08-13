@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     if (!isConfigured) {
       return NextResponse.json({
         success: false,
-        message: 'Inventory channel not configured. Please set TELEGRAM_INVENTORY_CHAT_ID in your environment variables.',
+        message:
+          'Inventory channel not configured. Please set TELEGRAM_INVENTORY_CHAT_ID in your environment variables.',
       });
     }
 
@@ -46,10 +47,10 @@ export async function POST(request: NextRequest) {
     } else {
       return NextResponse.json({
         success: false,
-        message: 'Failed to send test inventory alert. Please check your bot token and inventory chat ID.',
+        message:
+          'Failed to send test inventory alert. Please check your bot token and inventory chat ID.',
       });
     }
-
   } catch (error) {
     console.error('Error testing inventory notification:', error);
     return NextResponse.json(

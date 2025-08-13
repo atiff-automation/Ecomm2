@@ -12,7 +12,15 @@ import { OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
 import { z } from 'zod';
 
 const updateStatusSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']),
+  status: z.enum([
+    'PENDING',
+    'CONFIRMED',
+    'PROCESSING',
+    'SHIPPED',
+    'DELIVERED',
+    'CANCELLED',
+    'REFUNDED',
+  ]),
   paymentStatus: z.enum(['PENDING', 'PAID', 'FAILED', 'REFUNDED']).optional(),
   triggeredBy: z.string().optional(),
   metadata: z.record(z.any()).optional(),
@@ -26,7 +34,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { status, paymentStatus, triggeredBy, metadata, webhookSecret } = 
+    const { status, paymentStatus, triggeredBy, metadata, webhookSecret } =
       updateStatusSchema.parse(body);
 
     const { orderId } = params;
@@ -37,20 +45,25 @@ export async function PATCH(
 
     if (isWebhook) {
       // Verify webhook secret (you can set this in your environment)
-      const expectedSecret = process.env.ORDER_WEBHOOK_SECRET || 'your-webhook-secret';
+      const expectedSecret =
+        process.env.ORDER_WEBHOOK_SECRET || 'your-webhook-secret';
       if (webhookSecret === expectedSecret) {
         isAuthorized = true;
         console.log('✅ Webhook authentication successful');
       } else {
         console.warn('❌ Invalid webhook secret');
-        return NextResponse.json({ error: 'Invalid webhook secret' }, { status: 401 });
+        return NextResponse.json(
+          { error: 'Invalid webhook secret' },
+          { status: 401 }
+        );
       }
     } else {
       // Check session for admin/staff access
       const session = await getServerSession(authOptions);
       if (
         session?.user &&
-        (session.user.role === UserRole.ADMIN || session.user.role === UserRole.STAFF)
+        (session.user.role === UserRole.ADMIN ||
+          session.user.role === UserRole.STAFF)
       ) {
         isAuthorized = true;
         console.log('✅ Admin/Staff authentication successful');
@@ -81,7 +94,6 @@ export async function PATCH(
         updatedAt: updatedOrder.updatedAt,
       },
     });
-
   } catch (error) {
     console.error('❌ Order status update error:', error);
 

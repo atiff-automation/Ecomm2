@@ -88,7 +88,8 @@ export async function GET() {
     orders.forEach(order => {
       order.orderItems.forEach(item => {
         // Handle multiple categories - use primary category (first one)
-        const categoryName = item.product.categories?.[0]?.category?.name || 'Uncategorized';
+        const categoryName =
+          item.product.categories?.[0]?.category?.name || 'Uncategorized';
         categoryCount.set(
           categoryName,
           (categoryCount.get(categoryName) || 0) + 1

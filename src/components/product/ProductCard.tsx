@@ -1,7 +1,7 @@
 /**
  * ProductCard Component - Malaysian E-commerce Platform
  * Centralized product card using new pricing service architecture
- * 
+ *
  * This component eliminates business logic duplication by using
  * the centralized pricing service for all pricing calculations.
  */
@@ -51,15 +51,19 @@ export function ProductCard({
   size = 'md',
   showDescription = true,
   showRating = true,
-  className = ''
+  className = '',
 }: ProductCardProps) {
   // Get all pricing data from centralized service
   const pricing = usePricing(product);
 
-  const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+  const primaryImage =
+    product.images.find(img => img.isPrimary) || product.images[0];
 
   // If user doesn't have access, don't render the card
-  if (pricing.effectivePrice === 0 && pricing.priceDescription.includes('restricted')) {
+  if (
+    pricing.effectivePrice === 0 &&
+    pricing.priceDescription.includes('restricted')
+  ) {
     return null;
   }
 
@@ -72,12 +76,14 @@ export function ProductCard({
   const sizeClasses = {
     sm: 'text-sm',
     md: 'text-base',
-    lg: 'text-lg'
+    lg: 'text-lg',
   };
 
   return (
     <Link href={`/products/${product.slug}`}>
-      <Card className={`group hover:shadow-lg transition-shadow duration-200 cursor-pointer ${className}`}>
+      <Card
+        className={`group hover:shadow-lg transition-shadow duration-200 cursor-pointer ${className}`}
+      >
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
           {primaryImage ? (
             <Image
@@ -105,9 +111,9 @@ export function ProductCard({
             ))}
           </div>
 
-          <div 
+          <div
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.preventDefault()}
+            onClick={e => e.preventDefault()}
           >
             <WishlistButton
               productId={product.id}
@@ -126,7 +132,9 @@ export function ProductCard({
             </span>
 
             {/* Product Name */}
-            <h3 className={`font-semibold line-clamp-2 hover:text-primary transition-colors ${sizeClasses[size]}`}>
+            <h3
+              className={`font-semibold line-clamp-2 hover:text-primary transition-colors ${sizeClasses[size]}`}
+            >
               {product.name}
             </h3>
 
@@ -161,11 +169,16 @@ export function ProductCard({
             {/* Centralized Pricing Display */}
             <div className="space-y-1" aria-label={pricing.priceDescription}>
               <div className="flex items-center gap-2">
-                <span className={`font-bold ${sizeClasses[size]} ${pricing.displayClasses.priceColor}`}>
+                <span
+                  className={`font-bold ${sizeClasses[size]} ${pricing.displayClasses.priceColor}`}
+                >
                   {pricing.formattedPrice}
                 </span>
                 {pricing.priceType === 'early-access' && (
-                  <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-purple-100 text-purple-800"
+                  >
                     Early Access
                   </Badge>
                 )}
@@ -180,19 +193,21 @@ export function ProductCard({
                   </Badge>
                 )}
               </div>
-              
+
               {/* Show original price and savings */}
               {pricing.showSavings && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground line-through">
                     {pricing.formattedOriginalPrice}
                   </span>
-                  <span className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}>
+                  <span
+                    className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}
+                  >
                     Save {pricing.formattedSavings}
                   </span>
                 </div>
               )}
-              
+
               {/* Show member price preview for non-members */}
               {pricing.showMemberPreview && (
                 <div className="text-xs text-muted-foreground">
@@ -205,7 +220,7 @@ export function ProductCard({
             <Button
               className="w-full"
               disabled={product.stockQuantity === 0}
-              onClick={async (e) => {
+              onClick={async e => {
                 e.preventDefault();
                 e.stopPropagation();
                 await handleAddToCart();

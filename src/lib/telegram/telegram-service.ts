@@ -36,16 +36,20 @@ export class TelegramService {
   private lastHealthCheck: Date | null = null;
   private isHealthy: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
-  private retryQueue: Array<{ message: TelegramMessage; retries: number; timestamp: Date }> = [];
+  private retryQueue: Array<{
+    message: TelegramMessage;
+    retries: number;
+    timestamp: Date;
+  }> = [];
 
   constructor() {
     // Configuration will be loaded dynamically from database
     this.loadConfiguration();
     this.startHealthCheck();
-    
+
     // Initialize cron jobs (only once)
     this.initializeCronJobs();
-    
+
     // Ensure singleton behavior - prevent multiple instances
     if (typeof window === 'undefined' && !global.__telegramServiceInitialized) {
       global.__telegramServiceInitialized = true;
@@ -58,12 +62,15 @@ export class TelegramService {
    */
   private initializeCronJobs(): void {
     // Avoid importing at module level to prevent import issues
-    if (typeof window === 'undefined') { // Only run on server side
-      import('@/lib/cron/index').then(({ initializeCronJobs }) => {
-        initializeCronJobs();
-      }).catch(error => {
-        console.error('Failed to initialize cron jobs:', error);
-      });
+    if (typeof window === 'undefined') {
+      // Only run on server side
+      import('@/lib/cron/index')
+        .then(({ initializeCronJobs }) => {
+          initializeCronJobs();
+        })
+        .catch(error => {
+          console.error('Failed to initialize cron jobs:', error);
+        });
     }
   }
 
@@ -72,9 +79,12 @@ export class TelegramService {
    */
   private startHealthCheck(): void {
     // Check every 5 minutes
-    this.healthCheckInterval = setInterval(async () => {
-      await this.performHealthCheck();
-    }, 5 * 60 * 1000);
+    this.healthCheckInterval = setInterval(
+      async () => {
+        await this.performHealthCheck();
+      },
+      5 * 60 * 1000
+    );
 
     // Initial health check - run sooner and assume healthy if configured
     setTimeout(async () => {
@@ -128,7 +138,8 @@ export class TelegramService {
     this.retryQueue = [];
 
     for (const queueItem of failedMessages) {
-      if (queueItem.retries < 3) { // Max 3 retries
+      if (queueItem.retries < 3) {
+        // Max 3 retries
         const success = await this.sendMessage(queueItem.message, false); // Don't queue again
         if (!success) {
           // Re-queue with incremented retry count
@@ -138,7 +149,10 @@ export class TelegramService {
           });
         }
       } else {
-        console.error('❌ Telegram message failed after 3 retries, discarding:', queueItem.message);
+        console.error(
+          '❌ Telegram message failed after 3 retries, discarding:',
+          queueItem.message
+        );
       }
     }
   }
@@ -146,7 +160,11 @@ export class TelegramService {
   /**
    * Get connection health status
    */
-  public getHealthStatus(): { healthy: boolean; lastCheck: Date | null; queuedMessages: number } {
+  public getHealthStatus(): {
+    healthy: boolean;
+    lastCheck: Date | null;
+    queuedMessages: number;
+  } {
     return {
       healthy: this.isHealthy,
       lastCheck: this.lastHealthCheck,
@@ -163,7 +181,7 @@ export class TelegramService {
       const envToken = process.env.TELEGRAM_BOT_TOKEN;
       const envOrdersChatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
       const envInventoryChatId = process.env.TELEGRAM_INVENTORY_CHAT_ID;
-      
+
       if (envToken && envOrdersChatId) {
         this.botToken = envToken;
         this.ordersChatId = envOrdersChatId;
@@ -178,31 +196,33 @@ export class TelegramService {
         where: {
           key: {
             in: [
-              'TELEGRAM_BOT_TOKEN', 
-              'TELEGRAM_ORDERS_CHAT_ID', 
+              'TELEGRAM_BOT_TOKEN',
+              'TELEGRAM_ORDERS_CHAT_ID',
               'TELEGRAM_INVENTORY_CHAT_ID',
               'TELEGRAM_ORDERS_ENABLED',
-              'TELEGRAM_INVENTORY_ENABLED'
-            ]
-          }
+              'TELEGRAM_INVENTORY_ENABLED',
+            ],
+          },
         },
       });
 
-      const configMap = configs.reduce((acc, config) => {
-        acc[config.key] = config.value;
-        return acc;
-      }, {} as Record<string, string>);
+      const configMap = configs.reduce(
+        (acc, config) => {
+          acc[config.key] = config.value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
       this.botToken = configMap.TELEGRAM_BOT_TOKEN || null;
       this.ordersChatId = configMap.TELEGRAM_ORDERS_CHAT_ID || null;
       this.inventoryChatId = configMap.TELEGRAM_INVENTORY_CHAT_ID || null;
-      
+
       if (this.botToken) {
         this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
       }
 
       this.configLoaded = true;
-
     } catch (error) {
       console.error('Failed to load Telegram configuration:', error);
       this.configLoaded = true; // Don't block forever
@@ -262,7 +282,10 @@ export class TelegramService {
   /**
    * Send a raw message to Telegram with retry capability
    */
-  private async sendMessage(message: TelegramMessage, allowQueue: boolean = true): Promise<boolean> {
+  private async sendMessage(
+    message: TelegramMessage,
+    allowQueue: boolean = true
+  ): Promise<boolean> {
     if (!(await this.isConfigured())) {
       console.log('Telegram not configured, skipping notification');
       return false;
@@ -281,8 +304,12 @@ export class TelegramService {
 
       if (!response.ok) {
         const error = await response.text();
-        console.error('Failed to send Telegram message:', response.status, error);
-        
+        console.error(
+          'Failed to send Telegram message:',
+          response.status,
+          error
+        );
+
         // Queue for retry if it's a temporary failure and queueing is allowed
         if (allowQueue && this.shouldRetry(response.status)) {
           this.retryQueue.push({
@@ -293,7 +320,7 @@ export class TelegramService {
           console.log('📝 Telegram message queued for retry');
           return false;
         }
-        
+
         return false;
       }
 
@@ -301,7 +328,7 @@ export class TelegramService {
       return true;
     } catch (error) {
       console.error('Error sending Telegram message:', error);
-      
+
       // Queue for retry if queueing is allowed (network errors, timeouts, etc.)
       if (allowQueue) {
         this.retryQueue.push({
@@ -311,7 +338,7 @@ export class TelegramService {
         });
         console.log('📝 Telegram message queued for retry due to error');
       }
-      
+
       return false;
     }
   }
@@ -327,7 +354,9 @@ export class TelegramService {
   /**
    * Send new order notification
    */
-  async sendNewOrderNotification(orderData: OrderNotificationData): Promise<boolean> {
+  async sendNewOrderNotification(
+    orderData: OrderNotificationData
+  ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
       console.log('Orders channel not configured, skipping order notification');
       return false;
@@ -337,7 +366,7 @@ export class TelegramService {
     const formattedDate = orderData.createdAt.toLocaleString('en-MY', {
       timeZone: 'Asia/Kuala_Lumpur',
       day: '2-digit',
-      month: '2-digit', 
+      month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -345,10 +374,12 @@ export class TelegramService {
     });
 
     // Format items list
-    const itemsList = orderData.items.map(item => {
-      const itemTotal = item.quantity * item.price;
-      return `• ${item.name} (${item.quantity}x) - RM ${itemTotal.toFixed(2)}`;
-    }).join('\n');
+    const itemsList = orderData.items
+      .map(item => {
+        const itemTotal = item.quantity * item.price;
+        return `• ${item.name} (${item.quantity}x) - RM ${itemTotal.toFixed(2)}`;
+      })
+      .join('\n');
 
     const message = `
 🛒 <b>NEW ORDER #${orderData.orderNumber}</b>
@@ -374,13 +405,20 @@ ${itemsList}
   /**
    * Send payment status update notification
    */
-  async sendPaymentStatusNotification(orderNumber: string, status: string, amount: number): Promise<boolean> {
+  async sendPaymentStatusNotification(
+    orderNumber: string,
+    status: string,
+    amount: number
+  ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
-      console.log('Orders channel not configured, skipping payment notification');
+      console.log(
+        'Orders channel not configured, skipping payment notification'
+      );
       return false;
     }
 
-    const statusEmoji = status === 'COMPLETED' ? '✅' : status === 'FAILED' ? '❌' : '⏳';
+    const statusEmoji =
+      status === 'COMPLETED' ? '✅' : status === 'FAILED' ? '❌' : '⏳';
     const formattedAmount = `RM ${amount.toFixed(2)}`;
 
     const message = `
@@ -413,12 +451,13 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
       // Get orders for the specified date (Malaysian timezone)
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
-      
+
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
       // Fetch daily order statistics from database
-      const { totalOrders, totalRevenue, completedOrders, failedOrders } = await this.getDailySummaryData(startOfDay, endOfDay);
+      const { totalOrders, totalRevenue, completedOrders, failedOrders } =
+        await this.getDailySummaryData(startOfDay, endOfDay);
 
       const formattedDate = date.toLocaleDateString('en-MY', {
         timeZone: 'Asia/Kuala_Lumpur',
@@ -475,7 +514,10 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
       const orderTotal = Number(order.total) || 0;
       return sum + orderTotal;
     }, 0);
-    const completedOrders = orders.filter(order => order.paymentStatus === 'COMPLETED' || order.paymentStatus === 'PAID').length;
+    const completedOrders = orders.filter(
+      order =>
+        order.paymentStatus === 'COMPLETED' || order.paymentStatus === 'PAID'
+    ).length;
     const failedOrders = totalOrders - completedOrders;
 
     return {
@@ -489,7 +531,11 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   /**
    * Send low stock alert to inventory channel
    */
-  async sendLowStockAlert(productName: string, currentStock: number, sku: string): Promise<boolean> {
+  async sendLowStockAlert(
+    productName: string,
+    currentStock: number,
+    sku: string
+  ): Promise<boolean> {
     if (!(await this.isInventoryChannelConfigured())) {
       console.log('Inventory channel not configured, skipping low stock alert');
       return false;
@@ -517,9 +563,14 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   /**
    * Send general notification
    */
-  async sendGeneralNotification(title: string, message: string): Promise<boolean> {
+  async sendGeneralNotification(
+    title: string,
+    message: string
+  ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
-      console.log('Orders channel not configured, skipping general notification');
+      console.log(
+        'Orders channel not configured, skipping general notification'
+      );
       return false;
     }
 
@@ -545,7 +596,8 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
     if (!(await this.isConfigured())) {
       return {
         success: false,
-        message: 'Telegram not configured. Please configure your bot token and chat ID in the admin settings.',
+        message:
+          'Telegram not configured. Please configure your bot token and chat ID in the admin settings.',
       };
     }
 
@@ -577,8 +629,8 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
 
       return {
         success,
-        message: success 
-          ? 'Test message sent successfully!' 
+        message: success
+          ? 'Test message sent successfully!'
           : 'Failed to send test message. Please check your bot token and chat ID.',
       };
     } catch (error) {

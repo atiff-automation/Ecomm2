@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (type === 'seasonal') {
       // Create seasonal promotion
       const { season } = createSeasonalPromotionSchema.parse(body);
-      
+
       const code = await memberPromotionService.createSeasonalMemberPromotion(
         season,
         session.user.id
@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
 
       const config = {
         ...promotionData,
-        expiresAt: promotionData.expiresAt 
-          ? new Date(promotionData.expiresAt) 
+        expiresAt: promotionData.expiresAt
+          ? new Date(promotionData.expiresAt)
           : undefined,
       };
 

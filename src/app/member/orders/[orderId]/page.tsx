@@ -7,7 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Package, MapPin, CreditCard, Calendar, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Package,
+  MapPin,
+  CreditCard,
+  Calendar,
+  Loader2,
+} from 'lucide-react';
 import Image from 'next/image';
 
 interface OrderItem {
@@ -85,7 +92,7 @@ export default function OrderDetailPage() {
       try {
         setLoading(true);
         const response = await fetch(`/api/member/orders/${orderId}`);
-        
+
         if (response.ok) {
           const orderData = await response.json();
           setOrder(orderData);
@@ -189,15 +196,11 @@ export default function OrderDetailPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Orders
         </Button>
-        
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Order #{order.orderNumber}</h1>
@@ -209,7 +212,10 @@ export default function OrderDetailPage() {
             <Badge className={getStatusColor(order.status)} variant="outline">
               {order.status}
             </Badge>
-            <Badge className={getPaymentStatusColor(order.paymentStatus)} variant="outline">
+            <Badge
+              className={getPaymentStatusColor(order.paymentStatus)}
+              variant="outline"
+            >
               Payment: {order.paymentStatus}
             </Badge>
           </div>
@@ -228,8 +234,11 @@ export default function OrderDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {order.orderItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+              {order.orderItems.map(item => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-4 p-4 border rounded-lg"
+                >
                   <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     {item.product?.images?.[0] ? (
                       <Image
@@ -244,21 +253,31 @@ export default function OrderDetailPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1">
                     <h4 className="font-medium">{item.productName}</h4>
-                    <p className="text-sm text-muted-foreground">SKU: {item.productSku}</p>
-                    <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                    <p className="text-sm text-muted-foreground">
+                      SKU: {item.productSku}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Qty: {item.quantity}
+                    </p>
                   </div>
-                  
+
                   <div className="text-right">
-                    <p className="font-medium">{formatPrice(item.totalPrice)}</p>
+                    <p className="font-medium">
+                      {formatPrice(item.totalPrice)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {formatPrice(item.appliedPrice)} each
                     </p>
                     {item.appliedPrice < item.regularPrice && (
                       <p className="text-xs text-green-600">
-                        Member savings: {formatPrice((item.regularPrice - item.appliedPrice) * item.quantity)}
+                        Member savings:{' '}
+                        {formatPrice(
+                          (item.regularPrice - item.appliedPrice) *
+                            item.quantity
+                        )}
                       </p>
                     )}
                   </div>
@@ -279,17 +298,21 @@ export default function OrderDetailPage() {
               <CardContent>
                 <div className="space-y-1">
                   <p className="font-medium">
-                    {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                    {order.shippingAddress.firstName}{' '}
+                    {order.shippingAddress.lastName}
                   </p>
                   <p>{order.shippingAddress.addressLine1}</p>
                   {order.shippingAddress.addressLine2 && (
                     <p>{order.shippingAddress.addressLine2}</p>
                   )}
                   <p>
-                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
+                    {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                    {order.shippingAddress.postalCode}
                   </p>
                   <p>{order.shippingAddress.country}</p>
-                  <p className="text-muted-foreground">Phone: {order.shippingAddress.phone}</p>
+                  <p className="text-muted-foreground">
+                    Phone: {order.shippingAddress.phone}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -320,26 +343,26 @@ export default function OrderDetailPage() {
                 <span>Subtotal</span>
                 <span>{formatPrice(order.subtotal)}</span>
               </div>
-              
+
               {order.memberDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Member Discount</span>
                   <span>-{formatPrice(order.memberDiscount)}</span>
                 </div>
               )}
-              
+
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span>{formatPrice(order.shippingCost)}</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span>Tax</span>
                 <span>{formatPrice(order.taxAmount)}</span>
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
                 <span>{formatPrice(order.total)}</span>
@@ -357,32 +380,42 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Payment Method
+                </label>
                 <p className="capitalize">{order.paymentMethod || 'N/A'}</p>
               </div>
-              
+
               {order.trackingNumber && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Tracking Number</label>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Tracking Number
+                  </label>
                   <p className="font-mono text-sm">{order.trackingNumber}</p>
                 </div>
               )}
-              
+
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Order Date</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Order Date
+                </label>
                 <p>{formatDate(order.createdAt)}</p>
               </div>
-              
+
               {order.shippedAt && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Shipped Date</label>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Shipped Date
+                  </label>
                   <p>{formatDate(order.shippedAt)}</p>
                 </div>
               )}
-              
+
               {order.deliveredAt && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Delivered Date</label>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Delivered Date
+                  </label>
                   <p>{formatDate(order.deliveredAt)}</p>
                 </div>
               )}

@@ -19,7 +19,10 @@ import {
   updateGuestCartItem,
   clearGuestCart,
 } from '@/lib/cart/guest-cart';
-import { getBestPrice, productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
+import {
+  getBestPrice,
+  productQualifiesForMembership,
+} from '@/lib/promotions/promotion-utils';
 
 interface CartItemWithProduct {
   id: string;
@@ -72,7 +75,23 @@ export async function GET() {
     // Handle guest cart
     if (!session?.user) {
       const guestCartData = await getGuestCartWithProducts();
-      return NextResponse.json(guestCartData);
+      
+      // Transform guest cart to match CartResponse structure
+      return NextResponse.json({
+        id: 'guest_cart',
+        items: guestCartData.items.map(item => ({
+          id: item.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+          product: item.product,
+        })),
+        totalItems: guestCartData.summary.itemCount,
+        subtotal: guestCartData.summary.subtotal,
+        memberDiscount: guestCartData.summary.potentialSavings,
+        promotionalDiscount: 0,
+        total: guestCartData.summary.total,
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     // Handle authenticated user cart
@@ -112,7 +131,9 @@ export async function GET() {
         regularPrice: Number(item.product.regularPrice),
         memberPrice: Number(item.product.memberPrice),
         isPromotional: item.product.isPromotional,
-        promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
+        promotionalPrice: item.product.promotionalPrice
+          ? Number(item.product.promotionalPrice)
+          : null,
         promotionStartDate: item.product.promotionStartDate,
         promotionEndDate: item.product.promotionEndDate,
         isQualifyingForMembership: item.product.isQualifyingForMembership,
@@ -141,8 +162,10 @@ export async function GET() {
     );
 
     return NextResponse.json({
+      id: `cart_${session.user.id}`,
       items: cartItems.map(item => ({
         id: item.id,
+        productId: item.productId,
         quantity: item.quantity,
         product: {
           ...item.product,
@@ -150,7 +173,12 @@ export async function GET() {
           images: undefined, // Remove images array to keep response clean
         },
       })),
-      summary: cartSummary,
+      totalItems: cartSummary.itemCount,
+      subtotal: cartSummary.subtotal,
+      memberDiscount: cartSummary.potentialSavings,
+      promotionalDiscount: 0, // TODO: Calculate promotional discounts
+      total: cartSummary.total,
+      updatedAt: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error fetching cart:', error);
@@ -198,25 +226,25 @@ export async function POST(request: NextRequest) {
 
     // Handle guest cart
     if (!session?.user) {
-      const guestCart = addToGuestCart(productId, quantity);
-      return NextResponse.json(
-        {
-          message: 'Added to cart successfully',
-          cartItem: {
-            id: `guest_${productId}`,
-            quantity:
-              guestCart.items.find(item => item.productId === productId)
-                ?.quantity || quantity,
-            product: {
-              id: product.id,
-              name: product.name,
-              regularPrice: Number(product.regularPrice),
-              memberPrice: Number(product.memberPrice),
-            },
-          },
-        },
-        { status: 201 }
-      );
+      addToGuestCart(productId, quantity);
+      // Return full cart data like GET endpoint does
+      const guestCartData = await getGuestCartWithProducts();
+      
+      return NextResponse.json({
+        id: 'guest_cart',
+        items: guestCartData.items.map(item => ({
+          id: item.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+          product: item.product,
+        })),
+        totalItems: guestCartData.summary.itemCount,
+        subtotal: guestCartData.summary.subtotal,
+        memberDiscount: guestCartData.summary.potentialSavings,
+        promotionalDiscount: 0,
+        total: guestCartData.summary.total,
+        updatedAt: new Date().toISOString(),
+      }, { status: 201 });
     }
 
     // Handle authenticated user cart
@@ -267,34 +295,94 @@ export async function POST(request: NextRequest) {
         where: { id: cartItem.id },
         data: { quantity: product.stockQuantity },
       });
-
-      return NextResponse.json(
-        {
-          message: 'Added to cart (adjusted to available stock)',
-          cartItem: {
-            ...cartItem,
-            quantity: product.stockQuantity,
-          },
-          availableStock: product.stockQuantity,
-        },
-        { status: 200 }
-      );
     }
 
-    return NextResponse.json(
-      {
-        message: 'Added to cart successfully',
-        cartItem: {
-          ...cartItem,
-          product: {
-            ...cartItem.product,
-            primaryImage: cartItem.product.images[0] || null,
-            images: undefined,
+    // Get full cart data after the add operation (same as GET endpoint)
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId: session.user.id },
+      include: {
+        product: {
+          include: {
+            categories: {
+              select: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+            images: {
+              where: { isPrimary: true },
+              take: 1,
+            },
           },
         },
       },
-      { status: 201 }
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Convert Decimal prices to numbers for calculation
+    const convertedCartItems: CartItemWithProduct[] = cartItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        regularPrice: Number(item.product.regularPrice),
+        memberPrice: Number(item.product.memberPrice),
+        isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice
+          ? Number(item.product.promotionalPrice)
+          : null,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
+        memberOnlyUntil: item.product.memberOnlyUntil,
+        earlyAccessStart: item.product.earlyAccessStart,
+        status: item.product.status,
+        categories: item.product.categories.map(cat => ({
+          category: {
+            id: cat.category.id,
+            name: cat.category.name,
+            slug: cat.category.slug,
+          },
+        })),
+        images: item.product.images.map(img => ({
+          url: img.url,
+          altText: img.altText || '',
+          isPrimary: img.isPrimary,
+        })),
+      },
+    }));
+
+    // Calculate cart totals and membership eligibility
+    const cartSummary = await calculateCartSummary(
+      convertedCartItems,
+      session.user.isMember
     );
+
+    return NextResponse.json({
+      id: `cart_${session.user.id}`,
+      items: cartItems.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        product: {
+          ...item.product,
+          primaryImage: item.product.images[0] || null,
+          images: undefined, // Remove images array to keep response clean
+        },
+      })),
+      totalItems: cartSummary.itemCount,
+      subtotal: cartSummary.subtotal,
+      memberDiscount: cartSummary.potentialSavings,
+      promotionalDiscount: 0, // TODO: Calculate promotional discounts
+      total: cartSummary.total,
+      updatedAt: new Date().toISOString(),
+    }, { status: 201 });
   } catch (error) {
     console.error('Error adding to cart:', error);
 
@@ -532,17 +620,20 @@ async function calculateCartSummary(
     totalItems += quantity;
 
     // Use comprehensive pricing logic that considers promotions, membership, and early access
-    const priceInfo = getBestPrice({
-      isPromotional: product.isPromotional,
-      promotionalPrice: product.promotionalPrice,
-      promotionStartDate: product.promotionStartDate,
-      promotionEndDate: product.promotionEndDate,
-      isQualifyingForMembership: product.isQualifyingForMembership,
-      memberOnlyUntil: product.memberOnlyUntil,
-      earlyAccessStart: product.earlyAccessStart,
-      regularPrice: product.regularPrice,
-      memberPrice: product.memberPrice,
-    }, isMember);
+    const priceInfo = getBestPrice(
+      {
+        isPromotional: product.isPromotional,
+        promotionalPrice: product.promotionalPrice,
+        promotionStartDate: product.promotionStartDate,
+        promotionEndDate: product.promotionEndDate,
+        isQualifyingForMembership: product.isQualifyingForMembership,
+        memberOnlyUntil: product.memberOnlyUntil,
+        earlyAccessStart: product.earlyAccessStart,
+        regularPrice: product.regularPrice,
+        memberPrice: product.memberPrice,
+      },
+      isMember
+    );
 
     const itemSubtotal = product.regularPrice * quantity;
     const memberItemSubtotal = product.memberPrice * quantity;
@@ -566,7 +657,8 @@ async function calculateCartSummary(
     // CRITICAL: If the user is getting promotional pricing, the product should NOT qualify
     // This ensures consistency between pricing and qualification
     const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
-    const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+    const finalQualification =
+      qualifiesForMembership && !isUsingPromotionalPrice;
 
     if (finalQualification) {
       qualifyingTotal += applicableItemSubtotal;
@@ -574,10 +666,18 @@ async function calculateCartSummary(
   }
 
   // Calculate potential savings and membership progress
-  const potentialSavings = isMember ? subtotal - applicableSubtotal : subtotal - memberSubtotal;
-  const membershipProgress = Math.min((qualifyingTotal / membershipThreshold) * 100, 100);
+  const potentialSavings = isMember
+    ? subtotal - applicableSubtotal
+    : subtotal - memberSubtotal;
+  const membershipProgress = Math.min(
+    (qualifyingTotal / membershipThreshold) * 100,
+    100
+  );
   const isEligibleForMembership = qualifyingTotal >= membershipThreshold;
-  const amountNeededForMembership = Math.max(0, membershipThreshold - qualifyingTotal);
+  const amountNeededForMembership = Math.max(
+    0,
+    membershipThreshold - qualifyingTotal
+  );
 
   return {
     itemCount: totalItems,

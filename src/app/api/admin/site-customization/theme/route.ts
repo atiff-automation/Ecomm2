@@ -13,10 +13,18 @@ const colorRegex = /^#[0-9A-F]{6}$/i;
 
 const themeSchema = z.object({
   name: z.string().min(1, 'Theme name is required'),
-  primaryColor: z.string().regex(colorRegex, 'Invalid primary color format (use #RRGGBB)'),
-  secondaryColor: z.string().regex(colorRegex, 'Invalid secondary color format (use #RRGGBB)'),
-  backgroundColor: z.string().regex(colorRegex, 'Invalid background color format (use #RRGGBB)'),
-  textColor: z.string().regex(colorRegex, 'Invalid text color format (use #RRGGBB)'),
+  primaryColor: z
+    .string()
+    .regex(colorRegex, 'Invalid primary color format (use #RRGGBB)'),
+  secondaryColor: z
+    .string()
+    .regex(colorRegex, 'Invalid secondary color format (use #RRGGBB)'),
+  backgroundColor: z
+    .string()
+    .regex(colorRegex, 'Invalid background color format (use #RRGGBB)'),
+  textColor: z
+    .string()
+    .regex(colorRegex, 'Invalid text color format (use #RRGGBB)'),
 });
 
 /**
@@ -354,10 +362,7 @@ export async function POST(request: NextRequest) {
         message: 'Theme duplicated successfully',
       });
     } else {
-      return NextResponse.json(
-        { message: 'Invalid action' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
     console.error('Error processing theme action:', error);
@@ -398,15 +403,15 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!theme) {
-      return NextResponse.json(
-        { message: 'Theme not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Theme not found' }, { status: 404 });
     }
 
     if (theme.isActive) {
       return NextResponse.json(
-        { message: 'Cannot delete the active theme. Please activate another theme first.' },
+        {
+          message:
+            'Cannot delete the active theme. Please activate another theme first.',
+        },
         { status: 400 }
       );
     }

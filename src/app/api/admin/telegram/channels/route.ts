@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
 
     // Check configuration for each channel
     const ordersConfigured = await telegramService.isOrdersChannelConfigured();
-    const inventoryConfigured = await telegramService.isInventoryChannelConfigured();
+    const inventoryConfigured =
+      await telegramService.isInventoryChannelConfigured();
 
     const channels = [
       {
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       },
       {
         id: 'inventory',
-        name: 'Inventory Alerts', 
+        name: 'Inventory Alerts',
         description: 'Low stock and reorder notifications',
         configured: inventoryConfigured,
         enabled: inventoryConfigured, // If configured, assume enabled
@@ -47,9 +48,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       channels,
-      botConfigured: !!(process.env.TELEGRAM_BOT_TOKEN),
+      botConfigured: !!process.env.TELEGRAM_BOT_TOKEN,
     });
-
   } catch (error) {
     console.error('Error fetching channel status:', error);
     return NextResponse.json(

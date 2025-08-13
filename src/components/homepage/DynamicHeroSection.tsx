@@ -44,24 +44,27 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   isMember,
 }) => {
   // Use defaults if no data, but preserve backgroundImage if provided
-  const hero = heroSection ? {
-    ...heroSection
-  } : {
-    id: 'default',
-    title: 'Welcome to JRM E-commerce',
-    subtitle: "Malaysia's premier online marketplace",
-    description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
-    ctaPrimaryText: 'Join as Member',
-    ctaPrimaryLink: '/auth/signup',
-    ctaSecondaryText: 'Browse Products',
-    ctaSecondaryLink: '/products',
-    backgroundType: 'IMAGE' as const,
-    backgroundImage: null,
-    backgroundVideo: null,
-    overlayOpacity: 0.1,
-    textAlignment: 'left' as const,
-    isActive: true,
-  };
+  const hero = heroSection
+    ? {
+        ...heroSection,
+      }
+    : {
+        id: 'default',
+        title: 'Welcome to JRM E-commerce',
+        subtitle: "Malaysia's premier online marketplace",
+        description:
+          'Intelligent membership benefits, dual pricing, and local payment integration.',
+        ctaPrimaryText: 'Join as Member',
+        ctaPrimaryLink: '/auth/signup',
+        ctaSecondaryText: 'Browse Products',
+        ctaSecondaryLink: '/products',
+        backgroundType: 'IMAGE' as const,
+        backgroundImage: null,
+        backgroundVideo: null,
+        overlayOpacity: 0.1,
+        textAlignment: 'left' as const,
+        isActive: true,
+      };
 
   const theme = siteTheme || {
     id: 'default',
@@ -76,11 +79,13 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   // Convert hex to RGB for opacity calculations
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
   };
 
   const primaryRgb = hexToRgb(theme.primaryColor);
@@ -91,11 +96,17 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
     : 'linear-gradient(to bottom right, #3B82F6, #1E40AF)';
 
   const backgroundStyle: React.CSSProperties = {
-    background: hero.backgroundImage || hero.backgroundVideo ? 'transparent' : gradientStyle,
+    background:
+      hero.backgroundImage || hero.backgroundVideo
+        ? 'transparent'
+        : gradientStyle,
   };
 
   return (
-    <section className="relative text-white min-h-[700px] flex items-center" style={backgroundStyle}>
+    <section
+      className="relative text-white min-h-[700px] flex items-center"
+      style={backgroundStyle}
+    >
       {/* Background Media */}
       {hero.backgroundImage && hero.backgroundType === 'IMAGE' && (
         <div className="absolute inset-0 overflow-hidden">
@@ -125,7 +136,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       )}
 
       {/* Overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-black"
         style={{ opacity: hero.overlayOpacity }}
       />

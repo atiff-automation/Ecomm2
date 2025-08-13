@@ -42,7 +42,9 @@ export function DateRangePicker({
 
   // Create date range for the calendar
   const dateRange: DateRange | undefined = React.useMemo(() => {
-    if (!startDate && !endDate) return undefined;
+    if (!startDate && !endDate) {
+      return undefined;
+    }
     return {
       from: startDate,
       to: endDate,

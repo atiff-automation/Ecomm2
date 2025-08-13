@@ -44,7 +44,7 @@ function SignInForm() {
       } else {
         // Refresh session to get updated user data
         const session = await getSession();
-        
+
         // Role-based redirect logic
         if (session?.user?.role === 'ADMIN') {
           router.push('/admin/dashboard');

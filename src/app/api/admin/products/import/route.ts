@@ -18,10 +18,18 @@ const productSchema = z.object({
   shortDescription: z.string().optional(),
   categoryId: z.string().min(1, 'Category ID is required'),
   regularPrice: z.number().positive('Regular price must be positive'),
-  memberPrice: z.number().positive('Member price must be positive').nullable().optional(),
+  memberPrice: z
+    .number()
+    .positive('Member price must be positive')
+    .nullable()
+    .optional(),
   costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity cannot be negative'),
-  lowStockAlert: z.number().int().min(0, 'Low stock alert cannot be negative').default(10),
+  lowStockAlert: z
+    .number()
+    .int()
+    .min(0, 'Low stock alert cannot be negative')
+    .default(10),
   weight: z.number().positive().optional(),
   dimensions: z.string().optional(),
   featured: z.boolean().default(false),
@@ -60,32 +68,46 @@ function parseExcelValue(value: any): any {
   if (value === null || value === undefined || value === '') {
     return undefined;
   }
-  
+
   // Handle Excel date values
   if (typeof value === 'number' && value > 25000 && value < 50000) {
     // Likely an Excel date serial number
     const date = XLSX.SSF.parse_date_code(value);
     return new Date(date.y, date.m - 1, date.d).toISOString();
   }
-  
+
   return value;
 }
 
-function convertToProduct(row: any, rowIndex: number): { data?: any; errors: ImportError[] } {
+function convertToProduct(
+  row: any,
+  rowIndex: number
+): { data?: any; errors: ImportError[] } {
   const errors: ImportError[] = [];
-  
+
   try {
     // Convert boolean fields
-    const booleanFields = ['featured', 'isPromotional', 'isQualifyingForMembership'];
+    const booleanFields = [
+      'featured',
+      'isPromotional',
+      'isQualifyingForMembership',
+    ];
     booleanFields.forEach(field => {
       if (row[field] !== undefined && row[field] !== '') {
         const value = String(row[field]).toLowerCase();
         row[field] = value === 'true' || value === '1' || value === 'yes';
       }
     });
-    
+
     // Convert numeric fields
-    const numericFields = ['regularPrice', 'memberPrice', 'stockQuantity', 'lowStockAlert', 'weight', 'promotionalPrice'];
+    const numericFields = [
+      'regularPrice',
+      'memberPrice',
+      'stockQuantity',
+      'lowStockAlert',
+      'weight',
+      'promotionalPrice',
+    ];
     numericFields.forEach(field => {
       if (row[field] !== undefined && row[field] !== '') {
         const numValue = parseFloat(String(row[field]).replace(/[^\d.-]/g, ''));
@@ -94,9 +116,14 @@ function convertToProduct(row: any, rowIndex: number): { data?: any; errors: Imp
         }
       }
     });
-    
+
     // Convert date fields
-    const dateFields = ['promotionStartDate', 'promotionEndDate', 'memberOnlyUntil', 'earlyAccessStart'];
+    const dateFields = [
+      'promotionStartDate',
+      'promotionEndDate',
+      'memberOnlyUntil',
+      'earlyAccessStart',
+    ];
     dateFields.forEach(field => {
       if (row[field] !== undefined && row[field] !== '') {
         const parsedValue = parseExcelValue(row[field]);
@@ -112,14 +139,14 @@ function convertToProduct(row: any, rowIndex: number): { data?: any; errors: Imp
         }
       }
     });
-    
+
     // Remove empty fields
     Object.keys(row).forEach(key => {
       if (row[key] === '' || row[key] === null || row[key] === undefined) {
         delete row[key];
       }
     });
-    
+
     const validatedData = productSchema.parse(row);
     return { data: validatedData };
   } catch (error) {
@@ -143,23 +170,26 @@ function convertToProduct(row: any, rowIndex: number): { data?: any; errors: Imp
   }
 }
 
-async function generateUniqueSlug(name: string, existingSlugs: Set<string>): Promise<string> {
-  let baseSlug = name
+async function generateUniqueSlug(
+  name: string,
+  existingSlugs: Set<string>
+): Promise<string> {
+  const baseSlug = name
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim()
     .substring(0, 50);
-  
+
   let slug = baseSlug;
   let counter = 1;
-  
+
   while (existingSlugs.has(slug)) {
     slug = `${baseSlug}-${counter}`;
     counter++;
   }
-  
+
   existingSlugs.add(slug);
   return slug;
 }
@@ -167,12 +197,9 @@ async function generateUniqueSlug(name: string, existingSlugs: Set<string>): Pro
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await request.formData();
@@ -187,7 +214,11 @@ export async function POST(request: NextRequest) {
 
     // Validate file type
     const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+    if (
+      !fileName.endsWith('.csv') &&
+      !fileName.endsWith('.xlsx') &&
+      !fileName.endsWith('.xls')
+    ) {
       return NextResponse.json(
         { message: 'Invalid file type. Please upload CSV or Excel file.' },
         { status: 400 }
@@ -197,7 +228,7 @@ export async function POST(request: NextRequest) {
     // Read file content
     const buffer = await file.arrayBuffer();
     let workbook: XLSX.WorkBook;
-    
+
     try {
       if (fileName.endsWith('.csv')) {
         const text = new TextDecoder().decode(buffer);
@@ -224,7 +255,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate categories exist
-    const categoryIds = [...new Set(rawData.map((row: any) => row.categoryId).filter(Boolean))];
+    const categoryIds = [
+      ...new Set(rawData.map((row: any) => row.categoryId).filter(Boolean)),
+    ];
     const existingCategories = await prisma.category.findMany({
       where: { id: { in: categoryIds } },
       select: { id: true },
@@ -251,7 +284,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < rawData.length; i++) {
       const row = rawData[i] as any;
       const rowIndex = i + 2; // +2 because Excel starts at 1 and we have headers
-      
+
       try {
         // Validate category exists
         if (!validCategoryIds.has(row.categoryId)) {
@@ -278,7 +311,7 @@ export async function POST(request: NextRequest) {
 
         // Check for duplicate SKU
         const isUpdate = existingSkus.has(productData.sku);
-        
+
         if (isUpdate) {
           // Update existing product
           const { categoryId, ...updateData } = productData;
@@ -288,10 +321,18 @@ export async function POST(request: NextRequest) {
               ...updateData,
               memberPrice: updateData.memberPrice || updateData.regularPrice,
               slug,
-              promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
-              promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
-              memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
-              earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
+              promotionStartDate: productData.promotionStartDate
+                ? new Date(productData.promotionStartDate)
+                : null,
+              promotionEndDate: productData.promotionEndDate
+                ? new Date(productData.promotionEndDate)
+                : null,
+              memberOnlyUntil: productData.memberOnlyUntil
+                ? new Date(productData.memberOnlyUntil)
+                : null,
+              earlyAccessStart: productData.earlyAccessStart
+                ? new Date(productData.earlyAccessStart)
+                : null,
               updatedAt: new Date(),
               // Update categories - replace existing with new primary category
               categories: {
@@ -316,10 +357,18 @@ export async function POST(request: NextRequest) {
               ...createData,
               memberPrice: createData.memberPrice || createData.regularPrice,
               slug,
-              promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
-              promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
-              memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
-              earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
+              promotionStartDate: productData.promotionStartDate
+                ? new Date(productData.promotionStartDate)
+                : null,
+              promotionEndDate: productData.promotionEndDate
+                ? new Date(productData.promotionEndDate)
+                : null,
+              memberOnlyUntil: productData.memberOnlyUntil
+                ? new Date(productData.memberOnlyUntil)
+                : null,
+              earlyAccessStart: productData.earlyAccessStart
+                ? new Date(productData.earlyAccessStart)
+                : null,
               status: 'ACTIVE',
               // Create category association using the new many-to-many structure
               categories: {
@@ -335,7 +384,7 @@ export async function POST(request: NextRequest) {
             name: productData.name,
             action: 'created',
           });
-          
+
           existingSkus.add(productData.sku);
         }
 
@@ -345,7 +394,8 @@ export async function POST(request: NextRequest) {
         result.errorDetails.push({
           row: rowIndex,
           field: 'general',
-          message: error instanceof Error ? error.message : 'Failed to process row',
+          message:
+            error instanceof Error ? error.message : 'Failed to process row',
         });
         result.errors++;
       }

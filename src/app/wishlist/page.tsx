@@ -329,7 +329,8 @@ export default function WishlistPage() {
                     href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
                     className="text-xs text-muted-foreground hover:text-primary"
                   >
-                    {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+                    {item.product.categories?.[0]?.category?.name ||
+                      'Uncategorized'}
                   </Link>
 
                   {/* Product Name */}

@@ -24,7 +24,7 @@ const createReferralSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { message: 'Authentication required' },
@@ -40,29 +40,36 @@ export async function GET(request: NextRequest) {
     switch (type) {
       case 'overview':
         const metrics = await getUserReferralMetrics(session.user.id);
-        
+
         // Generate user's referral code if they don't have one
         const existingReferral = await prisma.memberReferral.findFirst({
           where: { referrerId: session.user.id },
         });
-        
+
         let referralCode = existingReferral?.referralCode;
         if (!referralCode) {
-          referralCode = await generateReferralCode(session.user.id, session.user.name || 'USER');
+          referralCode = await generateReferralCode(
+            session.user.id,
+            session.user.name || 'USER'
+          );
         }
-        
+
         const referralUrl = generateReferralUrl(referralCode);
-        
+
         return NextResponse.json({
           metrics,
           referralCode,
           referralUrl,
         });
-        
+
       case 'history':
-        const history = await getUserReferralHistory(session.user.id, page, limit);
+        const history = await getUserReferralHistory(
+          session.user.id,
+          page,
+          limit
+        );
         return NextResponse.json(history);
-        
+
       default:
         return NextResponse.json(
           { message: 'Invalid type parameter' },
@@ -82,7 +89,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { message: 'Authentication required' },
@@ -95,9 +102,9 @@ export async function POST(request: NextRequest) {
 
     // Check if user is already a member
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
-    
+
     if (existingUser) {
       return NextResponse.json(
         { message: 'This email is already registered' },
@@ -111,9 +118,9 @@ export async function POST(request: NextRequest) {
         referrerId: session.user.id,
         referredEmail: email,
         status: { in: ['PENDING', 'REGISTERED'] },
-      }
+      },
     });
-    
+
     if (existingReferral) {
       return NextResponse.json(
         { message: 'You have already referred this email address' },
@@ -143,7 +150,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     console.error('Referrals POST error:', error);
     return NextResponse.json(
       { message: 'Failed to create referral' },

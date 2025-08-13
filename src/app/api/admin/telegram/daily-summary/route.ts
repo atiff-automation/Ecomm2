@@ -30,12 +30,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success,
-      message: success 
-        ? 'Daily summary sent successfully' 
+      message: success
+        ? 'Daily summary sent successfully'
         : 'Failed to send daily summary',
       date: targetDate.toDateString(),
     });
-
   } catch (error) {
     console.error('Error triggering daily summary:', error);
     return NextResponse.json(
@@ -65,7 +64,6 @@ export async function GET(request: NextRequest) {
       timezone: 'Asia/Kuala_Lumpur',
       description: 'Sends daily order summary at midnight',
     });
-
   } catch (error) {
     console.error('Error getting daily summary status:', error);
     return NextResponse.json(

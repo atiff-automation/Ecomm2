@@ -58,7 +58,10 @@ export class OrderStatusHandler {
     }
 
     // Handle payment status changes
-    if (data.newPaymentStatus === 'PAID' && data.previousPaymentStatus !== 'PAID') {
+    if (
+      data.newPaymentStatus === 'PAID' &&
+      data.previousPaymentStatus !== 'PAID'
+    ) {
       await this.handlePaymentSuccess(order, data);
     }
 
@@ -110,7 +113,10 @@ export class OrderStatusHandler {
   /**
    * Handle successful payment - MAIN TELEGRAM NOTIFICATION TRIGGER
    */
-  private static async handlePaymentSuccess(order: any, data: OrderStatusChangeData) {
+  private static async handlePaymentSuccess(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('💰 Payment success detected for order:', order.orderNumber);
 
     // Send Telegram notification for successful payment
@@ -128,11 +134,15 @@ export class OrderStatusHandler {
           quantity: item.quantity,
           price: Number(item.appliedPrice),
         })),
-        paymentMethod: order.paymentMethod?.toUpperCase() || data.triggeredBy.toUpperCase(),
+        paymentMethod:
+          order.paymentMethod?.toUpperCase() || data.triggeredBy.toUpperCase(),
         createdAt: new Date(),
       });
 
-      console.log('✅ Telegram notification sent for paid order:', order.orderNumber);
+      console.log(
+        '✅ Telegram notification sent for paid order:',
+        order.orderNumber
+      );
     } catch (error) {
       console.error('❌ Failed to send Telegram notification:', error);
     }
@@ -164,7 +174,10 @@ export class OrderStatusHandler {
   /**
    * Handle order confirmed
    */
-  private static async handleOrderConfirmed(order: any, data: OrderStatusChangeData) {
+  private static async handleOrderConfirmed(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('✅ Order confirmed:', order.orderNumber);
     // Additional logic for confirmed orders
   }
@@ -172,7 +185,10 @@ export class OrderStatusHandler {
   /**
    * Handle order processing
    */
-  private static async handleOrderProcessing(order: any, data: OrderStatusChangeData) {
+  private static async handleOrderProcessing(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('⚙️ Order processing:', order.orderNumber);
     // Send processing notification if needed
   }
@@ -180,14 +196,17 @@ export class OrderStatusHandler {
   /**
    * Handle order shipped
    */
-  private static async handleOrderShipped(order: any, data: OrderStatusChangeData) {
+  private static async handleOrderShipped(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('🚚 Order shipped:', order.orderNumber);
-    
+
     // Send shipping notification
     try {
       await telegramService.sendMessage({
         message: `📦 ORDER SHIPPED\n\nOrder #${order.orderNumber} has been shipped!\n\nTracking: ${order.trackingNumber || 'N/A'}`,
-        channel: 'orders'
+        channel: 'orders',
       });
     } catch (error) {
       console.error('Failed to send shipping notification:', error);
@@ -197,14 +216,17 @@ export class OrderStatusHandler {
   /**
    * Handle order delivered
    */
-  private static async handleOrderDelivered(order: any, data: OrderStatusChangeData) {
+  private static async handleOrderDelivered(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('🎉 Order delivered:', order.orderNumber);
-    
+
     // Send delivery confirmation
     try {
       await telegramService.sendMessage({
         message: `✅ ORDER DELIVERED\n\nOrder #${order.orderNumber} has been successfully delivered!`,
-        channel: 'orders'
+        channel: 'orders',
       });
     } catch (error) {
       console.error('Failed to send delivery notification:', error);
@@ -214,14 +236,17 @@ export class OrderStatusHandler {
   /**
    * Handle order cancelled
    */
-  private static async handleOrderCancelled(order: any, data: OrderStatusChangeData) {
+  private static async handleOrderCancelled(
+    order: any,
+    data: OrderStatusChangeData
+  ) {
     console.log('❌ Order cancelled:', order.orderNumber);
-    
+
     // Send cancellation notification
     try {
       await telegramService.sendMessage({
         message: `❌ ORDER CANCELLED\n\nOrder #${order.orderNumber} has been cancelled.`,
-        channel: 'orders'
+        channel: 'orders',
       });
     } catch (error) {
       console.error('Failed to send cancellation notification:', error);

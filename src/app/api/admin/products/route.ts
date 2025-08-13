@@ -18,9 +18,15 @@ const createProductSchema = z.object({
   shortDescription: z.string().optional(),
   sku: z.string().min(1, 'SKU is required'),
   barcode: z.string().optional(),
-  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required'),
+  categoryIds: z
+    .array(z.string().min(1, 'Category ID is required'))
+    .min(1, 'At least one category is required'),
   regularPrice: z.number().min(0, 'Regular price must be positive'),
-  memberPrice: z.number().min(0, 'Member price must be positive').nullable().optional(),
+  memberPrice: z
+    .number()
+    .min(0, 'Member price must be positive')
+    .nullable()
+    .optional(),
   costPrice: z.number().min(0, 'Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity must be non-negative'),
   lowStockAlert: z
@@ -34,10 +40,18 @@ const createProductSchema = z.object({
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
   isQualifyingForMembership: z.boolean().default(true),
-  promotionalPrice: z.union([
-    z.number().min(0, 'Promotional price must be positive'),
-    z.string().transform(val => val === '' ? undefined : parseFloat(val)).refine(val => val === undefined || (!isNaN(val) && val >= 0), 'Promotional price must be a positive number')
-  ]).optional(),
+  promotionalPrice: z
+    .union([
+      z.number().min(0, 'Promotional price must be positive'),
+      z
+        .string()
+        .transform(val => (val === '' ? undefined : parseFloat(val)))
+        .refine(
+          val => val === undefined || (!isNaN(val) && val >= 0),
+          'Promotional price must be a positive number'
+        ),
+    ])
+    .optional(),
   promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
   promotionEndDate: z.union([z.string().datetime(), z.null()]).optional(),
   memberOnlyUntil: z.union([z.string().datetime(), z.null()]).optional(),
@@ -102,9 +116,14 @@ export async function POST(request: NextRequest) {
 
     if (categories.length !== productData.categoryIds.length) {
       const foundIds = categories.map(c => c.id);
-      const missingIds = productData.categoryIds.filter(id => !foundIds.includes(id));
+      const missingIds = productData.categoryIds.filter(
+        id => !foundIds.includes(id)
+      );
       return NextResponse.json(
-        { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
+        {
+          message: `Categories not found: ${missingIds.join(', ')}`,
+          field: 'categoryIds',
+        },
         { status: 400 }
       );
     }

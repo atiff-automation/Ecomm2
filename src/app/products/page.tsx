@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { ProductCard } from '@/components/product/ProductCard';
 import { productService } from '@/lib/services/product-service';
 import { categoryService } from '@/lib/services/category-service';
+import { useCart } from '@/hooks/use-cart';
 
 interface Product {
   id: string;
@@ -71,6 +72,7 @@ export default function ProductsPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -107,12 +109,12 @@ export default function ProductsPage() {
         search: searchTerm || undefined,
         category: selectedCategory !== 'all' ? selectedCategory : undefined,
         sortBy: sortField as 'created' | 'name' | 'price' | 'rating',
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: sortOrder as 'asc' | 'desc',
       };
 
       // Use service layer with built-in error handling and caching
       const result = await productService.getProducts(params);
-      
+
       setProducts(result.products);
       setTotalPages(result.pagination.totalPages);
       setTotalCount(result.pagination.totalCount);
@@ -126,7 +128,9 @@ export default function ProductsPage() {
   // Fetch categories function using service layer
   const fetchCategories = async () => {
     try {
-      const categories = await categoryService.getCategories({ includeProductCount: true });
+      const categories = await categoryService.getCategories({
+        includeProductCount: true,
+      });
       setCategories(categories);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
@@ -151,34 +155,13 @@ export default function ProductsPage() {
 
   const handleAddToCart = async (productId: string) => {
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(data.message || 'Added to cart successfully');
-
-        // Trigger cart refresh
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Failed to add to cart');
-      }
+      await addToCart(productId, 1);
+      // The success toast is handled by the useCart hook
     } catch (error) {
+      // The error toast is handled by the useCart hook
       console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart. Please try again.');
     }
   };
-
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -241,11 +224,12 @@ export default function ProductsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {Array.isArray(categories) && categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name} ({category.productCount || 0})
-                      </SelectItem>
-                    ))}
+                    {Array.isArray(categories) &&
+                      categories.map(category => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name} ({category.productCount || 0})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -303,8 +287,8 @@ export default function ProductsPage() {
               {/* Products Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map(product => (
-                  <ProductCard 
-                    key={product.id} 
+                  <ProductCard
+                    key={product.id}
                     product={product}
                     onAddToCart={handleAddToCart}
                     size="md"

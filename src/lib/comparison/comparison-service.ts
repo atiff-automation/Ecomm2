@@ -162,7 +162,8 @@ export class ComparisonService {
                 acc[product.id] = product.reviewCount;
                 break;
               case 'category':
-                acc[product.id] = product.categories?.[0]?.category?.name || 'Uncategorized';
+                acc[product.id] =
+                  product.categories?.[0]?.category?.name || 'Uncategorized';
                 break;
               default:
                 acc[product.id] = null;

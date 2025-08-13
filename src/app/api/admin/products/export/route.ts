@@ -11,12 +11,9 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -26,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {};
-    
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -34,7 +31,7 @@ export async function GET(request: NextRequest) {
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (categoryId) {
       where.categories = {
         some: {
@@ -42,7 +39,7 @@ export async function GET(request: NextRequest) {
         },
       };
     }
-    
+
     if (status) {
       where.status = status;
     }
@@ -123,10 +120,16 @@ export async function GET(request: NextRequest) {
           product.isPromotional ? 'true' : 'false',
           product.isQualifyingForMembership ? 'true' : 'false',
           product.promotionalPrice || '',
-          product.promotionStartDate ? product.promotionStartDate.toISOString() : '',
-          product.promotionEndDate ? product.promotionEndDate.toISOString() : '',
+          product.promotionStartDate
+            ? product.promotionStartDate.toISOString()
+            : '',
+          product.promotionEndDate
+            ? product.promotionEndDate.toISOString()
+            : '',
           product.memberOnlyUntil ? product.memberOnlyUntil.toISOString() : '',
-          product.earlyAccessStart ? product.earlyAccessStart.toISOString() : '',
+          product.earlyAccessStart
+            ? product.earlyAccessStart.toISOString()
+            : '',
           `"${product.status || ''}"`,
           `"${(product.metaTitle || '').replace(/"/g, '""')}"`,
           `"${(product.metaDescription || '').replace(/"/g, '""')}"`,

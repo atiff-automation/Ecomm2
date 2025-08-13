@@ -44,36 +44,36 @@ interface MemberPromotionForm {
 }
 
 const quickTemplates = [
-  { 
-    key: 'welcome', 
-    label: 'Welcome Bonus', 
+  {
+    key: 'welcome',
+    label: 'Welcome Bonus',
     icon: '👋',
     description: '15% off for new members',
     discountType: 'PERCENTAGE' as const,
     discountValue: 15,
     minimumOrderValue: 50,
   },
-  { 
-    key: 'birthday', 
-    label: 'Birthday Special', 
+  {
+    key: 'birthday',
+    label: 'Birthday Special',
     icon: '🎂',
     description: '25% off birthday month',
     discountType: 'PERCENTAGE' as const,
     discountValue: 25,
     maximumDiscount: 100,
   },
-  { 
-    key: 'loyalty', 
-    label: 'Loyalty Reward', 
+  {
+    key: 'loyalty',
+    label: 'Loyalty Reward',
     icon: '⭐',
     description: 'RM50 off for VIP members',
     discountType: 'FIXED_AMOUNT' as const,
     discountValue: 50,
     minimumOrderValue: 200,
   },
-  { 
-    key: 'flash', 
-    label: 'Flash Sale', 
+  {
+    key: 'flash',
+    label: 'Flash Sale',
     icon: '⚡',
     description: '30% off limited time',
     discountType: 'PERCENTAGE' as const,
@@ -182,7 +182,9 @@ export default function AdminMemberPromotionsPage() {
           isPublic: false,
           startsAt: new Date().toISOString(),
           // Set expiry to 30 days from now by default
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
         }),
       });
 
@@ -212,10 +214,10 @@ export default function AdminMemberPromotionsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumbs */}
-      <Breadcrumbs 
+      <Breadcrumbs
         items={[
           { label: 'Membership', href: '/admin/membership' },
-          { label: 'Member Promotions' }
+          { label: 'Member Promotions' },
         ]}
         className="mb-6"
       />
@@ -518,7 +520,8 @@ export default function AdminMemberPromotionsPage() {
               Quick Discount Templates
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Create member-exclusive discount codes using pre-configured templates
+              Create member-exclusive discount codes using pre-configured
+              templates
             </p>
           </CardHeader>
           <CardContent>
@@ -553,13 +556,17 @@ export default function AdminMemberPromotionsPage() {
                       {template.minimumOrderValue && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Min. order:</span>
-                          <span className="font-medium">RM{template.minimumOrderValue}</span>
+                          <span className="font-medium">
+                            RM{template.minimumOrderValue}
+                          </span>
                         </div>
                       )}
                       {template.maximumDiscount && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Max. discount:</span>
-                          <span className="font-medium">RM{template.maximumDiscount}</span>
+                          <span className="font-medium">
+                            RM{template.maximumDiscount}
+                          </span>
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
@@ -591,9 +598,16 @@ export default function AdminMemberPromotionsPage() {
                 <div className="text-sm text-amber-800">
                   <p className="font-medium mb-1">How Templates Work</p>
                   <ul className="space-y-1 list-disc list-inside">
-                    <li>Each template creates a unique discount code with 30-day expiry</li>
-                    <li>Codes are automatically set as member-only and private</li>
-                    <li>Template values can be customized after creation if needed</li>
+                    <li>
+                      Each template creates a unique discount code with 30-day
+                      expiry
+                    </li>
+                    <li>
+                      Codes are automatically set as member-only and private
+                    </li>
+                    <li>
+                      Template values can be customized after creation if needed
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -606,9 +620,9 @@ export default function AdminMemberPromotionsPage() {
                   <div className="text-sm text-gray-700">
                     <p className="font-medium mb-1">Managing Discount Codes</p>
                     <p>
-                      All created discount codes are managed in the comprehensive
-                      discount codes system. You can view usage, modify settings,
-                      and track performance there.
+                      All created discount codes are managed in the
+                      comprehensive discount codes system. You can view usage,
+                      modify settings, and track performance there.
                     </p>
                   </div>
                 </div>

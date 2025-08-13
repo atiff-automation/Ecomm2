@@ -127,7 +127,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (!user) {
-        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        return NextResponse.json(
+          { message: 'User not found' },
+          { status: 404 }
+        );
       }
 
       isMember = user.isMember || orderData.membershipActivated;
@@ -371,7 +374,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Note: Telegram notifications are sent after successful payment in webhook handlers
-    console.log('Order created, awaiting payment confirmation:', result.orderNumber);
+    console.log(
+      'Order created, awaiting payment confirmation:',
+      result.orderNumber
+    );
 
     // Create payment URL based on payment method
     let paymentUrl = null;
@@ -409,7 +415,7 @@ export async function POST(request: NextRequest) {
         'shippingAddress.state': 'Shipping State',
         'shippingAddress.postcode': 'Shipping Postcode',
         'billingAddress.firstName': 'Billing First Name',
-        'billingAddress.lastName': 'Billing Last Name', 
+        'billingAddress.lastName': 'Billing Last Name',
         'billingAddress.email': 'Billing Email',
         'billingAddress.phone': 'Billing Phone',
         'billingAddress.address': 'Billing Address',
@@ -421,12 +427,15 @@ export async function POST(request: NextRequest) {
       error.issues.forEach(issue => {
         const fieldPath = issue.path.join('.');
         const friendlyName = friendlyFieldNames[fieldPath] || fieldPath;
-        
+
         if (issue.code === 'too_small' && issue.type === 'string') {
           fieldErrors[fieldPath] = `${friendlyName} is required`;
         } else if (issue.code === 'invalid_type') {
           fieldErrors[fieldPath] = `${friendlyName} is required`;
-        } else if (issue.code === 'invalid_string' && issue.validation === 'email') {
+        } else if (
+          issue.code === 'invalid_string' &&
+          issue.validation === 'email'
+        ) {
           fieldErrors[fieldPath] = `Please enter a valid email address`;
         } else {
           fieldErrors[fieldPath] = `${friendlyName}: ${issue.message}`;
@@ -435,15 +444,16 @@ export async function POST(request: NextRequest) {
 
       // Create summary message
       const missingFields = Object.values(fieldErrors);
-      const summaryMessage = missingFields.length === 1 
-        ? missingFields[0]
-        : `Please fill in the following required fields: ${missingFields.join(', ')}`;
+      const summaryMessage =
+        missingFields.length === 1
+          ? missingFields[0]
+          : `Please fill in the following required fields: ${missingFields.join(', ')}`;
 
       return NextResponse.json(
-        { 
+        {
           message: summaryMessage,
           fieldErrors,
-          errors: error.issues // Keep original for debugging
+          errors: error.issues, // Keep original for debugging
         },
         { status: 400 }
       );

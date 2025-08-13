@@ -1,7 +1,7 @@
 /**
  * API Types - Malaysian E-commerce Platform
  * Centralized type definitions for API operations and responses
- * 
+ *
  * This file consolidates all API-related types that were previously
  * scattered across multiple components and services.
  */
@@ -36,7 +36,7 @@ export interface APIError {
   method?: string;
 }
 
-export type APIErrorCode = 
+export type APIErrorCode =
   | 'VALIDATION_ERROR'
   | 'AUTHENTICATION_ERROR'
   | 'AUTHORIZATION_ERROR'
@@ -189,7 +189,13 @@ export interface CreateReviewRequest {
 export interface OrderResponse {
   id: string;
   orderNumber: string;
-  status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  status:
+    | 'PENDING'
+    | 'CONFIRMED'
+    | 'PROCESSING'
+    | 'SHIPPED'
+    | 'DELIVERED'
+    | 'CANCELLED';
   items: OrderItem[];
   subtotal: number;
   memberDiscount: number;
@@ -256,7 +262,7 @@ export interface APIMetrics {
 }
 
 // Event Types
-export type APIEvent = 
+export type APIEvent =
   | 'REQUEST_START'
   | 'REQUEST_SUCCESS'
   | 'REQUEST_ERROR'

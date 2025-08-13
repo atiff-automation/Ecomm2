@@ -18,9 +18,16 @@ const updateProductSchema = z.object({
   shortDescription: z.string().optional(),
   sku: z.string().min(1, 'SKU is required').optional(),
   barcode: z.string().optional(),
-  categoryIds: z.array(z.string().min(1, 'Category ID is required')).min(1, 'At least one category is required').optional(),
+  categoryIds: z
+    .array(z.string().min(1, 'Category ID is required'))
+    .min(1, 'At least one category is required')
+    .optional(),
   regularPrice: z.number().min(0, 'Regular price must be positive').optional(),
-  memberPrice: z.number().min(0, 'Member price must be positive').nullable().optional(),
+  memberPrice: z
+    .number()
+    .min(0, 'Member price must be positive')
+    .nullable()
+    .optional(),
   costPrice: z.number().min(0, 'Cost price must be positive').optional(),
   stockQuantity: z
     .number()
@@ -46,7 +53,7 @@ const updateProductSchema = z.object({
       z.null(),
     ])
     .optional()
-    .transform((val) => {
+    .transform(val => {
       if (val === null || val === undefined || val === '') {
         return null;
       }
@@ -57,7 +64,7 @@ const updateProductSchema = z.object({
       return val;
     })
     .refine(
-      (val) => val === null || (typeof val === 'number' && val >= 0),
+      val => val === null || (typeof val === 'number' && val >= 0),
       'Promotional price must be a positive number or empty'
     ),
   promotionStartDate: z.union([z.string().datetime(), z.null()]).optional(),
@@ -218,9 +225,14 @@ export async function PUT(
 
       if (categories.length !== productData.categoryIds.length) {
         const foundIds = categories.map(c => c.id);
-        const missingIds = productData.categoryIds.filter(id => !foundIds.includes(id));
+        const missingIds = productData.categoryIds.filter(
+          id => !foundIds.includes(id)
+        );
         return NextResponse.json(
-          { message: `Categories not found: ${missingIds.join(', ')}`, field: 'categoryIds' },
+          {
+            message: `Categories not found: ${missingIds.join(', ')}`,
+            field: 'categoryIds',
+          },
           { status: 400 }
         );
       }
@@ -248,7 +260,8 @@ export async function PUT(
             regularPrice: productData.regularPrice,
           }),
           ...(productData.memberPrice !== undefined && {
-            memberPrice: productData.memberPrice || productData.regularPrice || 0,
+            memberPrice:
+              productData.memberPrice || productData.regularPrice || 0,
           }),
           ...(productData.costPrice !== undefined && {
             costPrice: productData.costPrice,
@@ -280,16 +293,24 @@ export async function PUT(
             promotionalPrice: productData.promotionalPrice || null,
           }),
           ...(productData.promotionStartDate !== undefined && {
-            promotionStartDate: productData.promotionStartDate ? new Date(productData.promotionStartDate) : null,
+            promotionStartDate: productData.promotionStartDate
+              ? new Date(productData.promotionStartDate)
+              : null,
           }),
           ...(productData.promotionEndDate !== undefined && {
-            promotionEndDate: productData.promotionEndDate ? new Date(productData.promotionEndDate) : null,
+            promotionEndDate: productData.promotionEndDate
+              ? new Date(productData.promotionEndDate)
+              : null,
           }),
           ...(productData.memberOnlyUntil !== undefined && {
-            memberOnlyUntil: productData.memberOnlyUntil ? new Date(productData.memberOnlyUntil) : null,
+            memberOnlyUntil: productData.memberOnlyUntil
+              ? new Date(productData.memberOnlyUntil)
+              : null,
           }),
           ...(productData.earlyAccessStart !== undefined && {
-            earlyAccessStart: productData.earlyAccessStart ? new Date(productData.earlyAccessStart) : null,
+            earlyAccessStart: productData.earlyAccessStart
+              ? new Date(productData.earlyAccessStart)
+              : null,
           }),
         },
         include: {

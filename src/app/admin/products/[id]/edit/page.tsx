@@ -276,7 +276,6 @@ export default function EditProductPage() {
         updated.promotionEndDate = undefined;
       }
 
-
       return updated;
     });
 
@@ -318,14 +317,19 @@ export default function EditProductPage() {
     }
     const regularPrice = parseFloat(formData.regularPrice as string) || 0;
     const memberPrice = parseFloat(formData.memberPrice as string) || 0;
-    
+
     if (!formData.regularPrice || regularPrice <= 0) {
-      newErrors.regularPrice = 'Regular price is required and must be greater than 0';
+      newErrors.regularPrice =
+        'Regular price is required and must be greater than 0';
     }
     if (formData.memberPrice && memberPrice <= 0) {
       newErrors.memberPrice = 'Member price must be greater than 0';
     }
-    if (memberPrice >= regularPrice && formData.memberPrice && formData.regularPrice) {
+    if (
+      memberPrice >= regularPrice &&
+      formData.memberPrice &&
+      formData.regularPrice
+    ) {
       newErrors.memberPrice = 'Member price must be less than regular price';
     }
     if (formData.stockQuantity < 0) {
@@ -335,19 +339,20 @@ export default function EditProductPage() {
     // Sale pricing validation (only when sale price is provided)
     if (formData.promotionalPrice) {
       const promoPrice = parseFloat(formData.promotionalPrice.toString()) || 0;
-      
+
       if (promoPrice <= 0) {
         newErrors.promotionalPrice = 'Sale price must be greater than 0';
       }
-      
+
       // Check against regular price
       if (promoPrice >= regularPrice && formData.regularPrice) {
-        newErrors.promotionalPrice = 'Sale price must be less than regular price';
+        newErrors.promotionalPrice =
+          'Sale price must be less than regular price';
       }
-      
+
       // Note: Promotional price can be higher than member price
       // System will automatically select the lowest price for members
-      
+
       if (formData.promotionStartDate && formData.promotionEndDate) {
         const startDate = formData.promotionStartDate;
         const endDate = formData.promotionEndDate;
@@ -380,7 +385,9 @@ export default function EditProductPage() {
       const processedFormData = {
         ...formData,
         regularPrice: parseFloat(formData.regularPrice as string) || 0,
-        memberPrice: formData.memberPrice ? parseFloat(formData.memberPrice as string) : null,
+        memberPrice: formData.memberPrice
+          ? parseFloat(formData.memberPrice as string)
+          : null,
         stockQuantity: Number(formData.stockQuantity),
         lowStockAlert: Number(formData.lowStockAlert),
         weight:
@@ -464,7 +471,7 @@ export default function EditProductPage() {
       basic: ['name', 'slug', 'sku', 'categoryIds'],
       pricing: [
         'regularPrice',
-        'memberPrice', 
+        'memberPrice',
         'promotionalPrice',
         'promotionStartDate',
         'promotionEndDate',
@@ -938,10 +945,7 @@ export default function EditProductPage() {
                             min="0"
                             value={formData.regularPrice}
                             onChange={e =>
-                              handleInputChange(
-                                'regularPrice',
-                                e.target.value
-                              )
+                              handleInputChange('regularPrice', e.target.value)
                             }
                             placeholder="150.00"
                           />
@@ -953,9 +957,7 @@ export default function EditProductPage() {
                         </div>
 
                         <div>
-                          <Label htmlFor="memberPrice">
-                            Member Price (RM)
-                          </Label>
+                          <Label htmlFor="memberPrice">Member Price (RM)</Label>
                           <Input
                             id="memberPrice"
                             type="number"
@@ -963,10 +965,7 @@ export default function EditProductPage() {
                             min="0"
                             value={formData.memberPrice}
                             onChange={e =>
-                              handleInputChange(
-                                'memberPrice',
-                                e.target.value
-                              )
+                              handleInputChange('memberPrice', e.target.value)
                             }
                             placeholder="120.00 (optional)"
                           />
@@ -979,7 +978,6 @@ export default function EditProductPage() {
                             Special discounted price for approved members
                           </p>
                         </div>
-
                       </div>
 
                       {/* Settings Section */}
@@ -995,7 +993,10 @@ export default function EditProductPage() {
                               )
                             }
                           />
-                          <Label htmlFor="isQualifyingForMembership" className="font-normal">
+                          <Label
+                            htmlFor="isQualifyingForMembership"
+                            className="font-normal"
+                          >
                             Counts toward membership qualification
                           </Label>
                         </div>
@@ -1060,7 +1061,10 @@ export default function EditProductPage() {
                                   startDate={formData.promotionStartDate}
                                   endDate={formData.promotionEndDate}
                                   onStartDateChange={date =>
-                                    handleInputChange('promotionStartDate', date)
+                                    handleInputChange(
+                                      'promotionStartDate',
+                                      date
+                                    )
                                   }
                                   onEndDateChange={date =>
                                     handleInputChange('promotionEndDate', date)
@@ -1080,7 +1084,6 @@ export default function EditProductPage() {
                         )}
                       </div>
                     </div>
-
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1176,7 +1179,6 @@ export default function EditProductPage() {
                         <Label htmlFor="featured">Featured Product</Label>
                       </div>
                     </div>
-
                   </CardContent>
                 </Card>
               </TabsContent>

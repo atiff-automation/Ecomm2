@@ -76,8 +76,9 @@ export async function GET() {
 
     // Calculate conversion rate (members vs total users)
     const totalUsers = await prisma.user.count();
-    const memberConversionRate = totalUsers > 0 ? (totalMembers / totalUsers) * 100 : 0;
-    
+    const memberConversionRate =
+      totalUsers > 0 ? (totalMembers / totalUsers) * 100 : 0;
+
     // Calculate retention rate (members with orders this month vs total members)
     const activeMembers = await prisma.user.count({
       where: {
@@ -92,7 +93,8 @@ export async function GET() {
         },
       },
     });
-    const retentionRate = totalMembers > 0 ? (activeMembers / totalMembers) * 100 : 0;
+    const retentionRate =
+      totalMembers > 0 ? (activeMembers / totalMembers) * 100 : 0;
 
     // Additional member insights
     const memberOrdersThisMonth = await prisma.order.count({
@@ -129,7 +131,7 @@ export async function GET() {
     const productIds = topCategories.map(item => item.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      include: { 
+      include: {
         categories: {
           select: {
             category: {
@@ -155,7 +157,8 @@ export async function GET() {
     const categoryData = topCategories.map(item => {
       const product = productMap[item.productId];
       // For products with multiple categories, use the first one
-      const firstCategory = product?.categories?.[0]?.category?.name || 'Unknown';
+      const firstCategory =
+        product?.categories?.[0]?.category?.name || 'Unknown';
       return {
         categoryName: firstCategory,
         quantity: item._sum.quantity || 0,

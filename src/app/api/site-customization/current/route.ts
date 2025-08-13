@@ -61,7 +61,8 @@ export async function GET() {
       id: 'default',
       title: 'Welcome to JRM E-commerce',
       subtitle: "Malaysia's premier online marketplace",
-      description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
+      description:
+        'Intelligent membership benefits, dual pricing, and local payment integration.',
       ctaPrimaryText: 'Join as Member',
       ctaPrimaryLink: '/auth/signup',
       ctaSecondaryText: 'Browse Products',
@@ -82,7 +83,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching site customization:', error);
-    
+
     // Return defaults in case of error
     return NextResponse.json({
       theme: {
@@ -98,7 +99,8 @@ export async function GET() {
         id: 'default',
         title: 'Welcome to JRM E-commerce',
         subtitle: "Malaysia's premier online marketplace",
-        description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
+        description:
+          'Intelligent membership benefits, dual pricing, and local payment integration.',
         ctaPrimaryText: 'Join as Member',
         ctaPrimaryLink: '/auth/signup',
         ctaSecondaryText: 'Browse Products',

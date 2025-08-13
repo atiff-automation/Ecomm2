@@ -311,7 +311,8 @@ export default function CartPage() {
                           href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
                           className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
-                          {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+                          {item.product.categories?.[0]?.category?.name ||
+                            'Uncategorized'}
                         </Link>
 
                         {item.product.shortDescription && (
@@ -321,7 +322,8 @@ export default function CartPage() {
                         )}
 
                         {/* Qualifying Category Badge */}
-                        {item.product.categories?.[0]?.category?.isQualifyingCategory && (
+                        {item.product.categories?.[0]?.category
+                          ?.isQualifyingCategory && (
                           <Badge variant="outline" className="mt-2">
                             <Award className="w-3 h-3 mr-1" />
                             Membership Qualifying
@@ -493,14 +495,14 @@ export default function CartPage() {
                 ) : (
                   <div className="text-center">
                     <p className="text-sm text-blue-700 mb-1">
-                      {cartSummary.qualifyingTotal > 0 
+                      {cartSummary.qualifyingTotal > 0
                         ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more qualifying items to unlock member pricing`
-                        : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items to unlock member pricing`
-                      }
+                        : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items to unlock member pricing`}
                     </p>
                     {cartSummary.qualifyingTotal === 0 && (
                       <p className="text-xs text-blue-600">
-                        💡 Promotional items don't count toward membership - add regular items to qualify!
+                        💡 Promotional items don't count toward membership - add
+                        regular items to qualify!
                       </p>
                     )}
                   </div>

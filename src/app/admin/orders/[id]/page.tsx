@@ -101,7 +101,7 @@ export default function AdminOrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
-  
+
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -110,7 +110,9 @@ export default function AdminOrderDetailsPage() {
   const orderId = params.id as string;
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === 'loading') {
+      return;
+    }
 
     if (!session?.user) {
       router.push('/auth/signin?callbackUrl=/admin/orders');
@@ -131,7 +133,7 @@ export default function AdminOrderDetailsPage() {
     try {
       setLoading(true);
       const response = await fetch(`/api/admin/orders/${orderId}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           setError('Order not found');
@@ -152,7 +154,9 @@ export default function AdminOrderDetailsPage() {
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!order) return;
+    if (!order) {
+      return;
+    }
 
     try {
       setUpdating(true);
@@ -260,10 +264,10 @@ export default function AdminOrderDetailsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Breadcrumbs */}
-        <Breadcrumbs 
+        <Breadcrumbs
           items={[
             { label: 'Orders', href: '/admin/orders' },
-            { label: `Order #${order.orderNumber}` }
+            { label: `Order #${order.orderNumber}` },
           ]}
           className="mb-6"
         />
@@ -290,10 +294,14 @@ export default function AdminOrderDetailsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Badge className={`${getStatusColor(order.status)} border px-3 py-1`}>
+            <Badge
+              className={`${getStatusColor(order.status)} border px-3 py-1`}
+            >
               {order.status}
             </Badge>
-            <Badge className={`${getPaymentStatusColor(order.paymentStatus)} border px-3 py-1`}>
+            <Badge
+              className={`${getPaymentStatusColor(order.paymentStatus)} border px-3 py-1`}
+            >
               {order.paymentStatus}
             </Badge>
           </div>
@@ -312,13 +320,19 @@ export default function AdminOrderDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                  {order.items.map(item => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-4 p-4 border rounded-lg"
+                    >
                       <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         {item.product.primaryImage ? (
                           <Image
                             src={item.product.primaryImage.url}
-                            alt={item.product.primaryImage.altText || item.product.name}
+                            alt={
+                              item.product.primaryImage.altText ||
+                              item.product.name
+                            }
                             fill
                             className="object-cover"
                           />
@@ -341,7 +355,9 @@ export default function AdminOrderDetailsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{formatPrice(item.finalPrice * item.quantity)}</p>
+                        <p className="font-medium">
+                          {formatPrice(item.finalPrice * item.quantity)}
+                        </p>
                         {item.finalPrice < item.price && (
                           <p className="text-sm text-gray-500 line-through">
                             {formatPrice(item.price * item.quantity)}
@@ -369,7 +385,10 @@ export default function AdminOrderDetailsPage() {
                       {order.customer.firstName} {order.customer.lastName}
                     </span>
                     {order.customer.isMember && (
-                      <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                      <Badge
+                        variant="secondary"
+                        className="bg-purple-100 text-purple-800"
+                      >
                         Member
                       </Badge>
                     )}
@@ -381,7 +400,9 @@ export default function AdminOrderDetailsPage() {
                   {order.customer.memberSince && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>Member since {formatDate(order.customer.memberSince)}</span>
+                      <span>
+                        Member since {formatDate(order.customer.memberSince)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -401,7 +422,8 @@ export default function AdminOrderDetailsPage() {
                 <CardContent>
                   <div className="space-y-1 text-sm">
                     <p className="font-medium">
-                      {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                      {order.shippingAddress.firstName}{' '}
+                      {order.shippingAddress.lastName}
                     </p>
                     {order.shippingAddress.email && (
                       <p>{order.shippingAddress.email}</p>
@@ -414,7 +436,9 @@ export default function AdminOrderDetailsPage() {
                       <p>{order.shippingAddress.address2}</p>
                     )}
                     <p>
-                      {order.shippingAddress.postcode} {order.shippingAddress.city}, {order.shippingAddress.state}
+                      {order.shippingAddress.postcode}{' '}
+                      {order.shippingAddress.city},{' '}
+                      {order.shippingAddress.state}
                     </p>
                     <p>{order.shippingAddress.country}</p>
                   </div>
@@ -432,7 +456,8 @@ export default function AdminOrderDetailsPage() {
                 <CardContent>
                   <div className="space-y-1 text-sm">
                     <p className="font-medium">
-                      {order.billingAddress.firstName} {order.billingAddress.lastName}
+                      {order.billingAddress.firstName}{' '}
+                      {order.billingAddress.lastName}
                     </p>
                     {order.billingAddress.email && (
                       <p>{order.billingAddress.email}</p>
@@ -445,7 +470,8 @@ export default function AdminOrderDetailsPage() {
                       <p>{order.billingAddress.address2}</p>
                     )}
                     <p>
-                      {order.billingAddress.postcode} {order.billingAddress.city}, {order.billingAddress.state}
+                      {order.billingAddress.postcode}{' '}
+                      {order.billingAddress.city}, {order.billingAddress.state}
                     </p>
                     <p>{order.billingAddress.country}</p>
                   </div>
@@ -505,17 +531,23 @@ export default function AdminOrderDetailsPage() {
                 {updating && (
                   <Alert>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <AlertDescription>Updating order status...</AlertDescription>
+                    <AlertDescription>
+                      Updating order status...
+                    </AlertDescription>
                   </Alert>
                 )}
 
                 <Separator />
 
                 <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
-                    onClick={() => window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`)}
+                    onClick={() =>
+                      window.open(
+                        `/api/orders/${order.id}/invoice?format=pdf&download=true`
+                      )
+                    }
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Download Receipt
@@ -582,14 +614,18 @@ export default function AdminOrderDetailsPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Payment Status</span>
-                  <Badge className={`${getPaymentStatusColor(order.paymentStatus)} border text-xs`}>
+                  <Badge
+                    className={`${getPaymentStatusColor(order.paymentStatus)} border text-xs`}
+                  >
                     {order.paymentStatus}
                   </Badge>
                 </div>
                 {order.paymentMethod && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Payment Method</span>
-                    <span className="text-sm font-medium">{order.paymentMethod}</span>
+                    <span className="text-sm font-medium">
+                      {order.paymentMethod}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">

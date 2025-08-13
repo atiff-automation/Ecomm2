@@ -62,10 +62,7 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Transform the data for the frontend
@@ -89,7 +86,7 @@ export async function GET(
       updatedAt: order.updatedAt.toISOString(),
       shippedAt: order.shippedAt?.toISOString() || null,
       deliveredAt: order.deliveredAt?.toISOString() || null,
-      orderItems: order.orderItems.map((item) => ({
+      orderItems: order.orderItems.map(item => ({
         id: item.id,
         productId: item.productId,
         quantity: item.quantity,
@@ -99,36 +96,42 @@ export async function GET(
         totalPrice: Number(item.totalPrice),
         productName: item.productName,
         productSku: item.productSku,
-        product: item.product ? {
-          id: item.product.id,
-          name: item.product.name,
-          images: item.product.images || [],
-        } : null,
+        product: item.product
+          ? {
+              id: item.product.id,
+              name: item.product.name,
+              images: item.product.images || [],
+            }
+          : null,
       })),
-      shippingAddress: order.shippingAddress ? {
-        id: order.shippingAddress.id,
-        firstName: order.shippingAddress.firstName,
-        lastName: order.shippingAddress.lastName,
-        addressLine1: order.shippingAddress.addressLine1,
-        addressLine2: order.shippingAddress.addressLine2,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state,
-        postalCode: order.shippingAddress.postalCode,
-        country: order.shippingAddress.country,
-        phone: order.shippingAddress.phone,
-      } : null,
-      billingAddress: order.billingAddress ? {
-        id: order.billingAddress.id,
-        firstName: order.billingAddress.firstName,
-        lastName: order.billingAddress.lastName,
-        addressLine1: order.billingAddress.addressLine1,
-        addressLine2: order.billingAddress.addressLine2,
-        city: order.billingAddress.city,
-        state: order.billingAddress.state,
-        postalCode: order.billingAddress.postalCode,
-        country: order.billingAddress.country,
-        phone: order.billingAddress.phone,
-      } : null,
+      shippingAddress: order.shippingAddress
+        ? {
+            id: order.shippingAddress.id,
+            firstName: order.shippingAddress.firstName,
+            lastName: order.shippingAddress.lastName,
+            addressLine1: order.shippingAddress.addressLine1,
+            addressLine2: order.shippingAddress.addressLine2,
+            city: order.shippingAddress.city,
+            state: order.shippingAddress.state,
+            postalCode: order.shippingAddress.postalCode,
+            country: order.shippingAddress.country,
+            phone: order.shippingAddress.phone,
+          }
+        : null,
+      billingAddress: order.billingAddress
+        ? {
+            id: order.billingAddress.id,
+            firstName: order.billingAddress.firstName,
+            lastName: order.billingAddress.lastName,
+            addressLine1: order.billingAddress.addressLine1,
+            addressLine2: order.billingAddress.addressLine2,
+            city: order.billingAddress.city,
+            state: order.billingAddress.state,
+            postalCode: order.billingAddress.postalCode,
+            country: order.billingAddress.country,
+            phone: order.billingAddress.phone,
+          }
+        : null,
     };
 
     return NextResponse.json(orderData);

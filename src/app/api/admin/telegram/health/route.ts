@@ -26,20 +26,20 @@ export async function GET(request: NextRequest) {
     const isConfigured = await telegramService.isConfigured();
 
     // If no health check has run yet but system is configured, assume healthy
-    const effectivelyHealthy = healthStatus.healthy || (isConfigured && !healthStatus.lastCheck);
+    const effectivelyHealthy =
+      healthStatus.healthy || (isConfigured && !healthStatus.lastCheck);
 
     return NextResponse.json({
       configured: isConfigured,
       healthy: effectivelyHealthy,
       lastCheck: healthStatus.lastCheck,
       queuedMessages: healthStatus.queuedMessages,
-      status: !isConfigured 
-        ? 'not_configured' 
-        : effectivelyHealthy 
-          ? 'healthy' 
+      status: !isConfigured
+        ? 'not_configured'
+        : effectivelyHealthy
+          ? 'healthy'
           : 'unhealthy',
     });
-
   } catch (error) {
     console.error('Error checking Telegram health:', error);
     return NextResponse.json(

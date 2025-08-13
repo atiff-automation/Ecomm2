@@ -174,7 +174,6 @@ export default function CreateProductPage() {
         updated.promotionEndDate = undefined;
       }
 
-
       return updated;
     });
 
@@ -218,14 +217,19 @@ export default function CreateProductPage() {
     // Price validation
     const regularPrice = parseFloat(formData.regularPrice as string) || 0;
     const memberPrice = parseFloat(formData.memberPrice as string) || 0;
-    
+
     if (!formData.regularPrice || regularPrice <= 0) {
-      newErrors.regularPrice = 'Regular price is required and must be greater than 0';
+      newErrors.regularPrice =
+        'Regular price is required and must be greater than 0';
     }
     if (formData.memberPrice && memberPrice <= 0) {
       newErrors.memberPrice = 'Member price must be greater than 0';
     }
-    if (memberPrice >= regularPrice && formData.memberPrice && formData.regularPrice) {
+    if (
+      memberPrice >= regularPrice &&
+      formData.memberPrice &&
+      formData.regularPrice
+    ) {
       newErrors.memberPrice = 'Member price must be less than regular price';
     }
 
@@ -237,28 +241,29 @@ export default function CreateProductPage() {
     // Sale pricing validation (only when sale price is provided)
     if (formData.promotionalPrice) {
       const promoPrice = parseFloat(formData.promotionalPrice.toString()) || 0;
-      
+
       if (promoPrice <= 0) {
         newErrors.promotionalPrice = 'Sale price must be greater than 0';
       }
-      
+
       // Check against regular price
       if (promoPrice >= regularPrice && formData.regularPrice) {
-        newErrors.promotionalPrice = 'Sale price must be less than regular price';
+        newErrors.promotionalPrice =
+          'Sale price must be less than regular price';
       }
-      
+
       // Note: Promotional price can be higher than member price
       // System will automatically select the lowest price for members
-      
+
       // Require dates when sale price is set
       if (!formData.promotionStartDate) {
         newErrors.promotionStartDate = 'Please select sale start date';
       }
-      
+
       if (!formData.promotionEndDate) {
         newErrors.promotionEndDate = 'Please select sale end date';
       }
-      
+
       if (formData.promotionStartDate && formData.promotionEndDate) {
         const startDate = formData.promotionStartDate;
         const endDate = formData.promotionEndDate;
@@ -302,7 +307,7 @@ export default function CreateProductPage() {
           [
             'regularPrice',
             'memberPrice',
-                'promotionalPrice',
+            'promotionalPrice',
             'promotionStartDate',
             'promotionEndDate',
           ].includes(firstError)
@@ -321,7 +326,9 @@ export default function CreateProductPage() {
       const processedFormData = {
         ...formData,
         regularPrice: parseFloat(formData.regularPrice as string) || 0,
-        memberPrice: formData.memberPrice ? parseFloat(formData.memberPrice as string) : null,
+        memberPrice: formData.memberPrice
+          ? parseFloat(formData.memberPrice as string)
+          : null,
         weight:
           formData.weight && formData.weight !== ''
             ? Number(formData.weight)
@@ -834,10 +841,7 @@ export default function CreateProductPage() {
                             min="0"
                             value={formData.regularPrice}
                             onChange={e =>
-                              handleInputChange(
-                                'regularPrice',
-                                e.target.value
-                              )
+                              handleInputChange('regularPrice', e.target.value)
                             }
                             placeholder="150.00"
                           />
@@ -849,9 +853,7 @@ export default function CreateProductPage() {
                         </div>
 
                         <div>
-                          <Label htmlFor="memberPrice">
-                            Member Price (RM)
-                          </Label>
+                          <Label htmlFor="memberPrice">Member Price (RM)</Label>
                           <Input
                             id="memberPrice"
                             type="number"
@@ -859,10 +861,7 @@ export default function CreateProductPage() {
                             min="0"
                             value={formData.memberPrice}
                             onChange={e =>
-                              handleInputChange(
-                                'memberPrice',
-                                e.target.value
-                              )
+                              handleInputChange('memberPrice', e.target.value)
                             }
                             placeholder="120.00 (optional)"
                           />
@@ -875,7 +874,6 @@ export default function CreateProductPage() {
                             Special discounted price for approved members
                           </p>
                         </div>
-
                       </div>
 
                       {/* Settings Section */}
@@ -891,7 +889,10 @@ export default function CreateProductPage() {
                               )
                             }
                           />
-                          <Label htmlFor="isQualifyingForMembership" className="font-normal">
+                          <Label
+                            htmlFor="isQualifyingForMembership"
+                            className="font-normal"
+                          >
                             Counts toward membership qualification
                           </Label>
                         </div>
@@ -1070,7 +1071,6 @@ export default function CreateProductPage() {
                         <Label htmlFor="featured">Featured Product</Label>
                       </div>
                     </div>
-
                   </CardContent>
                 </Card>
               </TabsContent>

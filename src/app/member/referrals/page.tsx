@@ -92,11 +92,12 @@ export default function MemberReferralsPage() {
 
   const fetchReferralData = async () => {
     try {
-      const [overviewResponse, historyResponse, rewardsResponse] = await Promise.all([
-        fetch('/api/member/referrals?type=overview'),
-        fetch('/api/member/referrals?type=history&limit=10'),
-        fetch('/api/member/referrals/rewards'),
-      ]);
+      const [overviewResponse, historyResponse, rewardsResponse] =
+        await Promise.all([
+          fetch('/api/member/referrals?type=overview'),
+          fetch('/api/member/referrals?type=history&limit=10'),
+          fetch('/api/member/referrals/rewards'),
+        ]);
 
       if (overviewResponse.ok) {
         const overviewData = await overviewResponse.json();
@@ -149,7 +150,9 @@ export default function MemberReferralsPage() {
 
   const handleSendReferral = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newReferralEmail) return;
+    if (!newReferralEmail) {
+      return;
+    }
 
     setSendingReferral(true);
     try {
@@ -258,17 +261,23 @@ export default function MemberReferralsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Referrals
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalReferrals}</div>
+                <div className="text-2xl font-bold">
+                  {metrics.totalReferrals}
+                </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Successful</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Successful
+                </CardTitle>
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -277,10 +286,12 @@ export default function MemberReferralsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Conversion Rate
+                </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -289,10 +300,12 @@ export default function MemberReferralsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Rewards</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Rewards
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -320,7 +333,7 @@ export default function MemberReferralsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Input
                   value={referralUrl}
@@ -361,12 +374,12 @@ export default function MemberReferralsPage() {
                     id="email"
                     type="email"
                     value={newReferralEmail}
-                    onChange={(e) => setNewReferralEmail(e.target.value)}
+                    onChange={e => setNewReferralEmail(e.target.value)}
                     placeholder="Enter your friend's email"
                     required
                   />
                 </div>
-                
+
                 <Button type="submit" disabled={sendingReferral}>
                   {sendingReferral ? 'Sending...' : 'Send Invitation'}
                 </Button>
@@ -389,7 +402,7 @@ export default function MemberReferralsPage() {
                     Send your referral link to friends and family
                   </p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <UserPlus className="w-6 h-6 text-green-600" />
@@ -399,7 +412,7 @@ export default function MemberReferralsPage() {
                     Your friends register and make their first purchase
                   </p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Gift className="w-6 h-6 text-purple-600" />
@@ -438,7 +451,7 @@ export default function MemberReferralsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {referrals.map((referral) => (
+                  {referrals.map(referral => (
                     <TableRow key={referral.id}>
                       <TableCell>
                         <div>
@@ -455,9 +468,7 @@ export default function MemberReferralsPage() {
                           {referral.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {formatDate(referral.referralDate)}
-                      </TableCell>
+                      <TableCell>{formatDate(referral.referralDate)}</TableCell>
                       <TableCell>
                         {referral.firstOrderDate ? (
                           <div>
@@ -495,7 +506,7 @@ export default function MemberReferralsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {rewards.map((reward) => (
+                {rewards.map(reward => (
                   <div
                     key={reward.id}
                     className="flex items-center justify-between p-4 border rounded-lg"

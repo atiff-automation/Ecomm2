@@ -161,7 +161,6 @@ export default function AdminDashboard() {
     }
   };
 
-
   // Chart colors
   const COLORS = [
     '#3B82F6',
@@ -354,7 +353,7 @@ export default function AdminDashboard() {
                             })
                           }
                         />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />
@@ -763,7 +762,7 @@ export default function AdminDashboard() {
                       <BarChart data={analytics.categoryPerformance}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />
@@ -800,7 +799,7 @@ export default function AdminDashboard() {
                       <BarChart data={analytics.membershipComparison}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="customerType" />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={value => formatCurrencyCompact(value)}
                           width={60}
                         />

@@ -46,7 +46,10 @@ export default function BrandingCustomization() {
   const [activeTheme, setActiveTheme] = useState<SiteTheme | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [logoWidth, setLogoWidth] = useState<number>(120);
   const [logoHeight, setLogoHeight] = useState<number>(40);
 
@@ -60,8 +63,12 @@ export default function BrandingCustomization() {
       if (response.ok) {
         const data = await response.json();
         setActiveTheme(data.activeTheme);
-        if (data.activeTheme?.logoWidth) setLogoWidth(data.activeTheme.logoWidth);
-        if (data.activeTheme?.logoHeight) setLogoHeight(data.activeTheme.logoHeight);
+        if (data.activeTheme?.logoWidth) {
+          setLogoWidth(data.activeTheme.logoWidth);
+        }
+        if (data.activeTheme?.logoHeight) {
+          setLogoHeight(data.activeTheme.logoHeight);
+        }
       }
     } catch (error) {
       console.error('Error fetching theme:', error);
@@ -71,15 +78,20 @@ export default function BrandingCustomization() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'logo' | 'favicon'
+  ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const maxSize = type === 'logo' ? 5 * 1024 * 1024 : 1 * 1024 * 1024; // 5MB for logos, 1MB for favicons
     if (file.size > maxSize) {
-      setMessage({ 
-        type: 'error', 
-        text: `File size too large. Maximum size is ${maxSize / 1024 / 1024}MB for ${type}s.` 
+      setMessage({
+        type: 'error',
+        text: `File size too large. Maximum size is ${maxSize / 1024 / 1024}MB for ${type}s.`,
       });
       return;
     }
@@ -110,9 +122,9 @@ export default function BrandingCustomization() {
         throw new Error(data.message || `Failed to upload ${type}`);
       }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : `Upload failed` 
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : `Upload failed`,
       });
     } finally {
       setIsUploading(false);
@@ -122,15 +134,20 @@ export default function BrandingCustomization() {
   };
 
   const handleRemoveAsset = async (type: 'logo' | 'favicon') => {
-    if (!confirm(`Are you sure you want to remove the ${type}?`)) return;
+    if (!confirm(`Are you sure you want to remove the ${type}?`)) {
+      return;
+    }
 
     setIsUploading(true);
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/admin/site-customization/branding?type=${type}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/admin/site-customization/branding?type=${type}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       const data = await response.json();
 
@@ -141,9 +158,9 @@ export default function BrandingCustomization() {
         throw new Error(data.message || `Failed to remove ${type}`);
       }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : `Removal failed` 
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : `Removal failed`,
       });
     } finally {
       setIsUploading(false);
@@ -177,7 +194,7 @@ export default function BrandingCustomization() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ContextualNavigation items={breadcrumbItems} />
-      
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -186,19 +203,26 @@ export default function BrandingCustomization() {
             Site Branding
           </h1>
           <p className="text-gray-600 mt-1">
-            Upload your business logo and favicon to customize your site's branding
+            Upload your business logo and favicon to customize your site's
+            branding
           </p>
         </div>
 
         {/* Messages */}
         {message && (
-          <Alert className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+          <Alert
+            className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+          >
             {message.type === 'success' ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
               <AlertCircle className="h-4 w-4 text-red-600" />
             )}
-            <AlertDescription className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+            <AlertDescription
+              className={
+                message.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }
+            >
               {message.text}
             </AlertDescription>
           </Alert>
@@ -246,7 +270,9 @@ export default function BrandingCustomization() {
                     id="logoWidth"
                     type="number"
                     value={logoWidth}
-                    onChange={(e) => setLogoWidth(parseInt(e.target.value) || 120)}
+                    onChange={e =>
+                      setLogoWidth(parseInt(e.target.value) || 120)
+                    }
                     min="20"
                     max="400"
                   />
@@ -257,7 +283,9 @@ export default function BrandingCustomization() {
                     id="logoHeight"
                     type="number"
                     value={logoHeight}
-                    onChange={(e) => setLogoHeight(parseInt(e.target.value) || 40)}
+                    onChange={e =>
+                      setLogoHeight(parseInt(e.target.value) || 40)
+                    }
                     min="20"
                     max="200"
                   />
@@ -271,7 +299,7 @@ export default function BrandingCustomization() {
                   <Input
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                    onChange={(e) => handleFileUpload(e, 'logo')}
+                    onChange={e => handleFileUpload(e, 'logo')}
                     disabled={isUploading}
                     className="mt-1"
                   />
@@ -335,12 +363,13 @@ export default function BrandingCustomization() {
                   <Input
                     type="file"
                     accept="image/png,image/x-icon,image/vnd.microsoft.icon"
-                    onChange={(e) => handleFileUpload(e, 'favicon')}
+                    onChange={e => handleFileUpload(e, 'favicon')}
                     disabled={isUploading}
                     className="mt-1"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Supported formats: PNG, ICO (Max 1MB)<br />
+                    Supported formats: PNG, ICO (Max 1MB)
+                    <br />
                     Recommended size: 32×32px or 16×16px
                   </p>
                 </div>
@@ -371,7 +400,9 @@ export default function BrandingCustomization() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-gray-600">
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Logo Best Practices:</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Logo Best Practices:
+              </h4>
               <ul className="list-disc list-inside space-y-1">
                 <li>Use high-quality PNG or SVG files for best results</li>
                 <li>Recommended dimensions: 120×40px to 200×80px</li>
@@ -379,14 +410,18 @@ export default function BrandingCustomization() {
                 <li>Test visibility on both light and dark backgrounds</li>
               </ul>
             </div>
-            
+
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Favicon Requirements:</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Favicon Requirements:
+              </h4>
               <ul className="list-disc list-inside space-y-1">
                 <li>Use 32×32px or 16×16px PNG/ICO files</li>
                 <li>Simple designs work best at small sizes</li>
                 <li>Avoid detailed graphics that become unclear when small</li>
-                <li>Consider using your logo's simplified version or initials</li>
+                <li>
+                  Consider using your logo's simplified version or initials
+                </li>
               </ul>
             </div>
           </CardContent>

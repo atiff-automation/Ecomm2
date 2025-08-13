@@ -6,8 +6,22 @@
 'use client';
 
 import * as React from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isSameMonth, addMonths, subMonths } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isToday,
+  isSameMonth,
+  addMonths,
+  subMonths,
+} from 'date-fns';
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,8 +42,18 @@ interface CustomDateRangePickerProps {
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 export function CustomDateRangePicker({
@@ -83,7 +107,9 @@ export function CustomDateRangePicker({
   };
 
   const isInRange = (date: Date) => {
-    if (!startDate || !endDate) return false;
+    if (!startDate || !endDate) {
+      return false;
+    }
     return date >= startDate && date <= endDate;
   };
 
@@ -96,25 +122,29 @@ export function CustomDateRangePicker({
   };
 
   const getDayClassName = (date: Date) => {
-    const baseClass = "h-9 w-9 p-0 font-normal text-sm hover:bg-blue-100 cursor-pointer flex items-center justify-center rounded";
-    
+    const baseClass =
+      'h-9 w-9 p-0 font-normal text-sm hover:bg-blue-100 cursor-pointer flex items-center justify-center rounded';
+
     if (isToday(date)) {
-      return cn(baseClass, "bg-blue-100 text-blue-900 font-semibold border border-blue-400");
+      return cn(
+        baseClass,
+        'bg-blue-100 text-blue-900 font-semibold border border-blue-400'
+      );
     }
-    
+
     if (isRangeStart(date) || isRangeEnd(date)) {
-      return cn(baseClass, "bg-green-500 text-white hover:bg-green-600");
+      return cn(baseClass, 'bg-green-500 text-white hover:bg-green-600');
     }
-    
+
     if (isInRange(date)) {
-      return cn(baseClass, "bg-green-100 text-green-900 hover:bg-green-200");
+      return cn(baseClass, 'bg-green-100 text-green-900 hover:bg-green-200');
     }
-    
+
     if (!isSameMonth(date, currentMonth)) {
-      return cn(baseClass, "text-gray-400 hover:bg-gray-100");
+      return cn(baseClass, 'text-gray-400 hover:bg-gray-100');
     }
-    
-    return cn(baseClass, "text-gray-900 hover:bg-gray-100");
+
+    return cn(baseClass, 'text-gray-900 hover:bg-gray-100');
   };
 
   const renderMonth = (monthDate: Date) => {
@@ -122,10 +152,10 @@ export function CustomDateRangePicker({
     const monthEnd = endOfMonth(monthDate);
     const startDate = new Date(monthStart);
     startDate.setDate(startDate.getDate() - startDate.getDay()); // Start from Sunday
-    
+
     const endDate = new Date(monthEnd);
     endDate.setDate(endDate.getDate() + (6 - monthEnd.getDay())); // End on Saturday
-    
+
     const days = eachDayOfInterval({ start: startDate, end: endDate });
 
     return (
@@ -154,8 +184,11 @@ export function CustomDateRangePicker({
 
         {/* Days of week header */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {DAYS_OF_WEEK.map((day) => (
-            <div key={day} className="h-9 w-9 flex items-center justify-center text-sm font-medium text-gray-600">
+          {DAYS_OF_WEEK.map(day => (
+            <div
+              key={day}
+              className="h-9 w-9 flex items-center justify-center text-sm font-medium text-gray-600"
+            >
               {day}
             </div>
           ))}
@@ -179,7 +212,9 @@ export function CustomDateRangePicker({
   };
 
   const getDaysCount = () => {
-    if (!startDate || !endDate) return null;
+    if (!startDate || !endDate) {
+      return null;
+    }
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return diffDays;
@@ -206,7 +241,7 @@ export function CustomDateRangePicker({
           {renderMonth(currentMonth)}
           {renderMonth(addMonths(currentMonth, 1))}
         </div>
-        
+
         {/* Footer with promotion info */}
         <div className="p-3 border-t bg-gray-50">
           <div className="flex items-center justify-between text-sm">

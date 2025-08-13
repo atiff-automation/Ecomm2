@@ -51,21 +51,28 @@ export default function MembershipCheckoutBanner({
     if (cartItems.length > 0) {
       checkEligibility();
     }
-    
+
     // Check if user just registered for membership
     const registrationFlag = sessionStorage.getItem('membershipJustRegistered');
-    const registrationTimestamp = sessionStorage.getItem('membershipJustRegisteredTime');
-    
+    const registrationTimestamp = sessionStorage.getItem(
+      'membershipJustRegisteredTime'
+    );
+
     if (registrationFlag === 'true') {
       // Check if registration flag is older than 5 minutes (300000 ms) - reduced time
       const now = Date.now();
-      const registrationTime = registrationTimestamp ? parseInt(registrationTimestamp) : 0;
+      const registrationTime = registrationTimestamp
+        ? parseInt(registrationTimestamp)
+        : 0;
       const timeElapsed = now - registrationTime;
-      
+
       // Also check if there's no timestamp (old format) or elapsed time is too long
-      if (!registrationTimestamp || timeElapsed > 300000) { // 5 minutes
+      if (!registrationTimestamp || timeElapsed > 300000) {
+        // 5 minutes
         if (process.env.NODE_ENV === 'development') {
-          console.log('🧹 Clearing expired or invalid membershipJustRegistered flag');
+          console.log(
+            '🧹 Clearing expired or invalid membershipJustRegistered flag'
+          );
         }
         sessionStorage.removeItem('membershipJustRegistered');
         sessionStorage.removeItem('membershipJustRegisteredTime');
@@ -75,14 +82,18 @@ export default function MembershipCheckoutBanner({
         // If showing registration complete but user isn't signed in, it's stale
         if (!session?.user) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🧹 Clearing membershipJustRegistered flag - user not signed in');
+            console.log(
+              '🧹 Clearing membershipJustRegistered flag - user not signed in'
+            );
           }
           sessionStorage.removeItem('membershipJustRegistered');
           sessionStorage.removeItem('membershipJustRegisteredTime');
           setHasJustRegistered(false);
         } else {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 Found valid membershipJustRegistered flag, setting hasJustRegistered to true');
+            console.log(
+              '🔄 Found valid membershipJustRegistered flag, setting hasJustRegistered to true'
+            );
           }
           setHasJustRegistered(true);
         }
@@ -122,19 +133,21 @@ export default function MembershipCheckoutBanner({
     if (process.env.NODE_ENV === 'development') {
       console.log('🎯 handleMembershipSuccess called', membershipData);
     }
-    
+
     // Mark that user just registered for membership
     setHasJustRegistered(true);
-    
+
     // Persist registration state across component re-renders with timestamp
     const now = Date.now().toString();
     sessionStorage.setItem('membershipJustRegistered', 'true');
     sessionStorage.setItem('membershipJustRegisteredTime', now);
-    
+
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Set membershipJustRegistered flag in sessionStorage with timestamp');
+      console.log(
+        '✅ Set membershipJustRegistered flag in sessionStorage with timestamp'
+      );
     }
-    
+
     // Refresh session to get updated user data
     try {
       await update();
@@ -146,7 +159,7 @@ export default function MembershipCheckoutBanner({
         console.warn('Failed to refresh session:', error);
       }
     }
-    
+
     // Refresh eligibility status
     checkEligibility();
     // Notify parent component
@@ -195,7 +208,8 @@ export default function MembershipCheckoutBanner({
               <Sparkles className="h-4 w-4 text-green-600" />
             </div>
             <p className="text-green-700 text-sm">
-              Your membership will be activated after completing this purchase. You'll enjoy member benefits starting immediately after payment!
+              Your membership will be activated after completing this purchase.
+              You'll enjoy member benefits starting immediately after payment!
             </p>
           </div>
         </div>
@@ -223,13 +237,16 @@ export default function MembershipCheckoutBanner({
                 <Sparkles className="h-4 w-4 text-green-600" />
               </div>
               <p className="text-green-700 text-sm mb-3">
-                Great news! With {formatCurrency(eligibility.qualifyingTotal)} in eligible purchases, 
-                your membership will be automatically activated when your payment is completed successfully.
+                Great news! With {formatCurrency(eligibility.qualifyingTotal)}{' '}
+                in eligible purchases, your membership will be automatically
+                activated when your payment is completed successfully.
               </p>
               <div className="bg-green-100 rounded-lg p-3 mb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Gift className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">What happens next:</span>
+                  <span className="text-sm font-medium text-green-800">
+                    What happens next:
+                  </span>
                 </div>
                 <ul className="text-sm text-green-700 space-y-1 ml-6 list-disc">
                   <li>Complete your purchase to activate membership</li>
@@ -239,7 +256,10 @@ export default function MembershipCheckoutBanner({
               </div>
               <div className="flex items-center gap-2 text-xs text-green-600">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Membership activation is subject to successful payment completion</span>
+                <span>
+                  Membership activation is subject to successful payment
+                  completion
+                </span>
               </div>
             </div>
           </div>
@@ -265,8 +285,8 @@ export default function MembershipCheckoutBanner({
                 </div>
                 <p className="text-yellow-700 text-sm mb-3">
                   With {formatCurrency(eligibility.qualifyingTotal)} in eligible
-                  purchases, you can create an account and unlock exclusive member pricing
-                  on all future orders!
+                  purchases, you can create an account and unlock exclusive
+                  member pricing on all future orders!
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button

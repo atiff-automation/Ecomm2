@@ -146,7 +146,10 @@ export async function POST(request: NextRequest) {
       // Process referral completion if user exists and made their first qualifying order
       if (order.user) {
         try {
-          await processReferralOrderCompletion(order.user.id, Number(order.total));
+          await processReferralOrderCompletion(
+            order.user.id,
+            Number(order.total)
+          );
         } catch (referralError) {
           console.error('Referral processing error:', referralError);
           // Don't fail the webhook processing if referral fails

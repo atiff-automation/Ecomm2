@@ -8,11 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Dialog, 
-  DialogContent, 
+import {
+  Dialog,
+  DialogContent,
   DialogDescription,
-  DialogHeader, 
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
@@ -58,7 +58,11 @@ interface ColorPickerProps {
   label: string;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => {
+const ColorPicker: React.FC<ColorPickerProps> = ({
+  color,
+  onChange,
+  label,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tempColor, setTempColor] = useState(color);
 
@@ -73,7 +77,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => 
         />
         <Input
           value={color}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder="#000000"
           className="font-mono text-sm"
         />
@@ -88,10 +92,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => 
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
-            <HexColorPicker 
-              color={tempColor} 
-              onChange={setTempColor}
-            />
+            <HexColorPicker color={tempColor} onChange={setTempColor} />
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded border"
@@ -99,7 +100,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => 
               />
               <Input
                 value={tempColor}
-                onChange={(e) => setTempColor(e.target.value)}
+                onChange={e => setTempColor(e.target.value)}
                 className="w-32 font-mono text-sm"
               />
             </div>
@@ -108,7 +109,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => 
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 onChange(tempColor);
                 setIsOpen(false);
@@ -128,9 +129,12 @@ export default function ThemeCustomization() {
   const [allThemes, setAllThemes] = useState<SiteTheme[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  
+
   // Form state for creating/editing themes
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingTheme, setEditingTheme] = useState<SiteTheme | null>(null);
@@ -175,7 +179,9 @@ export default function ThemeCustomization() {
       const response = await fetch('/api/admin/site-customization/theme', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingTheme ? { themeId: editingTheme.id, ...formData } : formData),
+        body: JSON.stringify(
+          editingTheme ? { themeId: editingTheme.id, ...formData } : formData
+        ),
       });
 
       const data = await response.json();
@@ -191,17 +197,23 @@ export default function ThemeCustomization() {
           backgroundColor: '#F8FAFC',
           textColor: '#1E293B',
         });
-        setMessage({ 
-          type: 'success', 
-          text: `Theme ${editingTheme ? 'updated' : 'created'} successfully!` 
+        setMessage({
+          type: 'success',
+          text: `Theme ${editingTheme ? 'updated' : 'created'} successfully!`,
         });
       } else {
-        throw new Error(data.message || `Failed to ${editingTheme ? 'update' : 'create'} theme`);
+        throw new Error(
+          data.message ||
+            `Failed to ${editingTheme ? 'update' : 'create'} theme`
+        );
       }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : `Failed to ${editingTheme ? 'update' : 'create'} theme` 
+      setMessage({
+        type: 'error',
+        text:
+          error instanceof Error
+            ? error.message
+            : `Failed to ${editingTheme ? 'update' : 'create'} theme`,
       });
     } finally {
       setSaving(false);
@@ -228,7 +240,11 @@ export default function ThemeCustomization() {
         throw new Error(data.message || 'Failed to activate theme');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to activate theme' });
+      setMessage({
+        type: 'error',
+        text:
+          error instanceof Error ? error.message : 'Failed to activate theme',
+      });
     } finally {
       setSaving(false);
     }
@@ -254,14 +270,22 @@ export default function ThemeCustomization() {
         throw new Error(data.message || 'Failed to duplicate theme');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to duplicate theme' });
+      setMessage({
+        type: 'error',
+        text:
+          error instanceof Error ? error.message : 'Failed to duplicate theme',
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteTheme = async (themeId: string) => {
-    if (!confirm('Are you sure you want to delete this theme? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this theme? This action cannot be undone.'
+      )
+    ) {
       return;
     }
 
@@ -269,9 +293,12 @@ export default function ThemeCustomization() {
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/admin/site-customization/theme?id=${themeId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/admin/site-customization/theme?id=${themeId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       const data = await response.json();
 
@@ -282,7 +309,10 @@ export default function ThemeCustomization() {
         throw new Error(data.message || 'Failed to delete theme');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to delete theme' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to delete theme',
+      });
     } finally {
       setSaving(false);
     }
@@ -327,7 +357,7 @@ export default function ThemeCustomization() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ContextualNavigation items={breadcrumbItems} />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -341,18 +371,23 @@ export default function ThemeCustomization() {
                 Customize your site's color scheme and visual appearance
               </p>
             </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setCreateDialogOpen}
+            >
               <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setEditingTheme(null);
-                  setFormData({
-                    name: '',
-                    primaryColor: '#3B82F6',
-                    secondaryColor: '#FDE047',
-                    backgroundColor: '#F8FAFC',
-                    textColor: '#1E293B',
-                  });
-                }}>
+                <Button
+                  onClick={() => {
+                    setEditingTheme(null);
+                    setFormData({
+                      name: '',
+                      primaryColor: '#3B82F6',
+                      secondaryColor: '#FDE047',
+                      backgroundColor: '#F8FAFC',
+                      textColor: '#1E293B',
+                    });
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Theme
                 </Button>
@@ -363,7 +398,9 @@ export default function ThemeCustomization() {
                     {editingTheme ? 'Edit Theme' : 'Create New Theme'}
                   </DialogTitle>
                   <DialogDescription>
-                    {editingTheme ? 'Update the theme colors and settings' : 'Create a new color theme for your site'}
+                    {editingTheme
+                      ? 'Update the theme colors and settings'
+                      : 'Create a new color theme for your site'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -373,59 +410,75 @@ export default function ThemeCustomization() {
                       <Input
                         id="themeName"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={e =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                         placeholder="My Custom Theme"
                       />
                     </div>
 
                     <ColorPicker
                       color={formData.primaryColor}
-                      onChange={(color) => setFormData({ ...formData, primaryColor: color })}
+                      onChange={color =>
+                        setFormData({ ...formData, primaryColor: color })
+                      }
                       label="Primary Color"
                     />
 
                     <ColorPicker
                       color={formData.secondaryColor}
-                      onChange={(color) => setFormData({ ...formData, secondaryColor: color })}
+                      onChange={color =>
+                        setFormData({ ...formData, secondaryColor: color })
+                      }
                       label="Secondary Color"
                     />
 
                     <ColorPicker
                       color={formData.backgroundColor}
-                      onChange={(color) => setFormData({ ...formData, backgroundColor: color })}
+                      onChange={color =>
+                        setFormData({ ...formData, backgroundColor: color })
+                      }
                       label="Background Color"
                     />
 
                     <ColorPicker
                       color={formData.textColor}
-                      onChange={(color) => setFormData({ ...formData, textColor: color })}
+                      onChange={color =>
+                        setFormData({ ...formData, textColor: color })
+                      }
                       label="Text Color"
                     />
                   </div>
 
                   <div className="space-y-4">
                     <Label>Preview</Label>
-                    <div 
+                    <div
                       className="border rounded-lg p-6 space-y-4"
-                      style={{ backgroundColor: formData.backgroundColor, color: formData.textColor }}
+                      style={{
+                        backgroundColor: formData.backgroundColor,
+                        color: formData.textColor,
+                      }}
                     >
-                      <div 
+                      <div
                         className="h-20 rounded-lg flex items-center justify-center text-white font-bold"
                         style={{ backgroundColor: formData.primaryColor }}
                       >
                         Primary Color Header
                       </div>
-                      
+
                       <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Sample Content</h3>
+                        <h3 className="text-lg font-semibold">
+                          Sample Content
+                        </h3>
                         <p className="text-sm">
-                          This is how your text will appear with the selected colors.
+                          This is how your text will appear with the selected
+                          colors.
                         </p>
-                        <button 
+                        <button
                           className="px-4 py-2 rounded text-sm font-medium"
-                          style={{ 
-                            backgroundColor: formData.secondaryColor, 
-                            color: formData.textColor 
+                          style={{
+                            backgroundColor: formData.secondaryColor,
+                            color: formData.textColor,
                           }}
                         >
                           Secondary Button
@@ -435,7 +488,10 @@ export default function ThemeCustomization() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCreateDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button onClick={handleCreateTheme} disabled={isSaving}>
@@ -454,13 +510,19 @@ export default function ThemeCustomization() {
 
         {/* Messages */}
         {message && (
-          <Alert className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+          <Alert
+            className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+          >
             {message.type === 'success' ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
               <AlertCircle className="h-4 w-4 text-red-600" />
             )}
-            <AlertDescription className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+            <AlertDescription
+              className={
+                message.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }
+            >
               {message.text}
             </AlertDescription>
           </Alert>
@@ -480,44 +542,59 @@ export default function ThemeCustomization() {
                 {activeTheme ? (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-lg">{activeTheme.name}</h3>
+                      <h3 className="font-semibold text-lg">
+                        {activeTheme.name}
+                      </h3>
                       <p className="text-sm text-gray-600">
-                        Last updated: {new Date(activeTheme.updatedAt).toLocaleDateString()}
+                        Last updated:{' '}
+                        {new Date(activeTheme.updatedAt).toLocaleDateString()}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="text-center">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded mx-auto border-2 border-gray-200"
                           style={{ backgroundColor: activeTheme.primaryColor }}
                         />
                         <p className="text-xs mt-1">Primary</p>
-                        <p className="text-xs font-mono text-gray-600">{activeTheme.primaryColor}</p>
+                        <p className="text-xs font-mono text-gray-600">
+                          {activeTheme.primaryColor}
+                        </p>
                       </div>
                       <div className="text-center">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded mx-auto border-2 border-gray-200"
-                          style={{ backgroundColor: activeTheme.secondaryColor }}
+                          style={{
+                            backgroundColor: activeTheme.secondaryColor,
+                          }}
                         />
                         <p className="text-xs mt-1">Secondary</p>
-                        <p className="text-xs font-mono text-gray-600">{activeTheme.secondaryColor}</p>
+                        <p className="text-xs font-mono text-gray-600">
+                          {activeTheme.secondaryColor}
+                        </p>
                       </div>
                       <div className="text-center">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded mx-auto border-2 border-gray-200"
-                          style={{ backgroundColor: activeTheme.backgroundColor }}
+                          style={{
+                            backgroundColor: activeTheme.backgroundColor,
+                          }}
                         />
                         <p className="text-xs mt-1">Background</p>
-                        <p className="text-xs font-mono text-gray-600">{activeTheme.backgroundColor}</p>
+                        <p className="text-xs font-mono text-gray-600">
+                          {activeTheme.backgroundColor}
+                        </p>
                       </div>
                       <div className="text-center">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded mx-auto border-2 border-gray-200"
                           style={{ backgroundColor: activeTheme.textColor }}
                         />
                         <p className="text-xs mt-1">Text</p>
-                        <p className="text-xs font-mono text-gray-600">{activeTheme.textColor}</p>
+                        <p className="text-xs font-mono text-gray-600">
+                          {activeTheme.textColor}
+                        </p>
                       </div>
                     </div>
 
@@ -562,7 +639,7 @@ export default function ThemeCustomization() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {allThemes.map((theme) => (
+                  {allThemes.map(theme => (
                     <div
                       key={theme.id}
                       className={`border rounded-lg p-4 ${theme.isActive ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
@@ -582,22 +659,22 @@ export default function ThemeCustomization() {
                       </div>
 
                       <div className="flex gap-2 mb-3">
-                        <div 
+                        <div
                           className="w-6 h-6 rounded border"
                           style={{ backgroundColor: theme.primaryColor }}
                           title="Primary Color"
                         />
-                        <div 
+                        <div
                           className="w-6 h-6 rounded border"
                           style={{ backgroundColor: theme.secondaryColor }}
                           title="Secondary Color"
                         />
-                        <div 
+                        <div
                           className="w-6 h-6 rounded border"
                           style={{ backgroundColor: theme.backgroundColor }}
                           title="Background Color"
                         />
-                        <div 
+                        <div
                           className="w-6 h-6 rounded border"
                           style={{ backgroundColor: theme.textColor }}
                           title="Text Color"
@@ -647,8 +724,12 @@ export default function ThemeCustomization() {
                   {allThemes.length === 0 && (
                     <div className="col-span-full text-center py-12 text-gray-500">
                       <Palette className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-lg font-medium mb-2">No themes found</p>
-                      <p className="text-sm">Create your first theme to get started</p>
+                      <p className="text-lg font-medium mb-2">
+                        No themes found
+                      </p>
+                      <p className="text-sm">
+                        Create your first theme to get started
+                      </p>
                     </div>
                   )}
                 </div>

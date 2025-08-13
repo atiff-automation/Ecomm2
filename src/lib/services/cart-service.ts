@@ -1,7 +1,7 @@
 /**
  * Centralized Cart Service - Malaysian E-commerce Platform
  * Single source of truth for ALL cart-related operations
- * 
+ *
  * This service consolidates all cart API calls and business logic
  * that were previously scattered across 15+ components.
  */
@@ -12,7 +12,7 @@ import {
   CartResponse,
   CartItem,
   AddToCartRequest,
-  UpdateCartItemRequest
+  UpdateCartItemRequest,
 } from '@/lib/types/api';
 
 export interface CartSummary {
@@ -26,7 +26,12 @@ export interface CartSummary {
 }
 
 export interface CartEventPayload {
-  event: 'ITEM_ADDED' | 'ITEM_UPDATED' | 'ITEM_REMOVED' | 'CART_CLEARED' | 'CART_REFRESHED';
+  event:
+    | 'ITEM_ADDED'
+    | 'ITEM_UPDATED'
+    | 'ITEM_REMOVED'
+    | 'CART_CLEARED'
+    | 'CART_REFRESHED';
   cartId?: string;
   productId?: string;
   quantity?: number;
@@ -45,10 +50,12 @@ export class CartService {
   private readonly CACHE_TTL = 30 * 1000; // 30 seconds cache for cart data
 
   private constructor() {
-    // Set up cart refresh listener for global cart updates
+    // Legacy global cart update listener - removed refreshCart() call to prevent race conditions
+    // The service layer events should handle updates instead
     if (typeof window !== 'undefined') {
       window.addEventListener('cartUpdated', () => {
-        this.refreshCart();
+        console.log('🌍 Global cartUpdated event received (legacy)');
+        // Do nothing - service layer events handle updates now
       });
     }
   }
@@ -64,15 +71,18 @@ export class CartService {
    * Get current cart data with caching
    */
   async getCart(forceRefresh: boolean = false): Promise<CartResponse> {
+    console.log('🔄 getCart called with forceRefresh:', forceRefresh);
     const now = Date.now();
-    
+
     // Use cached cart if available and fresh
-    if (!forceRefresh && this.cart && (now - this.lastFetch) < this.CACHE_TTL) {
+    if (!forceRefresh && this.cart && now - this.lastFetch < this.CACHE_TTL) {
+      console.log('💾 Using cached cart:', { cartItems: this.cart.totalItems });
       return this.cart;
     }
 
     // Prevent concurrent fetches
     if (this.isLoading) {
+      console.log('⏳ Cart already loading, waiting...');
       // Wait for current fetch to complete
       while (this.isLoading) {
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -82,9 +92,11 @@ export class CartService {
 
     try {
       this.isLoading = true;
+      console.log('🌐 Fetching cart from API...');
       const response = await apiClient.get<CartResponse>('/api/cart');
 
       if (response.success && response.data) {
+        console.log('📥 Cart fetched successfully:', { cartItems: response.data.totalItems });
         this.cart = response.data;
         this.lastFetch = now;
         this.emitEvent('CART_REFRESHED', { cart: this.cart });
@@ -93,9 +105,10 @@ export class CartService {
 
       throw new Error(response.error || 'Failed to fetch cart');
     } catch (error) {
-      console.error('CartService.getCart error:', error);
+      console.error('❌ CartService.getCart error:', error);
       // Return empty cart on error to prevent UI breaks
       const emptyCart = this.createEmptyCart();
+      console.log('🚫 Setting empty cart due to error');
       this.cart = emptyCart;
       return emptyCart;
     } finally {
@@ -106,26 +119,60 @@ export class CartService {
   /**
    * Add item to cart
    */
-  async addToCart(productId: string, quantity: number = 1): Promise<CartResponse> {
+  async addToCart(
+    productId: string,
+    quantity: number = 1
+  ): Promise<CartResponse> {
+    console.log('🛒 CartService.addToCart called with:', { productId, quantity });
+    
     try {
       const requestData: AddToCartRequest = { productId, quantity };
-      const response = await apiClient.post<CartResponse>('/api/cart', requestData);
+      console.log('🌐 Making API call to /api/cart with:', requestData);
+      
+      const response = await apiClient.post<CartResponse>(
+        '/api/cart',
+        requestData
+      );
+
+      console.log('📡 API response received:', {
+        success: response.success,
+        hasData: !!response.data,
+        cartItems: response.data?.totalItems
+      });
 
       if (response.success && response.data) {
         this.cart = response.data;
         this.lastFetch = Date.now();
-        this.emitEvent('ITEM_ADDED', { 
-          productId, 
-          quantity, 
-          cart: this.cart 
+        
+        console.log('✅ Cart updated, emitting ITEM_ADDED event');
+        console.log('🔍 Cart data before events:', { 
+          cartId: this.cart.id, 
+          totalItems: this.cart.totalItems 
+        });
+        
+        // Emit events immediately after updating cart
+        this.emitEvent('ITEM_ADDED', {
+          productId,
+          quantity,
+          cart: this.cart,
         });
         this.triggerGlobalCartUpdate();
+        
+        // Force immediate update for UI components
+        setTimeout(() => {
+          console.log('⏰ setTimeout callback - cart status:', {
+            hasCart: !!this.cart,
+            cartItems: this.cart?.totalItems || 'NO CART'
+          });
+          this.emitEvent('CART_REFRESHED', { cart: this.cart });
+        }, 0);
+        
         return this.cart;
       }
 
       throw new Error(response.error || 'Failed to add item to cart');
     } catch (error) {
-      console.error('CartService.addToCart error:', error);
+      console.error('❌ CartService.addToCart error:', error);
       throw error;
     }
   }
@@ -133,17 +180,23 @@ export class CartService {
   /**
    * Update cart item quantity
    */
-  async updateCartItem(itemId: string, quantity: number): Promise<CartResponse> {
+  async updateCartItem(
+    itemId: string,
+    quantity: number
+  ): Promise<CartResponse> {
     try {
       const requestData: UpdateCartItemRequest = { quantity };
-      const response = await apiClient.patch<CartResponse>(`/api/cart/items/${itemId}`, requestData);
+      const response = await apiClient.patch<CartResponse>(
+        `/api/cart/items/${itemId}`,
+        requestData
+      );
 
       if (response.success && response.data) {
         this.cart = response.data;
         this.lastFetch = Date.now();
-        this.emitEvent('ITEM_UPDATED', { 
-          quantity, 
-          cart: this.cart 
+        this.emitEvent('ITEM_UPDATED', {
+          quantity,
+          cart: this.cart,
         });
         this.triggerGlobalCartUpdate();
         return this.cart;
@@ -161,7 +214,9 @@ export class CartService {
    */
   async removeFromCart(itemId: string): Promise<CartResponse> {
     try {
-      const response = await apiClient.delete<CartResponse>(`/api/cart/items/${itemId}`);
+      const response = await apiClient.delete<CartResponse>(
+        `/api/cart/items/${itemId}`
+      );
 
       if (response.success && response.data) {
         this.cart = response.data;
@@ -219,7 +274,7 @@ export class CartService {
     try {
       const cart = await this.getCart();
       const membershipThreshold = 80; // RM 80 for membership
-      
+
       return {
         totalItems: cart.totalItems,
         subtotal: cart.subtotal,
@@ -227,7 +282,10 @@ export class CartService {
         promotionalDiscount: cart.promotionalDiscount,
         total: cart.total,
         qualifiesForMembership: cart.subtotal >= membershipThreshold,
-        membershipProgress: Math.min((cart.subtotal / membershipThreshold) * 100, 100)
+        membershipProgress: Math.min(
+          (cart.subtotal / membershipThreshold) * 100,
+          100
+        ),
       };
     } catch (error) {
       console.error('CartService.getCartSummary error:', error);
@@ -238,7 +296,7 @@ export class CartService {
         promotionalDiscount: 0,
         total: 0,
         qualifiesForMembership: false,
-        membershipProgress: 0
+        membershipProgress: 0,
       };
     }
   }
@@ -246,15 +304,17 @@ export class CartService {
   /**
    * Check if product is in cart
    */
-  async isProductInCart(productId: string): Promise<{ inCart: boolean; quantity: number; itemId?: string }> {
+  async isProductInCart(
+    productId: string
+  ): Promise<{ inCart: boolean; quantity: number; itemId?: string }> {
     try {
       const cart = await this.getCart();
       const cartItem = cart.items.find(item => item.productId === productId);
-      
+
       return {
         inCart: !!cartItem,
         quantity: cartItem?.quantity || 0,
-        itemId: cartItem?.id
+        itemId: cartItem?.id,
       };
     } catch (error) {
       console.error('CartService.isProductInCart error:', error);
@@ -287,12 +347,12 @@ export class CartService {
       const cart = await this.getCart();
       const threshold = 80;
       const remaining = Math.max(0, threshold - cart.subtotal);
-      
+
       return {
         eligible: cart.subtotal >= threshold,
         progress: Math.min((cart.subtotal / threshold) * 100, 100),
         remaining,
-        threshold
+        threshold,
       };
     } catch (error) {
       console.error('CartService.checkMembershipEligibility error:', error);
@@ -300,7 +360,7 @@ export class CartService {
         eligible: false,
         progress: 0,
         remaining: 80,
-        threshold: 80
+        threshold: 80,
       };
     }
   }
@@ -311,7 +371,10 @@ export class CartService {
   async transferGuestCart(guestCartId?: string): Promise<CartResponse> {
     try {
       const requestData = guestCartId ? { guestCartId } : {};
-      const response = await apiClient.post<CartResponse>('/api/cart/transfer-guest-cart', requestData);
+      const response = await apiClient.post<CartResponse>(
+        '/api/cart/transfer-guest-cart',
+        requestData
+      );
 
       if (response.success && response.data) {
         this.cart = response.data;
@@ -356,22 +419,48 @@ export class CartService {
     };
   }
 
-  private emitEvent(event: CartEventPayload['event'], payload: Omit<CartEventPayload, 'event' | 'timestamp'>): void {
+  private emitEvent(
+    event: CartEventPayload['event'],
+    payload: Omit<CartEventPayload, 'event' | 'timestamp'>
+  ): void {
     const eventPayload: CartEventPayload = {
       ...payload,
       event,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
+    // Debug logging in development - force log to see what's happening
+    console.log('🛒 CartService emitting event:', event, {
+      cartItems: eventPayload.cart?.totalItems,
+      listeners: {
+        specific: this.eventListeners.get(event)?.size || 0,
+        wildcard: this.eventListeners.get('*')?.size || 0
+      },
+      timestamp: new Date().toISOString()
+    });
+
+    // Emit to specific event listeners
     const listeners = this.eventListeners.get(event);
-    if (listeners) {
-      listeners.forEach(listener => listener(eventPayload));
+    if (listeners && listeners.size > 0) {
+      listeners.forEach(listener => {
+        try {
+          listener(eventPayload);
+        } catch (error) {
+          console.error('Error in cart event listener:', error);
+        }
+      });
     }
 
-    // Also emit to 'any' listeners
+    // Also emit to wildcard ('*') listeners
     const anyListeners = this.eventListeners.get('*');
-    if (anyListeners) {
-      anyListeners.forEach(listener => listener(eventPayload));
+    if (anyListeners && anyListeners.size > 0) {
+      anyListeners.forEach(listener => {
+        try {
+          listener(eventPayload);
+        } catch (error) {
+          console.error('Error in wildcard cart event listener:', error);
+        }
+      });
     }
   }
 
@@ -387,7 +476,7 @@ export class CartService {
       memberDiscount: 0,
       promotionalDiscount: 0,
       total: 0,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
   }
 
@@ -421,7 +510,7 @@ export class CartService {
       cacheAge: this.lastFetch ? Date.now() - this.lastFetch : 0,
       isLoading: this.isLoading,
       hasCache: !!this.cart,
-      itemCount: this.cart?.totalItems || 0
+      itemCount: this.cart?.totalItems || 0,
     };
   }
 }

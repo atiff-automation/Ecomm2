@@ -104,7 +104,8 @@ export async function GET() {
       const categoryCount = new Map<string, number>();
       member.orders.forEach(order => {
         order.orderItems.forEach(item => {
-          const categoryName = item.product.categories?.[0]?.category?.name || 'Uncategorized';
+          const categoryName =
+            item.product.categories?.[0]?.category?.name || 'Uncategorized';
           categoryCount.set(
             categoryName,
             (categoryCount.get(categoryName) || 0) + 1

@@ -85,12 +85,12 @@ export async function getMembershipConfig(): Promise<MembershipConfig> {
     return {
       membershipThreshold: Number(configMap.membership_threshold) || 80,
       enablePromotionalExclusion:
-        configMap.enable_promotional_exclusion !== undefined 
-          ? Boolean(configMap.enable_promotional_exclusion) 
+        configMap.enable_promotional_exclusion !== undefined
+          ? Boolean(configMap.enable_promotional_exclusion)
           : true,
       requireQualifyingCategories:
-        configMap.require_qualifying_categories !== undefined 
-          ? Boolean(configMap.require_qualifying_categories) 
+        configMap.require_qualifying_categories !== undefined
+          ? Boolean(configMap.require_qualifying_categories)
           : true,
       membershipBenefitsText:
         String(configMap.membership_benefits_text) ||
@@ -137,13 +137,18 @@ export function calculateMembershipEligibility(
     memberSubtotal += memberPrice * quantity;
 
     // Check if item qualifies for membership calculation using new promotional system
-    const qualifiesForMembership = productQualifiesForMembership({
-      isPromotional: item.product.isPromotional,
-      promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
-      promotionStartDate: item.product.promotionStartDate,
-      promotionEndDate: item.product.promotionEndDate,
-      isQualifyingForMembership: item.product.isQualifyingForMembership
-    }, config.enablePromotionalExclusion);
+    const qualifiesForMembership = productQualifiesForMembership(
+      {
+        isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice
+          ? Number(item.product.promotionalPrice)
+          : null,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
+      },
+      config.enablePromotionalExclusion
+    );
 
     if (qualifiesForMembership) {
       qualifyingTotal += regularPrice * quantity;
@@ -282,13 +287,18 @@ export async function checkUserMembershipQualification(
     orders.forEach(order => {
       order.orderItems.forEach(item => {
         // Use new promotional system for membership qualification
-        const qualifiesForMembership = productQualifiesForMembership({
-          isPromotional: item.product.isPromotional,
-          promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
-          promotionStartDate: item.product.promotionStartDate,
-          promotionEndDate: item.product.promotionEndDate,
-          isQualifyingForMembership: item.product.isQualifyingForMembership
-        }, config.enablePromotionalExclusion);
+        const qualifiesForMembership = productQualifiesForMembership(
+          {
+            isPromotional: item.product.isPromotional,
+            promotionalPrice: item.product.promotionalPrice
+              ? Number(item.product.promotionalPrice)
+              : null,
+            promotionStartDate: item.product.promotionStartDate,
+            promotionEndDate: item.product.promotionEndDate,
+            isQualifyingForMembership: item.product.isQualifyingForMembership,
+          },
+          config.enablePromotionalExclusion
+        );
 
         if (qualifiesForMembership) {
           qualifyingTotal += Number(item.regularPrice) * item.quantity;

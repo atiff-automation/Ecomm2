@@ -120,7 +120,7 @@ export default function ProductDetailPage() {
         // Use service layer with built-in error handling and caching
         const product = await productService.getProduct(slug);
         setProduct(product);
-        
+
         // Track product view for analytics
         productService.trackProductView(product.id);
       } catch (err) {
@@ -134,7 +134,6 @@ export default function ProductDetailPage() {
       fetchProduct();
     }
   }, [slug]);
-
 
   const handleAddToCart = async () => {
     if (!product) {
@@ -202,12 +201,15 @@ export default function ProductDetailPage() {
   }
 
   const isOutOfStock = product.stockQuantity === 0;
-  
+
   // Get centralized pricing information
   const pricing = usePricing(product);
-  
+
   // Handle restricted access
-  if (pricing.effectivePrice === 0 && pricing.priceDescription.includes('restricted')) {
+  if (
+    pricing.effectivePrice === 0 &&
+    pricing.priceDescription.includes('restricted')
+  ) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
@@ -218,7 +220,11 @@ export default function ProductDetailPage() {
           <p className="text-muted-foreground mb-6">
             This product is currently available for members only
             {product.memberOnlyUntil && (
-              <span> until {new Date(product.memberOnlyUntil).toLocaleDateString('en-MY')}</span>
+              <span>
+                {' '}
+                until{' '}
+                {new Date(product.memberOnlyUntil).toLocaleDateString('en-MY')}
+              </span>
             )}
           </p>
           <div className="space-y-3">
@@ -354,7 +360,9 @@ export default function ProductDetailPage() {
                   variant={badge.variant}
                   className={badge.className}
                 >
-                  {badge.type === 'featured' && <Award className="w-3 h-3 mr-1" />}
+                  {badge.type === 'featured' && (
+                    <Award className="w-3 h-3 mr-1" />
+                  )}
                   {badge.text}
                 </Badge>
               ))}
@@ -409,47 +417,48 @@ export default function ProductDetailPage() {
           <div className="space-y-2" aria-label={pricing.priceDescription}>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}>
+                <span
+                  className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}
+                >
                   {pricing.formattedPrice}
                 </span>
                 {/* Price type badges already handled by centralized badges above */}
               </div>
-              
+
               {/* Original price and savings */}
               {pricing.showSavings && (
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl text-muted-foreground line-through">
                     {pricing.formattedOriginalPrice}
                   </span>
-                  <span className={`font-medium ${pricing.displayClasses.savingsColor}`}>
+                  <span
+                    className={`font-medium ${pricing.displayClasses.savingsColor}`}
+                  >
                     You save {pricing.formattedSavings}
                   </span>
                 </div>
               )}
-              
+
               {/* Member price preview for non-members */}
               {pricing.showMemberPreview && (
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
-                    <strong>
-                      {pricing.memberPreviewText}
-                    </strong>
+                    <strong>{pricing.memberPreviewText}</strong>
                     <br />
                     Save {pricing.formattedSavings} with membership
                   </p>
                 </div>
               )}
-              
+
               {/* Early access information */}
               {pricing.priceType === 'early-access' && (
                 <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <p className="text-sm text-purple-800">
                     <strong>🎆 Early Access Promotion</strong>
                     <br />
-                    {isMember 
-                      ? 'You have early access to this promotion!' 
-                      : 'Members get early access to special promotions'
-                    }
+                    {isMember
+                      ? 'You have early access to this promotion!'
+                      : 'Members get early access to special promotions'}
                   </p>
                 </div>
               )}
@@ -569,8 +578,12 @@ export default function ProductDetailPage() {
                     <div className="flex justify-between">
                       <span>Categories:</span>
                       <div className="flex flex-wrap gap-1">
-                        {product.categories.map((cat) => (
-                          <Badge key={cat.category.id} variant="outline" className="text-xs">
+                        {product.categories.map(cat => (
+                          <Badge
+                            key={cat.category.id}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {cat.category.name}
                           </Badge>
                         ))}
@@ -726,7 +739,8 @@ export default function ProductDetailPage() {
                       {relatedProduct.memberPrice <
                         relatedProduct.regularPrice && (
                         <div className="text-xs text-muted-foreground">
-                          Member: {new Intl.NumberFormat('en-MY', {
+                          Member:{' '}
+                          {new Intl.NumberFormat('en-MY', {
                             style: 'currency',
                             currency: 'MYR',
                           }).format(relatedProduct.memberPrice)}

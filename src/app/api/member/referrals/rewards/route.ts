@@ -14,7 +14,7 @@ import { RewardStatus } from '@prisma/client';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { message: 'Authentication required' },
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { message: 'Authentication required' },
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const rewardId = searchParams.get('id');
-    
+
     if (!rewardId) {
       return NextResponse.json(
         { message: 'Reward ID is required' },
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
         id: rewardId,
         userId: session.user.id,
         status: RewardStatus.PENDING,
-      }
+      },
     });
 
     if (!reward) {
@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest) {
       data: {
         status: RewardStatus.ISSUED,
         processedAt: new Date(),
-      }
+      },
     });
 
     return NextResponse.json({

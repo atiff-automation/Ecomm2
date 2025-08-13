@@ -133,7 +133,10 @@ export async function PUT(
     }
 
     // Verify parent category exists if provided and different from current
-    if (categoryData.parentId && categoryData.parentId !== existingCategory.parentId) {
+    if (
+      categoryData.parentId &&
+      categoryData.parentId !== existingCategory.parentId
+    ) {
       // Prevent setting parent to self or descendant
       if (categoryData.parentId === id) {
         return NextResponse.json(
@@ -257,8 +260,8 @@ export async function DELETE(
     // Prevent deletion if category has products
     if (category._count.products > 0) {
       return NextResponse.json(
-        { 
-          message: `Cannot delete category. It contains ${category._count.products} products. Please move or delete the products first.` 
+        {
+          message: `Cannot delete category. It contains ${category._count.products} products. Please move or delete the products first.`,
         },
         { status: 400 }
       );
@@ -267,8 +270,8 @@ export async function DELETE(
     // Prevent deletion if category has subcategories
     if (category._count.children > 0) {
       return NextResponse.json(
-        { 
-          message: `Cannot delete category. It has ${category._count.children} subcategories. Please move or delete the subcategories first.` 
+        {
+          message: `Cannot delete category. It has ${category._count.children} subcategories. Please move or delete the subcategories first.`,
         },
         { status: 400 }
       );

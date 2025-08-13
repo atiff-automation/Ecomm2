@@ -69,10 +69,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Transform the data for the frontend
@@ -86,8 +83,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       subtotal: Number(order.subtotal),
       taxAmount: Number(order.taxAmount),
       shippingCost: Number(order.shippingCost),
-      discountAmount: order.discountAmount && Number(order.discountAmount) > 0 ? Number(order.discountAmount) : null,
-      memberDiscount: order.memberDiscount && Number(order.memberDiscount) > 0 ? Number(order.memberDiscount) : null,
+      discountAmount:
+        order.discountAmount && Number(order.discountAmount) > 0
+          ? Number(order.discountAmount)
+          : null,
+      memberDiscount:
+        order.memberDiscount && Number(order.memberDiscount) > 0
+          ? Number(order.memberDiscount)
+          : null,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
       notes: order.notes,
@@ -99,47 +102,58 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         product: {
           name: item.product.name,
           slug: item.product.slug,
-          primaryImage: item.product.images?.find(img => img.isPrimary) ? {
-            url: item.product.images.find(img => img.isPrimary)!.url,
-            altText: item.product.images.find(img => img.isPrimary)!.altText,
-          } : (item.product.images?.[0] ? {
-            url: item.product.images[0].url,
-            altText: item.product.images[0].altText,
-          } : null),
+          primaryImage: item.product.images?.find(img => img.isPrimary)
+            ? {
+                url: item.product.images.find(img => img.isPrimary)!.url,
+                altText: item.product.images.find(img => img.isPrimary)!
+                  .altText,
+              }
+            : item.product.images?.[0]
+              ? {
+                  url: item.product.images[0].url,
+                  altText: item.product.images[0].altText,
+                }
+              : null,
         },
       })),
-      shippingAddress: order.shippingAddress ? {
-        firstName: order.shippingAddress.firstName,
-        lastName: order.shippingAddress.lastName,
-        email: order.shippingAddress.email,
-        phone: order.shippingAddress.phone,
-        address: order.shippingAddress.address,
-        address2: order.shippingAddress.address2,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state,
-        postcode: order.shippingAddress.postcode,
-        country: order.shippingAddress.country,
-      } : null,
-      billingAddress: order.billingAddress ? {
-        firstName: order.billingAddress.firstName,
-        lastName: order.billingAddress.lastName,
-        email: order.billingAddress.email,
-        phone: order.billingAddress.phone,
-        address: order.billingAddress.address,
-        address2: order.billingAddress.address2,
-        city: order.billingAddress.city,
-        state: order.billingAddress.state,
-        postcode: order.billingAddress.postcode,
-        country: order.billingAddress.country,
-      } : null,
-      customer: order.user ? {
-        id: order.user.id,
-        firstName: order.user.firstName,
-        lastName: order.user.lastName,
-        email: order.user.email,
-        isMember: order.user.isMember,
-        memberSince: order.user.memberSince?.toISOString(),
-      } : null,
+      shippingAddress: order.shippingAddress
+        ? {
+            firstName: order.shippingAddress.firstName,
+            lastName: order.shippingAddress.lastName,
+            email: order.shippingAddress.email,
+            phone: order.shippingAddress.phone,
+            address: order.shippingAddress.address,
+            address2: order.shippingAddress.address2,
+            city: order.shippingAddress.city,
+            state: order.shippingAddress.state,
+            postcode: order.shippingAddress.postcode,
+            country: order.shippingAddress.country,
+          }
+        : null,
+      billingAddress: order.billingAddress
+        ? {
+            firstName: order.billingAddress.firstName,
+            lastName: order.billingAddress.lastName,
+            email: order.billingAddress.email,
+            phone: order.billingAddress.phone,
+            address: order.billingAddress.address,
+            address2: order.billingAddress.address2,
+            city: order.billingAddress.city,
+            state: order.billingAddress.state,
+            postcode: order.billingAddress.postcode,
+            country: order.billingAddress.country,
+          }
+        : null,
+      customer: order.user
+        ? {
+            id: order.user.id,
+            firstName: order.user.firstName,
+            lastName: order.user.lastName,
+            email: order.user.email,
+            isMember: order.user.isMember,
+            memberSince: order.user.memberSince?.toISOString(),
+          }
+        : null,
     };
 
     return NextResponse.json({ order: transformedOrder });
@@ -172,7 +186,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { status } = body;
 
     // Validate status
-    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    const validStatuses = [
+      'PENDING',
+      'PROCESSING',
+      'SHIPPED',
+      'DELIVERED',
+      'CANCELLED',
+    ];
     if (status && !validStatuses.includes(status)) {
       return NextResponse.json(
         { message: 'Invalid status value' },
@@ -231,8 +251,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       subtotal: Number(updatedOrder.subtotal),
       taxAmount: Number(updatedOrder.taxAmount),
       shippingCost: Number(updatedOrder.shippingCost),
-      discountAmount: updatedOrder.discountAmount && Number(updatedOrder.discountAmount) > 0 ? Number(updatedOrder.discountAmount) : null,
-      memberDiscount: updatedOrder.memberDiscount && Number(updatedOrder.memberDiscount) > 0 ? Number(updatedOrder.memberDiscount) : null,
+      discountAmount:
+        updatedOrder.discountAmount && Number(updatedOrder.discountAmount) > 0
+          ? Number(updatedOrder.discountAmount)
+          : null,
+      memberDiscount:
+        updatedOrder.memberDiscount && Number(updatedOrder.memberDiscount) > 0
+          ? Number(updatedOrder.memberDiscount)
+          : null,
       createdAt: updatedOrder.createdAt.toISOString(),
       updatedAt: updatedOrder.updatedAt.toISOString(),
       notes: updatedOrder.notes,
@@ -244,47 +270,58 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         product: {
           name: item.product.name,
           slug: item.product.slug,
-          primaryImage: item.product.images?.find(img => img.isPrimary) ? {
-            url: item.product.images.find(img => img.isPrimary)!.url,
-            altText: item.product.images.find(img => img.isPrimary)!.altText,
-          } : (item.product.images?.[0] ? {
-            url: item.product.images[0].url,
-            altText: item.product.images[0].altText,
-          } : null),
+          primaryImage: item.product.images?.find(img => img.isPrimary)
+            ? {
+                url: item.product.images.find(img => img.isPrimary)!.url,
+                altText: item.product.images.find(img => img.isPrimary)!
+                  .altText,
+              }
+            : item.product.images?.[0]
+              ? {
+                  url: item.product.images[0].url,
+                  altText: item.product.images[0].altText,
+                }
+              : null,
         },
       })),
-      shippingAddress: updatedOrder.shippingAddress ? {
-        firstName: updatedOrder.shippingAddress.firstName,
-        lastName: updatedOrder.shippingAddress.lastName,
-        email: updatedOrder.shippingAddress.email,
-        phone: updatedOrder.shippingAddress.phone,
-        address: updatedOrder.shippingAddress.address,
-        address2: updatedOrder.shippingAddress.address2,
-        city: updatedOrder.shippingAddress.city,
-        state: updatedOrder.shippingAddress.state,
-        postcode: updatedOrder.shippingAddress.postcode,
-        country: updatedOrder.shippingAddress.country,
-      } : null,
-      billingAddress: updatedOrder.billingAddress ? {
-        firstName: updatedOrder.billingAddress.firstName,
-        lastName: updatedOrder.billingAddress.lastName,
-        email: updatedOrder.billingAddress.email,
-        phone: updatedOrder.billingAddress.phone,
-        address: updatedOrder.billingAddress.address,
-        address2: updatedOrder.billingAddress.address2,
-        city: updatedOrder.billingAddress.city,
-        state: updatedOrder.billingAddress.state,
-        postcode: updatedOrder.billingAddress.postcode,
-        country: updatedOrder.billingAddress.country,
-      } : null,
-      customer: updatedOrder.user ? {
-        id: updatedOrder.user.id,
-        firstName: updatedOrder.user.firstName,
-        lastName: updatedOrder.user.lastName,
-        email: updatedOrder.user.email,
-        isMember: updatedOrder.user.isMember,
-        memberSince: updatedOrder.user.memberSince?.toISOString(),
-      } : null,
+      shippingAddress: updatedOrder.shippingAddress
+        ? {
+            firstName: updatedOrder.shippingAddress.firstName,
+            lastName: updatedOrder.shippingAddress.lastName,
+            email: updatedOrder.shippingAddress.email,
+            phone: updatedOrder.shippingAddress.phone,
+            address: updatedOrder.shippingAddress.address,
+            address2: updatedOrder.shippingAddress.address2,
+            city: updatedOrder.shippingAddress.city,
+            state: updatedOrder.shippingAddress.state,
+            postcode: updatedOrder.shippingAddress.postcode,
+            country: updatedOrder.shippingAddress.country,
+          }
+        : null,
+      billingAddress: updatedOrder.billingAddress
+        ? {
+            firstName: updatedOrder.billingAddress.firstName,
+            lastName: updatedOrder.billingAddress.lastName,
+            email: updatedOrder.billingAddress.email,
+            phone: updatedOrder.billingAddress.phone,
+            address: updatedOrder.billingAddress.address,
+            address2: updatedOrder.billingAddress.address2,
+            city: updatedOrder.billingAddress.city,
+            state: updatedOrder.billingAddress.state,
+            postcode: updatedOrder.billingAddress.postcode,
+            country: updatedOrder.billingAddress.country,
+          }
+        : null,
+      customer: updatedOrder.user
+        ? {
+            id: updatedOrder.user.id,
+            firstName: updatedOrder.user.firstName,
+            lastName: updatedOrder.user.lastName,
+            email: updatedOrder.user.email,
+            isMember: updatedOrder.user.isMember,
+            memberSince: updatedOrder.user.memberSince?.toISOString(),
+          }
+        : null,
     };
 
     // Create audit log
@@ -300,14 +337,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           newStatus: status,
           updatedBy: session.user.name || session.user.email,
         },
-        ipAddress: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+        ipAddress:
+          request.ip || request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Order updated successfully',
-      order: transformedOrder 
+      order: transformedOrder,
     });
   } catch (error) {
     console.error('Error updating order:', error);

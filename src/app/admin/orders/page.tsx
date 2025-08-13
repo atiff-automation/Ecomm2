@@ -195,12 +195,7 @@ export default function AdminOrders() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Breadcrumbs */}
-        <Breadcrumbs 
-          items={[
-            { label: 'Orders' }
-          ]}
-          className="mb-6"
-        />
+        <Breadcrumbs items={[{ label: 'Orders' }]} className="mb-6" />
 
         {/* Header */}
         <div className="mb-8">

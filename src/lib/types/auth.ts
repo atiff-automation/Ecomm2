@@ -1,7 +1,7 @@
 /**
  * Authentication Types - Malaysian E-commerce Platform
  * Centralized type definitions for authentication and user context
- * 
+ *
  * This file consolidates all auth-related types that were previously
  * scattered across multiple components.
  */
@@ -32,27 +32,27 @@ export interface AuthContextType {
   isLoggedIn: boolean;
   isMember: boolean;
   isAdmin: boolean;
-  
+
   // User info
   user: User | null;
   userId?: string;
   userName?: string;
   userEmail?: string;
-  
+
   // Membership info
   membershipDate?: string;
   totalSpent?: number;
   membershipProgress?: number;
-  
+
   // Auth status checks
   isAuthenticated: boolean;
   hasValidSession: boolean;
-  
+
   // Actions
   signIn: (credentials?: any) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  
+
   // Error handling
   error: string | null;
   clearError: () => void;
@@ -116,11 +116,11 @@ export interface SignOutOptions {
 }
 
 // Auth event types
-export type AuthEvent = 
-  | 'SIGNED_IN' 
-  | 'SIGNED_OUT' 
-  | 'SESSION_UPDATED' 
-  | 'MEMBERSHIP_CHANGED' 
+export type AuthEvent =
+  | 'SIGNED_IN'
+  | 'SIGNED_OUT'
+  | 'SESSION_UPDATED'
+  | 'MEMBERSHIP_CHANGED'
   | 'TOKEN_REFRESHED'
   | 'AUTH_ERROR';
 
@@ -137,6 +137,9 @@ export type AuthEventListener = (payload: AuthEventPayload) => void;
 
 export interface AuthEventManager {
   subscribe: (event: AuthEvent, listener: AuthEventListener) => () => void;
-  emit: (event: AuthEvent, payload: Omit<AuthEventPayload, 'event' | 'timestamp'>) => void;
+  emit: (
+    event: AuthEvent,
+    payload: Omit<AuthEventPayload, 'event' | 'timestamp'>
+  ) => void;
   removeAllListeners: () => void;
 }

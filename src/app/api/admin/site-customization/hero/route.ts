@@ -59,7 +59,8 @@ export async function GET() {
         data: {
           title: 'Welcome to JRM E-commerce',
           subtitle: "Malaysia's premier online marketplace",
-          description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
+          description:
+            'Intelligent membership benefits, dual pricing, and local payment integration.',
           ctaPrimaryText: 'Join as Member',
           ctaPrimaryLink: '/auth/signup',
           ctaSecondaryText: 'Browse Products',
@@ -111,8 +112,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('Hero section update request body:', JSON.stringify(body, null, 2));
-    
+    console.log(
+      'Hero section update request body:',
+      JSON.stringify(body, null, 2)
+    );
+
     let validatedData;
     try {
       validatedData = heroSectionSchema.parse(body);
@@ -125,7 +129,12 @@ export async function PUT(request: NextRequest) {
             errors: validationError.issues.map(issue => ({
               field: issue.path.join('.'),
               message: issue.message,
-              receivedValue: issue.path.length > 0 ? JSON.stringify(issue.path.reduce((obj, key) => obj?.[key], body)) : 'N/A',
+              receivedValue:
+                issue.path.length > 0
+                  ? JSON.stringify(
+                      issue.path.reduce((obj, key) => obj?.[key], body)
+                    )
+                  : 'N/A',
             })),
           },
           { status: 400 }
@@ -234,7 +243,8 @@ export async function POST(request: NextRequest) {
       data: {
         title: 'Welcome to JRM E-commerce',
         subtitle: "Malaysia's premier online marketplace",
-        description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
+        description:
+          'Intelligent membership benefits, dual pricing, and local payment integration.',
         ctaPrimaryText: 'Join as Member',
         ctaPrimaryLink: '/auth/signup',
         ctaSecondaryText: 'Browse Products',

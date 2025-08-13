@@ -305,7 +305,8 @@ export function CartSidebar({
                         </Link>
 
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+                          {item.product.categories?.[0]?.category?.name ||
+                            'Uncategorized'}
                         </p>
 
                         {/* Pricing */}
@@ -435,10 +436,9 @@ export function CartSidebar({
                   ) : (
                     <div className="mt-2">
                       <p className="text-xs text-blue-700">
-                        {cartSummary.qualifyingTotal > 0 
+                        {cartSummary.qualifyingTotal > 0
                           ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more to qualify`
-                          : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items`
-                        }
+                          : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items`}
                       </p>
                       {cartSummary.qualifyingTotal === 0 && (
                         <p className="text-xs text-blue-600 mt-1">

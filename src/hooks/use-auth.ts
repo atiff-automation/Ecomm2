@@ -1,7 +1,7 @@
 /**
  * useAuth Hook - Malaysian E-commerce Platform
  * React hook for accessing centralized authentication logic
- * 
+ *
  * This hook provides a clean React interface to the AuthService,
  * handling all session management and auth state centrally.
  */
@@ -9,13 +9,13 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { AuthService } from '@/lib/services/auth-service';
-import { 
-  User, 
-  Session, 
-  UseAuthReturn, 
-  SignInOptions, 
+import {
+  User,
+  Session,
+  UseAuthReturn,
+  SignInOptions,
   SignOutOptions,
-  AuthEvent
+  AuthEvent,
 } from '@/lib/types/auth';
 
 /**
@@ -28,11 +28,13 @@ export function useAuth(): UseAuthReturn {
 
   // Convert NextAuth session to our enhanced session type
   const session: Session | null = useMemo(() => {
-    if (!nextAuthSession?.user) return null;
-    
+    if (!nextAuthSession?.user) {
+      return null;
+    }
+
     return {
       user: AuthService['enhanceUserData'](nextAuthSession.user),
-      expires: nextAuthSession.expires
+      expires: nextAuthSession.expires,
     };
   }, [nextAuthSession]);
 
@@ -57,7 +59,9 @@ export function useAuth(): UseAuthReturn {
 
   const isAuthenticated = isLoggedIn;
   const hasValidSession = useMemo(() => {
-    if (!session) return false;
+    if (!session) {
+      return false;
+    }
     return AuthService.validateSession(session);
   }, [session]);
 
@@ -109,13 +113,15 @@ export function useAuth(): UseAuthReturn {
   }, [isMember]);
 
   const getSessionTimeRemaining = useCallback(() => {
-    if (!session) return 0;
+    if (!session) {
+      return 0;
+    }
     return AuthService.getSessionTimeRemaining(session);
   }, [session]);
 
   // Set up auth event listeners
   useEffect(() => {
-    const unsubscribeError = AuthService.onAuthEvent('AUTH_ERROR', (payload) => {
+    const unsubscribeError = AuthService.onAuthEvent('AUTH_ERROR', payload => {
       setError(payload.error || 'Authentication error occurred');
     });
 
@@ -137,36 +143,36 @@ export function useAuth(): UseAuthReturn {
     isLoggedIn,
     isMember,
     isAdmin,
-    
+
     // User info
     user,
     userId,
     userName,
     userEmail,
-    
+
     // Membership info
     membershipDate,
     totalSpent,
     membershipProgress,
-    
+
     // Auth status checks
     isAuthenticated,
     hasValidSession,
-    
+
     // Actions
     signIn,
     signOut,
     refreshSession,
-    
+
     // Error handling
     error,
     clearError,
-    
+
     // Utility methods
     checkMembershipStatus,
     getMembershipProgress,
     canAccessMemberFeatures,
-    getSessionTimeRemaining
+    getSessionTimeRemaining,
   };
 }
 
@@ -175,8 +181,10 @@ export function useAuth(): UseAuthReturn {
  */
 export function useIsAuthenticated(): boolean {
   const { data: session, status } = useSession();
-  
-  if (status === 'loading') return false;
+
+  if (status === 'loading') {
+    return false;
+  }
   return !!session?.user;
 }
 
@@ -185,9 +193,11 @@ export function useIsAuthenticated(): boolean {
  */
 export function useIsMember(): boolean {
   const { data: session, status } = useSession();
-  
-  if (status === 'loading' || !session?.user) return false;
-  
+
+  if (status === 'loading' || !session?.user) {
+    return false;
+  }
+
   const user = session.user as any;
   const totalSpent = user.totalSpent || 0;
   return user.isMember || totalSpent >= 80; // RM 80 threshold
@@ -198,9 +208,11 @@ export function useIsMember(): boolean {
  */
 export function useUser(): User | null {
   const { data: session, status } = useSession();
-  
-  if (status === 'loading' || !session?.user) return null;
-  
+
+  if (status === 'loading' || !session?.user) {
+    return null;
+  }
+
   return AuthService['enhanceUserData'](session.user);
 }
 
@@ -209,9 +221,11 @@ export function useUser(): User | null {
  */
 export function useIsAdmin(): boolean {
   const { data: session, status } = useSession();
-  
-  if (status === 'loading' || !session?.user) return false;
-  
+
+  if (status === 'loading' || !session?.user) {
+    return false;
+  }
+
   const user = session.user as any;
   return user.role === 'ADMIN';
 }
@@ -226,29 +240,29 @@ export function useMembershipProgress(): {
   totalSpent: number;
 } {
   const { data: session, status } = useSession();
-  
+
   const defaultReturn = {
     progress: 0,
     remaining: 80,
     isMember: false,
-    totalSpent: 0
+    totalSpent: 0,
   };
-  
+
   if (status === 'loading' || !session?.user) {
     return defaultReturn;
   }
-  
+
   const user = session.user as any;
   const totalSpent = user.totalSpent || 0;
   const isMember = user.isMember || totalSpent >= 80;
   const progress = AuthService.calculateMembershipProgress(totalSpent);
   const remaining = AuthService.getMembershipRemaining(totalSpent);
-  
+
   return {
     progress,
     remaining,
     isMember,
-    totalSpent
+    totalSpent,
   };
 }
 
@@ -262,28 +276,28 @@ export function useSessionExpiry(): {
 } {
   const { data: session } = useSession();
   const [timeRemaining, setTimeRemaining] = useState(0);
-  
+
   useEffect(() => {
     if (!session) {
       setTimeRemaining(0);
       return;
     }
-    
+
     const updateTimer = () => {
       const remaining = AuthService.getSessionTimeRemaining(session);
       setTimeRemaining(remaining);
     };
-    
+
     updateTimer();
     const interval = setInterval(updateTimer, 60000); // Update every minute
-    
+
     return () => clearInterval(interval);
   }, [session]);
-  
+
   return {
     timeRemaining,
     isExpiringSoon: timeRemaining <= 5 && timeRemaining > 0,
-    isExpired: timeRemaining <= 0
+    isExpired: timeRemaining <= 0,
   };
 }
 
@@ -306,9 +320,11 @@ export function useAuthEvents(
  */
 export function useUserAvatar(): string | null {
   const user = useUser();
-  
-  if (!user) return null;
-  
+
+  if (!user) {
+    return null;
+  }
+
   return AuthService.getAvatarUrl(user);
 }
 
@@ -317,8 +333,10 @@ export function useUserAvatar(): string | null {
  */
 export function useDisplayName(): string | null {
   const user = useUser();
-  
-  if (!user) return null;
-  
+
+  if (!user) {
+    return null;
+  }
+
   return AuthService.getDisplayName(user);
 }

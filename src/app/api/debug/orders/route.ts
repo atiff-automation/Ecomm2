@@ -17,16 +17,16 @@ export async function GET(request: NextRequest) {
             id: true,
             email: true,
             isMember: true,
-          }
+          },
         },
         orderItems: {
           select: {
             id: true,
             quantity: true,
             productName: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     const users = await prisma.user.findMany({
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         isMember: true,
         createdAt: true,
         lastLoginAt: true,
-      }
+      },
     });
 
     return NextResponse.json({
@@ -60,9 +60,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Debug API error:', error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

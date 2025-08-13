@@ -119,11 +119,13 @@ export default function HomePage() {
     const fetchHomeData = async () => {
       try {
         // Use service layer for data fetching with built-in error handling and caching
-        const [products, categories, customizationResponse] = await Promise.all([
-          productService.getFeaturedProducts(8),
-          categoryService.getCategories({ includeProductCount: true }),
-          fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
-        ]);
+        const [products, categories, customizationResponse] = await Promise.all(
+          [
+            productService.getFeaturedProducts(8),
+            categoryService.getCategories({ includeProductCount: true }),
+            fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
+          ]
+        );
 
         setFeaturedProducts(products);
         setCategories(categories.slice(0, 6));

@@ -56,11 +56,17 @@ export async function GET(request: NextRequest) {
     const transformedCodes = codes.map(code => ({
       ...code,
       discountValue: Number(code.discountValue),
-      minimumOrderValue: code.minimumOrderValue ? Number(code.minimumOrderValue) : null,
-      maximumDiscount: code.maximumDiscount ? Number(code.maximumDiscount) : null,
-      createdBy: code.createdBy ? {
-        name: `${code.createdBy.firstName} ${code.createdBy.lastName}`.trim(),
-      } : null,
+      minimumOrderValue: code.minimumOrderValue
+        ? Number(code.minimumOrderValue)
+        : null,
+      maximumDiscount: code.maximumDiscount
+        ? Number(code.maximumDiscount)
+        : null,
+      createdBy: code.createdBy
+        ? {
+            name: `${code.createdBy.firstName} ${code.createdBy.lastName}`.trim(),
+          }
+        : null,
     }));
 
     return NextResponse.json({ codes: transformedCodes });
@@ -89,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Basic validation - you can expand this with Zod schema
     const {
       code,

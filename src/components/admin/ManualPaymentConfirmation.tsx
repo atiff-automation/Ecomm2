@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -66,12 +66,12 @@ export default function ManualPaymentConfirmation({
         const result = await response.json();
         toast.success('Payment confirmed! Telegram notification sent.');
         console.log('Payment confirmation result:', result);
-        
+
         // Clear form
         setPaymentMethod('');
         setReference('');
         setNotes('');
-        
+
         // Notify parent component
         if (onStatusUpdate) {
           onStatusUpdate();
@@ -125,19 +125,21 @@ export default function ManualPaymentConfirmation({
                 <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
                 <SelectItem value="cash-deposit">Cash Deposit</SelectItem>
                 <SelectItem value="cheque">Cheque</SelectItem>
-                <SelectItem value="cash-on-delivery">Cash on Delivery</SelectItem>
+                <SelectItem value="cash-on-delivery">
+                  Cash on Delivery
+                </SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="reference">Reference Number (Optional)</Label>
             <Input
               id="reference"
               placeholder="Transaction reference"
               value={reference}
-              onChange={(e) => setReference(e.target.value)}
+              onChange={e => setReference(e.target.value)}
             />
           </div>
         </div>
@@ -148,7 +150,7 @@ export default function ManualPaymentConfirmation({
             id="notes"
             placeholder="Additional notes about the payment..."
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={e => setNotes(e.target.value)}
             rows={3}
           />
         </div>

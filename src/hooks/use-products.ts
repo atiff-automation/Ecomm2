@@ -1,13 +1,17 @@
 /**
  * useProducts Hooks - Malaysian E-commerce Platform
  * Enhanced React hooks for product data with React Query patterns
- * 
+ *
  * These hooks provide optimized data fetching with caching,
  * error handling, and automatic refetching capabilities.
  */
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { productService, ProductListResponse, ProductSearchOptions } from '@/lib/services/product-service';
+import {
+  productService,
+  ProductListResponse,
+  ProductSearchOptions,
+} from '@/lib/services/product-service';
 import { ProductResponse, ProductListParams } from '@/lib/types/api';
 
 interface UseProductsReturn {
@@ -38,55 +42,66 @@ export function useProducts(params: ProductListParams = {}): UseProductsReturn {
       totalPages: 1,
       totalCount: 0,
       hasNextPage: false,
-      hasPrevPage: false
-    }
+      hasPrevPage: false,
+    },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async (resetData = true) => {
-    try {
-      if (resetData) setIsLoading(true);
-      setError(null);
-      
-      const result = await productService.getProducts(params);
-      
-      if (resetData) {
-        setData(result);
-      } else {
-        // Load more: append products
-        setData(prev => ({
-          ...result,
-          products: [...prev.products, ...result.products]
-        }));
+  const fetchProducts = useCallback(
+    async (resetData = true) => {
+      try {
+        if (resetData) {
+          setIsLoading(true);
+        }
+        setError(null);
+
+        const result = await productService.getProducts(params);
+
+        if (resetData) {
+          setData(result);
+        } else {
+          // Load more: append products
+          setData(prev => ({
+            ...result,
+            products: [...prev.products, ...result.products],
+          }));
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to load products'
+        );
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [params]);
+    },
+    [params]
+  );
 
   useEffect(() => {
     fetchProducts(true);
   }, [fetchProducts]);
 
   const loadMore = useCallback(async () => {
-    if (!data.pagination.hasNextPage || isLoading) return;
-    
+    if (!data.pagination.hasNextPage || isLoading) {
+      return;
+    }
+
     const nextParams = {
       ...params,
-      page: (params.page || 1) + 1
+      page: (params.page || 1) + 1,
     };
-    
+
     try {
       const result = await productService.getProducts(nextParams);
       setData(prev => ({
         ...result,
-        products: [...prev.products, ...result.products]
+        products: [...prev.products, ...result.products],
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load more products');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load more products'
+      );
     }
   }, [params, data.pagination.hasNextPage, isLoading]);
 
@@ -99,7 +114,7 @@ export function useProducts(params: ProductListParams = {}): UseProductsReturn {
     pagination: data.pagination,
     refetch,
     loadMore,
-    canLoadMore: data.pagination.hasNextPage && !isLoading
+    canLoadMore: data.pagination.hasNextPage && !isLoading,
   };
 }
 
@@ -123,7 +138,9 @@ export function useFeaturedProducts(limit: number = 8): {
       const result = await productService.getFeaturedProducts(limit);
       setProducts(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load featured products');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load featured products'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +154,7 @@ export function useFeaturedProducts(limit: number = 8): {
     products,
     isLoading,
     error,
-    refetch: fetchFeaturedProducts
+    refetch: fetchFeaturedProducts,
   };
 }
 
@@ -155,14 +172,16 @@ export function useProduct(slugOrId: string): {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProduct = useCallback(async () => {
-    if (!slugOrId) return;
-    
+    if (!slugOrId) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       const result = await productService.getProduct(slugOrId);
       setProduct(result);
-      
+
       // Track product view
       productService.trackProductView(result.id);
     } catch (err) {
@@ -181,14 +200,18 @@ export function useProduct(slugOrId: string): {
     product,
     isLoading,
     error,
-    refetch: fetchProduct
+    refetch: fetchProduct,
   };
 }
 
 /**
  * Hook for product search with debouncing
  */
-export function useProductSearch(query: string, options: ProductSearchOptions = {}, debounceMs: number = 300): {
+export function useProductSearch(
+  query: string,
+  options: ProductSearchOptions = {},
+  debounceMs: number = 300
+): {
   products: ProductResponse[];
   isLoading: boolean;
   error: string | null;
@@ -235,8 +258,10 @@ export function useProductSearch(query: string, options: ProductSearchOptions = 
   }, [query, options, debounceMs]);
 
   const refetch = useCallback(async () => {
-    if (!query.trim()) return;
-    
+    if (!query.trim()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -256,14 +281,17 @@ export function useProductSearch(query: string, options: ProductSearchOptions = 
     error,
     isSearching,
     totalCount,
-    refetch
+    refetch,
   };
 }
 
 /**
  * Hook for related products
  */
-export function useRelatedProducts(productId: string, limit: number = 4): {
+export function useRelatedProducts(
+  productId: string,
+  limit: number = 4
+): {
   products: ProductResponse[];
   isLoading: boolean;
   error: string | null;
@@ -273,16 +301,22 @@ export function useRelatedProducts(productId: string, limit: number = 4): {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!productId) return;
-    
+    if (!productId) {
+      return;
+    }
+
     const fetchRelatedProducts = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const result = await productService.getRelatedProducts(productId, { limit });
+        const result = await productService.getRelatedProducts(productId, {
+          limit,
+        });
         setProducts(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load related products');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load related products'
+        );
         setProducts([]);
       } finally {
         setIsLoading(false);
@@ -298,7 +332,10 @@ export function useRelatedProducts(productId: string, limit: number = 4): {
 /**
  * Hook for product recommendations
  */
-export function useProductRecommendations(type: 'general' | 'user-based' | 'trending' = 'general', limit: number = 8): {
+export function useProductRecommendations(
+  type: 'general' | 'user-based' | 'trending' = 'general',
+  limit: number = 8
+): {
   products: ProductResponse[];
   isLoading: boolean;
   error: string | null;
@@ -315,7 +352,9 @@ export function useProductRecommendations(type: 'general' | 'user-based' | 'tren
       const result = await productService.getRecommendations(type, limit);
       setProducts(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load recommendations');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load recommendations'
+      );
       setProducts([]);
     } finally {
       setIsLoading(false);
@@ -330,7 +369,7 @@ export function useProductRecommendations(type: 'general' | 'user-based' | 'tren
     products,
     isLoading,
     error,
-    refetch: fetchRecommendations
+    refetch: fetchRecommendations,
   };
 }
 
@@ -346,21 +385,23 @@ export function useInfiniteProducts(baseParams: ProductListParams = {}) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchNextPage = useCallback(async () => {
-    if (!hasNextPage || isLoadingMore) return;
+    if (!hasNextPage || isLoadingMore) {
+      return;
+    }
 
     try {
       setIsLoadingMore(true);
       setError(null);
-      
+
       const params = { ...baseParams, page: currentPage };
       const result = await productService.getProducts(params);
-      
+
       if (currentPage === 1) {
         setAllProducts(result.products);
       } else {
         setAllProducts(prev => [...prev, ...result.products]);
       }
-      
+
       setHasNextPage(result.pagination.hasNextPage);
       setCurrentPage(prev => prev + 1);
     } catch (err) {
@@ -398,6 +439,6 @@ export function useInfiniteProducts(baseParams: ProductListParams = {}) {
     error,
     hasNextPage,
     fetchNextPage,
-    reset
+    reset,
   };
 }

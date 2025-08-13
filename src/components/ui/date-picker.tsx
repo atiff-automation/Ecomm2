@@ -41,7 +41,9 @@ export function DatePicker({
 
   // Create date range for highlighting
   const dateRange = React.useMemo(() => {
-    if (!date || !otherDate) return undefined;
+    if (!date || !otherDate) {
+      return undefined;
+    }
 
     const startDate = isStartDate ? date : otherDate;
     const endDate = isStartDate ? otherDate : date;
@@ -82,7 +84,9 @@ export function DatePicker({
             range_end: dateRange?.to,
             range_middle: dateRange
               ? date => {
-                  if (!dateRange.from || !dateRange.to) return false;
+                  if (!dateRange.from || !dateRange.to) {
+                    return false;
+                  }
                   return date > dateRange.from && date < dateRange.to;
                 }
               : undefined,

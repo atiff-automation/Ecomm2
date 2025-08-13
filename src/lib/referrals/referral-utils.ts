@@ -4,7 +4,12 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { MemberReferral, ReferralStatus, ReferralRewardType, RewardStatus } from '@prisma/client';
+import {
+  MemberReferral,
+  ReferralStatus,
+  ReferralRewardType,
+  RewardStatus,
+} from '@prisma/client';
 
 interface ReferralCode {
   code: string;
@@ -37,22 +42,27 @@ interface ReferralWithDetails extends MemberReferral {
 /**
  * Generate unique referral code for a user
  */
-export async function generateReferralCode(userId: string, userName: string): Promise<string> {
+export async function generateReferralCode(
+  userId: string,
+  userName: string
+): Promise<string> {
   const baseCode = userName
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '')
     .substring(0, 6)
     .padEnd(6, '0');
-  
+
   let counter = 1;
   let code = baseCode;
-  
+
   // Ensure uniqueness
-  while (await prisma.memberReferral.findUnique({ where: { referralCode: code } })) {
+  while (
+    await prisma.memberReferral.findUnique({ where: { referralCode: code } })
+  ) {
     code = `${baseCode}${counter.toString().padStart(2, '0')}`;
     counter++;
   }
-  
+
   return code;
 }
 
@@ -68,26 +78,26 @@ export async function createReferral(
   if (!referralCode) {
     const referrer = await prisma.user.findUnique({
       where: { id: referrerId },
-      select: { firstName: true, lastName: true }
+      select: { firstName: true, lastName: true },
     });
-    
+
     if (!referrer) {
       throw new Error('Referrer not found');
     }
-    
+
     const fullName = `${referrer.firstName} ${referrer.lastName}`.trim();
     referralCode = await generateReferralCode(referrerId, fullName || 'USER');
   }
-  
+
   const referral = await prisma.memberReferral.create({
     data: {
       referrerId,
       referredEmail,
       referralCode,
       status: ReferralStatus.PENDING,
-    }
+    },
   });
-  
+
   return referral;
 }
 
@@ -102,13 +112,13 @@ export async function processReferralRegistration(
     where: {
       referredEmail: email,
       status: ReferralStatus.PENDING,
-    }
+    },
   });
-  
+
   if (!referral) {
     return null;
   }
-  
+
   // Update referral with registered user info
   const updatedReferral = await prisma.memberReferral.update({
     where: { id: referral.id },
@@ -116,9 +126,9 @@ export async function processReferralRegistration(
       referredId: newUserId,
       status: ReferralStatus.REGISTERED,
       registeredDate: new Date(),
-    }
+    },
   });
-  
+
   return updatedReferral;
 }
 
@@ -134,18 +144,18 @@ export async function processReferralCompletion(
   if (!settings.isActive || orderAmount < settings.minimumOrderAmount) {
     return null;
   }
-  
+
   const referral = await prisma.memberReferral.findFirst({
     where: {
       referredId: userId,
       status: ReferralStatus.REGISTERED,
-    }
+    },
   });
-  
+
   if (!referral) {
     return null;
   }
-  
+
   // Update referral status and metrics
   const updatedReferral = await prisma.memberReferral.update({
     where: { id: referral.id },
@@ -156,12 +166,12 @@ export async function processReferralCompletion(
       totalOrderAmount: orderAmount,
       totalOrders: 1,
       rewardedDate: new Date(),
-    }
+    },
   });
-  
+
   // Create rewards for both referrer and referee
   await createReferralRewards(updatedReferral.id, settings);
-  
+
   return updatedReferral;
 }
 
@@ -172,22 +182,22 @@ export async function createReferralRewards(
   referralId: string,
   settings?: any
 ): Promise<void> {
-  const referralSettings = settings || await getReferralSettings();
+  const referralSettings = settings || (await getReferralSettings());
   const referral = await prisma.memberReferral.findUnique({
     where: { id: referralId },
     include: {
       referrer: true,
       referred: true,
-    }
+    },
   });
-  
+
   if (!referral || !referral.referred) {
     return;
   }
-  
+
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + referralSettings.rewardExpiryDays);
-  
+
   // Create referrer reward
   await prisma.referralReward.create({
     data: {
@@ -198,9 +208,9 @@ export async function createReferralRewards(
       status: RewardStatus.PENDING,
       description: `Referral reward for bringing in ${referral.referred.firstName} ${referral.referred.lastName}`,
       expiresAt: expiryDate,
-    }
+    },
   });
-  
+
   // Create referee reward
   await prisma.referralReward.create({
     data: {
@@ -211,31 +221,44 @@ export async function createReferralRewards(
       status: RewardStatus.PENDING,
       description: `Welcome reward for joining through ${referral.referrer.firstName} ${referral.referrer.lastName}'s referral`,
       expiresAt: expiryDate,
-    }
+    },
   });
 }
 
 /**
  * Get user's referral metrics
  */
-export async function getUserReferralMetrics(userId: string): Promise<ReferralMetrics> {
+export async function getUserReferralMetrics(
+  userId: string
+): Promise<ReferralMetrics> {
   const referrals = await prisma.memberReferral.findMany({
     where: { referrerId: userId },
     include: {
       rewards: true,
-    }
+    },
   });
-  
+
   const totalReferrals = referrals.length;
-  const successfulReferrals = referrals.filter(r => r.status === ReferralStatus.COMPLETED).length;
-  const pendingReferrals = referrals.filter(r => r.status === ReferralStatus.PENDING).length;
+  const successfulReferrals = referrals.filter(
+    r => r.status === ReferralStatus.COMPLETED
+  ).length;
+  const pendingReferrals = referrals.filter(
+    r => r.status === ReferralStatus.PENDING
+  ).length;
   const totalRewards = referrals.reduce((sum, r) => {
     const userRewards = r.rewards.filter(reward => reward.userId === userId);
-    return sum + userRewards.reduce((rewardSum, reward) => rewardSum + Number(reward.rewardAmount), 0);
+    return (
+      sum +
+      userRewards.reduce(
+        (rewardSum, reward) => rewardSum + Number(reward.rewardAmount),
+        0
+      )
+    );
   }, 0);
-  
-  const conversionRate = totalReferrals > 0 ? (successfulReferrals / totalReferrals) * 100 : 0;
-  
+
+  const conversionRate =
+    totalReferrals > 0 ? (successfulReferrals / totalReferrals) * 100 : 0;
+
   return {
     totalReferrals,
     successfulReferrals,
@@ -254,7 +277,7 @@ export async function getUserReferralHistory(
   limit: number = 10
 ): Promise<{ referrals: ReferralWithDetails[]; total: number; pages: number }> {
   const skip = (page - 1) * limit;
-  
+
   const [referrals, total] = await Promise.all([
     prisma.memberReferral.findMany({
       where: { referrerId: userId },
@@ -265,7 +288,7 @@ export async function getUserReferralHistory(
             firstName: true,
             lastName: true,
             email: true,
-          }
+          },
         },
         referred: {
           select: {
@@ -273,8 +296,8 @@ export async function getUserReferralHistory(
             firstName: true,
             lastName: true,
             email: true,
-          }
-        }
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip,
@@ -282,11 +305,11 @@ export async function getUserReferralHistory(
     }),
     prisma.memberReferral.count({
       where: { referrerId: userId },
-    })
+    }),
   ]);
-  
+
   const pages = Math.ceil(total / limit);
-  
+
   return { referrals, total, pages };
 }
 
@@ -301,7 +324,7 @@ export async function getUserReferralRewards(
   if (status) {
     where.status = status;
   }
-  
+
   const rewards = await prisma.referralReward.findMany({
     where,
     include: {
@@ -312,14 +335,14 @@ export async function getUserReferralRewards(
               firstName: true,
               lastName: true,
               email: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
-  
+
   return rewards;
 }
 
@@ -328,20 +351,22 @@ export async function getUserReferralRewards(
  */
 export async function getReferralSettings(): Promise<any> {
   const settings = await prisma.referralSetting.findFirst({
-    orderBy: { updatedAt: 'desc' }
+    orderBy: { updatedAt: 'desc' },
   });
-  
+
   // Default settings if none exist
-  return settings || {
-    referrerRewardType: ReferralRewardType.DISCOUNT_CODE,
-    referrerRewardAmount: 10,
-    refereeRewardType: ReferralRewardType.DISCOUNT_CODE,
-    refereeRewardAmount: 10,
-    minimumOrderAmount: 50,
-    rewardExpiryDays: 30,
-    maxReferralsPerMember: null,
-    isActive: true,
-  };
+  return (
+    settings || {
+      referrerRewardType: ReferralRewardType.DISCOUNT_CODE,
+      referrerRewardAmount: 10,
+      refereeRewardType: ReferralRewardType.DISCOUNT_CODE,
+      refereeRewardAmount: 10,
+      minimumOrderAmount: 50,
+      rewardExpiryDays: 30,
+      maxReferralsPerMember: null,
+      isActive: true,
+    }
+  );
 }
 
 /**
@@ -355,23 +380,28 @@ export async function updateReferralSettings(
     data: {
       ...settings,
       updatedBy,
-    }
+    },
   });
-  
+
   return updatedSettings;
 }
 
 /**
  * Generate referral URL for sharing
  */
-export function generateReferralUrl(referralCode: string, baseUrl: string = process.env.NEXTAUTH_URL || 'http://localhost:3000'): string {
+export function generateReferralUrl(
+  referralCode: string,
+  baseUrl: string = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+): string {
   return `${baseUrl}/join?ref=${referralCode}`;
 }
 
 /**
  * Validate referral code
  */
-export async function validateReferralCode(code: string): Promise<MemberReferral | null> {
+export async function validateReferralCode(
+  code: string
+): Promise<MemberReferral | null> {
   const referral = await prisma.memberReferral.findUnique({
     where: { referralCode: code },
     include: {
@@ -381,18 +411,21 @@ export async function validateReferralCode(code: string): Promise<MemberReferral
           firstName: true,
           lastName: true,
           email: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
-  
+
   return referral;
 }
 
 /**
  * Track referral click/visit (optional enhancement)
  */
-export async function trackReferralVisit(referralCode: string, ipAddress?: string): Promise<void> {
+export async function trackReferralVisit(
+  referralCode: string,
+  ipAddress?: string
+): Promise<void> {
   // This could be implemented to track referral link clicks
   // For now, we'll just log it
   console.log(`Referral visit tracked: ${referralCode} from ${ipAddress}`);
@@ -401,15 +434,18 @@ export async function trackReferralVisit(referralCode: string, ipAddress?: strin
 /**
  * Process referral order completion when referred user makes their first qualifying order
  */
-export async function processReferralOrderCompletion(userId: string, orderAmount: number): Promise<void> {
+export async function processReferralOrderCompletion(
+  userId: string,
+  orderAmount: number
+): Promise<void> {
   // Get referral settings
   const settings = await getReferralSettings();
-  
+
   // Check if order meets minimum amount requirement
   if (orderAmount < settings.minimumOrderAmount) {
     return;
   }
-  
+
   // Find pending referral for this user (as referred user)
   const referral = await prisma.memberReferral.findFirst({
     where: {
@@ -419,13 +455,13 @@ export async function processReferralOrderCompletion(userId: string, orderAmount
     include: {
       referrer: true,
       referred: true,
-    }
+    },
   });
-  
+
   if (!referral) {
     return; // No pending referral found
   }
-  
+
   // Update referral status to completed
   await prisma.memberReferral.update({
     where: { id: referral.id },
@@ -436,12 +472,12 @@ export async function processReferralOrderCompletion(userId: string, orderAmount
       totalOrderAmount: orderAmount,
       totalOrders: 1,
       rewardedDate: new Date(),
-    }
+    },
   });
-  
+
   // Create rewards for both referrer and referee
   await createReferralRewards(referral.id, settings);
-  
+
   console.log('Referral completed:', {
     referralId: referral.id,
     referrerId: referral.referrerId,

@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -76,7 +82,10 @@ export default function HeroSectionManagement() {
   const [isSaving, setSaving] = useState(false);
   const [isUploading, setUploading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
@@ -116,7 +125,9 @@ export default function HeroSectionManagement() {
 
   const fetchMediaUploads = async () => {
     try {
-      const response = await fetch('/api/admin/site-customization/media/upload?usage=hero_background&limit=50');
+      const response = await fetch(
+        '/api/admin/site-customization/media/upload?usage=hero_background&limit=50'
+      );
       if (response.ok) {
         const data = await response.json();
         setMediaUploads(data.mediaUploads);
@@ -159,12 +170,18 @@ export default function HeroSectionManagement() {
 
       if (response.ok) {
         setHeroSection(data.heroSection);
-        setMessage({ type: 'success', text: 'Hero section updated successfully!' });
+        setMessage({
+          type: 'success',
+          text: 'Hero section updated successfully!',
+        });
       } else {
         throw new Error(data.message || 'Failed to update hero section');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to save changes' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to save changes',
+      });
     } finally {
       setSaving(false);
     }
@@ -203,19 +220,29 @@ export default function HeroSectionManagement() {
         throw new Error(data.message || 'Failed to reset hero section');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to reset' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to reset',
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file size (50MB max)
     if (file.size > 50 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'File size too large. Maximum size is 50MB.' });
+      setMessage({
+        type: 'error',
+        text: 'File size too large. Maximum size is 50MB.',
+      });
       return;
     }
 
@@ -227,21 +254,30 @@ export default function HeroSectionManagement() {
       formData.append('file', file);
       formData.append('usage', 'hero_background');
 
-      const response = await fetch('/api/admin/site-customization/media/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        '/api/admin/site-customization/media/upload',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
         await fetchMediaUploads(); // Refresh media list
-        setMessage({ type: 'success', text: `${data.mediaUpload.mediaType.toLowerCase()} uploaded successfully!` });
+        setMessage({
+          type: 'success',
+          text: `${data.mediaUpload.mediaType.toLowerCase()} uploaded successfully!`,
+        });
       } else {
         throw new Error(data.message || 'Failed to upload file');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Upload failed' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Upload failed',
+      });
     } finally {
       setUploading(false);
       // Reset file input
@@ -250,23 +286,40 @@ export default function HeroSectionManagement() {
   };
 
   const handleDeleteMedia = async (mediaId: string) => {
-    if (!confirm('Are you sure you want to delete this media file?')) return;
+    if (!confirm('Are you sure you want to delete this media file?')) {
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/admin/site-customization/media/upload?id=${mediaId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/admin/site-customization/media/upload?id=${mediaId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.ok) {
         await fetchMediaUploads(); // Refresh media list
-        setMessage({ type: 'success', text: 'Media file deleted successfully!' });
-        
+        setMessage({
+          type: 'success',
+          text: 'Media file deleted successfully!',
+        });
+
         // If the deleted media was being used, clear it from form
-        if (formData.backgroundImage?.includes(mediaId) || formData.backgroundVideo?.includes(mediaId)) {
+        if (
+          formData.backgroundImage?.includes(mediaId) ||
+          formData.backgroundVideo?.includes(mediaId)
+        ) {
           setFormData({
             ...formData,
-            backgroundImage: formData.backgroundType === 'IMAGE' ? undefined : formData.backgroundImage,
-            backgroundVideo: formData.backgroundType === 'VIDEO' ? undefined : formData.backgroundVideo,
+            backgroundImage:
+              formData.backgroundType === 'IMAGE'
+                ? undefined
+                : formData.backgroundImage,
+            backgroundVideo:
+              formData.backgroundType === 'VIDEO'
+                ? undefined
+                : formData.backgroundVideo,
           });
         }
       } else {
@@ -274,12 +327,17 @@ export default function HeroSectionManagement() {
         throw new Error(data.message || 'Failed to delete media file');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to delete media' });
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to delete media',
+      });
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {
+      return '0 Bytes';
+    }
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -313,7 +371,7 @@ export default function HeroSectionManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ContextualNavigation items={breadcrumbItems} />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -322,19 +380,26 @@ export default function HeroSectionManagement() {
             Hero Section Management
           </h1>
           <p className="text-gray-600 mt-1">
-            Customize your homepage hero section with images, videos, and content
+            Customize your homepage hero section with images, videos, and
+            content
           </p>
         </div>
 
         {/* Messages */}
         {message && (
-          <Alert className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+          <Alert
+            className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+          >
             {message.type === 'success' ? (
               <CheckCircle className="h-4 w-4 text-green-600" />
             ) : (
               <AlertCircle className="h-4 w-4 text-red-600" />
             )}
-            <AlertDescription className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+            <AlertDescription
+              className={
+                message.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }
+            >
               {message.text}
             </AlertDescription>
           </Alert>
@@ -365,10 +430,7 @@ export default function HeroSectionManagement() {
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Reset to Default
                     </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                    >
+                    <Button onClick={handleSave} disabled={isSaving}>
                       {isSaving ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
@@ -383,37 +445,51 @@ export default function HeroSectionManagement() {
                 {previewMode ? (
                   /* Preview Mode */
                   <div className="border rounded-lg overflow-hidden">
-                    <div 
+                    <div
                       className="relative h-96 flex items-center justify-center text-white"
                       style={{
                         backgroundColor: '#3B82F6',
-                        backgroundImage: formData.backgroundImage ? `url(${formData.backgroundImage})` : undefined,
+                        backgroundImage: formData.backgroundImage
+                          ? `url(${formData.backgroundImage})`
+                          : undefined,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                       }}
                     >
-                      {formData.backgroundVideo && formData.backgroundType === 'VIDEO' && (
-                        <video 
-                          className="absolute inset-0 w-full h-full object-cover"
-                          src={formData.backgroundVideo}
-                          autoPlay
-                          muted
-                          loop
-                        />
-                      )}
-                      <div 
+                      {formData.backgroundVideo &&
+                        formData.backgroundType === 'VIDEO' && (
+                          <video
+                            className="absolute inset-0 w-full h-full object-cover"
+                            src={formData.backgroundVideo}
+                            autoPlay
+                            muted
+                            loop
+                          />
+                        )}
+                      <div
                         className="absolute inset-0 bg-black"
                         style={{ opacity: formData.overlayOpacity || 0.1 }}
                       />
-                      <div className={`relative z-10 max-w-2xl mx-auto px-6 text-${formData.textAlignment || 'left'}`}>
-                        <h1 className="text-4xl font-bold mb-4">{formData.title || 'Hero Title'}</h1>
-                        <h2 className="text-xl text-blue-100 mb-4">{formData.subtitle || 'Hero Subtitle'}</h2>
-                        <p className="text-blue-100 mb-6">{formData.description || 'Hero Description'}</p>
+                      <div
+                        className={`relative z-10 max-w-2xl mx-auto px-6 text-${formData.textAlignment || 'left'}`}
+                      >
+                        <h1 className="text-4xl font-bold mb-4">
+                          {formData.title || 'Hero Title'}
+                        </h1>
+                        <h2 className="text-xl text-blue-100 mb-4">
+                          {formData.subtitle || 'Hero Subtitle'}
+                        </h2>
+                        <p className="text-blue-100 mb-6">
+                          {formData.description || 'Hero Description'}
+                        </p>
                         <div className="flex gap-4">
                           <Button className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
                             {formData.ctaPrimaryText || 'Primary CTA'}
                           </Button>
-                          <Button variant="outline" className="text-white border-white hover:bg-white hover:text-blue-800">
+                          <Button
+                            variant="outline"
+                            className="text-white border-white hover:bg-white hover:text-blue-800"
+                          >
                             {formData.ctaSecondaryText || 'Secondary CTA'}
                           </Button>
                         </div>
@@ -436,7 +512,12 @@ export default function HeroSectionManagement() {
                           <Input
                             id="title"
                             value={formData.title || ''}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                title: e.target.value,
+                              })
+                            }
                             placeholder="Welcome to JRM E-commerce"
                           />
                         </div>
@@ -445,18 +526,28 @@ export default function HeroSectionManagement() {
                           <Input
                             id="subtitle"
                             value={formData.subtitle || ''}
-                            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                subtitle: e.target.value,
+                              })
+                            }
                             placeholder="Malaysia's premier online marketplace"
                           />
                         </div>
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="description">Description</Label>
                         <Textarea
                           id="description"
                           value={formData.description || ''}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          onChange={e =>
+                            setFormData({
+                              ...formData,
+                              description: e.target.value,
+                            })
+                          }
                           placeholder="Describe your platform's key benefits"
                           rows={3}
                         />
@@ -468,16 +559,28 @@ export default function HeroSectionManagement() {
                           <Input
                             id="ctaPrimary"
                             value={formData.ctaPrimaryText || ''}
-                            onChange={(e) => setFormData({ ...formData, ctaPrimaryText: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                ctaPrimaryText: e.target.value,
+                              })
+                            }
                             placeholder="Join as Member"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="ctaPrimaryLink">Primary CTA Link</Label>
+                          <Label htmlFor="ctaPrimaryLink">
+                            Primary CTA Link
+                          </Label>
                           <Input
                             id="ctaPrimaryLink"
                             value={formData.ctaPrimaryLink || ''}
-                            onChange={(e) => setFormData({ ...formData, ctaPrimaryLink: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                ctaPrimaryLink: e.target.value,
+                              })
+                            }
                             placeholder="/auth/signup"
                           />
                         </div>
@@ -485,20 +588,34 @@ export default function HeroSectionManagement() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="ctaSecondary">Secondary CTA Text</Label>
+                          <Label htmlFor="ctaSecondary">
+                            Secondary CTA Text
+                          </Label>
                           <Input
                             id="ctaSecondary"
                             value={formData.ctaSecondaryText || ''}
-                            onChange={(e) => setFormData({ ...formData, ctaSecondaryText: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                ctaSecondaryText: e.target.value,
+                              })
+                            }
                             placeholder="Browse Products"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="ctaSecondaryLink">Secondary CTA Link</Label>
+                          <Label htmlFor="ctaSecondaryLink">
+                            Secondary CTA Link
+                          </Label>
                           <Input
                             id="ctaSecondaryLink"
                             value={formData.ctaSecondaryLink || ''}
-                            onChange={(e) => setFormData({ ...formData, ctaSecondaryLink: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                ctaSecondaryLink: e.target.value,
+                              })
+                            }
                             placeholder="/products"
                           />
                         </div>
@@ -510,7 +627,7 @@ export default function HeroSectionManagement() {
                         <Label>Background Type</Label>
                         <Select
                           value={formData.backgroundType || 'IMAGE'}
-                          onValueChange={(value: 'IMAGE' | 'VIDEO') => 
+                          onValueChange={(value: 'IMAGE' | 'VIDEO') =>
                             setFormData({ ...formData, backgroundType: value })
                           }
                         >
@@ -529,7 +646,12 @@ export default function HeroSectionManagement() {
                           <Label>Background Image URL</Label>
                           <Input
                             value={formData.backgroundImage || ''}
-                            onChange={(e) => setFormData({ ...formData, backgroundImage: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                backgroundImage: e.target.value,
+                              })
+                            }
                             placeholder="Select from uploaded images or enter URL"
                           />
                           {formData.backgroundImage && (
@@ -551,7 +673,12 @@ export default function HeroSectionManagement() {
                           <Label>Background Video URL</Label>
                           <Input
                             value={formData.backgroundVideo || ''}
-                            onChange={(e) => setFormData({ ...formData, backgroundVideo: e.target.value })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                backgroundVideo: e.target.value,
+                              })
+                            }
                             placeholder="Select from uploaded videos or enter URL"
                           />
                           {formData.backgroundVideo && (
@@ -577,11 +704,17 @@ export default function HeroSectionManagement() {
                             max="1"
                             step="0.1"
                             value={formData.overlayOpacity || 0.1}
-                            onChange={(e) => setFormData({ ...formData, overlayOpacity: parseFloat(e.target.value) })}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                overlayOpacity: parseFloat(e.target.value),
+                              })
+                            }
                             className="flex-1"
                           />
                           <span className="text-sm text-gray-600 w-12">
-                            {Math.round((formData.overlayOpacity || 0.1) * 100)}%
+                            {Math.round((formData.overlayOpacity || 0.1) * 100)}
+                            %
                           </span>
                         </div>
                       </div>
@@ -592,7 +725,7 @@ export default function HeroSectionManagement() {
                         <Label>Text Alignment</Label>
                         <Select
                           value={formData.textAlignment || 'left'}
-                          onValueChange={(value: 'left' | 'center' | 'right') => 
+                          onValueChange={(value: 'left' | 'center' | 'right') =>
                             setFormData({ ...formData, textAlignment: value })
                           }
                         >
@@ -630,7 +763,8 @@ export default function HeroSectionManagement() {
                       Drop files here or click to upload
                     </p>
                     <p className="text-xs text-gray-500">
-                      Images: JPG, PNG, WebP, GIF (Max 50MB)<br />
+                      Images: JPG, PNG, WebP, GIF (Max 50MB)
+                      <br />
                       Videos: MP4, WebM, AVI, MOV (Max 50MB)
                     </p>
                     <input
@@ -641,7 +775,7 @@ export default function HeroSectionManagement() {
                       disabled={isUploading}
                     />
                   </div>
-                  
+
                   {isUploading && (
                     <div className="text-center">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -667,8 +801,11 @@ export default function HeroSectionManagement() {
                       <p>No media files uploaded yet</p>
                     </div>
                   ) : (
-                    mediaUploads.map((media) => (
-                      <div key={media.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                    mediaUploads.map(media => (
+                      <div
+                        key={media.id}
+                        className="flex items-center gap-3 p-3 border rounded-lg"
+                      >
                         <div className="flex-shrink-0">
                           {media.mediaType === 'IMAGE' ? (
                             <Image
@@ -685,12 +822,22 @@ export default function HeroSectionManagement() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{media.originalName}</p>
+                          <p className="text-sm font-medium truncate">
+                            {media.originalName}
+                          </p>
                           <div className="flex items-center gap-2">
-                            <Badge variant={media.mediaType === 'IMAGE' ? 'default' : 'secondary'}>
+                            <Badge
+                              variant={
+                                media.mediaType === 'IMAGE'
+                                  ? 'default'
+                                  : 'secondary'
+                              }
+                            >
                               {media.mediaType}
                             </Badge>
-                            <span className="text-xs text-gray-500">{formatFileSize(media.size)}</span>
+                            <span className="text-xs text-gray-500">
+                              {formatFileSize(media.size)}
+                            </span>
                           </div>
                         </div>
                         <div className="flex gap-1">
@@ -700,13 +847,21 @@ export default function HeroSectionManagement() {
                             onClick={() => {
                               if (formData.backgroundType === media.mediaType) {
                                 if (media.mediaType === 'IMAGE') {
-                                  setFormData({ ...formData, backgroundImage: media.url });
+                                  setFormData({
+                                    ...formData,
+                                    backgroundImage: media.url,
+                                  });
                                 } else {
-                                  setFormData({ ...formData, backgroundVideo: media.url });
+                                  setFormData({
+                                    ...formData,
+                                    backgroundVideo: media.url,
+                                  });
                                 }
                               }
                             }}
-                            disabled={formData.backgroundType !== media.mediaType}
+                            disabled={
+                              formData.backgroundType !== media.mediaType
+                            }
                           >
                             Use
                           </Button>
@@ -728,27 +883,38 @@ export default function HeroSectionManagement() {
             {heroSection && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Current Configuration</CardTitle>
+                  <CardTitle className="text-sm">
+                    Current Configuration
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    <Badge variant={heroSection.isActive ? 'default' : 'secondary'}>
+                    <Badge
+                      variant={heroSection.isActive ? 'default' : 'secondary'}
+                    >
                       {heroSection.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Background:</span>
-                    <Badge variant="outline">{heroSection.backgroundType}</Badge>
+                    <Badge variant="outline">
+                      {heroSection.backgroundType}
+                    </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Last Updated:</span>
-                    <span>{new Date(heroSection.updatedAt).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(heroSection.updatedAt).toLocaleDateString()}
+                    </span>
                   </div>
                   {heroSection.creator && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Updated By:</span>
-                      <span>{heroSection.creator.firstName} {heroSection.creator.lastName}</span>
+                      <span>
+                        {heroSection.creator.firstName}{' '}
+                        {heroSection.creator.lastName}
+                      </span>
                     </div>
                   )}
                 </CardContent>

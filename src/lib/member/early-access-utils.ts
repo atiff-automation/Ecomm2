@@ -43,13 +43,17 @@ export function isPromotionEarlyAccess(
   product: EarlyAccessProduct,
   now: Date = new Date()
 ): boolean {
-  if (!product.isPromotional || !product.earlyAccessStart || !product.promotionStartDate) {
+  if (
+    !product.isPromotional ||
+    !product.earlyAccessStart ||
+    !product.promotionStartDate
+  ) {
     return false;
   }
 
   const earlyAccessStart = new Date(product.earlyAccessStart);
   const promotionStart = new Date(product.promotionStartDate);
-  
+
   return now >= earlyAccessStart && now < promotionStart;
 }
 
@@ -62,7 +66,7 @@ export function calculateEarlyAccessStatus(
 ): EarlyAccessStatus {
   const isMemberOnly = isProductMemberOnly(product, now);
   const isEarlyAccessPromotion = isPromotionEarlyAccess(product, now);
-  
+
   let memberOnlyTimeRemaining: number | undefined;
   let earlyAccessTimeRemaining: number | undefined;
   let publicAccessDate: Date | undefined;
@@ -71,13 +75,19 @@ export function calculateEarlyAccessStatus(
   if (product.memberOnlyUntil && isMemberOnly) {
     publicAccessDate = new Date(product.memberOnlyUntil);
     const timeDiff = publicAccessDate.getTime() - now.getTime();
-    memberOnlyTimeRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60))); // hours
+    memberOnlyTimeRemaining = Math.max(
+      0,
+      Math.ceil(timeDiff / (1000 * 60 * 60))
+    ); // hours
   }
 
   if (product.promotionStartDate && isEarlyAccessPromotion) {
     publicPromotionDate = new Date(product.promotionStartDate);
     const timeDiff = publicPromotionDate.getTime() - now.getTime();
-    earlyAccessTimeRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60))); // hours
+    earlyAccessTimeRemaining = Math.max(
+      0,
+      Math.ceil(timeDiff / (1000 * 60 * 60))
+    ); // hours
   }
 
   return {
@@ -99,12 +109,12 @@ export function canUserAccessProduct(
   now: Date = new Date()
 ): boolean {
   const earlyAccessStatus = calculateEarlyAccessStatus(product, now);
-  
+
   // If product is member-only, only members can access
   if (earlyAccessStatus.isMemberOnly) {
     return isMember;
   }
-  
+
   // Otherwise, everyone can access the product itself
   return true;
 }
@@ -118,19 +128,23 @@ export function canUserAccessPromotionalPrice(
   now: Date = new Date()
 ): boolean {
   const earlyAccessStatus = calculateEarlyAccessStatus(product, now);
-  
+
   // If promotion is in early access period, only members can access promotional price
   if (earlyAccessStatus.isEarlyAccessPromotion) {
     return isMember;
   }
-  
+
   // Check if regular promotion is active (using existing logic)
-  if (product.isPromotional && product.promotionStartDate && product.promotionEndDate) {
+  if (
+    product.isPromotional &&
+    product.promotionStartDate &&
+    product.promotionEndDate
+  ) {
     const promotionStart = new Date(product.promotionStartDate);
     const promotionEnd = new Date(product.promotionEndDate);
     return now >= promotionStart && now <= promotionEnd;
   }
-  
+
   return false;
 }
 
@@ -143,7 +157,7 @@ export function getEarlyAccessDisplayText(
   if (earlyAccessStatus.isMemberOnly) {
     if (earlyAccessStatus.memberOnlyTimeRemaining !== undefined) {
       if (earlyAccessStatus.memberOnlyTimeRemaining <= 1) {
-        return "Member exclusive - Public access soon!";
+        return 'Member exclusive - Public access soon!';
       } else if (earlyAccessStatus.memberOnlyTimeRemaining <= 24) {
         return `Member exclusive - Public in ${earlyAccessStatus.memberOnlyTimeRemaining}h`;
       } else {
@@ -151,13 +165,13 @@ export function getEarlyAccessDisplayText(
         return `Member exclusive - Public in ${days}d`;
       }
     }
-    return "Member exclusive";
+    return 'Member exclusive';
   }
-  
+
   if (earlyAccessStatus.isEarlyAccessPromotion) {
     if (earlyAccessStatus.earlyAccessTimeRemaining !== undefined) {
       if (earlyAccessStatus.earlyAccessTimeRemaining <= 1) {
-        return "Member early access - Public pricing soon!";
+        return 'Member early access - Public pricing soon!';
       } else if (earlyAccessStatus.earlyAccessTimeRemaining <= 24) {
         return `Member early access - Public in ${earlyAccessStatus.earlyAccessTimeRemaining}h`;
       } else {
@@ -165,9 +179,9 @@ export function getEarlyAccessDisplayText(
         return `Member early access - Public in ${days}d`;
       }
     }
-    return "Member early access";
+    return 'Member early access';
   }
-  
+
   return null;
 }
 
@@ -179,7 +193,9 @@ export function filterProductsByAccess<T extends EarlyAccessProduct>(
   isMember: boolean,
   now: Date = new Date()
 ): T[] {
-  return products.filter(product => canUserAccessProduct(product, isMember, now));
+  return products.filter(product =>
+    canUserAccessProduct(product, isMember, now)
+  );
 }
 
 /**
@@ -194,18 +210,26 @@ export function getEarlyAccessPrice(
   priceType: 'regular' | 'member' | 'promotional' | 'early-access';
   hasEarlyAccess: boolean;
 } {
-  const canAccessPromotion = canUserAccessPromotionalPrice(product, isMember, now);
+  const canAccessPromotion = canUserAccessPromotionalPrice(
+    product,
+    isMember,
+    now
+  );
   const earlyAccessStatus = calculateEarlyAccessStatus(product, now);
-  
+
   // Early access promotional price (members only during early access period)
-  if (canAccessPromotion && earlyAccessStatus.isEarlyAccessPromotion && product.promotionalPrice) {
+  if (
+    canAccessPromotion &&
+    earlyAccessStatus.isEarlyAccessPromotion &&
+    product.promotionalPrice
+  ) {
     return {
       price: product.promotionalPrice,
       priceType: 'early-access',
       hasEarlyAccess: true,
     };
   }
-  
+
   // Regular promotional price (when promotion is publicly active)
   if (canAccessPromotion && product.promotionalPrice) {
     return {
@@ -214,7 +238,7 @@ export function getEarlyAccessPrice(
       hasEarlyAccess: false,
     };
   }
-  
+
   // Member price (when no active promotion)
   if (isMember && product.memberPrice < product.regularPrice) {
     return {
@@ -223,7 +247,7 @@ export function getEarlyAccessPrice(
       hasEarlyAccess: false,
     };
   }
-  
+
   // Regular price
   return {
     price: product.regularPrice,

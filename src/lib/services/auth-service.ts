@@ -1,63 +1,70 @@
 /**
  * Centralized Auth Service - Malaysian E-commerce Platform
  * Single source of truth for ALL authentication and session management
- * 
+ *
  * This service consolidates all auth logic that was previously
  * scattered across 34+ frontend components into one maintainable location.
  */
 
-import { 
-  User, 
-  Session, 
-  AuthState, 
+import {
+  User,
+  Session,
+  AuthState,
   AuthServiceConfig,
   SignInOptions,
   SignOutOptions,
   AuthEvent,
   AuthEventPayload,
   AuthEventListener,
-  AuthEventManager
+  AuthEventManager,
 } from '@/lib/types/auth';
-import { signIn as nextAuthSignIn, signOut as nextAuthSignOut, getSession } from 'next-auth/react';
+import {
+  signIn as nextAuthSignIn,
+  signOut as nextAuthSignOut,
+  getSession,
+} from 'next-auth/react';
 
 export class AuthService {
   private static config: AuthServiceConfig = {
     membershipThreshold: 80, // RM 80 minimum spend for membership
     sessionRefreshInterval: 5 * 60 * 1000, // 5 minutes
     autoRefresh: true,
-    errorRetryCount: 3
+    errorRetryCount: 3,
   };
 
   private static eventManager: AuthEventManager = {
     listeners: new Map(),
-    
+
     subscribe(event: AuthEvent, listener: AuthEventListener) {
       if (!this.listeners.has(event)) {
         this.listeners.set(event, new Set());
       }
       this.listeners.get(event)!.add(listener);
-      
+
       // Return unsubscribe function
       return () => {
         this.listeners.get(event)?.delete(listener);
       };
     },
-    
-    emit(event: AuthEvent, payload: Omit<AuthEventPayload, 'event' | 'timestamp'>) {
+
+    emit(
+      event: AuthEvent,
+      payload: Omit<AuthEventPayload, 'event' | 'timestamp'>
+    ) {
       const listeners = this.listeners.get(event);
       if (listeners) {
         const eventPayload: AuthEventPayload = {
           ...payload,
           event,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
         listeners.forEach(listener => listener(eventPayload));
       }
     },
-    
+
     removeAllListeners() {
       this.listeners.clear();
-    }
+    },
   };
 
   /**
@@ -73,14 +80,14 @@ export class AuthService {
       // Enhance session with additional user properties
       const enhancedSession: Session = {
         ...session,
-        user: this.enhanceUserData(session.user as any)
+        user: this.enhanceUserData(session.user as any),
       };
 
       return enhancedSession;
     } catch (error) {
       console.error('Failed to get current session:', error);
-      this.eventManager.emit('AUTH_ERROR', { 
-        error: 'Failed to retrieve session' 
+      this.eventManager.emit('AUTH_ERROR', {
+        error: 'Failed to retrieve session',
       });
       return null;
     }
@@ -91,33 +98,40 @@ export class AuthService {
    */
   private static enhanceUserData(user: any): User {
     const totalSpent = user.totalSpent || 0;
-    const isMember = user.isMember || totalSpent >= this.config.membershipThreshold;
-    
+    const isMember =
+      user.isMember || totalSpent >= this.config.membershipThreshold;
+
     return {
       id: user.id,
       name: user.name || '',
       email: user.email || '',
       image: user.image,
       isMember,
-      membershipDate: user.membershipDate || (isMember && !user.membershipDate ? new Date().toISOString() : undefined),
+      membershipDate:
+        user.membershipDate ||
+        (isMember && !user.membershipDate
+          ? new Date().toISOString()
+          : undefined),
       totalSpent,
       role: user.role || 'USER',
       emailVerified: user.emailVerified || false,
       createdAt: user.createdAt || new Date().toISOString(),
-      updatedAt: user.updatedAt || new Date().toISOString()
+      updatedAt: user.updatedAt || new Date().toISOString(),
     };
   }
 
   /**
    * Sign in with enhanced error handling and events
    */
-  static async signIn(options: SignInOptions = {}): Promise<{ success: boolean; error?: string }> {
+  static async signIn(
+    options: SignInOptions = {}
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const result = await nextAuthSignIn(options.provider || 'credentials', {
         email: options.email,
         password: options.password,
         redirect: options.redirect ?? false,
-        callbackUrl: options.callbackUrl
+        callbackUrl: options.callbackUrl,
       });
 
       if (result?.error) {
@@ -129,9 +143,9 @@ export class AuthService {
       // Get fresh session after sign in
       const session = await this.getCurrentSession();
       if (session) {
-        this.eventManager.emit('SIGNED_IN', { 
-          user: session.user, 
-          session 
+        this.eventManager.emit('SIGNED_IN', {
+          user: session.user,
+          session,
         });
       }
 
@@ -149,21 +163,21 @@ export class AuthService {
   static async signOut(options: SignOutOptions = {}): Promise<void> {
     try {
       const session = await this.getCurrentSession();
-      
+
       await nextAuthSignOut({
         redirect: options.redirect ?? false,
-        callbackUrl: options.callbackUrl
+        callbackUrl: options.callbackUrl,
       });
 
       if (session) {
-        this.eventManager.emit('SIGNED_OUT', { 
-          user: session.user 
+        this.eventManager.emit('SIGNED_OUT', {
+          user: session.user,
         });
       }
     } catch (error) {
       console.error('Sign out error:', error);
-      this.eventManager.emit('AUTH_ERROR', { 
-        error: 'Sign out failed' 
+      this.eventManager.emit('AUTH_ERROR', {
+        error: 'Sign out failed',
       });
     }
   }
@@ -234,16 +248,16 @@ export class AuthService {
     try {
       const session = await this.getCurrentSession();
       if (session) {
-        this.eventManager.emit('SESSION_UPDATED', { 
-          session, 
-          user: session.user 
+        this.eventManager.emit('SESSION_UPDATED', {
+          session,
+          user: session.user,
         });
       }
       return session;
     } catch (error) {
       console.error('Failed to refresh session:', error);
-      this.eventManager.emit('AUTH_ERROR', { 
-        error: 'Failed to refresh session' 
+      this.eventManager.emit('AUTH_ERROR', {
+        error: 'Failed to refresh session',
       });
       return null;
     }
@@ -252,7 +266,10 @@ export class AuthService {
   /**
    * Subscribe to auth events
    */
-  static onAuthEvent(event: AuthEvent, listener: AuthEventListener): () => void {
+  static onAuthEvent(
+    event: AuthEvent,
+    listener: AuthEventListener
+  ): () => void {
     return this.eventManager.subscribe(event, listener);
   }
 
@@ -261,11 +278,12 @@ export class AuthService {
    */
   private static getReadableErrorMessage(error: string): string {
     const errorMap: Record<string, string> = {
-      'CredentialsSignin': 'Invalid email or password',
-      'EmailNotVerified': 'Please verify your email address',
-      'AccountNotLinked': 'This email is already registered with a different provider',
-      'Timeout': 'Request timed out. Please try again',
-      'Default': 'Something went wrong. Please try again'
+      CredentialsSignin: 'Invalid email or password',
+      EmailNotVerified: 'Please verify your email address',
+      AccountNotLinked:
+        'This email is already registered with a different provider',
+      Timeout: 'Request timed out. Please try again',
+      Default: 'Something went wrong. Please try again',
     };
 
     return errorMap[error] || errorMap.Default;
@@ -328,7 +346,7 @@ export class AuthService {
     if (user.image) {
       return user.image;
     }
-    
+
     // Generate initials-based avatar URL
     const initials = this.getDisplayName(user)
       .split(' ')
@@ -336,7 +354,7 @@ export class AuthService {
       .join('')
       .toUpperCase()
       .slice(0, 2);
-    
+
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random&color=fff&size=128`;
   }
 }

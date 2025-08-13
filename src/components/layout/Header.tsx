@@ -43,7 +43,6 @@ export function Header() {
   const { isLoggedIn, isMember, isLoading, signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
   };
@@ -99,7 +98,8 @@ export function Header() {
             </Link>
 
             {/* Cart Button - only for non-admin users */}
-            {(!isLoggedIn || (user?.role !== 'ADMIN' && user?.role !== 'STAFF')) && (
+            {(!isLoggedIn ||
+              (user?.role !== 'ADMIN' && user?.role !== 'STAFF')) && (
               <CartButton />
             )}
 
@@ -144,7 +144,7 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  
+
                   {/* Customer navigation - only for non-admin users */}
                   {user?.role !== 'ADMIN' && user?.role !== 'STAFF' && (
                     <>
@@ -176,8 +176,7 @@ export function Header() {
                   )}
 
                   {/* Admin/Staff navigation */}
-                  {(user?.role === 'ADMIN' ||
-                    user?.role === 'STAFF') && (
+                  {(user?.role === 'ADMIN' || user?.role === 'STAFF') && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -254,9 +253,7 @@ export function Header() {
                     <div className="border-t pt-4 mt-4">
                       <div className="px-3 py-2 text-sm">
                         <p className="font-medium">{user?.name}</p>
-                        <p className="text-muted-foreground">
-                          {user?.email}
-                        </p>
+                        <p className="text-muted-foreground">{user?.email}</p>
                         {isMember && (
                           <Badge variant="secondary" className="mt-1 text-xs">
                             <Award className="w-3 h-3 mr-1" />
@@ -297,8 +294,7 @@ export function Header() {
                           <Settings className="mr-2 h-4 w-4" />
                           Profile
                         </Link>
-                        {(user?.role === 'ADMIN' ||
-                          user?.role === 'STAFF') && (
+                        {(user?.role === 'ADMIN' || user?.role === 'STAFF') && (
                           <Link
                             href="/admin/dashboard"
                             onClick={() => setIsMobileMenuOpen(false)}

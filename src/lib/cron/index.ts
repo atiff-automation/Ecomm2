@@ -10,10 +10,10 @@ import { dailySummaryCron } from './daily-summary';
  */
 export function initializeCronJobs(): void {
   console.log('🚀 Initializing cron jobs...');
-  
+
   // Start daily summary cron job
   dailySummaryCron.start();
-  
+
   console.log('✅ All cron jobs initialized');
 }
 
@@ -22,9 +22,9 @@ export function initializeCronJobs(): void {
  */
 export function stopCronJobs(): void {
   console.log('🛑 Stopping cron jobs...');
-  
+
   // Stop daily summary cron job
   dailySummaryCron.stop();
-  
+
   console.log('✅ All cron jobs stopped');
 }

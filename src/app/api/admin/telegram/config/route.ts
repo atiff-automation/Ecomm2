@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const { botToken, chatId } = configSchema.parse(body);
 
     // Store in system config table (more flexible than env variables)
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       // Update or create bot token
       await tx.systemConfig.upsert({
         where: { key: 'TELEGRAM_BOT_TOKEN' },
@@ -81,15 +81,14 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Telegram configuration saved successfully',
     });
-
   } catch (error) {
     console.error('Error saving Telegram config:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           message: 'Invalid configuration data',
-          errors: error.issues.map(issue => issue.message)
+          errors: error.issues.map(issue => issue.message),
         },
         { status: 400 }
       );
@@ -119,8 +118,8 @@ export async function GET(request: NextRequest) {
     const configs = await prisma.systemConfig.findMany({
       where: {
         key: {
-          in: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID']
-        }
+          in: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'],
+        },
       },
       select: {
         key: true,
@@ -128,18 +127,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const configMap = configs.reduce((acc, config) => {
-      acc[config.key] = config.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const configMap = configs.reduce(
+      (acc, config) => {
+        acc[config.key] = config.value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     return NextResponse.json({
-      configured: !!(configMap.TELEGRAM_BOT_TOKEN && configMap.TELEGRAM_CHAT_ID),
+      configured: !!(
+        configMap.TELEGRAM_BOT_TOKEN && configMap.TELEGRAM_CHAT_ID
+      ),
       hasToken: !!configMap.TELEGRAM_BOT_TOKEN,
       hasChatId: !!configMap.TELEGRAM_CHAT_ID,
       // Don't return actual values for security
     });
-
   } catch (error) {
     console.error('Error fetching Telegram config:', error);
     return NextResponse.json(

@@ -6,7 +6,15 @@
 export type PriceType = 'regular' | 'promotional' | 'member' | 'early-access';
 
 export interface PricingBadge {
-  type: 'promotional' | 'member' | 'early-access' | 'featured' | 'members-only' | 'coming-soon' | 'out-of-stock' | 'qualifying';
+  type:
+    | 'promotional'
+    | 'member'
+    | 'early-access'
+    | 'featured'
+    | 'members-only'
+    | 'coming-soon'
+    | 'out-of-stock'
+    | 'qualifying';
   text: string;
   variant: 'default' | 'destructive' | 'outline' | 'secondary';
   className?: string;
@@ -23,26 +31,26 @@ export interface ProductPricing {
   effectivePrice: number;
   originalPrice: number;
   priceType: PriceType;
-  
+
   // Savings calculations
   savings: number;
   savingsPercentage: number;
-  
+
   // Display elements
   badges: PricingBadge[];
   displayClasses: PricingDisplayClasses;
-  
+
   // Formatted strings (ready for display)
   formattedPrice: string;
   formattedOriginalPrice: string;
   formattedSavings: string;
-  
+
   // Additional context
   showOriginalPrice: boolean;
   showSavings: boolean;
   showMemberPreview: boolean;
   memberPreviewText?: string;
-  
+
   // Accessibility
   priceDescription: string; // For screen readers
 }

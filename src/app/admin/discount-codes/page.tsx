@@ -80,7 +80,9 @@ export default function DiscountCodesPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === 'loading') {
+      return;
+    }
 
     if (!session?.user) {
       router.push('/auth/signin?callbackUrl=/admin/discount-codes');
@@ -127,7 +129,9 @@ export default function DiscountCodesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this discount code?')) return;
+    if (!confirm('Are you sure you want to delete this discount code?')) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/admin/discount-codes/${id}`, {
@@ -155,7 +159,9 @@ export default function DiscountCodesPage() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'No expiry';
+    if (!dateString) {
+      return 'No expiry';
+    }
     return new Intl.DateTimeFormat('en-MY', {
       year: 'numeric',
       month: 'short',
@@ -218,10 +224,10 @@ export default function DiscountCodesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumbs */}
-      <Breadcrumbs 
+      <Breadcrumbs
         items={[
           { label: 'Membership', href: '/admin/membership' },
-          { label: 'Discount Codes' }
+          { label: 'Discount Codes' },
         ]}
         className="mb-6"
       />

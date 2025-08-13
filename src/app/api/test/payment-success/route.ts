@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: 'User must be logged in to test payment success' },
@@ -28,32 +28,32 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { 
-      orderId, 
-      totalAmount, 
-      qualifyingAmount, 
-      activateMembership = true 
+    const {
+      orderId,
+      totalAmount,
+      qualifyingAmount,
+      activateMembership = true,
     } = body;
 
     // Simulate payment processing
     console.log('🧪 TEST: Simulating payment success...');
-    
+
     // For testing purposes, just create a simple record to track the test
     const testOrderId = orderId || `test_order_${Date.now()}`;
     console.log('🧪 TEST: Creating test order:', testOrderId);
 
     let membershipActivated = false;
-    
+
     // Activate membership if qualifying
     if (activateMembership && qualifyingAmount >= 80) {
       console.log('🎯 TEST: Activating membership for user...');
-      
+
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { 
+        data: {
           isMember: true,
-          memberSince: new Date()
-        }
+          memberSince: new Date(),
+        },
       });
 
       membershipActivated = true;
@@ -70,16 +70,15 @@ export async function POST(request: NextRequest) {
       membershipActivated,
       user: {
         ...session.user,
-        isMember: membershipActivated || session.user.isMember
+        isMember: membershipActivated || session.user.isMember,
       },
       testData: {
         totalAmount: totalAmount || 100,
         qualifyingAmount: qualifyingAmount || 100,
         membershipThreshold: 80,
-        qualified: qualifyingAmount >= 80
-      }
+        qualified: qualifyingAmount >= 80,
+      },
     });
-
   } catch (error) {
     console.error('TEST: Error simulating payment success:', error);
     return NextResponse.json(

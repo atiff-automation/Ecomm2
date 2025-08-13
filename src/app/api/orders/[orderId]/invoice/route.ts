@@ -59,7 +59,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     if (format === 'html') {
-      // Return HTML receipt for preview 
+      // Return HTML receipt for preview
       const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
 
       return new Response(htmlReceipt, {
@@ -75,17 +75,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (format === 'pdf') {
       // Generate PDF using Puppeteer
       const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
-      
+
       let browser;
       try {
         browser = await puppeteer.launch({
           headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
-        
+
         const page = await browser.newPage();
         await page.setContent(htmlReceipt);
-        
+
         const pdfBuffer = await page.pdf({
           format: 'A4',
           printBackground: true,
@@ -93,21 +93,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             top: '1cm',
             right: '1cm',
             bottom: '1cm',
-            left: '1cm'
-          }
+            left: '1cm',
+          },
         });
-        
+
         await browser.close();
-        
+
         return new Response(pdfBuffer, {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="Receipt_${invoiceData.order.orderNumber}.pdf"`,
           },
         });
-        
       } catch (error) {
-        if (browser) await browser.close();
+        if (browser) {
+          await browser.close();
+        }
         console.error('PDF generation error:', error);
         throw error;
       }

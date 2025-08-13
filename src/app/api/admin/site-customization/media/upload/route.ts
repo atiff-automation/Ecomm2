@@ -13,8 +13,19 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB max file size
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/avi', 'video/mov'];
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/avi',
+  'video/mov',
+];
 
 /**
  * POST /api/admin/site-customization/media/upload - Upload media files
@@ -32,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const usage = formData.get('usage') as string || 'hero_background';
+    const usage = (formData.get('usage') as string) || 'hero_background';
 
     if (!file) {
       return NextResponse.json(
@@ -57,9 +68,10 @@ export async function POST(request: NextRequest) {
       mediaType = 'VIDEO';
     } else {
       return NextResponse.json(
-        { 
-          message: 'Invalid file type. Allowed types: ' + 
-            [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(', ')
+        {
+          message:
+            'Invalid file type. Allowed types: ' +
+            [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(', '),
         },
         { status: 400 }
       );

@@ -258,150 +258,150 @@ export function ProductRecommendations({
 
           return (
             <Link href={`/products/${product.slug}`} key={product.id}>
-              <Card
-                className="group hover:shadow-lg transition-shadow cursor-pointer"
-              >
-              <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                {product.primaryImage ? (
-                  <Image
-                    src={product.primaryImage.url}
-                    alt={product.primaryImage.altText || product.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">No Image</span>
-                  </div>
-                )}
-
-                {/* Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  {product.featured && (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-500 text-white text-xs"
-                    >
-                      Featured
-                    </Badge>
-                  )}
-                  {product.stockQuantity === 0 && (
-                    <Badge variant="outline" className="bg-white text-xs">
-                      Out of Stock
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Quick Actions */}
-                <div 
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <WishlistButton
-                    productId={product.id}
-                    size="sm"
-                    variant="secondary"
-                    className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
-                  />
-                </div>
-              </div>
-
-              <CardContent className="p-3">
-                <div className="space-y-2">
-                  {/* Category */}
-                  <div 
-                    className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/products?category=${product.categories?.[0]?.category?.id || ''}`;
-                    }}
-                  >
-                    {product.categories?.[0]?.category?.name || 'Uncategorized'}
-                  </div>
-
-                  {/* Product Name */}
-                  <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
-
-                  {/* Rating */}
-                  {product.averageRating > 0 && (
-                    <div className="flex items-center gap-1">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <Star
-                            key={star}
-                            className={`w-3 h-3 ${
-                              star <= product.averageRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        ({product.reviewCount})
-                      </span>
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                  {product.primaryImage ? (
+                    <Image
+                      src={product.primaryImage.url}
+                      alt={product.primaryImage.altText || product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">No Image</span>
                     </div>
                   )}
 
-                  {/* Pricing */}
-                  <div className="space-y-1">
-                    {showMemberPrice ? (
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold text-sm text-green-600">
-                            {formatPrice(product.memberPrice)}
-                          </span>
-                          <Badge variant="secondary" className="text-xs py-0">
-                            Member
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground line-through">
-                          {formatPrice(product.regularPrice)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-semibold text-sm">
-                          {formatPrice(product.regularPrice)}
-                        </span>
-                        {!isLoggedIn &&
-                          product.memberPrice < product.regularPrice && (
-                            <div className="text-xs text-muted-foreground">
-                              Member: {formatPrice(product.memberPrice)}
-                            </div>
-                          )}
-                      </div>
+                  {/* Badges */}
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {product.featured && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-yellow-500 text-white text-xs"
+                      >
+                        Featured
+                      </Badge>
+                    )}
+                    {product.stockQuantity === 0 && (
+                      <Badge variant="outline" className="bg-white text-xs">
+                        Out of Stock
+                      </Badge>
                     )}
                   </div>
 
-                  {/* Quick Add to Cart */}
-                  <Button
-                    size="sm"
-                    className="w-full text-xs h-8"
-                    disabled={product.stockQuantity === 0}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      addToCart(product.id);
-                    }}
+                  {/* Quick Actions */}
+                  <div
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={e => e.preventDefault()}
                   >
-                    <ShoppingCart className="w-3 h-3 mr-1" />
-                    {product.stockQuantity === 0
-                      ? 'Out of Stock'
-                      : 'Add to Cart'}
-                  </Button>
-
-                  {/* Stock Warning */}
-                  {product.stockQuantity <= 5 && product.stockQuantity > 0 && (
-                    <p className="text-xs text-orange-600">
-                      Only {product.stockQuantity} left
-                    </p>
-                  )}
+                    <WishlistButton
+                      productId={product.id}
+                      size="sm"
+                      variant="secondary"
+                      className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                <CardContent className="p-3">
+                  <div className="space-y-2">
+                    {/* Category */}
+                    <div
+                      className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
+                      onClick={e => {
+                        e.preventDefault();
+                        window.location.href = `/products?category=${product.categories?.[0]?.category?.id || ''}`;
+                      }}
+                    >
+                      {product.categories?.[0]?.category?.name ||
+                        'Uncategorized'}
+                    </div>
+
+                    {/* Product Name */}
+                    <h3 className="font-medium text-sm line-clamp-2 hover:text-primary transition-colors">
+                      {product.name}
+                    </h3>
+
+                    {/* Rating */}
+                    {product.averageRating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star
+                              key={star}
+                              className={`w-3 h-3 ${
+                                star <= product.averageRating
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          ({product.reviewCount})
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Pricing */}
+                    <div className="space-y-1">
+                      {showMemberPrice ? (
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-sm text-green-600">
+                              {formatPrice(product.memberPrice)}
+                            </span>
+                            <Badge variant="secondary" className="text-xs py-0">
+                              Member
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground line-through">
+                            {formatPrice(product.regularPrice)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="font-semibold text-sm">
+                            {formatPrice(product.regularPrice)}
+                          </span>
+                          {!isLoggedIn &&
+                            product.memberPrice < product.regularPrice && (
+                              <div className="text-xs text-muted-foreground">
+                                Member: {formatPrice(product.memberPrice)}
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick Add to Cart */}
+                    <Button
+                      size="sm"
+                      className="w-full text-xs h-8"
+                      disabled={product.stockQuantity === 0}
+                      onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart(product.id);
+                      }}
+                    >
+                      <ShoppingCart className="w-3 h-3 mr-1" />
+                      {product.stockQuantity === 0
+                        ? 'Out of Stock'
+                        : 'Add to Cart'}
+                    </Button>
+
+                    {/* Stock Warning */}
+                    {product.stockQuantity <= 5 &&
+                      product.stockQuantity > 0 && (
+                        <p className="text-xs text-orange-600">
+                          Only {product.stockQuantity} left
+                        </p>
+                      )}
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
           );
         })}

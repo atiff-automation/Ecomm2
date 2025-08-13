@@ -11,12 +11,9 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     // Fetch fresh user data from database
@@ -32,31 +29,29 @@ export async function GET(request: NextRequest) {
         memberSince: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
     // Combine firstName and lastName into name for compatibility
     const userData = {
       ...user,
-      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User'
+      name:
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        'Unknown User',
     };
 
     console.log('📋 Fresh user data fetched:', {
       userId: user.id,
       name: userData.name,
       isMember: user.isMember,
-      memberSince: user.memberSince
+      memberSince: user.memberSince,
     });
 
     return NextResponse.json(userData);
-
   } catch (error) {
     console.error('❌ Error fetching user data:', error);
     return NextResponse.json(

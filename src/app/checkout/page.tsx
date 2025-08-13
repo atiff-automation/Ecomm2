@@ -172,7 +172,7 @@ export default function CheckoutPage() {
   const fetchCheckoutData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // If we're processing payment, don't fetch cart or redirect
       if (paymentProcessed) {
         setLoading(false);
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
             const addressResponse = await fetch('/api/user/default-address');
             if (addressResponse.ok) {
               const { address } = await addressResponse.json();
-              
+
               if (address) {
                 // Use saved address
                 setShippingAddress(address);
@@ -208,7 +208,10 @@ export default function CheckoutPage() {
                 }
               } else {
                 // Fallback to basic user info
-                const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+                const [firstName, lastName] = session.user.name?.split(' ') || [
+                  '',
+                  '',
+                ];
                 const basicInfo = {
                   firstName: firstName || '',
                   lastName: lastName || '',
@@ -226,7 +229,10 @@ export default function CheckoutPage() {
               }
             } else {
               // Fallback to basic user info if API fails
-              const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+              const [firstName, lastName] = session.user.name?.split(' ') || [
+                '',
+                '',
+              ];
               const basicInfo = {
                 firstName: firstName || '',
                 lastName: lastName || '',
@@ -245,7 +251,10 @@ export default function CheckoutPage() {
           } catch (error) {
             console.error('Error fetching default address:', error);
             // Fallback to basic user info
-            const [firstName, lastName] = session.user.name?.split(' ') || ['', ''];
+            const [firstName, lastName] = session.user.name?.split(' ') || [
+              '',
+              '',
+            ];
             const basicInfo = {
               firstName: firstName || '',
               lastName: lastName || '',
@@ -293,8 +302,10 @@ export default function CheckoutPage() {
   // Helper function to render field errors
   const renderFieldError = (fieldPath: string) => {
     const error = fieldErrors[fieldPath];
-    if (!error) return null;
-    
+    if (!error) {
+      return null;
+    }
+
     return (
       <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
@@ -312,7 +323,7 @@ export default function CheckoutPage() {
         return newErrors;
       });
     }
-    
+
     // Clear general order error when user starts fixing issues
     if (orderError) {
       setOrderError('');
@@ -326,7 +337,7 @@ export default function CheckoutPage() {
   ) => {
     // Clear field-specific error
     clearFieldError(`${type}Address.${field}`);
-    
+
     // Clear general error
     if (orderError) {
       setOrderError('');
@@ -379,21 +390,21 @@ export default function CheckoutPage() {
 
         if (response.ok) {
           const result = await response.json();
-          
+
           // Now redirect to test payment gateway with the actual order ID
           const paymentParams = new URLSearchParams({
             amount: checkoutSummary?.total.toString() || '100',
             currency: 'MYR',
             orderRef: result.orderNumber,
-            returnUrl: '/checkout'
+            returnUrl: '/checkout',
           });
-          
+
           router.push(`/test-payment-gateway?${paymentParams.toString()}`);
         } else {
           const error = await response.json();
           setOrderError(error.message || 'Failed to create order');
           setFieldErrors(error.fieldErrors || {});
-          
+
           // Scroll to top to show error message
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -433,15 +444,17 @@ export default function CheckoutPage() {
         const error = await response.json();
         setOrderError(error.message || 'Failed to create order');
         setFieldErrors(error.fieldErrors || {});
-        
+
         // Scroll to top to show error message
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
       console.error('Order submission error:', error);
-      setOrderError('Failed to submit order. Please check your connection and try again.');
+      setOrderError(
+        'Failed to submit order. Please check your connection and try again.'
+      );
       setFieldErrors({});
-      
+
       // Scroll to top to show error message
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
@@ -460,47 +473,50 @@ export default function CheckoutPage() {
 
       if (paymentResult && orderRef && !paymentProcessed) {
         setPaymentProcessed(true);
-        
+
         // Clear URL params immediately to prevent re-processing
         window.history.replaceState({}, '', window.location.pathname);
-        
+
         if (paymentResult === 'success') {
           // Clear cart immediately
           localStorage.removeItem('cart_items');
-          
+
           // Clear cart via API as well to ensure it's empty
           try {
             await fetch('/api/cart', { method: 'DELETE' });
           } catch (error) {
             console.error('Failed to clear cart via API:', error);
           }
-          
+
           // Dispatch cart update event to refresh cart sidebar
           window.dispatchEvent(new Event('cart_updated'));
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'cart_items',
-            newValue: null,
-            oldValue: 'cleared'
-          }));
-          
+          window.dispatchEvent(
+            new StorageEvent('storage', {
+              key: 'cart_items',
+              newValue: null,
+              oldValue: 'cleared',
+            })
+          );
+
           const isQualifying = parseFloat(amount || '0') >= 80;
-          
+
           // Update session to refresh membership status for qualifying purchases
           if (isQualifying) {
             updateSession();
           }
-          
+
           // Redirect to thank you page with order details
           const thankYouParams = new URLSearchParams({
             orderRef: orderRef,
             amount: amount || '0',
-            ...(isQualifying && { membership: 'true' })
+            ...(isQualifying && { membership: 'true' }),
           });
-          
+
           router.replace(`/thank-you?${thankYouParams.toString()}`);
-          
         } else if (paymentResult === 'failed') {
-          alert(`❌ Payment Failed\n\nOrder: ${orderRef}\nPlease try again or use a different payment method.`);
+          alert(
+            `❌ Payment Failed\n\nOrder: ${orderRef}\nPlease try again or use a different payment method.`
+          );
           setPaymentProcessed(false); // Allow retry
         }
       }
@@ -677,7 +693,11 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'phone', e.target.value)
                     }
                     required
-                    className={fieldErrors['shippingAddress.phone'] ? 'border-red-300 focus:border-red-500' : ''}
+                    className={
+                      fieldErrors['shippingAddress.phone']
+                        ? 'border-red-300 focus:border-red-500'
+                        : ''
+                    }
                   />
                   {renderFieldError('shippingAddress.phone')}
                 </div>
@@ -692,7 +712,11 @@ export default function CheckoutPage() {
                     handleAddressChange('shipping', 'address', e.target.value)
                   }
                   required
-                  className={fieldErrors['shippingAddress.address'] ? 'border-red-300 focus:border-red-500' : ''}
+                  className={
+                    fieldErrors['shippingAddress.address']
+                      ? 'border-red-300 focus:border-red-500'
+                      : ''
+                  }
                 />
                 {renderFieldError('shippingAddress.address')}
               </div>
@@ -1000,7 +1024,8 @@ export default function CheckoutPage() {
                       {item.product.name}
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+                      {item.product.categories?.[0]?.category?.name ||
+                        'Uncategorized'}
                     </p>
                   </div>
                   <div className="text-sm font-medium">

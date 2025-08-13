@@ -9,7 +9,7 @@ import {
   canUserAccessPromotionalPrice,
   calculateEarlyAccessStatus,
   getEarlyAccessDisplayText,
-  getEarlyAccessPrice
+  getEarlyAccessPrice,
 } from '@/lib/member/early-access-utils';
 
 export interface PromotionData {
@@ -62,25 +62,29 @@ export function calculatePromotionStatus(
 ): PromotionStatus {
   const now = new Date();
   const hasPromotionToggle = product.isPromotional;
-  const hasPromotionalPrice = product.promotionalPrice !== null && product.promotionalPrice !== undefined;
+  const hasPromotionalPrice =
+    product.promotionalPrice !== null && product.promotionalPrice !== undefined;
   const hasValidDates = product.promotionStartDate && product.promotionEndDate;
 
   // Check if promotion is active
-  const isActive = hasPromotionToggle && 
-                   hasPromotionalPrice && 
-                   hasValidDates && 
-                   isPromotionActive(product.promotionStartDate, product.promotionEndDate);
+  const isActive =
+    hasPromotionToggle &&
+    hasPromotionalPrice &&
+    hasValidDates &&
+    isPromotionActive(product.promotionStartDate, product.promotionEndDate);
 
   // Check if promotion is scheduled for future
-  const isScheduled = hasPromotionToggle && 
-                      hasPromotionalPrice && 
-                      hasValidDates && 
-                      new Date(product.promotionStartDate!) > now;
+  const isScheduled =
+    hasPromotionToggle &&
+    hasPromotionalPrice &&
+    hasValidDates &&
+    new Date(product.promotionStartDate!) > now;
 
   // Check if promotion is expired
-  const isExpired = hasPromotionToggle && 
-                    hasValidDates && 
-                    new Date(product.promotionEndDate!) < now;
+  const isExpired =
+    hasPromotionToggle &&
+    hasValidDates &&
+    new Date(product.promotionEndDate!) < now;
 
   // Calculate days until start/end
   let daysUntilStart: number | undefined;
@@ -113,8 +117,8 @@ export function calculatePromotionStatus(
   // Calculate membership qualification
   // Rule: Active promotion overrides membership qualification
   const overridesQualification = isActive;
-  const qualifiesForMembership = overridesQualification 
-    ? false 
+  const qualifiesForMembership = overridesQualification
+    ? false
     : product.isQualifyingForMembership;
 
   return {
@@ -125,7 +129,7 @@ export function calculatePromotionStatus(
     daysUntilEnd,
     effectivePrice,
     qualifiesForMembership: Boolean(qualifiesForMembership),
-    overridesQualification: Boolean(overridesQualification)
+    overridesQualification: Boolean(overridesQualification),
   };
 }
 
@@ -153,43 +157,58 @@ export function getBestPrice(
       price: product.regularPrice,
       originalPrice: product.regularPrice,
       savings: 0,
-      priceType: 'regular'
+      priceType: 'regular',
     };
   }
 
   // Use early access pricing if available
   const earlyAccessPrice = getEarlyAccessPrice(
-    product as EarlyAccessProduct & { regularPrice: number; memberPrice: number },
+    product as EarlyAccessProduct & {
+      regularPrice: number;
+      memberPrice: number;
+    },
     isMember
   );
 
   if (earlyAccessPrice.hasEarlyAccess) {
-    const earlyAccessStatus = calculateEarlyAccessStatus(product as EarlyAccessProduct);
+    const earlyAccessStatus = calculateEarlyAccessStatus(
+      product as EarlyAccessProduct
+    );
     const earlyAccessText = getEarlyAccessDisplayText(earlyAccessStatus);
-    
+
     return {
       price: earlyAccessPrice.price,
       originalPrice: product.regularPrice,
       savings: product.regularPrice - earlyAccessPrice.price,
-      priceType: earlyAccessPrice.priceType as 'regular' | 'member' | 'promotional' | 'early-access',
+      priceType: earlyAccessPrice.priceType as
+        | 'regular'
+        | 'member'
+        | 'promotional'
+        | 'early-access',
       hasEarlyAccess: true,
-      earlyAccessText
+      earlyAccessText,
     };
   }
 
   // Fall back to existing promotional pricing logic
   const promotionStatus = calculatePromotionStatus(product);
-  
+
   // For members: compare promotional price vs member price and select the lowest
-  if (isMember && promotionStatus.isActive && product.promotionalPrice && product.memberPrice) {
+  if (
+    isMember &&
+    promotionStatus.isActive &&
+    product.promotionalPrice &&
+    product.memberPrice
+  ) {
     const lowestPrice = Math.min(product.promotionalPrice, product.memberPrice);
-    const priceType = lowestPrice === product.promotionalPrice ? 'promotional' : 'member';
-    
+    const priceType =
+      lowestPrice === product.promotionalPrice ? 'promotional' : 'member';
+
     return {
       price: lowestPrice,
       originalPrice: product.regularPrice,
       savings: product.regularPrice - lowestPrice,
-      priceType: priceType as 'promotional' | 'member'
+      priceType: priceType as 'promotional' | 'member',
     };
   } else if (promotionStatus.isActive && product.promotionalPrice) {
     // Non-members get promotional price if active
@@ -197,7 +216,7 @@ export function getBestPrice(
       price: product.promotionalPrice,
       originalPrice: product.regularPrice,
       savings: product.regularPrice - product.promotionalPrice,
-      priceType: 'promotional'
+      priceType: 'promotional',
     };
   } else if (isMember && product.memberPrice < product.regularPrice) {
     // Members get member price when no active promotion
@@ -205,7 +224,7 @@ export function getBestPrice(
       price: product.memberPrice,
       originalPrice: product.regularPrice,
       savings: product.regularPrice - product.memberPrice,
-      priceType: 'member'
+      priceType: 'member',
     };
   } else {
     // Regular price for non-members or when no discounts apply
@@ -213,7 +232,7 @@ export function getBestPrice(
       price: product.regularPrice,
       originalPrice: product.regularPrice,
       savings: 0,
-      priceType: 'regular'
+      priceType: 'regular',
     };
   }
 }
@@ -221,32 +240,34 @@ export function getBestPrice(
 /**
  * Format promotion display text for UI
  */
-export function getPromotionDisplayText(status: PromotionStatus): string | null {
+export function getPromotionDisplayText(
+  status: PromotionStatus
+): string | null {
   if (status.isActive) {
     if (status.daysUntilEnd !== undefined) {
       if (status.daysUntilEnd === 0) {
-        return "Ends today!";
+        return 'Ends today!';
       } else if (status.daysUntilEnd === 1) {
-        return "Ends tomorrow!";
+        return 'Ends tomorrow!';
       } else if (status.daysUntilEnd <= 7) {
         return `Ends in ${status.daysUntilEnd} days`;
       } else {
-        return "Limited time offer";
+        return 'Limited time offer';
       }
     }
-    return "Special price";
+    return 'Special price';
   } else if (status.isScheduled && status.daysUntilStart !== undefined) {
     if (status.daysUntilStart === 1) {
-      return "Sale starts tomorrow";
+      return 'Sale starts tomorrow';
     } else if (status.daysUntilStart <= 7) {
       return `Sale starts in ${status.daysUntilStart} days`;
     } else {
-      return "Coming soon";
+      return 'Coming soon';
     }
   } else if (status.isExpired) {
-    return "Sale ended";
+    return 'Sale ended';
   }
-  
+
   return null;
 }
 
@@ -254,7 +275,7 @@ export function getPromotionDisplayText(status: PromotionStatus): string | null 
  * Utility to check if a product qualifies for membership (with promotional override)
  */
 export function productQualifiesForMembership(
-  product: PromotionData, 
+  product: PromotionData,
   enablePromotionalExclusion: boolean = true
 ): boolean {
   // If promotional exclusion is disabled, promotional products can qualify
@@ -266,8 +287,8 @@ export function productQualifiesForMembership(
   const promotionStatus = calculatePromotionStatus({
     ...product,
     regularPrice: 0, // Not needed for qualification check
-    memberPrice: 0   // Not needed for qualification check
+    memberPrice: 0, // Not needed for qualification check
   });
-  
+
   return promotionStatus.qualifiesForMembership;
 }

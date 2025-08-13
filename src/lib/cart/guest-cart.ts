@@ -257,10 +257,7 @@ export async function getGuestCartWithProducts() {
     memberSubtotal += memberPrice;
 
     // Check if item qualifies for membership using product-level control
-    if (
-      !item.product.isPromotional &&
-      item.product.isQualifyingForMembership
-    ) {
+    if (!item.product.isPromotional && item.product.isQualifyingForMembership) {
       qualifyingTotal += regularPrice;
     }
   });

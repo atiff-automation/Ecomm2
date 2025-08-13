@@ -1,7 +1,7 @@
 /**
  * Centralized Product Service - Malaysian E-commerce Platform
  * Single source of truth for ALL product-related operations
- * 
+ *
  * This service consolidates all product API calls and business logic
  * that were previously scattered across 20+ components.
  */
@@ -13,7 +13,7 @@ import {
   ProductListParams,
   ReviewResponse,
   CreateReviewRequest,
-  PaginationMeta
+  PaginationMeta,
 } from '@/lib/types/api';
 
 export interface ProductListResponse {
@@ -46,7 +46,10 @@ export interface RelatedProductsOptions {
 
 export class ProductService {
   private static instance: ProductService;
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
   private readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {}
@@ -61,31 +64,55 @@ export class ProductService {
   /**
    * Get paginated list of products with filters and search
    */
-  async getProducts(params: ProductListParams = {}): Promise<ProductListResponse> {
+  async getProducts(
+    params: ProductListParams = {}
+  ): Promise<ProductListResponse> {
     const cacheKey = `products:${JSON.stringify(params)}`;
     const cached = this.getFromCache<ProductListResponse>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams();
-      
+
       // Add pagination
-      if (params.page) queryParams.append('page', params.page.toString());
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      
+      if (params.page) {
+        queryParams.append('page', params.page.toString());
+      }
+      if (params.limit) {
+        queryParams.append('limit', params.limit.toString());
+      }
+
       // Add search and filters
-      if (params.search) queryParams.append('search', params.search);
-      if (params.category) queryParams.append('category', params.category);
-      if (params.featured !== undefined) queryParams.append('featured', params.featured.toString());
-      if (params.inStock !== undefined) queryParams.append('inStock', params.inStock.toString());
-      
+      if (params.search) {
+        queryParams.append('search', params.search);
+      }
+      if (params.category) {
+        queryParams.append('category', params.category);
+      }
+      if (params.featured !== undefined) {
+        queryParams.append('featured', params.featured.toString());
+      }
+      if (params.inStock !== undefined) {
+        queryParams.append('inStock', params.inStock.toString());
+      }
+
       // Add sorting
-      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-      
+      if (params.sortBy) {
+        queryParams.append('sortBy', params.sortBy);
+      }
+      if (params.sortOrder) {
+        queryParams.append('sortOrder', params.sortOrder);
+      }
+
       // Add price range
-      if (params.priceMin !== undefined) queryParams.append('priceMin', params.priceMin.toString());
-      if (params.priceMax !== undefined) queryParams.append('priceMax', params.priceMax.toString());
+      if (params.priceMin !== undefined) {
+        queryParams.append('priceMin', params.priceMin.toString());
+      }
+      if (params.priceMax !== undefined) {
+        queryParams.append('priceMax', params.priceMax.toString());
+      }
 
       const endpoint = `/api/products?${queryParams.toString()}`;
       const response = await apiClient.get<ProductListResponse>(endpoint);
@@ -108,10 +135,14 @@ export class ProductService {
   async getProduct(slugOrId: string): Promise<ProductResponse> {
     const cacheKey = `product:${slugOrId}`;
     const cached = this.getFromCache<ProductResponse>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
-      const response = await apiClient.get<{ product: ProductResponse }>(`/api/products/${slugOrId}`);
+      const response = await apiClient.get<{ product: ProductResponse }>(
+        `/api/products/${slugOrId}`
+      );
 
       if (response.success && response.data?.product) {
         this.setCache(cacheKey, response.data.product);
@@ -131,14 +162,16 @@ export class ProductService {
   async getFeaturedProducts(limit: number = 8): Promise<ProductResponse[]> {
     const cacheKey = `featured-products:${limit}`;
     const cached = this.getFromCache<ProductResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
-      const result = await this.getProducts({ 
-        featured: true, 
+      const result = await this.getProducts({
+        featured: true,
         limit,
         sortBy: 'created',
-        sortOrder: 'desc'
+        sortOrder: 'desc',
       });
 
       this.setCache(cacheKey, result.products);
@@ -153,12 +186,12 @@ export class ProductService {
    * Search products with advanced options
    */
   async searchProducts(
-    query: string, 
+    query: string,
     options: ProductSearchOptions = {}
   ): Promise<ProductListResponse> {
     const params: ProductListParams = {
       search: query,
-      ...options
+      ...options,
     };
 
     return this.getProducts(params);
@@ -168,12 +201,12 @@ export class ProductService {
    * Get products by category
    */
   async getProductsByCategory(
-    categoryId: string, 
+    categoryId: string,
     params: Omit<ProductListParams, 'category'> = {}
   ): Promise<ProductListResponse> {
     return this.getProducts({
       ...params,
-      category: categoryId
+      category: categoryId,
     });
   }
 
@@ -186,17 +219,29 @@ export class ProductService {
   ): Promise<ProductResponse[]> {
     const cacheKey = `related-products:${productId}:${JSON.stringify(options)}`;
     const cached = this.getFromCache<ProductResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams();
-      if (options.limit) queryParams.append('limit', options.limit.toString());
-      if (options.excludeOutOfStock) queryParams.append('excludeOutOfStock', 'true');
-      if (options.sameCategoryOnly) queryParams.append('sameCategoryOnly', 'true');
-      if (options.includePromotional) queryParams.append('includePromotional', 'true');
+      if (options.limit) {
+        queryParams.append('limit', options.limit.toString());
+      }
+      if (options.excludeOutOfStock) {
+        queryParams.append('excludeOutOfStock', 'true');
+      }
+      if (options.sameCategoryOnly) {
+        queryParams.append('sameCategoryOnly', 'true');
+      }
+      if (options.includePromotional) {
+        queryParams.append('includePromotional', 'true');
+      }
 
       const endpoint = `/api/products/${productId}/related?${queryParams.toString()}`;
-      const response = await apiClient.get<{ products: ProductResponse[] }>(endpoint);
+      const response = await apiClient.get<{ products: ProductResponse[] }>(
+        endpoint
+      );
 
       if (response.success && response.data?.products) {
         this.setCache(cacheKey, response.data.products);
@@ -219,17 +264,25 @@ export class ProductService {
     limit: number = 10
   ): Promise<{ reviews: ReviewResponse[]; pagination: PaginationMeta }> {
     const cacheKey = `product-reviews:${productId}:${page}:${limit}`;
-    const cached = this.getFromCache<{ reviews: ReviewResponse[]; pagination: PaginationMeta }>(cacheKey);
-    if (cached) return cached;
+    const cached = this.getFromCache<{
+      reviews: ReviewResponse[];
+      pagination: PaginationMeta;
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams({
         page: page.toString(),
-        limit: limit.toString()
+        limit: limit.toString(),
       });
 
       const endpoint = `/api/products/${productId}/reviews?${queryParams.toString()}`;
-      const response = await apiClient.get<{ reviews: ReviewResponse[]; pagination: PaginationMeta }>(endpoint);
+      const response = await apiClient.get<{
+        reviews: ReviewResponse[];
+        pagination: PaginationMeta;
+      }>(endpoint);
 
       if (response.success && response.data) {
         this.setCache(cacheKey, response.data, 2 * 60 * 1000); // Cache for 2 minutes
@@ -248,7 +301,10 @@ export class ProductService {
    */
   async createReview(reviewData: CreateReviewRequest): Promise<ReviewResponse> {
     try {
-      const response = await apiClient.post<{ review: ReviewResponse }>('/api/reviews', reviewData);
+      const response = await apiClient.post<{ review: ReviewResponse }>(
+        '/api/reviews',
+        reviewData
+      );
 
       if (response.success && response.data?.review) {
         // Invalidate related caches
@@ -266,15 +322,23 @@ export class ProductService {
   /**
    * Get available product filters for current search/category
    */
-  async getProductFilters(params: ProductListParams = {}): Promise<ProductFilters> {
+  async getProductFilters(
+    params: ProductListParams = {}
+  ): Promise<ProductFilters> {
     const cacheKey = `product-filters:${JSON.stringify(params)}`;
     const cached = this.getFromCache<ProductFilters>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams();
-      if (params.search) queryParams.append('search', params.search);
-      if (params.category) queryParams.append('category', params.category);
+      if (params.search) {
+        queryParams.append('search', params.search);
+      }
+      if (params.category) {
+        queryParams.append('category', params.category);
+      }
 
       const endpoint = `/api/products/filters?${queryParams.toString()}`;
       const response = await apiClient.get<ProductFilters>(endpoint);
@@ -290,7 +354,7 @@ export class ProductService {
         priceRange: [0, 1000],
         ratings: [1, 2, 3, 4, 5],
         availability: ['in-stock', 'out-of-stock'],
-        features: ['featured', 'promotional', 'member-qualifying']
+        features: ['featured', 'promotional', 'member-qualifying'],
       };
     } catch (error) {
       console.error('ProductService.getProductFilters error:', error);
@@ -300,7 +364,7 @@ export class ProductService {
         priceRange: [0, 1000],
         ratings: [1, 2, 3, 4, 5],
         availability: ['in-stock', 'out-of-stock'],
-        features: ['featured', 'promotional', 'member-qualifying']
+        features: ['featured', 'promotional', 'member-qualifying'],
       };
     }
   }
@@ -308,7 +372,10 @@ export class ProductService {
   /**
    * Check product availability
    */
-  async checkAvailability(productId: string, quantity: number = 1): Promise<{
+  async checkAvailability(
+    productId: string,
+    quantity: number = 1
+  ): Promise<{
     available: boolean;
     stockQuantity: number;
     maxQuantity: number;
@@ -340,16 +407,20 @@ export class ProductService {
   ): Promise<ProductResponse[]> {
     const cacheKey = `recommendations:${type}:${limit}`;
     const cached = this.getFromCache<ProductResponse[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     try {
       const queryParams = new URLSearchParams({
         type,
-        limit: limit.toString()
+        limit: limit.toString(),
       });
 
       const endpoint = `/api/products/recommendations?${queryParams.toString()}`;
-      const response = await apiClient.get<{ products: ProductResponse[] }>(endpoint);
+      const response = await apiClient.get<{ products: ProductResponse[] }>(
+        endpoint
+      );
 
       if (response.success && response.data?.products) {
         this.setCache(cacheKey, response.data.products, 15 * 60 * 1000); // Cache for 15 minutes
@@ -369,9 +440,11 @@ export class ProductService {
   async trackProductView(productId: string): Promise<void> {
     try {
       // Fire and forget - don't wait for response
-      apiClient.post('/api/analytics/product-view', { productId }).catch(error => {
-        console.warn('Failed to track product view:', error);
-      });
+      apiClient
+        .post('/api/analytics/product-view', { productId })
+        .catch(error => {
+          console.warn('Failed to track product view:', error);
+        });
     } catch (error) {
       // Silently fail - analytics shouldn't break user experience
       console.warn('ProductService.trackProductView error:', error);
@@ -383,7 +456,9 @@ export class ProductService {
    */
   private getFromCache<T>(key: string): T | null {
     const item = this.cache.get(key);
-    if (!item) return null;
+    if (!item) {
+      return null;
+    }
 
     if (Date.now() > item.timestamp + item.ttl) {
       this.cache.delete(key);
@@ -393,18 +468,25 @@ export class ProductService {
     return item.data;
   }
 
-  private setCache<T>(key: string, data: T, ttl: number = this.DEFAULT_CACHE_TTL): void {
+  private setCache<T>(
+    key: string,
+    data: T,
+    ttl: number = this.DEFAULT_CACHE_TTL
+  ): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
   private invalidateReviewCaches(productId: string): void {
     const keysToDelete: string[] = [];
     this.cache.forEach((_, key) => {
-      if (key.includes(`product-reviews:${productId}`) || key.includes(`product:${productId}`)) {
+      if (
+        key.includes(`product-reviews:${productId}`) ||
+        key.includes(`product:${productId}`)
+      ) {
         keysToDelete.push(key);
       }
     });
@@ -424,7 +506,7 @@ export class ProductService {
   getCacheStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 }

@@ -15,20 +15,21 @@ export async function GET(request: NextRequest) {
 
     if (
       !session?.user ||
-      (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.STAFF)
+      (session.user.role !== UserRole.ADMIN &&
+        session.user.role !== UserRole.STAFF)
     ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = request.nextUrl.searchParams;
     const period = searchParams.get('period') || '30';
-    
+
     const now = new Date();
     const daysAgo = parseInt(period);
     const startDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
 
     // Revenue trend over the specified period
-    const revenueTrend = await prisma.$queryRaw`
+    const revenueTrend = (await prisma.$queryRaw`
       SELECT 
         DATE_TRUNC('day', "createdAt") as date,
         COUNT(*) as orders,
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
         AND "paymentStatus" = 'PAID'
       GROUP BY DATE_TRUNC('day', "createdAt")
       ORDER BY date
-    ` as Array<{ date: Date; orders: bigint; revenue: number }>;
+    `) as Array<{ date: Date; orders: bigint; revenue: number }>;
 
     // Order status distribution
     const orderStatusData = await prisma.order.groupBy({
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Member vs Non-member sales comparison
-    const membershipComparison = await prisma.$queryRaw`
+    const membershipComparison = (await prisma.$queryRaw`
       SELECT 
         CASE WHEN u."isMember" = true THEN 'Member' ELSE 'Non-Member' END as customer_type,
         COUNT(*) as orders,
@@ -65,10 +66,15 @@ export async function GET(request: NextRequest) {
       WHERE o."createdAt" >= ${startDate}
         AND o."paymentStatus" = 'PAID'
       GROUP BY u."isMember"
-    ` as Array<{ customer_type: string; orders: bigint; revenue: number; avg_order_value: number }>;
+    `) as Array<{
+      customer_type: string;
+      orders: bigint;
+      revenue: number;
+      avg_order_value: number;
+    }>;
 
     // Category performance
-    const categoryPerformance = await prisma.$queryRaw`
+    const categoryPerformance = (await prisma.$queryRaw`
       SELECT 
         c.name as category,
         COUNT(DISTINCT oi."orderId") as orders,
@@ -84,10 +90,15 @@ export async function GET(request: NextRequest) {
       GROUP BY c.id, c.name
       ORDER BY revenue DESC
       LIMIT 10
-    ` as Array<{ category: string; orders: bigint; units_sold: bigint; revenue: number }>;
+    `) as Array<{
+      category: string;
+      orders: bigint;
+      units_sold: bigint;
+      revenue: number;
+    }>;
 
     // Hourly order distribution (for operational insights)
-    const hourlyOrderData = await prisma.$queryRaw`
+    const hourlyOrderData = (await prisma.$queryRaw`
       SELECT 
         EXTRACT(HOUR FROM "createdAt") as hour,
         COUNT(*) as orders,
@@ -97,7 +108,7 @@ export async function GET(request: NextRequest) {
         AND "paymentStatus" = 'PAID'
       GROUP BY EXTRACT(HOUR FROM "createdAt")
       ORDER BY hour
-    ` as Array<{ hour: number; orders: bigint; revenue: number }>;
+    `) as Array<{ hour: number; orders: bigint; revenue: number }>;
 
     // Payment method distribution
     const paymentMethodDistribution = await prisma.order.groupBy({
@@ -114,8 +125,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Format the data for frontend consumption
-    const totalOrderStatus = orderStatusData.reduce((sum, curr) => sum + curr._count.id, 0);
-    const totalPaymentMethods = paymentMethodDistribution.reduce((sum, curr) => sum + curr._count.id, 0);
+    const totalOrderStatus = orderStatusData.reduce(
+      (sum, curr) => sum + curr._count.id,
+      0
+    );
+    const totalPaymentMethods = paymentMethodDistribution.reduce(
+      (sum, curr) => sum + curr._count.id,
+      0
+    );
 
     const analytics = {
       revenueTrend: revenueTrend.map(item => ({

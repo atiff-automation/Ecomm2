@@ -7,9 +7,9 @@ import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 
 export enum PaymentMethodType {
-  WEBHOOK_AUTOMATED = 'webhook_automated',    // Real-time webhooks
-  API_POLLING = 'api_polling',                // API polling every few minutes  
-  MANUAL_CONFIRMATION = 'manual_confirmation' // Admin manual confirmation
+  WEBHOOK_AUTOMATED = 'webhook_automated', // Real-time webhooks
+  API_POLLING = 'api_polling', // API polling every few minutes
+  MANUAL_CONFIRMATION = 'manual_confirmation', // Admin manual confirmation
 }
 
 export interface PaymentMethodConfig {
@@ -31,7 +31,7 @@ export const PAYMENT_METHODS: Record<string, PaymentMethodConfig> = {
     maxProcessingTime: 0.5, // 30 minutes max
     requiresVerification: false,
   },
-  
+
   stripe: {
     type: PaymentMethodType.WEBHOOK_AUTOMATED,
     displayName: 'Credit/Debit Card',
@@ -96,25 +96,43 @@ export class PaymentMethodRouter {
     }
   ) {
     const methodConfig = PAYMENT_METHODS[paymentMethod];
-    
+
     if (!methodConfig) {
       console.warn(`Unknown payment method: ${paymentMethod}`);
       // Default to manual confirmation for unknown methods
-      return this.processManualConfirmation(orderId, paymentMethod, confirmationData);
+      return this.processManualConfirmation(
+        orderId,
+        paymentMethod,
+        confirmationData
+      );
     }
 
     switch (methodConfig.type) {
       case PaymentMethodType.WEBHOOK_AUTOMATED:
-        return this.processWebhookConfirmation(orderId, paymentMethod, confirmationData);
-        
+        return this.processWebhookConfirmation(
+          orderId,
+          paymentMethod,
+          confirmationData
+        );
+
       case PaymentMethodType.API_POLLING:
-        return this.processApiPollingConfirmation(orderId, paymentMethod, confirmationData);
-        
+        return this.processApiPollingConfirmation(
+          orderId,
+          paymentMethod,
+          confirmationData
+        );
+
       case PaymentMethodType.MANUAL_CONFIRMATION:
-        return this.processManualConfirmation(orderId, paymentMethod, confirmationData);
-        
+        return this.processManualConfirmation(
+          orderId,
+          paymentMethod,
+          confirmationData
+        );
+
       default:
-        throw new Error(`Unsupported payment method type: ${methodConfig.type}`);
+        throw new Error(
+          `Unsupported payment method type: ${methodConfig.type}`
+        );
     }
   }
 
@@ -126,8 +144,11 @@ export class PaymentMethodRouter {
     paymentMethod: string,
     data: any
   ) {
-    console.log('🚀 Processing webhook confirmation:', { orderId, paymentMethod });
-    
+    console.log('🚀 Processing webhook confirmation:', {
+      orderId,
+      paymentMethod,
+    });
+
     return updateOrderStatus(
       orderId,
       'CONFIRMED',
@@ -152,8 +173,11 @@ export class PaymentMethodRouter {
     paymentMethod: string,
     data: any
   ) {
-    console.log('⏱️ Processing API polling confirmation:', { orderId, paymentMethod });
-    
+    console.log('⏱️ Processing API polling confirmation:', {
+      orderId,
+      paymentMethod,
+    });
+
     return updateOrderStatus(
       orderId,
       'CONFIRMED',
@@ -179,11 +203,15 @@ export class PaymentMethodRouter {
     paymentMethod: string,
     data: any
   ) {
-    console.log('👤 Processing manual confirmation:', { orderId, paymentMethod });
-    
+    console.log('👤 Processing manual confirmation:', {
+      orderId,
+      paymentMethod,
+    });
+
     // For manual confirmations, we might want different status initially
-    const requiresApproval = PAYMENT_METHODS[paymentMethod]?.requiresVerification;
-    
+    const requiresApproval =
+      PAYMENT_METHODS[paymentMethod]?.requiresVerification;
+
     return updateOrderStatus(
       orderId,
       requiresApproval ? 'PROCESSING' : 'CONFIRMED',
@@ -205,7 +233,9 @@ export class PaymentMethodRouter {
   /**
    * Get payment method configuration
    */
-  static getPaymentMethodConfig(paymentMethod: string): PaymentMethodConfig | null {
+  static getPaymentMethodConfig(
+    paymentMethod: string
+  ): PaymentMethodConfig | null {
     return PAYMENT_METHODS[paymentMethod] || null;
   }
 

@@ -19,7 +19,8 @@ export async function GET() {
     const healthStatus = telegramService.getHealthStatus();
     const isConfigured = await telegramService.isConfigured();
     const ordersChannel = await telegramService.isOrdersChannelConfigured();
-    const inventoryChannel = await telegramService.isInventoryChannelConfigured();
+    const inventoryChannel =
+      await telegramService.isInventoryChannelConfigured();
 
     return NextResponse.json({
       status: 'ok',
@@ -33,7 +34,9 @@ export async function GET() {
           inventory: inventoryChannel,
         },
       },
-      message: isConfigured ? 'Telegram service is running' : 'Telegram service not configured',
+      message: isConfigured
+        ? 'Telegram service is running'
+        : 'Telegram service not configured',
     });
   } catch (error) {
     console.error('Error checking Telegram health:', error);

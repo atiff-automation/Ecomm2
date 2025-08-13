@@ -1,5 +1,5 @@
 /**
- * Admin Referrals API Route - Malaysian E-commerce Platform  
+ * Admin Referrals API Route - Malaysian E-commerce Platform
  * Admin management of referral system
  */
 
@@ -8,7 +8,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
-import { getReferralSettings, updateReferralSettings } from '@/lib/referrals/referral-utils';
+import {
+  getReferralSettings,
+  updateReferralSettings,
+} from '@/lib/referrals/referral-utils';
 import { ReferralRewardType } from '@prisma/client';
 
 const referralSettingsSchema = z.object({
@@ -26,12 +29,9 @@ const referralSettingsSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -45,21 +45,20 @@ export async function GET(request: NextRequest) {
           successfulReferrals,
           pendingReferrals,
           totalRewards,
-          settings
+          settings,
         ] = await Promise.all([
           prisma.memberReferral.count(),
           prisma.memberReferral.count({ where: { status: 'COMPLETED' } }),
           prisma.memberReferral.count({ where: { status: 'PENDING' } }),
           prisma.referralReward.aggregate({
             _sum: { rewardAmount: true },
-            where: { status: 'ISSUED' }
+            where: { status: 'ISSUED' },
           }),
-          getReferralSettings()
+          getReferralSettings(),
         ]);
 
-        const conversionRate = totalReferrals > 0 
-          ? (successfulReferrals / totalReferrals) * 100 
-          : 0;
+        const conversionRate =
+          totalReferrals > 0 ? (successfulReferrals / totalReferrals) * 100 : 0;
 
         return NextResponse.json({
           analytics: {
@@ -85,14 +84,14 @@ export async function GET(request: NextRequest) {
                   id: true,
                   name: true,
                   email: true,
-                }
+                },
               },
               referred: {
                 select: {
                   id: true,
                   name: true,
                   email: true,
-                }
+                },
               },
               rewards: {
                 include: {
@@ -100,10 +99,10 @@ export async function GET(request: NextRequest) {
                     select: {
                       name: true,
                       email: true,
-                    }
-                  }
-                }
-              }
+                    },
+                  },
+                },
+              },
             },
             orderBy: { createdAt: 'desc' },
             skip,
@@ -132,7 +131,7 @@ export async function GET(request: NextRequest) {
                   id: true,
                   name: true,
                   email: true,
-                }
+                },
               },
               referral: {
                 include: {
@@ -140,16 +139,16 @@ export async function GET(request: NextRequest) {
                     select: {
                       name: true,
                       email: true,
-                    }
+                    },
                   },
                   referred: {
                     select: {
                       name: true,
                       email: true,
-                    }
-                  }
-                }
-              }
+                    },
+                  },
+                },
+              },
             },
             orderBy: { createdAt: 'desc' },
             skip: rewardSkip,
@@ -184,18 +183,18 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
     const settings = referralSettingsSchema.parse(body);
 
-    const updatedSettings = await updateReferralSettings(settings, session.user.id);
+    const updatedSettings = await updateReferralSettings(
+      settings,
+      session.user.id
+    );
 
     return NextResponse.json({
       message: 'Referral settings updated successfully',
