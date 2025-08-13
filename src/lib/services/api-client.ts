@@ -428,10 +428,10 @@ export class APIClient {
     // Track requests by endpoint
     try {
       // Handle both relative and absolute URLs
-      const endpoint = url.startsWith('http') 
-        ? new URL(url).pathname 
+      const endpoint = url.startsWith('http')
+        ? new URL(url).pathname
         : url.split('?')[0]; // For relative URLs, just get the path part before query params
-      
+
       this.metrics.requestsByEndpoint[endpoint] =
         (this.metrics.requestsByEndpoint[endpoint] || 0) + 1;
     } catch (error) {
