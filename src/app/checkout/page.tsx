@@ -176,6 +176,7 @@ export default function CheckoutPage() {
 
       // If we're processing payment, don't fetch cart or redirect
       if (paymentProcessed) {
+        console.log('⏸️ Payment already processed, skipping cart fetch');
         setLoading(false);
         return;
       }
@@ -202,10 +203,17 @@ export default function CheckoutPage() {
         };
         setCheckoutSummary(summary);
 
-        // Only redirect to cart if empty AND not processing payment
-        if (data.items.length === 0) {
+        // Check if we have payment parameters in URL - if so, don't redirect to cart
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
+        
+        // Only redirect to cart if empty AND not processing payment AND no payment params
+        if (data.items.length === 0 && !hasPaymentParams) {
+          console.log('🔄 Cart is empty, redirecting to cart page');
           router.push('/cart');
           return;
+        } else if (data.items.length === 0 && hasPaymentParams) {
+          console.log('⏸️ Cart empty but payment params detected, staying on checkout');
         }
 
         // Pre-fill user info and default address if available
@@ -486,60 +494,34 @@ export default function CheckoutPage() {
       const paymentResult = urlParams.get('payment');
       const orderRef = urlParams.get('orderRef');
       const amount = urlParams.get('amount');
+      
+      console.log('🔍 Checking URL params:', { 
+        hasPayment: !!paymentResult,
+        hasOrderRef: !!orderRef,
+        paymentProcessed,
+        currentUrl: window.location.href
+      });
 
       if (paymentResult && orderRef && !paymentProcessed) {
+        console.log('🔔 Payment result detected:', { paymentResult, orderRef, amount });
         setPaymentProcessed(true);
 
         // Clear URL params immediately to prevent re-processing
         window.history.replaceState({}, '', window.location.pathname);
 
-        if (paymentResult === 'success') {
-          // Clear cart immediately
-          localStorage.removeItem('cart_items');
-
-          // Clear cart via API as well to ensure it's empty
-          try {
-            await fetch('/api/cart', { method: 'DELETE' });
-          } catch (error) {
-            console.error('Failed to clear cart via API:', error);
-          }
-
-          // Dispatch cart update event to refresh cart sidebar
-          window.dispatchEvent(new Event('cart_updated'));
-          window.dispatchEvent(
-            new StorageEvent('storage', {
-              key: 'cart_items',
-              newValue: null,
-              oldValue: 'cleared',
-            })
-          );
-
-          const isQualifying = parseFloat(amount || '0') >= 80;
-
-          // Update session to refresh membership status for qualifying purchases
-          if (isQualifying) {
-            updateSession();
-          }
-
-          // Redirect to thank you page with order details
-          const thankYouParams = new URLSearchParams({
-            orderRef: orderRef,
-            amount: amount || '0',
-            ...(isQualifying && { membership: 'true' }),
-          });
-
-          router.replace(`/thank-you?${thankYouParams.toString()}`);
-        } else if (paymentResult === 'failed') {
+        // Only handle failed payments here - successful payments now go directly to thank-you page
+        if (paymentResult === 'failed') {
           alert(
             `❌ Payment Failed\n\nOrder: ${orderRef}\nPlease try again or use a different payment method.`
           );
           setPaymentProcessed(false); // Allow retry
         }
+        // Note: Successful payments are now handled directly by payment gateway -> thank-you page
       }
     };
 
     handlePaymentResult();
-  }, [router, paymentProcessed, updateSession]);
+  }, []); // Remove dependencies to ensure it runs on mount
 
   // Fetch checkout data after payment processing is set up
   useEffect(() => {

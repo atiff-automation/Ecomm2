@@ -51,14 +51,27 @@ export default function TestPaymentGatewayPage() {
       });
 
       if (webhookResponse.ok) {
-        // Redirect back to checkout/success page with result
-        const params = new URLSearchParams({
-          payment: success ? 'success' : 'failed',
-          orderRef,
-          amount,
-        });
-
-        router.push(`${returnUrl}?${params.toString()}`);
+        if (success) {
+          // For successful payments, redirect directly to thank-you page
+          const thankYouParams = new URLSearchParams({
+            orderRef,
+            amount,
+            // Note: membership qualification will be determined by thank-you page
+            // based on order data, not payment gateway
+          });
+          
+          console.log('✅ Payment successful - redirecting to thank-you page');
+          router.push(`/thank-you?${thankYouParams.toString()}`);
+        } else {
+          // For failed payments, redirect back to checkout with failure info
+          const params = new URLSearchParams({
+            payment: 'failed',
+            orderRef,
+            amount,
+          });
+          
+          router.push(`${returnUrl}?${params.toString()}`);
+        }
       } else {
         alert('Webhook failed - check server logs');
       }

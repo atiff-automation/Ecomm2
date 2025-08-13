@@ -387,9 +387,16 @@ export function CartSidebar({
           </Link>
 
           <Link href="/checkout" onClick={() => onOpenChange(false)}>
-            <Button className="w-full">
-              Proceed to Checkout
-              <span className="ml-2">{formatPrice(total)}</span>
+            <Button 
+              className="w-full" 
+              disabled={totalItems === 0 || isLoading}
+            >
+              {totalItems === 0 ? 'Cart is Empty' : (
+                <>
+                  Proceed to Checkout
+                  <span className="ml-2">{formatPrice(total)}</span>
+                </>
+              )}
             </Button>
           </Link>
         </div>

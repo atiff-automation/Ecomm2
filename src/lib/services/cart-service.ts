@@ -57,6 +57,24 @@ export class CartService {
         console.log('🌍 Global cartUpdated event received (legacy)');
         // Do nothing - service layer events handle updates now
       });
+      
+      // Listen for force refresh events (e.g., after payment success)
+      window.addEventListener('forceCartRefresh', () => {
+        console.log('🔄 Force cart refresh event received');
+        this.refreshCart().then(() => {
+          console.log('✅ Cart force refresh completed');
+        }).catch(error => {
+          console.error('❌ Cart force refresh failed:', error);
+        });
+      });
+      
+      // Listen for cart cleared events (after successful payment)
+      window.addEventListener('cart_cleared', () => {
+        console.log('🧹 Cart cleared event received - setting empty cart');
+        this.cart = this.createEmptyCart();
+        this.lastFetch = Date.now();
+        this.emitEvent('CART_CLEARED', { cart: this.cart });
+      });
     }
   }
 

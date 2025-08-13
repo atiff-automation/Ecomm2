@@ -403,6 +403,12 @@ export async function POST(request: NextRequest) {
         memberDiscount: cartSummary.potentialSavings,
         promotionalDiscount: 0, // TODO: Calculate promotional discounts
         total: cartSummary.total,
+        // Membership qualification data - CRITICAL: Match GET response structure
+        qualifyingTotal: cartSummary.qualifyingTotal,
+        membershipThreshold: cartSummary.membershipThreshold,
+        qualifiesForMembership: cartSummary.isEligibleForMembership,
+        membershipProgress: cartSummary.membershipProgress,
+        membershipRemaining: cartSummary.amountNeededForMembership,
         updatedAt: new Date().toISOString(),
       },
       { status: 201 }

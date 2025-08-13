@@ -456,8 +456,12 @@ export default function CartPage() {
 
                 {/* Checkout Button */}
                 <Link href="/checkout">
-                  <Button className="w-full" size="lg">
-                    Proceed to Checkout
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    disabled={totalItems === 0 || isLoading}
+                  >
+                    {totalItems === 0 ? 'Cart is Empty' : 'Proceed to Checkout'}
                   </Button>
                 </Link>
 

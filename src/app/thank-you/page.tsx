@@ -96,7 +96,41 @@ function ThankYouContent() {
   const orderRef = searchParams.get('orderRef');
   const amount = searchParams.get('amount');
   const membershipEligible = searchParams.get('membership') === 'true';
+  
+  // Clear cart immediately when thank-you page loads (after successful payment)
+  const clearCartAfterPayment = async () => {
+    console.log('🧹 Thank-you page: Clearing cart after successful payment');
+    
+    try {
+      // Clear cart via API
+      const response = await fetch('/api/cart', { method: 'DELETE' });
+      if (response.ok) {
+        console.log('✅ Cart cleared via API');
+      }
+    } catch (error) {
+      console.error('❌ Failed to clear cart:', error);
+    }
+    
+    // Clear localStorage
+    ['cart_items', 'guest_cart', 'shopping_cart'].forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Broadcast cart clearing events
+    if (typeof window !== 'undefined') {
+      ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach(eventName => {
+        window.dispatchEvent(new CustomEvent(eventName));
+      });
+    }
+    
+    console.log('✅ Cart clearing completed on thank-you page');
+  };
 
+  // Clear cart on page load (successful payment)
+  useEffect(() => {
+    clearCartAfterPayment();
+  }, []); // Run once on mount
+  
   useEffect(() => {
     if (!orderRef) {
       setError('Order reference not found');
@@ -118,22 +152,20 @@ function ThankYouContent() {
     try {
       setLoading(true);
 
-      // Search for order by order number
-      const response = await fetch(
-        `/api/member/orders?orderNumber=${orderRef}`
-      );
+      // Search for order by order number using public API
+      console.log('🔍 Fetching order details for:', orderRef);
+      const response = await fetch(`/api/orders/lookup/${orderRef}`);
 
       if (!response.ok) {
-        throw new Error('Order not found');
+        if (response.status === 404) {
+          throw new Error('Order not found');
+        }
+        throw new Error(`Failed to fetch order: ${response.statusText}`);
       }
 
-      const data = await response.json();
-
-      if (data.orders && data.orders.length > 0) {
-        setOrderData(data.orders[0]);
-      } else {
-        setError('Order not found');
-      }
+      const orderData = await response.json();
+      console.log('✅ Order data received:', orderData);
+      setOrderData(orderData);
     } catch (error) {
       console.error('Error fetching order:', error);
       setError('Failed to load order details');
