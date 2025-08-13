@@ -5,12 +5,12 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { CartSidebar } from './CartSidebar';
+import { useCartCount } from '@/hooks/use-cart';
 
 interface CartButtonProps {
   className?: string;
@@ -23,51 +23,8 @@ export function CartButton({
   variant = 'ghost',
   size = 'default',
 }: CartButtonProps) {
-  const { data: session } = useSession();
-  const [cartCount, setCartCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  const isLoggedIn = !!session?.user;
-
-  // Fetch cart count (works for both guest and authenticated users)
-  const fetchCartCount = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cart');
-
-      if (response.ok) {
-        const data = await response.json();
-        setCartCount(data.summary?.itemCount || 0);
-      } else {
-        setCartCount(0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch cart count:', error);
-      setCartCount(0);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCartCount();
-  }, [fetchCartCount]);
-
-  // Listen for cart updates
-  useEffect(() => {
-    const handleCartUpdate = () => {
-      fetchCartCount();
-    };
-
-    window.addEventListener('cart_updated', handleCartUpdate);
-    return () => {
-      window.removeEventListener('cart_updated', handleCartUpdate);
-    };
-  }, [fetchCartCount]);
-
-  // Refresh cart count when cart sidebar opens/closes
-  useEffect(() => {
-    if (!isCartOpen) {
-      fetchCartCount();
-    }
-  }, [isCartOpen, fetchCartCount]);
+  const { count: cartCount, isLoading } = useCartCount();
 
   return (
     <>

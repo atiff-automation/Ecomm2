@@ -33,6 +33,7 @@ import { DynamicHeroSection } from '@/components/homepage/DynamicHeroSection';
 import { ProductCard } from '@/components/product/ProductCard';
 import { productService } from '@/lib/services/product-service';
 import { categoryService } from '@/lib/services/category-service';
+import { useCart } from '@/hooks/use-cart';
 
 interface Product {
   id: string;
@@ -101,6 +102,7 @@ interface HeroSection {
 
 export default function HomePage() {
   const { data: session } = useSession();
+  const { addToCart } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [siteTheme, setSiteTheme] = useState<SiteTheme | null>(null);
@@ -300,34 +302,16 @@ export default function HomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {featuredProducts.slice(0, 4).map(product => {
                   const handleAddToCart = async (productId: string) => {
-                    const isLoggedInUser = !!session?.user;
-                    
-                    if (!isLoggedInUser) {
+                    if (!isLoggedIn) {
                       window.location.href = '/auth/signin';
                       return;
                     }
 
                     try {
-                      const response = await fetch('/api/cart', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          productId,
-                          quantity: 1,
-                        }),
-                      });
-
-                      if (response.ok) {
-                        // TODO: Add toast notification here
-                        // Success handled silently for now
-                      } else {
-                        const data = await response.json();
-                        alert(data.message || 'Failed to add to cart');
-                      }
-                    } catch {
-                      alert('Failed to add to cart');
+                      await addToCart(productId, 1);
+                    } catch (error) {
+                      // Error handling is done in the useCart hook
+                      console.error('Add to cart failed:', error);
                     }
                   };
 
