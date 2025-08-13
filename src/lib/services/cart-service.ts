@@ -96,7 +96,9 @@ export class CartService {
       const response = await apiClient.get<CartResponse>('/api/cart');
 
       if (response.success && response.data) {
-        console.log('📥 Cart fetched successfully:', { cartItems: response.data.totalItems });
+        console.log('📥 Cart fetched successfully:', {
+          cartItems: response.data.totalItems,
+        });
         this.cart = response.data;
         this.lastFetch = now;
         this.emitEvent('CART_REFRESHED', { cart: this.cart });
@@ -123,12 +125,15 @@ export class CartService {
     productId: string,
     quantity: number = 1
   ): Promise<CartResponse> {
-    console.log('🛒 CartService.addToCart called with:', { productId, quantity });
-    
+    console.log('🛒 CartService.addToCart called with:', {
+      productId,
+      quantity,
+    });
+
     try {
       const requestData: AddToCartRequest = { productId, quantity };
       console.log('🌐 Making API call to /api/cart with:', requestData);
-      
+
       const response = await apiClient.post<CartResponse>(
         '/api/cart',
         requestData
@@ -137,19 +142,19 @@ export class CartService {
       console.log('📡 API response received:', {
         success: response.success,
         hasData: !!response.data,
-        cartItems: response.data?.totalItems
+        cartItems: response.data?.totalItems,
       });
 
       if (response.success && response.data) {
         this.cart = response.data;
         this.lastFetch = Date.now();
-        
+
         console.log('✅ Cart updated, emitting ITEM_ADDED event');
-        console.log('🔍 Cart data before events:', { 
-          cartId: this.cart.id, 
-          totalItems: this.cart.totalItems 
+        console.log('🔍 Cart data before events:', {
+          cartId: this.cart.id,
+          totalItems: this.cart.totalItems,
         });
-        
+
         // Emit events immediately after updating cart
         this.emitEvent('ITEM_ADDED', {
           productId,
@@ -157,16 +162,16 @@ export class CartService {
           cart: this.cart,
         });
         this.triggerGlobalCartUpdate();
-        
+
         // Force immediate update for UI components
         setTimeout(() => {
           console.log('⏰ setTimeout callback - cart status:', {
             hasCart: !!this.cart,
-            cartItems: this.cart?.totalItems || 'NO CART'
+            cartItems: this.cart?.totalItems || 'NO CART',
           });
           this.emitEvent('CART_REFRESHED', { cart: this.cart });
         }, 0);
-        
+
         return this.cart;
       }
 
@@ -185,9 +190,24 @@ export class CartService {
     quantity: number
   ): Promise<CartResponse> {
     try {
-      const requestData: UpdateCartItemRequest = { quantity };
-      const response = await apiClient.patch<CartResponse>(
-        `/api/cart/items/${itemId}`,
+      // Find the product ID from the current cart item
+      const cartItem = this.cart?.items.find(item => item.id === itemId);
+      if (!cartItem) {
+        throw new Error('Cart item not found');
+      }
+
+      const requestData = {
+        productId: cartItem.productId,
+        quantity,
+      };
+
+      console.log(
+        '🔧 CartService.updateCartItem - using PUT /api/cart with:',
+        requestData
+      );
+
+      const response = await apiClient.put<CartResponse>(
+        '/api/cart',
         requestData
       );
 
@@ -214,8 +234,25 @@ export class CartService {
    */
   async removeFromCart(itemId: string): Promise<CartResponse> {
     try {
-      const response = await apiClient.delete<CartResponse>(
-        `/api/cart/items/${itemId}`
+      // Find the product ID from the current cart item
+      const cartItem = this.cart?.items.find(item => item.id === itemId);
+      if (!cartItem) {
+        throw new Error('Cart item not found');
+      }
+
+      const requestData = {
+        productId: cartItem.productId,
+        quantity: 0,
+      };
+
+      console.log(
+        '🗑️ CartService.removeFromCart - using PUT /api/cart with:',
+        requestData
+      );
+
+      const response = await apiClient.put<CartResponse>(
+        '/api/cart',
+        requestData
       );
 
       if (response.success && response.data) {
@@ -434,9 +471,9 @@ export class CartService {
       cartItems: eventPayload.cart?.totalItems,
       listeners: {
         specific: this.eventListeners.get(event)?.size || 0,
-        wildcard: this.eventListeners.get('*')?.size || 0
+        wildcard: this.eventListeners.get('*')?.size || 0,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Emit to specific event listeners

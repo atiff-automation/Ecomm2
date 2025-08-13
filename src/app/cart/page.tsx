@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,165 +27,78 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-
-interface CartItem {
-  id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    shortDescription?: string;
-    regularPrice: number;
-    memberPrice: number;
-    stockQuantity: number;
-    categories: Array<{
-      category: {
-        id: string;
-        name: string;
-        slug: string;
-        isQualifyingCategory?: boolean;
-      };
-    }>;
-    primaryImage?: {
-      url: string;
-      altText?: string;
-    };
-  };
-}
-
-interface CartSummary {
-  itemCount: number;
-  subtotal: number;
-  memberSubtotal: number;
-  applicableSubtotal: number;
-  potentialSavings: number;
-  qualifyingTotal: number;
-  membershipThreshold: number;
-  isEligibleForMembership: boolean;
-  membershipProgress: number;
-  amountNeededForMembership: number;
-  taxAmount: number;
-  shippingCost: number;
-  total: number;
-}
+import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const {
+    cart,
+    isLoading,
+    error,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    totalItems,
+    subtotal,
+    total,
+    memberDiscount,
+    qualifiesForMembership,
+    membershipProgress,
+    membershipRemaining,
+  } = useCart();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
-  const [loading, setLoading] = useState(true);
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
+  const cartItems = cart?.items || [];
+  const membershipThreshold = 80;
 
-  // Fetch cart data (works for both guest and authenticated users)
-  const fetchCart = useCallback(async () => {
+  // Handle quantity update with loading state
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/cart');
-
-      if (response.ok) {
-        const data = await response.json();
-        setCartItems(data.items || []);
-        setCartSummary(data.summary);
-      } else if (response.status === 401) {
-        // Handle unauthorized case
-        setCartItems([]);
-        setCartSummary(null);
-      } else {
-        // Handle other errors
-        setCartItems([]);
-        setCartSummary(null);
-      }
+      setUpdatingItem(itemId);
+      await updateQuantity(itemId, newQuantity);
     } catch (error) {
-      console.error('Failed to fetch cart:', error);
-      setCartItems([]);
-      setCartSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Update item quantity (works for both guest and authenticated users)
-  const updateQuantity = async (productId: string, newQuantity: number) => {
-    try {
-      setUpdatingItem(productId);
-
-      const response = await fetch('/api/cart', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: newQuantity,
-        }),
-      });
-
-      if (response.ok) {
-        await fetchCart(); // Refresh cart
-        // Emit storage event to notify other components
-        localStorage.setItem('cart_updated', Date.now().toString());
-        window.dispatchEvent(new Event('cart_updated'));
-      } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to update cart');
-      }
-    } catch (error) {
-      console.error('Failed to update cart:', error);
-      alert('Failed to update cart');
+      console.error('Failed to update cart item:', error);
     } finally {
       setUpdatingItem(null);
     }
   };
 
-  // Remove item from cart
-  const removeItem = (productId: string) => {
-    updateQuantity(productId, 0);
+  // Handle item removal
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      setUpdatingItem(itemId);
+      await removeItem(itemId);
+    } catch (error) {
+      console.error('Failed to remove cart item:', error);
+    } finally {
+      setUpdatingItem(null);
+    }
   };
 
-  // Clear entire cart (works for both guest and authenticated users)
-  const clearCart = async () => {
+  // Handle clear cart
+  const handleClearCart = async () => {
     if (!confirm('Are you sure you want to clear your cart?')) {
       return;
     }
-
     try {
-      setLoading(true);
-      const response = await fetch('/api/cart', {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setCartItems([]);
-        setCartSummary(null);
-        // Emit storage event to notify other components
-        localStorage.setItem('cart_updated', Date.now().toString());
-        window.dispatchEvent(new Event('cart_updated'));
-      }
+      await clearCart();
     } catch (error) {
       console.error('Failed to clear cart:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Handle quantity input change
-  const handleQuantityInputChange = (productId: string, value: string) => {
+  const handleQuantityInputChange = (itemId: string, value: string) => {
     const quantity = parseInt(value, 10);
     if (!isNaN(quantity) && quantity >= 0) {
-      updateQuantity(productId, quantity);
+      handleUpdateQuantity(itemId, quantity);
     }
   };
-
-  useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -196,7 +109,7 @@ export default function CartPage() {
 
   // Remove login requirement - allow guest users to view cart
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-12">
@@ -243,8 +156,7 @@ export default function CartPage() {
           <div>
             <h1 className="text-3xl font-bold">Shopping Cart</h1>
             <p className="text-muted-foreground">
-              {cartSummary?.itemCount}{' '}
-              {cartSummary?.itemCount === 1 ? 'item' : 'items'} in your cart
+              {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
             </p>
           </div>
         </div>
@@ -259,7 +171,7 @@ export default function CartPage() {
             </Link>
             <Button
               variant="ghost"
-              onClick={clearCart}
+              onClick={handleClearCart}
               className="text-red-600 hover:text-red-700"
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -335,8 +247,8 @@ export default function CartPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeItem(item.product.id)}
-                        disabled={updatingItem === item.product.id}
+                        onClick={() => handleRemoveItem(item.id)}
+                        disabled={updatingItem === item.id}
                         className="text-red-600 hover:text-red-700 flex-shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -392,11 +304,10 @@ export default function CartPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity - 1)
+                              handleUpdateQuantity(item.id, item.quantity - 1)
                             }
                             disabled={
-                              updatingItem === item.product.id ||
-                              item.quantity <= 1
+                              updatingItem === item.id || item.quantity <= 1
                             }
                             className="w-10 h-10 p-0"
                           >
@@ -409,12 +320,9 @@ export default function CartPage() {
                             max={item.product.stockQuantity}
                             value={item.quantity}
                             onChange={e =>
-                              handleQuantityInputChange(
-                                item.product.id,
-                                e.target.value
-                              )
+                              handleQuantityInputChange(item.id, e.target.value)
                             }
-                            disabled={updatingItem === item.product.id}
+                            disabled={updatingItem === item.id}
                             className="w-16 text-center border-0 focus-visible:ring-0"
                           />
 
@@ -422,10 +330,10 @@ export default function CartPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity + 1)
+                              handleUpdateQuantity(item.id, item.quantity + 1)
                             }
                             disabled={
-                              updatingItem === item.product.id ||
+                              updatingItem === item.id ||
                               item.quantity >= item.product.stockQuantity
                             }
                             className="w-10 h-10 p-0"
@@ -434,7 +342,7 @@ export default function CartPage() {
                           </Button>
                         </div>
 
-                        {updatingItem === item.product.id && (
+                        {updatingItem === item.id && (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         )}
                       </div>
@@ -463,7 +371,7 @@ export default function CartPage() {
         {/* Order Summary Sidebar */}
         <div className="space-y-6">
           {/* Membership Progress */}
-          {cartSummary && !isMember && (
+          {!isMember && subtotal > 0 && (
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -472,17 +380,14 @@ export default function CartPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Progress
-                  value={cartSummary.membershipProgress}
-                  className="h-3"
-                />
+                <Progress value={membershipProgress} className="h-3" />
 
                 <div className="flex justify-between text-sm text-blue-700">
-                  <span>{formatPrice(cartSummary.qualifyingTotal)}</span>
-                  <span>{formatPrice(cartSummary.membershipThreshold)}</span>
+                  <span>{formatPrice(subtotal)}</span>
+                  <span>{formatPrice(membershipThreshold)}</span>
                 </div>
 
-                {cartSummary.isEligibleForMembership ? (
+                {qualifiesForMembership ? (
                   <div className="text-center">
                     <p className="text-sm text-blue-800 font-medium mb-2">
                       🎉 Congratulations! You&apos;re eligible for membership
@@ -495,16 +400,9 @@ export default function CartPage() {
                 ) : (
                   <div className="text-center">
                     <p className="text-sm text-blue-700 mb-1">
-                      {cartSummary.qualifyingTotal > 0
-                        ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more qualifying items to unlock member pricing`
-                        : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items to unlock member pricing`}
+                      Add {formatPrice(membershipRemaining)} more to qualify for
+                      membership
                     </p>
-                    {cartSummary.qualifyingTotal === 0 && (
-                      <p className="text-xs text-blue-600">
-                        💡 Promotional items don't count toward membership - add
-                        regular items to qualify!
-                      </p>
-                    )}
                   </div>
                 )}
               </CardContent>
@@ -512,7 +410,7 @@ export default function CartPage() {
           )}
 
           {/* Order Summary */}
-          {cartSummary && (
+          {totalItems > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
@@ -520,21 +418,14 @@ export default function CartPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span>Subtotal ({cartSummary.itemCount} items)</span>
-                    <span>{formatPrice(cartSummary.subtotal)}</span>
+                    <span>Subtotal ({totalItems} items)</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
 
-                  {isMember && cartSummary.potentialSavings > 0 && (
+                  {isMember && memberDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Member Discount</span>
-                      <span>-{formatPrice(cartSummary.potentialSavings)}</span>
-                    </div>
-                  )}
-
-                  {!isMember && cartSummary.potentialSavings > 0 && (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Potential Member Savings</span>
-                      <span>{formatPrice(cartSummary.potentialSavings)}</span>
+                      <span>-{formatPrice(memberDiscount)}</span>
                     </div>
                   )}
 
@@ -547,7 +438,7 @@ export default function CartPage() {
                 <div className="border-t pt-3">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span>{formatPrice(cartSummary.applicableSubtotal)}</span>
+                    <span>{formatPrice(total)}</span>
                   </div>
                 </div>
 

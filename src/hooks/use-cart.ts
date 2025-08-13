@@ -287,9 +287,9 @@ export function useCartCount(): {
       (payload: CartEventPayload) => {
         console.log('🔔 useCartCount received event:', payload.event, {
           cartItems: payload.cart?.totalItems,
-          timestamp: payload.timestamp
+          timestamp: payload.timestamp,
         });
-        
+
         if (payload.cart) {
           console.log('📊 Updating cart count to:', payload.cart.totalItems);
           setCount(payload.cart.totalItems);

@@ -75,7 +75,7 @@ export async function GET() {
     // Handle guest cart
     if (!session?.user) {
       const guestCartData = await getGuestCartWithProducts();
-      
+
       // Transform guest cart to match CartResponse structure
       return NextResponse.json({
         id: 'guest_cart',
@@ -229,22 +229,25 @@ export async function POST(request: NextRequest) {
       addToGuestCart(productId, quantity);
       // Return full cart data like GET endpoint does
       const guestCartData = await getGuestCartWithProducts();
-      
-      return NextResponse.json({
-        id: 'guest_cart',
-        items: guestCartData.items.map(item => ({
-          id: item.id,
-          productId: item.product.id,
-          quantity: item.quantity,
-          product: item.product,
-        })),
-        totalItems: guestCartData.summary.itemCount,
-        subtotal: guestCartData.summary.subtotal,
-        memberDiscount: guestCartData.summary.potentialSavings,
-        promotionalDiscount: 0,
-        total: guestCartData.summary.total,
-        updatedAt: new Date().toISOString(),
-      }, { status: 201 });
+
+      return NextResponse.json(
+        {
+          id: 'guest_cart',
+          items: guestCartData.items.map(item => ({
+            id: item.id,
+            productId: item.product.id,
+            quantity: item.quantity,
+            product: item.product,
+          })),
+          totalItems: guestCartData.summary.itemCount,
+          subtotal: guestCartData.summary.subtotal,
+          memberDiscount: guestCartData.summary.potentialSavings,
+          promotionalDiscount: 0,
+          total: guestCartData.summary.total,
+          updatedAt: new Date().toISOString(),
+        },
+        { status: 201 }
+      );
     }
 
     // Handle authenticated user cart
@@ -364,25 +367,28 @@ export async function POST(request: NextRequest) {
       session.user.isMember
     );
 
-    return NextResponse.json({
-      id: `cart_${session.user.id}`,
-      items: cartItems.map(item => ({
-        id: item.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        product: {
-          ...item.product,
-          primaryImage: item.product.images[0] || null,
-          images: undefined, // Remove images array to keep response clean
-        },
-      })),
-      totalItems: cartSummary.itemCount,
-      subtotal: cartSummary.subtotal,
-      memberDiscount: cartSummary.potentialSavings,
-      promotionalDiscount: 0, // TODO: Calculate promotional discounts
-      total: cartSummary.total,
-      updatedAt: new Date().toISOString(),
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        id: `cart_${session.user.id}`,
+        items: cartItems.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          product: {
+            ...item.product,
+            primaryImage: item.product.images[0] || null,
+            images: undefined, // Remove images array to keep response clean
+          },
+        })),
+        totalItems: cartSummary.itemCount,
+        subtotal: cartSummary.subtotal,
+        memberDiscount: cartSummary.potentialSavings,
+        promotionalDiscount: 0, // TODO: Calculate promotional discounts
+        total: cartSummary.total,
+        updatedAt: new Date().toISOString(),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error adding to cart:', error);
 
@@ -413,11 +419,65 @@ export async function PUT(request: NextRequest) {
     if (!session?.user) {
       if (quantity === 0) {
         updateGuestCartItem(productId, 0);
-        return NextResponse.json({
-          message: 'Item removed from cart',
+      } else {
+        // Verify product exists and check stock
+        const product = await prisma.product.findFirst({
+          where: {
+            id: productId,
+            status: 'ACTIVE',
+          },
         });
+
+        if (!product) {
+          return NextResponse.json(
+            { message: 'Product not found or unavailable' },
+            { status: 404 }
+          );
+        }
+
+        if (product.stockQuantity < quantity) {
+          return NextResponse.json(
+            {
+              message: 'Insufficient stock',
+              availableStock: product.stockQuantity,
+            },
+            { status: 400 }
+          );
+        }
+
+        updateGuestCartItem(productId, quantity);
       }
 
+      // Return full cart data like GET endpoint does
+      const guestCartData = await getGuestCartWithProducts();
+      
+      return NextResponse.json({
+        id: 'guest_cart',
+        items: guestCartData.items.map(item => ({
+          id: item.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+          product: item.product,
+        })),
+        totalItems: guestCartData.summary.itemCount,
+        subtotal: guestCartData.summary.subtotal,
+        memberDiscount: guestCartData.summary.potentialSavings,
+        promotionalDiscount: 0,
+        total: guestCartData.summary.total,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Handle authenticated user cart
+    // If quantity is 0, remove the item
+    if (quantity === 0) {
+      await prisma.cartItem.deleteMany({
+        where: {
+          userId: session.user.id,
+          productId: productId,
+        },
+      });
+    } else {
       // Verify product exists and check stock
       const product = await prisma.product.findFirst({
         where: {
@@ -443,73 +503,21 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      const guestCart = updateGuestCartItem(productId, quantity);
-      return NextResponse.json({
-        message: 'Cart updated successfully',
-        cartItem: {
-          id: `guest_${productId}`,
-          quantity:
-            guestCart.items.find(item => item.productId === productId)
-              ?.quantity || quantity,
-          product: {
-            id: product.id,
-            name: product.name,
-            regularPrice: Number(product.regularPrice),
-            memberPrice: Number(product.memberPrice),
+      // Update cart item
+      await prisma.cartItem.update({
+        where: {
+          userId_productId: {
+            userId: session.user.id,
+            productId: productId,
           },
         },
+        data: { quantity },
       });
     }
 
-    // Handle authenticated user cart
-    // If quantity is 0, remove the item
-    if (quantity === 0) {
-      await prisma.cartItem.deleteMany({
-        where: {
-          userId: session.user.id,
-          productId: productId,
-        },
-      });
-
-      return NextResponse.json({
-        message: 'Item removed from cart',
-      });
-    }
-
-    // Verify product exists and check stock
-    const product = await prisma.product.findFirst({
-      where: {
-        id: productId,
-        status: 'ACTIVE',
-      },
-    });
-
-    if (!product) {
-      return NextResponse.json(
-        { message: 'Product not found or unavailable' },
-        { status: 404 }
-      );
-    }
-
-    if (product.stockQuantity < quantity) {
-      return NextResponse.json(
-        {
-          message: 'Insufficient stock',
-          availableStock: product.stockQuantity,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Update cart item
-    const cartItem = await prisma.cartItem.update({
-      where: {
-        userId_productId: {
-          userId: session.user.id,
-          productId: productId,
-        },
-      },
-      data: { quantity },
+    // Get full cart data after the update operation (same as GET endpoint)
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId: session.user.id },
       include: {
         product: {
           include: {
@@ -531,18 +539,67 @@ export async function PUT(request: NextRequest) {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({
-      message: 'Cart updated successfully',
-      cartItem: {
-        ...cartItem,
-        product: {
-          ...cartItem.product,
-          primaryImage: cartItem.product.images[0] || null,
-          images: undefined,
-        },
+    // Convert Decimal prices to numbers for calculation
+    const convertedCartItems: CartItemWithProduct[] = cartItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        regularPrice: Number(item.product.regularPrice),
+        memberPrice: Number(item.product.memberPrice),
+        isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice
+          ? Number(item.product.promotionalPrice)
+          : null,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
+        memberOnlyUntil: item.product.memberOnlyUntil,
+        earlyAccessStart: item.product.earlyAccessStart,
+        status: item.product.status,
+        categories: item.product.categories.map(cat => ({
+          category: {
+            id: cat.category.id,
+            name: cat.category.name,
+            slug: cat.category.slug,
+          },
+        })),
+        images: item.product.images.map(img => ({
+          url: img.url,
+          altText: img.altText || '',
+          isPrimary: img.isPrimary,
+        })),
       },
+    }));
+
+    // Calculate cart totals and membership eligibility
+    const cartSummary = await calculateCartSummary(
+      convertedCartItems,
+      session.user.isMember
+    );
+
+    return NextResponse.json({
+      id: `cart_${session.user.id}`,
+      items: cartItems.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        product: {
+          ...item.product,
+          primaryImage: item.product.images[0] || null,
+          images: undefined, // Remove images array to keep response clean
+        },
+      })),
+      totalItems: cartSummary.itemCount,
+      subtotal: cartSummary.subtotal,
+      memberDiscount: cartSummary.potentialSavings,
+      promotionalDiscount: 0, // TODO: Calculate promotional discounts
+      total: cartSummary.total,
+      updatedAt: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error updating cart:', error);

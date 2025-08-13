@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,47 +29,8 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useCart } from '@/hooks/use-cart';
 import React from 'react';
-
-interface CartItem {
-  id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    regularPrice: number;
-    memberPrice: number;
-    stockQuantity: number;
-    categories: Array<{
-      category: {
-        id: string;
-        name: string;
-        slug: string;
-      };
-    }>;
-    primaryImage?: {
-      url: string;
-      altText?: string;
-    };
-  };
-}
-
-interface CartSummary {
-  itemCount: number;
-  subtotal: number;
-  memberSubtotal: number;
-  applicableSubtotal: number;
-  potentialSavings: number;
-  qualifyingTotal: number;
-  membershipThreshold: number;
-  isEligibleForMembership: boolean;
-  membershipProgress: number;
-  amountNeededForMembership: number;
-  taxAmount: number;
-  shippingCost: number;
-  total: number;
-}
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -83,130 +44,63 @@ export function CartSidebar({
   trigger,
 }: CartSidebarProps) {
   const { data: session } = useSession();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    cart,
+    isLoading,
+    error,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    totalItems,
+    subtotal,
+    total,
+    memberDiscount,
+    qualifiesForMembership,
+    membershipProgress,
+    membershipRemaining,
+  } = useCart();
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
+  const cartItems = cart?.items || [];
+  const membershipThreshold = 80;
 
-  // Fetch cart data (works for both guest and authenticated users)
-  const fetchCart = useCallback(async () => {
+  // Handle quantity update with loading state
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/cart');
-
-      if (response.ok) {
-        const data = await response.json();
-        setCartItems(data.items || []);
-        setCartSummary(data.summary);
-      } else {
-        setCartItems([]);
-        setCartSummary(null);
-      }
+      setUpdatingItem(itemId);
+      await updateQuantity(itemId, newQuantity);
     } catch (error) {
-      console.error('Failed to fetch cart:', error);
-      setCartItems([]);
-      setCartSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Update item quantity (works for both guest and authenticated users)
-  const updateQuantity = async (productId: string, newQuantity: number) => {
-    try {
-      setUpdatingItem(productId);
-
-      const response = await fetch('/api/cart', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: newQuantity,
-        }),
-      });
-
-      if (response.ok) {
-        await fetchCart(); // Refresh cart
-        // Emit storage event to notify other components (like checkout page)
-        localStorage.setItem('cart_updated', Date.now().toString());
-        window.dispatchEvent(new Event('cart_updated'));
-      } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to update cart');
-      }
-    } catch (error) {
-      console.error('Failed to update cart:', error);
-      alert('Failed to update cart');
+      console.error('Failed to update cart item:', error);
     } finally {
       setUpdatingItem(null);
     }
   };
 
-  // Remove item from cart
-  const removeItem = (productId: string) => {
-    updateQuantity(productId, 0);
+  // Handle item removal
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      setUpdatingItem(itemId);
+      await removeItem(itemId);
+    } catch (error) {
+      console.error('Failed to remove cart item:', error);
+    } finally {
+      setUpdatingItem(null);
+    }
   };
 
-  // Clear entire cart (works for both guest and authenticated users)
-  const clearCart = async () => {
+  // Handle clear cart
+  const handleClearCart = async () => {
     if (!confirm('Are you sure you want to clear your cart?')) {
       return;
     }
-
     try {
-      setLoading(true);
-      const response = await fetch('/api/cart', {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setCartItems([]);
-        setCartSummary(null);
-        // Emit storage event to notify other components (like checkout page)
-        localStorage.setItem('cart_updated', Date.now().toString());
-        window.dispatchEvent(new Event('cart_updated'));
-      }
+      await clearCart();
     } catch (error) {
       console.error('Failed to clear cart:', error);
-    } finally {
-      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchCart();
-    }
-  }, [isOpen, fetchCart]);
-
-  // Listen for cart updates from other components (like payment completion)
-  useEffect(() => {
-    const handleCartUpdate = () => {
-      fetchCart();
-    };
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'cart_items' && event.newValue === null) {
-        // Cart was cleared from localStorage
-        fetchCart();
-      }
-    };
-
-    // Listen for custom cart update events
-    window.addEventListener('cart_updated', handleCartUpdate);
-    // Listen for localStorage changes (like cart clearing after payment)
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('cart_updated', handleCartUpdate);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [fetchCart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -222,10 +116,9 @@ export function CartSidebar({
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
             Shopping Cart
-            {cartSummary && (
+            {totalItems > 0 && (
               <Badge variant="secondary">
-                {cartSummary.itemCount}{' '}
-                {cartSummary.itemCount === 1 ? 'item' : 'items'}
+                {totalItems} {totalItems === 1 ? 'item' : 'items'}
               </Badge>
             )}
           </SheetTitle>
@@ -233,7 +126,7 @@ export function CartSidebar({
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearCart}
+              onClick={handleClearCart}
               className="text-red-600 hover:text-red-700"
             >
               <Trash2 className="w-4 h-4 mr-1" />
@@ -249,7 +142,7 @@ export function CartSidebar({
       </SheetHeader>
 
       <div className="flex-1 overflow-y-auto py-4">
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
             <span>Loading cart...</span>
@@ -342,14 +235,10 @@ export function CartSidebar({
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.quantity - 1
-                                )
+                                handleUpdateQuantity(item.id, item.quantity - 1)
                               }
                               disabled={
-                                updatingItem === item.product.id ||
-                                item.quantity <= 1
+                                updatingItem === item.id || item.quantity <= 1
                               }
                               className="w-7 h-7 p-0"
                             >
@@ -357,7 +246,7 @@ export function CartSidebar({
                             </Button>
 
                             <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
-                              {updatingItem === item.product.id ? (
+                              {updatingItem === item.id ? (
                                 <Loader2 className="w-3 h-3 animate-spin mx-auto" />
                               ) : (
                                 item.quantity
@@ -368,13 +257,10 @@ export function CartSidebar({
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.quantity + 1
-                                )
+                                handleUpdateQuantity(item.id, item.quantity + 1)
                               }
                               disabled={
-                                updatingItem === item.product.id ||
+                                updatingItem === item.id ||
                                 item.quantity >= item.product.stockQuantity
                               }
                               className="w-7 h-7 p-0"
@@ -386,8 +272,8 @@ export function CartSidebar({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeItem(item.product.id)}
-                            disabled={updatingItem === item.product.id}
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={updatingItem === item.id}
                             className="text-red-600 hover:text-red-700 w-7 h-7 p-0"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -408,7 +294,7 @@ export function CartSidebar({
             </div>
 
             {/* Membership Progress */}
-            {cartSummary && !isMember && (
+            {!isMember && subtotal > 0 && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -418,17 +304,14 @@ export function CartSidebar({
                     </span>
                   </div>
 
-                  <Progress
-                    value={cartSummary.membershipProgress}
-                    className="mb-2 h-2"
-                  />
+                  <Progress value={membershipProgress} className="mb-2 h-2" />
 
                   <div className="flex justify-between text-xs text-blue-700">
-                    <span>{formatPrice(cartSummary.qualifyingTotal)}</span>
-                    <span>{formatPrice(cartSummary.membershipThreshold)}</span>
+                    <span>{formatPrice(subtotal)}</span>
+                    <span>{formatPrice(membershipThreshold)}</span>
                   </div>
 
-                  {cartSummary.isEligibleForMembership ? (
+                  {qualifiesForMembership ? (
                     <p className="text-xs text-blue-800 mt-2 font-medium">
                       🎉 Congratulations! You&apos;re eligible for membership
                       benefits!
@@ -436,15 +319,9 @@ export function CartSidebar({
                   ) : (
                     <div className="mt-2">
                       <p className="text-xs text-blue-700">
-                        {cartSummary.qualifyingTotal > 0
-                          ? `Add ${formatPrice(cartSummary.amountNeededForMembership)} more to qualify`
-                          : `Add ${formatPrice(cartSummary.membershipThreshold)} qualifying items`}
+                        Add {formatPrice(membershipRemaining)} more to qualify
+                        for membership
                       </p>
-                      {cartSummary.qualifyingTotal === 0 && (
-                        <p className="text-xs text-blue-600 mt-1">
-                          💡 Promotional items don't count - add regular items!
-                        </p>
-                      )}
                     </div>
                   )}
                 </CardContent>
@@ -452,35 +329,28 @@ export function CartSidebar({
             )}
 
             {/* Cart Summary */}
-            {cartSummary && (
+            {totalItems > 0 && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Subtotal ({cartSummary.itemCount} items)</span>
-                    <span>{formatPrice(cartSummary.subtotal)}</span>
+                    <span>Subtotal ({totalItems} items)</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
 
-                  {isMember && cartSummary.potentialSavings > 0 && (
+                  {isMember && memberDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Member Discount</span>
-                      <span>-{formatPrice(cartSummary.potentialSavings)}</span>
-                    </div>
-                  )}
-
-                  {!isMember && cartSummary.potentialSavings > 0 && (
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Potential Member Savings</span>
-                      <span>{formatPrice(cartSummary.potentialSavings)}</span>
+                      <span>-{formatPrice(memberDiscount)}</span>
                     </div>
                   )}
 
                   <div className="border-t pt-2">
                     <div className="flex justify-between font-medium">
                       <span>Total</span>
-                      <span>{formatPrice(cartSummary.applicableSubtotal)}</span>
+                      <span>{formatPrice(total)}</span>
                     </div>
                   </div>
 
@@ -519,11 +389,7 @@ export function CartSidebar({
           <Link href="/checkout" onClick={() => onOpenChange(false)}>
             <Button className="w-full">
               Proceed to Checkout
-              {cartSummary && (
-                <span className="ml-2">
-                  {formatPrice(cartSummary.applicableSubtotal)}
-                </span>
-              )}
+              <span className="ml-2">{formatPrice(total)}</span>
             </Button>
           </Link>
         </div>
