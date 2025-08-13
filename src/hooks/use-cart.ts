@@ -182,13 +182,10 @@ export function useCart(): UseCartReturn {
   const memberDiscount = cart?.memberDiscount || 0;
   const promotionalDiscount = cart?.promotionalDiscount || 0;
 
-  const membershipThreshold = 80; // RM 80
-  const qualifiesForMembership = subtotal >= membershipThreshold;
-  const membershipProgress = Math.min(
-    (subtotal / membershipThreshold) * 100,
-    100
-  );
-  const membershipRemaining = Math.max(0, membershipThreshold - subtotal);
+  // Membership qualification data from API (respects product rules)
+  const qualifiesForMembership = cart?.qualifiesForMembership || false;
+  const membershipProgress = cart?.membershipProgress || 0;
+  const membershipRemaining = cart?.membershipRemaining || 80;
 
   // Utility functions
   const isProductInCart = useCallback(

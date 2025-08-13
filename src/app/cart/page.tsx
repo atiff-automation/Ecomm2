@@ -54,7 +54,7 @@ export default function CartPage() {
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = 80;
+  const membershipThreshold = cart?.membershipThreshold || 80;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -383,7 +383,7 @@ export default function CartPage() {
                 <Progress value={membershipProgress} className="h-3" />
 
                 <div className="flex justify-between text-sm text-blue-700">
-                  <span>{formatPrice(subtotal)}</span>
+                  <span>{formatPrice(cart?.qualifyingTotal || 0)}</span>
                   <span>{formatPrice(membershipThreshold)}</span>
                 </div>
 

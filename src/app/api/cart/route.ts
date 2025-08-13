@@ -90,6 +90,12 @@ export async function GET() {
         memberDiscount: guestCartData.summary.potentialSavings,
         promotionalDiscount: 0,
         total: guestCartData.summary.total,
+        // Membership qualification data for guest cart
+        qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
+        membershipThreshold: guestCartData.summary.membershipThreshold || 80,
+        qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+        membershipProgress: guestCartData.summary.membershipProgress || 0,
+        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -178,6 +184,12 @@ export async function GET() {
       memberDiscount: cartSummary.potentialSavings,
       promotionalDiscount: 0, // TODO: Calculate promotional discounts
       total: cartSummary.total,
+      // Membership qualification data
+      qualifyingTotal: cartSummary.qualifyingTotal,
+      membershipThreshold: cartSummary.membershipThreshold,
+      qualifiesForMembership: cartSummary.isEligibleForMembership,
+      membershipProgress: cartSummary.membershipProgress,
+      membershipRemaining: cartSummary.amountNeededForMembership,
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -244,6 +256,12 @@ export async function POST(request: NextRequest) {
           memberDiscount: guestCartData.summary.potentialSavings,
           promotionalDiscount: 0,
           total: guestCartData.summary.total,
+          // Membership qualification data for guest cart
+          qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
+          membershipThreshold: guestCartData.summary.membershipThreshold || 80,
+          qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+          membershipProgress: guestCartData.summary.membershipProgress || 0,
+          membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
           updatedAt: new Date().toISOString(),
         },
         { status: 201 }
@@ -464,6 +482,12 @@ export async function PUT(request: NextRequest) {
         memberDiscount: guestCartData.summary.potentialSavings,
         promotionalDiscount: 0,
         total: guestCartData.summary.total,
+        // Membership qualification data for guest cart
+        qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
+        membershipThreshold: guestCartData.summary.membershipThreshold || 80,
+        qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+        membershipProgress: guestCartData.summary.membershipProgress || 0,
+        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -599,6 +623,12 @@ export async function PUT(request: NextRequest) {
       memberDiscount: cartSummary.potentialSavings,
       promotionalDiscount: 0, // TODO: Calculate promotional discounts
       total: cartSummary.total,
+      // Membership qualification data
+      qualifyingTotal: cartSummary.qualifyingTotal,
+      membershipThreshold: cartSummary.membershipThreshold,
+      qualifiesForMembership: cartSummary.isEligibleForMembership,
+      membershipProgress: cartSummary.membershipProgress,
+      membershipRemaining: cartSummary.amountNeededForMembership,
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {

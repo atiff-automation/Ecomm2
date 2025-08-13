@@ -64,7 +64,7 @@ export function CartSidebar({
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = 80;
+  const membershipThreshold = cart?.membershipThreshold || 80;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -307,7 +307,7 @@ export function CartSidebar({
                   <Progress value={membershipProgress} className="mb-2 h-2" />
 
                   <div className="flex justify-between text-xs text-blue-700">
-                    <span>{formatPrice(subtotal)}</span>
+                    <span>{formatPrice(cart?.qualifyingTotal || 0)}</span>
                     <span>{formatPrice(membershipThreshold)}</span>
                   </div>
 
