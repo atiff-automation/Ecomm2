@@ -302,32 +302,22 @@ export default function HomePage() {
               </div>
             ) : featuredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {featuredProducts.slice(0, 4).map(product => {
-                  const handleAddToCart = async (productId: string) => {
-                    if (!isLoggedIn) {
-                      window.location.href = '/auth/signin';
-                      return;
-                    }
-
-                    try {
-                      await addToCart(productId, 1);
-                    } catch (error) {
-                      // Error handling is done in the useCart hook
-                      console.error('Add to cart failed:', error);
-                    }
-                  };
-
-                  return (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                      size="md"
-                      showDescription={false}
-                      showRating={true}
-                    />
-                  );
-                })}
+                {featuredProducts.slice(0, 4).map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={async (productId: string) => {
+                      try {
+                        await addToCart(productId, 1);
+                      } catch (error) {
+                        console.error('Add to cart failed:', error);
+                      }
+                    }}
+                    size="md"
+                    showDescription={false}
+                    showRating={true}
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-12">

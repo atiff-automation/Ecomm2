@@ -50,6 +50,8 @@ export interface ProductPricing {
   showSavings: boolean;
   showMemberPreview: boolean;
   memberPreviewText?: string;
+  potentialMemberSavings?: number;
+  formattedPotentialMemberSavings?: string;
 
   // Accessibility
   priceDescription: string; // For screen readers

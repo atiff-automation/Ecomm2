@@ -104,7 +104,19 @@ export function useCart(): UseCartReturn {
         await cartService.addToCart(productId, quantity);
         console.log('🎉 cartService.addToCart completed successfully');
         toast.success(
-          `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`
+          `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`, 
+          {
+            duration: 2000,
+            action: {
+              label: 'View Cart',
+              onClick: () => {
+                // Trigger cart sidebar open
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('openCartSidebar'));
+                }
+              }
+            }
+          }
         );
       } catch (err) {
         console.error('💥 useCart.addToCart error:', err);
@@ -123,7 +135,7 @@ export function useCart(): UseCartReturn {
       try {
         setError(null);
         await cartService.updateCartItem(itemId, quantity);
-        toast.success('Cart updated');
+        toast.success('Cart updated', { duration: 1500 });
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to update cart';
@@ -139,7 +151,7 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.removeFromCart(itemId);
-      toast.success('Item removed from cart');
+      toast.success('Item removed from cart', { duration: 1500 });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to remove item';
@@ -153,7 +165,7 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.clearCart();
-      toast.success('Cart cleared');
+      toast.success('Cart cleared', { duration: 1500 });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to clear cart';

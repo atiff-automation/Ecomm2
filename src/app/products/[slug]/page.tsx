@@ -26,9 +26,9 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { toast } from 'sonner';
 import { usePricing } from '@/hooks/use-pricing';
 import { productService } from '@/lib/services/product-service';
+import { useCart } from '@/hooks/use-cart';
 
 interface ProductImage {
   id: string;
@@ -100,12 +100,31 @@ interface Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const { data: session } = useSession();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+
+  // Always call hooks at the top level to maintain consistency
+  // Create a default product structure for hook calls when product is null
+  const hookProduct = product || {
+    id: '',
+    regularPrice: 0,
+    memberPrice: 0,
+    promotionalPrice: null,
+    isPromotional: false,
+    isQualifyingForMembership: false,
+    promotionStartDate: null,
+    promotionEndDate: null,
+    memberOnlyUntil: null,
+    earlyAccessStart: null,
+  };
+  
+  // Always call hooks in the same order
+  const pricing = usePricing(hookProduct);
 
   const slug = params.slug as string;
   const isLoggedIn = !!session?.user;
@@ -142,13 +161,11 @@ export default function ProductDetailPage() {
 
     setAddingToCart(true);
     try {
-      // TODO: Implement add to cart API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      toast.success(
-        `Added ${quantity} ${quantity === 1 ? 'item' : 'items'} to cart`
-      );
-    } catch {
-      toast.error('Failed to add to cart');
+      await addToCart(product.id, quantity);
+      // The success toast is handled by the useCart hook
+    } catch (error) {
+      // The error toast is handled by the useCart hook
+      console.error('Error adding to cart:', error);
     } finally {
       setAddingToCart(false);
     }
@@ -200,16 +217,15 @@ export default function ProductDetailPage() {
     );
   }
 
-  const isOutOfStock = product.stockQuantity === 0;
+  const isOutOfStock = product ? product.stockQuantity === 0 : false;
 
-  // Get centralized pricing information
-  const pricing = usePricing(product);
-
-  // Handle restricted access
-  if (
+  // Check if product is restricted (only when product exists)
+  const isRestricted = product && pricing && 
     pricing.effectivePrice === 0 &&
-    pricing.priceDescription.includes('restricted')
-  ) {
+    pricing.priceDescription.includes('restricted');
+
+  // Render restricted access page if needed
+  if (isRestricted) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
@@ -445,7 +461,7 @@ export default function ProductDetailPage() {
                   <p className="text-sm text-blue-800">
                     <strong>{pricing.memberPreviewText}</strong>
                     <br />
-                    Save {pricing.formattedSavings} with membership
+                    Save {pricing.formattedPotentialMemberSavings || pricing.formattedSavings} with membership
                   </p>
                 </div>
               )}

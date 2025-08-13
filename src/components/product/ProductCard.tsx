@@ -59,12 +59,14 @@ export function ProductCard({
   const primaryImage =
     product.images.find(img => img.isPrimary) || product.images[0];
 
-  // If user doesn't have access, don't render the card
-  if (
+  // Check if user doesn't have access, but don't return early to maintain hook consistency
+  const isRestricted = 
     pricing.effectivePrice === 0 &&
-    pricing.priceDescription.includes('restricted')
-  ) {
-    return null;
+    pricing.priceDescription.includes('restricted');
+
+  // Don't render anything if restricted, but maintain component structure
+  if (isRestricted) {
+    return <div className="hidden" />;
   }
 
   const handleAddToCart = async () => {

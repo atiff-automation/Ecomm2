@@ -87,6 +87,7 @@ export class PricingService {
       earlyAccessStatus
     );
 
+
     return {
       effectivePrice: finalPrice.price,
       originalPrice: finalPrice.originalPrice,
@@ -105,6 +106,8 @@ export class PricingService {
       showSavings: finalPrice.savings > 0,
       showMemberPreview: memberPreview.show,
       memberPreviewText: memberPreview.text,
+      potentialMemberSavings: (memberPreview as any).potentialSavings,
+      formattedPotentialMemberSavings: (memberPreview as any).formattedPotentialSavings,
       priceDescription: this.generatePriceDescription(finalPrice, product),
     };
   }
@@ -273,9 +276,14 @@ export class PricingService {
     }
 
     const memberPriceFormatted = this.formatPrice(product.memberPrice);
+    const potentialSavings = product.regularPrice - product.memberPrice;
+    const formattedPotentialSavings = this.formatPrice(potentialSavings);
+    
     return {
       show: true,
       text: `Member price: ${memberPriceFormatted}`,
+      potentialSavings,
+      formattedPotentialSavings,
     };
   }
 

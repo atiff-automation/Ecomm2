@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart } from 'lucide-react';
@@ -25,6 +25,19 @@ export function CartButton({
 }: CartButtonProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { count: cartCount, isLoading } = useCartCount();
+
+  // Listen for custom event to open cart sidebar
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsCartOpen(true);
+    };
+
+    window.addEventListener('openCartSidebar', handleOpenCart);
+    
+    return () => {
+      window.removeEventListener('openCartSidebar', handleOpenCart);
+    };
+  }, []);
 
   return (
     <>

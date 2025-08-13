@@ -21,6 +21,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import {
   ShoppingCart,
   CreditCard,
@@ -184,7 +185,22 @@ export default function CheckoutPage() {
       if (response.ok) {
         const data = await response.json();
         setCartItems(data.items);
-        setCheckoutSummary(data.summary);
+        
+        // Extract checkout summary from cart data
+        const summary: CheckoutSummary = {
+          itemCount: data.totalItems,
+          subtotal: data.subtotal,
+          memberSubtotal: data.subtotal - (data.memberDiscount || 0),
+          applicableSubtotal: data.total,
+          potentialSavings: data.memberDiscount || 0,
+          shippingCost: 0, // TODO: Calculate shipping
+          taxAmount: 0, // TODO: Calculate tax
+          total: data.total,
+          qualifyingTotal: data.qualifyingTotal || 0,
+          membershipThreshold: data.membershipThreshold || 80,
+          isEligibleForMembership: data.qualifiesForMembership || false,
+        };
+        setCheckoutSummary(summary);
 
         // Only redirect to cart if empty AND not processing payment
         if (data.items.length === 0) {
@@ -1099,6 +1115,49 @@ export default function CheckoutPage() {
                     </div>
                     <p className="text-xs text-blue-700 mt-1">
                       {pendingMembershipMessage}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Membership Progress - for non-members */}
+          {!isMember && checkoutSummary && checkoutSummary.qualifyingTotal > 0 && (
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-blue-800">
+                  <Award className="w-5 h-5" />
+                  Membership Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Progress 
+                  value={Math.min((checkoutSummary.qualifyingTotal / checkoutSummary.membershipThreshold) * 100, 100)} 
+                  className="h-3" 
+                />
+
+                <div className="flex justify-between text-sm text-blue-700">
+                  <span>{formatPrice(checkoutSummary.qualifyingTotal)}</span>
+                  <span>{formatPrice(checkoutSummary.membershipThreshold)}</span>
+                </div>
+
+                {checkoutSummary.isEligibleForMembership ? (
+                  <div className="text-center">
+                    <p className="text-sm text-blue-800 font-medium mb-2">
+                      🎉 Congratulations! You're eligible for membership benefits!
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Your membership will be activated after successful payment
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm text-blue-700 mb-1">
+                      Add {formatPrice(Math.max(0, checkoutSummary.membershipThreshold - checkoutSummary.qualifyingTotal))} more to qualify for membership
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Only qualifying products count towards membership
                     </p>
                   </div>
                 )}

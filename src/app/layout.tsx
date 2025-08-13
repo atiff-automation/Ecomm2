@@ -41,7 +41,24 @@ export default function RootLayout({
         <AuthProvider>
           <MainLayout>{children}</MainLayout>
           <TelegramHealthCheck />
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-right" 
+            duration={3000}
+            pauseWhenPageIsHidden
+            closeButton
+            richColors
+            expand={false}
+            visibleToasts={4}
+            toastOptions={{
+              style: {
+                background: 'white',
+                border: '1px solid #e5e7eb',
+                color: '#374151'
+              },
+              className: 'group',
+              descriptionClassName: 'group-[.toast]:text-muted-foreground'
+            }}
+          />
         </AuthProvider>
       </body>
     </html>
