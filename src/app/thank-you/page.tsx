@@ -62,10 +62,17 @@ interface OrderData {
   createdAt: string;
   items: OrderItem[];
   shippingAddress: {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    address: string;
+    address2?: string;
     city: string;
     state: string;
+    postcode: string;
     country: string;
-  };
+    phone?: string;
+  } | null;
   customer: {
     firstName: string;
     isMember: boolean;
@@ -404,6 +411,11 @@ function ThankYouContent() {
                       {orderData.shippingAddress.firstName}{' '}
                       {orderData.shippingAddress.lastName}
                     </p>
+                    {orderData.shippingAddress.company && (
+                      <p className="text-sm text-gray-600">
+                        {orderData.shippingAddress.company}
+                      </p>
+                    )}
                     <p>{orderData.shippingAddress.address}</p>
                     {orderData.shippingAddress.address2 && (
                       <p>{orderData.shippingAddress.address2}</p>
@@ -414,6 +426,11 @@ function ThankYouContent() {
                       {orderData.shippingAddress.state}
                     </p>
                     <p>{orderData.shippingAddress.country}</p>
+                    {orderData.shippingAddress.phone && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        📞 {orderData.shippingAddress.phone}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

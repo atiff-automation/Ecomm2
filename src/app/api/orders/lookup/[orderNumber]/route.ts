@@ -139,6 +139,34 @@ export async function GET(
             memberSince: true,
           },
         },
+        shippingAddress: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
+            phone: true,
+          },
+        },
+        billingAddress: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
+            phone: true,
+          },
+        },
       },
     });
 
@@ -201,12 +229,19 @@ export async function GET(
             primaryImage: item.product?.images[0] || null,
           },
         })),
-        // Mask sensitive address information
-        shippingAddress: {
-          city: (order.shippingAddress as any)?.city || '',
-          state: (order.shippingAddress as any)?.state || '',
-          country: (order.shippingAddress as any)?.country || '',
-        },
+        // Complete shipping address for order confirmation
+        shippingAddress: order.shippingAddress ? {
+          firstName: order.shippingAddress.firstName,
+          lastName: order.shippingAddress.lastName,
+          company: order.shippingAddress.company,
+          address: order.shippingAddress.addressLine1,
+          address2: order.shippingAddress.addressLine2,
+          city: order.shippingAddress.city,
+          state: order.shippingAddress.state,
+          postcode: order.shippingAddress.postalCode,
+          country: order.shippingAddress.country,
+          phone: order.shippingAddress.phone,
+        } : null,
         customer: {
           firstName: order.user?.firstName || (order.shippingAddress as any)?.firstName || 'Guest',
           isMember: order.user?.isMember || false,
