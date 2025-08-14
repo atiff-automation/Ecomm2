@@ -209,6 +209,7 @@ export async function GET(
     const orderData = {
       success: true,
       data: {
+        id: order.id, // Include ID for receipt generation
         orderNumber: order.orderNumber,
         status: order.status,
         paymentStatus: order.paymentStatus,

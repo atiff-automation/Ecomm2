@@ -50,6 +50,7 @@ interface OrderItem {
 }
 
 interface OrderData {
+  id: string;
   orderNumber: string;
   status: string;
   paymentStatus: string;
@@ -208,8 +209,9 @@ function ThankYouContent() {
     try {
       setDownloadingReceipt(true);
 
+      // Use the new public receipt endpoint with order number
       const response = await fetch(
-        `/api/orders/${orderData.id}/receipt?format=pdf&download=true`
+        `/api/orders/receipt/${orderData.orderNumber}?format=pdf&download=true`
       );
 
       if (!response.ok) {
