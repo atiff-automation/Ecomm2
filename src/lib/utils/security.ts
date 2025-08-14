@@ -118,9 +118,21 @@ export function verifyCSRFToken(token: string, sessionToken: string): boolean {
 export function isTrustedOrigin(request: NextRequest, allowedOrigins: string[]): boolean {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
+  const host = request.headers.get('host');
   
+  // For same-origin requests (no origin header), check if it's from the same host
   if (!origin && !referer) {
-    return false; // No origin information
+    // Allow same-origin requests (common for API calls from the same domain)
+    if (host) {
+      const sameOriginUrls = [
+        `http://${host}`,
+        `https://${host}`,
+      ];
+      return allowedOrigins.some(allowed => 
+        sameOriginUrls.includes(allowed) || allowed === '*'
+      );
+    }
+    return false; // No origin information and no host
   }
   
   const requestOrigin = origin || (referer ? new URL(referer).origin : '');

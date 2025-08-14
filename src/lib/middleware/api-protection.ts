@@ -281,8 +281,16 @@ export const protectionConfigs = {
   // Standard API endpoints
   standard: {
     rateLimiting: { enabled: true, requestsPerMinute: 60 },
-    corsProtection: { enabled: true, allowedOrigins: [] }, // Use default
-    userAgentValidation: { enabled: true, blockSuspicious: true },
+    corsProtection: { 
+      enabled: true, 
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXTAUTH_URL || '',
+        process.env.NEXT_PUBLIC_APP_URL || '',
+      ].filter(Boolean)
+    },
+    userAgentValidation: { enabled: false, blockSuspicious: false }, // Allow all user agents for cart operations
     requireAuth: false,
   } as Partial<ApiProtectionConfig>,
 
