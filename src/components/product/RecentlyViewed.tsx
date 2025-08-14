@@ -14,6 +14,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useAlertDialog } from '@/components/ui/alert-dialog';
+import config from '@/lib/config/app-config';
 
 interface RecentlyViewedItem {
   id: string;
@@ -49,7 +52,7 @@ interface RecentlyViewedProps {
 }
 
 export function RecentlyViewed({
-  limit = 8,
+  limit = config.ui.pagination.defaultPageSize / 2.5, // Default to 8 for UI consistency
   showHeader = true,
   className = '',
   horizontal = true,
@@ -57,6 +60,8 @@ export function RecentlyViewed({
   const { data: session } = useSession();
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);
   const [, setLoading] = useState(false);
+  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const { showAlert, AlertDialog } = useAlertDialog();
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
@@ -85,21 +90,30 @@ export function RecentlyViewed({
 
   // Clear all recently viewed
   const clearRecentlyViewed = async () => {
-    if (!isLoggedIn || !confirm('Clear all recently viewed products?')) {
+    if (!isLoggedIn) {
       return;
     }
 
-    try {
-      const response = await fetch('/api/recently-viewed', {
-        method: 'DELETE',
-      });
+    showConfirmation({
+      title: 'Clear Recently Viewed',
+      description: 'Are you sure you want to clear all recently viewed products? This action cannot be undone.',
+      confirmText: 'Clear All',
+      cancelText: 'Keep History',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          const response = await fetch('/api/recently-viewed', {
+            method: 'DELETE',
+          });
 
-      if (response.ok) {
-        setItems([]);
-      }
-    } catch {
-      // Handle error silently
-    }
+          if (response.ok) {
+            setItems([]);
+          }
+        } catch {
+          // Handle error silently
+        }
+      },
+    });
   };
 
   // Add to cart functionality
@@ -125,7 +139,12 @@ export function RecentlyViewed({
         // Success handled silently for now
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to add to cart');
+        showAlert({
+          title: 'Add to Cart Failed',
+          description: data.message || 'Failed to add item to cart. Please try again.',
+          variant: 'error',
+          confirmText: 'OK',
+        });
       }
     } catch {
       // Handle error silently
@@ -357,6 +376,9 @@ export function RecentlyViewed({
           );
         })}
       </div>
+      
+      <ConfirmationDialog />
+      <AlertDialog />
     </div>
   );
 }

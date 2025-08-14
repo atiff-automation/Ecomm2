@@ -20,6 +20,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { useAlertDialog } from '@/components/ui/alert-dialog';
+import config from '@/lib/config/app-config';
 
 interface RecommendedProduct {
   id: string;
@@ -60,7 +62,7 @@ export function ProductRecommendations({
   type = 'general',
   productId,
   categoryId,
-  limit = 8,
+  limit = config.ui.pagination.defaultPageSize / 2.5, // Default to 8 for UI consistency
   title,
   description,
   showHeader = true,
@@ -72,6 +74,7 @@ export function ProductRecommendations({
   );
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { showAlert, AlertDialog } = useAlertDialog();
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
@@ -138,7 +141,12 @@ export function ProductRecommendations({
         // Success handled silently for now
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to add to cart');
+        showAlert({
+          title: 'Add to Cart Failed',
+          description: data.message || 'Failed to add item to cart. Please try again.',
+          variant: 'error',
+          confirmText: 'OK',
+        });
       }
     } catch {
       // Handle error silently
@@ -406,6 +414,8 @@ export function ProductRecommendations({
           );
         })}
       </div>
+      
+      <AlertDialog />
     </div>
   );
 }

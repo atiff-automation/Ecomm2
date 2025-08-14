@@ -149,12 +149,12 @@ export interface CartResponse {
   memberDiscount: number;
   promotionalDiscount: number;
   total: number;
-  // Membership qualification data
-  qualifyingTotal: number;
-  membershipThreshold: number;
-  qualifiesForMembership: boolean;
-  membershipProgress: number;
-  membershipRemaining: number;
+  // Membership qualification data (optional for backward compatibility)
+  qualifyingTotal?: number;
+  membershipThreshold?: number;
+  qualifiesForMembership?: boolean;
+  membershipProgress?: number;
+  membershipRemaining?: number;
   updatedAt: string;
 }
 

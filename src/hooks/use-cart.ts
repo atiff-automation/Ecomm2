@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { cartService, CartEventPayload } from '@/lib/services/cart-service';
 import { CartResponse, CartItem } from '@/lib/types/api';
 import { toast } from 'sonner';
+import config from '@/lib/config/app-config';
 
 interface UseCartReturn {
   // Cart state
@@ -106,7 +107,7 @@ export function useCart(): UseCartReturn {
         toast.success(
           `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`, 
           {
-            duration: 2000,
+            duration: config.ui.loading.animationDuration * 10,
             action: {
               label: 'View Cart',
               onClick: () => {
@@ -135,7 +136,7 @@ export function useCart(): UseCartReturn {
       try {
         setError(null);
         await cartService.updateCartItem(itemId, quantity);
-        toast.success('Cart updated', { duration: 1500 });
+        toast.success('Cart updated', { duration: config.ui.loading.animationDuration * 7.5 });
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to update cart';
@@ -151,7 +152,7 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.removeFromCart(itemId);
-      toast.success('Item removed from cart', { duration: 1500 });
+      toast.success('Item removed from cart', { duration: config.ui.loading.animationDuration * 7.5 });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to remove item';
@@ -165,7 +166,7 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.clearCart();
-      toast.success('Cart cleared', { duration: 1500 });
+      toast.success('Cart cleared', { duration: config.ui.loading.animationDuration * 7.5 });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to clear cart';
@@ -197,7 +198,7 @@ export function useCart(): UseCartReturn {
   // Membership qualification data from API (respects product rules)
   const qualifiesForMembership = cart?.qualifiesForMembership || false;
   const membershipProgress = cart?.membershipProgress || 0;
-  const membershipRemaining = cart?.membershipRemaining || 80;
+  const membershipRemaining = cart?.membershipRemaining || config.business.membership.threshold;
 
   // Utility functions
   const isProductInCart = useCallback(
@@ -345,8 +346,8 @@ export function useMembershipEligibility(): {
   const [data, setData] = useState({
     eligible: false,
     progress: 0,
-    remaining: 80,
-    threshold: 80,
+    remaining: config.business.membership.threshold,
+    threshold: config.business.membership.threshold,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

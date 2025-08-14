@@ -8,6 +8,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader } from './card';
+import { useReducedMotion } from '@/hooks/use-accessibility';
 
 // Base skeleton component
 export interface SkeletonProps {
@@ -25,6 +26,7 @@ export function Skeleton({
   height,
   animation = 'pulse',
 }: SkeletonProps) {
+  const prefersReducedMotion = useReducedMotion();
   const baseClasses = 'bg-muted';
 
   const variantClasses = {
@@ -34,8 +36,8 @@ export function Skeleton({
   };
 
   const animationClasses = {
-    pulse: 'animate-pulse',
-    wave: 'animate-pulse', // Could be enhanced with custom wave animation
+    pulse: prefersReducedMotion ? '' : 'animate-pulse',
+    wave: prefersReducedMotion ? '' : 'animate-pulse', // Could be enhanced with custom wave animation
     none: '',
   };
 
@@ -53,6 +55,9 @@ export function Skeleton({
         className
       )}
       style={style}
+      role="status"
+      aria-label="Loading content"
+      aria-busy="true"
     />
   );
 }
@@ -69,10 +74,20 @@ export function ProductCardSkeleton({
   showDescription = true,
   showRating = true,
 }: ProductCardSkeletonProps) {
+  const prefersReducedMotion = useReducedMotion();
+  
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card 
+      className={cn('overflow-hidden', className)}
+      role="status"
+      aria-label="Loading product information"
+      aria-busy="true"
+    >
       {/* Product image */}
-      <div className="aspect-square bg-muted animate-pulse" />
+      <div 
+        className={`aspect-square bg-muted ${prefersReducedMotion ? '' : 'animate-pulse'}`}
+        aria-label="Loading product image"
+      />
 
       <CardContent className="p-4 space-y-3">
         {/* Product name */}

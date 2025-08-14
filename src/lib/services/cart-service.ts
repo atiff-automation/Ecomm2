@@ -14,6 +14,7 @@ import {
   AddToCartRequest,
   UpdateCartItemRequest,
 } from '@/lib/types/api';
+import config from '@/lib/config/app-config';
 
 export interface CartSummary {
   totalItems: number;
@@ -47,7 +48,7 @@ export class CartService {
   private eventListeners = new Map<string, Set<CartEventListener>>();
   private isLoading = false;
   private lastFetch: number = 0;
-  private readonly CACHE_TTL = 30 * 1000; // 30 seconds cache for cart data
+  private readonly CACHE_TTL = config.ui.loading.debounceMs * 100; // Cache based on UI debounce settings
 
   private constructor() {
     // Legacy global cart update listener - removed refreshCart() call to prevent race conditions
@@ -328,7 +329,7 @@ export class CartService {
   async getCartSummary(): Promise<CartSummary> {
     try {
       const cart = await this.getCart();
-      const membershipThreshold = 80; // RM 80 for membership
+      const membershipThreshold = config.business.membership.threshold;
 
       return {
         totalItems: cart.totalItems,
@@ -400,7 +401,7 @@ export class CartService {
 
       // Fallback calculation
       const cart = await this.getCart();
-      const threshold = 80;
+      const threshold = config.business.membership.threshold;
       const remaining = Math.max(0, threshold - cart.subtotal);
 
       return {
@@ -414,8 +415,8 @@ export class CartService {
       return {
         eligible: false,
         progress: 0,
-        remaining: 80,
-        threshold: 80,
+        remaining: config.business.membership.threshold,
+        threshold: config.business.membership.threshold,
       };
     }
   }
@@ -531,6 +532,11 @@ export class CartService {
       memberDiscount: 0,
       promotionalDiscount: 0,
       total: 0,
+      qualifyingTotal: 0,
+      membershipThreshold: config.business.membership.threshold,
+      qualifiesForMembership: false,
+      membershipProgress: 0,
+      membershipRemaining: config.business.membership.threshold,
       updatedAt: new Date().toISOString(),
     };
   }

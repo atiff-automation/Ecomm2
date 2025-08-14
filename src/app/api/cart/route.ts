@@ -2,6 +2,7 @@
  * Shopping Cart API - Malaysian E-commerce Platform
  * Handles cart operations with membership eligibility calculation
  * Supports both authenticated users and guest checkout
+ * Protected with comprehensive security middleware
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,6 +24,8 @@ import {
   getBestPrice,
   productQualifiesForMembership,
 } from '@/lib/promotions/promotion-utils';
+import { withApiProtection, protectionConfigs } from '@/lib/middleware/api-protection';
+import config from '@/lib/config/app-config';
 
 interface CartItemWithProduct {
   id: string;
@@ -68,7 +71,8 @@ const updateCartSchema = z.object({
 /**
  * GET /api/cart - Get cart (authenticated user or guest)
  */
-export async function GET() {
+// Internal handler functions
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -92,10 +96,10 @@ export async function GET() {
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
-        membershipThreshold: guestCartData.summary.membershipThreshold || 80,
+        membershipThreshold: guestCartData.summary.membershipThreshold || config.business.membership.threshold,
         qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
         membershipProgress: guestCartData.summary.membershipProgress || 0,
-        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
+        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || config.business.membership.threshold) - (guestCartData.summary.qualifyingTotal || 0)),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -204,7 +208,7 @@ export async function GET() {
 /**
  * POST /api/cart - Add item to cart (authenticated user or guest)
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
@@ -433,7 +437,7 @@ export async function POST(request: NextRequest) {
 /**
  * PUT /api/cart - Update cart item quantity (authenticated user or guest)
  */
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
@@ -490,10 +494,10 @@ export async function PUT(request: NextRequest) {
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
-        membershipThreshold: guestCartData.summary.membershipThreshold || 80,
+        membershipThreshold: guestCartData.summary.membershipThreshold || config.business.membership.threshold,
         qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
         membershipProgress: guestCartData.summary.membershipProgress || 0,
-        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
+        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || config.business.membership.threshold) - (guestCartData.summary.qualifyingTotal || 0)),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -657,7 +661,7 @@ export async function PUT(request: NextRequest) {
 /**
  * DELETE /api/cart - Clear entire cart (authenticated user or guest)
  */
-export async function DELETE() {
+async function handleDELETE() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -699,7 +703,7 @@ async function calculateCartSummary(
       key: 'membership_threshold',
     },
   });
-  const membershipThreshold = Number(thresholdConfig?.value) || 80;
+  const membershipThreshold = Number(thresholdConfig?.value) || config.business.membership.threshold;
 
   let totalItems = 0;
   let subtotal = 0;
@@ -792,3 +796,9 @@ async function calculateCartSummary(
     total: applicableSubtotal,
   };
 }
+
+// Protected API exports with security middleware
+export const GET = withApiProtection(handleGET, protectionConfigs.standard);
+export const POST = withApiProtection(handlePOST, protectionConfigs.standard);
+export const PUT = withApiProtection(handlePUT, protectionConfigs.standard);
+export const DELETE = withApiProtection(handleDELETE, protectionConfigs.standard);

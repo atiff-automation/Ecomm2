@@ -30,6 +30,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useCart } from '@/hooks/use-cart';
+import config from '@/lib/config/app-config';
+import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import React from 'react';
 
 interface CartSidebarProps {
@@ -60,11 +62,12 @@ export function CartSidebar({
     membershipRemaining,
   } = useCart();
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
+  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = cart?.membershipThreshold || 80;
+  const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -92,14 +95,20 @@ export function CartSidebar({
 
   // Handle clear cart
   const handleClearCart = async () => {
-    if (!confirm('Are you sure you want to clear your cart?')) {
-      return;
-    }
-    try {
-      await clearCart();
-    } catch (error) {
-      console.error('Failed to clear cart:', error);
-    }
+    showConfirmation({
+      title: 'Clear Cart',
+      description: 'Are you sure you want to clear your cart? This action cannot be undone.',
+      confirmText: 'Clear Cart',
+      cancelText: 'Keep Items',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await clearCart();
+        } catch (error) {
+          console.error('Failed to clear cart:', error);
+        }
+      },
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -281,7 +290,7 @@ export function CartSidebar({
                         </div>
 
                         {/* Stock Warning */}
-                        {item.product.stockQuantity <= 5 && (
+                        {item.product.stockQuantity <= config.business.product.lowStockThreshold && (
                           <p className="text-xs text-orange-600 mt-1">
                             Only {item.product.stockQuantity} left in stock
                           </p>
@@ -401,6 +410,8 @@ export function CartSidebar({
           </Link>
         </div>
       )}
+      
+      <ConfirmationDialog />
     </>
   );
 

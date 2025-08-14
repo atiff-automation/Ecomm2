@@ -34,6 +34,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { productService } from '@/lib/services/product-service';
 import { categoryService } from '@/lib/services/category-service';
 import { useCart } from '@/hooks/use-cart';
+import config from '@/lib/config/app-config';
 
 interface Product {
   id: string;
@@ -390,7 +391,7 @@ export default function HomePage() {
         {/* Product Recommendations */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
-            <ProductRecommendations type="general" limit={8} />
+            <ProductRecommendations type="general" limit={Math.floor(config.ui.pagination.defaultPageSize / 2.5)} />
           </div>
         </section>
       </div>

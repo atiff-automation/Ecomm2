@@ -28,6 +28,8 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/use-cart';
+import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import config from '@/lib/config/app-config';
 
 export default function CartPage() {
   const { data: session } = useSession();
@@ -50,11 +52,12 @@ export default function CartPage() {
 
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
+  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = cart?.membershipThreshold || 80;
+  const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -82,14 +85,20 @@ export default function CartPage() {
 
   // Handle clear cart
   const handleClearCart = async () => {
-    if (!confirm('Are you sure you want to clear your cart?')) {
-      return;
-    }
-    try {
-      await clearCart();
-    } catch (error) {
-      console.error('Failed to clear cart:', error);
-    }
+    showConfirmation({
+      title: 'Clear Cart',
+      description: 'Are you sure you want to clear your cart? This action cannot be undone.',
+      confirmText: 'Clear Cart',
+      cancelText: 'Keep Items',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await clearCart();
+        } catch (error) {
+          console.error('Failed to clear cart:', error);
+        }
+      },
+    });
   };
 
   // Handle quantity input change
@@ -491,6 +500,8 @@ export default function CartPage() {
           )}
         </div>
       </div>
+      
+      <ConfirmationDialog />
     </div>
   );
 }

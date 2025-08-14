@@ -50,7 +50,6 @@ interface OrderItem {
 }
 
 interface OrderData {
-  id: string;
   orderNumber: string;
   status: string;
   paymentStatus: string;
@@ -63,22 +62,21 @@ interface OrderData {
   createdAt: string;
   items: OrderItem[];
   shippingAddress: {
-    firstName: string;
-    lastName: string;
-    address: string;
-    address2?: string;
     city: string;
     state: string;
-    postcode: string;
     country: string;
   };
   customer: {
     firstName: string;
-    lastName: string;
-    email: string;
     isMember: boolean;
     memberSince?: string;
   };
+}
+
+interface SecureOrderResponse {
+  success: boolean;
+  data: OrderData;
+  timestamp: string;
 }
 
 function ThankYouContent() {
@@ -152,20 +150,26 @@ function ThankYouContent() {
     try {
       setLoading(true);
 
-      // Search for order by order number using public API
+      // Search for order by order number using secured public API
       console.log('🔍 Fetching order details for:', orderRef);
       const response = await fetch(`/api/orders/lookup/${orderRef}`);
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch order' }));
         if (response.status === 404) {
-          throw new Error('Order not found');
+          throw new Error('Order not found or no longer available');
         }
-        throw new Error(`Failed to fetch order: ${response.statusText}`);
+        throw new Error(errorData.message || `Failed to fetch order: ${response.statusText}`);
       }
 
-      const orderData = await response.json();
-      console.log('✅ Order data received:', orderData);
-      setOrderData(orderData);
+      const apiResponse: SecureOrderResponse = await response.json();
+      
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error('Invalid order data received');
+      }
+      
+      console.log('✅ Secure order data received:', apiResponse.data);
+      setOrderData(apiResponse.data);
     } catch (error) {
       console.error('Error fetching order:', error);
       setError('Failed to load order details');

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -42,6 +42,14 @@ import { CartButton } from '@/components/cart/CartButton';
 export function Header() {
   const { isLoggedIn, isMember, isLoading, signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  const skipToContent = () => {
+    const target = document.getElementById('main-content');
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
@@ -55,14 +63,34 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+    <div>
+      {/* Skip to main content link */}
+      <a
+        href="#main-content"
+        onClick={(e) => {
+          e.preventDefault();
+          skipToContent();
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
+      <header 
+        className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        role="banner"
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link 
+              href="/" 
+              className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"
+              aria-label="JRM E-commerce - Go to homepage"
+            >
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">JRM</span>
+                <span className="text-white font-bold text-sm" aria-hidden="true">JRM</span>
               </div>
               <span className="hidden sm:inline-block font-bold text-xl">
                 E-commerce
@@ -70,12 +98,16 @@ export function Header() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6 ml-6">
+            <nav 
+              className="hidden md:flex items-center space-x-6 ml-6"
+              role="navigation"
+              aria-label="Main navigation"
+            >
               {navigationItems.map(item => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm font-medium transition-colors hover:text-primary"
+                  className="text-sm font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm px-2 py-1"
                 >
                   {item.label}
                 </Link>
@@ -92,8 +124,13 @@ export function Header() {
           <div className="flex items-center gap-2">
             {/* Search Button - Mobile */}
             <Link href="/search" className="lg:hidden">
-              <Button variant="ghost" size="sm">
-                <Search className="w-5 h-5" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                aria-label="Search products"
+              >
+                <Search className="w-5 h-5" aria-hidden="true" />
+                <span className="sr-only">Search</span>
               </Button>
             </Link>
 
@@ -110,6 +147,9 @@ export function Header() {
                   <Button
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
+                    aria-label={`User menu for ${user?.name || 'user'}`}
+                    aria-expanded={false}
+                    aria-haspopup="menu"
                   >
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-primary-foreground">
@@ -338,5 +378,6 @@ export function Header() {
         </div>
       </div>
     </header>
+    </div>
   );
 }
