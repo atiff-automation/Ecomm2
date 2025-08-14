@@ -110,13 +110,13 @@ function ThankYouContent() {
     }
     
     // Clear localStorage
-    ['cart_items', 'guest_cart', 'shopping_cart'].forEach(key => {
+    ['cart_items', 'guest_cart', 'shopping_cart'].forEach((key) => {
       localStorage.removeItem(key);
     });
     
     // Broadcast cart clearing events
     if (typeof window !== 'undefined') {
-      ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach(eventName => {
+      ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach((eventName) => {
         window.dispatchEvent(new CustomEvent(eventName));
       });
     }
@@ -517,20 +517,16 @@ function ThankYouContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>You'll receive an order confirmation email shortly</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>
-                      We'll send shipping updates as your order is processed
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Track your order anytime in your account</p>
-                  </div>
+                  {[
+                    "You'll receive an order confirmation email shortly",
+                    "We'll send shipping updates as your order is processed",
+                    "Track your order anytime in your account"
+                  ].map((text, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <p>{text}</p>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="pt-3 space-y-2">
