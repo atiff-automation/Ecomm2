@@ -284,12 +284,12 @@ export default function CartPage() {
                             );
                           }
 
-                          // Get the best price for this product
+                          // Get the best price for this product (convert strings to numbers)
                           const bestPrice = getBestPrice({
-                            regularPrice: item.product.regularPrice,
-                            memberPrice: item.product.memberPrice,
+                            regularPrice: Number(item.product.regularPrice),
+                            memberPrice: Number(item.product.memberPrice),
                             isPromotional: item.product.isPromotional || false,
-                            promotionalPrice: item.product.promotionalPrice,
+                            promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
                             promotionStartDate: item.product.promotionStartDate,
                             promotionEndDate: item.product.promotionEndDate,
                             isQualifyingForMembership: item.product.isQualifyingForMembership || false,
@@ -297,60 +297,41 @@ export default function CartPage() {
                             earlyAccessStart: item.product.earlyAccessStart
                           }, isMember);
 
-                          console.log(`🔍 Cart Product Pricing Debug for ${item.product.name}:`, {
-                            regularPrice: item.product.regularPrice,
-                            memberPrice: item.product.memberPrice,
-                            promotionalPrice: item.product.promotionalPrice,
-                            isPromotional: item.product.isPromotional,
-                            isMember,
-                            freshMembershipLoading: freshMembership.loading,
-                            bestPrice: {
-                              price: bestPrice.price,
-                              priceType: bestPrice.priceType,
-                              savings: bestPrice.savings
-                            }
-                          });
-
-                          const getBadgeVariant = (priceType: string) => {
-                            switch (priceType) {
-                              case 'promotional':
-                                return 'destructive'; // Red for promotional
-                              case 'member':
-                                return 'secondary'; // Default for member
-                              case 'early-access':
-                                return 'default'; // Blue for early access
-                              default:
-                                return 'outline'; // Regular price
+                          // Price type styling configuration (centralized)
+                          const priceTypeConfig = {
+                            promotional: {
+                              textColor: 'text-red-600',
+                              badgeVariant: 'destructive' as const,
+                              badgeText: 'Promotional'
+                            },
+                            member: {
+                              textColor: 'text-green-600', 
+                              badgeVariant: 'secondary' as const,
+                              badgeText: 'Member Price'
+                            },
+                            'early-access': {
+                              textColor: 'text-blue-600',
+                              badgeVariant: 'default' as const, 
+                              badgeText: 'Early Access'
+                            },
+                            regular: {
+                              textColor: 'text-gray-900',
+                              badgeVariant: 'outline' as const,
+                              badgeText: 'Regular Price'
                             }
                           };
 
-                          const getBadgeText = (priceType: string) => {
-                            switch (priceType) {
-                              case 'promotional':
-                                return 'Promotional';
-                              case 'member':
-                                return 'Member Price';
-                              case 'early-access':
-                                return 'Early Access';
-                              default:
-                                return 'Regular Price';
-                            }
-                          };
+                          const currentConfig = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
 
                           return (
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className={`font-bold text-lg ${
-                                  bestPrice.priceType === 'promotional' ? 'text-red-600' :
-                                  bestPrice.priceType === 'member' ? 'text-green-600' :
-                                  bestPrice.priceType === 'early-access' ? 'text-blue-600' :
-                                  'text-gray-900'
-                                }`}>
+                                <span className={`font-bold text-lg ${currentConfig.textColor}`}>
                                   {formatPrice(bestPrice.price)}
                                 </span>
                                 {bestPrice.priceType !== 'regular' && (
-                                  <Badge variant={getBadgeVariant(bestPrice.priceType)} className="text-xs">
-                                    {getBadgeText(bestPrice.priceType)}
+                                  <Badge variant={currentConfig.badgeVariant} className="text-xs">
+                                    {currentConfig.badgeText}
                                   </Badge>
                                 )}
                               </div>
@@ -359,12 +340,7 @@ export default function CartPage() {
                                   <span className="text-muted-foreground line-through">
                                     {formatPrice(bestPrice.originalPrice)}
                                   </span>
-                                  <span className={`font-medium ${
-                                    bestPrice.priceType === 'promotional' ? 'text-red-600' :
-                                    bestPrice.priceType === 'member' ? 'text-green-600' :
-                                    bestPrice.priceType === 'early-access' ? 'text-blue-600' :
-                                    'text-gray-600'
-                                  }`}>
+                                  <span className={`font-medium ${currentConfig.textColor}`}>
                                     Save {formatPrice(bestPrice.savings)}
                                   </span>
                                 </div>
