@@ -272,6 +272,18 @@ export default function CartPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         {(() => {
+                          // Wait for fresh membership data to load before calculating pricing
+                          if (freshMembership.loading) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-lg text-gray-400">
+                                  {formatPrice(item.product.regularPrice)}
+                                </span>
+                                <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+                              </div>
+                            );
+                          }
+
                           // Get the best price for this product
                           const bestPrice = getBestPrice({
                             regularPrice: item.product.regularPrice,
@@ -284,6 +296,20 @@ export default function CartPage() {
                             memberOnlyUntil: item.product.memberOnlyUntil,
                             earlyAccessStart: item.product.earlyAccessStart
                           }, isMember);
+
+                          console.log(`🔍 Cart Product Pricing Debug for ${item.product.name}:`, {
+                            regularPrice: item.product.regularPrice,
+                            memberPrice: item.product.memberPrice,
+                            promotionalPrice: item.product.promotionalPrice,
+                            isPromotional: item.product.isPromotional,
+                            isMember,
+                            freshMembershipLoading: freshMembership.loading,
+                            bestPrice: {
+                              price: bestPrice.price,
+                              priceType: bestPrice.priceType,
+                              savings: bestPrice.savings
+                            }
+                          });
 
                           const getBadgeVariant = (priceType: string) => {
                             switch (priceType) {
