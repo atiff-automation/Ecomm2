@@ -56,6 +56,14 @@ export default function MemberOrdersPage() {
     }
   };
 
+  // Consistent currency formatting
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+    }).format(price);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DELIVERED':
@@ -168,7 +176,7 @@ export default function MemberOrdersPage() {
                             </span>
                             <span className="flex items-center">
                               <DollarSign className="h-4 w-4 mr-1" />
-                              RM {order.total.toFixed(2)}
+                              {formatPrice(order.total)}
                             </span>
                             <span>
                               {order.itemCount} item

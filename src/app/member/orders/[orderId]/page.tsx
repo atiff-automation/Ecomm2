@@ -119,6 +119,43 @@ export default function OrderDetailPage() {
     }).format(price);
   };
 
+  // Determine price type and savings information for order items
+  const getPriceTypeInfo = (item: OrderItem, order: Order) => {
+    // If no discount applied, it's regular price
+    if (item.appliedPrice >= item.regularPrice) {
+      return {
+        priceType: 'regular',
+        savingsText: '',
+        savingsColor: ''
+      };
+    }
+
+    // Check if applied price matches member price (indicating member pricing was used)
+    if (item.appliedPrice === item.memberPrice) {
+      return {
+        priceType: 'member',
+        savingsText: 'Member savings',
+        savingsColor: 'text-green-600'
+      };
+    }
+
+    // If applied price is lower than member price, it's likely promotional
+    if (item.appliedPrice < item.memberPrice) {
+      return {
+        priceType: 'promotional',
+        savingsText: 'Promotional savings',
+        savingsColor: 'text-blue-600'
+      };
+    }
+
+    // Fallback for edge cases
+    return {
+      priceType: 'discounted',
+      savingsText: 'Savings',
+      savingsColor: 'text-gray-600'
+    };
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-MY', {
       year: 'numeric',
@@ -271,15 +308,18 @@ export default function OrderDetailPage() {
                     <p className="text-sm text-muted-foreground">
                       {formatPrice(item.appliedPrice)} each
                     </p>
-                    {item.appliedPrice < item.regularPrice && (
-                      <p className="text-xs text-green-600">
-                        Member savings:{' '}
-                        {formatPrice(
-                          (item.regularPrice - item.appliedPrice) *
-                            item.quantity
-                        )}
-                      </p>
-                    )}
+                    {item.appliedPrice < item.regularPrice && (() => {
+                      const priceInfo = getPriceTypeInfo(item, order);
+                      return priceInfo.savingsText && (
+                        <p className={`text-xs ${priceInfo.savingsColor}`}>
+                          {priceInfo.savingsText}:{' '}
+                          {formatPrice(
+                            (item.regularPrice - item.appliedPrice) *
+                              item.quantity
+                          )}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

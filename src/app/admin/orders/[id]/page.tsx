@@ -187,6 +187,48 @@ export default function AdminOrderDetailsPage() {
     }).format(price);
   };
 
+  // Determine price type and badge information for order items
+  const getPriceTypeInfo = (item: OrderItem, order: OrderDetails) => {
+    // If no discount applied, it's regular price
+    if (item.finalPrice >= item.price) {
+      return {
+        priceType: 'regular',
+        badgeText: '',
+        badgeVariant: 'outline' as const,
+        textColor: 'text-gray-900'
+      };
+    }
+
+    // If there's a discount, determine if it's member or promotional based on order-level discounts
+    const hasPromotionalDiscount = order.discountAmount && order.discountAmount > 0;
+    const hasMemberDiscount = order.memberDiscount && order.memberDiscount > 0;
+
+    // If both discounts exist, prioritize promotional (as that's what our logic does)
+    if (hasPromotionalDiscount) {
+      return {
+        priceType: 'promotional',
+        badgeText: 'Promotional',
+        badgeVariant: 'destructive' as const,
+        textColor: 'text-red-600'
+      };
+    } else if (hasMemberDiscount) {
+      return {
+        priceType: 'member',
+        badgeText: 'Member Price',
+        badgeVariant: 'secondary' as const,
+        textColor: 'text-green-600'
+      };
+    } else {
+      // Fallback for unknown discount type
+      return {
+        priceType: 'discounted',
+        badgeText: 'Discounted',
+        badgeVariant: 'outline' as const,
+        textColor: 'text-gray-700'
+      };
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('en-MY', {
       year: 'numeric',
@@ -347,11 +389,14 @@ export default function AdminOrderDetailsPage() {
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                           <span>Quantity: {item.quantity}</span>
                           <span>Price: {formatPrice(item.finalPrice)}</span>
-                          {item.finalPrice < item.price && (
-                            <Badge variant="secondary" className="text-xs">
-                              Member Price
-                            </Badge>
-                          )}
+                          {(() => {
+                            const priceInfo = getPriceTypeInfo(item, order);
+                            return priceInfo.badgeText && (
+                              <Badge variant={priceInfo.badgeVariant} className="text-xs">
+                                {priceInfo.badgeText}
+                              </Badge>
+                            );
+                          })()}
                         </div>
                       </div>
                       <div className="text-right">
@@ -578,8 +623,8 @@ export default function AdminOrderDetailsPage() {
                 )}
 
                 {order.discountAmount && order.discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount</span>
+                  <div className="flex justify-between text-sm text-blue-600">
+                    <span>Promotional Discount</span>
                     <span>-{formatPrice(order.discountAmount)}</span>
                   </div>
                 )}
