@@ -194,27 +194,41 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Refresh cart to ensure we have latest data
-      await refreshCart();
+      // DON'T refresh cart here - use cached data from cart service to avoid fetching stale database data
 
       // Check if we have payment parameters in URL - if so, don't redirect to cart
       const urlParams = new URLSearchParams(window.location.search);
       const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
       
-      // Wait a brief moment for guest cart transfer to complete if needed
-      // This prevents timing issues during authentication state changes
-      if (totalItems === 0 && session?.user && !hasPaymentParams) {
+      // FIXED: Only check for empty cart if cart is actually loaded
+      // Don't trigger guest cart transfer if cart is still loading or null
+      const currentCartItems = cart?.items?.length || 0;
+      const isCartLoaded = !cartLoading && cart !== null;
+      
+      if (currentCartItems === 0 && session?.user && !hasPaymentParams && isCartLoaded) {
         console.log('⏰ Cart appears empty but user is authenticated, waiting for guest cart transfer...');
+        console.log('📊 Current cart state:', { 
+          totalItems, 
+          currentCartItems, 
+          cartItemsCount: cart?.items?.length,
+          cartLoading,
+          isCartLoaded,
+          cartIsNull: cart === null
+        });
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await refreshCart();
+        // NOTE: We should avoid refreshCart here to prevent fetching stale data
+        // The cart service should already have the latest data from user interactions
+      } else if (!isCartLoaded) {
+        console.log('🔄 Cart still loading, skipping empty cart check');
       }
       
-      // Only redirect to cart if empty AND not processing payment AND no payment params
-      if (totalItems === 0 && !hasPaymentParams && !cartLoading) {
+      // Only redirect to cart if empty AND not processing payment AND no payment params AND cart is loaded
+      // Use the updated currentCartItems check to be consistent
+      if (currentCartItems === 0 && !hasPaymentParams && isCartLoaded) {
         console.log('🔄 Cart is empty, redirecting to cart page');
         router.push('/cart');
         return;
-      } else if (totalItems === 0 && hasPaymentParams) {
+      } else if (currentCartItems === 0 && hasPaymentParams) {
         console.log('⏸️ Cart empty but payment params detected, staying on checkout');
       }
 
@@ -302,7 +316,7 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  }, [session, paymentProcessed, router, refreshCart, totalItems, useSameAddress]);
+  }, [session, paymentProcessed, router, totalItems, useSameAddress, cart, cartLoading]);
 
   // Handle membership activation callback
   const handleMembershipActivated = (membershipData: any) => {

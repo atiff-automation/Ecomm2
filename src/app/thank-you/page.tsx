@@ -129,10 +129,9 @@ function ThankYouContent() {
         window.dispatchEvent(new CustomEvent(eventName));
       });
       
-      // Also dispatch a force refresh event with a small delay to ensure it's processed
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('forceCartRefresh'));
-      }, config.ui.loading.animationDuration);
+      // DON'T force refresh after clearing - let the service maintain the empty cart state
+      // Force refresh would query the database again and might get new items added after payment
+      console.log('🚫 Skipping force refresh - cart should remain empty after payment');
     }
     
     console.log('✅ Cart clearing completed on thank-you page');
