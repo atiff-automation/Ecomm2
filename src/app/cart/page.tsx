@@ -29,6 +29,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/use-cart';
 import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useFreshMembership } from '@/hooks/use-fresh-membership';
+import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import config from '@/lib/config/app-config';
 
 export default function CartPage() {
@@ -45,6 +47,7 @@ export default function CartPage() {
     subtotal,
     total,
     memberDiscount,
+    promotionalDiscount,
     qualifiesForMembership,
     membershipProgress,
     membershipRemaining,
@@ -53,9 +56,10 @@ export default function CartPage() {
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const freshMembership = useFreshMembership();
 
-  const isLoggedIn = !!session?.user;
-  const isMember = session?.user?.isMember;
+  const isLoggedIn = freshMembership.isLoggedIn;
+  const isMember = freshMembership.isMember;
   const cartItems = cart?.items || [];
   const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
 
@@ -267,43 +271,81 @@ export default function CartPage() {
                     {/* Price and Controls */}
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        {isMember ? (
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-lg text-green-600">
-                                {formatPrice(item.product.memberPrice)}
-                              </span>
-                              <Badge variant="secondary" className="text-xs">
-                                Member Price
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="text-muted-foreground line-through">
-                                {formatPrice(item.product.regularPrice)}
-                              </span>
-                              <span className="text-green-600 font-medium">
-                                Save{' '}
-                                {formatPrice(
-                                  item.product.regularPrice -
-                                    item.product.memberPrice
+                        {(() => {
+                          // Get the best price for this product
+                          const bestPrice = getBestPrice({
+                            regularPrice: item.product.regularPrice,
+                            memberPrice: item.product.memberPrice,
+                            isPromotional: item.product.isPromotional || false,
+                            promotionalPrice: item.product.promotionalPrice,
+                            promotionStartDate: item.product.promotionStartDate,
+                            promotionEndDate: item.product.promotionEndDate,
+                            isQualifyingForMembership: item.product.isQualifyingForMembership || false,
+                            memberOnlyUntil: item.product.memberOnlyUntil,
+                            earlyAccessStart: item.product.earlyAccessStart
+                          }, isMember);
+
+                          const getBadgeVariant = (priceType: string) => {
+                            switch (priceType) {
+                              case 'promotional':
+                                return 'destructive'; // Red for promotional
+                              case 'member':
+                                return 'secondary'; // Default for member
+                              case 'early-access':
+                                return 'default'; // Blue for early access
+                              default:
+                                return 'outline'; // Regular price
+                            }
+                          };
+
+                          const getBadgeText = (priceType: string) => {
+                            switch (priceType) {
+                              case 'promotional':
+                                return 'Promotional';
+                              case 'member':
+                                return 'Member Price';
+                              case 'early-access':
+                                return 'Early Access';
+                              default:
+                                return 'Regular Price';
+                            }
+                          };
+
+                          return (
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold text-lg ${
+                                  bestPrice.priceType === 'promotional' ? 'text-red-600' :
+                                  bestPrice.priceType === 'member' ? 'text-green-600' :
+                                  bestPrice.priceType === 'early-access' ? 'text-blue-600' :
+                                  'text-gray-900'
+                                }`}>
+                                  {formatPrice(bestPrice.price)}
+                                </span>
+                                {bestPrice.priceType !== 'regular' && (
+                                  <Badge variant={getBadgeVariant(bestPrice.priceType)} className="text-xs">
+                                    {getBadgeText(bestPrice.priceType)}
+                                  </Badge>
                                 )}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <span className="font-bold text-lg">
-                              {formatPrice(item.product.regularPrice)}
-                            </span>
-                            {item.product.memberPrice <
-                              item.product.regularPrice && (
-                              <div className="text-sm text-muted-foreground">
-                                Member price:{' '}
-                                {formatPrice(item.product.memberPrice)}
                               </div>
-                            )}
-                          </div>
-                        )}
+                              {bestPrice.savings > 0 && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-muted-foreground line-through">
+                                    {formatPrice(bestPrice.originalPrice)}
+                                  </span>
+                                  <span className={`font-medium ${
+                                    bestPrice.priceType === 'promotional' ? 'text-red-600' :
+                                    bestPrice.priceType === 'member' ? 'text-green-600' :
+                                    bestPrice.priceType === 'early-access' ? 'text-blue-600' :
+                                    'text-gray-600'
+                                  }`}>
+                                    Save {formatPrice(bestPrice.savings)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Quantity Controls */}
@@ -380,7 +422,7 @@ export default function CartPage() {
         {/* Order Summary Sidebar */}
         <div className="space-y-6">
           {/* Membership Progress */}
-          {!isMember && subtotal > 0 && (
+          {!isMember && !freshMembership.loading && subtotal > 0 && (
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -431,7 +473,14 @@ export default function CartPage() {
                     <span>{formatPrice(subtotal)}</span>
                   </div>
 
-                  {isMember && memberDiscount > 0 && (
+                  {promotionalDiscount > 0 && (
+                    <div className="flex justify-between text-blue-600">
+                      <span>Promotional Discount</span>
+                      <span>-{formatPrice(promotionalDiscount)}</span>
+                    </div>
+                  )}
+
+                  {isMember && !freshMembership.loading && memberDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Member Discount</span>
                       <span>-{formatPrice(memberDiscount)}</span>
