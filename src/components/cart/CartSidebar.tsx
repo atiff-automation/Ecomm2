@@ -30,6 +30,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useCart } from '@/hooks/use-cart';
+import { useFreshMembership } from '@/hooks/use-fresh-membership';
+import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import config from '@/lib/config/app-config';
 import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import React from 'react';
@@ -57,15 +59,17 @@ export function CartSidebar({
     subtotal,
     total,
     memberDiscount,
+    promotionalDiscount,
     qualifiesForMembership,
     membershipProgress,
     membershipRemaining,
   } = useCart();
   const [updatingItem, setUpdatingItem] = useState<string | null>(null);
   const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const freshMembership = useFreshMembership();
 
-  const isLoggedIn = !!session?.user;
-  const isMember = session?.user?.isMember;
+  const isLoggedIn = freshMembership.isLoggedIn;
+  const isMember = freshMembership.isMember;
   const cartItems = cart?.items || [];
   const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
 
@@ -213,28 +217,81 @@ export function CartSidebar({
 
                         {/* Pricing */}
                         <div className="mt-2">
-                          {isMember ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm text-green-600">
-                                  {formatPrice(item.product.memberPrice)}
-                                </span>
-                                <Badge
-                                  variant="secondary"
-                                  className="text-xs py-0"
-                                >
-                                  Member
-                                </Badge>
+                          {(() => {
+                            // Wait for fresh membership data to load
+                            if (freshMembership.loading) {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm text-gray-400">
+                                    {formatPrice(Number(item.product.regularPrice))}
+                                  </span>
+                                  <div className="w-12 h-3 bg-gray-200 rounded animate-pulse"></div>
+                                </div>
+                              );
+                            }
+
+                            // Get the best price for this product
+                            const bestPrice = getBestPrice({
+                              regularPrice: Number(item.product.regularPrice),
+                              memberPrice: Number(item.product.memberPrice),
+                              isPromotional: item.product.isPromotional || false,
+                              promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
+                              promotionStartDate: item.product.promotionStartDate,
+                              promotionEndDate: item.product.promotionEndDate,
+                              isQualifyingForMembership: item.product.isQualifyingForMembership || false,
+                              memberOnlyUntil: item.product.memberOnlyUntil,
+                              earlyAccessStart: item.product.earlyAccessStart
+                            }, isMember);
+
+                            // Price type styling configuration (centralized)
+                            const priceTypeConfig = {
+                              promotional: {
+                                textColor: 'text-red-600',
+                                badgeVariant: 'destructive' as const,
+                                badgeText: 'Promo'
+                              },
+                              member: {
+                                textColor: 'text-green-600', 
+                                badgeVariant: 'secondary' as const,
+                                badgeText: 'Member'
+                              },
+                              'early-access': {
+                                textColor: 'text-blue-600',
+                                badgeVariant: 'default' as const, 
+                                badgeText: 'Early'
+                              },
+                              regular: {
+                                textColor: 'text-gray-900',
+                                badgeVariant: 'outline' as const,
+                                badgeText: 'Regular'
+                              }
+                            };
+
+                            const currentConfig = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
+
+                            return (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-medium text-sm ${currentConfig.textColor}`}>
+                                    {formatPrice(bestPrice.price)}
+                                  </span>
+                                  {bestPrice.priceType !== 'regular' && (
+                                    <Badge
+                                      variant={currentConfig.badgeVariant}
+                                      className="text-xs py-0"
+                                    >
+                                      {currentConfig.badgeText}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {bestPrice.savings > 0 && (
+                                  <div className="text-xs text-muted-foreground line-through">
+                                    {formatPrice(bestPrice.originalPrice)}
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-xs text-muted-foreground line-through">
-                                {formatPrice(item.product.regularPrice)}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="font-medium text-sm">
-                              {formatPrice(item.product.regularPrice)}
-                            </span>
-                          )}
+                            );
+                          })()}
                         </div>
 
                         {/* Quantity Controls */}
@@ -303,7 +360,7 @@ export function CartSidebar({
             </div>
 
             {/* Membership Progress */}
-            {!isMember && subtotal > 0 && (
+            {!isMember && !freshMembership.loading && subtotal > 0 && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -349,7 +406,14 @@ export function CartSidebar({
                     <span>{formatPrice(subtotal)}</span>
                   </div>
 
-                  {isMember && memberDiscount > 0 && (
+                  {promotionalDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-blue-600">
+                      <span>Promotional Discount</span>
+                      <span>-{formatPrice(promotionalDiscount)}</span>
+                    </div>
+                  )}
+
+                  {isMember && !freshMembership.loading && memberDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Member Discount</span>
                       <span>-{formatPrice(memberDiscount)}</span>
