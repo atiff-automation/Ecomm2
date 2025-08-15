@@ -40,6 +40,8 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/use-cart';
+import { useFreshMembership } from '@/hooks/use-fresh-membership';
+import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
 
 interface CheckoutItem {
@@ -105,6 +107,7 @@ export default function CheckoutPage() {
     subtotal,
     total,
     memberDiscount,
+    promotionalDiscount,
     qualifiesForMembership,
     membershipProgress,
     membershipRemaining,
@@ -158,9 +161,10 @@ export default function CheckoutPage() {
     return false;
   });
 
-  const isLoggedIn = !!session?.user;
-  const isMember =
-    session?.user?.isMember || (membershipActivated && !membershipPending);
+  const freshMembership = useFreshMembership();
+  
+  const isLoggedIn = freshMembership.isLoggedIn;
+  const isMember = freshMembership.isMember || (membershipActivated && !membershipPending);
 
   // Malaysian states
   const malaysianStates = [
@@ -200,36 +204,28 @@ export default function CheckoutPage() {
       const urlParams = new URLSearchParams(window.location.search);
       const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
       
-      // FIXED: Only check for empty cart if cart is actually loaded
-      // Don't trigger guest cart transfer if cart is still loading or null
-      const currentCartItems = cart?.items?.length || 0;
+      // FIXED: Use totalItems from cart service instead of cart.items.length for consistency
+      // This prevents the checkout page from thinking cart is empty when it has items
       const isCartLoaded = !cartLoading && cart !== null;
       
-      if (currentCartItems === 0 && session?.user && !hasPaymentParams && isCartLoaded) {
-        console.log('⏰ Cart appears empty but user is authenticated, waiting for guest cart transfer...');
-        console.log('📊 Current cart state:', { 
-          totalItems, 
-          currentCartItems, 
-          cartItemsCount: cart?.items?.length,
-          cartLoading,
-          isCartLoaded,
-          cartIsNull: cart === null
-        });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // NOTE: We should avoid refreshCart here to prevent fetching stale data
-        // The cart service should already have the latest data from user interactions
-      } else if (!isCartLoaded) {
-        console.log('🔄 Cart still loading, skipping empty cart check');
-      }
+      console.log('📊 Checkout cart state check:', { 
+        totalItems, 
+        cartItemsLength: cart?.items?.length,
+        cartLoading,
+        isCartLoaded,
+        hasPaymentParams
+      });
       
       // Only redirect to cart if empty AND not processing payment AND no payment params AND cart is loaded
-      // Use the updated currentCartItems check to be consistent
-      if (currentCartItems === 0 && !hasPaymentParams && isCartLoaded) {
+      // Use totalItems from cart service for consistency across components
+      if (totalItems === 0 && !hasPaymentParams && isCartLoaded) {
         console.log('🔄 Cart is empty, redirecting to cart page');
         router.push('/cart');
         return;
-      } else if (currentCartItems === 0 && hasPaymentParams) {
+      } else if (totalItems === 0 && hasPaymentParams) {
         console.log('⏸️ Cart empty but payment params detected, staying on checkout');
+      } else if (totalItems > 0) {
+        console.log('✅ Cart has items, proceeding with checkout');
       }
 
       // Pre-fill user info and default address if available
@@ -404,8 +400,8 @@ export default function CheckoutPage() {
     setFieldErrors({});
 
     try {
-      // Check if cart is empty
-      if (!cart || !cart.items || cart.items.length === 0) {
+      // Check if cart is empty using totalItems for consistency
+      if (!cart || totalItems === 0) {
         setOrderError('Your cart is empty. Please add items before proceeding.');
         setProcessing(false);
         router.push('/cart');
@@ -456,7 +452,7 @@ export default function CheckoutPage() {
           billingAddress: useSameAddress ? shippingAddress : billingAddress,
           paymentMethod,
           orderNotes,
-          membershipActivated,
+          membershipActivated: membershipActivated || membershipPending, // Include pending memberships
         };
 
         const response = await fetch('/api/orders', {
@@ -500,7 +496,7 @@ export default function CheckoutPage() {
         billingAddress: useSameAddress ? shippingAddress : billingAddress,
         paymentMethod,
         orderNotes,
-        membershipActivated,
+        membershipActivated: membershipActivated || membershipPending, // Include pending memberships
       };
 
       const response = await fetch('/api/orders', {
@@ -629,7 +625,8 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cart?.items.length) {
+  // Use totalItems for consistency with cart service instead of cart?.items.length
+  if (!cart || totalItems === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
@@ -1094,11 +1091,50 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                   <div className="text-sm font-medium">
-                    {formatPrice(
-                      (isMember
-                        ? item.product.memberPrice
-                        : item.product.regularPrice) * item.quantity
-                    )}
+                    {(() => {
+                      // Wait for fresh membership data to load
+                      if (freshMembership.loading) {
+                        return formatPrice(Number(item.product.regularPrice) * item.quantity);
+                      }
+
+                      // Get the best price for this product
+                      const bestPrice = getBestPrice({
+                        regularPrice: Number(item.product.regularPrice),
+                        memberPrice: Number(item.product.memberPrice),
+                        isPromotional: item.product.isPromotional || false,
+                        promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
+                        promotionStartDate: item.product.promotionStartDate,
+                        promotionEndDate: item.product.promotionEndDate,
+                        isQualifyingForMembership: item.product.isQualifyingForMembership || false,
+                        memberOnlyUntil: item.product.memberOnlyUntil,
+                        earlyAccessStart: item.product.earlyAccessStart
+                      }, isMember);
+
+                      // Price type styling configuration
+                      const priceTypeConfig = {
+                        promotional: { color: 'text-red-600', label: 'Promo' },
+                        member: { color: 'text-green-600', label: 'Member' },
+                        'early-access': { color: 'text-blue-600', label: 'Early' },
+                        regular: { color: 'text-gray-900', label: '' }
+                      };
+
+                      const config = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
+
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={config.color}>
+                              {formatPrice(bestPrice.price * item.quantity)}
+                            </span>
+                            {config.label && (
+                              <Badge variant="outline" className="text-xs py-0">
+                                {config.label}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -1114,7 +1150,16 @@ export default function CheckoutPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
-                {isMember && memberDiscount > 0 && (
+                {promotionalDiscount > 0 && (
+                  <div className="flex justify-between text-blue-600">
+                    <span>Promotional Discount</span>
+                    <span>
+                      -{formatPrice(promotionalDiscount)}
+                    </span>
+                  </div>
+                )}
+
+                {isMember && !freshMembership.loading && memberDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Member Discount</span>
                     <span>
@@ -1172,7 +1217,7 @@ export default function CheckoutPage() {
           )}
 
           {/* Membership Progress - for non-members */}
-          {!isMember && cart && cart.qualifyingTotal > 0 && (
+          {!isMember && !freshMembership.loading && cart && cart.qualifyingTotal > 0 && (
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-blue-800">
