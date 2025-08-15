@@ -99,6 +99,7 @@ function ThankYouContent() {
   const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [initialSessionState, setInitialSessionState] = useState<'loading' | 'authenticated' | 'guest'>('loading');
 
   const orderRef = searchParams.get('orderRef');
   const amount = searchParams.get('amount');
@@ -137,6 +138,17 @@ function ThankYouContent() {
     console.log('✅ Cart clearing completed on thank-you page');
   };
 
+  // Track initial session state to distinguish guest vs logged out user
+  useEffect(() => {
+    if (session !== undefined) { // session is no longer loading
+      if (session?.user) {
+        setInitialSessionState('authenticated');
+      } else {
+        setInitialSessionState('guest');
+      }
+    }
+  }, [session]);
+
   // Clear cart on page load (successful payment)
   useEffect(() => {
     clearCartAfterPayment();
@@ -161,8 +173,9 @@ function ThankYouContent() {
 
   // Handle logout - redirect to main page when user logs out
   useEffect(() => {
-    // If session becomes null (user logged out), clear sensitive data and redirect
-    if (session === null && orderData) {
+    // Only redirect if user was initially authenticated and then logged out
+    // Don't redirect guest users (who were never logged in)
+    if (session === null && orderData && initialSessionState === 'authenticated') {
       console.log('🚪 User logged out from thank-you page, clearing data and redirecting to home');
       
       // Clear sensitive order data immediately
@@ -173,8 +186,10 @@ function ThankYouContent() {
       
       // Redirect to home page
       router.push('/');
+    } else if (session === null && orderData && initialSessionState === 'guest') {
+      console.log('👤 Guest user on thank-you page, allowing access to order details');
     }
-  }, [session, orderData, router]);
+  }, [session, orderData, router, initialSessionState]);
 
   const fetchOrderData = async () => {
     try {
@@ -308,8 +323,9 @@ function ThankYouContent() {
     );
   }
 
-  // Security check: If user logged out and we still have order data, don't show it
-  if (session === null && orderData) {
+  // Security check: Only show session expired for users who were authenticated and then logged out
+  // Allow guest users to view their order details
+  if (session === null && orderData && initialSessionState === 'authenticated') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
