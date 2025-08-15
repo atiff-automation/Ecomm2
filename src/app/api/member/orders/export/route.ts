@@ -22,12 +22,8 @@ export async function GET() {
       );
     }
 
-    if (!session.user.isMember) {
-      return NextResponse.json(
-        { message: 'Member access required' },
-        { status: 403 }
-      );
-    }
+    // Allow all authenticated users to export their order history
+    // All users should be able to export their purchase records
 
     // Get all member orders for export
     const orders = await prisma.order.findMany({

@@ -47,11 +47,15 @@ export default function MembershipCheckoutBanner({
   const [showModal, setShowModal] = useState(false);
   const [hasJustRegistered, setHasJustRegistered] = useState(false);
 
+  // Check eligibility only when cart items actually change (not on every render)
   useEffect(() => {
     if (cartItems.length > 0) {
       checkEligibility();
     }
+  }, [cartItems.length]); // Only depend on length, not the entire array
 
+  // Handle session storage flag separately to avoid API calls
+  useEffect(() => {
     // Check if user just registered for membership
     const registrationFlag = sessionStorage.getItem('membershipJustRegistered');
     const registrationTimestamp = sessionStorage.getItem(
@@ -99,10 +103,14 @@ export default function MembershipCheckoutBanner({
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems, session]);
+  }, [session?.user?.id]); // Only depend on user ID, not entire session
 
   const checkEligibility = async () => {
+    // Skip if no cart items or already loading
+    if (cartItems.length === 0 || loading) {
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch('/api/cart/membership-check', {

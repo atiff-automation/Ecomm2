@@ -8,6 +8,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import config from '@/lib/config/app-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -127,6 +128,11 @@ function ThankYouContent() {
       ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach((eventName) => {
         window.dispatchEvent(new CustomEvent(eventName));
       });
+      
+      // Also dispatch a force refresh event with a small delay to ensure it's processed
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('forceCartRefresh'));
+      }, config.ui.loading.animationDuration);
     }
     
     console.log('✅ Cart clearing completed on thank-you page');
@@ -153,6 +159,23 @@ function ThankYouContent() {
       handleMembershipActivation();
     }
   }, [membershipEligible, session]);
+
+  // Handle logout - redirect to main page when user logs out
+  useEffect(() => {
+    // If session becomes null (user logged out), clear sensitive data and redirect
+    if (session === null && orderData) {
+      console.log('🚪 User logged out from thank-you page, clearing data and redirecting to home');
+      
+      // Clear sensitive order data immediately
+      setOrderData(null);
+      setError('');
+      setMembershipActivated(false);
+      setShowWelcomeModal(false);
+      
+      // Redirect to home page
+      router.push('/');
+    }
+  }, [session, orderData, router]);
 
   const fetchOrderData = async () => {
     try {
@@ -280,6 +303,30 @@ function ThankYouContent() {
               <Home className="w-4 h-4 mr-2" />
               Return Home
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Security check: If user logged out and we still have order data, don't show it
+  if (session === null && orderData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="text-center p-6">
+            <AlertCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Session Expired</h2>
+            <p className="text-gray-600 mb-4">Please sign in to view your order details</p>
+            <div className="space-y-2">
+              <Button onClick={() => router.push('/auth/signin')} className="w-full">
+                Sign In
+              </Button>
+              <Button variant="outline" onClick={() => router.push('/')} className="w-full">
+                <Home className="w-4 h-4 mr-2" />
+                Return Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

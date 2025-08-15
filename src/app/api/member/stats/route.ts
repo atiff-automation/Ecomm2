@@ -22,12 +22,8 @@ export async function GET() {
       );
     }
 
-    if (!session.user.isMember) {
-      return NextResponse.json(
-        { message: 'Member access required' },
-        { status: 403 }
-      );
-    }
+    // Allow all authenticated users to view their stats
+    // For non-members, some stats may be zero but they should still see their order history
 
     // Get user details for member since date
     const user = await prisma.user.findUnique({

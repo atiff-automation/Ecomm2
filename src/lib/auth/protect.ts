@@ -53,7 +53,26 @@ export async function requireRole(requiredRole: UserRole) {
 }
 
 /**
+ * Server-side user account protection for API routes
+ * Allows all authenticated users to access their account features (orders, profile, etc.)
+ */
+export async function requireUserAccount() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json(
+      { message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  // All authenticated users can access their account features
+  return session;
+}
+
+/**
  * Server-side member protection for API routes
+ * Only for member-exclusive features (pricing, special promotions, etc.)
  */
 export async function requireMember() {
   const session = await getServerSession(authOptions);

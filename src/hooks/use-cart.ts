@@ -6,7 +6,8 @@
  * handling all cart state management and operations centrally.
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { cartService, CartEventPayload } from '@/lib/services/cart-service';
 import { CartResponse, CartItem } from '@/lib/types/api';
 import { toast } from 'sonner';
@@ -44,9 +45,12 @@ interface UseCartReturn {
 }
 
 export function useCart(): UseCartReturn {
+  const { data: session, status } = useSession();
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const previousAuthState = useRef<boolean>(false);
+  const transferAttempted = useRef<boolean>(false);
 
   // Initialize cart on mount
   useEffect(() => {
@@ -65,6 +69,67 @@ export function useCart(): UseCartReturn {
 
     initializeCart();
   }, []);
+
+  // Monitor authentication state changes and transfer guest cart when user logs in
+  useEffect(() => {
+    const currentAuthState = status === 'authenticated' && !!session?.user;
+    
+    // Only proceed if authentication status is not loading
+    if (status === 'loading') return;
+
+    // CRITICAL FIX: Only transfer guest cart on actual login transition
+    // Check if user just logged in (previous: false, current: true) AND there's actually a guest cart to transfer
+    if (!previousAuthState.current && currentAuthState && !transferAttempted.current) {
+      console.log('🔐 User authentication detected, checking for guest cart...');
+      
+      // Check if there's actually a guest cart in localStorage to transfer
+      const hasGuestCart = typeof window !== 'undefined' && (
+        localStorage.getItem('cart_items') || 
+        localStorage.getItem('guest_cart') || 
+        localStorage.getItem('shopping_cart')
+      );
+      
+      if (hasGuestCart) {
+        console.log('📦 Guest cart found, transferring to authenticated user...');
+        transferAttempted.current = true;
+        
+        // Transfer guest cart to authenticated user cart
+        const transferGuestCart = async () => {
+          try {
+            await cartService.transferGuestCart();
+            console.log('✅ Guest cart transferred successfully');
+            // Refresh cart to get latest data after transfer
+            await refreshCart();
+          } catch (error) {
+            console.error('❌ Failed to transfer guest cart:', error);
+            // Even if transfer fails, still refresh cart to get authenticated cart data
+            await refreshCart();
+          }
+        };
+
+        transferGuestCart();
+      } else {
+        console.log('🚫 No guest cart found, skipping transfer');
+        transferAttempted.current = true; // Mark as attempted to prevent future checks
+        // Don't refresh - user is already authenticated and cart is valid
+        console.log('📊 Keeping existing authenticated cart data');
+      }
+    }
+
+    // Check if user logged out (previous: true, current: false)
+    if (previousAuthState.current && !currentAuthState) {
+      console.log('🚪 User logged out, clearing cart cache...');
+      transferAttempted.current = false;
+      // Clear cart cache when user logs out
+      setCart(null);
+      setError(null);
+      // Refresh cart to get guest cart data
+      refreshCart();
+    }
+
+    // Update previous auth state
+    previousAuthState.current = currentAuthState;
+  }, [status]); // Removed session?.user?.id to prevent retriggering on navigation
 
   // Set up cart event listeners
   useEffect(() => {

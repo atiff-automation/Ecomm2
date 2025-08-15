@@ -236,11 +236,11 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Member routes
+    // Member routes - Allow all authenticated users to access their account features
+    // Membership only affects pricing, not access to user account pages
     if (pathname.startsWith('/member') || pathname.startsWith('/api/members')) {
-      if (!token.isMember && userRole === UserRole.CUSTOMER) {
-        return new NextResponse('Member access required', { status: 403 });
-      }
+      // All authenticated users can access member area (dashboard, orders, profile, etc.)
+      // No additional membership check needed - authentication check above is sufficient
     }
   }
 

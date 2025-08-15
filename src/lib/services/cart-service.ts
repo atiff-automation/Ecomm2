@@ -70,11 +70,12 @@ export class CartService {
       });
       
       // Listen for cart cleared events (after successful payment)
-      window.addEventListener('cart_cleared', () => {
+      window.addEventListener('cart_cleared', async () => {
         console.log('🧹 Cart cleared event received - setting empty cart');
         this.cart = this.createEmptyCart();
         this.lastFetch = Date.now();
         this.emitEvent('CART_CLEARED', { cart: this.cart });
+        console.log('✅ Cart cleared and updated in service');
       });
     }
   }

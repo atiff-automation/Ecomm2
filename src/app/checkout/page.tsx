@@ -39,6 +39,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/hooks/use-cart';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
 
 interface CheckoutItem {
@@ -95,9 +96,21 @@ export default function CheckoutPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
 
-  const [cartItems, setCartItems] = useState<CheckoutItem[]>([]);
-  const [checkoutSummary, setCheckoutSummary] =
-    useState<CheckoutSummary | null>(null);
+  // Use centralized cart service
+  const {
+    cart,
+    isLoading: cartLoading,
+    error: cartError,
+    totalItems,
+    subtotal,
+    total,
+    memberDiscount,
+    qualifiesForMembership,
+    membershipProgress,
+    membershipRemaining,
+    refreshCart
+  } = useCart();
+
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
@@ -105,7 +118,7 @@ export default function CheckoutPage() {
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     firstName: '',
     lastName: '',
-    email: session?.user?.email || '',
+    email: '',
     phone: '',
     address: '',
     address2: '',
@@ -118,7 +131,7 @@ export default function CheckoutPage() {
   const [billingAddress, setBillingAddress] = useState<ShippingAddress>({
     firstName: '',
     lastName: '',
-    email: session?.user?.email || '',
+    email: '',
     phone: '',
     address: '',
     address2: '',
@@ -169,60 +182,49 @@ export default function CheckoutPage() {
     'Terengganu',
   ];
 
-  // Fetch checkout data
-  const fetchCheckoutData = useCallback(async () => {
+  // Initialize checkout data using cart service
+  const initializeCheckoutData = useCallback(async () => {
     try {
       setLoading(true);
 
       // If we're processing payment, don't fetch cart or redirect
       if (paymentProcessed) {
-        console.log('⏸️ Payment already processed, skipping cart fetch');
+        console.log('⏸️ Payment already processed, skipping cart initialization');
         setLoading(false);
         return;
       }
 
-      const response = await fetch('/api/cart');
+      // Refresh cart to ensure we have latest data
+      await refreshCart();
 
-      if (response.ok) {
-        const data = await response.json();
-        setCartItems(data.items);
-        
-        // Extract checkout summary from cart data
-        const summary: CheckoutSummary = {
-          itemCount: data.totalItems,
-          subtotal: data.subtotal,
-          memberSubtotal: data.subtotal - (data.memberDiscount || 0),
-          applicableSubtotal: data.total,
-          potentialSavings: data.memberDiscount || 0,
-          shippingCost: 0, // TODO: Calculate shipping
-          taxAmount: 0, // TODO: Calculate tax
-          total: data.total,
-          qualifyingTotal: data.qualifyingTotal || 0,
-          membershipThreshold: data.membershipThreshold || 80,
-          isEligibleForMembership: data.qualifiesForMembership || false,
-        };
-        setCheckoutSummary(summary);
+      // Check if we have payment parameters in URL - if so, don't redirect to cart
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
+      
+      // Wait a brief moment for guest cart transfer to complete if needed
+      // This prevents timing issues during authentication state changes
+      if (totalItems === 0 && session?.user && !hasPaymentParams) {
+        console.log('⏰ Cart appears empty but user is authenticated, waiting for guest cart transfer...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await refreshCart();
+      }
+      
+      // Only redirect to cart if empty AND not processing payment AND no payment params
+      if (totalItems === 0 && !hasPaymentParams && !cartLoading) {
+        console.log('🔄 Cart is empty, redirecting to cart page');
+        router.push('/cart');
+        return;
+      } else if (totalItems === 0 && hasPaymentParams) {
+        console.log('⏸️ Cart empty but payment params detected, staying on checkout');
+      }
 
-        // Check if we have payment parameters in URL - if so, don't redirect to cart
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
-        
-        // Only redirect to cart if empty AND not processing payment AND no payment params
-        if (data.items.length === 0 && !hasPaymentParams) {
-          console.log('🔄 Cart is empty, redirecting to cart page');
-          router.push('/cart');
-          return;
-        } else if (data.items.length === 0 && hasPaymentParams) {
-          console.log('⏸️ Cart empty but payment params detected, staying on checkout');
-        }
-
-        // Pre-fill user info and default address if available
-        if (session?.user) {
-          try {
-            // Try to fetch user's default address
-            const addressResponse = await fetch('/api/user/default-address');
-            if (addressResponse.ok) {
-              const { address } = await addressResponse.json();
+      // Pre-fill user info and default address if available
+      if (session?.user) {
+        try {
+          // Try to fetch user's default address
+          const addressResponse = await fetch('/api/user/default-address');
+          if (addressResponse.ok) {
+            const { address } = await addressResponse.json();
 
               if (address) {
                 // Use saved address
@@ -295,15 +297,12 @@ export default function CheckoutPage() {
             setBillingAddress(prev => ({ ...prev, ...basicInfo }));
           }
         }
-      } else {
-        console.error('Failed to fetch cart data:', response.status);
-      }
     } catch (error) {
-      console.error('Failed to fetch checkout data:', error);
+      console.error('Failed to initialize checkout data:', error);
     } finally {
       setLoading(false);
     }
-  }, [router, session?.user, paymentProcessed]);
+  }, [session, paymentProcessed, router, refreshCart, totalItems, useSameAddress]);
 
   // Handle membership activation callback
   const handleMembershipActivated = (membershipData: any) => {
@@ -387,13 +386,55 @@ export default function CheckoutPage() {
   // Submit order
   const handleSubmitOrder = async () => {
     setProcessing(true);
+    setOrderError('');
+    setFieldErrors({});
 
     try {
+      // Check if cart is empty
+      if (!cart || !cart.items || cart.items.length === 0) {
+        setOrderError('Your cart is empty. Please add items before proceeding.');
+        setProcessing(false);
+        router.push('/cart');
+        return;
+      }
+
+      // Client-side validation before submitting
+      const errors: { [key: string]: string } = {};
+      
+      // Validate shipping address
+      if (!shippingAddress.firstName.trim()) errors['shippingAddress.firstName'] = 'First name is required';
+      if (!shippingAddress.lastName.trim()) errors['shippingAddress.lastName'] = 'Last name is required';
+      if (!shippingAddress.phone.trim()) errors['shippingAddress.phone'] = 'Phone number is required';
+      if (!shippingAddress.address.trim()) errors['shippingAddress.address'] = 'Address is required';
+      if (!shippingAddress.city.trim()) errors['shippingAddress.city'] = 'City is required';
+      if (!shippingAddress.state.trim()) errors['shippingAddress.state'] = 'State is required';
+      if (!shippingAddress.postcode.trim()) errors['shippingAddress.postcode'] = 'Postcode is required';
+      
+      // Validate billing address if different from shipping
+      if (!useSameAddress) {
+        if (!billingAddress.firstName.trim()) errors['billingAddress.firstName'] = 'First name is required';
+        if (!billingAddress.lastName.trim()) errors['billingAddress.lastName'] = 'Last name is required';
+        if (!billingAddress.phone.trim()) errors['billingAddress.phone'] = 'Phone number is required';
+        if (!billingAddress.address.trim()) errors['billingAddress.address'] = 'Address is required';
+        if (!billingAddress.city.trim()) errors['billingAddress.city'] = 'City is required';
+        if (!billingAddress.state.trim()) errors['billingAddress.state'] = 'State is required';
+        if (!billingAddress.postcode.trim()) errors['billingAddress.postcode'] = 'Postcode is required';
+      }
+
+      // If there are validation errors, show them and stop processing
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setOrderError('Please fill in all required fields');
+        setProcessing(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
       // For testing purposes, create order first then redirect to test payment gateway
       if (process.env.NODE_ENV === 'development') {
         // Create the order first in development mode
         const orderData = {
-          cartItems: cartItems.map(item => ({
+          cartItems: cart?.items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
           })),
@@ -417,7 +458,7 @@ export default function CheckoutPage() {
 
           // Now redirect to test payment gateway with the actual order ID
           const paymentParams = new URLSearchParams({
-            amount: checkoutSummary?.total.toString() || '100',
+            amount: total.toString() || '100',
             currency: 'MYR',
             orderRef: result.orderNumber,
             returnUrl: '/checkout',
@@ -437,7 +478,7 @@ export default function CheckoutPage() {
 
       // Production flow - create order and get real payment URL
       const orderData = {
-        cartItems: cartItems.map(item => ({
+        cartItems: cart?.items.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
         })),
@@ -523,17 +564,26 @@ export default function CheckoutPage() {
     handlePaymentResult();
   }, []); // Remove dependencies to ensure it runs on mount
 
+  // Initialize email from session once
+  useEffect(() => {
+    if (session?.user?.email && !shippingAddress.email && !billingAddress.email) {
+      const email = session.user.email;
+      setShippingAddress(prev => ({ ...prev, email }));
+      setBillingAddress(prev => ({ ...prev, email }));
+    }
+  }, [session?.user?.email, shippingAddress.email, billingAddress.email]);
+
   // Fetch checkout data after payment processing is set up
   useEffect(() => {
-    fetchCheckoutData();
-  }, [fetchCheckoutData]);
+    initializeCheckoutData();
+  }, [initializeCheckoutData]);
 
   // Simplified cart synchronization - only listen for essential updates
   useEffect(() => {
     const handleCartUpdated = () => {
       // Only refresh if we're not processing a payment
       if (!processing) {
-        fetchCheckoutData();
+        initializeCheckoutData();
       }
     };
 
@@ -543,7 +593,7 @@ export default function CheckoutPage() {
     return () => {
       window.removeEventListener('cart_updated', handleCartUpdated);
     };
-  }, [fetchCheckoutData, processing]);
+  }, [processing]); // Remove fetchCheckoutData dependency
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -565,7 +615,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cartItems.length) {
+  if (!cart?.items.length) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
@@ -615,9 +665,9 @@ export default function CheckoutPage() {
         {/* Main Checkout Form */}
         <div className="lg:col-span-2 space-y-8">
           {/* Membership Qualification Banner */}
-          {checkoutSummary && (
+          {cart && (
             <MembershipCheckoutBanner
-              cartItems={cartItems.map(item => ({
+              cartItems={cart.items.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity,
               }))}
@@ -996,24 +1046,27 @@ export default function CheckoutPage() {
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cartItems.map(item => (
+              {cart?.items.map(item => (
                 <div key={item.id} className="flex items-center gap-3">
-                  <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.product.primaryImage ? (
-                      <Image
-                        src={item.product.primaryImage.url}
-                        alt={
-                          item.product.primaryImage.altText || item.product.name
-                        }
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                        No Image
-                      </div>
-                    )}
-                    <Badge className="absolute -top-2 -right-2 w-6 h-6 p-0 flex items-center justify-center text-xs">
+                  <div className="relative w-16 h-12 flex-shrink-0">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
+                      {item.product.primaryImage ? (
+                        <Image
+                          src={item.product.primaryImage.url}
+                          alt={
+                            item.product.primaryImage.altText || item.product.name
+                          }
+                          width={48}
+                          height={48}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs font-medium bg-primary text-primary-foreground border border-background">
                       {item.quantity}
                     </Badge>
                   </div>
@@ -1039,38 +1092,38 @@ export default function CheckoutPage() {
           </Card>
 
           {/* Pricing Breakdown */}
-          {checkoutSummary && (
+          {cart && (
             <Card>
               <CardContent className="space-y-3 pt-6">
                 <div className="flex justify-between">
-                  <span>Subtotal ({checkoutSummary.itemCount} items)</span>
-                  <span>{formatPrice(checkoutSummary.subtotal)}</span>
+                  <span>Subtotal ({totalItems} items)</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
 
-                {isMember && checkoutSummary.potentialSavings > 0 && (
+                {isMember && memberDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Member Discount</span>
                     <span>
-                      -{formatPrice(checkoutSummary.potentialSavings)}
+                      -{formatPrice(memberDiscount)}
                     </span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{formatPrice(checkoutSummary.shippingCost)}</span>
+                  <span>{formatPrice(0)}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span>Tax</span>
-                  <span>{formatPrice(checkoutSummary.taxAmount)}</span>
+                  <span>{formatPrice(0)}</span>
                 </div>
 
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>{formatPrice(checkoutSummary.total)}</span>
+                  <span>{formatPrice(total)}</span>
                 </div>
 
                 {membershipActivated && !membershipPending && (
@@ -1105,7 +1158,7 @@ export default function CheckoutPage() {
           )}
 
           {/* Membership Progress - for non-members */}
-          {!isMember && checkoutSummary && checkoutSummary.qualifyingTotal > 0 && (
+          {!isMember && cart && cart.qualifyingTotal > 0 && (
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -1115,16 +1168,16 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Progress 
-                  value={Math.min((checkoutSummary.qualifyingTotal / checkoutSummary.membershipThreshold) * 100, 100)} 
+                  value={membershipProgress} 
                   className="h-3" 
                 />
 
                 <div className="flex justify-between text-sm text-blue-700">
-                  <span>{formatPrice(checkoutSummary.qualifyingTotal)}</span>
-                  <span>{formatPrice(checkoutSummary.membershipThreshold)}</span>
+                  <span>{formatPrice(cart.qualifyingTotal)}</span>
+                  <span>{formatPrice(cart.membershipThreshold)}</span>
                 </div>
 
-                {checkoutSummary.isEligibleForMembership ? (
+                {qualifiesForMembership ? (
                   <div className="text-center">
                     <p className="text-sm text-blue-800 font-medium mb-2">
                       🎉 Congratulations! You're eligible for membership benefits!
@@ -1136,7 +1189,7 @@ export default function CheckoutPage() {
                 ) : (
                   <div className="text-center">
                     <p className="text-sm text-blue-700 mb-1">
-                      Add {formatPrice(Math.max(0, checkoutSummary.membershipThreshold - checkoutSummary.qualifyingTotal))} more to qualify for membership
+                      Add {formatPrice(membershipRemaining)} more to qualify for membership
                     </p>
                     <p className="text-xs text-blue-600">
                       Only qualifying products count towards membership
@@ -1163,7 +1216,7 @@ export default function CheckoutPage() {
               <>
                 <Shield className="w-4 h-4 mr-2" />
                 Place Order{' '}
-                {checkoutSummary && formatPrice(checkoutSummary.total)}
+                {cart && formatPrice(total)}
               </>
             )}
           </Button>

@@ -22,12 +22,8 @@ export async function GET() {
       );
     }
 
-    if (!session.user.isMember) {
-      return NextResponse.json(
-        { message: 'Member access required' },
-        { status: 403 }
-      );
-    }
+    // Allow all authenticated users to access their profile
+    // Membership only affects pricing, not access to user account features
 
     // Get user profile information
     const user = await prisma.user.findUnique({
@@ -81,12 +77,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (!session.user.isMember) {
-      return NextResponse.json(
-        { message: 'Member access required' },
-        { status: 403 }
-      );
-    }
+    // Allow all authenticated users to access their profile
+    // Membership only affects pricing, not access to user account features
 
     const body = await request.json();
     const { firstName, lastName, email, phone, dateOfBirth } = body;
