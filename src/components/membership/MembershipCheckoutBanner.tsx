@@ -198,31 +198,60 @@ export default function MembershipCheckoutBanner({
     return null;
   }
 
-  // If user just registered, show success message instead of join button
+  // If user just registered, check if they still qualify for membership
   if (hasJustRegistered) {
-    return (
-      <div
-        className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
-      >
-        <div className="flex items-start space-x-3">
-          <div className="p-2 bg-green-100 rounded-full">
-            <Crown className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-semibold text-green-800">
-                🎉 Registration Complete!
-              </h3>
-              <Sparkles className="h-4 w-4 text-green-600" />
+    if (eligibility?.eligible) {
+      // User registered and still qualifies
+      return (
+        <div
+          className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
+        >
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-green-100 rounded-full">
+              <Crown className="h-6 w-6 text-green-600" />
             </div>
-            <p className="text-green-700 text-sm">
-              Your membership will be activated after completing this purchase.
-              You'll enjoy member benefits starting immediately after payment!
-            </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-semibold text-green-800">
+                  🎉 Registration Complete!
+                </h3>
+                <Sparkles className="h-4 w-4 text-green-600" />
+              </div>
+              <p className="text-green-700 text-sm">
+                Your membership will be activated after completing this purchase.
+                You'll enjoy member benefits starting immediately after payment!
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // User registered but no longer qualifies
+      return (
+        <div
+          className={`bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 ${className}`}
+        >
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-yellow-100 rounded-full">
+              <Crown className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-semibold text-yellow-800">
+                  ⚠️ Account Created Successfully
+                </h3>
+              </div>
+              <p className="text-yellow-700 text-sm mb-2">
+                Your account has been created, but your cart no longer meets the {formatCurrency(eligibility?.threshold || 80)} threshold for membership activation.
+              </p>
+              <p className="text-yellow-700 text-sm">
+                Add {formatCurrency(eligibility?.remaining || 0)} more in qualifying products to activate membership with this purchase.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (eligibility.eligible) {
