@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -166,6 +166,14 @@ export default function CheckoutPage() {
   const isLoggedIn = freshMembership.isLoggedIn;
   const isMember = freshMembership.isMember || (membershipActivated && !membershipPending);
 
+  // Memoize cartItems for MembershipCheckoutBanner to prevent unnecessary re-renders
+  const memoizedCartItems = useMemo(() => {
+    return cart?.items.map(item => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+    })) || [];
+  }, [cart?.items]);
+
   // Malaysian states
   const malaysianStates = [
     'Johor',
@@ -312,7 +320,7 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  }, [session, paymentProcessed, router, totalItems, useSameAddress, cart, cartLoading]);
+  }, [session?.user?.id, paymentProcessed, router, totalItems, cartLoading]); // Removed useSameAddress and cart from dependencies
 
   // Handle membership activation callback
   const handleMembershipActivated = (membershipData: any) => {
@@ -327,7 +335,7 @@ export default function CheckoutPage() {
     } else {
       // Membership is immediately active
       setMembershipActivated(true);
-      fetchCheckoutData(); // Refresh to apply member pricing
+      // Cart data will automatically refresh through cart service hooks
     }
   };
 
@@ -678,10 +686,7 @@ export default function CheckoutPage() {
           {/* Membership Qualification Banner */}
           {cart && (
             <MembershipCheckoutBanner
-              cartItems={cart.items.map(item => ({
-                productId: item.product.id,
-                quantity: item.quantity,
-              }))}
+              cartItems={memoizedCartItems}
               onMembershipActivated={handleMembershipActivated}
             />
           )}

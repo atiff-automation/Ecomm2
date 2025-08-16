@@ -251,38 +251,83 @@ export async function POST(request: NextRequest) {
 
     // Create order in database transaction
     const result = await prisma.$transaction(async tx => {
-      // Create addresses first
-      const shippingAddr = await tx.address.create({
-        data: {
-          userId: isGuest ? null : session!.user.id,
-          type: 'SHIPPING',
-          firstName: orderData.shippingAddress.firstName,
-          lastName: orderData.shippingAddress.lastName,
-          addressLine1: orderData.shippingAddress.address,
-          addressLine2: orderData.shippingAddress.address2 || null,
-          city: orderData.shippingAddress.city,
-          state: orderData.shippingAddress.state,
-          postalCode: orderData.shippingAddress.postcode,
-          country: orderData.shippingAddress.country,
-          phone: orderData.shippingAddress.phone,
-        },
-      });
+      // Helper function to find or create address (best practice: address deduplication)
+      const findOrCreateAddress = async (addressData: any, type: 'SHIPPING' | 'BILLING') => {
+        // For authenticated users, try to find existing identical address
+        if (!isGuest && session?.user?.id) {
+          const existingAddress = await tx.address.findFirst({
+            where: {
+              userId: session.user.id,
+              firstName: addressData.firstName,
+              lastName: addressData.lastName,
+              addressLine1: addressData.address,
+              addressLine2: addressData.address2 || null,
+              city: addressData.city,
+              state: addressData.state,
+              postalCode: addressData.postcode,
+              country: addressData.country,
+              // Don't include phone and type in comparison as they might change
+            },
+          });
 
-      const billingAddr = await tx.address.create({
-        data: {
-          userId: isGuest ? null : session!.user.id,
-          type: 'BILLING',
-          firstName: orderData.billingAddress.firstName,
-          lastName: orderData.billingAddress.lastName,
-          addressLine1: orderData.billingAddress.address,
-          addressLine2: orderData.billingAddress.address2 || null,
-          city: orderData.billingAddress.city,
-          state: orderData.billingAddress.state,
-          postalCode: orderData.billingAddress.postcode,
-          country: orderData.billingAddress.country,
-          phone: orderData.billingAddress.phone,
-        },
-      });
+          if (existingAddress) {
+            console.log(`♻️ Reusing existing ${type.toLowerCase()} address for user:`, session.user.id);
+            
+            // Update phone if it's different (phone can change while address stays same)
+            if (existingAddress.phone !== addressData.phone) {
+              await tx.address.update({
+                where: { id: existingAddress.id },
+                data: { phone: addressData.phone }
+              });
+              console.log(`📞 Updated phone number for existing address`);
+            }
+            
+            return existingAddress;
+          }
+        }
+
+        // Create new address if no match found or guest user
+        console.log(`🆕 Creating new ${type.toLowerCase()} address`);
+        return await tx.address.create({
+          data: {
+            userId: isGuest ? null : session?.user?.id || null,
+            type: type, // This will be SHIPPING or BILLING for order-specific addresses
+            firstName: addressData.firstName,
+            lastName: addressData.lastName,
+            addressLine1: addressData.address,
+            addressLine2: addressData.address2 || null,
+            city: addressData.city,
+            state: addressData.state,
+            postalCode: addressData.postcode,
+            country: addressData.country,
+            phone: addressData.phone || null,
+          },
+        });
+      };
+
+      // Find or create addresses using best practice deduplication
+      const shippingAddr = await findOrCreateAddress(orderData.shippingAddress, 'SHIPPING');
+      const billingAddr = await findOrCreateAddress(orderData.billingAddress, 'BILLING');
+
+      // Set default address if user doesn't have one (best practice: auto-set default)
+      if (!isGuest && session?.user?.id) {
+        const hasDefaultAddress = await tx.address.findFirst({
+          where: {
+            userId: session.user.id,
+            isDefault: true,
+          },
+        });
+
+        if (!hasDefaultAddress && shippingAddr.userId) {
+          // Set shipping address as default since it's usually the primary address
+          // Only set default for user addresses (not guest addresses)
+          await tx.address.update({
+            where: { id: shippingAddr.id },
+            data: { isDefault: true },
+          });
+          console.log(`✅ Set shipping address as default for user:`, session.user.id);
+        }
+      }
 
       // Create the order
       const order = await tx.order.create({
