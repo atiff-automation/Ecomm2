@@ -47,12 +47,12 @@ export default function MembershipCheckoutBanner({
   const [showModal, setShowModal] = useState(false);
   const [hasJustRegistered, setHasJustRegistered] = useState(false);
 
-  // Check eligibility only when cart items actually change (not on every render)
+  // Check eligibility when cart items change (including quantity changes)
   useEffect(() => {
     if (cartItems.length > 0) {
       checkEligibility();
     }
-  }, [cartItems.length]); // Only depend on length, not the entire array
+  }, [cartItems]); // Depend on entire cartItems array to catch quantity changes
 
   // Handle session storage flag separately to avoid API calls
   useEffect(() => {
