@@ -4,6 +4,10 @@
 
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db/prisma';
+import {
+  getBestPrice,
+  productQualifiesForMembership,
+} from '@/lib/promotions/promotion-utils';
 
 export interface GuestCartItem {
   productId: string;
@@ -221,9 +225,14 @@ export async function getGuestCartWithProducts() {
           shortDescription: product.shortDescription,
           regularPrice: Number(product.regularPrice),
           memberPrice: Number(product.memberPrice),
+          promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
+          promotionStartDate: product.promotionStartDate,
+          promotionEndDate: product.promotionEndDate,
           stockQuantity: product.stockQuantity,
           isPromotional: product.isPromotional,
           isQualifyingForMembership: product.isQualifyingForMembership,
+          memberOnlyUntil: product.memberOnlyUntil,
+          earlyAccessStart: product.earlyAccessStart,
           category: {
             id: product.categories?.[0]?.category?.id || '',
             name: product.categories?.[0]?.category?.name || 'Uncategorized',
@@ -238,10 +247,11 @@ export async function getGuestCartWithProducts() {
     })
     .filter(Boolean);
 
-  // Calculate cart summary
+  // Calculate cart summary using centralized pricing logic
   let itemCount = 0;
   let subtotal = 0;
   let memberSubtotal = 0;
+  let applicableSubtotal = 0;
   let qualifyingTotal = 0;
 
   cartItems.forEach(item => {
@@ -250,15 +260,61 @@ export async function getGuestCartWithProducts() {
     }
 
     itemCount += item.quantity;
+
+    // Use centralized pricing logic for guests (isMember = false)
+    const priceInfo = getBestPrice(
+      {
+        isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
+        memberOnlyUntil: item.product.memberOnlyUntil,
+        earlyAccessStart: item.product.earlyAccessStart,
+        regularPrice: item.product.regularPrice,
+        memberPrice: item.product.memberPrice,
+      },
+      false // Guests are not members
+    );
+
+    // Debug log for guest cart pricing
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🛒 Guest Cart - Product: ${item.product.name}`);
+      console.log(`   - isPromotional: ${item.product.isPromotional}`);
+      console.log(`   - promotionalPrice: ${item.product.promotionalPrice}`);
+      console.log(`   - regularPrice: ${item.product.regularPrice}`);
+      console.log(`   - priceInfo.priceType: ${priceInfo.priceType}`);
+      console.log(`   - priceInfo.price: ${priceInfo.price}`);
+      console.log(`   - quantity: ${item.quantity}`);
+      console.log(`   - item subtotal: ${priceInfo.price * item.quantity}`);
+      console.log('---');
+    }
+
     const regularPrice = item.product.regularPrice * item.quantity;
     const memberPrice = item.product.memberPrice * item.quantity;
+    const effectivePrice = priceInfo.price * item.quantity;
 
     subtotal += regularPrice;
     memberSubtotal += memberPrice;
+    applicableSubtotal += effectivePrice;
 
-    // Check if item qualifies for membership using product-level control
-    if (!item.product.isPromotional && item.product.isQualifyingForMembership) {
-      qualifyingTotal += regularPrice;
+    // Check if product qualifies for membership using centralized logic
+    const qualifiesForMembership = productQualifiesForMembership({
+      isPromotional: item.product.isPromotional,
+      promotionalPrice: item.product.promotionalPrice,
+      promotionStartDate: item.product.promotionStartDate,
+      promotionEndDate: item.product.promotionEndDate,
+      isQualifyingForMembership: item.product.isQualifyingForMembership,
+      memberOnlyUntil: item.product.memberOnlyUntil,
+      earlyAccessStart: item.product.earlyAccessStart,
+    });
+
+    // CRITICAL: If using promotional price, don't count towards membership qualification
+    const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
+    const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+
+    if (finalQualification) {
+      qualifyingTotal += effectivePrice;
     }
   });
 
@@ -273,9 +329,6 @@ export async function getGuestCartWithProducts() {
     0,
     membershipThreshold - qualifyingTotal
   );
-
-  // For guests, always use regular pricing
-  const applicableSubtotal = subtotal;
 
   // Calculate tax and shipping (simplified)
   const taxAmount = Math.round(applicableSubtotal * 0.06 * 100) / 100; // 6% SST
