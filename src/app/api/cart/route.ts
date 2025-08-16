@@ -92,7 +92,7 @@ async function handleGET() {
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
         memberDiscount: guestCartData.summary.potentialSavings,
-        promotionalDiscount: 0,
+        promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
@@ -289,7 +289,7 @@ async function handlePOST(request: NextRequest) {
           totalItems: guestCartData.summary.itemCount,
           subtotal: guestCartData.summary.subtotal,
           memberDiscount: guestCartData.summary.potentialSavings,
-          promotionalDiscount: 0,
+          promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
           total: guestCartData.summary.total,
           // Membership qualification data for guest cart
           qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
@@ -554,7 +554,7 @@ async function handlePUT(request: NextRequest) {
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
         memberDiscount: guestCartData.summary.potentialSavings,
-        promotionalDiscount: 0,
+        promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
