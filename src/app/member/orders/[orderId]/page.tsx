@@ -60,6 +60,7 @@ interface Order {
   shippingCost: number;
   total: number;
   memberDiscount: number;
+  discountAmount?: number; // Promotional discount
   paymentMethod?: string;
   trackingNumber?: string;
   createdAt: string;
@@ -119,7 +120,7 @@ export default function OrderDetailPage() {
     }).format(price);
   };
 
-  // Determine price type and savings information for order items
+  // Determine price type and savings information using Source of Truth (stored order data)
   const getPriceTypeInfo = (item: OrderItem, order: Order) => {
     // If no discount applied, it's regular price
     if (item.appliedPrice >= item.regularPrice) {
@@ -130,21 +131,36 @@ export default function OrderDetailPage() {
       };
     }
 
-    // Check if applied price matches member price (indicating member pricing was used)
-    if (item.appliedPrice === item.memberPrice) {
+    // Use stored order-level discount data to determine price type (Source of Truth)
+    const hasPromotionalDiscount = order.discountAmount && order.discountAmount > 0;
+    const hasMemberDiscount = order.memberDiscount && order.memberDiscount > 0;
+
+    if (hasPromotionalDiscount && hasMemberDiscount) {
+      // Both discounts exist - determine which one was applied based on the price comparison
+      if (item.appliedPrice < item.memberPrice) {
+        return {
+          priceType: 'promotional',
+          savingsText: 'Promotional savings',
+          savingsColor: 'text-red-600'
+        };
+      } else if (item.appliedPrice === item.memberPrice) {
+        return {
+          priceType: 'member',
+          savingsText: 'Member savings',
+          savingsColor: 'text-green-600'
+        };
+      }
+    } else if (hasPromotionalDiscount) {
+      return {
+        priceType: 'promotional',
+        savingsText: 'Promotional savings',
+        savingsColor: 'text-red-600'
+      };
+    } else if (hasMemberDiscount || item.appliedPrice === item.memberPrice) {
       return {
         priceType: 'member',
         savingsText: 'Member savings',
         savingsColor: 'text-green-600'
-      };
-    }
-
-    // If applied price is lower than member price, it's likely promotional
-    if (item.appliedPrice < item.memberPrice) {
-      return {
-        priceType: 'promotional',
-        savingsText: 'Promotional savings',
-        savingsColor: 'text-blue-600'
       };
     }
 
@@ -388,6 +404,13 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between text-green-600">
                   <span>Member Discount</span>
                   <span>-{formatPrice(order.memberDiscount)}</span>
+                </div>
+              )}
+
+              {order.discountAmount && order.discountAmount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Promotional Discount</span>
+                  <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               )}
 

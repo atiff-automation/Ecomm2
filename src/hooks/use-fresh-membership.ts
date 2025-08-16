@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 
 interface MembershipStatus {
   isLoggedIn: boolean;
@@ -16,6 +17,7 @@ interface MembershipStatus {
 
 export function useFreshMembership(): MembershipStatus {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>({
     isLoggedIn: false,
     isMember: false,
@@ -38,7 +40,8 @@ export function useFreshMembership(): MembershipStatus {
       }
 
       try {
-        const response = await fetch('/api/auth/membership-status');
+        // Add cache busting parameter to ensure fresh data
+        const response = await fetch(`/api/auth/membership-status?t=${Date.now()}`);
         const data = await response.json();
 
         console.log('🔍 Fresh membership status API response:', {
@@ -74,7 +77,7 @@ export function useFreshMembership(): MembershipStatus {
     }
 
     fetchMembershipStatus();
-  }, [session, status]);
+  }, [session, status, pathname]); // Add pathname to dependencies to refresh on navigation
 
   return membershipStatus;
 }

@@ -623,7 +623,7 @@ export default function AdminOrderDetailsPage() {
                 )}
 
                 {order.discountAmount && order.discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-blue-600">
+                  <div className="flex justify-between text-sm text-red-600">
                     <span>Promotional Discount</span>
                     <span>-{formatPrice(order.discountAmount)}</span>
                   </div>

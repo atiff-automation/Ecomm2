@@ -221,8 +221,10 @@ export async function GET(
         memberDiscount: Number(order.memberDiscount) || 0,
         createdAt: order.createdAt.toISOString(),
         items: order.orderItems.map(item => ({
+          id: item.id, // Add missing id field for React keys
           quantity: item.quantity,
           price: Number(item.regularPrice),
+          memberPrice: Number(item.memberPrice), // Add member price for badge detection
           finalPrice: Number(item.appliedPrice),
           product: {
             name: item.productName,

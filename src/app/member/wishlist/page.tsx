@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { usePricing } from '@/hooks/use-pricing';
 import {
   Heart,
   ShoppingCart,
@@ -31,6 +32,14 @@ interface WishlistItem {
     regularPrice: number;
     memberPrice: number;
     stockQuantity: number;
+    featured?: boolean;
+    isPromotional: boolean;
+    isQualifyingForMembership: boolean;
+    promotionalPrice?: number | null;
+    promotionStartDate?: string | null;
+    promotionEndDate?: string | null;
+    memberOnlyUntil?: string | null;
+    earlyAccessStart?: string | null;
     images: Array<{
       url: string;
       altText?: string;
@@ -48,6 +57,36 @@ interface WishlistItem {
   };
   createdAt: string;
 }
+
+// Centralized pricing component for member wishlist
+const MemberWishlistPricing = ({ product }: { product: WishlistItem['product'] }) => {
+  const pricing = usePricing(product);
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center space-x-2">
+        <span className={`text-lg font-bold ${pricing.displayClasses.priceColor}`}>
+          {pricing.formattedPrice}
+        </span>
+        {pricing.badges.map((badge, index) => (
+          <Badge key={index} variant={badge.variant} className={badge.className}>
+            {badge.text}
+          </Badge>
+        ))}
+      </div>
+      {pricing.showSavings && (
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500 line-through">
+            {pricing.formattedOriginalPrice}
+          </span>
+          <span className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}>
+            Save {pricing.formattedSavings}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function MemberWishlistPage() {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -250,17 +289,7 @@ export default function MemberWishlistPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-blue-600">
-                        RM {item.product.memberPrice.toFixed(2)}
-                      </span>
-                      {item.product.memberPrice !==
-                        item.product.regularPrice && (
-                        <span className="text-sm text-gray-500 line-through">
-                          RM {item.product.regularPrice.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
+                    <MemberWishlistPricing product={item.product} />
 
                     <div className="flex space-x-2">
                       <Button

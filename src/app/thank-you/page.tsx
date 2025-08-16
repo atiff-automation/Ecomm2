@@ -39,6 +39,7 @@ interface OrderItem {
   id: string;
   quantity: number;
   price: number;
+  memberPrice: number;
   finalPrice: number;
   product: {
     name: string;
@@ -438,11 +439,51 @@ function ThankYouContent() {
                         <span className="text-sm text-gray-600">
                           Qty: {item.quantity}
                         </span>
-                        {item.finalPrice < item.price && (
-                          <Badge variant="secondary" className="text-xs">
-                            Member Price
-                          </Badge>
-                        )}
+                        {/* Show price type badge based on stored order data */}
+                        {item.finalPrice < item.price && (() => {
+                          // Determine price type from actual applied pricing (Source of Truth)
+                          // This logic recreates the pricing decision made during order creation
+                          
+                          if (item.finalPrice < item.memberPrice) {
+                            // Applied price is lower than member price = promotional discount
+                            return (
+                              <Badge variant="destructive" className="text-xs">
+                                Promo
+                              </Badge>
+                            );
+                          } else if (item.finalPrice === item.memberPrice) {
+                            // Applied price equals member price = member discount
+                            return (
+                              <Badge variant="secondary" className="text-xs">
+                                Member
+                              </Badge>
+                            );
+                          } else {
+                            // Applied price is between member and regular = unclear, fallback to order-level analysis
+                            const hasPromotionalDiscount = orderData?.discountAmount && orderData.discountAmount > 0;
+                            const hasMemberDiscount = orderData?.memberDiscount && orderData.memberDiscount > 0;
+                            
+                            if (hasPromotionalDiscount && !hasMemberDiscount) {
+                              return (
+                                <Badge variant="destructive" className="text-xs">
+                                  Promo
+                                </Badge>
+                              );
+                            } else if (hasMemberDiscount && !hasPromotionalDiscount) {
+                              return (
+                                <Badge variant="secondary" className="text-xs">
+                                  Member
+                                </Badge>
+                              );
+                            } else {
+                              return (
+                                <Badge variant="outline" className="text-xs">
+                                  Discounted
+                                </Badge>
+                              );
+                            }
+                          }
+                        })()}
                       </div>
                     </div>
                     <div className="text-right">
@@ -525,8 +566,8 @@ function ThankYouContent() {
                 )}
 
                 {orderData?.discountAmount && orderData.discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
+                  <div className="flex justify-between text-blue-600">
+                    <span>Promotional Discount</span>
                     <span>-{formatPrice(orderData.discountAmount)}</span>
                   </div>
                 )}

@@ -12,6 +12,7 @@ import { getMembershipConfig } from '@/lib/membership';
 import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
 import { telegramService } from '@/lib/telegram/telegram-service';
+import { getBestPrice } from '@/lib/promotions/promotion-utils';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -85,7 +86,18 @@ export async function POST(request: NextRequest) {
         id: { in: cartItems.map(item => item.productId) },
         status: 'ACTIVE',
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        regularPrice: true,
+        memberPrice: true,
+        isPromotional: true,
+        promotionalPrice: true,
+        promotionStartDate: true,
+        promotionEndDate: true,
+        isQualifyingForMembership: true,
+        stockQuantity: true,
         categories: {
           include: {
             category: {
@@ -133,16 +145,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      isMember = user.isMember || orderData.membershipActivated;
+      // Only apply member pricing for users who are ALREADY members
+      // Don't apply member pricing for pending memberships (activated during checkout)
+      isMember = user.isMember;
     } else {
-      // Guest user - membership can only be activated during checkout
-      isMember = Boolean(orderData.membershipActivated);
+      // Guest user - don't apply member pricing during order creation
+      // Membership will be activated after payment via webhook
+      isMember = false;
     }
 
-    // Calculate order totals
+    // Calculate order totals using proper pricing logic
     let subtotal = 0;
     let memberSubtotal = 0;
     let qualifyingTotal = 0;
+    let totalMemberDiscount = 0;
+    let totalPromotionalDiscount = 0;
     const membershipConfig = await getMembershipConfig();
 
     const orderItems: Array<{
@@ -164,11 +181,45 @@ export async function POST(request: NextRequest) {
 
       const regularPrice = Number(product.regularPrice);
       const memberPrice = Number(product.memberPrice);
-      const price = isMember ? memberPrice : regularPrice;
-      const itemTotal = price * cartItem.quantity;
 
-      subtotal += regularPrice * cartItem.quantity;
+      // Use getBestPrice to get correct pricing including promotional discounts
+      const bestPriceResult = getBestPrice({
+        regularPrice: regularPrice,
+        memberPrice: memberPrice,
+        isPromotional: product.isPromotional || false,
+        promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
+        promotionStartDate: product.promotionStartDate,
+        promotionEndDate: product.promotionEndDate,
+        isQualifyingForMembership: product.isQualifyingForMembership,
+      }, isMember);
+
+      const appliedPrice = bestPriceResult.price;
+      const itemTotal = appliedPrice * cartItem.quantity;
+
+      // Debug promotional pricing
+      console.log(`🔍 Order Creation - Product: ${product.name}`);
+      console.log(`   - regularPrice: ${regularPrice}`);
+      console.log(`   - memberPrice: ${memberPrice}`);
+      console.log(`   - isPromotional: ${product.isPromotional}`);
+      console.log(`   - promotionalPrice: ${product.promotionalPrice}`);
+      console.log(`   - promotionStartDate: ${product.promotionStartDate}`);
+      console.log(`   - promotionEndDate: ${product.promotionEndDate}`);
+      console.log(`   - isMember: ${isMember}`);
+      console.log(`   - bestPriceResult:`, bestPriceResult);
+      console.log(`   - appliedPrice: ${appliedPrice}`);
+
+      subtotal += itemTotal;
       memberSubtotal += memberPrice * cartItem.quantity;
+
+      // Calculate discounts based on price type
+      if (bestPriceResult.priceType === 'promotional') {
+        const basePrice = isMember ? memberPrice : regularPrice;
+        const promotionalDiscount = (basePrice - appliedPrice) * cartItem.quantity;
+        totalPromotionalDiscount += promotionalDiscount;
+      } else if (bestPriceResult.priceType === 'member') {
+        const memberDiscount = (regularPrice - appliedPrice) * cartItem.quantity;
+        totalMemberDiscount += memberDiscount;
+      }
 
       // Check if item qualifies for membership using product-level control
       if (!product.isPromotional && product.isQualifyingForMembership) {
@@ -180,7 +231,7 @@ export async function POST(request: NextRequest) {
         quantity: cartItem.quantity,
         regularPrice: regularPrice,
         memberPrice: memberPrice,
-        appliedPrice: price,
+        appliedPrice: appliedPrice,
         totalPrice: itemTotal,
         productName: product.name,
         productSku: product.sku,
@@ -189,11 +240,14 @@ export async function POST(request: NextRequest) {
 
     // Calculate shipping and tax
     const shippingCost = subtotal >= 100 ? 0 : 15; // Free shipping over RM100
-    const taxRate = 0.06; // 6% SST
-    const taxAmount =
-      Math.round((isMember ? memberSubtotal : subtotal) * taxRate * 100) / 100;
-    const totalAmount =
-      (isMember ? memberSubtotal : subtotal) + shippingCost + taxAmount;
+    
+    // TODO: Tax calculation should be configurable, not hardcoded
+    // For now, set tax to 0 until tax system is properly configured
+    const taxRate = 0; // Remove hardcoded 6% SST
+    const taxAmount = 0; // No tax until properly configured
+    
+    // Always use regular pricing for order creation (before membership activation)
+    const totalAmount = subtotal + shippingCost + taxAmount;
 
     // Create order in database transaction
     const result = await prisma.$transaction(async tx => {
@@ -240,13 +294,14 @@ export async function POST(request: NextRequest) {
           orderNumber: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
           status: 'PENDING',
           paymentStatus: 'PENDING',
-          subtotal: isMember ? memberSubtotal : subtotal,
+          subtotal: subtotal, // Using calculated subtotal with applied pricing
           taxAmount,
           shippingCost,
           total: totalAmount,
           paymentMethod: orderData.paymentMethod,
           customerNotes: orderData.orderNotes || null,
-          memberDiscount: isMember ? subtotal - memberSubtotal : 0,
+          memberDiscount: totalMemberDiscount,
+          discountAmount: totalPromotionalDiscount,
           wasEligibleForMembership: Boolean(
             orderData.membershipActivated &&
               qualifyingTotal >= membershipConfig.membershipThreshold

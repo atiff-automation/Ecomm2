@@ -52,15 +52,23 @@ export default function TestPaymentGatewayPage() {
 
       if (webhookResponse.ok) {
         if (success) {
+          // Get webhook response to check if membership was activated
+          const webhookData = await webhookResponse.json();
+          console.log('🎯 Webhook response:', webhookData);
+          
           // For successful payments, redirect directly to thank-you page
           const thankYouParams = new URLSearchParams({
             orderRef,
             amount,
-            // Note: membership qualification will be determined by thank-you page
-            // based on order data, not payment gateway
           });
           
-          console.log('✅ Payment successful - redirecting to thank-you page');
+          // Pass membership parameter if membership was activated
+          if (webhookData.membershipActivated) {
+            thankYouParams.set('membership', 'true');
+            console.log('🎉 Membership activated - adding membership=true to thank-you URL');
+          }
+          
+          console.log('✅ Payment successful - redirecting to thank-you page with params:', thankYouParams.toString());
           router.push(`/thank-you?${thankYouParams.toString()}`);
         } else {
           // For failed payments, redirect back to checkout with failure info

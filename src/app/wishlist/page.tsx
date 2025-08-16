@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { usePricing } from '@/hooks/use-pricing';
 
 interface WishlistItem {
   id: string;
@@ -35,13 +36,22 @@ interface WishlistItem {
     memberPrice: number;
     stockQuantity: number;
     featured: boolean;
+    isPromotional: boolean;
+    isQualifyingForMembership: boolean;
+    promotionalPrice?: number | null;
+    promotionStartDate?: string | null;
+    promotionEndDate?: string | null;
+    memberOnlyUntil?: string | null;
+    earlyAccessStart?: string | null;
     averageRating: number;
     reviewCount: number;
-    category: {
-      id: string;
-      name: string;
-      slug: string;
-    };
+    categories: Array<{
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    }>;
     primaryImage?: {
       url: string;
       altText?: string;
@@ -164,6 +174,161 @@ export default function WishlistPage() {
     });
   };
 
+  // Wishlist Item Card Component with centralized pricing
+  const WishlistItemCard = ({ 
+    item, 
+    onRemove, 
+    onAddToCart, 
+    addingToCart 
+  }: {
+    item: WishlistItem;
+    onRemove: (productId: string) => void;
+    onAddToCart: (productId: string) => Promise<void>;
+    addingToCart: string | null;
+  }) => {
+    const pricing = usePricing(item.product);
+
+    return (
+      <Card className="group hover:shadow-lg transition-shadow">
+        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+          {item.product.primaryImage ? (
+            <Image
+              src={item.product.primaryImage.url}
+              alt={item.product.primaryImage.altText || item.product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-400">No Image</span>
+            </div>
+          )}
+
+          {/* Centralized Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {pricing.badges.map((badge, index) => (
+              <Badge key={index} variant={badge.variant} className={badge.className}>
+                {badge.text}
+              </Badge>
+            ))}
+            {item.product.stockQuantity === 0 && (
+              <Badge variant="outline" className="bg-white">
+                Out of Stock
+              </Badge>
+            )}
+          </div>
+
+          {/* Wishlist Button */}
+          <div className="absolute top-2 right-2">
+            <WishlistButton
+              productId={item.product.id}
+              initialInWishlist={true}
+              onWishlistChange={inWishlist => {
+                if (!inWishlist) {
+                  onRemove(item.product.id);
+                }
+              }}
+              variant="secondary"
+              className="bg-white/90 hover:bg-white"
+            />
+          </div>
+
+          {/* Added Date */}
+          <div className="absolute bottom-2 left-2">
+            <Badge variant="outline" className="bg-white/90 text-xs">
+              Added {formatDate(item.createdAt)}
+            </Badge>
+          </div>
+        </div>
+
+        <CardContent className="p-4">
+          <div className="space-y-2">
+            {/* Category */}
+            <Link
+              href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
+              className="text-xs text-muted-foreground hover:text-primary"
+            >
+              {item.product.categories?.[0]?.category?.name || 'Uncategorized'}
+            </Link>
+
+            {/* Product Name */}
+            <Link href={`/products/${item.product.slug}`}>
+              <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
+                {item.product.name}
+              </h3>
+            </Link>
+
+            {/* Description */}
+            {item.product.shortDescription && (
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {item.product.shortDescription}
+              </p>
+            )}
+
+            {/* Rating */}
+            {item.product.averageRating > 0 && (
+              <div className="flex items-center gap-1">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star
+                      key={star}
+                      className={`w-3 h-3 ${
+                        star <= item.product.averageRating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  ({item.product.reviewCount})
+                </span>
+              </div>
+            )}
+
+            {/* Centralized Pricing */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className={`font-bold text-lg ${pricing.displayClasses.priceColor}`}>
+                  {pricing.formattedPrice}
+                </span>
+              </div>
+              {pricing.showSavings && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground line-through">
+                    {pricing.formattedOriginalPrice}
+                  </span>
+                  <span className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}>
+                    Save {pricing.formattedSavings}
+                  </span>
+                </div>
+              )}
+              {pricing.showMemberPreview && (
+                <div className="text-xs text-muted-foreground">
+                  {pricing.memberPreviewText}
+                </div>
+              )}
+            </div>
+
+            {/* Add to Cart Button */}
+            <Button
+              className="w-full"
+              disabled={item.product.stockQuantity === 0 || addingToCart === item.product.id}
+              onClick={() => onAddToCart(item.product.id)}
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              {addingToCart === item.product.id
+                ? 'Adding...'
+                : item.product.stockQuantity === 0
+                  ? 'Out of Stock'
+                  : 'Add to Cart'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -260,183 +425,14 @@ export default function WishlistPage() {
       {/* Wishlist Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {wishlistItems.map(item => {
-          const showMemberPrice = isLoggedIn && isMember;
-          const savings = item.product.regularPrice - item.product.memberPrice;
-
           return (
-            <Card
+            <WishlistItemCard
               key={item.id}
-              className="group hover:shadow-lg transition-shadow"
-            >
-              <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                {item.product.primaryImage ? (
-                  <Image
-                    src={item.product.primaryImage.url}
-                    alt={item.product.primaryImage.altText || item.product.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400">No Image</span>
-                  </div>
-                )}
-
-                {/* Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  {item.product.featured && (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-500 text-white"
-                    >
-                      Featured
-                    </Badge>
-                  )}
-                  {item.product.stockQuantity === 0 && (
-                    <Badge variant="outline" className="bg-white">
-                      Out of Stock
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Wishlist Button */}
-                <div className="absolute top-2 right-2">
-                  <WishlistButton
-                    productId={item.product.id}
-                    initialInWishlist={true}
-                    onWishlistChange={inWishlist => {
-                      if (!inWishlist) {
-                        removeFromWishlist(item.product.id);
-                      }
-                    }}
-                    variant="secondary"
-                    className="bg-white/90 hover:bg-white"
-                  />
-                </div>
-
-                {/* Added Date */}
-                <div className="absolute bottom-2 left-2">
-                  <Badge variant="outline" className="bg-white/90 text-xs">
-                    Added {formatDate(item.createdAt)}
-                  </Badge>
-                </div>
-              </div>
-
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  {/* Category */}
-                  <Link
-                    href={`/products?category=${item.product.categories?.[0]?.category?.id || ''}`}
-                    className="text-xs text-muted-foreground hover:text-primary"
-                  >
-                    {item.product.categories?.[0]?.category?.name ||
-                      'Uncategorized'}
-                  </Link>
-
-                  {/* Product Name */}
-                  <Link href={`/products/${item.product.slug}`}>
-                    <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
-                      {item.product.name}
-                    </h3>
-                  </Link>
-
-                  {/* Description */}
-                  {item.product.shortDescription && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {item.product.shortDescription}
-                    </p>
-                  )}
-
-                  {/* Rating */}
-                  {item.product.averageRating > 0 && (
-                    <div className="flex items-center gap-1">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <Star
-                            key={star}
-                            className={`w-3 h-3 ${
-                              star <= item.product.averageRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        ({item.product.reviewCount})
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Pricing */}
-                  <div className="space-y-1">
-                    {showMemberPrice ? (
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-lg text-green-600">
-                            {formatPrice(item.product.memberPrice)}
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            Member
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground line-through">
-                            {formatPrice(item.product.regularPrice)}
-                          </span>
-                          <span className="text-xs text-green-600 font-medium">
-                            Save {formatPrice(savings)}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-bold text-lg">
-                          {formatPrice(item.product.regularPrice)}
-                        </span>
-                        {!isLoggedIn &&
-                          item.product.memberPrice <
-                            item.product.regularPrice && (
-                            <div className="text-xs text-muted-foreground">
-                              Member price:{' '}
-                              {formatPrice(item.product.memberPrice)}
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      className="flex-1"
-                      disabled={
-                        item.product.stockQuantity === 0 ||
-                        addingToCart === item.product.id
-                      }
-                      onClick={() => addToCart(item.product.id)}
-                    >
-                      {addingToCart === item.product.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                      )}
-                      {item.product.stockQuantity === 0
-                        ? 'Out of Stock'
-                        : 'Add to Cart'}
-                    </Button>
-                  </div>
-
-                  {/* Stock Warning */}
-                  {item.product.stockQuantity <= 5 &&
-                    item.product.stockQuantity > 0 && (
-                      <p className="text-xs text-orange-600">
-                        Only {item.product.stockQuantity} left in stock
-                      </p>
-                    )}
-                </div>
-              </CardContent>
-            </Card>
+              item={item}
+              onRemove={removeFromWishlist}
+              onAddToCart={addToCart}
+              addingToCart={addingToCart}
+            />
           );
         })}
       </div>

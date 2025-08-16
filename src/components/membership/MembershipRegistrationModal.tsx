@@ -222,35 +222,45 @@ export default function MembershipRegistrationModal({
           console.warn('Error transferring guest cart:', error);
         }
 
-        // Activate membership for existing user
-        const membershipResponse = await fetch('/api/membership/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            acceptTerms: true,
-            qualifyingAmount: eligibility.qualifyingTotal,
-          }),
-        });
+        // For checkout flow, don't activate membership immediately
+        // Instead, signal that membership will be pending until payment
+        if (typeof window !== 'undefined' && window.location.pathname === '/checkout') {
+          console.log('🔄 Checkout flow: Membership will be pending until payment completion');
+          
+          onSuccess({
+            message: 'Account created! Your membership will be activated after successful payment.',
+            membershipStatus: 'pending_payment',
+            membership: {
+              isActive: false,
+              pendingPayment: true,
+              qualifyingAmount: eligibility.qualifyingTotal,
+            }
+          });
 
-        const membershipResult = await membershipResponse.json();
-
-        if (membershipResponse.ok) {
-          onSuccess(membershipResult);
-
-          // Ensure user stays on checkout page after login
-          if (
-            typeof window !== 'undefined' &&
-            window.location.pathname === '/checkout'
-          ) {
-            // Stay on checkout page - don't navigate away
-            window.history.replaceState(null, '', '/checkout');
-          }
-
+          // Stay on checkout page - don't navigate away
+          window.history.replaceState(null, '', '/checkout');
           onClose();
         } else {
-          setErrors({
-            submit: membershipResult.message || 'Failed to activate membership',
+          // For non-checkout flows, activate membership immediately
+          const membershipResponse = await fetch('/api/membership/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              acceptTerms: true,
+              qualifyingAmount: eligibility.qualifyingTotal,
+            }),
           });
+
+          const membershipResult = await membershipResponse.json();
+
+          if (membershipResponse.ok) {
+            onSuccess(membershipResult);
+            onClose();
+          } else {
+            setErrors({
+              submit: membershipResult.message || 'Failed to activate membership',
+            });
+          }
         }
       } else {
         setErrors({ submit: 'Invalid email or password' });

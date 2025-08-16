@@ -118,6 +118,8 @@ export class CartService {
       if (response.success && response.data) {
         console.log('📥 Cart fetched successfully:', {
           cartItems: response.data.totalItems,
+          cartId: response.data.id,
+          backendResponse: response.data
         });
         this.cart = response.data;
         this.lastFetch = now;
@@ -163,6 +165,7 @@ export class CartService {
         success: response.success,
         hasData: !!response.data,
         cartItems: response.data?.totalItems,
+        fullResponse: response,
       });
 
       if (response.success && response.data) {

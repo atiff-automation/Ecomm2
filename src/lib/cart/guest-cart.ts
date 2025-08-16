@@ -330,10 +330,10 @@ export async function getGuestCartWithProducts() {
     membershipThreshold - qualifyingTotal
   );
 
-  // Calculate tax and shipping (simplified)
-  const taxAmount = Math.round(applicableSubtotal * 0.06 * 100) / 100; // 6% SST
-  const shippingCost = applicableSubtotal >= 100 ? 0 : 15; // Free shipping over RM100
-  const total = applicableSubtotal + taxAmount + shippingCost;
+  // Tax and shipping to be calculated at checkout (matches authenticated cart approach)
+  const taxAmount = 0; // Tax calculation deferred to checkout
+  const shippingCost = 0; // Shipping calculation deferred to checkout
+  const total = applicableSubtotal; // Total = price user actually pays (before tax/shipping)
 
   return {
     items: cartItems,

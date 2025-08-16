@@ -36,6 +36,8 @@ import { useSession } from 'next-auth/react';
 import React from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { ProductCard } from '@/components/product/ProductCard';
+import { useCart } from '@/hooks/use-cart';
 
 interface Product {
   id: string;
@@ -46,6 +48,13 @@ interface Product {
   memberPrice: number;
   stockQuantity: number;
   featured: boolean;
+  isPromotional: boolean;
+  isQualifyingForMembership: boolean;
+  promotionalPrice?: number | null;
+  promotionStartDate?: string | null;
+  promotionEndDate?: string | null;
+  memberOnlyUntil?: string | null;
+  earlyAccessStart?: string | null;
   averageRating: number;
   reviewCount: number;
   categories: Array<{
@@ -121,6 +130,7 @@ export default function SearchPage() {
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
+  const { addToCart } = useCart();
 
   // Debounced query for suggestions
   const debouncedQuery = useDebounce(query, 300);
@@ -331,183 +341,14 @@ export default function SearchPage() {
     ];
   }, [suggestions]);
 
-  const ProductCard = ({ product }: { product: Product }) => {
-    const primaryImage =
-      product.images.find(img => img.isPrimary) || product.images[0];
-    const showMemberPrice = isLoggedIn && isMember;
-    const savings = product.regularPrice - product.memberPrice;
-
-    return (
-      <Card className="group hover:shadow-lg transition-shadow duration-200">
-        <div className="relative aspect-square overflow-hidden rounded-t-lg">
-          {primaryImage ? (
-            <Image
-              src={primaryImage.url}
-              alt={primaryImage.altText || product.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-200"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No Image</span>
-            </div>
-          )}
-
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.featured && (
-              <Badge variant="secondary" className="bg-yellow-500 text-white">
-                Featured
-              </Badge>
-            )}
-            {product.stockQuantity === 0 && (
-              <Badge variant="outline" className="bg-white">
-                Out of Stock
-              </Badge>
-            )}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <WishlistButton
-              productId={product.id}
-              size="sm"
-              variant="secondary"
-              className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
-            />
-          </div>
-        </div>
-
-        <CardContent className="p-4">
-          <div className="space-y-2">
-            {/* Category */}
-            <Link
-              href={`/products?category=${product.categories?.[0]?.category?.id || ''}`}
-              className="text-xs text-muted-foreground hover:text-primary"
-            >
-              {product.categories?.[0]?.category?.name || 'Uncategorized'}
-            </Link>
-
-            {/* Product Name */}
-            <Link href={`/products/${product.slug}`}>
-              <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
-                {product.name}
-              </h3>
-            </Link>
-
-            {/* Description */}
-            {product.shortDescription && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {product.shortDescription}
-              </p>
-            )}
-
-            {/* Rating */}
-            {product.averageRating > 0 && (
-              <div className="flex items-center gap-1">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <Star
-                      key={star}
-                      className={`w-3 h-3 ${
-                        star <= product.averageRating
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  ({product.reviewCount})
-                </span>
-              </div>
-            )}
-
-            {/* Pricing */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  {showMemberPrice ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg text-green-600">
-                          {formatPrice(product.memberPrice)}
-                        </span>
-                        <Badge variant="secondary" className="text-xs">
-                          Member
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground line-through">
-                          {formatPrice(product.regularPrice)}
-                        </span>
-                        <span className="text-xs text-green-600 font-medium">
-                          Save {formatPrice(savings)}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <span className="font-bold text-lg">
-                        {formatPrice(product.regularPrice)}
-                      </span>
-                      {!isLoggedIn &&
-                        product.memberPrice < product.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member price: {formatPrice(product.memberPrice)}
-                          </div>
-                        )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Add to Cart Button */}
-            <Button
-              className="w-full"
-              disabled={product.stockQuantity === 0}
-              onClick={async () => {
-                if (!isLoggedIn) {
-                  window.location.href = '/auth/signin';
-                  return;
-                }
-
-                if (product.stockQuantity === 0) {
-                  return;
-                }
-
-                try {
-                  const response = await fetch('/api/cart', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      productId: product.id,
-                      quantity: 1,
-                    }),
-                  });
-
-                  if (response.ok) {
-                    // You could add a toast notification here
-                    // Success handled silently for now
-                  } else {
-                    const data = await response.json();
-                    alert(data.message || 'Failed to add to cart');
-                  }
-                } catch {
-                  alert('Failed to add to cart');
-                }
-              }}
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await addToCart(productId, 1);
+      // The success toast is handled by the useCart hook
+    } catch (error) {
+      // The error toast is handled by the useCart hook
+      console.error('Error adding to cart:', error);
+    }
   };
 
   return (
@@ -802,7 +643,14 @@ export default function SearchPage() {
                     }`}
                   >
                     {products.map(product => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onAddToCart={handleAddToCart}
+                        size="md"
+                        showDescription={true}
+                        showRating={true}
+                      />
                     ))}
                   </div>
 
