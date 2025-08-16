@@ -17,6 +17,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { headers } from 'next/headers';
 import { telegramService } from '@/lib/telegram/telegram-service';
+import { getBestPrice, productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
+
+/**
+ * Calculate the actual qualifying total for membership based on order items
+ * This ensures we check the final order state, not just stored values
+ */
+function calculateActualQualifyingTotal(orderItems: any[]): number {
+  let qualifyingTotal = 0;
+  
+  for (const item of orderItems) {
+    // Use the same logic as order creation: non-promotional qualifying products count at regular price
+    if (item.product.isQualifyingForMembership && !item.product.isPromotional) {
+      qualifyingTotal += Number(item.regularPrice) * item.quantity;
+    }
+  }
+  
+  return qualifyingTotal;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,131 +75,22 @@ export async function POST(request: NextRequest) {
             product: true,
           },
         },
+        pendingMembership: true, // Include pending membership for activation
       },
     });
 
     if (!order) {
-      console.log(
-        '📦 Order not found, but checking for membership activation in test mode...'
+      console.log('❌ Order not found for orderReference:', orderReference);
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Order not found',
+          orderReference,
+          note: 'Order should be created via /api/orders before payment processing'
+        },
+        { status: 404 }
       );
-
-      let membershipActivated = false;
-
-      // For simulation mode, we need to handle the case where no order exists yet
-      // In production, orders would be created first and then this webhook would update them
-      if (amount >= 80) {
-        console.log(
-          '🎯 Processing membership activation for qualifying purchase...'
-        );
-
-        // Look for user with recent activity who should receive this membership activation
-        // In production, this would be tied to the actual order user
-        const recentUser = await prisma.user.findFirst({
-          where: {
-            isMember: false,
-            OR: [
-              {
-                cartItems: {
-                  some: {}, // User with cart items (active session)
-                },
-              },
-              {
-                lastLoginAt: {
-                  gte: new Date(Date.now() - 30 * 60 * 1000), // Logged in within last 30 minutes
-                },
-              },
-            ],
-          },
-          orderBy: { lastLoginAt: 'desc' },
-        });
-
-        if (recentUser) {
-          console.log(
-            '✅ Found qualifying user for membership activation:',
-            recentUser.id
-          );
-
-          // Get user's cart items to create order record
-          const cartItems = await prisma.cartItem.findMany({
-            where: { userId: recentUser.id },
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  sku: true,
-                  regularPrice: true,
-                  memberPrice: true,
-                },
-              },
-            },
-          });
-
-          // Create order record for customer's order history
-          await prisma.order.create({
-            data: {
-              orderNumber: orderReference,
-              user: {
-                connect: { id: recentUser.id },
-              },
-              status: 'CONFIRMED',
-              paymentStatus: 'PAID',
-              paymentId: transactionId,
-              subtotal: amount,
-              total: amount,
-              shippingCost: 0,
-              taxAmount: 0,
-              orderItems: {
-                create: cartItems.map(item => ({
-                  productId: item.productId,
-                  quantity: item.quantity,
-                  regularPrice: item.product.regularPrice,
-                  memberPrice:
-                    item.product.memberPrice || item.product.regularPrice,
-                  appliedPrice:
-                    item.product.memberPrice || item.product.regularPrice,
-                  totalPrice:
-                    (item.product.memberPrice || item.product.regularPrice) *
-                    item.quantity,
-                  productName: item.product.name,
-                  productSku: item.product.sku || `SKU-${item.productId}`,
-                })),
-              },
-            },
-          });
-
-          // Activate membership
-          await prisma.user.update({
-            where: { id: recentUser.id },
-            data: {
-              isMember: true,
-              memberSince: new Date(),
-            },
-          });
-
-          // Clear user's cart after successful payment
-          await prisma.cartItem.deleteMany({
-            where: { userId: recentUser.id },
-          });
-
-          membershipActivated = true;
-          console.log(
-            '✅ Order created and membership activated for user:',
-            recentUser.id
-          );
-        } else {
-          console.log('⚠️ No qualifying user found for membership activation');
-        }
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Payment webhook processed (test mode)',
-        orderReference,
-        amount,
-        membershipActivated,
-        note: 'Test mode - membership activation attempted',
-      });
     }
 
     // Update order status
@@ -196,9 +105,51 @@ export async function POST(request: NextRequest) {
 
     let membershipActivated = false;
 
-    // Check if user qualifies for membership activation
-    if (order.userId && !order.user?.isMember && amount >= 80) {
-      console.log('🎯 Qualifying purchase detected, activating membership...');
+    // Check if there's a pending membership to activate
+    if (order.pendingMembership && order.userId && !order.user?.isMember) {
+      console.log('🎯 Processing pending membership activation for order:', order.orderNumber);
+      
+      // CRITICAL: Re-calculate the actual qualifying total from order items
+      // Don't trust stored values - cart might have changed after pending membership was created
+      const actualQualifyingTotal = calculateActualQualifyingTotal(order.orderItems);
+      const membershipThreshold = 80; // Should match system config
+      
+      console.log(`🔍 Membership eligibility check:`, {
+        storedQualifyingAmount: order.pendingMembership.qualifyingAmount,
+        actualQualifyingTotal,
+        membershipThreshold,
+        orderTotal: Number(order.total)
+      });
+      
+      if (actualQualifyingTotal >= membershipThreshold) {
+        await prisma.user.update({
+          where: { id: order.userId },
+          data: {
+            isMember: true,
+            memberSince: new Date(),
+            membershipTotal: actualQualifyingTotal, // Use actual calculated total
+          },
+        });
+
+        membershipActivated = true;
+        console.log('✅ Membership activated for user from pending membership:', order.userId);
+        console.log(`   - Actual qualifying amount: RM${actualQualifyingTotal} (threshold: RM${membershipThreshold})`);
+      } else {
+        console.log('❌ Membership NOT activated - actual qualifying amount below threshold:', {
+          actualQualifyingTotal,
+          membershipThreshold,
+          shortfall: membershipThreshold - actualQualifyingTotal,
+          reason: 'Cart was reduced after registration or contains only promotional items'
+        });
+      }
+
+      // Always delete the pending membership record after processing
+      await prisma.pendingMembership.delete({
+        where: { id: order.pendingMembership.id },
+      });
+    } else if (order.userId && !order.user?.isMember && amount >= 80) {
+      // Fallback: Direct activation for qualifying purchases (legacy flow)
+      console.log('🎯 Qualifying purchase detected, activating membership (legacy flow)...');
 
       await prisma.user.update({
         where: { id: order.userId },
@@ -209,7 +160,7 @@ export async function POST(request: NextRequest) {
       });
 
       membershipActivated = true;
-      console.log('✅ Membership activated for user:', order.userId);
+      console.log('✅ Membership activated for user (legacy):', order.userId);
     }
 
     // Send Telegram notification for successful order
