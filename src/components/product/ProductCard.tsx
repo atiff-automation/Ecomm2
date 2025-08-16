@@ -57,7 +57,7 @@ export function ProductCard({
   const pricing = usePricing(product);
 
   const primaryImage =
-    product.images.find(img => img.isPrimary) || product.images[0];
+    product.images?.find(img => img.isPrimary) || product.images?.[0];
 
   // Check if user doesn't have access, but don't return early to maintain hook consistency
   const isRestricted = 
@@ -186,7 +186,7 @@ export function ProductCard({
                 )}
                 {pricing.priceType === 'promotional' && (
                   <Badge variant="destructive" className="text-xs">
-                    Special
+                    Promo
                   </Badge>
                 )}
                 {pricing.priceType === 'member' && (

@@ -200,9 +200,11 @@ export function getBestPrice(
     product.promotionalPrice &&
     product.memberPrice
   ) {
-    const lowestPrice = Math.min(product.promotionalPrice, product.memberPrice);
-    const priceType =
-      lowestPrice === product.promotionalPrice ? 'promotional' : 'member';
+    const promotionalPrice = Number(product.promotionalPrice);
+    const memberPrice = Number(product.memberPrice);
+    const lowestPrice = Math.min(promotionalPrice, memberPrice);
+    const priceType = lowestPrice === promotionalPrice ? 'promotional' : 'member';
+
 
     return {
       price: lowestPrice,
@@ -244,18 +246,8 @@ export function getPromotionDisplayText(
   status: PromotionStatus
 ): string | null {
   if (status.isActive) {
-    if (status.daysUntilEnd !== undefined) {
-      if (status.daysUntilEnd === 0) {
-        return 'Ends today!';
-      } else if (status.daysUntilEnd === 1) {
-        return 'Ends tomorrow!';
-      } else if (status.daysUntilEnd <= 7) {
-        return `Ends in ${status.daysUntilEnd} days`;
-      } else {
-        return 'Limited time offer';
-      }
-    }
-    return 'Special price';
+    // Use simple "Promo" text as requested by user instead of time-based text
+    return 'Promo';
   } else if (status.isScheduled && status.daysUntilStart !== undefined) {
     if (status.daysUntilStart === 1) {
       return 'Sale starts tomorrow';

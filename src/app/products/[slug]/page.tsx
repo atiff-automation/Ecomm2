@@ -108,23 +108,23 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
 
-  // Always call hooks at the top level to maintain consistency
-  // Create a default product structure for hook calls when product is null
-  const hookProduct = product || {
+  // Always call pricing hook to maintain hook order (Rules of Hooks)
+  // Use a default empty product object when no product data is available
+  const pricing = usePricing(product || {
     id: '',
+    name: '',
     regularPrice: 0,
     memberPrice: 0,
-    promotionalPrice: null,
+    stockQuantity: 0,
+    featured: false,
     isPromotional: false,
     isQualifyingForMembership: false,
+    promotionalPrice: null,
     promotionStartDate: null,
     promotionEndDate: null,
     memberOnlyUntil: null,
-    earlyAccessStart: null,
-  };
-  
-  // Always call hooks in the same order
-  const pricing = usePricing(hookProduct);
+    earlyAccessStart: null
+  });
 
   const slug = params.slug as string;
   const isLoggedIn = !!session?.user;
@@ -219,7 +219,7 @@ export default function ProductDetailPage() {
 
   const isOutOfStock = product ? product.stockQuantity === 0 : false;
 
-  // Check if product is restricted (only when product exists)
+  // Check if product is restricted (only when product and pricing exist)
   const isRestricted = product && pricing && 
     pricing.effectivePrice === 0 &&
     pricing.priceDescription.includes('restricted');
@@ -370,7 +370,7 @@ export default function ProductDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               {/* Centralized badges from pricing service */}
-              {pricing.badges.map((badge, index) => (
+              {pricing && product && product.id && pricing.badges.map((badge, index) => (
                 <Badge
                   key={`${badge.type}-${index}`}
                   variant={badge.variant}
@@ -430,56 +430,78 @@ export default function ProductDetailPage() {
           )}
 
           {/* Centralized Price Display */}
-          <div className="space-y-2" aria-label={pricing.priceDescription}>
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}
-                >
-                  {pricing.formattedPrice}
-                </span>
-                {/* Price type badges already handled by centralized badges above */}
-              </div>
-
-              {/* Original price and savings */}
-              {pricing.showSavings && (
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl text-muted-foreground line-through">
-                    {pricing.formattedOriginalPrice}
-                  </span>
+          {pricing && product && product.id ? (
+            <div className="space-y-2" aria-label={pricing.priceDescription}>
+              <div>
+                <div className="flex items-center gap-3 mb-2">
                   <span
-                    className={`font-medium ${pricing.displayClasses.savingsColor}`}
+                    className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}
                   >
-                    You save {pricing.formattedSavings}
+                    {pricing.formattedPrice}
                   </span>
+                  {/* Price type badges already handled by centralized badges above */}
                 </div>
-              )}
 
-              {/* Member price preview for non-members */}
-              {pricing.showMemberPreview && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <strong>{pricing.memberPreviewText}</strong>
-                    <br />
-                    Save {pricing.formattedPotentialMemberSavings || pricing.formattedSavings} with membership
-                  </p>
-                </div>
-              )}
+                {/* Original price and savings */}
+                {pricing.showSavings && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl text-muted-foreground line-through">
+                      {pricing.formattedOriginalPrice}
+                    </span>
+                    <span
+                      className={`font-medium ${pricing.displayClasses.savingsColor}`}
+                    >
+                      You save {pricing.formattedSavings}
+                    </span>
+                  </div>
+                )}
 
-              {/* Early access information */}
-              {pricing.priceType === 'early-access' && (
-                <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <p className="text-sm text-purple-800">
-                    <strong>🎆 Early Access Promotion</strong>
-                    <br />
-                    {isMember
-                      ? 'You have early access to this promotion!'
-                      : 'Members get early access to special promotions'}
-                  </p>
+                {/* Member price preview for non-members */}
+                {pricing.showMemberPreview && (
+                  <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>{pricing.memberPreviewText}</strong>
+                      <br />
+                      Save {pricing.formattedPotentialMemberSavings || pricing.formattedSavings} with membership
+                    </p>
+                  </div>
+                )}
+
+                {/* Early access information */}
+                {pricing.priceType === 'early-access' && (
+                  <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-purple-800">
+                      <strong>🎆 Early Access Promotion</strong>
+                      <br />
+                      {isMember
+                        ? 'You have early access to this promotion!'
+                        : 'Members get early access to special promotions'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            // Fallback pricing display while loading
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-3xl font-bold">
+                  {new Intl.NumberFormat('en-MY', {
+                    style: 'currency',
+                    currency: 'MYR',
+                  }).format(product.regularPrice)}
+                </span>
+              </div>
+              {product.memberPrice < product.regularPrice && (
+                <div className="text-sm text-muted-foreground">
+                  Member Price: {new Intl.NumberFormat('en-MY', {
+                    style: 'currency',
+                    currency: 'MYR',
+                  }).format(product.memberPrice)}
                 </div>
               )}
             </div>
-          </div>
+          )}
 
           {/* Quantity & Add to Cart */}
           <div className="space-y-4">
