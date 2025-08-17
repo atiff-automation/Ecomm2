@@ -146,6 +146,13 @@ enum ProductStatus {
   DISCONTINUED
 }
 
+// EasyParcel Shipping Classes (PDF Section 3.3)
+enum ShippingClass {
+  STANDARD    // Normal handling
+  FRAGILE     // Fragile items requiring special care
+  HAZARDOUS   // Hazardous materials with restrictions
+}
+
 model Category {
   id                   String    @id @default(cuid())
   name                 String
@@ -212,8 +219,13 @@ model Product {
   // Inventory
   stockQuantity   Int     @default(0)
   lowStockAlert   Int     @default(10)
-  weight          Decimal? @db.Decimal(8, 2)
-  dimensions      String?  // "L x W x H"
+  weight          Decimal? @db.Decimal(8, 2) // Required for shipping calculations
+  dimensions      Json?    // {length: cm, width: cm, height: cm} - EasyParcel format
+  
+  // Shipping Configuration (EasyParcel v1.4.0 - PDF Section 3.2)
+  shippingClass       ShippingClass @default(STANDARD)
+  customsDescription  String?       // For international shipping
+  hsCode             String?       // Harmonized System code for customs
   
   // SEO & Marketing
   metaTitle       String?
@@ -324,6 +336,21 @@ enum PaymentStatus {
   PARTIALLY_REFUNDED
 }
 
+// EasyParcel Shipment Status (PDF Section 6.1)
+enum ShipmentStatus {
+  DRAFT              // Shipment created but not booked
+  RATE_CALCULATED    // Shipping rates obtained
+  BOOKED             // Shipment booked with EasyParcel
+  LABEL_GENERATED    // Shipping label generated
+  PICKUP_SCHEDULED   // Pickup scheduled
+  PICKED_UP          // Package picked up by courier
+  IN_TRANSIT         // Package in transit
+  OUT_FOR_DELIVERY   // Package out for delivery
+  DELIVERED          // Package delivered
+  FAILED             // Delivery failed
+  CANCELLED          // Shipment cancelled
+}
+
 model Order {
   id       String @id @default(cuid())
   orderNumber String @unique // Format: ORD-YYYYMMDD-XXXX
@@ -364,10 +391,17 @@ model Order {
   shippedAt       DateTime?
   deliveredAt     DateTime?
   
+  // EasyParcel Integration (PDF Section 3.4 - Order Enhancements)
+  selectedCourierId      String?   // Selected courier for shipping
+  estimatedDeliveryDate  DateTime? // EasyParcel estimated delivery
+  shippingPreferences    Json?     // {insurance: boolean, signature_required: boolean, cod: object}
+  deliveryInstructions   String?   // Special delivery instructions
+  
   // Relationships
   orderItems OrderItem[]
   discountUsage DiscountUsage[]
   pendingMembership PendingMembership?
+  shipment Shipment? // One-to-one relationship with shipment
   
   // Special notes
   customerNotes String?
@@ -382,6 +416,90 @@ model Order {
   @@index([paymentStatus])
   @@index([orderNumber])
   @@index([createdAt])
+}
+
+// EasyParcel Shipment Model (PDF Section 3.2.1 - Shipment Entity)
+model Shipment {
+  id                    String   @id @default(cuid())
+  orderId               String   @unique
+  easyParcelShipmentId  String?  @unique // EasyParcel shipment ID
+  trackingNumber        String?  @unique
+  
+  // Courier Information (PDF Section 4.1)
+  courierId             String
+  courierName           String
+  serviceName           String
+  serviceType           String   // STANDARD, EXPRESS, OVERNIGHT
+  
+  // Shipping Details (PDF Section 3.3)
+  pickupAddress         Json     // Structured address
+  deliveryAddress       Json     // Structured address
+  parcelDetails         Json     // Weight, dimensions, value
+  
+  // Pricing (PDF Section 5.2)
+  originalPrice         Decimal  @db.Decimal(10, 2)
+  finalPrice            Decimal  @db.Decimal(10, 2)
+  insuranceAmount       Decimal? @db.Decimal(10, 2)
+  codAmount            Decimal? @db.Decimal(10, 2)
+  
+  // Status Tracking (PDF Section 6.1)
+  status               ShipmentStatus @default(DRAFT)
+  statusDescription    String?
+  estimatedDelivery    DateTime?
+  actualDelivery       DateTime?
+  
+  // Label & Pickup (PDF Sections 7.1, 8.1)
+  labelUrl             String?
+  labelGenerated       Boolean  @default(false)
+  pickupScheduled      Boolean  @default(false)
+  pickupDate           DateTime?
+  pickupTimeSlot       String?
+  
+  // Special Instructions (PDF Section 3.4)
+  specialInstructions  String?
+  signatureRequired    Boolean  @default(false)
+  insuranceRequired    Boolean  @default(false)
+  
+  // Relationships
+  order                Order    @relation(fields: [orderId], references: [id])
+  trackingEvents       ShipmentTracking[]
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("shipments")
+  @@index([orderId])
+  @@index([easyParcelShipmentId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@index([courierId])
+}
+
+// EasyParcel Tracking Events (PDF Section 6.2 - Tracking Events)
+model ShipmentTracking {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  
+  // Event Details (PDF Section 6.2.1)
+  eventCode   String   // As per EasyParcel event codes
+  eventName   String
+  description String
+  location    String?
+  
+  // Timing
+  eventTime   DateTime
+  timezone    String   @default("Asia/Kuala_Lumpur")
+  
+  // Source
+  source      String   @default("EASYPARCEL") // EASYPARCEL, COURIER, MANUAL
+  
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+  createdAt   DateTime @default(now())
+  
+  @@map("shipment_tracking")
+  @@index([shipmentId])
+  @@index([eventCode])
+  @@index([eventTime])
 }
 
 model OrderItem {
@@ -929,6 +1047,46 @@ model MediaUpload {
   createdAt     DateTime  @default(now())
 
   @@map("media_uploads")
+}
+
+// ==================== WEBHOOK PROCESSING QUEUE ====================
+
+enum WebhookStatus {
+  PENDING
+  RETRY
+  PROCESSED
+  FAILED
+}
+
+model WebhookQueue {
+  id             String        @id @default(cuid())
+  trackingNumber String        // Shipment tracking number
+  eventCode      String        // EasyParcel event code
+  eventName      String        // Event display name
+  eventTime      DateTime      // Event timestamp
+  location       String?       // Event location
+  shipmentId     String        // EasyParcel shipment ID
+  payload        Json          // Full webhook payload
+  
+  // Processing status
+  status         WebhookStatus @default(PENDING)
+  retryCount     Int          @default(0)
+  maxRetries     Int          @default(3)
+  nextRetryAt    DateTime     @default(now())
+  lastError      String?      // Last error message
+  
+  // Timestamps
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  processedAt    DateTime?    // When successfully processed
+  failedAt       DateTime?    // When permanently failed
+  
+  @@map("webhook_queue")
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+  @@index([eventCode])
 }
 
 // Add the missing relation for ImportExportJob and ComplianceReport to User model

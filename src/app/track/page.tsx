@@ -21,6 +21,9 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
+import DeliveryTimelineVisualization from '@/components/tracking/DeliveryTimelineVisualization';
+import DeliveryNotifications from '@/components/tracking/DeliveryNotifications';
+import ProofOfDelivery from '@/components/tracking/ProofOfDelivery';
 // Simple date formatting utility
 const formatDate = (dateString: string, includeTime = false) => {
   const date = new Date(dateString);
@@ -34,10 +37,36 @@ const formatDate = (dateString: string, includeTime = false) => {
 };
 
 interface TrackingEvent {
+  id?: string;
+  eventCode: string;
+  eventName: string;
+  description: string;
+  location?: string;
+  eventTime: string;
+  source: string;
+  category?: string;
+  isImportant?: boolean;
+  courierRemarks?: string;
+  // Legacy support
   timestamp: string;
   status: string;
-  location: string;
-  description: string;
+}
+
+interface DeliveryProof {
+  deliveredAt: string;
+  receivedBy: string;
+  receiverName?: string;
+  receiverRelationship?: string;
+  signatureImage?: string;
+  deliveryPhoto?: string;
+  deliveryNotes?: string;
+  locationCoordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  courierName?: string;
+  courierPhone?: string;
+  verificationMethod?: string;
 }
 
 interface TrackingInfo {
@@ -47,6 +76,13 @@ interface TrackingInfo {
   events: TrackingEvent[];
   estimatedDelivery?: string;
   deliveredAt?: string;
+  actualDelivery?: string;
+  courierName?: string;
+  serviceName?: string;
+  progress?: number;
+  isDelivered?: boolean;
+  inTransit?: boolean;
+  deliveryProof?: DeliveryProof;
 }
 
 interface OrderInfo {
@@ -68,6 +104,18 @@ interface OrderInfo {
 interface TrackingResponse {
   tracking: TrackingInfo;
   order?: OrderInfo;
+  shipment?: {
+    id: string;
+    trackingNumber: string;
+    status: string;
+    progress: number;
+    isDelivered: boolean;
+    estimatedDelivery?: string;
+    actualDelivery?: string;
+    courierName?: string;
+    serviceName?: string;
+    deliveryProof?: DeliveryProof;
+  };
 }
 
 export default function TrackingPage() {
@@ -256,12 +304,53 @@ export default function TrackingPage() {
             </Card>
           )}
 
-          {/* Tracking Status */}
-          <Card>
+          {/* Enhanced Delivery Timeline Visualization */}
+          <DeliveryTimelineVisualization
+            trackingNumber={trackingData.tracking.trackingNumber}
+            currentStatus={trackingData.tracking.status}
+            statusDescription={trackingData.tracking.statusDescription}
+            estimatedDelivery={trackingData.tracking.estimatedDelivery || trackingData.shipment?.estimatedDelivery}
+            actualDelivery={trackingData.tracking.actualDelivery || trackingData.tracking.deliveredAt || trackingData.shipment?.actualDelivery}
+            trackingEvents={trackingData.tracking.events.map(event => ({
+              ...event,
+              eventCode: event.eventCode || event.status,
+              eventName: event.eventName || event.description,
+              eventTime: event.eventTime || event.timestamp,
+              source: event.source || 'EASYPARCEL',
+            }))}
+            courierName={trackingData.tracking.courierName || trackingData.shipment?.courierName}
+            serviceName={trackingData.tracking.serviceName || trackingData.shipment?.serviceName}
+            progress={trackingData.tracking.progress || trackingData.shipment?.progress}
+            isDelivered={trackingData.tracking.isDelivered || trackingData.shipment?.isDelivered || trackingData.tracking.status === 'DELIVERED'}
+            inTransit={trackingData.tracking.inTransit || ['IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(trackingData.tracking.status)}
+          />
+
+          {/* Delivery Notifications */}
+          <DeliveryNotifications
+            trackingNumber={trackingData.tracking.trackingNumber}
+            currentStatus={trackingData.tracking.status}
+            customerEmail={trackingData.order?.customerName ? `${trackingData.order.customerName.toLowerCase().replace(' ', '.')}@example.com` : undefined}
+          />
+
+          {/* Proof of Delivery */}
+          {(trackingData.tracking.isDelivered || trackingData.shipment?.isDelivered || trackingData.tracking.status === 'DELIVERED') && (
+            <ProofOfDelivery
+              trackingNumber={trackingData.tracking.trackingNumber}
+              deliveryProof={trackingData.tracking.deliveryProof || trackingData.shipment?.deliveryProof}
+              customerName={trackingData.order?.customerName}
+              deliveryAddress={trackingData.order?.deliveryAddress ? 
+                `${trackingData.order.deliveryAddress.addressLine1}, ${trackingData.order.deliveryAddress.city}, ${trackingData.order.deliveryAddress.state} ${trackingData.order.deliveryAddress.postalCode}` : 
+                undefined
+              }
+            />
+          )}
+
+          {/* Legacy Tracking Status - kept for fallback */}
+          <Card className="border-dashed">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-gray-600">
                 <Truck className="h-5 w-5" />
-                Tracking Status
+                Legacy Tracking View
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -301,66 +390,28 @@ export default function TrackingPage() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
 
-          {/* Tracking History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Tracking History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              {/* Simple Event List */}
               {trackingData.tracking.events &&
-              trackingData.tracking.events.length > 0 ? (
-                <div className="space-y-4">
+              trackingData.tracking.events.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-medium text-gray-700">Recent Events:</p>
                   {trackingData.tracking.events
                     .sort(
                       (a, b) =>
                         new Date(b.timestamp).getTime() -
                         new Date(a.timestamp).getTime()
                     )
+                    .slice(0, 3)
                     .map((event, index) => (
-                      <div key={index} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              index === 0 ? 'bg-blue-500' : 'bg-gray-300'
-                            }`}
-                          />
-                          {index < trackingData.tracking.events.length - 1 && (
-                            <div className="w-px h-12 bg-gray-200 mt-2" />
-                          )}
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-semibold text-gray-900">
-                              {event.description}
-                            </p>
-                            <Badge variant="outline" className="text-xs">
-                              {event.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {event.location}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDate(event.timestamp, true)}
-                          </p>
+                      <div key={index} className="text-sm text-gray-600 border-l-2 border-gray-200 pl-2">
+                        <span className="font-medium">{event.description}</span>
+                        {event.location && <span className="ml-2">- {event.location}</span>}
+                        <div className="text-xs text-gray-400">
+                          {formatDate(event.timestamp, true)}
                         </div>
                       </div>
                     ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No tracking events available yet</p>
-                  <p className="text-sm">
-                    Tracking information will appear once your package is picked
-                    up
-                  </p>
                 </div>
               )}
             </CardContent>

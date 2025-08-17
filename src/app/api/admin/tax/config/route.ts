@@ -1,283 +1,270 @@
 /**
  * Admin Tax Configuration API
- * Manages Malaysian tax settings (GST, SST, Service Tax)
+ * Enhanced Malaysian tax settings with EasyParcel integration
+ * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.1
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
-import { handleApiError } from '@/lib/error-handler';
-import { UserRole } from '@prisma/client';
+import { MalaysianTaxService, ProductTaxCategory, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service';
 import { z } from 'zod';
 
 const taxConfigSchema = z.object({
-  gstRate: z.number().min(0).max(1),
-  sstRate: z.number().min(0).max(1),
-  serviceTaxRate: z.number().min(0).max(1),
-  isGstActive: z.boolean(),
-  isSstActive: z.boolean(),
-  defaultTaxType: z.enum(['GST', 'SST']),
+  salesTaxRate: z.number().min(0).max(1),      // 0-100% as decimal
+  serviceTaxRate: z.number().min(0).max(1),    // 0-100% as decimal
+  threshold: z.number().min(0),                // Registration threshold in MYR
+  isActive: z.boolean(),
+  effectiveDate: z.string().transform(str => new Date(str)),
 });
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get current tax rates from database
-    const taxRates = await prisma.taxRate.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
+    const taxService = MalaysianTaxService.getInstance();
+    
+    // Get current configuration from our enhanced service
+    const currentConfig = await (taxService as any).getTaxConfiguration();
+    
+    // Get registration information
+    const registrationInfo = taxService.getTaxRegistrationInfo();
+    
+    // Sample calculation for demonstration
+    const sampleCalculation = await taxService.calculateTaxBreakdown({
+      productSubtotal: 1000,
+      shippingCost: 50,
+      taxInclusive: false
     });
 
-    // Format tax configuration
-    const config = {
-      gstRate:
-        taxRates.find(rate => rate.name.toUpperCase().includes('GST'))?.rate ||
-        0,
-      sstRate:
-        taxRates.find(rate => rate.name.toUpperCase().includes('SST'))?.rate ||
-        0,
-      serviceTaxRate:
-        taxRates.find(rate => rate.name.toUpperCase().includes('SERVICE'))
-          ?.rate || 0,
-      isGstActive: taxRates.some(
-        rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0
-      ),
-      isSstActive: taxRates.some(
-        rate => rate.name.toUpperCase().includes('SST') && Number(rate.rate) > 0
-      ),
-      defaultTaxType: taxRates.some(
-        rate => rate.name.toUpperCase().includes('GST') && Number(rate.rate) > 0
-      )
-        ? 'GST'
-        : 'SST',
-      allTaxRates: taxRates.map(rate => ({
-        id: rate.id,
-        name: rate.name,
-        rate: Number(rate.rate),
-        isActive: rate.isActive,
-        description: rate.description,
-      })),
-    };
-
-    // Get tax registration numbers
+    // Get business registration from environment
     const registrationNumbers = {
-      gstNumber: process.env.GST_NUMBER || '',
       sstNumber: process.env.SST_NUMBER || '',
-      businessRegistrationNumber:
-        process.env.BUSINESS_REGISTRATION_NUMBER || '',
+      businessRegistrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER || '',
+      taxAgentLicense: process.env.TAX_AGENT_LICENSE || ''
     };
 
     return NextResponse.json({
-      config,
-      registrationNumbers,
-      malaysianTaxInfo: {
-        currentSystem: 'SST', // Malaysia currently uses SST
-        gstSuspended: true, // GST is suspended since 2018
-        sstImplemented: true, // SST was reintroduced
-        standardSstRate: 0.06, // 6% SST
-        serviceTaxRate: 0.06, // 6% Service Tax
+      success: true,
+      configuration: {
+        ...currentConfig,
+        salesTaxRatePercentage: currentConfig.salesTaxRate * 100,
+        serviceTaxRatePercentage: currentConfig.serviceTaxRate * 100,
       },
+      registrationInfo,
+      registrationNumbers,
+      sampleCalculation,
+      taxCategories: {
+        productCategories: Object.values(ProductTaxCategory),
+        serviceCategories: Object.values(ServiceTaxCategory)
+      },
+      malaysianTaxInfo: {
+        description: 'Sales and Service Tax (SST) replaced GST in 2018',
+        authority: 'Royal Malaysian Customs Department',
+        website: 'https://gst.customs.gov.my/',
+        currentRates: {
+          salesTax: '10% (on most goods)',
+          serviceTax: '6% (on specified services)',
+          registrationThreshold: 'RM 500,000 annual revenue'
+        },
+        applicableServices: [
+          'Logistics and courier services',
+          'Freight and transportation',
+          'Warehousing services',
+          'Insurance services'
+        ],
+        exemptions: [
+          'Basic food items',
+          'Medical equipment and medicines',
+          'Educational materials and books',
+          'Essential goods'
+        ]
+      }
     });
+
   } catch (error) {
-    console.error('Tax configuration fetch error:', error);
-    return handleApiError(error);
+    console.error('Error fetching tax configuration:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch tax configuration' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
+    
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const validatedData = taxConfigSchema.parse(body);
+    const validatedConfig = taxConfigSchema.parse(body);
 
-    const {
-      gstRate,
-      sstRate,
-      serviceTaxRate,
-      isGstActive,
-      isSstActive,
-      defaultTaxType,
-    } = validatedData;
-
-    // Update or create GST tax rate
-    await prisma.taxRate.upsert({
-      where: { name: 'GST' },
-      update: {
-        rate: gstRate,
-        isActive: isGstActive,
-        description: `Goods and Services Tax - ${isGstActive ? 'Active' : 'Suspended'}`,
-        updatedAt: new Date(),
-      },
-      create: {
-        name: 'GST',
-        rate: gstRate,
-        isActive: isGstActive,
-        description: `Goods and Services Tax - ${isGstActive ? 'Active' : 'Suspended'}`,
-      },
-    });
-
-    // Update or create SST tax rate
-    await prisma.taxRate.upsert({
-      where: { name: 'SST' },
-      update: {
-        rate: sstRate,
-        isActive: isSstActive,
-        description: `Sales and Service Tax - ${isSstActive ? 'Active' : 'Inactive'}`,
-        updatedAt: new Date(),
-      },
-      create: {
-        name: 'SST',
-        rate: sstRate,
-        isActive: isSstActive,
-        description: `Sales and Service Tax - ${isSstActive ? 'Active' : 'Inactive'}`,
-      },
-    });
-
-    // Update or create Service Tax rate
-    await prisma.taxRate.upsert({
-      where: { name: 'Service Tax' },
-      update: {
-        rate: serviceTaxRate,
-        isActive: serviceTaxRate > 0,
-        description: 'Malaysian Service Tax',
-        updatedAt: new Date(),
-      },
-      create: {
-        name: 'Service Tax',
-        rate: serviceTaxRate,
-        isActive: serviceTaxRate > 0,
-        description: 'Malaysian Service Tax',
-      },
-    });
+    const taxService = MalaysianTaxService.getInstance();
+    
+    // Update configuration using our enhanced service
+    await taxService.updateTaxConfiguration(validatedConfig);
+    
+    // Get updated configuration for confirmation
+    const updatedConfig = await (taxService as any).getTaxConfiguration();
 
     // Create audit log for configuration change
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: 'TAX_CONFIG_UPDATE',
-        resource: 'TAX_CONFIGURATION',
-        details: {
-          changes: {
-            gstRate,
-            sstRate,
-            serviceTaxRate,
-            isGstActive,
-            isSstActive,
-            defaultTaxType,
-          },
-          updatedBy: session.user.email,
-          timestamp: new Date().toISOString(),
+    try {
+      await prisma.systemConfig.upsert({
+        where: { key: 'tax_config_audit' },
+        update: {
+          value: JSON.stringify({
+            lastUpdate: new Date().toISOString(),
+            updatedBy: session.user.email,
+            userId: session.user.id,
+            changes: validatedConfig
+          })
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+        create: {
+          key: 'tax_config_audit',
+          value: JSON.stringify({
+            lastUpdate: new Date().toISOString(),
+            updatedBy: session.user.email,
+            userId: session.user.id,
+            changes: validatedConfig
+          }),
+          type: 'JSON'
+        }
+      });
+    } catch (auditError) {
+      console.warn('Failed to create audit log:', auditError);
+      // Continue with success even if audit fails
+    }
 
     return NextResponse.json({
+      success: true,
       message: 'Tax configuration updated successfully',
-      config: {
-        gstRate,
-        sstRate,
-        serviceTaxRate,
-        isGstActive,
-        isSstActive,
-        defaultTaxType,
+      configuration: {
+        ...updatedConfig,
+        salesTaxRatePercentage: updatedConfig.salesTaxRate * 100,
+        serviceTaxRatePercentage: updatedConfig.serviceTaxRate * 100,
       },
+      updatedAt: new Date().toISOString()
     });
+
   } catch (error) {
+    console.error('Error updating tax configuration:', error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          message: 'Validation error',
-          errors: error.issues,
+        { 
+          error: 'Invalid configuration data', 
+          details: error.errors 
         },
         { status: 400 }
       );
     }
 
-    console.error('Tax configuration update error:', error);
-    return handleApiError(error);
+    return NextResponse.json(
+      { error: 'Failed to update tax configuration' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
+    
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { name, rate, description } = body;
+    const { action, ...params } = body;
 
-    if (!name || rate === undefined) {
-      return NextResponse.json(
-        { message: 'Name and rate are required' },
-        { status: 400 }
-      );
+    const taxService = MalaysianTaxService.getInstance();
+
+    switch (action) {
+      case 'calculate_sample':
+        const sampleCalc = await taxService.calculateTaxBreakdown({
+          productSubtotal: params.productSubtotal || 1000,
+          shippingCost: params.shippingCost || 50,
+          productTaxCategory: params.productTaxCategory,
+          shippingTaxCategory: params.shippingTaxCategory,
+          taxInclusive: params.taxInclusive || false
+        });
+
+        return NextResponse.json({
+          success: true,
+          calculation: sampleCalc,
+          invoiceItems: taxService.generateTaxInvoiceItems(sampleCalc),
+          formatted: {
+            subtotal: taxService.formatTaxAmount(sampleCalc.subtotal),
+            salesTax: taxService.formatTaxAmount(sampleCalc.salesTax),
+            serviceTax: taxService.formatTaxAmount(sampleCalc.serviceTax),
+            total: taxService.formatTaxAmount(sampleCalc.total)
+          }
+        });
+
+      case 'calculate_shipping_tax':
+        const shippingTax = await taxService.calculateShippingTax(
+          params.shippingCost || 50,
+          params.inclusive || false
+        );
+
+        return NextResponse.json({
+          success: true,
+          shippingTax,
+          formatted: {
+            taxExclusive: taxService.formatTaxAmount(shippingTax.taxExclusiveAmount),
+            taxAmount: taxService.formatTaxAmount(shippingTax.taxAmount),
+            taxInclusive: taxService.formatTaxAmount(shippingTax.taxInclusiveAmount)
+          }
+        });
+
+      case 'check_registration_requirement':
+        const shouldRegister = await taxService.shouldRegisterForSST(
+          params.annualRevenue || 0
+        );
+
+        return NextResponse.json({
+          success: true,
+          shouldRegister,
+          registrationRequired: shouldRegister,
+          annualRevenue: params.annualRevenue || 0,
+          threshold: 500000,
+          registrationInfo: taxService.getTaxRegistrationInfo()
+        });
+
+      case 'reset_to_defaults':
+        await taxService.updateTaxConfiguration({
+          salesTaxRate: 0.10,      // 10%
+          serviceTaxRate: 0.06,    // 6%
+          threshold: 500000,       // RM500,000
+          isActive: true,
+          effectiveDate: new Date('2018-09-01')
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: 'Tax configuration reset to Malaysian defaults'
+        });
+
+      default:
+        return NextResponse.json(
+          { error: 'Invalid action specified' },
+          { status: 400 }
+        );
     }
 
-    // Create new custom tax rate
-    const taxRate = await prisma.taxRate.create({
-      data: {
-        name,
-        rate: parseFloat(rate),
-        description: description || '',
-        isActive: true,
-      },
-    });
-
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: 'TAX_RATE_CREATED',
-        resource: 'TAX_RATE',
-        resourceId: taxRate.id,
-        details: {
-          name,
-          rate: parseFloat(rate),
-          description,
-          createdBy: session.user.email,
-        },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
-
-    return NextResponse.json({
-      message: 'Tax rate created successfully',
-      taxRate: {
-        id: taxRate.id,
-        name: taxRate.name,
-        rate: Number(taxRate.rate),
-        description: taxRate.description,
-        isActive: taxRate.isActive,
-      },
-    });
   } catch (error) {
-    console.error('Tax rate creation error:', error);
-    return handleApiError(error);
+    console.error('Error in tax configuration action:', error);
+    return NextResponse.json(
+      { error: 'Failed to process tax configuration action' },
+      { status: 500 }
+    );
   }
 }

@@ -43,6 +43,7 @@ import { useCart } from '@/hooks/use-cart';
 import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
+import CourierSelectionComponent from '@/components/checkout/CourierSelectionComponent';
 
 interface CheckoutItem {
   id: string;
@@ -160,6 +161,10 @@ export default function CheckoutPage() {
     }
     return false;
   });
+
+  // Shipping state
+  const [selectedShippingRate, setSelectedShippingRate] = useState<any>(null);
+  const [shippingCost, setShippingCost] = useState(0);
 
   const freshMembership = useFreshMembership();
   
@@ -401,6 +406,22 @@ export default function CheckoutPage() {
     }
   };
 
+  // Handle shipping rate selection
+  const handleShippingRateSelect = (rateData: any) => {
+    console.log('🚚 Shipping rate selected:', {
+      courierId: rateData.courierId,
+      courierName: rateData.courierName,
+      price: rateData.price,
+      serviceType: rateData.serviceType,
+      insurance: rateData.insurance,
+      cod: rateData.cod,
+      signatureRequired: rateData.signatureRequired,
+    });
+
+    setSelectedShippingRate(rateData);
+    setShippingCost(rateData.price);
+  };
+
   // Submit order
   const handleSubmitOrder = async () => {
     setProcessing(true);
@@ -439,6 +460,11 @@ export default function CheckoutPage() {
         if (!billingAddress.postcode.trim()) errors['billingAddress.postcode'] = 'Postcode is required';
       }
 
+      // Validate shipping method selection
+      if (!selectedShippingRate) {
+        errors['shipping'] = 'Please select a shipping method';
+      }
+
       // If there are validation errors, show them and stop processing
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
@@ -458,6 +484,7 @@ export default function CheckoutPage() {
           })),
           shippingAddress,
           billingAddress: useSameAddress ? shippingAddress : billingAddress,
+          shippingRate: selectedShippingRate,
           paymentMethod,
           orderNotes,
           membershipActivated: membershipActivated || membershipPending, // Include pending memberships
@@ -502,6 +529,7 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         billingAddress: useSameAddress ? shippingAddress : billingAddress,
+        shippingRate: selectedShippingRate,
         paymentMethod,
         orderNotes,
         membershipActivated: membershipActivated || membershipPending, // Include pending memberships
@@ -849,6 +877,25 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
+          {/* Shipping Options */}
+          <CourierSelectionComponent
+            cartItems={cart?.items.map(item => ({
+              id: item.id,
+              quantity: item.quantity,
+              product: {
+                id: item.product.id,
+                name: item.product.name,
+                regularPrice: item.product.regularPrice,
+                weight: item.product.weight,
+                dimensions: item.product.dimensions,
+              },
+            })) || []}
+            shippingAddress={shippingAddress}
+            orderValue={total}
+            onShippingRateSelect={handleShippingRateSelect}
+            selectedCourierId={selectedShippingRate?.courierId}
+          />
+
           {/* Billing Address */}
           <Card>
             <CardHeader>
@@ -1175,7 +1222,13 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{formatPrice(0)}</span>
+                  <span>
+                    {shippingCost === 0 ? (
+                      <span className="text-green-600">FREE</span>
+                    ) : (
+                      formatPrice(shippingCost)
+                    )}
+                  </span>
                 </div>
 
                 <div className="flex justify-between">
@@ -1187,7 +1240,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(total + shippingCost)}</span>
                 </div>
 
                 {membershipActivated && !membershipPending && (
