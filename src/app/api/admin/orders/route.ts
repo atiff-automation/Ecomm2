@@ -31,7 +31,24 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (status) {
-      where.status = status;
+      if (status === 'pending_shipping') {
+        // Orders that need shipping assignment
+        where.OR = [
+          { status: 'CONFIRMED' },
+          { 
+            AND: [
+              { status: 'PROCESSING' },
+              { 
+                shipments: {
+                  none: {}
+                }
+              }
+            ]
+          }
+        ];
+      } else if (status !== 'all') {
+        where.status = status.toUpperCase();
+      }
     }
 
     if (paymentStatus) {
@@ -72,10 +89,27 @@ export async function GET(request: NextRequest) {
           },
         },
         orderItems: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                weight: true,
+              }
+            }
+          }
+        },
+        shippingAddress: true,
+        shipments: {
           select: {
             id: true,
-          },
-        },
+            courierName: true,
+            serviceName: true,
+            shippingCost: true,
+            status: true,
+            trackingNumber: true,
+            estimatedDelivery: true,
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
@@ -95,15 +129,42 @@ export async function GET(request: NextRequest) {
       status: order.status,
       paymentStatus: order.paymentStatus,
       createdAt: order.createdAt.toISOString(),
-      itemCount: order.orderItems.length,
+      shippingAddress: order.shippingAddress ? {
+        address: order.shippingAddress.address,
+        city: order.shippingAddress.city,
+        state: order.shippingAddress.state,
+        postcode: order.shippingAddress.postcode,
+      } : null,
+      items: order.orderItems.map(item => ({
+        id: item.id,
+        name: item.product.name,
+        quantity: item.quantity,
+        weight: item.product.weight || 0.5,
+      })),
+      shipping: order.shipments?.[0] ? {
+        courierName: order.shipments[0].courierName,
+        serviceName: order.shipments[0].serviceName,
+        price: order.shipments[0].shippingCost,
+        trackingNumber: order.shipments[0].trackingNumber,
+        status: order.shipments[0].status,
+        estimatedDelivery: order.shipments[0].estimatedDelivery?.toISOString(),
+      } : null,
     }));
 
     return NextResponse.json({
+      success: true,
       orders: formattedOrders,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
+      },
+      filters: {
+        status,
+        search,
+      }
     });
   } catch (error) {
     console.error('Orders fetch error:', error);

@@ -1,7 +1,8 @@
 /**
  * Shipping Calculation API
- * Enhanced shipping rates calculation with real-time EasyParcel data
- * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 4.1
+ * Enhanced shipping rates calculation with real-time EasyParcel Individual API v1.4.0
+ * Reference: Official Malaysia_Individual_1.4.0.0.pdf documentation
+ * Endpoint: EPRateCheckingBulk for real-time courier rate calculations
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -109,7 +110,13 @@ export async function POST(request: NextRequest) {
       orderValue: body.orderValue,
       city: body.deliveryAddress?.city,
       state: body.deliveryAddress?.state,
+      adminControlled: body.adminControlled,
     });
+
+    // Handle admin-controlled shipping request (simplified format)
+    if (body.adminControlled && body.destination && body.parcel) {
+      return handleAdminControlledShipping(body);
+    }
 
     // Validate request
     const validatedData = shippingCalculationSchema.parse(body);
@@ -144,78 +151,99 @@ export async function POST(request: NextRequest) {
     const pickupAddress = await businessShippingConfig.getPickupAddress();
     const isBusinessConfigured = await businessShippingConfig.isBusinessConfigured();
 
-    // Use enhanced EasyParcel service with caching and monitoring
-    const enhancedEasyParcel = new EnhancedEasyParcelService();
-    const taxCalculator = new TaxInclusiveShippingCalculator();
-
     try {
-      // Calculate total parcel weight and dimensions
+      // Calculate total parcel weight
       const totalWeight = calculationItems.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
       const totalValue = calculationItems.reduce((sum, item) => sum + (item.value * item.quantity), 0);
 
-      // Map delivery state to Malaysian state code
+      // Map delivery state to Malaysian state code  
       const deliveryStateCode = mapToMalaysianStateCode(validatedData.deliveryAddress.state);
 
-      // Calculate tax-inclusive shipping rates using business pickup address
-      const taxInclusiveRates = await taxCalculator.calculateTaxInclusiveRates({
-        pickupAddress: {
-          postcode: pickupAddress.postcode,
-          state: pickupAddress.state,
-          city: pickupAddress.city
-        },
-        deliveryAddress: {
-          postcode: validatedData.deliveryAddress.postalCode,
-          state: deliveryStateCode,
-          city: validatedData.deliveryAddress.city
-        },
-        parcel: {
-          weight: totalWeight,
-          length: calculationItems[0]?.dimensions?.length,
-          width: calculationItems[0]?.dimensions?.width,
-          height: calculationItems[0]?.dimensions?.height,
-          value: totalValue
-        },
-        serviceTypes: validatedData.options?.serviceTypes,
-        includeInsurance: validatedData.options?.includeInsurance,
-        includeCOD: validatedData.options?.includeCOD,
-        displayTaxInclusive: true,
-        orderValue: validatedData.orderValue,
-        freeShippingThreshold: businessProfile?.shippingPolicies.freeShippingThreshold || 150
-      });
+      // Use EasyParcel service for real-time rates (basic service without cache/monitoring)
+      // const enhancedEasyParcel = new EnhancedEasyParcelService();
+      const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
+      const easyParcelService = new EasyParcelService();
+      let rates;
+      
+      try {
+        // Calculate tax-inclusive shipping rates using business pickup address
+        const easyParcelRequest = {
+          pickup_address: {
+            name: pickupAddress.name,
+            phone: pickupAddress.phone,
+            address_line_1: pickupAddress.addressLine1 || 'No. 123, Jalan Technology',
+            address_line_2: pickupAddress.addressLine2 || '',
+            city: pickupAddress.city,
+            state: pickupAddress.state as any,
+            postcode: pickupAddress.postcode,
+            country: 'MY'
+          },
+          delivery_address: {
+            name: `${validatedData.deliveryAddress.firstName} ${validatedData.deliveryAddress.lastName}`,
+            phone: validatedData.deliveryAddress.phone,
+            address_line_1: validatedData.deliveryAddress.addressLine1,
+            address_line_2: validatedData.deliveryAddress.addressLine2 || '',
+            city: validatedData.deliveryAddress.city,
+            state: deliveryStateCode as any,
+            postcode: validatedData.deliveryAddress.postalCode,
+            country: 'MY'
+          },
+          parcel: {
+            weight: totalWeight,
+            length: calculationItems[0]?.dimensions?.length || 10,
+            width: calculationItems[0]?.dimensions?.width || 10,
+            height: calculationItems[0]?.dimensions?.height || 5,
+            content: calculationItems.map(item => item.name).join(', '),
+            value: totalValue
+          },
+          service_types: validatedData.options?.serviceTypes || ['STANDARD'],
+          insurance: validatedData.options?.includeInsurance || false,
+          cod: validatedData.options?.includeCOD || false
+        };
 
-      // Filter rates based on business preferences
-      let filteredRates = await businessShippingConfig.filterRatesForBusiness(taxInclusiveRates);
+        console.log('🚀 Calling EasyParcel API with request:', easyParcelRequest);
+        const easyParcelResponse = await easyParcelService.calculateRates(easyParcelRequest);
+        
+        // Transform EasyParcel rates to our format
+        const easyParcelRates = easyParcelResponse.rates.map(rate => ({
+          courierId: rate.courier_id,
+          courierName: rate.courier_name,
+          serviceName: rate.service_name,
+          serviceType: rate.service_type as 'STANDARD' | 'EXPRESS' | 'OVERNIGHT',
+          price: rate.price,
+          originalPrice: rate.price,
+          freeShippingApplied: validatedData.orderValue >= (businessProfile?.shippingPolicies.freeShippingThreshold || 150) ? true : false,
+          estimatedDays: rate.estimated_delivery_days,
+          description: rate.description || `${rate.service_name} delivery service`,
+          features: {
+            insuranceAvailable: rate.features.insurance_available,
+            codAvailable: rate.features.cod_available,
+            signatureRequiredAvailable: rate.features.signature_required_available,
+          },
+          insurancePrice: rate.features.insurance_available ? 5.00 : 0,
+          codPrice: rate.features.cod_available ? 3.00 : 0,
+          signaturePrice: 2.00,
+        }));
 
-      // Transform to our expected format and add fallback using original calculator
-      let rates = filteredRates.map(rate => ({
-        courierId: rate.courierId,
-        courierName: rate.courierName,
-        serviceName: rate.serviceName,
-        serviceType: rate.serviceType as 'STANDARD' | 'EXPRESS' | 'OVERNIGHT',
-        price: rate.finalPrice,
-        originalPrice: rate.basePrice,
-        freeShippingApplied: rate.finalPrice === 0,
-        estimatedDays: rate.estimatedDeliveryDays,
-        description: `${rate.serviceName} delivery service`,
-        features: {
-          insuranceAvailable: rate.insuranceIncluded || validatedData.options?.includeInsurance || false,
-          codAvailable: rate.codAvailable || validatedData.options?.includeCOD || false,
-          signatureRequiredAvailable: true,
-        },
-        insurancePrice: rate.taxBreakdown ? 5.00 : 0,
-        codPrice: rate.codAvailable ? 3.00 : 0,
-        signaturePrice: 2.00,
-      }));
+        console.log('✅ EasyParcel rates retrieved:', easyParcelRates.length, 'options');
+        
+        // Apply free shipping if applicable
+        rates = easyParcelRates.map(rate => ({
+          ...rate,
+          price: rate.freeShippingApplied ? 0 : rate.price
+        }));
 
-      // If no rates from EasyParcel, fallback to original calculator
-      if (rates.length === 0) {
-        console.log('🔄 No EasyParcel rates available, falling back to original calculator');
+      } catch (easyParcelError) {
+        console.warn('⚠️ EasyParcel API error, falling back to original calculator:', easyParcelError);
+        
+        // Fallback to original shipping calculator
         const fallbackResult = await shippingCalculator.calculateShipping(
           calculationItems,
           deliveryAddress,
           validatedData.orderValue,
           validatedData.options
         );
+        
         rates = fallbackResult.rates;
       }
 
@@ -398,6 +426,85 @@ export async function GET(request: NextRequest) {
     console.error('❌ Shipping service info error:', error);
     return NextResponse.json(
       { message: 'Failed to retrieve shipping service information' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Handle admin-controlled shipping calculation
+ */
+async function handleAdminControlledShipping(body: any) {
+  try {
+    const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
+    const { courierSelector } = await import('@/lib/shipping/courier-selector');
+    
+    const easyParcelService = new EasyParcelService();
+    const pickupAddress = await businessShippingConfig.getPickupAddress();
+
+    // Map state to state code
+    const stateCode = mapToMalaysianStateCode(body.destination.state);
+
+    // Calculate rates using EasyParcel
+    const easyParcelRequest = {
+      pickup_address: {
+        name: pickupAddress.name,
+        phone: pickupAddress.phone,
+        address_line_1: pickupAddress.address_line_1,
+        address_line_2: pickupAddress.address_line_2 || '',
+        city: pickupAddress.city,
+        state: pickupAddress.state,
+        postcode: pickupAddress.postcode,
+        country: 'MY'
+      },
+      delivery_address: {
+        name: 'Customer',
+        phone: '+60123456789',
+        address_line_1: 'Customer Address',
+        city: body.destination.city,
+        state: stateCode,
+        postcode: body.destination.postcode,
+        country: 'MY'
+      },
+      parcel: {
+        weight: body.parcel.weight,
+        length: body.parcel.length || 20,
+        width: body.parcel.width || 15,
+        height: body.parcel.height || 10,
+        content: 'General merchandise',
+        value: body.parcel.declared_value || 100
+      },
+      service_types: ['STANDARD'],
+      insurance: false,
+      cod: false
+    };
+
+    const easyParcelResponse = await easyParcelService.calculateRates(easyParcelRequest);
+
+    // Use courier selector to get the best option
+    const selectionCriteria = {
+      destinationState: stateCode as any,
+      destinationPostcode: body.destination.postcode,
+      parcelWeight: body.parcel.weight,
+      parcelValue: body.parcel.declared_value || 100,
+    };
+
+    const selectedOption = await courierSelector.getAutomaticSelection(
+      easyParcelResponse.rates,
+      selectionCriteria
+    );
+
+    return NextResponse.json({
+      success: true,
+      selectedOption: selectedOption.displayInfo,
+      rateDetails: selectedOption.rate,
+      adminControlled: true,
+    });
+
+  } catch (error) {
+    console.error('❌ Admin-controlled shipping error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to calculate shipping' },
       { status: 500 }
     );
   }

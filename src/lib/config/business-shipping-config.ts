@@ -340,10 +340,10 @@ export class BusinessShippingConfig {
       },
       
       courierPreferences: {
-        preferredCouriers: [], // Empty means all couriers allowed
+        preferredCouriers: ['citylink', 'poslaju', 'gdex'], // Admin's preferred couriers in priority order
         blockedCouriers: [], // Block specific couriers if needed
-        autoSelectCheapest: false, // Let customers choose
-        showCustomerChoice: true, // Show all available options
+        autoSelectCheapest: true, // Admin controls courier selection automatically
+        showCustomerChoice: false, // Hide courier choice from customers
         defaultServiceType: 'STANDARD'
       },
       

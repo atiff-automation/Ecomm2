@@ -1,13 +1,14 @@
 /**
  * EasyParcel Service v2 for Malaysian Shipping Integration
- * Updated to align with official API v1.4.0 specification
- * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 2
+ * Updated to align with official EasyParcel Individual API v1.4.0 specification
+ * Reference: Official Malaysia_Individual_1.4.0.0.pdf documentation
+ * Implemented: Rate checking with EPRateCheckingBulk endpoint
  */
 
 import axios, { AxiosInstance } from 'axios';
 
 // ===== EasyParcel API v1.4.0 Type Definitions =====
-// Reference: PDF Section 3.1 - Address Structure Validation
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 3.1 - Address Structure Validation
 
 export interface AddressStructure {
   name: string; // Max 100 chars
@@ -17,12 +18,12 @@ export interface AddressStructure {
   address_line_1: string; // Max 100 chars
   address_line_2?: string; // Max 100 chars
   city: string; // Max 50 chars
-  state: MalaysianState; // As per PDF Appendix A
+  state: MalaysianState; // As per Malaysia_Individual_1.4.0.0.pdf Appendix A
   postcode: string; // 5-digit Malaysian postcode
   country: string; // "MY" for Malaysia
 }
 
-// Reference: PDF Section 3.2 - Parcel Details Structure
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 3.2 - Parcel Details Structure
 export interface ParcelDetails {
   weight: number; // In KG, max 70kg
   length?: number; // In CM
@@ -33,7 +34,7 @@ export interface ParcelDetails {
   quantity?: number; // Default 1
 }
 
-// Reference: PDF Section 4.1 - Rate Calculation
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 4.1 - Rate Calculation
 export interface RateRequest {
   pickup_address: AddressStructure;
   delivery_address: AddressStructure;
@@ -63,7 +64,7 @@ export interface RateResponse {
   parcel: ParcelDetails;
 }
 
-// Reference: PDF Section 5.1 - Shipment Booking
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 5.1 - Shipment Booking
 export interface ShipmentBookingRequest {
   pickup_address: AddressStructure;
   delivery_address: AddressStructure;
@@ -81,7 +82,7 @@ export interface ShipmentBookingRequest {
   };
 }
 
-// Reference: PDF Section 5.2 - Shipment Booking Response
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 5.2 - Shipment Booking Response
 export interface ShipmentBookingResponse {
   shipment_id: string;
   tracking_number: string;
@@ -97,7 +98,7 @@ export interface ShipmentBookingResponse {
   };
 }
 
-// Reference: PDF Section 8.1 - Pickup Scheduling
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 8.1 - Pickup Scheduling
 export interface PickupRequest {
   shipment_ids: string[];
   pickup_date: string; // YYYY-MM-DD
@@ -107,7 +108,7 @@ export interface PickupRequest {
   special_instruction?: string;
 }
 
-// Reference: PDF Section 6.1 - Tracking
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 6.1 - Tracking
 export interface TrackingResponse {
   tracking_number: string;
   status: string;
@@ -129,7 +130,7 @@ export interface TrackingEvent {
   event_time: string; // ISO 8601
 }
 
-// Reference: PDF Section 6.3 - Webhook Payload
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 6.3 - Webhook Payload
 export interface WebhookPayload {
   tracking_number: string;
   event_code: string;
@@ -141,7 +142,7 @@ export interface WebhookPayload {
   signature?: string; // Webhook signature verification
 }
 
-// Reference: PDF Section 9.1 - Error Handling
+// Reference: Malaysia_Individual_1.4.0.0.pdf Section 9.1 - Error Handling
 export interface EasyParcelError {
   error: {
     code: string; // E.g., "INVALID_ADDRESS", "INSUFFICIENT_CREDIT"
@@ -151,7 +152,7 @@ export interface EasyParcelError {
   http_status: number;
 }
 
-// Malaysian State type (PDF Appendix B)
+// Malaysian State type (Malaysia_Individual_1.4.0.0.pdf Appendix B)
 export type MalaysianState = 
   | "JOH" | "KDH" | "KTN" | "MLK" | "NSN" | "PHG" | "PRK" | "PLS" 
   | "PNG" | "KUL" | "TRG" | "SEL" | "SBH" | "SWK" | "LBN";
@@ -167,7 +168,7 @@ export class EasyParcelService {
     const apiSecret = process.env.EASYPARCEL_API_SECRET;
     this.isSandbox = process.env.EASYPARCEL_SANDBOX === 'true';
     
-    // Reference: PDF Section 2.1 - Base URL Configuration
+    // Reference: Malaysia_Individual_1.4.0.0.pdf Section 2.1 - Base URL Configuration
     this.baseURL = process.env.EASYPARCEL_BASE_URL || 'http://demo.connect.easyparcel.my';
 
     if (!apiKey || !apiSecret) {
@@ -185,7 +186,7 @@ export class EasyParcelService {
       baseURL: this.baseURL,
       timeout: 30000,
       headers: {
-        // Reference: PDF Section 2.2 - Headers Implementation
+        // Reference: Malaysia_Individual_1.4.0.0.pdf Section 2.2 - Headers Implementation
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
@@ -231,11 +232,31 @@ export class EasyParcelService {
     );
   }
 
+  // ===== Helper Methods =====
+  
+  /**
+   * Map EasyParcel service detail to our service type
+   */
+  private mapServiceType(serviceDetail: string): string {
+    const detail = serviceDetail.toLowerCase();
+    if (detail.includes('overnight') || detail.includes('next day')) return 'OVERNIGHT';
+    if (detail.includes('express') || detail.includes('same day')) return 'EXPRESS';
+    return 'STANDARD';
+  }
+
+  /**
+   * Parse delivery time from EasyParcel format
+   */
+  private parseDeliveryDays(deliveryStr: string): number {
+    const match = deliveryStr.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 3;
+  }
+
   // ===== Core API Methods =====
 
   /**
    * Calculate shipping rates
-   * Reference: PDF Section 4.1 - Rate Calculation Enhancement
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 4.1 - Rate Calculation Enhancement
    */
   async calculateRates(request: RateRequest): Promise<RateResponse> {
     try {
@@ -320,28 +341,34 @@ export class EasyParcelService {
       }
 
       // Transform Individual API response to our format
-      if (response.data.rates && Array.isArray(response.data.rates)) {
-        const transformedRates = response.data.rates.map((rate: any) => ({
-          courier_id: rate.courier_id || rate.service_id || 'unknown',
-          courier_name: rate.courier_name || rate.courier || 'Unknown Courier',
-          service_name: rate.service_name || rate.service || 'Standard Service',
-          service_type: rate.service_type || 'STANDARD',
-          price: parseFloat(rate.price || rate.shipping_fee || '0'),
-          estimated_delivery_days: parseInt(rate.delivery_time || rate.est_delivery || '3'),
-          description: rate.description || `${rate.courier_name} delivery service`,
-          features: {
-            insurance_available: rate.insurance_available !== false,
-            cod_available: rate.cod_available !== false,
-            signature_required_available: true,
-          }
-        }));
+      // EasyParcel Individual API returns: { api_status: "Success", result: [{ rates: [...] }] }
+      if (response.data.api_status === 'Success' && response.data.result && Array.isArray(response.data.result)) {
+        const firstResult = response.data.result[0];
+        if (firstResult && firstResult.rates && Array.isArray(firstResult.rates)) {
+          const transformedRates = firstResult.rates.map((rate: any) => ({
+            courier_id: rate.courier_id || rate.service_id || 'unknown',
+            courier_name: rate.courier_name || rate.service_name || 'Unknown Courier',
+            service_name: rate.service_name || 'Standard Service',
+            service_type: this.mapServiceType(rate.service_detail || rate.service_type || 'pickup'),
+            price: parseFloat(rate.price || '0'),
+            estimated_delivery_days: this.parseDeliveryDays(rate.delivery || '3 working day(s)'),
+            description: rate.service_name ? `${rate.service_name} delivery service` : 'Standard delivery service',
+            features: {
+              insurance_available: rate.addon_insurance_available !== false,
+              cod_available: rate.cod_service_available !== false,
+              signature_required_available: true,
+            }
+          }));
 
-        return {
-          rates: transformedRates,
-          pickup_address: request.pickup_address,
-          delivery_address: request.delivery_address,
-          parcel: request.parcel
-        };
+          console.log('✅ Transformed EasyParcel rates:', transformedRates.length, 'options found');
+
+          return {
+            rates: transformedRates,
+            pickup_address: request.pickup_address,
+            delivery_address: request.delivery_address,
+            parcel: request.parcel
+          };
+        }
       }
 
       console.warn('⚠️ No rates found in EasyParcel response');
@@ -360,7 +387,7 @@ export class EasyParcelService {
 
   /**
    * Book a shipment
-   * Reference: PDF Section 5.1 - Shipment Creation API
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 5.1 - Shipment Creation API
    */
   async bookShipment(request: ShipmentBookingRequest): Promise<ShipmentBookingResponse> {
     try {
@@ -392,7 +419,7 @@ export class EasyParcelService {
 
   /**
    * Generate shipping label
-   * Reference: PDF Section 7.1 - Label Download API
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 7.1 - Label Download API
    */
   async generateLabel(shipmentId: string): Promise<Buffer> {
     try {
@@ -418,7 +445,7 @@ export class EasyParcelService {
 
   /**
    * Schedule pickup
-   * Reference: PDF Section 8.1 - Pickup Booking API
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 8.1 - Pickup Booking API
    */
   async schedulePickup(request: PickupRequest): Promise<{ pickup_id: string; status: string }> {
     try {
@@ -440,8 +467,51 @@ export class EasyParcelService {
   }
 
   /**
+   * Check account credit balance
+   * Reference: Malaysia_Individual_1.4.0.0.pdf - EPCheckCreditBalance endpoint
+   */
+  async checkCreditBalance(): Promise<{ balance: number; currency: string; wallets: Array<{ balance: number; currency_code: string }> }> {
+    try {
+      if (!this.isConfigured) {
+        return {
+          balance: 1000.00,
+          currency: 'MYR',
+          wallets: [{ balance: 1000.00, currency_code: 'MYR' }]
+        };
+      }
+
+      const formData = new URLSearchParams();
+      formData.append('api', process.env.EASYPARCEL_API_KEY || '');
+
+      const response = await this.apiClient.post('/?ac=EPCheckCreditBalance', formData.toString());
+
+      if (!response.data || response.data.api_status !== 'Success') {
+        throw new Error(`Credit balance check failed: ${response.data?.error_remark || 'Unknown error'}`);
+      }
+
+      return {
+        balance: parseFloat(response.data.result || '0'),
+        currency: response.data.currency || 'MYR',
+        wallets: response.data.wallet || []
+      };
+    } catch (error) {
+      console.error('Error checking credit balance:', error);
+      
+      if (this.isSandbox || process.env.NODE_ENV === 'development') {
+        return {
+          balance: 1000.00,
+          currency: 'MYR',
+          wallets: [{ balance: 1000.00, currency_code: 'MYR' }]
+        };
+      }
+
+      throw this.handleApiError(error);
+    }
+  }
+
+  /**
    * Track shipment
-   * Reference: PDF Section 6.1 - Tracking API
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 6.1 - Tracking API
    */
   async trackShipment(trackingNumber: string): Promise<TrackingResponse> {
     try {
@@ -555,7 +625,7 @@ export class EasyParcelService {
     return validStates.includes(state as MalaysianState);
   }
 
-  // Reference: PDF Appendix A - Postcode Validation
+  // Reference: Malaysia_Individual_1.4.0.0.pdf Appendix A - Postcode Validation
   private readonly MALAYSIAN_POSTCODE_RANGES: Record<MalaysianState, [number, number]> = {
     "KUL": [50000, 60999], // Kuala Lumpur & Putrajaya
     "SEL": [40000, 48999], // Selangor
@@ -583,7 +653,7 @@ export class EasyParcelService {
   }
 
   // ===== Error Handling =====
-  // Reference: PDF Section 9 - Error Codes
+  // Reference: Malaysia_Individual_1.4.0.0.pdf Section 9 - Error Codes
 
   private handleApiError(error: any): Error {
     if (error.response) {
@@ -746,7 +816,7 @@ startxref
 
   /**
    * Configure webhook with EasyParcel
-   * Reference: PDF Section 6.3 - Webhook Configuration
+   * Reference: Malaysia_Individual_1.4.0.0.pdf Section 6.3 - Webhook Configuration
    */
   async configureWebhook(config: {
     url: string;

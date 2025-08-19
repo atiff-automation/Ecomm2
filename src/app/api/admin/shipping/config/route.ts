@@ -1,12 +1,12 @@
 /**
  * Admin Shipping Configuration API
- * Manage shipping settings and EasyParcel configuration
+ * Manages business shipping profile and settings
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { easyParcelService } from '@/lib/shipping/easyparcel-service';
+import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { handleApiError } from '@/lib/error-handler';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
@@ -49,34 +49,9 @@ export async function GET() {
       );
     }
 
-    // Get current shipping configuration
-    const config = {
-      easyParcelStatus: easyParcelService.getServiceStatus(),
-      freeShippingThreshold: parseFloat(
-        process.env.FREE_SHIPPING_THRESHOLD || '150'
-      ),
-      defaultCourier: process.env.DEFAULT_COURIER || '',
-      enableInsurance: process.env.ENABLE_INSURANCE === 'true',
-      businessAddress: {
-        name: process.env.BUSINESS_NAME || '',
-        phone: process.env.BUSINESS_PHONE || '',
-        email: process.env.BUSINESS_EMAIL || '',
-        addressLine1: process.env.BUSINESS_ADDRESS_LINE1 || '',
-        addressLine2: process.env.BUSINESS_ADDRESS_LINE2 || '',
-        city: process.env.BUSINESS_CITY || '',
-        state: process.env.BUSINESS_STATE || '',
-        postalCode: process.env.BUSINESS_POSTAL_CODE || '',
-      },
-      availableStates: easyParcelService.getMalaysianStates(),
-      supportedCouriers: [
-        { id: 'citylink', name: 'City-Link Express' },
-        { id: 'poslaju', name: 'Pos Laju' },
-        { id: 'gdex', name: 'GDex' },
-        { id: 'dhl', name: 'DHL' },
-        { id: 'fedex', name: 'FedEx' },
-        { id: 'aramex', name: 'Aramex' },
-      ],
-    };
+    const profile = await businessShippingConfig.getBusinessProfile();
+    const isConfigured = await businessShippingConfig.isBusinessConfigured();
+    const courierPrefs = await businessShippingConfig.getCourierPreferences();
 
     // Get shipping statistics
     const shippingStats = await prisma.order.groupBy({
@@ -111,7 +86,10 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      config,
+      success: true,
+      profile,
+      configured: isConfigured,
+      courierPreferences: courierPrefs,
       statistics: {
         shipped: totalShipped,
         delivered: totalDelivered,
