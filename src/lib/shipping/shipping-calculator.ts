@@ -5,6 +5,7 @@
  */
 
 import { easyParcelService, type AddressStructure, type ParcelDetails, type RateRequest, type MalaysianState } from './easyparcel-service';
+import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 export interface ShippingCalculationItem {
   productId: string;
@@ -97,14 +98,11 @@ export interface ShippingCalculationResult {
 }
 
 export class ShippingCalculator {
-  private freeShippingThreshold: number;
   private defaultInsuranceRate: number = 0.02; // 2% of parcel value
   private maxInsuranceAmount: number = 5000; // RM 5000 max insurance
 
   constructor() {
-    this.freeShippingThreshold = parseFloat(
-      process.env.FREE_SHIPPING_THRESHOLD || '150'
-    );
+    // Free shipping threshold is now loaded from business configuration
   }
 
   /**
@@ -132,8 +130,10 @@ export class ShippingCalculator {
       // Calculate totals
       const { totalWeight, totalValue, itemCount } = this.calculateTotals(items);
       
-      // Check free shipping eligibility
-      const freeShippingEligible = orderValue >= this.freeShippingThreshold;
+      // Get free shipping threshold from business configuration
+      const businessProfile = await businessShippingConfig.getBusinessProfile();
+      const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+      const freeShippingEligible = orderValue >= freeShippingThreshold;
 
       // Get business pickup address
       const pickupAddress = this.getBusinessPickupAddress();
@@ -169,7 +169,8 @@ export class ShippingCalculator {
         totalWeight,
         totalValue,
         itemCount,
-        freeShippingEligible
+        freeShippingEligible,
+        freeShippingThreshold
       );
 
       return {
@@ -194,7 +195,7 @@ export class ShippingCalculator {
       
       // Return fallback rates for development
       if (process.env.NODE_ENV === 'development') {
-        return this.getFallbackShippingRates(items, deliveryAddress, orderValue);
+        return await this.getFallbackShippingRates(items, deliveryAddress, orderValue);
       }
       
       throw error;
@@ -422,7 +423,8 @@ export class ShippingCalculator {
     totalWeight: number,
     totalValue: number,
     itemCount: number,
-    freeShippingEligible: boolean
+    freeShippingEligible: boolean,
+    freeShippingThreshold: number
   ) {
     const cheapestRate = rates.length > 0 ? 
       Math.min(...rates.map(r => r.price)) : undefined;
@@ -443,7 +445,7 @@ export class ShippingCalculator {
       totalWeight,
       totalValue,
       itemCount,
-      freeShippingThreshold: this.freeShippingThreshold,
+      freeShippingThreshold,
       freeShippingEligible,
       cheapestRate,
       fastestService,
@@ -498,13 +500,17 @@ export class ShippingCalculator {
     return this.getDeliveryZone(state) === 'west';
   }
 
-  private getFallbackShippingRates(
+  private async getFallbackShippingRates(
     items: ShippingCalculationItem[],
     deliveryAddress: ShippingAddress,
     orderValue: number
-  ): ShippingCalculationResult {
+  ): Promise<ShippingCalculationResult> {
     const { totalWeight, totalValue, itemCount } = this.calculateTotals(items);
-    const freeShippingEligible = orderValue >= this.freeShippingThreshold;
+    
+    // Get free shipping threshold from business configuration
+    const businessProfile = await businessShippingConfig.getBusinessProfile();
+    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+    const freeShippingEligible = orderValue >= freeShippingThreshold;
     const deliveryZone = this.getDeliveryZone(deliveryAddress.state);
     
     const baseRate = deliveryZone === 'west' ? 8 : 15;
@@ -535,7 +541,7 @@ export class ShippingCalculator {
         totalWeight,
         totalValue,
         itemCount,
-        freeShippingThreshold: this.freeShippingThreshold,
+        freeShippingThreshold,
         freeShippingEligible,
         cheapestRate: fallbackRates[0].price,
         fastestService: fallbackRates[0].serviceName,
@@ -563,12 +569,14 @@ export class ShippingCalculator {
 
   // ===== Utility Methods =====
 
-  getFreeShippingThreshold(): number {
-    return this.freeShippingThreshold;
+  async getFreeShippingThreshold(): Promise<number> {
+    const businessProfile = await businessShippingConfig.getBusinessProfile();
+    return businessProfile?.shippingPolicies.freeShippingThreshold || 150;
   }
 
-  isEligibleForFreeShipping(orderValue: number): boolean {
-    return orderValue >= this.freeShippingThreshold;
+  async isEligibleForFreeShipping(orderValue: number): Promise<boolean> {
+    const threshold = await this.getFreeShippingThreshold();
+    return orderValue >= threshold;
   }
 
   getMalaysianStates() {

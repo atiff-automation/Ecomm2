@@ -190,21 +190,26 @@ export async function POST(request: NextRequest) {
       return product;
     });
 
-    // Log the action
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: 'CREATE',
-        resource: 'PRODUCT',
-        resourceId: result.id,
-        details: {
-          productName: result.name,
-          sku: result.sku,
-          categories: categories.map(c => c.name).join(', '),
-          status: result.status,
+    // Log the action (skip if audit log fails)
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: session.user.id,
+          action: 'CREATE',
+          resource: 'PRODUCT',
+          resourceId: result.id,
+          details: {
+            productName: result.name,
+            sku: result.sku,
+            categories: categories.map(c => c.name).join(', '),
+            status: result.status,
+          },
         },
-      },
-    });
+      });
+    } catch (auditError) {
+      console.warn('Failed to create audit log:', auditError);
+      // Continue execution - audit log failure should not block product creation
+    }
 
     return NextResponse.json(
       {

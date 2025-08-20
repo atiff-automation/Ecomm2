@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -105,20 +106,22 @@ export default function AdminControlledShippingComponent({
 
   // Fetch shipping rate automatically
   useEffect(() => {
-    if (!initialOption) {
+    if (!initialOption && shippingAddress.postcode && shippingAddress.state) {
       fetchShippingRate();
     }
-  }, [shippingAddress, cartItems]);
+  }, [shippingAddress.postcode, shippingAddress.state, cartItems.length]);
 
   const fetchShippingRate = async () => {
-    if (!shippingAddress.postcode || !shippingAddress.state) {
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
+      console.log('🚚 Fetching admin-controlled shipping rate...');
+      
+      // Create an AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout
+
       const response = await fetch('/api/shipping/calculate', {
         method: 'POST',
         headers: {
@@ -137,9 +140,12 @@ export default function AdminControlledShippingComponent({
             height: 10,
             declared_value: cartValue,
           },
-          adminControlled: true, // Flag for admin-controlled selection
+          adminControlled: true,
         }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -148,15 +154,39 @@ export default function AdminControlledShippingComponent({
       const data = await response.json();
 
       if (data.success && data.selectedOption) {
-        setShippingOption(data.selectedOption);
+        const apiShippingOption: ShippingOption = {
+          courierName: data.selectedOption.courierName || 'Auto-Selected Courier',
+          serviceName: data.selectedOption.serviceName || 'Standard Delivery',
+          price: cartValue >= 150 ? 0 : (data.selectedOption.price || 10), // Apply free shipping
+          estimatedDelivery: data.selectedOption.estimatedDelivery || '2-3 business days',
+          deliveryNote: data.selectedOption.deliveryNote || 'Automatically selected based on your location and our shipping policies',
+          insuranceAvailable: data.selectedOption.insuranceAvailable !== false,
+          codAvailable: data.selectedOption.codAvailable !== false,
+        };
+        
+        setShippingOption(apiShippingOption);
         setError(null);
         setRetryCount(0);
+        console.log('✅ Admin-controlled shipping rate loaded:', apiShippingOption);
       } else {
         throw new Error(data.message || 'No shipping options available');
       }
     } catch (error) {
-      console.error('Shipping rate fetch error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load shipping rates');
+      console.error('❌ Shipping rate fetch error:', error);
+      
+      // Fallback to reliable mock option when API fails
+      const fallbackShippingOption: ShippingOption = {
+        courierName: 'City-Link Express',
+        serviceName: 'Standard Delivery',
+        price: cartValue >= 150 ? 0 : 10, // Free shipping over RM150
+        estimatedDelivery: '2-3 business days',
+        deliveryNote: 'Automatically selected based on your location and our shipping policies (backup)',
+        insuranceAvailable: true,
+        codAvailable: true,
+      };
+      
+      setShippingOption(fallbackShippingOption);
+      setError(`Shipping service temporarily unavailable. Using standard rates: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setRetryCount(prev => prev + 1);
     } finally {
       setLoading(false);

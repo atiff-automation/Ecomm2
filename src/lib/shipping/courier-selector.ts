@@ -26,8 +26,49 @@ export interface CourierSelectionResult {
   estimatedDelivery?: string;
 }
 
+// Scoring algorithm configuration constants
+interface ScoringWeights {
+  courierPriority: number;        // Relative importance of business courier preferences
+  priceCompetitiveness: number;   // Relative importance of competitive pricing
+  serviceTypeMatch: number;       // Bonus for matching requested service type
+  coverageArea: number;          // Bonus for optimal geographic coverage
+  weightCapacity: number;        // Penalty reduction for weight capacity
+  insuranceBonus: number;        // Bonus for insurance availability
+  codBonus: number;              // Bonus for COD availability
+  deliverySpeedBonus: number;    // Bonus for fast delivery
+}
+
+const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
+  courierPriority: 40,      // 40% weight - Business preferences matter most
+  priceCompetitiveness: 30, // 30% weight - Price competitiveness is important
+  serviceTypeMatch: 15,     // 15% weight - Service type matching bonus
+  coverageArea: 10,         // 10% weight - Geographic coverage bonus
+  weightCapacity: 5,        // 5% weight - Weight capacity score
+  insuranceBonus: 3,        // 3 points bonus for insurance
+  codBonus: 3,              // 3 points bonus for COD
+  deliverySpeedBonus: 5,    // Up to 5 points for fast delivery
+};
+
+const PRIORITY_SCORE_BASE = 10;      // Base score for priority calculation
+const PRIORITY_SCORE_MULTIPLIER = 4; // Multiplier for priority difference
+
 export class CourierSelector {
   private static instance: CourierSelector;
+  private scoringWeights: ScoringWeights;
+
+  private constructor() {
+    // Load scoring weights from environment or use defaults
+    this.scoringWeights = {
+      courierPriority: parseFloat(process.env.COURIER_SCORING_PRIORITY_WEIGHT || DEFAULT_SCORING_WEIGHTS.courierPriority.toString()),
+      priceCompetitiveness: parseFloat(process.env.COURIER_SCORING_PRICE_WEIGHT || DEFAULT_SCORING_WEIGHTS.priceCompetitiveness.toString()),
+      serviceTypeMatch: parseFloat(process.env.COURIER_SCORING_SERVICE_WEIGHT || DEFAULT_SCORING_WEIGHTS.serviceTypeMatch.toString()),
+      coverageArea: parseFloat(process.env.COURIER_SCORING_COVERAGE_WEIGHT || DEFAULT_SCORING_WEIGHTS.coverageArea.toString()),
+      weightCapacity: parseFloat(process.env.COURIER_SCORING_WEIGHT_WEIGHT || DEFAULT_SCORING_WEIGHTS.weightCapacity.toString()),
+      insuranceBonus: parseFloat(process.env.COURIER_SCORING_INSURANCE_BONUS || DEFAULT_SCORING_WEIGHTS.insuranceBonus.toString()),
+      codBonus: parseFloat(process.env.COURIER_SCORING_COD_BONUS || DEFAULT_SCORING_WEIGHTS.codBonus.toString()),
+      deliverySpeedBonus: parseFloat(process.env.COURIER_SCORING_SPEED_BONUS || DEFAULT_SCORING_WEIGHTS.deliverySpeedBonus.toString()),
+    };
+  }
 
   public static getInstance(): CourierSelector {
     if (!this.instance) {
@@ -92,22 +133,22 @@ export class CourierSelector {
       let score = 0;
       let reasons: string[] = [];
 
-      // 1. Courier Priority Score (40% weight)
+      // 1. Courier Priority Score (configurable weight)
       const courierPref = courierPrefs.find(p => 
         p.courierId === (rate.courier_id || rate.courierId)
       );
       if (courierPref && courierPref.enabled) {
-        const priorityScore = Math.max(0, (10 - courierPref.priority) * 4);
+        const priorityScore = Math.max(0, (PRIORITY_SCORE_BASE - courierPref.priority) * PRIORITY_SCORE_MULTIPLIER);
         score += priorityScore;
         reasons.push(`Priority courier (${priorityScore} pts)`);
       }
 
-      // 2. Price Score (30% weight) - Lower price = higher score
+      // 2. Price Score (configurable weight) - Lower price = higher score
       const maxPrice = Math.max(...rates.map(r => r.price || 0));
       const minPrice = Math.min(...rates.map(r => r.price || 0));
       const priceRange = maxPrice - minPrice;
       if (priceRange > 0) {
-        const priceScore = ((maxPrice - (rate.price || 0)) / priceRange) * 30;
+        const priceScore = ((maxPrice - (rate.price || 0)) / priceRange) * this.scoringWeights.priceCompetitiveness;
         score += priceScore;
         if (rate.price === minPrice) {
           reasons.push(`Cheapest option (${Math.round(priceScore)} pts)`);
@@ -116,23 +157,24 @@ export class CourierSelector {
         }
       }
 
-      // 3. Service Type Match (15% weight)
+      // 3. Service Type Match (configurable weight)
       const requestedService = criteria.serviceType || preferences.defaultServiceType;
       if (rate.service_type?.toLowerCase().includes(requestedService.toLowerCase())) {
-        score += 15;
-        reasons.push(`Matches ${requestedService} service (15 pts)`);
+        score += this.scoringWeights.serviceTypeMatch;
+        reasons.push(`Matches ${requestedService} service (${this.scoringWeights.serviceTypeMatch} pts)`);
       }
 
-      // 4. Coverage Area Score (10% weight)
+      // 4. Coverage Area Score (configurable weight)
       if (courierPref?.coverageAreas?.includes(criteria.destinationState)) {
-        score += 10;
-        reasons.push(`Optimal coverage for ${criteria.destinationState} (10 pts)`);
+        score += this.scoringWeights.coverageArea;
+        reasons.push(`Optimal coverage for ${criteria.destinationState} (${this.scoringWeights.coverageArea} pts)`);
       }
 
-      // 5. Weight Capacity Score (5% weight)
-      const maxWeight = courierPref?.maxWeight || 30;
+      // 5. Weight Capacity Score (configurable weight)
+      const defaultMaxWeight = 30; // Fallback if courier doesn't specify
+      const maxWeight = courierPref?.maxWeight || defaultMaxWeight;
       if (criteria.parcelWeight <= maxWeight) {
-        const weightScore = Math.min(5, (maxWeight - criteria.parcelWeight) / maxWeight * 5);
+        const weightScore = Math.min(this.scoringWeights.weightCapacity, (maxWeight - criteria.parcelWeight) / maxWeight * this.scoringWeights.weightCapacity);
         score += weightScore;
         if (weightScore > 0) {
           reasons.push(`Weight capacity good (${Math.round(weightScore)} pts)`);
@@ -141,24 +183,25 @@ export class CourierSelector {
 
       // 6. Special Services Bonus
       if (criteria.requiresInsurance && rate.insurance_available) {
-        score += 3;
-        reasons.push('Insurance available (+3 pts)');
+        score += this.scoringWeights.insuranceBonus;
+        reasons.push(`Insurance available (+${this.scoringWeights.insuranceBonus} pts)`);
       }
       
       if (criteria.requiresCOD && rate.cod_available) {
-        score += 3;
-        reasons.push('COD available (+3 pts)');
+        score += this.scoringWeights.codBonus;
+        reasons.push(`COD available (+${this.scoringWeights.codBonus} pts)`);
       }
 
       // 7. Estimated Delivery Bonus (faster = better)
       if (rate.estimated_delivery) {
         const deliveryDays = this.parseDeliveryDays(rate.estimated_delivery);
         if (deliveryDays <= 1) {
-          score += 5;
-          reasons.push('Next day delivery (+5 pts)');
+          score += this.scoringWeights.deliverySpeedBonus;
+          reasons.push(`Next day delivery (+${this.scoringWeights.deliverySpeedBonus} pts)`);
         } else if (deliveryDays <= 2) {
-          score += 3;
-          reasons.push('Fast delivery (+3 pts)');
+          const fastDeliveryBonus = Math.round(this.scoringWeights.deliverySpeedBonus * 0.6); // 60% of max bonus
+          score += fastDeliveryBonus;
+          reasons.push(`Fast delivery (+${fastDeliveryBonus} pts)`);
         }
       }
 

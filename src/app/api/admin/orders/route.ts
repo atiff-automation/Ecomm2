@@ -39,9 +39,7 @@ export async function GET(request: NextRequest) {
             AND: [
               { status: 'PROCESSING' },
               { 
-                shipments: {
-                  none: {}
-                }
+                shipment: null
               }
             ]
           }
@@ -99,7 +97,7 @@ export async function GET(request: NextRequest) {
           }
         },
         shippingAddress: true,
-        shipments: {
+        shipment: {
           select: {
             id: true,
             courierName: true,

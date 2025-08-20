@@ -182,9 +182,13 @@ export class EasyParcelService {
   }
 
   private initializeClient(apiKey: string, apiSecret: string): void {
+    // Get timeout values from environment or use defaults
+    const sandboxTimeout = parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '8000');
+    const productionTimeout = parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000');
+    
     this.apiClient = axios.create({
       baseURL: this.baseURL,
-      timeout: 30000,
+      timeout: this.isSandbox ? sandboxTimeout : productionTimeout, // Configurable timeout
       headers: {
         // Reference: Malaysia_Individual_1.4.0.0.pdf Section 2.2 - Headers Implementation
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -261,6 +265,7 @@ export class EasyParcelService {
   async calculateRates(request: RateRequest): Promise<RateResponse> {
     try {
       if (!this.isConfigured) {
+        console.log('🔒 EasyParcel not configured, using mock data');
         return this.getMockRateResponse(request);
       }
 
@@ -271,25 +276,33 @@ export class EasyParcelService {
       const formData = new URLSearchParams();
       formData.append('api', process.env.EASYPARCEL_API_KEY || '');
       
-      // Bulk format (single item for now)
+      // Bulk format (single item for now) - fix duplicate pick_addr issue
       formData.append('bulk[0][pick_name]', request.pickup_address.name);
       formData.append('bulk[0][pick_mobile]', request.pickup_address.phone);
-      formData.append('bulk[0][pick_addr]', request.pickup_address.address_line_1);
+      
+      // Combine address lines properly
+      let pickupFullAddress = request.pickup_address.address_line_1;
       if (request.pickup_address.address_line_2) {
-        formData.append('bulk[0][pick_addr]', `${request.pickup_address.address_line_1}, ${request.pickup_address.address_line_2}`);
+        pickupFullAddress += `, ${request.pickup_address.address_line_2}`;
       }
+      formData.append('bulk[0][pick_addr]', pickupFullAddress);
+      
       formData.append('bulk[0][pick_city]', request.pickup_address.city);
       formData.append('bulk[0][pick_code]', request.pickup_address.postcode);
       formData.append('bulk[0][pick_state]', request.pickup_address.state.toLowerCase());
       formData.append('bulk[0][pick_country]', 'MY');
       
-      // Receiver details
+      // Receiver details - fix duplicate send_addr issue
       formData.append('bulk[0][send_name]', request.delivery_address.name);
       formData.append('bulk[0][send_mobile]', request.delivery_address.phone);
-      formData.append('bulk[0][send_addr]', request.delivery_address.address_line_1);
+      
+      // Combine address lines properly
+      let deliveryFullAddress = request.delivery_address.address_line_1;
       if (request.delivery_address.address_line_2) {
-        formData.append('bulk[0][send_addr]', `${request.delivery_address.address_line_1}, ${request.delivery_address.address_line_2}`);
+        deliveryFullAddress += `, ${request.delivery_address.address_line_2}`;
       }
+      formData.append('bulk[0][send_addr]', deliveryFullAddress);
+      
       formData.append('bulk[0][send_city]', request.delivery_address.city);
       formData.append('bulk[0][send_code]', request.delivery_address.postcode);
       formData.append('bulk[0][send_state]', request.delivery_address.state.toLowerCase());
@@ -304,6 +317,15 @@ export class EasyParcelService {
         formData.append('bulk[0][width]', request.parcel.width.toString());
         formData.append('bulk[0][height]', request.parcel.height.toString());
       }
+
+      console.log('🔍 EasyParcel API Request Details:', {
+        url: `${this.baseURL}/?ac=EPRateCheckingBulk`,
+        apiKey: process.env.EASYPARCEL_API_KEY ? `${process.env.EASYPARCEL_API_KEY.substring(0, 8)}...` : 'MISSING',
+        pickupState: request.pickup_address.state,
+        deliveryState: request.delivery_address.state,
+        weight: request.parcel.weight,
+        formDataSize: formData.toString().length
+      });
 
       const response = await this.apiClient.post('/?ac=EPRateCheckingBulk', formData.toString());
 
@@ -374,13 +396,22 @@ export class EasyParcelService {
       console.warn('⚠️ No rates found in EasyParcel response');
       throw new Error('No shipping rates available for this destination');
     } catch (error) {
-      console.error('Error calculating shipping rates:', error);
+      console.error('❌ EasyParcel API Error Details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method
+      });
       
-      // Return mock rates in case of API failure for development
+      // Only fall back to mock data in sandbox/development mode
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
+        console.log('🔄 Falling back to mock shipping rates due to API error (development mode)');
         return this.getMockRateResponse(request);
       }
-
+      
+      // In production, throw the error to be handled by the business layer
       throw this.handleApiError(error);
     }
   }
@@ -473,10 +504,11 @@ export class EasyParcelService {
   async checkCreditBalance(): Promise<{ balance: number; currency: string; wallets: Array<{ balance: number; currency_code: string }> }> {
     try {
       if (!this.isConfigured) {
+        const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
         return {
-          balance: 1000.00,
+          balance: mockBalance,
           currency: 'MYR',
-          wallets: [{ balance: 1000.00, currency_code: 'MYR' }]
+          wallets: [{ balance: mockBalance, currency_code: 'MYR' }]
         };
       }
 
@@ -498,10 +530,11 @@ export class EasyParcelService {
       console.error('Error checking credit balance:', error);
       
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
+        const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
         return {
-          balance: 1000.00,
+          balance: mockBalance,
           currency: 'MYR',
-          wallets: [{ balance: 1000.00, currency_code: 'MYR' }]
+          wallets: [{ balance: mockBalance, currency_code: 'MYR' }]
         };
       }
 
@@ -688,8 +721,20 @@ export class EasyParcelService {
 
   private getMockRateResponse(request: RateRequest): RateResponse {
     const isWestMalaysia = this.isWestMalaysianState(request.delivery_address.state);
-    const basePrice = isWestMalaysia ? 8 : 15;
+    
+    // Use environment variables for mock pricing or sensible defaults
+    const westMalaysiaBasePrice = parseFloat(process.env.MOCK_WEST_MALAYSIA_BASE_PRICE || '8');
+    const eastMalaysiaBasePrice = parseFloat(process.env.MOCK_EAST_MALAYSIA_BASE_PRICE || '15');
+    const basePrice = isWestMalaysia ? westMalaysiaBasePrice : eastMalaysiaBasePrice;
+    
     const weightMultiplier = Math.ceil(request.parcel.weight);
+    const standardMultiplier = parseFloat(process.env.MOCK_STANDARD_WEIGHT_MULTIPLIER || '2');
+    const expressMultiplier = parseFloat(process.env.MOCK_EXPRESS_WEIGHT_MULTIPLIER || '3');
+    const expressBasePremium = parseFloat(process.env.MOCK_EXPRESS_BASE_PREMIUM || '5');
+    
+    // Note: Free shipping logic will be applied later in the business layer
+    const standardPrice = basePrice + weightMultiplier * standardMultiplier;
+    const expressPrice = basePrice + weightMultiplier * expressMultiplier + expressBasePremium;
 
     return {
       rates: [
@@ -698,7 +743,7 @@ export class EasyParcelService {
           courier_name: 'City-Link Express',
           service_name: 'Standard Delivery',
           service_type: 'STANDARD',
-          price: basePrice + weightMultiplier * 2,
+          price: standardPrice,
           estimated_delivery_days: isWestMalaysia ? 2 : 4,
           description: 'Standard delivery service',
           features: {
@@ -712,7 +757,7 @@ export class EasyParcelService {
           courier_name: 'Pos Laju',
           service_name: 'Next Day Delivery',
           service_type: 'EXPRESS',
-          price: basePrice + weightMultiplier * 3 + 5,
+          price: expressPrice,
           estimated_delivery_days: 1,
           description: 'Express next day delivery',
           features: {

@@ -13,6 +13,8 @@ import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
 import { telegramService } from '@/lib/telegram/telegram-service';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
+import { MalaysianTaxService, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service';
+import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -238,13 +240,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Calculate shipping and tax
-    const shippingCost = subtotal >= 100 ? 0 : 15; // Free shipping over RM100
+    // Calculate shipping using business configuration
+    const businessProfile = await businessShippingConfig.getBusinessProfile();
+    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+    const shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
     
-    // TODO: Tax calculation should be configurable, not hardcoded
-    // For now, set tax to 0 until tax system is properly configured
-    const taxRate = 0; // Remove hardcoded 6% SST
-    const taxAmount = 0; // No tax until properly configured
+    // Use MalaysianTaxService for proper tax calculation
+    const taxService = MalaysianTaxService.getInstance();
+    const shippingTaxResult = await taxService.calculateShippingTax(shippingCost, false);
+    const taxAmount = shippingTaxResult.taxAmount;
     
     // Always use regular pricing for order creation (before membership activation)
     const totalAmount = subtotal + shippingCost + taxAmount;

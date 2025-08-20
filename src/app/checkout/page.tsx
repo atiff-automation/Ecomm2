@@ -43,7 +43,8 @@ import { useCart } from '@/hooks/use-cart';
 import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
-import CourierSelectionComponent from '@/components/checkout/CourierSelectionComponent';
+import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
+import { malaysianPostcodeService } from '@/lib/shipping/malaysian-postcode-service';
 
 interface CheckoutItem {
   id: string;
@@ -165,6 +166,16 @@ export default function CheckoutPage() {
   // Shipping state
   const [selectedShippingRate, setSelectedShippingRate] = useState<any>(null);
   const [shippingCost, setShippingCost] = useState(0);
+  const [freeShippingApplied, setFreeShippingApplied] = useState(false);
+
+  // Postcode validation state
+  const [postcodeValidation, setPostcodeValidation] = useState<{
+    shipping: { valid: boolean; error?: string; loading?: boolean };
+    billing: { valid: boolean; error?: string; loading?: boolean };
+  }>({
+    shipping: { valid: true },
+    billing: { valid: true }
+  });
 
   const freshMembership = useFreshMembership();
   
@@ -179,25 +190,14 @@ export default function CheckoutPage() {
     })) || [];
   }, [cart?.items]);
 
-  // Malaysian states
-  const malaysianStates = [
-    'Johor',
-    'Kedah',
-    'Kelantan',
-    'Kuala Lumpur',
-    'Labuan',
-    'Malacca',
-    'Negeri Sembilan',
-    'Pahang',
-    'Penang',
-    'Perak',
-    'Perlis',
-    'Putrajaya',
-    'Sabah',
-    'Sarawak',
-    'Selangor',
-    'Terengganu',
-  ];
+  // Malaysian states from centralized service
+  const malaysianStates = useMemo(() => {
+    return malaysianPostcodeService.getAllStates().map(state => ({
+      code: state.code,
+      name: state.name,
+      zone: state.zone
+    }));
+  }, []);
 
   // Initialize checkout data using cart service
   const initializeCheckoutData = useCallback(async () => {
@@ -344,6 +344,62 @@ export default function CheckoutPage() {
     }
   };
 
+  // Handle postcode change with auto-fill
+  const handlePostcodeChange = (addressType: 'shipping' | 'billing', postcode: string) => {
+    // Update the postcode value immediately
+    const addressSetter = addressType === 'shipping' ? setShippingAddress : setBillingAddress;
+    addressSetter(prev => ({ ...prev, postcode }));
+
+    // Set loading state
+    setPostcodeValidation(prev => ({
+      ...prev,
+      [addressType]: { valid: true, loading: true }
+    }));
+
+    // Debounce the validation and auto-fill
+    setTimeout(() => {
+      const validation = malaysianPostcodeService.validatePostcode(postcode);
+      
+      if (validation.valid && validation.location) {
+        // Auto-fill state and city
+        addressSetter(prev => ({
+          ...prev,
+          postcode: validation.formatted || postcode,
+          state: validation.location!.stateName,
+          city: validation.location!.city
+        }));
+
+        setPostcodeValidation(prev => ({
+          ...prev,
+          [addressType]: { valid: true, loading: false }
+        }));
+
+        console.log(`✅ Auto-filled ${addressType} address:`, {
+          postcode: validation.formatted,
+          state: validation.location.stateName,
+          city: validation.location.city,
+          zone: validation.location.zone
+        });
+      } else if (postcode.length === 5) {
+        // Invalid postcode
+        setPostcodeValidation(prev => ({
+          ...prev,
+          [addressType]: { 
+            valid: false, 
+            error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
+            loading: false 
+          }
+        }));
+      } else {
+        // Still typing
+        setPostcodeValidation(prev => ({
+          ...prev,
+          [addressType]: { valid: true, loading: false }
+        }));
+      }
+    }, 500); // 500ms debounce
+  };
+
   // Handle address input change
   // Helper function to render field errors
   const renderFieldError = (fieldPath: string) => {
@@ -406,20 +462,21 @@ export default function CheckoutPage() {
     }
   };
 
-  // Handle shipping rate selection
-  const handleShippingRateSelect = (rateData: any) => {
-    console.log('🚚 Shipping rate selected:', {
-      courierId: rateData.courierId,
-      courierName: rateData.courierName,
-      price: rateData.price,
-      serviceType: rateData.serviceType,
-      insurance: rateData.insurance,
-      cod: rateData.cod,
-      signatureRequired: rateData.signatureRequired,
+  // Handle shipping change (admin-controlled)
+  const handleShippingChange = (shippingData: any) => {
+    console.log('🚚 Admin-controlled shipping selected:', {
+      courierName: shippingData.courierName,
+      serviceName: shippingData.serviceName,
+      price: shippingData.price,
+      insurance: shippingData.insurance,
+      cod: shippingData.cod,
+      codAmount: shippingData.codAmount,
     });
 
-    setSelectedShippingRate(rateData);
-    setShippingCost(rateData.price);
+    setSelectedShippingRate(shippingData);
+    setShippingCost(shippingData.price);
+    // Admin-controlled shipping doesn't use customer-facing free shipping thresholds
+    setFreeShippingApplied(false);
   };
 
   // Submit order
@@ -447,7 +504,11 @@ export default function CheckoutPage() {
       if (!shippingAddress.address.trim()) errors['shippingAddress.address'] = 'Address is required';
       if (!shippingAddress.city.trim()) errors['shippingAddress.city'] = 'City is required';
       if (!shippingAddress.state.trim()) errors['shippingAddress.state'] = 'State is required';
-      if (!shippingAddress.postcode.trim()) errors['shippingAddress.postcode'] = 'Postcode is required';
+      if (!shippingAddress.postcode.trim()) {
+        errors['shippingAddress.postcode'] = 'Postcode is required';
+      } else if (!postcodeValidation.shipping.valid) {
+        errors['shippingAddress.postcode'] = 'Please enter a valid Malaysian postcode for accurate shipping calculation';
+      }
       
       // Validate billing address if different from shipping
       if (!useSameAddress) {
@@ -457,12 +518,16 @@ export default function CheckoutPage() {
         if (!billingAddress.address.trim()) errors['billingAddress.address'] = 'Address is required';
         if (!billingAddress.city.trim()) errors['billingAddress.city'] = 'City is required';
         if (!billingAddress.state.trim()) errors['billingAddress.state'] = 'State is required';
-        if (!billingAddress.postcode.trim()) errors['billingAddress.postcode'] = 'Postcode is required';
+        if (!billingAddress.postcode.trim()) {
+          errors['billingAddress.postcode'] = 'Postcode is required';
+        } else if (!postcodeValidation.billing.valid) {
+          errors['billingAddress.postcode'] = 'Please enter a valid Malaysian postcode';
+        }
       }
 
-      // Validate shipping method selection
+      // Admin-controlled shipping should be automatically selected
       if (!selectedShippingRate) {
-        errors['shipping'] = 'Please select a shipping method';
+        errors['shipping'] = 'Shipping method not available. Please check your address.';
       }
 
       // If there are validation errors, show them and stop processing
@@ -726,6 +791,12 @@ export default function CheckoutPage() {
                 <MapPin className="w-5 h-5" />
                 Shipping Address
               </CardTitle>
+              <Alert className="mt-2">
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Auto-fill:</strong> Enter your 5-digit Malaysian postcode and we'll automatically fill in your state and city for accurate shipping calculation.
+                </AlertDescription>
+              </Alert>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -851,49 +922,71 @@ export default function CheckoutPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {malaysianStates.map(state => (
-                        <SelectItem key={state} value={state}>
-                          {state}
+                        <SelectItem key={state.code} value={state.name}>
+                          {state.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="shippingPostcode">Postcode *</Label>
+                  <Label htmlFor="shippingPostcode">
+                    Postcode *
+                    {postcodeValidation.shipping.loading && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id="shippingPostcode"
                     value={shippingAddress.postcode}
-                    onChange={e =>
-                      handleAddressChange(
-                        'shipping',
-                        'postcode',
-                        e.target.value
-                      )
-                    }
+                    onChange={e => handlePostcodeChange('shipping', e.target.value)}
+                    placeholder="e.g. 50000"
+                    maxLength={5}
                     required
+                    className={
+                      !postcodeValidation.shipping.valid
+                        ? 'border-red-300 focus:border-red-500'
+                        : postcodeValidation.shipping.loading
+                        ? 'border-blue-300 focus:border-blue-500'
+                        : ''
+                    }
                   />
+                  {!postcodeValidation.shipping.valid && postcodeValidation.shipping.error && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {postcodeValidation.shipping.error}
+                    </p>
+                  )}
+                  {postcodeValidation.shipping.valid && shippingAddress.postcode.length === 5 && (
+                    <p className="mt-1 text-xs text-green-600">
+                      ✓ Valid Malaysian postcode
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Shipping Options */}
-          <CourierSelectionComponent
+          {/* Admin-Controlled Shipping */}
+          <AdminControlledShippingComponent
             cartItems={cart?.items.map(item => ({
               id: item.id,
               quantity: item.quantity,
               product: {
                 id: item.product.id,
                 name: item.product.name,
-                regularPrice: item.product.regularPrice,
-                weight: item.product.weight,
-                dimensions: item.product.dimensions,
+                regularPrice: Number(item.product.regularPrice),
+                weight: Number(item.product.weight) || undefined,
+                dimensions: item.product.dimensions ? {
+                  length: Number(item.product.dimensions.split('x')[0]) || undefined,
+                  width: Number(item.product.dimensions.split('x')[1]) || undefined,
+                  height: Number(item.product.dimensions.split('x')[2]) || undefined,
+                } : undefined,
               },
             })) || []}
             shippingAddress={shippingAddress}
-            orderValue={total}
-            onShippingRateSelect={handleShippingRateSelect}
-            selectedCourierId={selectedShippingRate?.courierId}
+            onShippingChange={handleShippingChange}
           />
 
           {/* Billing Address */}
@@ -1031,27 +1124,47 @@ export default function CheckoutPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {malaysianStates.map(state => (
-                          <SelectItem key={state} value={state}>
-                            {state}
+                          <SelectItem key={state.code} value={state.name}>
+                            {state.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="billingPostcode">Postcode *</Label>
+                    <Label htmlFor="billingPostcode">
+                      Postcode *
+                      {postcodeValidation.billing.loading && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                        </span>
+                      )}
+                    </Label>
                     <Input
                       id="billingPostcode"
                       value={billingAddress.postcode}
-                      onChange={e =>
-                        handleAddressChange(
-                          'billing',
-                          'postcode',
-                          e.target.value
-                        )
-                      }
+                      onChange={e => handlePostcodeChange('billing', e.target.value)}
+                      placeholder="e.g. 50000"
+                      maxLength={5}
                       required
+                      className={
+                        !postcodeValidation.billing.valid
+                          ? 'border-red-300 focus:border-red-500'
+                          : postcodeValidation.billing.loading
+                          ? 'border-blue-300 focus:border-blue-500'
+                          : ''
+                      }
                     />
+                    {!postcodeValidation.billing.valid && postcodeValidation.billing.error && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {postcodeValidation.billing.error}
+                      </p>
+                    )}
+                    {postcodeValidation.billing.valid && billingAddress.postcode.length === 5 && (
+                      <p className="mt-1 text-xs text-green-600">
+                        ✓ Valid Malaysian postcode
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -1223,8 +1336,10 @@ export default function CheckoutPage() {
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span>
-                    {shippingCost === 0 ? (
+                    {freeShippingApplied && shippingCost === 0 ? (
                       <span className="text-green-600">FREE</span>
+                    ) : shippingCost === 0 ? (
+                      <span className="text-muted-foreground">Select shipping method</span>
                     ) : (
                       formatPrice(shippingCost)
                     )}

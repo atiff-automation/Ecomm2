@@ -180,50 +180,70 @@ export class BusinessShippingConfig {
    */
   async filterRatesForBusiness(rates: any[]): Promise<any[]> {
     const profile = await this.getBusinessProfile();
-    if (!profile) return rates;
-
-    const preferences = profile.courierPreferences;
-    
-    let filteredRates = rates;
-
-    // Filter by blocked couriers
-    if (preferences.blockedCouriers.length > 0) {
-      filteredRates = filteredRates.filter(rate => 
-        !preferences.blockedCouriers.includes(rate.courier_id || rate.courierId)
-      );
-    }
-
-    // Filter by preferred couriers (if specified)
-    if (preferences.preferredCouriers.length > 0) {
-      filteredRates = filteredRates.filter(rate => 
-        preferences.preferredCouriers.includes(rate.courier_id || rate.courierId)
-      );
-    }
-
-    // Sort by preference priority
     const courierPrefs = await this.getCourierPreferences();
+    
+    console.log('🎯 Filtering rates with preferences:', {
+      totalRates: rates.length,
+      totalCourierPrefs: courierPrefs.length,
+      enabledCourierPrefs: courierPrefs.filter(p => p.enabled).length,
+      courierPrefIds: courierPrefs.filter(p => p.enabled).map(p => p.courierId)
+    });
+
+    if (!profile || courierPrefs.length === 0) return rates;
+
+    // Get enabled courier preferences only
+    const enabledCourierPrefs = courierPrefs.filter(pref => pref.enabled);
+    
+    if (enabledCourierPrefs.length === 0) {
+      console.log('⚠️ No enabled courier preferences found, returning all rates');
+      return rates;
+    }
+
+    // Filter rates to only include couriers from enabled preferences
+    let filteredRates = rates.filter(rate => {
+      const rateCourierId = rate.courier_id || rate.courierId;
+      const isEnabled = enabledCourierPrefs.some(pref => pref.courierId === rateCourierId);
+      
+      if (!isEnabled) {
+        console.log(`🚫 Filtering out courier: ${rate.courier_name} (${rateCourierId})`);
+      } else {
+        console.log(`✅ Including courier: ${rate.courier_name} (${rateCourierId})`);
+      }
+      
+      return isEnabled;
+    });
+
+    // Sort by preference priority (1 = highest priority)
     filteredRates.sort((a, b) => {
-      const aPref = courierPrefs.find(p => p.courierId === (a.courier_id || a.courierId));
-      const bPref = courierPrefs.find(p => p.courierId === (b.courier_id || b.courierId));
+      const aPref = enabledCourierPrefs.find(p => p.courierId === (a.courier_id || a.courierId));
+      const bPref = enabledCourierPrefs.find(p => p.courierId === (b.courier_id || b.courierId));
       
       const aPriority = aPref?.priority || 999;
       const bPriority = bPref?.priority || 999;
       
       if (aPriority !== bPriority) {
-        return aPriority - bPriority;
+        return aPriority - bPriority; // Lower number = higher priority
       }
       
-      // If same priority, sort by price
+      // If same priority, sort by price (cheapest first)
       return (a.price || 0) - (b.price || 0);
     });
 
+    console.log('🏆 Final filtered and sorted rates:', {
+      count: filteredRates.length,
+      topCouriers: filteredRates.slice(0, 3).map(r => `${r.courier_name} (Priority: ${
+        enabledCourierPrefs.find(p => p.courierId === (r.courier_id || r.courierId))?.priority || 'N/A'
+      })`)
+    });
+
     // If business wants to auto-select cheapest and not show customer choice
-    if (preferences.autoSelectCheapest && !preferences.showCustomerChoice) {
-      // Return only the cheapest option
-      const cheapest = filteredRates.reduce((min, rate) => 
-        (rate.price || 0) < (min.price || 0) ? rate : min
-      );
-      return [cheapest];
+    if (profile.courierPreferences.autoSelectCheapest && !profile.courierPreferences.showCustomerChoice) {
+      // Return only the highest priority option (or cheapest if same priority)
+      const bestOption = filteredRates[0];
+      if (bestOption) {
+        console.log('🎯 Auto-selecting single option:', bestOption.courier_name);
+        return [bestOption];
+      }
     }
 
     return filteredRates;
@@ -239,14 +259,15 @@ export class BusinessShippingConfig {
       return profile.pickupAddress;
     }
 
-    // Return default pickup address if not configured
+    // Return default pickup address from environment variables
     return {
-      name: 'EcomJRM Store',
-      phone: '+60123456789',
-      address_line_1: 'No. 123, Jalan Raja Laut',
-      city: 'Kuala Lumpur',
-      state: 'KUL' as MalaysianState,
-      postcode: '50000',
+      name: process.env.BUSINESS_NAME || 'EcomJRM Store',
+      phone: process.env.BUSINESS_PHONE || '+60123456789',
+      address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
+      address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || '',
+      city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
+      state: (process.env.BUSINESS_STATE as MalaysianState) || 'KUL',
+      postcode: process.env.BUSINESS_POSTAL_CODE || '50000',
       country: 'MY'
     };
   }
@@ -319,13 +340,13 @@ export class BusinessShippingConfig {
       contactEmail: 'store@ecomjrm.com',
       
       pickupAddress: {
-        name: 'EcomJRM Store',
-        phone: '+60123456789',
-        address_line_1: 'No. 123, Jalan Raja Laut',
-        address_line_2: 'Level 2, Block A',
-        city: 'Kuala Lumpur',
-        state: 'KUL' as MalaysianState,
-        postcode: '50000',
+        name: process.env.BUSINESS_NAME || 'EcomJRM Store',
+        phone: process.env.BUSINESS_PHONE || '+60123456789',
+        address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
+        address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || 'Level 5, Tech Plaza',
+        city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
+        state: (process.env.BUSINESS_STATE as MalaysianState) || 'KUL',
+        postcode: process.env.BUSINESS_POSTAL_CODE || '50000',
         country: 'MY'
       },
       
@@ -348,7 +369,7 @@ export class BusinessShippingConfig {
       },
       
       shippingPolicies: {
-        freeShippingThreshold: 150, // RM150 free shipping
+        freeShippingThreshold: parseFloat(process.env.FREE_SHIPPING_THRESHOLD || '150'), // RM150 free shipping
         maxWeight: 30, // 30kg max per parcel
         maxDimensions: {
           length: 100, // 100cm

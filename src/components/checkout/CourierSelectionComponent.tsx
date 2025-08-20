@@ -182,10 +182,18 @@ export default function CourierSelectionComponent({
       const calculationItems = cartItems.map(item => ({
         productId: item.product.id,
         name: item.product.name,
-        weight: item.product.weight || 0.5, // Default 0.5kg if not specified
+        weight: Number(item.product.weight) || 0.5, // Ensure number type, default 0.5kg if not specified
         quantity: item.quantity,
-        value: item.product.regularPrice,
-        dimensions: item.product.dimensions,
+        value: Number(item.product.regularPrice), // Ensure number type
+        dimensions: item.product.dimensions ? {
+          length: Number(item.product.dimensions.length) || 10,
+          width: Number(item.product.dimensions.width) || 10,
+          height: Number(item.product.dimensions.height) || 5,
+        } : {
+          length: 10,
+          width: 10,
+          height: 5,
+        },
       }));
 
       const deliveryAddress = {

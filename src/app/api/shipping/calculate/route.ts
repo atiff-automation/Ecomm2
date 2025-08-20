@@ -436,16 +436,20 @@ export async function GET(request: NextRequest) {
  */
 async function handleAdminControlledShipping(body: any) {
   try {
+    console.log('🚚 Admin-controlled shipping request:', {
+      destination: body.destination,
+      parcelWeight: body.parcel?.weight,
+      parcelValue: body.parcel?.declared_value
+    });
+
     const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
-    const { courierSelector } = await import('@/lib/shipping/courier-selector');
-    
     const easyParcelService = new EasyParcelService();
     const pickupAddress = await businessShippingConfig.getPickupAddress();
 
     // Map state to state code
     const stateCode = mapToMalaysianStateCode(body.destination.state);
 
-    // Calculate rates using EasyParcel
+    // Calculate rates using EasyParcel with proper error handling
     const easyParcelRequest = {
       pickup_address: {
         name: pickupAddress.name,
@@ -467,7 +471,7 @@ async function handleAdminControlledShipping(body: any) {
         country: 'MY'
       },
       parcel: {
-        weight: body.parcel.weight,
+        weight: Math.max(0.1, body.parcel.weight || 0.5),
         length: body.parcel.length || 20,
         width: body.parcel.width || 15,
         height: body.parcel.height || 10,
@@ -479,33 +483,122 @@ async function handleAdminControlledShipping(body: any) {
       cod: false
     };
 
+    console.log('📦 EasyParcel Request for Admin-Controlled:', {
+      pickup: `${pickupAddress.city}, ${pickupAddress.state}`,
+      delivery: `${body.destination.city}, ${stateCode}`,
+      weight: easyParcelRequest.parcel.weight,
+      value: easyParcelRequest.parcel.value
+    });
+
     const easyParcelResponse = await easyParcelService.calculateRates(easyParcelRequest);
 
-    // Use courier selector to get the best option
-    const selectionCriteria = {
-      destinationState: stateCode as any,
-      destinationPostcode: body.destination.postcode,
-      parcelWeight: body.parcel.weight,
-      parcelValue: body.parcel.declared_value || 100,
+    // Apply business courier filtering based on admin preferences
+    const filteredRates = await businessShippingConfig.filterRatesForBusiness(easyParcelResponse.rates);
+    
+    console.log('🎯 Courier Filtering Applied:', {
+      originalRates: easyParcelResponse.rates.length,
+      filteredRates: filteredRates.length,
+      availableCouriers: filteredRates.map(r => r.courier_name).slice(0, 3)
+    });
+
+    // Get business profile to determine free shipping threshold
+    const businessProfile = await businessShippingConfig.getBusinessProfile();
+    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+    
+    console.log('🏢 Business Profile Debug:', {
+      profileExists: !!businessProfile,
+      configuredThreshold: businessProfile?.shippingPolicies.freeShippingThreshold,
+      effectiveThreshold: freeShippingThreshold,
+      envThreshold: process.env.FREE_SHIPPING_THRESHOLD
+    });
+
+    // Select the best rate from filtered rates (highest priority courier)
+    const selectedRate = filteredRates[0];
+    if (!selectedRate) {
+      throw new Error('No shipping rates available from preferred couriers');
+    }
+
+    // Apply free shipping logic
+    const orderValue = body.parcel.declared_value || 0;
+    const finalPrice = orderValue >= freeShippingThreshold ? 0 : selectedRate.price;
+    
+    console.log('💰 Free Shipping Logic:', {
+      orderValue,
+      freeShippingThreshold,
+      originalPrice: selectedRate.price,
+      finalPrice,
+      freeShippingApplied: finalPrice === 0
+    });
+
+    const selectedOption = {
+      courierName: selectedRate.courier_name,
+      serviceName: selectedRate.service_name,
+      price: finalPrice,
+      estimatedDelivery: `${selectedRate.estimated_delivery_days} business day${selectedRate.estimated_delivery_days > 1 ? 's' : ''}`,
+      deliveryNote: finalPrice === 0 
+        ? `Free shipping applied! Delivered via ${selectedRate.courier_name}`
+        : `Automatically selected based on your location and our shipping policies`,
+      insuranceAvailable: selectedRate.features?.insurance_available || true,
+      codAvailable: selectedRate.features?.cod_available || true,
+      apiSource: easyParcelResponse.rates.length > 0 ? 'easyparcel' : 'mock'
     };
 
-    const selectedOption = await courierSelector.getAutomaticSelection(
-      easyParcelResponse.rates,
-      selectionCriteria
-    );
+    console.log('✅ Admin-controlled shipping selected:', selectedOption);
 
     return NextResponse.json({
       success: true,
-      selectedOption: selectedOption.displayInfo,
-      rateDetails: selectedOption.rate,
+      selectedOption,
+      rateDetails: selectedRate,
       adminControlled: true,
+      freeShippingApplied: finalPrice === 0,
+      freeShippingThreshold,
+      debug: {
+        originalPrice: selectedRate.price,
+        finalPrice,
+        orderValue: body.parcel.declared_value
+      }
     });
 
   } catch (error) {
     console.error('❌ Admin-controlled shipping error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to calculate shipping' },
-      { status: 500 }
-    );
+    
+    // Provide intelligent fallback
+    const businessProfile = await businessShippingConfig.getBusinessProfile();
+    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+    const orderValue = body.parcel?.declared_value || 0;
+    const finalPrice = orderValue >= freeShippingThreshold ? 0 : 10;
+    
+    console.log('🔄 Fallback Free Shipping Logic:', {
+      orderValue,
+      freeShippingThreshold,
+      originalPrice: 10,
+      finalPrice,
+      freeShippingApplied: finalPrice === 0
+    });
+
+    const fallbackOption = {
+      courierName: 'Standard Courier',
+      serviceName: 'Standard Delivery',
+      price: finalPrice,
+      estimatedDelivery: '2-3 business days',
+      deliveryNote: finalPrice === 0 
+        ? 'Free shipping applied! Standard delivery'
+        : 'Standard delivery rate (backup service)',
+      insuranceAvailable: true,
+      codAvailable: true,
+      apiSource: 'fallback'
+    };
+
+    console.log('🔄 Using fallback shipping option:', fallbackOption);
+
+    return NextResponse.json({
+      success: true,
+      selectedOption: fallbackOption,
+      adminControlled: true,
+      freeShippingApplied: finalPrice === 0,
+      freeShippingThreshold,
+      fallback: true,
+      error: error instanceof Error ? error.message : 'API temporarily unavailable'
+    });
   }
 }
