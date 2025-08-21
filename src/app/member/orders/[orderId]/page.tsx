@@ -14,7 +14,11 @@ import {
   CreditCard,
   Calendar,
   Loader2,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
+import { TrackingTimelineCard } from '@/components/customer/TrackingTimeline';
+import TrackingStatus from '@/components/customer/TrackingStatus';
 import Image from 'next/image';
 
 interface OrderItem {
@@ -71,6 +75,21 @@ interface Order {
   orderItems: OrderItem[];
   shippingAddress?: Address;
   billingAddress?: Address;
+  shipment?: {
+    id: string;
+    trackingNumber?: string;
+    status?: string;
+    courierName?: string;
+    serviceName?: string;
+    estimatedDelivery?: string;
+    actualDelivery?: string;
+    trackingEvents?: Array<{
+      eventName: string;
+      description: string;
+      timestamp: string;
+      location?: string;
+    }>;
+  };
 }
 
 export default function OrderDetailPage() {
@@ -82,6 +101,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshingTracking, setRefreshingTracking] = useState(false);
 
   useEffect(() => {
     if (!session?.user) {
@@ -112,6 +132,28 @@ export default function OrderDetailPage() {
 
     fetchOrder();
   }, [session, orderId, router]);
+
+  const handleTrackingRefresh = async () => {
+    if (!order?.shipment?.trackingNumber) return;
+    
+    setRefreshingTracking(true);
+    try {
+      const response = await fetch(`/api/customer/orders/${orderId}/tracking/refresh`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        // Refetch order data to get updated tracking
+        await fetchOrder();
+      } else {
+        console.error('Failed to refresh tracking');
+      }
+    } catch (error) {
+      console.error('Error refreshing tracking:', error);
+    } finally {
+      setRefreshingTracking(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -341,6 +383,120 @@ export default function OrderDetailPage() {
               ))}
             </CardContent>
           </Card>
+
+          {/* Shipping & Tracking Information */}
+          {order.shipment && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Shipping & Tracking
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Basic Shipping Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Tracking Number
+                    </label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        {order.shipment.trackingNumber || 'Not available'}
+                      </code>
+                      {order.shipment.trackingNumber && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigator.clipboard.writeText(order.shipment!.trackingNumber!)}
+                          className="h-7 w-7 p-0"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Courier
+                    </label>
+                    <p className="mt-1">{order.shipment.courierName || 'N/A'}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Service
+                    </label>
+                    <p className="mt-1">{order.shipment.serviceName || 'N/A'}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </label>
+                    <div className="mt-1">
+                      <TrackingStatus 
+                        status={order.shipment.status || 'unknown'} 
+                        size="md" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {order.shipment.estimatedDelivery && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Estimated Delivery
+                      </label>
+                      <p className="mt-1">
+                        {formatDate(order.shipment.estimatedDelivery)}
+                      </p>
+                    </div>
+                  )}
+
+                  {order.shipment.actualDelivery && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Actual Delivery
+                      </label>
+                      <p className="mt-1">
+                        {formatDate(order.shipment.actualDelivery)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Refresh Button */}
+                {order.shipment.trackingNumber && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={handleTrackingRefresh}
+                      disabled={refreshingTracking}
+                      size="sm"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${refreshingTracking ? 'animate-spin' : ''}`} />
+                      {refreshingTracking ? 'Refreshing...' : 'Refresh Tracking'}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tracking Timeline */}
+          {order.shipment?.trackingEvents && order.shipment.trackingEvents.length > 0 && (
+            <TrackingTimelineCard
+              events={order.shipment.trackingEvents}
+              currentStatus={order.shipment.status || 'unknown'}
+              estimatedDelivery={order.shipment.estimatedDelivery}
+              onRefresh={handleTrackingRefresh}
+              refreshing={refreshingTracking}
+            />
+          )}
 
           {/* Shipping Address */}
           {order.shippingAddress && (

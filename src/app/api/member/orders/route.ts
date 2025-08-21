@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       whereClause.status = status.toUpperCase();
     }
 
-    // Get orders with detailed information
+    // Get orders with detailed information including shipment data
     const orders = await prisma.order.findMany({
       where: whereClause,
       include: {
@@ -69,6 +69,14 @@ export async function GET(request: NextRequest) {
                 images: true,
               },
             },
+          },
+        },
+        shipment: {
+          select: {
+            trackingNumber: true,
+            status: true,
+            courierName: true,
+            estimatedDelivery: true,
           },
         },
       },
@@ -93,6 +101,12 @@ export async function GET(request: NextRequest) {
       memberSavings: Number(order.memberDiscount || 0),
       itemCount: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
       trackingNumber: order.trackingNumber,
+      shipment: order.shipment ? {
+        trackingNumber: order.shipment.trackingNumber,
+        status: order.shipment.status,
+        courierName: order.shipment.courierName,
+        estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
+      } : null,
       items: order.orderItems.map(item => ({
         id: item.id,
         productName: item.productName,

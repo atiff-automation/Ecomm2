@@ -28,9 +28,24 @@ import {
   Edit,
   Clock,
   AlertTriangle,
+  Copy,
+  RefreshCw,
+  Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
+
+// Define tracking status type
+type TrackingStatus = 
+  | 'pending'
+  | 'booked' 
+  | 'picked_up'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'exception'
+  | 'cancelled';
 
 interface FulfillmentOrder {
   id: string;
@@ -48,9 +63,17 @@ interface FulfillmentOrder {
     postcode: string;
   };
   createdAt: string;
-  shippingMethod?: string;
-  trackingNumber?: string;
   priority: 'HIGH' | 'NORMAL' | 'LOW';
+  
+  // ENHANCED: More detailed shipment info
+  shipment?: {
+    trackingNumber?: string;
+    status?: TrackingStatus;
+    courierName?: string;
+    serviceName?: string;
+    estimatedDelivery?: string;
+    lastTrackedAt?: string;
+  };
 }
 
 export default function OrderFulfillmentPage() {
@@ -110,6 +133,96 @@ export default function OrderFulfillmentPage() {
     }
   };
 
+  // NEW: Bulk shipping operations
+  const handleBulkShip = async () => {
+    const shippableOrders = selectedOrders.filter(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.status === 'PROCESSING' && !order?.shipment?.trackingNumber;
+    });
+
+    if (shippableOrders.length === 0) return;
+
+    try {
+      const response = await fetch('/api/admin/orders/bulk-ship', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: shippableOrders }),
+      });
+
+      if (response.ok) {
+        await fetchOrders();
+        setSelectedOrders([]);
+      }
+    } catch (error) {
+      console.error('Failed to ship orders:', error);
+    }
+  };
+
+  const handleBulkTrackingRefresh = async () => {
+    const ordersWithTracking = selectedOrders.filter(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.shipment?.trackingNumber;
+    });
+
+    if (ordersWithTracking.length === 0) return;
+
+    try {
+      const response = await fetch('/api/admin/orders/bulk-tracking-refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: ordersWithTracking }),
+      });
+
+      if (response.ok) {
+        await fetchOrders();
+      }
+    } catch (error) {
+      console.error('Failed to refresh tracking:', error);
+    }
+  };
+
+  const handleBulkLabelDownload = async () => {
+    const ordersWithShipments = selectedOrders.filter(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.shipment?.trackingNumber;
+    });
+
+    if (ordersWithShipments.length === 0) return;
+
+    try {
+      const response = await fetch('/api/admin/orders/bulk-labels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: ordersWithShipments }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `labels-${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Failed to download labels:', error);
+    }
+  };
+
+  const handleShipOrder = async (orderId: string) => {
+    // Implementation for single order shipping
+    // This could open a modal or navigate to shipping page
+    console.log('Ship order:', orderId);
+  };
+
+  const handleEditShipment = (orderId: string) => {
+    // Navigate to order details or open edit modal
+    window.location.href = `/admin/orders/${orderId}#shipping`;
+  };
+
   const handleSelectOrder = (orderId: string, selected: boolean) => {
     if (selected) {
       setSelectedOrders(prev => [...prev, orderId]);
@@ -152,6 +265,88 @@ export default function OrderFulfillmentPage() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // NEW: Tracking helper functions
+  const getTrackingStatusColor = (status?: TrackingStatus): string => {
+    switch (status) {
+      case 'pending':
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'booked':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'picked_up':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'in_transit':
+        return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case 'out_for_delivery':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'delivered':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'exception':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const formatTrackingStatus = (status?: TrackingStatus): string => {
+    if (!status) return 'No Status';
+    return status.replace(/_/g, ' ').toUpperCase();
+  };
+
+  const formatRelativeTime = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-MY');
+  };
+
+  const formatDateTime = (dateString: string): string => {
+    return new Intl.DateTimeFormat('en-MY', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(dateString));
+  };
+
+  // NEW: Bulk operation helper functions
+  const canBulkShip = (): boolean => {
+    return selectedOrders.some(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.status === 'PROCESSING' && !order?.shipment?.trackingNumber;
+    });
+  };
+
+  const getShippableCount = (): number => {
+    return selectedOrders.filter(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.status === 'PROCESSING' && !order?.shipment?.trackingNumber;
+    }).length;
+  };
+
+  const hasTrackingNumbers = (): boolean => {
+    return selectedOrders.some(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.shipment?.trackingNumber;
+    });
+  };
+
+  const hasShipments = (): boolean => {
+    return selectedOrders.some(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      return order?.shipment?.trackingNumber;
+    });
   };
 
   useEffect(() => {
@@ -261,23 +456,44 @@ export default function OrderFulfillmentPage() {
                 <Filter className="h-5 w-5" />
                 Fulfillment Queue
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={() => handleBulkStatusUpdate('PROCESSING')}
                   disabled={selectedOrders.length === 0}
                   size="sm"
                 >
                   <Package className="h-4 w-4 mr-2" />
-                  Start Processing
+                  Start Processing ({selectedOrders.length})
                 </Button>
+                
                 <Button
-                  onClick={() => handleBulkStatusUpdate('SHIPPED')}
-                  disabled={selectedOrders.length === 0}
+                  onClick={() => handleBulkShip()}
+                  disabled={selectedOrders.length === 0 || !canBulkShip()}
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Truck className="h-4 w-4 mr-2" />
-                  Mark Shipped
+                  Ship Orders ({getShippableCount()})
+                </Button>
+                
+                <Button
+                  onClick={() => handleBulkTrackingRefresh()}
+                  disabled={selectedOrders.length === 0 || !hasTrackingNumbers()}
+                  size="sm"
+                  variant="outline"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Tracking
+                </Button>
+                
+                <Button
+                  onClick={() => handleBulkLabelDownload()}
+                  disabled={selectedOrders.length === 0 || !hasShipments()}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Labels
                 </Button>
               </div>
             </div>
@@ -429,25 +645,107 @@ export default function OrderFulfillmentPage() {
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {order.shippingMethod || 'Standard'}
-                          </div>
-                          {order.trackingNumber && (
-                            <div className="text-sm text-gray-500">
-                              {order.trackingNumber}
+                          <div className="space-y-2">
+                            {/* Shipping Method */}
+                            <div className="text-sm text-gray-900 font-medium">
+                              {order.shipment?.serviceName || 'Standard'}
                             </div>
-                          )}
+                            
+                            {/* Courier Name */}
+                            {order.shipment?.courierName && (
+                              <div className="text-xs text-gray-600">
+                                via {order.shipment.courierName}
+                              </div>
+                            )}
+                            
+                            {/* Tracking Information */}
+                            {order.shipment?.trackingNumber ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-mono text-blue-600">
+                                    {order.shipment.trackingNumber}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => navigator.clipboard.writeText(order.shipment!.trackingNumber!)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    className={`${getTrackingStatusColor(order.shipment.status)} text-xs`}
+                                    variant="outline"
+                                  >
+                                    {formatTrackingStatus(order.shipment.status)}
+                                  </Badge>
+                                  
+                                  {order.shipment.lastTrackedAt && (
+                                    <span className="text-xs text-gray-400" title={`Last updated: ${formatDateTime(order.shipment.lastTrackedAt)}`}>
+                                      {formatRelativeTime(order.shipment.lastTrackedAt)}
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {order.shipment.estimatedDelivery && (
+                                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    Est: {formatDate(order.shipment.estimatedDelivery)}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <span className="text-xs text-gray-400">Awaiting shipment</span>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
+                            {/* View Order */}
                             <Button variant="outline" size="sm" asChild>
                               <Link href={`/admin/orders/${order.id}`}>
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            
+                            {/* Quick Tracking */}
+                            {order.shipment?.trackingNumber && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(`https://track.easyparcel.my/${order.shipment!.trackingNumber}`, '_blank')}
+                                title="Track shipment"
+                              >
+                                <Truck className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
+                            {/* Ship Order / Edit Tracking */}
+                            {order.status === 'PROCESSING' && !order.shipment?.trackingNumber ? (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleShipOrder(order.id)}
+                                title="Ship order"
+                              >
+                                <Package className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditShipment(order.id)}
+                                title="Edit shipment"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

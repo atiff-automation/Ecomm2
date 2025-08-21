@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
+import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
 
 // Helper functions to eliminate hardcoded values
 async function getDefaultOperatingHours() {
@@ -270,10 +271,11 @@ export async function GET() {
     const isConfigured = await businessShippingConfig.isBusinessConfigured();
     const courierPrefs = await businessShippingConfig.getCourierPreferences();
 
-    // Check if EasyParcel API is properly configured
-    const hasApiKey = !!process.env.EASYPARCEL_API_KEY;
-    const hasApiSecret = !!process.env.EASYPARCEL_API_SECRET;
-    const apiConfigured = hasApiKey && hasApiSecret;
+    // Check if EasyParcel API is properly configured (database-first with env fallback)
+    const credentialStatus = await easyParcelCredentialsService.getCredentialStatus();
+    const hasApiKey = credentialStatus.hasCredentials;
+    const hasApiSecret = credentialStatus.hasCredentials;
+    const apiConfigured = credentialStatus.hasCredentials;
 
     // Get shipping statistics - configurable time range
     const statsTimeRange = parseInt(process.env.SHIPPING_STATS_DAYS || '30');
@@ -328,6 +330,8 @@ export async function GET() {
         hasApiKey,
         hasApiSecret,
         apiConfigured,
+        environment: credentialStatus.environment,
+        source: credentialStatus.isUsingEnvFallback ? 'environment' : 'database',
         isBusinessConfigured: isConfigured,
       },
     });

@@ -159,10 +159,8 @@ export async function POST(request: NextRequest) {
       // Map delivery state to Malaysian state code  
       const deliveryStateCode = mapToMalaysianStateCode(validatedData.deliveryAddress.state);
 
-      // Use EasyParcel service for real-time rates (basic service without cache/monitoring)
-      // const enhancedEasyParcel = new EnhancedEasyParcelService();
-      const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
-      const easyParcelService = new EasyParcelService();
+      // Use EasyParcel singleton service for real-time rates
+      const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
       let rates;
       
       try {
@@ -443,7 +441,8 @@ async function handleAdminControlledShipping(body: any) {
     });
 
     const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
-    const easyParcelService = new EasyParcelService();
+    // Use singleton service instance
+    const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
     const pickupAddress = await businessShippingConfig.getPickupAddress();
 
     // Map state to state code

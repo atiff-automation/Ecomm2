@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { encryptData, decryptData } from '@/lib/utils/security';
+import { easyParcelConfig, getEasyParcelUrl } from '@/lib/config/easyparcel-config';
 import crypto from 'crypto';
 
 export interface EasyParcelCredentials {
@@ -236,6 +237,12 @@ export class EasyParcelCredentialsService {
       const apiKey = this.decryptCredential(encryptedApiKey);
       const apiSecret = this.decryptCredential(encryptedApiSecret);
       const environment = (environmentConfig?.value as 'sandbox' | 'production') || 'sandbox';
+      
+      console.log(`🔍 Decrypted credentials:`, {
+        apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
+        apiSecret: apiSecret ? `${apiSecret.substring(0, 8)}...` : 'MISSING',
+        environment
+      });
 
       const credentials: EasyParcelCredentials = {
         apiKey,
@@ -424,9 +431,7 @@ export class EasyParcelCredentialsService {
     
     try {
       // STRICT: Use URL based on environment setting only
-      const baseUrl = environment === 'sandbox' 
-        ? 'http://demo.connect.easyparcel.my'  // Sandbox URL
-        : 'https://connect.easyparcel.my';     // Production URL
+      const baseUrl = getEasyParcelUrl(environment === 'sandbox');
       
       console.log(`🔍 Testing EasyParcel API - Environment: ${environment}, URL: ${baseUrl}`);
 
@@ -524,9 +529,7 @@ export class EasyParcelCredentialsService {
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      const baseUrl = environment === 'sandbox' 
-        ? 'http://demo.connect.easyparcel.my'
-        : 'https://connect.easyparcel.my';
+      const baseUrl = getEasyParcelUrl(environment === 'sandbox');
       
       return {
         isValid: false,

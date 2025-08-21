@@ -21,6 +21,7 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react';
+import OrderTrackingCard from '@/components/customer/OrderTrackingCard';
 
 interface Order {
   id: string;
@@ -31,6 +32,12 @@ interface Order {
   createdAt: string;
   itemCount: number;
   trackingNumber?: string;
+  shipment?: {
+    trackingNumber?: string;
+    status?: string;
+    courierName?: string;
+    estimatedDelivery?: string;
+  };
 }
 
 export default function MemberOrdersPage() {
@@ -194,12 +201,11 @@ export default function MemberOrdersPage() {
                         <Badge variant="outline">
                           Payment: {order.paymentStatus}
                         </Badge>
+                      </div>
 
-                        {order.trackingNumber && (
-                          <Badge variant="outline">
-                            Tracking: {order.trackingNumber}
-                          </Badge>
-                        )}
+                      {/* Tracking Information */}
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <OrderTrackingCard order={order} />
                       </div>
                     </div>
 

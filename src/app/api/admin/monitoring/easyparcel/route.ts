@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/config';
 import { EasyParcelMonitor } from '@/lib/monitoring/easyparcel-monitor';
 import { getEasyParcelCache } from '@/lib/cache/easyparcel-cache';
 import { z } from 'zod';

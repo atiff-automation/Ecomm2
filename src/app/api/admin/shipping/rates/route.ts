@@ -5,8 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { EasyParcelService } from '@/lib/shipping/easyparcel-service';
+import { authOptions } from '@/lib/auth/config';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { courierSelector } from '@/lib/shipping/courier-selector';
 import { z } from 'zod';
@@ -63,8 +63,7 @@ export async function POST(request: NextRequest) {
     const pickupAddress = await businessShippingConfig.getPickupAddress();
     const stateCode = mapToMalaysianStateCode(validatedData.destination.state);
 
-    // Initialize EasyParcel service
-    const easyParcelService = new EasyParcelService();
+    // Use singleton EasyParcel service
 
     // Prepare EasyParcel request
     const easyParcelRequest = {

@@ -58,6 +58,13 @@ export async function GET(
         },
         shippingAddress: true,
         billingAddress: true,
+        shipment: {
+          include: {
+            trackingEvents: {
+              orderBy: { eventTime: 'desc' }
+            }
+          }
+        },
       },
     });
 
@@ -130,6 +137,23 @@ export async function GET(
             postalCode: order.billingAddress.postalCode,
             country: order.billingAddress.country,
             phone: order.billingAddress.phone,
+          }
+        : null,
+      shipment: order.shipment
+        ? {
+            id: order.shipment.id,
+            trackingNumber: order.shipment.trackingNumber,
+            status: order.shipment.status,
+            courierName: order.shipment.courierName,
+            serviceName: order.shipment.serviceName,
+            estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
+            actualDelivery: order.shipment.actualDelivery?.toISOString(),
+            trackingEvents: order.shipment.trackingEvents.map(event => ({
+              eventName: event.eventName,
+              description: event.description,
+              timestamp: event.eventTime.toISOString(),
+              location: event.location,
+            })),
           }
         : null,
     };

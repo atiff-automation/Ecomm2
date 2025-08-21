@@ -6,9 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { EasyParcelService } from '@/lib/shipping/easyparcel-service';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { z } from 'zod';
 import archiver from 'archiver';
 import { promises as fs } from 'fs';
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { shipmentIds } = bulkLabelSchema.parse(body);
 
-    const easyParcelService = new EasyParcelService();
+    // Use singleton EasyParcel service
     const results = [];
     let successCount = 0;
     let errorCount = 0;

@@ -6,8 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { EasyParcelService } from '@/lib/shipping/easyparcel-service';
+import { authOptions } from '@/lib/auth/config';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 import { TaxInclusiveShippingCalculator } from '@/lib/shipping/tax-inclusive-shipping-calculator';
 import { z } from 'zod';
 
@@ -220,7 +220,6 @@ export async function GET(request: NextRequest) {
  * Benchmark rate calculation performance
  */
 async function benchmarkRateCalculation(iterations: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
-  const easyParcelService = new EasyParcelService();
   const durations: number[] = [];
   const errors: string[] = [];
   const detailedMetrics: any[] = [];
@@ -347,7 +346,6 @@ async function benchmarkTaxCalculation(iterations: number, includeDetailedMetric
  * Benchmark concurrent request handling
  */
 async function benchmarkConcurrentRequests(concurrency: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
-  const easyParcelService = new EasyParcelService();
   const durations: number[] = [];
   const errors: string[] = [];
   const detailedMetrics: any[] = [];

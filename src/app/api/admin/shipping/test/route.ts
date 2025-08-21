@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/auth/config';
 import { UserRole } from '@prisma/client';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { courierSelector } from '@/lib/shipping/courier-selector';
-import { EasyParcelService } from '@/lib/shipping/easyparcel-service';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 
 /**
  * POST - Test shipping configuration
@@ -43,8 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize EasyParcel service
-    const easyParcelService = new EasyParcelService();
+    // Use singleton EasyParcel service
 
     // Test request payload
     const testRequest = {

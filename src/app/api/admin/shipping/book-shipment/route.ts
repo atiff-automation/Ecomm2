@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/config';
 import { smartBookingService } from '@/lib/shipping/smart-booking-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { prisma } from '@/lib/db/prisma';

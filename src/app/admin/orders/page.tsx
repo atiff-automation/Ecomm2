@@ -23,10 +23,26 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Truck,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+
+// Define tracking status type
+type TrackingStatus = 
+  | 'pending'
+  | 'booked' 
+  | 'picked_up'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'exception'
+  | 'cancelled';
 
 interface Order {
   id: string;
@@ -38,6 +54,15 @@ interface Order {
   paymentStatus: string;
   createdAt: string;
   itemCount: number;
+  
+  // NEW: Tracking fields
+  shipment?: {
+    trackingNumber?: string;
+    status?: TrackingStatus;
+    courierName?: string;
+    estimatedDelivery?: string;
+    lastTrackedAt?: string;
+  };
 }
 
 interface OrderFilters {
@@ -74,6 +99,7 @@ export default function AdminOrders() {
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
+        includeShipment: 'true', // NEW: Include shipment data
         ...Object.fromEntries(
           Object.entries(filters).filter(([, value]) => value)
         ),
@@ -180,6 +206,53 @@ export default function AdminOrders() {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Tracking helper functions
+  const getTrackingStatusColor = (status?: TrackingStatus): string => {
+    switch (status) {
+      case 'pending':
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'booked':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'picked_up':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'in_transit':
+        return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case 'out_for_delivery':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'delivered':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'exception':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const formatTrackingStatus = (status?: TrackingStatus): string => {
+    if (!status) return 'No Status';
+    return status.replace(/_/g, ' ').toUpperCase();
+  };
+
+  const formatRelativeTime = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
     }
   };
 
@@ -361,6 +434,7 @@ export default function AdminOrders() {
                         <th className="text-left py-3">Total</th>
                         <th className="text-left py-3">Status</th>
                         <th className="text-left py-3">Payment</th>
+                        <th className="text-left py-3">Tracking</th>
                         <th className="text-left py-3">Date</th>
                         <th className="text-left py-3">Actions</th>
                       </tr>
@@ -424,6 +498,53 @@ export default function AdminOrders() {
                               {order.paymentStatus}
                             </Badge>
                           </td>
+                          {/* NEW: Tracking column */}
+                          <td className="py-3">
+                            {order.shipment?.trackingNumber ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span 
+                                    className="font-mono text-xs text-blue-600 hover:text-blue-800 cursor-pointer" 
+                                    title="Click to copy tracking number"
+                                    onClick={() => copyToClipboard(order.shipment!.trackingNumber!)}
+                                  >
+                                    {order.shipment.trackingNumber}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => copyToClipboard(order.shipment!.trackingNumber!)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`${getTrackingStatusColor(order.shipment.status)} border text-xs`}>
+                                    {formatTrackingStatus(order.shipment.status)}
+                                  </Badge>
+                                  {order.shipment.courierName && (
+                                    <span className="text-xs text-gray-500">{order.shipment.courierName}</span>
+                                  )}
+                                </div>
+                                {order.shipment.estimatedDelivery && (
+                                  <div className="text-xs text-gray-500">
+                                    Est: {new Date(order.shipment.estimatedDelivery).toLocaleDateString('en-MY')}
+                                  </div>
+                                )}
+                                {order.shipment.lastTrackedAt && (
+                                  <div className="text-xs text-gray-400">
+                                    {formatRelativeTime(order.shipment.lastTrackedAt)}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <span className="text-gray-400 text-sm">—</span>
+                                <div className="text-xs text-gray-400">No tracking</div>
+                              </div>
+                            )}
+                          </td>
                           <td className="py-3 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
@@ -433,11 +554,24 @@ export default function AdminOrders() {
                             </div>
                           </td>
                           <td className="py-3">
-                            <Button size="sm" variant="outline" asChild>
-                              <Link href={`/admin/orders/${order.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" asChild>
+                                <Link href={`/admin/orders/${order.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              
+                              {order.shipment?.trackingNumber && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => window.open(`https://track.easyparcel.my/${order.shipment!.trackingNumber}`, '_blank')}
+                                  title="Track on EasyParcel"
+                                >
+                                  <Truck className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -4,7 +4,7 @@
  * Reference: Malaysia_Individual_1.4.0.0.pdf Section 5 - Booking Process
  */
 
-import { EasyParcelService, type BookingRequest, type ShipmentBookingResponse } from './easyparcel-service';
+import { easyParcelService, EasyParcelService, type BookingRequest, type ShipmentBookingResponse } from './easyparcel-service';
 import { prisma } from '@/lib/db/prisma';
 
 export interface CourierBookingData {
@@ -56,7 +56,7 @@ export class SmartBookingService {
   private easyParcelService: EasyParcelService;
 
   constructor() {
-    this.easyParcelService = new EasyParcelService();
+    this.easyParcelService = easyParcelService;
   }
 
   /**

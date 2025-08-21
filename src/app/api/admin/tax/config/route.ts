@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { MalaysianTaxService, ProductTaxCategory, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service';
 import { z } from 'zod';

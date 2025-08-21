@@ -4,7 +4,7 @@
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.1
  */
 
-import { EasyParcelService } from './easyparcel-service';
+import { easyParcelService, EasyParcelService } from './easyparcel-service';
 import { MalaysianTaxService, ServiceTaxCategory } from '../tax/malaysian-tax-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
@@ -64,7 +64,7 @@ export class TaxInclusiveShippingCalculator {
   private taxService: MalaysianTaxService;
 
   constructor() {
-    this.easyParcelService = new EasyParcelService();
+    this.easyParcelService = easyParcelService;
     this.taxService = MalaysianTaxService.getInstance();
   }
 

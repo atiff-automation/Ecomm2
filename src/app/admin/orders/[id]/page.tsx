@@ -36,6 +36,10 @@ import {
   Mail,
   Phone,
   Loader2,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  Download,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,6 +73,25 @@ interface Address {
   country: string;
 }
 
+// Define tracking status type
+type TrackingStatus = 
+  | 'pending'
+  | 'booked' 
+  | 'picked_up'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'exception'
+  | 'cancelled';
+
+interface TrackingEvent {
+  timestamp: string;
+  status: string;
+  location?: string;
+  description: string;
+  courierStatus?: string;
+}
+
 interface OrderDetails {
   id: string;
   orderNumber: string;
@@ -95,6 +118,23 @@ interface OrderDetails {
     isMember: boolean;
     memberSince?: string;
   };
+  
+  // NEW: Comprehensive shipment data
+  shipment?: {
+    id: string;
+    easyParcelShipmentId?: string;
+    trackingNumber?: string;
+    courierName?: string;
+    serviceName?: string;
+    status?: TrackingStatus;
+    statusDescription?: string;
+    estimatedDelivery?: string;
+    actualDelivery?: string;
+    trackingEvents?: TrackingEvent[];
+    lastTrackedAt?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export default function AdminOrderDetailsPage() {
@@ -106,6 +146,10 @@ export default function AdminOrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [updating, setUpdating] = useState(false);
+  
+  // NEW: Tracking state
+  const [refreshingTracking, setRefreshingTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState<string>('');
 
   const orderId = params.id as string;
 
@@ -266,6 +310,115 @@ export default function AdminOrderDetailsPage() {
         return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // NEW: Tracking helper functions
+  const getTrackingStatusColor = (status?: TrackingStatus): string => {
+    switch (status) {
+      case 'pending':
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'booked':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'picked_up':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'in_transit':
+        return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case 'out_for_delivery':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'delivered':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'exception':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const formatTrackingStatus = (status?: TrackingStatus): string => {
+    if (!status) return 'No Status';
+    return status.replace(/_/g, ' ').toUpperCase();
+  };
+
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const formatDateTime = (dateString: string): string => {
+    return new Intl.DateTimeFormat('en-MY', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(dateString));
+  };
+
+  const handleRefreshTracking = async (orderId: string) => {
+    setRefreshingTracking(true);
+    setTrackingError('');
+    
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/tracking`, {
+        method: 'POST', // POST to trigger refresh
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Refresh order details to get updated tracking
+        await fetchOrderDetails();
+      } else {
+        const error = await response.json();
+        setTrackingError(error.message || 'Failed to refresh tracking');
+      }
+    } catch (error) {
+      setTrackingError('Network error while refreshing tracking');
+    } finally {
+      setRefreshingTracking(false);
+    }
+  };
+
+  const openCourierTracking = (courierName: string, trackingNumber: string) => {
+    const courierUrls: Record<string, string> = {
+      'Pos Laju': `https://www.pos.com.my/postal-services/quick-access/?track-trace=${trackingNumber}`,
+      'GDex': `https://gdexpress.com/home/parcel_tracking?tracking_number=${trackingNumber}`,
+      'City-Link': `https://www.citylinkexpress.com/tools/parcel-tracking?awb=${trackingNumber}`,
+      'J&T Express': `https://www.jtexpress.my/index/query/gzquery.html?bills=${trackingNumber}`,
+      'DHL': `https://www.dhl.com/my-en/home/tracking.html?tracking-id=${trackingNumber}`,
+    };
+    
+    const url = courierUrls[courierName];
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      // Fallback to Google search
+      window.open(`https://www.google.com/search?q=${courierName}+tracking+${trackingNumber}`, '_blank');
+    }
+  };
+
+  const handleDownloadLabel = async (shipmentId: string) => {
+    try {
+      const response = await fetch(`/api/admin/shipping/labels/${shipmentId}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `label-${shipmentId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Failed to download label:', error);
     }
   };
 
@@ -600,6 +753,177 @@ export default function AdminOrderDetailsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* NEW: Shipping & Tracking Section */}
+            {order.shipment && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    Shipping & Tracking
+                    {order.shipment.lastTrackedAt && (
+                      <Badge variant="outline" className="text-xs">
+                        Updated {formatRelativeTime(order.shipment.lastTrackedAt)}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Tracking Overview */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Tracking Number</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="font-mono text-sm">{order.shipment.trackingNumber || 'N/A'}</span>
+                        {order.shipment.trackingNumber && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigator.clipboard.writeText(order.shipment!.trackingNumber!)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Courier</label>
+                      <div className="text-sm mt-1">
+                        {order.shipment.courierName || 'N/A'}
+                        {order.shipment.serviceName && (
+                          <div className="text-xs text-gray-500">{order.shipment.serviceName}</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <div className="mt-1">
+                        <Badge className={`${getTrackingStatusColor(order.shipment.status)} border`}>
+                          {formatTrackingStatus(order.shipment.status)}
+                        </Badge>
+                        {order.shipment.statusDescription && (
+                          <div className="text-xs text-gray-500 mt-1">{order.shipment.statusDescription}</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Estimated Delivery</label>
+                      <div className="text-sm mt-1">
+                        {order.shipment.estimatedDelivery ? formatDate(order.shipment.estimatedDelivery) : 'TBD'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Tracking Timeline */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium">Tracking History</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRefreshTracking(order.id)}
+                        disabled={refreshingTracking}
+                      >
+                        {refreshingTracking ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                        )}
+                        Refresh
+                      </Button>
+                    </div>
+                    
+                    {trackingError && (
+                      <Alert className="mb-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{trackingError}</AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {order.shipment.trackingEvents && order.shipment.trackingEvents.length > 0 ? (
+                        order.shipment.trackingEvents.map((event, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${
+                              index === 0 ? 'bg-blue-500' : 'bg-gray-300'
+                            }`}></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-sm">{event.status}</h5>
+                                  <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                                  {event.location && (
+                                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      {event.location}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-500 text-right ml-2">
+                                  {formatDateTime(event.timestamp)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No tracking events available yet</p>
+                          <p className="text-sm">Tracking information will appear once the shipment is picked up</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {order.shipment.trackingNumber && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`https://track.easyparcel.my/${order.shipment!.trackingNumber}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Track on EasyParcel
+                        </Button>
+                        
+                        {order.shipment.courierName && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openCourierTracking(order.shipment!.courierName!, order.shipment!.trackingNumber!)}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Track on {order.shipment.courierName}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    
+                    {order.shipment.easyParcelShipmentId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadLabel(order.shipment!.easyParcelShipmentId!)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Label
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Order Summary */}
             <Card>

@@ -8,6 +8,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
+import { easyParcelConfig, getEasyParcelUrl, getEasyParcelTimeout } from '@/lib/config/easyparcel-config';
 
 // ===== EasyParcel API v1.4.0 Type Definitions =====
 // Reference: Malaysia_Individual_1.4.0.0.pdf Section 3.1 - Address Structure Validation
@@ -163,14 +164,14 @@ export class EasyParcelService {
   private apiClient!: AxiosInstance;
   private isConfigured: boolean = false;
   private isSandbox: boolean = true;
-  private baseURL: string;
+  private baseURL: string = easyParcelConfig.urls.sandbox; // Default to sandbox
   private credentialSource: 'database' | 'environment' | 'none' = 'none';
   private lastCredentialCheck: number = 0;
-  private readonly CREDENTIAL_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly CREDENTIAL_CACHE_DURATION = easyParcelConfig.cache.credentialDuration;
 
   constructor() {
-    // Initialize with default sandbox URL - will be updated based on credentials
-    this.baseURL = 'http://demo.connect.easyparcel.my';  // Default to sandbox for safety
+    // Initialize with default sandbox URL from config
+    this.baseURL = easyParcelConfig.urls.sandbox;  // Default to sandbox for safety
     
     // Initialize with credentials (async initialization will be handled per request)
     this.initializeCredentials();
@@ -197,9 +198,7 @@ export class EasyParcelService {
         this.lastCredentialCheck = now;
         
         // CRITICAL FIX: Set the correct baseURL based on environment
-        const newBaseURL = this.isSandbox 
-          ? 'http://demo.connect.easyparcel.my'   // Sandbox
-          : 'https://connect.easyparcel.my';      // Production
+        const newBaseURL = getEasyParcelUrl(this.isSandbox);
         
         // Update baseURL if it changed
         if (this.baseURL !== newBaseURL) {
@@ -240,18 +239,24 @@ export class EasyParcelService {
   }
 
   private initializeClient(apiKey: string, apiSecret: string): void {
-    // Get timeout values from environment or use defaults
-    const sandboxTimeout = parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '8000');
-    const productionTimeout = parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000');
+    console.log(`🔧 Initializing EasyParcel client:`, {
+      apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
+      apiSecret: apiSecret ? `${apiSecret.substring(0, 8)}...` : 'MISSING',
+      baseURL: this.baseURL,
+      isSandbox: this.isSandbox
+    });
+    
+    // Set instance variables BEFORE creating client
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
+    
+    // Get timeout values from centralized config
+    const timeout = getEasyParcelTimeout(this.isSandbox);
     
     this.apiClient = axios.create({
       baseURL: this.baseURL,
-      timeout: this.isSandbox ? sandboxTimeout : productionTimeout, // Configurable timeout
-      headers: {
-        // Reference: Malaysia_Individual_1.4.0.0.pdf Section 2.2 - Headers Implementation
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
-      },
+      timeout, // Configurable timeout from centralized config
+      headers: easyParcelConfig.headers,
     });
 
     // Request interceptor for logging
@@ -577,7 +582,10 @@ export class EasyParcelService {
     // Ensure credentials are loaded
     await this.ensureCredentials();
     try {
+      console.log(`🔍 CheckCreditBalance - isConfigured: ${this.isConfigured}, apiKey: ${this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'MISSING'}`);
+      
       if (!this.isConfigured) {
+        console.log(`❌ Service not configured, returning mock balance`);
         const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
         return {
           balance: mockBalance,

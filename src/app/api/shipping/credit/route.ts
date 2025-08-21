@@ -4,14 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { EasyParcelService } from '@/lib/shipping/easyparcel-service';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 
 /**
  * GET - Check EasyParcel credit balance
  */
 export async function GET(request: NextRequest) {
   try {
-    const easyParcelService = new EasyParcelService();
+    // Use singleton service instance
     
     console.log('🔍 Checking EasyParcel credit balance...');
     const startTime = Date.now();

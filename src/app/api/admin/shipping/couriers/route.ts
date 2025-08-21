@@ -67,8 +67,7 @@ async function getAvailableCouriers() {
   try {
     console.log('🚚 Fetching available couriers for admin configuration...');
 
-    const { EasyParcelService } = await import('@/lib/shipping/easyparcel-service');
-    const easyParcelService = new EasyParcelService();
+    const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
     const pickupAddress = await businessShippingConfig.getPickupAddress();
 
     // Test API call to get available couriers for the admin's pickup location

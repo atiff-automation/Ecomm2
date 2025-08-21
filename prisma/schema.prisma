@@ -402,6 +402,7 @@ model Order {
   discountUsage DiscountUsage[]
   pendingMembership PendingMembership?
   shipment Shipment? // One-to-one relationship with shipment
+  trackingCache TrackingCache? // One-to-one relationship with tracking cache
   
   // Special notes
   customerNotes String?
@@ -1087,6 +1088,143 @@ model WebhookQueue {
   @@index([nextRetryAt])
   @@index([createdAt])
   @@index([eventCode])
+}
+
+// ==================== TRACKING CACHE SYSTEM (REFACTORED ARCHITECTURE) ====================
+
+model TrackingCache {
+  id                        String   @id @default(cuid())
+  orderId                   String   @unique
+  courierTrackingNumber     String
+  courierService            String
+  
+  // Current Status
+  currentStatus             String
+  lastStatusUpdate          DateTime
+  
+  // Tracking Events (JSON)
+  trackingEvents            Json     @default("[]")
+  
+  // Delivery Information
+  estimatedDelivery         DateTime?
+  actualDelivery            DateTime?
+  deliveryLocation          String?
+  
+  // Update Management
+  lastApiUpdate             DateTime
+  nextUpdateDue             DateTime
+  updateFrequencyMinutes    Int      @default(120)
+  consecutiveFailures       Int      @default(0)
+  
+  // Status Flags
+  isDelivered               Boolean  @default(false)
+  isFailed                  Boolean  @default(false)
+  isActive                  Boolean  @default(true)
+  requiresAttention         Boolean  @default(false)
+  
+  // API Response Cache
+  lastApiResponse           Json?
+  apiResponseHash           String?
+  
+  // Relationships
+  order                     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  updateLogs                TrackingUpdateLog[]
+  jobQueue                  TrackingJobQueue[]
+  
+  // Timestamps
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  
+  @@map("tracking_cache")
+  @@index([orderId])
+  @@index([courierTrackingNumber])
+  @@index([nextUpdateDue])
+  @@index([isActive, isDelivered])
+  @@index([currentStatus])
+  @@index([requiresAttention])
+  @@unique([orderId, courierTrackingNumber])
+}
+
+model TrackingUpdateLog {
+  id                    String   @id @default(cuid())
+  trackingCacheId       String
+  
+  // Update Details
+  updateType            String   // 'scheduled', 'manual', 'webhook'
+  triggeredBy           String?  // 'system', 'admin_user_id', 'webhook'
+  
+  // API Call Details
+  apiCallSuccess        Boolean
+  apiResponseTimeMs     Int?
+  apiStatusCode         Int?
+  apiErrorMessage       String?
+  
+  // Data Changes
+  statusChanged         Boolean  @default(false)
+  previousStatus        String?
+  newStatus             String?
+  eventsAdded           Int      @default(0)
+  
+  // Relationships
+  trackingCache         TrackingCache @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  startedAt             DateTime
+  completedAt           DateTime?
+  createdAt             DateTime @default(now())
+  
+  @@map("tracking_update_logs")
+  @@index([trackingCacheId])
+  @@index([startedAt])
+  @@index([apiCallSuccess])
+  @@index([updateType])
+}
+
+enum TrackingJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum TrackingJobType {
+  UPDATE
+  RETRY
+  MANUAL
+  CLEANUP
+}
+
+model TrackingJobQueue {
+  id                   String            @id @default(cuid())
+  trackingCacheId      String
+  
+  // Job Details
+  jobType              TrackingJobType
+  priority             Int               @default(100) // Lower = higher priority
+  scheduledFor         DateTime
+  
+  // Execution
+  attempts             Int               @default(0)
+  maxAttempts          Int               @default(3)
+  lastAttemptAt        DateTime?
+  lastError            String?
+  
+  // Status
+  status               TrackingJobStatus @default(PENDING)
+  
+  // Relationships
+  trackingCache        TrackingCache     @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  
+  @@map("tracking_job_queue")
+  @@index([scheduledFor, status])
+  @@index([trackingCacheId])
+  @@index([status])
+  @@index([priority])
+  @@index([jobType])
 }
 
 // Add the missing relation for ImportExportJob and ComplianceReport to User model

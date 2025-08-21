@@ -59,6 +59,7 @@ export function Header() {
     { href: '/products', label: 'Products' },
     { href: '/categories', label: 'Categories' },
     { href: '/deals', label: 'Deals' },
+    { href: '/track-order', label: 'Track Order' },
     { href: '/about', label: 'About' },
   ];
 
