@@ -3,9 +3,11 @@
  * Updated to align with official EasyParcel Individual API v1.4.0 specification
  * Reference: Official Malaysia_Individual_1.4.0.0.pdf documentation
  * Implemented: Rate checking with EPRateCheckingBulk endpoint
+ * Enhanced: Dynamic credential loading from database with env fallback
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
 
 // ===== EasyParcel API v1.4.0 Type Definitions =====
 // Reference: Malaysia_Individual_1.4.0.0.pdf Section 3.1 - Address Structure Validation
@@ -161,24 +163,80 @@ export class EasyParcelService {
   private apiClient!: AxiosInstance;
   private isConfigured: boolean = false;
   private isSandbox: boolean = true;
-  private readonly baseURL: string;
+  private baseURL: string;
+  private credentialSource: 'database' | 'environment' | 'none' = 'none';
+  private lastCredentialCheck: number = 0;
+  private readonly CREDENTIAL_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
-    const apiKey = process.env.EASYPARCEL_API_KEY;
-    const apiSecret = process.env.EASYPARCEL_API_SECRET;
-    this.isSandbox = process.env.EASYPARCEL_SANDBOX === 'true';
+    // Initialize with default sandbox URL - will be updated based on credentials
+    this.baseURL = 'http://demo.connect.easyparcel.my';  // Default to sandbox for safety
     
-    // Reference: Malaysia_Individual_1.4.0.0.pdf Section 2.1 - Base URL Configuration
-    this.baseURL = process.env.EASYPARCEL_BASE_URL || 'http://demo.connect.easyparcel.my';
+    // Initialize with credentials (async initialization will be handled per request)
+    this.initializeCredentials();
+  }
 
-    if (!apiKey || !apiSecret) {
+  /**
+   * Initialize credentials from database or environment variables
+   */
+  private async initializeCredentials(): Promise<void> {
+    try {
+      // Check if we need to refresh credentials (cache duration check)
+      const now = Date.now();
+      if (this.isConfigured && (now - this.lastCredentialCheck) < this.CREDENTIAL_CACHE_DURATION) {
+        return; // Use cached configuration
+      }
+
+      // Try to get credentials from database first
+      const credentials = await easyParcelCredentialsService.getCredentialsForService();
+      
+      if (credentials) {
+        this.isConfigured = true;
+        this.isSandbox = credentials.isSandbox;
+        this.credentialSource = credentials.source;
+        this.lastCredentialCheck = now;
+        
+        // CRITICAL FIX: Set the correct baseURL based on environment
+        const newBaseURL = this.isSandbox 
+          ? 'http://demo.connect.easyparcel.my'   // Sandbox
+          : 'https://connect.easyparcel.my';      // Production
+        
+        // Update baseURL if it changed
+        if (this.baseURL !== newBaseURL) {
+          this.baseURL = newBaseURL;
+          console.log(`🔄 EasyParcel baseURL switched to: ${newBaseURL}`);
+        }
+        
+        this.initializeClient(credentials.apiKey, credentials.apiSecret);
+        
+        console.log(`🚚 EasyParcel configured from ${credentials.source} (${this.isSandbox ? 'sandbox' : 'production'}) - URL: ${this.baseURL}`);
+        return;
+      }
+
+      // Fallback: No credentials available
       console.warn('EasyParcel credentials not configured. Using mock mode.');
       this.isConfigured = false;
-      return;
+      this.credentialSource = 'none';
+      this.lastCredentialCheck = now;
+      
+    } catch (error) {
+      console.error('Error initializing EasyParcel credentials:', error);
+      this.isConfigured = false;
+      this.credentialSource = 'none';
     }
+  }
 
-    this.isConfigured = true;
-    this.initializeClient(apiKey, apiSecret);
+  /**
+   * Ensure credentials are loaded before making API calls
+   */
+  private async ensureCredentials(): Promise<void> {
+    if (!this.isConfigured || (Date.now() - this.lastCredentialCheck) >= this.CREDENTIAL_CACHE_DURATION) {
+      await this.initializeCredentials();
+    }
+    
+    if (!this.isConfigured) {
+      throw new Error('EasyParcel credentials not configured. Please configure API credentials in admin panel.');
+    }
   }
 
   private initializeClient(apiKey: string, apiSecret: string): void {
@@ -263,6 +321,8 @@ export class EasyParcelService {
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 4.1 - Rate Calculation Enhancement
    */
   async calculateRates(request: RateRequest): Promise<RateResponse> {
+    // Ensure credentials are loaded
+    await this.ensureCredentials();
     try {
       if (!this.isConfigured) {
         console.log('🔒 EasyParcel not configured, using mock data');
@@ -274,7 +334,7 @@ export class EasyParcelService {
 
       // Prepare form data for Individual API EPRateCheckingBulk
       const formData = new URLSearchParams();
-      formData.append('api', process.env.EASYPARCEL_API_KEY || '');
+      formData.append('api', this.apiKey);
       
       // Bulk format (single item for now) - fix duplicate pick_addr issue
       formData.append('bulk[0][pick_name]', request.pickup_address.name);
@@ -320,7 +380,7 @@ export class EasyParcelService {
 
       console.log('🔍 EasyParcel API Request Details:', {
         url: `${this.baseURL}/?ac=EPRateCheckingBulk`,
-        apiKey: process.env.EASYPARCEL_API_KEY ? `${process.env.EASYPARCEL_API_KEY.substring(0, 8)}...` : 'MISSING',
+        apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'MISSING',
         pickupState: request.pickup_address.state,
         deliveryState: request.delivery_address.state,
         weight: request.parcel.weight,
@@ -421,6 +481,8 @@ export class EasyParcelService {
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 5.1 - Shipment Creation API
    */
   async bookShipment(request: ShipmentBookingRequest): Promise<ShipmentBookingResponse> {
+    // Ensure credentials are loaded
+    await this.ensureCredentials();
     try {
       if (!this.isConfigured) {
         return this.getMockShipmentBooking(request);
@@ -453,6 +515,8 @@ export class EasyParcelService {
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 7.1 - Label Download API
    */
   async generateLabel(shipmentId: string): Promise<Buffer> {
+    // Ensure credentials are loaded
+    await this.ensureCredentials();
     try {
       if (!this.isConfigured) {
         return this.getMockLabel();
@@ -472,6 +536,14 @@ export class EasyParcelService {
 
       throw this.handleApiError(error);
     }
+  }
+
+  /**
+   * Download shipping label (alias for generateLabel)
+   * This method provides compatibility with existing API calls
+   */
+  async downloadLabel(shipmentId: string): Promise<Buffer> {
+    return this.generateLabel(shipmentId);
   }
 
   /**
@@ -502,6 +574,8 @@ export class EasyParcelService {
    * Reference: Malaysia_Individual_1.4.0.0.pdf - EPCheckCreditBalance endpoint
    */
   async checkCreditBalance(): Promise<{ balance: number; currency: string; wallets: Array<{ balance: number; currency_code: string }> }> {
+    // Ensure credentials are loaded
+    await this.ensureCredentials();
     try {
       if (!this.isConfigured) {
         const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
@@ -513,7 +587,7 @@ export class EasyParcelService {
       }
 
       const formData = new URLSearchParams();
-      formData.append('api', process.env.EASYPARCEL_API_KEY || '');
+      formData.append('api', this.apiKey);
 
       const response = await this.apiClient.post('/?ac=EPCheckCreditBalance', formData.toString());
 
@@ -547,6 +621,8 @@ export class EasyParcelService {
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 6.1 - Tracking API
    */
   async trackShipment(trackingNumber: string): Promise<TrackingResponse> {
+    // Ensure credentials are loaded
+    await this.ensureCredentials();
     try {
       if (!this.isConfigured) {
         return this.getMockTrackingResponse(trackingNumber);
@@ -1016,9 +1092,19 @@ startxref
       configured: this.isConfigured,
       sandbox: this.isSandbox,
       baseURL: this.baseURL,
-      hasApiKey: !!process.env.EASYPARCEL_API_KEY,
-      hasApiSecret: !!process.env.EASYPARCEL_API_SECRET,
+      credentialSource: this.credentialSource,
+      lastCredentialCheck: this.lastCredentialCheck,
+      hasApiKey: !!this.apiKey,
+      hasApiSecret: !!this.apiSecret,
     };
+  }
+
+  /**
+   * Force refresh of credentials (useful after admin updates)
+   */
+  async refreshCredentials(): Promise<void> {
+    this.lastCredentialCheck = 0; // Force refresh
+    await this.initializeCredentials();
   }
 
   getMalaysianStates(): Array<{ code: MalaysianState; name: string; zone: 'west' | 'east' }> {

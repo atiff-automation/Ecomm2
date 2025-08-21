@@ -50,6 +50,12 @@ import {
   Activity,
   TrendingUp,
   Users,
+  Key,
+  Eye,
+  EyeOff,
+  Copy,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -120,11 +126,7 @@ export default function UnifiedShippingAdminPage() {
     redirect('/auth/signin');
   }
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
+  async function loadDashboardData() {
     try {
       setLoading(true);
       
@@ -173,7 +175,15 @@ export default function UnifiedShippingAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  function refreshDashboard() {
+    loadDashboardData();
+  }
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
   const saveConfiguration = async (updatedData: Partial<BusinessProfile>) => {
     if (!dashboardData) return;
@@ -343,12 +353,13 @@ export default function UnifiedShippingAdminPage() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="business">Business Profile</TabsTrigger>
           <TabsTrigger value="couriers">Courier Management</TabsTrigger>
           <TabsTrigger value="policies">Shipping Policies</TabsTrigger>
           <TabsTrigger value="services">Additional Services</TabsTrigger>
+          <TabsTrigger value="api">API Configuration</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -390,6 +401,10 @@ export default function UnifiedShippingAdminPage() {
             onSave={saveConfiguration}
             saving={saving}
           />
+        </TabsContent>
+
+        <TabsContent value="api">
+          <APIConfigurationTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -984,7 +999,7 @@ function CourierManagementTab({
     );
   };
 
-  const saveCourierSelections = async () => {
+  async function saveCourierSelections() {
     try {
       const selectedCouriers = availableCouriers
         .filter(courier => courier.enabled)
@@ -1006,8 +1021,11 @@ function CourierManagementTab({
 
       if (response.ok) {
         toast.success(`Successfully saved ${selectedCouriers.length} courier preferences`);
-        // Reload dashboard data to show updated preferences
-        await loadDashboardData();
+        // TODO: Replace window.location.reload() with seamless data refresh
+        // - Use React state updates instead of full page reload for better UX
+        // - Implement proper function scoping or useCallback hooks
+        // - Create smoother experience without page flash
+        window.location.reload();
       } else {
         const error = await response.json();
         toast.error(`Failed to save courier preferences: ${error.error}`);
@@ -1016,7 +1034,7 @@ function CourierManagementTab({
       console.error('Error saving courier selections:', error);
       toast.error('Failed to save courier selections');
     }
-  };
+  }
 
   const saveCourierPreferences = async (updatedPreferences: CourierPreference[]) => {
     try {
@@ -1028,8 +1046,11 @@ function CourierManagementTab({
 
       if (response.ok) {
         toast.success('Courier preferences updated successfully');
-        // Reload dashboard data to show updated preferences
-        await loadDashboardData();
+        // TODO: Replace window.location.reload() with seamless data refresh
+        // - Use React state updates instead of full page reload for better UX
+        // - Implement proper function scoping or useCallback hooks
+        // - Create smoother experience without page flash
+        window.location.reload();
       } else {
         const error = await response.json();
         toast.error(`Failed to update courier preferences: ${error.error}`);
@@ -1783,6 +1804,432 @@ function AdditionalServicesTab({
           {saving ? 'Saving...' : 'Save Additional Services'}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// API Configuration Tab Component
+function APIConfigurationTab() {
+  const [credentialStatus, setCredentialStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [showApiSecret, setShowApiSecret] = useState(false);
+  const [formData, setFormData] = useState({
+    apiKey: '',
+    apiSecret: '',
+    environment: 'sandbox' as 'sandbox' | 'production'
+  });
+
+  useEffect(() => {
+    loadCredentialStatus();
+  }, []);
+
+  const loadCredentialStatus = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/easyparcel/credentials');
+      const data = await response.json();
+      
+      if (data.success) {
+        setCredentialStatus(data.status);
+        setFormData(prev => ({
+          ...prev,
+          environment: data.status.environment
+        }));
+      } else {
+        toast.error('Failed to load credential status');
+      }
+    } catch (error) {
+      console.error('Error loading credential status:', error);
+      toast.error('Error loading credential status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveCredentials = async () => {
+    if (!formData.apiKey.trim() || !formData.apiSecret.trim()) {
+      toast.error('Please enter both API key and secret');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/admin/easyparcel/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_credentials',
+          apiKey: formData.apiKey.trim(),
+          apiSecret: formData.apiSecret.trim(),
+          environment: formData.environment
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Credentials updated and validated successfully!');
+        await loadCredentialStatus();
+        // Clear form
+        setFormData({
+          apiKey: '',
+          apiSecret: '',
+          environment: formData.environment
+        });
+      } else {
+        toast.error(result.error || 'Failed to update credentials');
+      }
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+      toast.error('Error saving credentials');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestCredentials = async () => {
+    setTesting(true);
+    try {
+      const response = await fetch('/api/admin/easyparcel/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test_current' })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(
+          `✅ API test successful!\n` +
+          `Endpoint: ${result.testResult.endpoint}\n` +
+          `Environment: ${result.testResult.environment}\n` +
+          `Response time: ${result.testResult.responseTime}ms\n` +
+          `Services found: ${result.testResult.servicesFound}`
+        );
+      } else {
+        toast.error(
+          `❌ API test failed!\n` +
+          `Endpoint: ${result.testResult?.endpoint || 'Unknown'}\n` +
+          `Environment: ${result.testResult?.environment || 'Unknown'}\n` +
+          `Error: ${result.testResult?.error || result.error}`
+        );
+      }
+    } catch (error) {
+      console.error('Error testing credentials:', error);
+      toast.error('Error testing credentials');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleEnvironmentSwitch = async (newEnvironment: 'sandbox' | 'production') => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/admin/easyparcel/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'switch_environment',
+          environment: newEnvironment
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Environment switched to ${newEnvironment}`);
+        setFormData(prev => ({ ...prev, environment: newEnvironment }));
+        await loadCredentialStatus();
+      } else {
+        toast.error(result.error || 'Failed to switch environment');
+      }
+    } catch (error) {
+      console.error('Error switching environment:', error);
+      toast.error('Error switching environment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearCredentials = async () => {
+    if (!confirm('Are you sure you want to clear stored credentials? This will fallback to environment variables if available.')) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/admin/easyparcel/credentials', {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Credentials cleared successfully');
+        await loadCredentialStatus();
+      } else {
+        toast.error(result.error || 'Failed to clear credentials');
+      }
+    } catch (error) {
+      console.error('Error clearing credentials:', error);
+      toast.error('Error clearing credentials');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3">Loading API configuration...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Environment Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            EasyParcel API Configuration
+          </CardTitle>
+          <CardDescription>
+            Manage your EasyParcel API credentials securely. Credentials are encrypted and stored safely.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Configuration Status */}
+            <div className="flex items-center gap-2">
+              {credentialStatus?.hasCredentials ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+              <div>
+                <p className="font-medium">Configuration</p>
+                <p className="text-sm text-gray-600">
+                  {credentialStatus?.hasCredentials ? 'Configured' : 'Not Configured'}
+                </p>
+              </div>
+            </div>
+
+            {/* Environment */}
+            <div className="flex items-center gap-2">
+              {credentialStatus?.environment === 'production' ? (
+                <Lock className="h-5 w-5 text-red-500" />
+              ) : (
+                <Unlock className="h-5 w-5 text-yellow-500" />
+              )}
+              <div>
+                <p className="font-medium">Environment</p>
+                <p className="text-sm text-gray-600 capitalize">
+                  {credentialStatus?.environment || 'sandbox'}
+                </p>
+              </div>
+            </div>
+
+            {/* Source */}
+            <div className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="font-medium">Source</p>
+                <p className="text-sm text-gray-600">
+                  {credentialStatus?.isUsingEnvFallback ? 'Environment Variables' : 'Database (Encrypted)'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {credentialStatus?.hasCredentials && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">API Key</p>
+                  <p className="text-sm text-gray-600 font-mono mb-2">
+                    {credentialStatus.apiKeyMasked}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    <strong>Endpoint:</strong> {credentialStatus.environment === 'production' 
+                      ? 'https://connect.easyparcel.my' 
+                      : 'http://demo.connect.easyparcel.my'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestCredentials}
+                    disabled={testing}
+                  >
+                    <TestTube className="h-4 w-4 mr-2" />
+                    {testing ? 'Testing...' : 'Test API'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Environment Toggle */}
+      {credentialStatus?.hasCredentials && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Environment Configuration
+            </CardTitle>
+            <CardDescription>
+              Switch between sandbox and production environments. Be careful when switching to production.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant={credentialStatus.environment === 'sandbox' ? 'default' : 'outline'}
+                    onClick={() => handleEnvironmentSwitch('sandbox')}
+                    disabled={saving || credentialStatus.environment === 'sandbox'}
+                  >
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Sandbox (Testing)
+                  </Button>
+                  <Button
+                    variant={credentialStatus.environment === 'production' ? 'default' : 'outline'}
+                    onClick={() => handleEnvironmentSwitch('production')}
+                    disabled={saving || credentialStatus.environment === 'production'}
+                    className={credentialStatus.environment === 'production' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    Production (Live)
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Current: <strong className="capitalize">{credentialStatus.environment}</strong>
+                  {credentialStatus.environment === 'production' && (
+                    <span className="text-red-600 ml-2">⚠️ Live environment - real charges apply</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Credential Input Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Update API Credentials
+          </CardTitle>
+          <CardDescription>
+            Enter new EasyParcel API credentials. They will be encrypted and tested before saving.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="apiKey">API Key</Label>
+            <div className="flex">
+              <Input
+                id="apiKey"
+                type={showApiKey ? 'text' : 'password'}
+                value={formData.apiKey}
+                onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
+                placeholder="Enter your EasyParcel API key"
+                className="font-mono"
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                autoComplete="new-password"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-2"
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="apiSecret">API Secret</Label>
+            <div className="flex">
+              <Input
+                id="apiSecret"
+                type={showApiSecret ? 'text' : 'password'}
+                value={formData.apiSecret}
+                onChange={(e) => setFormData(prev => ({ ...prev, apiSecret: e.target.value }))}
+                placeholder="Enter your EasyParcel API secret"
+                className="font-mono"
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                autoComplete="new-password"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-2"
+                onClick={() => setShowApiSecret(!showApiSecret)}
+              >
+                {showApiSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="environment">Environment</Label>
+            <Select
+              value={formData.environment}
+              onValueChange={(value: 'sandbox' | 'production') => 
+                setFormData(prev => ({ ...prev, environment: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select environment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                <SelectItem value="production">Production (Live)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-between items-center pt-4">
+            <Button
+              variant="destructive"
+              onClick={handleClearCredentials}
+              disabled={saving || !credentialStatus?.hasCredentials}
+            >
+              Clear Credentials
+            </Button>
+            <Button onClick={handleSaveCredentials} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? 'Saving...' : 'Save & Test Credentials'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Security Notice */}
+      <Alert>
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Security Notice:</strong> Your API credentials are encrypted using AES-256-GCM encryption before storage. 
+          Credential inputs are protected against copying and auto-completion. Only ADMIN and SUPERADMIN users can manage these credentials.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
