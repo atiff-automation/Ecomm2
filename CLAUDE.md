@@ -1,0 +1,3 @@
+##IMPORTANT##
+
+1. Always ensure all our implementation or steps are systematic and NO hardcode at all, CLEAR from any software architecture violation such as DRY, make sure take one source of truth approach and centralised approached. make sure the implementation are follow the best software architecture practice and approach in every step. and always always adhere to the planning made and refer to planning files.

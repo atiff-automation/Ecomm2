@@ -54,29 +54,52 @@ export function verifyHash(data: string, hash: string, salt: string): boolean {
 }
 
 /**
- * Encrypt sensitive data (Base64 encoding for compatibility)
+ * Encrypt sensitive data using AES-256-GCM
  */
 export function encryptData(data: string, key?: string): { encrypted: string; key: string; iv: string; tag: string } {
   const actualKey = key || crypto.randomBytes(32).toString('hex');
-  const iv = crypto.randomBytes(16).toString('hex');
+  const iv = crypto.randomBytes(16);
   
-  // Simple Base64 encoding (for development - replace with proper encryption in production)
-  const encrypted = Buffer.from(data, 'utf8').toString('base64');
-  
-  return {
-    encrypted,
-    key: actualKey,
-    iv,
-    tag: '',
-  };
+  try {
+    // Use AES-256-GCM for authenticated encryption
+    const cipher = crypto.createCipher('aes-256-gcm', Buffer.from(actualKey, 'hex'));
+    cipher.setIV(iv);
+    
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const tag = cipher.getAuthTag();
+    
+    return {
+      encrypted,
+      key: actualKey,
+      iv: iv.toString('hex'),
+      tag: tag.toString('hex'),
+    };
+  } catch (error) {
+    console.error('Encryption error:', error);
+    throw new Error('Failed to encrypt data');
+  }
 }
 
 /**
- * Decrypt data
+ * Decrypt data using AES-256-GCM
  */
 export function decryptData(encrypted: string, key: string, iv: string, tag: string): string {
-  // Simple Base64 decoding (for development - replace with proper decryption in production)
-  return Buffer.from(encrypted, 'base64').toString('utf8');
+  try {
+    // Use AES-256-GCM for authenticated decryption
+    const decipher = crypto.createDecipher('aes-256-gcm', Buffer.from(key, 'hex'));
+    decipher.setIV(Buffer.from(iv, 'hex'));
+    decipher.setAuthTag(Buffer.from(tag, 'hex'));
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption error:', error);
+    throw new Error('Failed to decrypt data - data may be corrupted or key is incorrect');
+  }
 }
 
 /**
@@ -129,6 +152,38 @@ export function isTrustedOrigin(request: NextRequest, allowedOrigins: string[]):
     }
     return requestOrigin === allowed;
   });
+}
+
+/**
+ * Verify webhook signature using HMAC-SHA256
+ */
+export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  try {
+    // Create expected signature
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(payload, 'utf8')
+      .digest('hex');
+    
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    );
+  } catch (error) {
+    console.error('Webhook signature verification error:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate webhook signature for outgoing requests
+ */
+export function generateWebhookSignature(payload: string, secret: string): string {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
 }
 
 /**

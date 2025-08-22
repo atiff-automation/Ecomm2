@@ -11,6 +11,7 @@ import { activateUserMembership } from '@/lib/membership';
 import { processReferralOrderCompletion } from '@/lib/referrals/referral-utils';
 import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 import { toyyibPayConfig } from '@/lib/config/toyyibpay-config';
+import { verifyWebhookSignature, getClientIP } from '@/lib/utils/security';
 
 // toyyibPay callback parameters
 interface ToyyibPayCallback {
@@ -25,6 +26,10 @@ interface ToyyibPayCallback {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security: Log client IP and basic request info
+    const clientIP = getClientIP(request);
+    console.log('🔍 toyyibPay webhook received from IP:', clientIP);
+
     // Parse form data from webhook
     const formData = await request.formData();
     const webhookData: Record<string, string> = {};
@@ -33,11 +38,34 @@ export async function POST(request: NextRequest) {
       webhookData[key] = value.toString();
     });
 
-    console.log('🔍 toyyibPay webhook received:', {
+    // Security: Verify webhook signature if available
+    const signature = request.headers.get('x-signature') || webhookData.signature;
+    if (signature && process.env.TOYYIBPAY_WEBHOOK_SECRET) {
+      const payload = JSON.stringify(webhookData);
+      const isValidSignature = verifyWebhookSignature(
+        payload,
+        signature,
+        process.env.TOYYIBPAY_WEBHOOK_SECRET
+      );
+      
+      if (!isValidSignature) {
+        console.warn('⚠️ Invalid webhook signature from IP:', clientIP);
+        return NextResponse.json(
+          { message: 'Invalid signature' },
+          { status: 401 }
+        );
+      }
+      console.log('✅ Webhook signature verified');
+    } else {
+      console.warn('⚠️ Webhook signature verification skipped - no signature or secret');
+    }
+
+    console.log('🔍 toyyibPay webhook data:', {
       billcode: webhookData.billcode,
       status: webhookData.status,
       order_id: webhookData.order_id,
-      amount: webhookData.amount
+      amount: webhookData.amount,
+      clientIP
     });
 
     // Validate required parameters
