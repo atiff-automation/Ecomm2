@@ -120,7 +120,7 @@ export default function AdminControlledShippingComponent({
       
       // Create an AbortController for timeout handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15 second timeout
 
       const response = await fetch('/api/shipping/calculate', {
         method: 'POST',
@@ -174,20 +174,37 @@ export default function AdminControlledShippingComponent({
     } catch (error) {
       console.error('❌ Shipping rate fetch error:', error);
       
-      // Fallback to reliable mock option when API fails
+      // Improved fallback handling
+      let errorMessage = 'Shipping service temporarily unavailable';
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Shipping calculation timed out';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Shipping service is taking too long to respond';
+        } else if (error.message.includes('No shipping rates available')) {
+          errorMessage = 'No shipping rates available from our courier partners';
+        } else {
+          errorMessage = `Shipping service error: ${error.message}`;
+        }
+      }
+      
+      // Always provide fallback shipping option so checkout can continue
       const fallbackShippingOption: ShippingOption = {
-        courierName: 'City-Link Express',
+        courierName: 'Standard Courier',
         serviceName: 'Standard Delivery',
         price: cartValue >= 150 ? 0 : 10, // Free shipping over RM150
         estimatedDelivery: '2-3 business days',
-        deliveryNote: 'Automatically selected based on your location and our shipping policies (backup)',
+        deliveryNote: 'Standard shipping rate applied due to service unavailability',
         insuranceAvailable: true,
         codAvailable: true,
       };
       
       setShippingOption(fallbackShippingOption);
-      setError(`Shipping service temporarily unavailable. Using standard rates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(errorMessage);
       setRetryCount(prev => prev + 1);
+      
+      console.log('🔄 Using fallback shipping option:', fallbackShippingOption);
     } finally {
       setLoading(false);
     }

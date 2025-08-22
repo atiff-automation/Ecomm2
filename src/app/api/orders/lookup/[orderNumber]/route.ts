@@ -21,8 +21,9 @@ const limiter = rateLimit({
   uniqueTokenPerInterval: 500, // Limit by IP
 });
 
-// Order number validation regex
+// Order number validation regex - supports both direct order numbers and external references
 const ORDER_NUMBER_REGEX = /^ORD-\d{8}-[A-Z0-9]{4,8}$/;
+const EXTERNAL_REFERENCE_REGEX = /^JRM_(ORD-\d{8}-[A-Z0-9]{4,8})_\d+$/;
 
 // Security headers for responses
 const SECURITY_HEADERS = {
@@ -89,7 +90,20 @@ export async function GET(
 
     // Sanitize and validate order number format
     const sanitizedOrderNumber = sanitizeInput(orderNumber);
-    if (!ORDER_NUMBER_REGEX.test(sanitizedOrderNumber)) {
+    let actualOrderNumber = sanitizedOrderNumber;
+    
+    // Check if this is a direct order number or external reference
+    if (ORDER_NUMBER_REGEX.test(sanitizedOrderNumber)) {
+      // Direct order number format: ORD-20250822-XXXX
+      actualOrderNumber = sanitizedOrderNumber;
+    } else if (EXTERNAL_REFERENCE_REGEX.test(sanitizedOrderNumber)) {
+      // External reference format: JRM_ORD-20250822-XXXX_timestamp
+      const match = sanitizedOrderNumber.match(EXTERNAL_REFERENCE_REGEX);
+      if (match && match[1]) {
+        actualOrderNumber = match[1]; // Extract ORD-20250822-XXXX
+        console.log(`🔍 Extracted order number from external reference: ${actualOrderNumber}`);
+      }
+    } else {
       console.warn(`🚫 Invalid order number format from IP: ${clientIP}, order: ${sanitizedOrderNumber}`);
       return NextResponse.json(
         { 
@@ -104,12 +118,12 @@ export async function GET(
       );
     }
 
-    console.log(`🔍 Secure order lookup: ${sanitizedOrderNumber} from IP: ${clientIP}`);
+    console.log(`🔍 Secure order lookup: ${actualOrderNumber} from IP: ${clientIP}`);
 
     // Find the order with security constraints
     const order = await prisma.order.findFirst({
       where: { 
-        orderNumber: sanitizedOrderNumber,
+        orderNumber: actualOrderNumber,
         // Only allow lookup of recent orders for security
         createdAt: {
           gte: new Date(Date.now() - MAX_ORDER_AGE_MS)
@@ -171,7 +185,7 @@ export async function GET(
     });
 
     if (!order) {
-      console.warn(`❌ Order not found or expired: ${sanitizedOrderNumber} from IP: ${clientIP}`);
+      console.warn(`❌ Order not found or expired: ${actualOrderNumber} from IP: ${clientIP}`);
       
       // Generic error message to prevent enumeration
       return NextResponse.json(
@@ -189,7 +203,7 @@ export async function GET(
 
     // Additional security check: ensure order is not in a sensitive state
     if (order.status === 'CANCELLED' || order.paymentStatus === 'FAILED') {
-      console.warn(`🚫 Access denied to sensitive order: ${sanitizedOrderNumber} from IP: ${clientIP}`);
+      console.warn(`🚫 Access denied to sensitive order: ${actualOrderNumber} from IP: ${clientIP}`);
       return NextResponse.json(
         { 
           success: false,

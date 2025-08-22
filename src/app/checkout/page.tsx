@@ -44,6 +44,7 @@ import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
 import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
+import PaymentMethodSelection from '@/components/checkout/PaymentMethodSelection';
 import { malaysianPostcodeService } from '@/lib/shipping/malaysian-postcode-service';
 
 interface CheckoutItem {
@@ -147,7 +148,8 @@ export default function CheckoutPage() {
   });
 
   const [useSameAddress, setUseSameAddress] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [hasAvailableGateways, setHasAvailableGateways] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [orderError, setOrderError] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState('');
@@ -479,6 +481,22 @@ export default function CheckoutPage() {
     setFreeShippingApplied(false);
   };
 
+  // Handle payment method change
+  const handlePaymentMethodChange = (method: string) => {
+    console.log('💳 Payment method selected:', method);
+    setPaymentMethod(method);
+    // Clear any previous payment-related errors
+    if (orderError) {
+      setOrderError('');
+    }
+  };
+
+  // Handle payment methods loaded callback
+  const handlePaymentMethodsLoaded = (hasGateways: boolean) => {
+    console.log('💳 Payment gateways availability:', { hasGateways });
+    setHasAvailableGateways(hasGateways);
+  };
+
   // Submit order
   const handleSubmitOrder = async () => {
     setProcessing(true);
@@ -530,6 +548,13 @@ export default function CheckoutPage() {
         errors['shipping'] = 'Shipping method not available. Please check your address.';
       }
 
+      // Validate payment method selection
+      if (!paymentMethod) {
+        errors['paymentMethod'] = 'Please select a payment method';
+      } else if (!hasAvailableGateways) {
+        errors['paymentMethod'] = 'No payment gateways are currently available. Please try again later.';
+      }
+
       // If there are validation errors, show them and stop processing
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
@@ -566,15 +591,21 @@ export default function CheckoutPage() {
         if (response.ok) {
           const result = await response.json();
 
-          // Now redirect to test payment gateway with the actual order ID
-          const paymentParams = new URLSearchParams({
-            amount: total.toString() || '100',
-            currency: 'MYR',
-            orderRef: result.orderNumber,
-            returnUrl: '/checkout',
-          });
-
-          router.push(`/test-payment-gateway?${paymentParams.toString()}`);
+          // Redirect to payment URL returned from the order API
+          if (result.paymentUrl) {
+            console.log('🔗 Redirecting to payment URL:', result.paymentUrl);
+            router.push(result.paymentUrl);
+          } else {
+            // Fallback to test payment gateway if no payment URL provided
+            console.log('⚠️ No payment URL provided, using test payment gateway');
+            const paymentParams = new URLSearchParams({
+              amount: total.toString() || '100',
+              currency: 'MYR',
+              orderRef: result.orderNumber,
+              returnUrl: '/checkout',
+            });
+            router.push(`/test-payment-gateway?${paymentParams.toString()}`);
+          }
         } else {
           const error = await response.json();
           setOrderError(error.message || 'Failed to create order');
@@ -600,7 +631,10 @@ export default function CheckoutPage() {
         membershipActivated: membershipActivated || membershipPending, // Include pending memberships
       };
 
-      const response = await fetch('/api/orders', {
+      console.log('🔄 Creating order with payment method:', paymentMethod);
+
+      // First create the order
+      const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -608,20 +642,64 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderData),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        // Redirect to payment or order confirmation
-        if (result.paymentUrl) {
-          window.location.href = result.paymentUrl;
-        } else {
-          router.push(`/orders/${result.orderId}`);
-        }
-      } else {
-        const error = await response.json();
+      if (!orderResponse.ok) {
+        const error = await orderResponse.json();
         setOrderError(error.message || 'Failed to create order');
         setFieldErrors(error.fieldErrors || {});
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
 
-        // Scroll to top to show error message
+      const orderResult = await orderResponse.json();
+      console.log('✅ Order created successfully:', orderResult.orderNumber);
+
+      // Now create payment bill using the multi-gateway API
+      const paymentData = {
+        orderNumber: orderResult.orderNumber,
+        amount: total + shippingCost,
+        customerInfo: {
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+        },
+        description: `Order ${orderResult.orderNumber} - ${cart?.items.length} items`,
+        paymentMethod: paymentMethod, // Use selected payment method
+      };
+
+      console.log('💳 Creating payment bill:', {
+        method: paymentMethod,
+        amount: paymentData.amount,
+        orderNumber: paymentData.orderNumber
+      });
+
+      const paymentResponse = await fetch('/api/payment/create-bill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      if (paymentResponse.ok) {
+        const paymentResult = await paymentResponse.json();
+        console.log('✅ Payment bill created successfully:', {
+          method: paymentResult.paymentMethod,
+          billId: paymentResult.billId || paymentResult.billCode,
+          hasPaymentUrl: !!paymentResult.paymentUrl
+        });
+
+        // Redirect to payment gateway
+        if (paymentResult.success && paymentResult.paymentUrl) {
+          console.log('🔄 Redirecting to payment gateway...');
+          window.location.href = paymentResult.paymentUrl;
+        } else {
+          setOrderError(paymentResult.error || 'Failed to create payment. Please try again.');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        const paymentError = await paymentResponse.json();
+        console.error('❌ Payment creation failed:', paymentError);
+        setOrderError(paymentError.error || 'Failed to create payment. Please try again.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
@@ -1171,32 +1249,22 @@ export default function CheckoutPage() {
             )}
           </Card>
 
-          {/* Payment Method */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Payment Method
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={paymentMethod}
-                onValueChange={setPaymentMethod}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="stripe" id="stripe" />
-                  <Label htmlFor="stripe">Credit/Debit Card (Stripe)</Label>
-                  <Badge variant="secondary">Secure</Badge>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="billplz" id="billplz" />
-                  <Label htmlFor="billplz">Online Banking (Billplz)</Label>
-                  <Badge variant="secondary">Local Banks</Badge>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
+          {/* Payment Method - Dynamic Selection */}
+          <PaymentMethodSelection
+            selectedMethod={paymentMethod}
+            onMethodChange={handlePaymentMethodChange}
+            onMethodsLoaded={handlePaymentMethodsLoaded}
+          />
+          
+          {/* Payment Method Validation Error */}
+          {fieldErrors['paymentMethod'] && (
+            <Alert className="border-red-200 bg-red-50 -mt-4">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                {fieldErrors['paymentMethod']}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Order Notes */}
           <Card>

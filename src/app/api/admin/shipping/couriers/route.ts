@@ -165,7 +165,15 @@ async function getAvailableCouriers() {
         });
         
         availableCouriers = Array.from(courierMap.values());
-        console.log(`✅ Found ${availableCouriers.length} available couriers from EasyParcel API`);
+        
+        // Sort by cheapest price first for priority assignment
+        availableCouriers.sort((a, b) => {
+          const aPrice = a.priceRange?.min || 999;
+          const bPrice = b.priceRange?.min || 999;
+          return aPrice - bPrice; // Cheapest first
+        });
+        
+        console.log(`✅ Found ${availableCouriers.length} available couriers from EasyParcel API, sorted by price`);
       }
     } catch (apiError) {
       console.warn('⚠️ EasyParcel API not accessible, using fallback courier list:', apiError);
@@ -246,17 +254,18 @@ async function getAvailableCouriers() {
     // Get current admin courier preferences
     const currentPreferences = await businessShippingConfig.getCourierPreferences();
     
-    // Merge available couriers with current preferences
-    const mergedCouriers = availableCouriers.map(courier => {
+    // Merge available couriers with current preferences and assign priorities based on price ranking
+    const mergedCouriers = availableCouriers.map((courier, index) => {
       const existingPref = currentPreferences.find(pref => pref.courierId === courier.courierId);
       
       return {
         ...courier,
         currentlySelected: !!existingPref,
-        priority: existingPref?.priority || 999,
+        priority: index + 1, // Priority based on sorted order (cheapest = priority 1)
         enabled: existingPref?.enabled !== false,
         adminNotes: existingPref?.notes || courier.notes,
         maxWeight: existingPref?.maxWeight || 30,
+        priceRanking: index + 1, // Add explicit price ranking for UI display
       };
     });
 

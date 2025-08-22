@@ -1,347 +1,173 @@
 /**
  * Payment Bill Creation API
- * Creates Billplz payment bills for order processing
+ * Creates payment bills for existing orders using the multi-gateway payment router system
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { billplzService } from '@/lib/payments/billplz-service';
-import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
-import { discountService } from '@/lib/discounts/discount-service';
+import { paymentRouter } from '@/lib/payments/payment-router';
 import { handleApiError } from '@/lib/error-handler';
-import { z } from 'zod';
 
-const createBillSchema = z.object({
-  cartItems: z.array(
-    z.object({
-      productId: z.string(),
-      quantity: z.number().min(1),
-      price: z.number().min(0),
-    })
-  ),
-  customerInfo: z.object({
-    email: z.string().email(),
-    name: z.string().min(1),
-    phone: z.string().optional(),
-  }),
-  shippingAddress: z.object({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    addressLine1: z.string().min(1),
-    addressLine2: z.string().optional(),
-    city: z.string().min(1),
-    state: z.string().min(1),
-    postalCode: z.string().min(1),
-    country: z.string().default('Malaysia'),
-  }),
-  appliedDiscounts: z
-    .array(
-      z.object({
-        code: z.string(),
-        amount: z.number(),
-      })
-    )
-    .optional(),
-  membershipDiscount: z.number().optional(),
-});
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Parse and validate request body
-    const body = await request.json();
-    const validatedData = createBillSchema.parse(body);
+    const { searchParams } = new URL(request.url);
+    const orderId = searchParams.get('orderId');
 
-    const {
-      cartItems,
-      customerInfo,
-      shippingAddress,
-      appliedDiscounts,
-      membershipDiscount,
-    } = validatedData;
-
-    // Get session (optional for guest checkout)
-    const session = await getServerSession(authOptions);
-
-    // Check if Billplz service is configured
-    if (!billplzService.isConfigured()) {
+    if (!orderId) {
       return NextResponse.json(
-        {
-          message: 'Payment service is not properly configured',
-          debug: billplzService.getConfigStatus(),
-        },
-        { status: 500 }
+        { message: 'Order ID is required' },
+        { status: 400 }
       );
     }
 
-    // Get product details and validate availability
-    const productIds = cartItems.map(item => item.productId);
-    const products = await prisma.product.findMany({
-      where: {
-        id: { in: productIds },
-        status: 'ACTIVE',
-      },
+    console.log(`🔄 Creating payment for order: ${orderId}`);
+
+    // Get the order with addresses
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
       include: {
-        category: true,
+        user: true,
+        shippingAddress: true,
+        billingAddress: true,
+        orderItems: {
+          include: {
+            product: true,
+          },
+        },
       },
     });
 
-    if (products.length !== cartItems.length) {
+    if (!order) {
       return NextResponse.json(
-        { message: 'Some products are no longer available' },
+        { message: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify order belongs to current user (if logged in)
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id && order.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: 'Unauthorized access to order' },
+        { status: 403 }
+      );
+    }
+
+    // Check if payment has already been created
+    if (order.paymentStatus !== 'PENDING') {
+      return NextResponse.json(
+        { message: `Payment already ${order.paymentStatus.toLowerCase()}` },
         { status: 400 }
       );
     }
 
-    // Check stock availability
-    const stockErrors: string[] = [];
-    for (const cartItem of cartItems) {
-      const product = products.find(p => p.id === cartItem.productId);
-      if (product && product.stockQuantity < cartItem.quantity) {
-        stockErrors.push(
-          `${product.name}: Only ${product.stockQuantity} items available (requested ${cartItem.quantity})`
-        );
-      }
-    }
-
-    if (stockErrors.length > 0) {
-      return NextResponse.json(
-        {
-          message: 'Insufficient stock',
-          errors: stockErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Calculate order totals
-    let subtotal = 0;
-    const orderItems = cartItems.map(cartItem => {
-      const product = products.find(p => p.id === cartItem.productId)!;
-      const price = session?.user?.isMember
-        ? Number(product.memberPrice)
-        : Number(product.regularPrice);
-      const itemTotal = price * cartItem.quantity;
-      subtotal += itemTotal;
-
-      return {
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        quantity: cartItem.quantity,
-        regularPrice: Number(product.regularPrice),
-        memberPrice: Number(product.memberPrice),
-        appliedPrice: price,
-        totalPrice: itemTotal,
-      };
-    });
-
-    // Calculate tax
-    const taxProducts = orderItems.map(item => ({
-      id: item.productId,
-      name: item.productName,
-      price: item.appliedPrice,
-      quantity: item.quantity,
-      taxCategory: 'STANDARD' as const,
-      isGstApplicable: false, // GST is suspended in Malaysia
-      isSstApplicable: true, // SST is currently active
-    }));
-
-    const taxCalculation = await malaysianTaxService.calculateTax(taxProducts);
-
-    // Calculate discounts
-    const discountAmount = (appliedDiscounts || []).reduce(
-      (sum, discount) => sum + discount.amount,
-      0
-    );
-    const memberDiscountAmount = membershipDiscount || 0;
-    const totalDiscounts = discountAmount + memberDiscountAmount;
-
-    // Calculate shipping using EasyParcel integration
-    const { shippingCalculator } = await import(
-      '@/lib/shipping/shipping-calculator'
-    );
-
-    // Prepare items for shipping calculation
-    const shippingItems = orderItems.map((item, index) => {
-      const product = products[index];
-      return {
-        productId: item.productId,
-        name: item.productName,
-        weight: product.weight ? Number(product.weight) : 0.5, // Default 0.5kg if no weight
-        quantity: item.quantity,
-        value: item.appliedPrice,
-      };
-    });
-
-    // Calculate shipping cost
-    const cleanedShippingAddress = {
-      firstName: shippingAddress.firstName,
-      lastName: shippingAddress.lastName,
-      addressLine1: shippingAddress.addressLine1,
-      city: shippingAddress.city,
-      state: shippingAddress.state,
-      postalCode: shippingAddress.postalCode,
-      country: shippingAddress.country,
-      ...(shippingAddress.addressLine2 && {
-        addressLine2: shippingAddress.addressLine2,
-      }),
+    // Determine customer info
+    const customerInfo = {
+      name: order.user?.name || 
+            `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+      email: order.user?.email || order.guestEmail || '',
+      phone: order.shippingAddress?.phone,
     };
 
-    const shippingCost = await shippingCalculator.getCheapestShippingRate(
-      shippingItems,
-      cleanedShippingAddress,
-      subtotal
-    );
-
-    // Calculate final total
-    const finalTotal =
-      subtotal + taxCalculation.taxAmount + shippingCost - totalDiscounts;
-
-    if (finalTotal <= 0) {
-      return NextResponse.json(
-        { message: 'Order total cannot be zero or negative' },
-        { status: 400 }
-      );
+    // Get payment method from order or use default
+    const paymentMethodFromOrder = order.paymentMethod?.toUpperCase();
+    let paymentMethod: 'BILLPLZ' | 'TOYYIBPAY' | undefined;
+    
+    if (paymentMethodFromOrder === 'BILLPLZ' || paymentMethodFromOrder === 'TOYYIBPAY') {
+      paymentMethod = paymentMethodFromOrder;
     }
 
-    // Generate unique order number
-    const orderNumber = `ORD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    console.log(`💳 Payment method for order ${order.orderNumber}: ${paymentMethod || 'AUTO'}`);
 
-    // Create Billplz bill
-    const billData = {
-      collection_id: billplzService.generateCollectionId(),
-      description: `JRM E-commerce Order ${orderNumber}`,
-      email: customerInfo.email,
-      name: customerInfo.name,
-      amount: finalTotal, // Amount in RM (Billplz service will convert to cents)
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/webhook`,
-      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
-      reference_1_label: 'Order Number',
-      reference_1: orderNumber,
-      reference_2_label: 'Customer Email',
-      reference_2: customerInfo.email,
-    };
-
-    const paymentResult = await billplzService.createBill(billData);
+    // Create payment using the payment router
+    const paymentResult = await paymentRouter.createPayment({
+      orderNumber: order.orderNumber,
+      customerInfo,
+      amount: Number(order.total),
+      description: `JRM E-commerce Order ${order.orderNumber}`,
+      paymentMethod,
+    });
 
     if (!paymentResult.success) {
+      console.error('❌ Payment creation failed:', paymentResult.error);
       return NextResponse.json(
         {
-          message: 'Failed to create payment bill',
+          message: 'Failed to create payment',
           error: paymentResult.error,
         },
         { status: 500 }
       );
     }
 
-    // Create order in database (initially as PENDING)
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        userId: session?.user?.id || null,
-        status: 'PENDING',
-        paymentStatus: 'PENDING',
-        subtotal,
-        taxAmount: taxCalculation.taxAmount,
-        shippingCost,
-        discountAmount: totalDiscounts,
-        total: finalTotal,
-        memberDiscount: memberDiscountAmount,
-        wasEligibleForMembership: !!session?.user?.isMember,
-        paymentMethod: 'BILLPLZ',
-        paymentId: paymentResult.bill_id || null,
-        customerNotes: `Payment via Billplz. Bill ID: ${paymentResult.bill_id}`,
+    // Update order with payment details
+    const updateData: any = {
+      paymentId: paymentResult.billId,
+    };
 
-        // Create order items
-        orderItems: {
-          create: orderItems.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            regularPrice: item.regularPrice,
-            memberPrice: item.memberPrice,
-            appliedPrice: item.appliedPrice,
-            totalPrice: item.totalPrice,
-            productName: item.productName,
-            productSku: item.productSku,
-          })),
-        },
-      },
-      include: {
-        orderItems: true,
-      },
-    });
-
-    // Record discount usage if discounts were applied
-    if (appliedDiscounts && appliedDiscounts.length > 0 && session?.user?.id) {
-      for (const discount of appliedDiscounts) {
-        try {
-          // Find the discount code to get its ID
-          const discountCode = await prisma.discountCode.findUnique({
-            where: { code: discount.code.toUpperCase() },
-          });
-
-          if (discountCode) {
-            await discountService.applyDiscountToOrder(
-              discountCode.id,
-              order.id,
-              session.user.id,
-              discount.amount
-            );
-          }
-        } catch (discountError) {
-          console.error('Error recording discount usage:', discountError);
-          // Don't fail the order creation for discount tracking errors
-        }
-      }
+    // Handle toyyibPay specific fields
+    if (paymentResult.paymentMethod === 'TOYYIBPAY') {
+      updateData.toyyibpayBillCode = paymentResult.billCode;
+      updateData.toyyibpayPaymentUrl = paymentResult.paymentUrl;
     }
 
-    // Log the payment creation
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.user?.id || null,
-        action: 'PAYMENT_BILL_CREATED',
-        resource: 'ORDER',
-        resourceId: order.id,
-        details: {
-          orderNumber,
-          billplzBillId: paymentResult.bill_id,
-          amount: finalTotal,
-          paymentUrl: paymentResult.payment_url,
-          customerEmail: customerInfo.email,
-        },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
+    await prisma.order.update({
+      where: { id: orderId },
+      data: updateData,
     });
 
+    console.log(`✅ Payment created successfully for order ${order.orderNumber}`);
+    console.log(`🔗 Payment URL: ${paymentResult.paymentUrl}`);
+
+    // Redirect to payment URL
+    if (paymentResult.paymentUrl) {
+      return NextResponse.redirect(paymentResult.paymentUrl);
+    }
+
+    // Fallback JSON response
     return NextResponse.json({
       success: true,
       order: {
         id: order.id,
         orderNumber: order.orderNumber,
-        total: finalTotal,
-        taxBreakdown: taxCalculation.breakdown,
+        total: Number(order.total),
       },
       payment: {
-        billId: paymentResult.bill_id,
-        paymentUrl: paymentResult.payment_url,
-        amount: billplzService.formatAmount(finalTotal * 100), // Convert back to display format
+        method: paymentResult.paymentMethod,
+        billId: paymentResult.billId,
+        billCode: paymentResult.billCode,
+        paymentUrl: paymentResult.paymentUrl,
+        externalReference: paymentResult.externalReference,
       },
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          message: 'Validation error',
-          errors: error.issues,
-        },
-        { status: 400 }
-      );
-    }
 
-    console.error('Payment bill creation error:', error);
+  } catch (error) {
+    console.error('❌ Payment bill creation error:', error);
     return handleApiError(error);
   }
+}
+
+export async function POST(request: NextRequest) {
+  // Support POST method as well for form submissions
+  const body = await request.json();
+  const orderId = body.orderId;
+
+  if (!orderId) {
+    return NextResponse.json(
+      { message: 'Order ID is required' },
+      { status: 400 }
+    );
+  }
+
+  // Create a new request with the orderId as a query parameter
+  const url = new URL(request.url);
+  url.searchParams.set('orderId', orderId);
+  
+  const newRequest = new NextRequest(url, {
+    method: 'GET',
+    headers: request.headers,
+  });
+
+  return GET(newRequest);
 }

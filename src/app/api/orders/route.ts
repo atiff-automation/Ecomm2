@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
 import { telegramService } from '@/lib/telegram/telegram-service';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
-import { MalaysianTaxService, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service';
+// import { MalaysianTaxService, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service'; // Disabled - tax not configured yet
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 const orderItemSchema = z.object({
@@ -38,11 +38,27 @@ const createOrderSchema = z.object({
   cartItems: z.array(orderItemSchema).optional(), // Optional for authenticated users (use cart)
   shippingAddress: addressSchema,
   billingAddress: addressSchema,
-  paymentMethod: z.enum(['stripe', 'billplz']),
+  paymentMethod: z.enum(['stripe', 'billplz', 'toyyibpay', 'BILLPLZ', 'TOYYIBPAY']),
   orderNotes: z.string().optional(),
   membershipActivated: z.boolean().optional(),
   isGuest: z.boolean().optional(), // To indicate guest checkout
   guestEmail: z.string().email().optional(), // Guest email for order tracking
+  shippingRate: z.object({
+    courierName: z.string(),
+    serviceName: z.string(),
+    price: z.number(),
+    insurance: z.any().optional().transform(val => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === false) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    }),
+    cod: z.boolean().optional(),
+    codAmount: z.any().optional().transform(val => {
+      if (val === null || val === undefined || val === '' || val === 'null' || val === false) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    })
+  }).optional(), // Selected shipping rate from admin-controlled shipping
 });
 
 /**
@@ -240,15 +256,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Calculate shipping using business configuration
-    const businessProfile = await businessShippingConfig.getBusinessProfile();
-    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
-    const shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
+    // Use selected shipping rate from checkout, fallback to business configuration
+    let shippingCost = 0;
+    if (orderData.shippingRate && orderData.shippingRate.price) {
+      shippingCost = orderData.shippingRate.price;
+      console.log(`🚚 Using selected shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`);
+    } else {
+      // Fallback to business configuration
+      const businessProfile = await businessShippingConfig.getBusinessProfile();
+      const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+      shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
+      console.log(`🚚 Using fallback shipping calculation: RM${shippingCost}`);
+    }
     
-    // Use MalaysianTaxService for proper tax calculation
-    const taxService = MalaysianTaxService.getInstance();
-    const shippingTaxResult = await taxService.calculateShippingTax(shippingCost, false);
-    const taxAmount = shippingTaxResult.taxAmount;
+    // No tax calculation for now - tax system not configured
+    const taxAmount = 0;
     
     // Always use regular pricing for order creation (before membership activation)
     const totalAmount = subtotal + shippingCost + taxAmount;
@@ -336,7 +358,7 @@ export async function POST(request: NextRequest) {
       // Create the order
       const order = await tx.order.create({
         data: {
-          userId: isGuest ? null : session?.user.id,
+          user: isGuest ? undefined : { connect: { id: session?.user.id } },
           guestEmail: isGuest
             ? orderData.guestEmail || orderData.shippingAddress.email
             : null,
@@ -355,8 +377,9 @@ export async function POST(request: NextRequest) {
             orderData.membershipActivated &&
               qualifyingTotal >= membershipConfig.membershipThreshold
           ),
-          shippingAddressId: shippingAddr.id,
-          billingAddressId: billingAddr.id,
+          // Note: shippingCourier and shippingService fields don't exist in schema
+          shippingAddress: { connect: { id: shippingAddr.id } },
+          billingAddress: { connect: { id: billingAddr.id } },
           orderItems: {
             create: orderItems,
           },
@@ -485,12 +508,17 @@ export async function POST(request: NextRequest) {
 
     // Create payment URL based on payment method
     let paymentUrl = null;
-    if (orderData.paymentMethod === 'stripe') {
+    const paymentMethod = orderData.paymentMethod.toLowerCase();
+    
+    if (paymentMethod === 'stripe') {
       // Create Stripe session
       paymentUrl = `/payment/stripe/${result.id}`;
-    } else if (orderData.paymentMethod === 'billplz') {
+    } else if (paymentMethod === 'billplz') {
       // Create Billplz bill
       paymentUrl = `/payment/billplz/${result.id}`;
+    } else if (paymentMethod === 'toyyibpay') {
+      // Create toyyibPay bill
+      paymentUrl = `/api/payment/create-bill?orderId=${result.id}`;
     }
 
     return NextResponse.json({

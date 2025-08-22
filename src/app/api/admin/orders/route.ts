@@ -102,7 +102,6 @@ export async function GET(request: NextRequest) {
             id: true,
             courierName: true,
             serviceName: true,
-            shippingCost: true,
             status: true,
             trackingNumber: true,
             estimatedDelivery: true,
