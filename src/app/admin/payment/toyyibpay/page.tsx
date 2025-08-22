@@ -491,6 +491,24 @@ export default function ToyyibPayConfigPage() {
                     }
                   </p>
                 </div>
+
+                <div>
+                  <Label htmlFor="categoryCode">Category Code</Label>
+                  <Input
+                    id="categoryCode"
+                    value={formData.categoryCode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, categoryCode: e.target.value }))}
+                    placeholder="Enter toyyibPay category code (e.g., xxxx-xxxx-xxxx)"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your toyyibPay category code from the merchant dashboard. This is required for creating bills.
+                  </p>
+                  {credentialStatus.categoryCode && (
+                    <p className="text-sm text-green-600 mt-1">
+                      ✅ Current: {credentialStatus.categoryCode}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="flex space-x-2">

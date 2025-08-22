@@ -133,6 +133,88 @@ If webhooks fail in production:
 4. **Fix:** Resolve webhook connectivity issues
 5. **Restore:** Disable return URL system once webhooks work
 
+### Admin UI Real-time Updates (Future Enhancement)
+
+Currently, the admin order management page requires manual refresh to show new orders. For production deployment, consider implementing real-time updates:
+
+#### Option 1: Auto-refresh (Simple)
+```typescript
+// Add to /src/app/admin/orders/page.tsx
+import { useRouter } from 'next/navigation';
+
+export default function AdminOrdersPage() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh(); // Refresh data every 30 seconds
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [router]);
+  
+  // ... rest of component
+}
+```
+
+#### Option 2: Real-time Updates (Advanced)
+```typescript
+// Implementation using Server-Sent Events (SSE)
+
+// 1. Create SSE endpoint: /src/app/api/admin/orders/events/route.ts
+export async function GET() {
+  const stream = new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
+      
+      // Send order updates when they occur
+      const sendUpdate = (orderData: any) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(orderData)}\n\n`));
+      };
+      
+      // Listen to database changes (requires database triggers or polling)
+      // Implementation details depend on your database setup
+    }
+  });
+  
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
+// 2. Update admin orders page to use SSE
+import { useEffect, useState } from 'react';
+
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState([]);
+  
+  useEffect(() => {
+    const eventSource = new EventSource('/api/admin/orders/events');
+    
+    eventSource.onmessage = (event) => {
+      const newOrder = JSON.parse(event.data);
+      setOrders(prev => [newOrder, ...prev]);
+    };
+    
+    return () => eventSource.close();
+  }, []);
+  
+  // ... rest of component
+}
+```
+
+#### Option 3: WebSocket Integration (Most Advanced)
+```typescript
+// Using WebSocket for bi-directional real-time communication
+// Requires WebSocket server setup and client-side connection management
+// Best for high-frequency updates and multiple admin users
+```
+
+**Production Recommendation:** Start with Option 1 (auto-refresh) for immediate improvement, then implement Option 2 (SSE) for better user experience without the complexity of WebSocket infrastructure.
+
 ### Documentation References
 
 - **toyyibPay API Documentation:** Lines 155 in `/Users/atiffriduan/Desktop/toyyib_api_docs.txt`
