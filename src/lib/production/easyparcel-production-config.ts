@@ -5,6 +5,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { encryptData, decryptData } from '@/lib/utils/security';
 
 export interface ProductionCredentials {
   apiKey: string;
@@ -199,7 +200,7 @@ export class EasyParcelProductionConfig {
    */
   private async storeProductionConfig(credentials: ProductionCredentials): Promise<void> {
     try {
-      // Store encrypted production credentials
+      // Store encrypted production credentials using AES-256-GCM
       const config = {
         apiKey: credentials.apiKey,
         apiSecret: credentials.apiSecret,
@@ -210,20 +211,33 @@ export class EasyParcelProductionConfig {
         migratedAt: new Date().toISOString()
       };
 
+      // Encrypt the configuration data
+      const encryptedConfig = encryptData(JSON.stringify(config));
+
       await prisma.systemConfig.upsert({
         where: { key: 'easyparcel_production_config' },
         update: {
-          value: JSON.stringify(config),
+          value: JSON.stringify({
+            encrypted: encryptedConfig.encrypted,
+            key: encryptedConfig.key,
+            iv: encryptedConfig.iv,
+            tag: encryptedConfig.tag
+          }),
           updatedAt: new Date()
         },
         create: {
           key: 'easyparcel_production_config',
-          value: JSON.stringify(config),
+          value: JSON.stringify({
+            encrypted: encryptedConfig.encrypted,
+            key: encryptedConfig.key,
+            iv: encryptedConfig.iv,
+            tag: encryptedConfig.tag
+          }),
           type: 'ENCRYPTED_JSON'
         }
       });
 
-      console.log('[EasyParcel] Production configuration stored securely');
+      console.log('[EasyParcel] Production configuration stored securely with AES-256-GCM encryption');
 
     } catch (error) {
       throw new Error(`Failed to store production config: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -578,7 +592,28 @@ export class EasyParcelProductionConfig {
         where: { key: 'easyparcel_production_config' }
       });
 
-      return config ? JSON.parse(config.value) : null;
+      if (!config) {
+        return null;
+      }
+
+      // Parse the stored encrypted data
+      const encryptedData = JSON.parse(config.value);
+      
+      // Check if this is encrypted data or legacy plain JSON
+      if (encryptedData.encrypted && encryptedData.key && encryptedData.iv && encryptedData.tag) {
+        // Decrypt using AES-256-GCM
+        const decryptedJson = decryptData(
+          encryptedData.encrypted,
+          encryptedData.key,
+          encryptedData.iv,
+          encryptedData.tag
+        );
+        return JSON.parse(decryptedJson);
+      } else {
+        // Legacy unencrypted data - log warning and return
+        console.warn('[EasyParcel] Production config stored in legacy unencrypted format - recommend re-storing with encryption');
+        return encryptedData;
+      }
     } catch (error) {
       console.error('Error retrieving production config:', error);
       return null;

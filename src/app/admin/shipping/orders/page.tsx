@@ -230,7 +230,11 @@ export default function AdminOrderShippingPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const formatPrice = (price: number) => `RM ${price.toFixed(2)}`;
+  const formatPrice = (price: number | string | null | undefined) => {
+    if (price === null || price === undefined) return 'RM 0.00';
+    const numPrice = typeof price === 'number' ? price : Number(price);
+    return `RM ${numPrice.toFixed(2)}`;
+  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -407,7 +411,11 @@ function CourierSelectionForm({
   onSave: () => void;
   saving: boolean;
 }) {
-  const formatPrice = (price: number) => `RM ${price.toFixed(2)}`;
+  const formatPrice = (price: number | string | null | undefined) => {
+    if (price === null || price === undefined) return 'RM 0.00';
+    const numPrice = typeof price === 'number' ? price : Number(price);
+    return `RM ${numPrice.toFixed(2)}`;
+  };
 
   const handleMainCourierChange = (rate: CourierRate) => {
     onSelectionChange({

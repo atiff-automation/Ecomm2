@@ -62,8 +62,7 @@ export function encryptData(data: string, key?: string): { encrypted: string; ke
   
   try {
     // Use AES-256-GCM for authenticated encryption
-    const cipher = crypto.createCipherGCM('aes-256-gcm', Buffer.from(actualKey, 'hex'));
-    cipher.setAAD(Buffer.from('JRM-ECOMMERCE-AUTH', 'utf8'));
+    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(actualKey, 'hex'), iv);
     
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -94,8 +93,7 @@ export function decryptData(encrypted: string, key: string, iv: string, tag: str
 
   try {
     // Use AES-256-GCM for authenticated decryption
-    const decipher = crypto.createDecipherGCM('aes-256-gcm', Buffer.from(key, 'hex'));
-    decipher.setAAD(Buffer.from('JRM-ECOMMERCE-AUTH', 'utf8'));
+    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
     decipher.setAuthTag(Buffer.from(tag, 'hex'));
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
