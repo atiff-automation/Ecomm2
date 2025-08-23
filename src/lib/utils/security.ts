@@ -62,8 +62,8 @@ export function encryptData(data: string, key?: string): { encrypted: string; ke
   
   try {
     // Use AES-256-GCM for authenticated encryption
-    const cipher = crypto.createCipher('aes-256-gcm', Buffer.from(actualKey, 'hex'));
-    cipher.setIV(iv);
+    const cipher = crypto.createCipherGCM('aes-256-gcm', Buffer.from(actualKey, 'hex'));
+    cipher.setAAD(Buffer.from('JRM-ECOMMERCE-AUTH', 'utf8'));
     
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -83,13 +83,19 @@ export function encryptData(data: string, key?: string): { encrypted: string; ke
 }
 
 /**
- * Decrypt data using AES-256-GCM
+ * Decrypt data using AES-256-GCM (Production Security)
  */
 export function decryptData(encrypted: string, key: string, iv: string, tag: string): string {
+  // Reject legacy data - force re-entry with proper encryption
+  if (!tag || tag === '') {
+    console.error('🔒 Legacy insecure data detected - credentials must be re-entered');
+    throw new Error('Legacy credentials detected - please re-configure credentials in admin panel for security');
+  }
+
   try {
     // Use AES-256-GCM for authenticated decryption
-    const decipher = crypto.createDecipher('aes-256-gcm', Buffer.from(key, 'hex'));
-    decipher.setIV(Buffer.from(iv, 'hex'));
+    const decipher = crypto.createDecipherGCM('aes-256-gcm', Buffer.from(key, 'hex'));
+    decipher.setAAD(Buffer.from('JRM-ECOMMERCE-AUTH', 'utf8'));
     decipher.setAuthTag(Buffer.from(tag, 'hex'));
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -97,8 +103,8 @@ export function decryptData(encrypted: string, key: string, iv: string, tag: str
     
     return decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
-    throw new Error('Failed to decrypt data - data may be corrupted or key is incorrect');
+    console.error('🔒 AES-256-GCM decryption failed - invalid credentials or corrupted data:', error);
+    throw new Error('Failed to decrypt credentials - please re-configure in admin panel');
   }
 }
 
