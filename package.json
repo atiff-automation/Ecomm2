@@ -11,7 +11,21 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "next lint --fix",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:reset": "npx prisma migrate reset --force && npm run db:seed"
+    "db:reset": "npx prisma migrate reset --force && npm run db:seed",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "analyze": "ANALYZE=true npm run build",
+    "analyze:dev": "ANALYZE=true npm run dev",
+    "bundle:size": "npm run build && npx size-limit",
+    "bundle:why": "npx whybundled .next/static/chunks/pages/**/*.js",
+    "perf:audit": "npm run build && npx lighthouse http://localhost:3000 --only-categories=performance --chrome-flags=\"--headless\"",
+    "optimize:images": "npx next-optimized-images",
+    "check:deps": "npx depcheck",
+    "check:unused": "npx unimported",
+    "stats": "npm run build -- --profile --json > bundle-stats.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -77,6 +91,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/crypto-js": "^4.2.2",
     "@types/jsonwebtoken": "^9.0.10",

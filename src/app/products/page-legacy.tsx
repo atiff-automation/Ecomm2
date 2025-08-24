@@ -9,4 +9,8 @@
  * - Reduce client-side JavaScript bundle size
  */
 
-export { default, generateMetadata } from './products-server';
+import ProductsPage from './products-server';
+
+// Re-export the server component and metadata
+export { generateMetadata } from './products-server';
+export default ProductsPage;
