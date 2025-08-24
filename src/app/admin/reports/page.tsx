@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ import {
   Loader2,
   PieChart,
 } from 'lucide-react';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import {
   LineChart,
   Line,
@@ -243,50 +243,46 @@ export default function AdminReports() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation
-        items={[
-          { label: 'Analytics', href: '/admin/reports' },
-          { label: 'Sales Reports', href: '/admin/reports/sales' },
-          { label: 'Member Analytics', href: '/admin/reports/membership' },
-        ]}
-      />
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for System/Reports
+  const tabs: TabConfig[] = [
+    { id: 'analytics', label: 'Analytics', href: '/admin/reports' },
+    { id: 'logs', label: 'Logs', href: '/admin/system/logs' },
+    { id: 'monitoring', label: 'Monitoring', href: '/admin/system/monitoring' },
+    { id: 'security', label: 'Security', href: '/admin/system/security' },
+  ];
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Reports & Analytics
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Business insights and performance metrics
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="90">Last 3 months</SelectItem>
-                  <SelectItem value="365">Last year</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => handleExportReport('overview')}
-                variant="outline"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export All
-              </Button>
-            </div>
-          </div>
-        </div>
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-3">
+      <Select value={dateRange} onValueChange={setDateRange}>
+        <SelectTrigger className="w-32">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="7">Last 7 days</SelectItem>
+          <SelectItem value="30">Last 30 days</SelectItem>
+          <SelectItem value="90">Last 3 months</SelectItem>
+          <SelectItem value="365">Last year</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button
+        onClick={() => handleExportReport('overview')}
+        variant="outline"
+      >
+        <Download className="h-4 w-4 mr-2" />
+        Export All
+      </Button>
+    </div>
+  );
+
+  return (
+    <AdminPageLayout
+      title="Reports & Analytics"
+      subtitle="Business insights and performance metrics"
+      actions={pageActions}
+      tabs={tabs}
+      loading={loading}
+    >
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
@@ -1216,7 +1212,6 @@ export default function AdminReports() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

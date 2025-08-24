@@ -29,7 +29,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
 
 interface MemberPromotionForm {
   name: string;
@@ -211,31 +211,51 @@ export default function AdminMemberPromotionsPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs */}
-      <Breadcrumbs
-        items={[
-          { label: 'Membership', href: '/admin/membership' },
-          { label: 'Member Promotions' },
-        ]}
-        className="mb-6"
-      />
+  // Define contextual tabs - Keep consistent with Customers section hierarchy
+  const tabs: TabConfig[] = [
+    { id: 'directory', label: 'Directory', href: '/admin/customers' },
+    { id: 'membership', label: 'Membership', href: '/admin/membership' },
+    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
+  ];
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center gap-3">
-            <Crown className="h-8 w-8 text-purple-600" />
-            <div>
-              <h1 className="text-3xl font-bold">Member Promotions</h1>
-              <p className="text-gray-600">
-                Create exclusive offers for your valued members
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+  // Extract page actions as tab navigation
+  const pageActions = (
+    <div className="flex gap-2">
+      <Button
+        variant={activeTab === 'custom' ? 'default' : 'outline'}
+        onClick={() => setActiveTab('custom')}
+        size="sm"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Custom
+      </Button>
+      <Button
+        variant={activeTab === 'templates' ? 'default' : 'outline'}
+        onClick={() => setActiveTab('templates')}
+        size="sm"
+      >
+        <Calendar className="h-4 w-4 mr-2" />
+        Templates
+      </Button>
+    </div>
+  );
+
+  // Define breadcrumbs to show hierarchical location
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.customers.main,
+    BREADCRUMB_CONFIGS.customers.referrals,
+  ];
+
+  return (
+    <AdminPageLayout
+      title="Member Promotions"
+      subtitle="Create exclusive offers for your valued members"
+      actions={pageActions}
+      tabs={tabs}
+      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
+      loading={loading}
+    >
 
       {/* Message Display */}
       {message && (
@@ -261,25 +281,6 @@ export default function AdminMemberPromotionsPage() {
         </Card>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex gap-4 mb-6">
-        <Button
-          variant={activeTab === 'custom' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('custom')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Custom Promotion
-        </Button>
-        <Button
-          variant={activeTab === 'templates' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('templates')}
-          className="flex items-center gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Quick Templates
-        </Button>
-      </div>
 
       {/* Custom Promotion Form */}
       {activeTab === 'custom' && (
@@ -640,6 +641,6 @@ export default function AdminMemberPromotionsPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

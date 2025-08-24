@@ -34,7 +34,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 // Define tracking status type
 type TrackingStatus = 
@@ -354,27 +354,71 @@ export default function OrderFulfillmentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, searchTerm]);
 
+  // Define contextual tabs for fulfillment page
+  const tabs: TabConfig[] = [
+    { id: 'all-orders', label: 'All Orders', href: '/admin/orders' },
+    { id: 'shipping', label: 'Shipping Management', href: '/admin/orders/shipping' },
+    { id: 'fulfillment', label: 'Fulfillment Queue', href: '/admin/orders/fulfillment' },
+    { id: 'analytics', label: 'Order Analytics', href: '/admin/orders/analytics' },
+  ];
+
+  // Header actions
+  const pageActions = (
+    <div className="flex items-center gap-3">
+      {selectedOrders.length > 0 && canBulkShip() && (
+        <Button onClick={handleBulkShip}>
+          <Package className="h-4 w-4 mr-2" />
+          Ship Selected ({selectedOrders.length})
+        </Button>
+      )}
+      {selectedOrders.length > 0 && canBulkPrint() && (
+        <Button variant="outline" onClick={handleBulkPrint}>
+          <Download className="h-4 w-4 mr-2" />
+          Print Labels ({selectedOrders.length})
+        </Button>
+      )}
+      <Button variant="outline" onClick={fetchOrders}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+
+  // Filters component
+  const filtersComponent = (
+    <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex-1 min-w-[200px]">
+        <Input
+          placeholder="Search orders..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+          <SelectItem value="PROCESSING">Processing</SelectItem>
+          <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
+          <SelectItem value="SHIPPED">Shipped</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation
-        items={[
-          { label: 'Orders', href: '/admin/orders' },
-          { label: 'Fulfillment', href: '/admin/orders/fulfillment' },
-          { label: 'Export', href: '/admin/orders/export' },
-        ]}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Order Fulfillment
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Process orders and manage shipping
-          </p>
-        </div>
-
+    <AdminPageLayout
+      title="Order Fulfillment"
+      subtitle="Process orders and manage shipping"
+      actions={pageActions}
+      tabs={tabs}
+      filters={filtersComponent}
+      loading={loading}
+    >
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -756,7 +800,6 @@ export default function OrderFulfillmentPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

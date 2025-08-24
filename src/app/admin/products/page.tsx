@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface Product {
   id: string;
@@ -231,32 +232,122 @@ export default function AdminProductsPage() {
     }
   };
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Products
+  const tabs: TabConfig[] = [
+    { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
+    { id: 'categories', label: 'Categories', href: '/admin/categories' },
+    { id: 'inventory', label: 'Inventory Management', href: '/admin/products/inventory' },
+    { id: 'import-export', label: 'Import/Export', href: '/admin/products/import' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-3">
+      <Link href="/admin/products/import">
+        <Button variant="outline" className="flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Import Products
+        </Button>
+      </Link>
+      <Link href="/admin/products/create">
+        <Button className="flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Add Product
+        </Button>
+      </Link>
+    </div>
+  );
+
+  // Extract filters component
+  const filtersComponent = (
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <SelectTrigger className="w-full sm:w-48">
+          <SelectValue
+            placeholder={categoriesLoading ? 'Loading...' : 'Category'}
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Categories</SelectItem>
+          {categoriesLoading && (
+            <SelectItem value="loading" disabled>
+              Loading categories...
+            </SelectItem>
+          )}
+          {!categoriesLoading &&
+            Array.isArray(categories) &&
+            categories.length > 0 &&
+            (() => {
+              console.log(
+                'About to map categories:',
+                categories,
+                'isArray:',
+                Array.isArray(categories)
+              );
+              return categories.map(category => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ));
+            })()}
+          {!categoriesLoading &&
+            (!Array.isArray(categories) || categories.length === 0) && (
+              <SelectItem value="no-categories" disabled>
+                No categories available
+              </SelectItem>
+            )}
+        </SelectContent>
+      </Select>
+      <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+        <SelectTrigger className="w-full sm:w-48">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="ACTIVE">Active</SelectItem>
+          <SelectItem value="DRAFT">Draft</SelectItem>
+          <SelectItem value="INACTIVE">Inactive</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={selectedStockLevel}
+        onValueChange={setSelectedStockLevel}
+      >
+        <SelectTrigger className="w-full sm:w-48">
+          <SelectValue placeholder="Stock Level" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Stock Levels</SelectItem>
+          <SelectItem value="in-stock">In Stock</SelectItem>
+          <SelectItem value="low-stock">Low Stock</SelectItem>
+          <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button variant="outline" onClick={exportProducts}>
+        <Download className="w-4 h-4 mr-2" />
+        Export
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold">Product Management</h1>
-            <p className="text-muted-foreground">
-              Manage your product catalog, inventory, and pricing
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/admin/products/import">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Import Products
-              </Button>
-            </Link>
-            <Link href="/admin/products/create">
-              <Button className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Product
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <AdminPageLayout
+      title="Product Management"
+      subtitle="Manage your product catalog, inventory, and pricing"
+      actions={pageActions}
+      tabs={tabs}
+      filters={filtersComponent}
+      loading={loading}
+    >
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -314,85 +405,6 @@ export default function AdminProductsPage() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue
-                placeholder={categoriesLoading ? 'Loading...' : 'Category'}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categoriesLoading && (
-                <SelectItem value="loading" disabled>
-                  Loading categories...
-                </SelectItem>
-              )}
-              {!categoriesLoading &&
-                Array.isArray(categories) &&
-                categories.length > 0 &&
-                (() => {
-                  console.log(
-                    'About to map categories:',
-                    categories,
-                    'isArray:',
-                    Array.isArray(categories)
-                  );
-                  return categories.map(category => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ));
-                })()}
-              {!categoriesLoading &&
-                (!Array.isArray(categories) || categories.length === 0) && (
-                  <SelectItem value="no-categories" disabled>
-                    No categories available
-                  </SelectItem>
-                )}
-            </SelectContent>
-          </Select>
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="INACTIVE">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={selectedStockLevel}
-            onValueChange={setSelectedStockLevel}
-          >
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Stock Level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Stock Levels</SelectItem>
-              <SelectItem value="in-stock">In Stock</SelectItem>
-              <SelectItem value="low-stock">Low Stock</SelectItem>
-              <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={exportProducts}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
 
       {/* Products Table */}
       <Card>
@@ -587,6 +599,6 @@ export default function AdminProductsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 }

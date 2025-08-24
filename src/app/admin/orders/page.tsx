@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,8 +30,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 // Define tracking status type
 type TrackingStatus = 
@@ -256,116 +255,114 @@ export default function AdminOrders() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation
-        items={[
-          { label: 'Orders', href: '/admin/orders' },
-          { label: 'Fulfillment', href: '/admin/orders/fulfillment' },
-          { label: 'Export', href: '/admin/orders/export' },
-        ]}
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md
+  const tabs: TabConfig[] = [
+    { id: 'all-orders', label: 'All Orders', href: '/admin/orders' },
+    { id: 'shipping', label: 'Shipping Management', href: '/admin/orders/shipping' },
+    { id: 'fulfillment', label: 'Fulfillment Queue', href: '/admin/orders/fulfillment' },
+    { id: 'analytics', label: 'Order Analytics', href: '/admin/orders/analytics' },
+  ];
+
+  // Primary action buttons for page header
+  const pageActions = (
+    <div className="flex items-center gap-3">
+      <Button variant="outline" onClick={handleExport}>
+        <Download className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+      <Button onClick={() => fetchOrders()}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+
+  // Filters component for layout (52px height following standard)
+  const filtersComponent = (
+    <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex-1 min-w-[200px]">
+        <Input
+          placeholder="Search orders..."
+          value={filters.search || ''}
+          onChange={e =>
+            setFilters(prev => ({ ...prev, search: e.target.value }))
+          }
+          className="w-full"
+        />
+      </div>
+      <Select
+        value={filters.status || ''}
+        onValueChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            status: value === 'all' ? '' : value,
+          }))
+        }
+      >
+        <SelectTrigger className="w-[160px]">
+          <SelectValue placeholder="Order Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="PENDING">Pending</SelectItem>
+          <SelectItem value="PROCESSING">Processing</SelectItem>
+          <SelectItem value="SHIPPED">Shipped</SelectItem>
+          <SelectItem value="DELIVERED">Delivered</SelectItem>
+          <SelectItem value="CANCELLED">Cancelled</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={filters.paymentStatus || ''}
+        onValueChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            paymentStatus: value === 'all' ? '' : value,
+          }))
+        }
+      >
+        <SelectTrigger className="w-[160px]">
+          <SelectValue placeholder="Payment Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Payment Status</SelectItem>
+          <SelectItem value="PAID">Paid</SelectItem>
+          <SelectItem value="PENDING">Pending</SelectItem>
+          <SelectItem value="FAILED">Failed</SelectItem>
+        </SelectContent>
+      </Select>
+      <Input
+        type="date"
+        value={filters.dateFrom || ''}
+        onChange={e =>
+          setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
+        }
+        placeholder="From Date"
+        className="w-[140px]"
       />
+      <Input
+        type="date"
+        value={filters.dateTo || ''}
+        onChange={e =>
+          setFilters(prev => ({ ...prev, dateTo: e.target.value }))
+        }
+        placeholder="To Date"
+        className="w-[140px]"
+      />
+      <Button onClick={fetchOrders} variant="outline" size="sm">
+        <Search className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Breadcrumbs */}
-        <Breadcrumbs items={[{ label: 'Orders' }]} className="mb-6" />
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-          <p className="text-gray-600 mt-1">Manage and track customer orders</p>
-        </div>
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <Input
-                  placeholder="Search orders..."
-                  value={filters.search || ''}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, search: e.target.value }))
-                  }
-                  className="w-full"
-                />
-              </div>
-              <Select
-                value={filters.status || ''}
-                onValueChange={value =>
-                  setFilters(prev => ({
-                    ...prev,
-                    status: value === 'all' ? '' : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Order Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="PROCESSING">Processing</SelectItem>
-                  <SelectItem value="SHIPPED">Shipped</SelectItem>
-                  <SelectItem value="DELIVERED">Delivered</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.paymentStatus || ''}
-                onValueChange={value =>
-                  setFilters(prev => ({
-                    ...prev,
-                    paymentStatus: value === 'all' ? '' : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Payment Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Payments</SelectItem>
-                  <SelectItem value="PAID">Paid</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="FAILED">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                type="date"
-                value={filters.dateFrom || ''}
-                onChange={e =>
-                  setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
-                }
-                placeholder="From Date"
-              />
-              <Input
-                type="date"
-                value={filters.dateTo || ''}
-                onChange={e =>
-                  setFilters(prev => ({ ...prev, dateTo: e.target.value }))
-                }
-                placeholder="To Date"
-              />
-            </div>
-            <div className="flex justify-between mt-4">
-              <Button onClick={fetchOrders} variant="outline">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-              <Button onClick={handleExport} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export Orders
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
+  return (
+    <AdminPageLayout
+      title="Order Management"
+      subtitle="Manage and track customer orders"
+      actions={pageActions}
+      tabs={tabs}
+      filters={filtersComponent}
+      loading={loading}
+    >
         {/* Bulk Actions */}
         {selectedOrders.length > 0 && (
           <Card className="mb-6">
@@ -633,7 +630,6 @@ export default function AdminOrders() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

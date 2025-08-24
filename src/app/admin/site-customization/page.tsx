@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import {
   Monitor,
   Palette,
@@ -17,13 +17,31 @@ import {
 import Link from 'next/link';
 
 export default function SiteCustomizationOverview() {
-  const breadcrumbItems = [
-    {
-      label: 'Site Customization',
-      href: '/admin/site-customization',
-      icon: Monitor,
-    },
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md - Site Customization section
+  const tabs: TabConfig[] = [
+    { id: 'overview', label: 'Overview', href: '/admin/site-customization' },
+    { id: 'hero', label: 'Hero Section', href: '/admin/site-customization/hero' },
+    { id: 'theme', label: 'Themes', href: '/admin/site-customization/theme' },
+    { id: 'branding', label: 'Branding', href: '/admin/site-customization/branding' },
   ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-2">
+      <Link href="/admin/site-customization/hero">
+        <Button size="sm">
+          <Camera className="w-4 h-4 mr-2" />
+          Customize Hero
+        </Button>
+      </Link>
+      <Link href="/" target="_blank">
+        <Button variant="outline" size="sm">
+          <Eye className="w-4 h-4 mr-2" />
+          Preview Site
+        </Button>
+      </Link>
+    </div>
+  );
 
   const customizationFeatures = [
     {
@@ -56,20 +74,12 @@ export default function SiteCustomizationOverview() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation items={breadcrumbItems} />
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Monitor className="h-8 w-8 text-blue-600" />
-            Site Customization
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Customize your website's appearance, content, and branding
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Site Customization"
+      subtitle="Customize your website's appearance, content, and branding"
+      actions={pageActions}
+      tabs={tabs}
+    >
 
         {/* Quick Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -218,7 +228,6 @@ export default function SiteCustomizationOverview() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

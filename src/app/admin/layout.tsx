@@ -24,6 +24,16 @@ import {
   ChevronDown,
   ExternalLink,
   MessageCircle,
+  CreditCard,
+  Monitor,
+  Shield,
+  FileText,
+  AlertTriangle,
+  UserCheck,
+  DollarSign,
+  RefreshCw,
+  MapPin,
+  Wrench,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
@@ -32,93 +42,96 @@ interface AdminLayoutProps {
 }
 
 const navigationItems = [
+  // 🏠 Dashboard Section
   {
     label: 'Dashboard',
     href: '/admin/dashboard',
     icon: LayoutDashboard,
     roles: [UserRole.ADMIN, UserRole.STAFF],
+    description: 'Overview & Alerts',
   },
+
+  // 📦 Orders Section - Flat structure, contextual tabs handle sub-sections
   {
     label: 'Orders',
     href: '/admin/orders',
     icon: ShoppingCart,
     roles: [UserRole.ADMIN, UserRole.STAFF],
+    description: 'All Orders, Shipping, Fulfillment, Analytics',
   },
+
+  // 🛍️ Products Section - Flat structure, contextual tabs handle sub-sections
   {
     label: 'Products',
     href: '/admin/products',
     icon: Package,
     roles: [UserRole.ADMIN, UserRole.STAFF],
-    submenu: [
-      { label: 'All Products', href: '/admin/products' },
-      { label: 'Add Product', href: '/admin/products/create' },
-      { label: 'Categories', href: '/admin/categories' },
-      { label: 'Import Products', href: '/admin/products/import' },
-    ],
+    description: 'Catalog, Categories, Inventory',
   },
+
+  // 👥 Customers Section - Flat structure, contextual tabs handle sub-sections
   {
     label: 'Customers',
     href: '/admin/customers',
     icon: Users,
     roles: [UserRole.ADMIN, UserRole.STAFF],
+    description: 'Directory, Membership, Referrals',
   },
+
+  // 💳 Payments Section - New section per standard
   {
-    label: 'Membership',
-    href: '/admin/membership',
-    icon: Gift,
+    label: 'Payments',
+    href: '/admin/payments',
+    icon: CreditCard,
     roles: [UserRole.ADMIN, UserRole.STAFF],
-    submenu: [
-      { label: 'Analytics', href: '/admin/membership/analytics' },
-      { label: 'Configuration', href: '/admin/membership/config' },
-      { label: 'Member Promotions', href: '/admin/member-promotions' },
-      { label: 'Discount Codes', href: '/admin/discount-codes' },
-    ],
+    description: 'Gateways, Transactions, Refunds',
   },
-  {
-    label: 'Reports',
-    href: '/admin/reports',
-    icon: BarChart3,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
-  },
+
+  // 🚚 Shipping Section - Contextual tabs handle Configuration, Couriers, Tracking
   {
     label: 'Shipping',
     href: '/admin/shipping',
     icon: Truck,
     roles: [UserRole.ADMIN, UserRole.STAFF],
+    description: 'Configuration, Couriers, Tracking',
   },
+
+  // ⚙️ System Section - New section per standard
+  {
+    label: 'System',
+    href: '/admin/system',
+    icon: Monitor,
+    roles: [UserRole.ADMIN],
+    description: 'Telegram, Monitoring, Logs, Security',
+  },
+
+  // Additional sections that exist but don't fit main categories
   {
     label: 'Site Customization',
     href: '/admin/site-customization',
     icon: Palette,
     roles: [UserRole.ADMIN],
-    submenu: [
-      {
-        label: 'Hero Section',
-        href: '/admin/site-customization/hero',
-      },
-      {
-        label: 'Theme Colors',
-        href: '/admin/site-customization/theme',
-      },
-    ],
+    description: 'Themes, Branding, Content',
   },
   {
     label: 'Notifications',
     href: '/admin/notifications',
     icon: MessageCircle,
     roles: [UserRole.ADMIN],
+    description: 'System Notifications',
   },
   {
     label: 'Settings',
     href: '/admin/settings',
     icon: Settings,
     roles: [UserRole.ADMIN],
+    description: 'General Configuration',
   },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  // Removed expandedMenus state - no longer needed for flat structure
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -149,13 +162,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     signOut({ callbackUrl: '/' });
   };
 
-  const toggleSubmenu = (label: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(label)
-        ? prev.filter(item => item !== label)
-        : [...prev, label]
-    );
-  };
+  // Removed toggleSubmenu - no longer needed for flat structure
 
   const isActiveRoute = (href: string) => {
     if (href === '/admin/dashboard') {
@@ -201,61 +208,27 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               {filteredNavigationItems.map(item => {
                 const Icon = item.icon;
                 const isActive = isActiveRoute(item.href);
-                const hasSubmenu = item.submenu && item.submenu.length > 0;
-                const isExpanded = expandedMenus.includes(item.label);
 
                 return (
-                  <div key={item.label}>
-                    <div className="flex items-center">
-                      <Link
-                        href={item.href}
-                        className={`flex-1 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                          isActive
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                        }`}
-                      >
-                        <Icon
-                          className={`mr-3 h-5 w-5 ${
-                            isActive
-                              ? 'text-blue-500'
-                              : 'text-gray-400 group-hover:text-gray-500'
-                          }`}
-                        />
-                        {item.label}
-                      </Link>
-                      {hasSubmenu && (
-                        <button
-                          onClick={() => toggleSubmenu(item.label)}
-                          className="p-1 ml-1 rounded text-gray-400 hover:text-gray-500"
-                        >
-                          <ChevronDown
-                            className={`h-4 w-4 transform transition-transform ${
-                              isExpanded ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </button>
-                      )}
-                    </div>
-
-                    {hasSubmenu && isExpanded && (
-                      <div className="ml-6 mt-1 space-y-1">
-                        {item.submenu?.map(subItem => (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === subItem.href
-                                ? 'bg-blue-50 text-blue-700'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            {subItem.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    title={item.description}
+                  >
+                    <Icon
+                      className={`mr-3 h-5 w-5 ${
+                        isActive
+                          ? 'text-blue-500'
+                          : 'text-gray-400 group-hover:text-gray-500'
+                      }`}
+                    />
+                    {item.label}
+                  </Link>
                 );
               })}
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
+import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -99,46 +99,47 @@ export default function AdminMembership() {
     );
   }
 
-  const breadcrumbItems = [
-    {
-      label: 'Membership',
-      href: '/admin/membership',
-      icon: Crown as React.ComponentType<{ className?: string }>,
-    },
+  // Define breadcrumbs to show hierarchical location
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.customers.main,
+    BREADCRUMB_CONFIGS.customers.membership,
   ];
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers (Membership section)
+  const tabs: TabConfig[] = [
+    { id: 'directory', label: 'Directory', href: '/admin/customers' },
+    { id: 'membership', label: 'Membership', href: '/admin/membership' },
+    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-3">
+      <Link href="/admin/membership/analytics">
+        <Button variant="outline">
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Analytics
+        </Button>
+      </Link>
+      <Link href="/admin/membership/config">
+        <Button>
+          <Settings className="h-4 w-4 mr-2" />
+          Configuration
+        </Button>
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation items={breadcrumbItems} />
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Crown className="h-8 w-8 text-yellow-500" />
-                Membership Management
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your membership program and track member engagement
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Link href="/admin/membership/analytics">
-                <Button variant="outline">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </Button>
-              </Link>
-              <Link href="/admin/membership/config">
-                <Button>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configuration
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+    <AdminPageLayout
+      title="Membership Management"
+      subtitle="Manage your membership program and track member engagement"
+      actions={pageActions}
+      tabs={tabs}
+      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
+      loading={loading}
+    >
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -346,7 +347,6 @@ export default function AdminMembership() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

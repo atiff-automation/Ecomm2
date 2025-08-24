@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface TelegramHealth {
   configured: boolean;
@@ -208,33 +208,44 @@ export default function NotificationsPage() {
     );
   }
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md - System section
+  const tabs: TabConfig[] = [
+    { id: 'notifications', label: 'Notifications', href: '/admin/notifications' },
+    { id: 'monitoring', label: 'System Monitoring', href: '/admin/system/monitoring' },
+    { id: 'logs', label: 'Activity Logs', href: '/admin/system/logs' },
+    { id: 'security', label: 'Security', href: '/admin/system/security' },
+  ];
+
+  // Extract page actions 
+  const pageActions = (
+    <div className="flex items-center gap-2">
+      {getConnectionStatus()}
+      {health?.configured && (
+        <Button
+          onClick={testDailySummary}
+          disabled={testingChannels['daily-summary']}
+          variant="outline"
+          size="sm"
+        >
+          {testingChannels['daily-summary'] ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4 mr-2" />
+          )}
+          Test Daily Summary
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Breadcrumbs */}
-        <Breadcrumbs
-          items={[
-            { label: 'Settings', href: '/admin/settings' },
-            { label: 'Notifications' },
-          ]}
-          className="mb-6"
-        />
-
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Telegram Notifications
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Configure automated notifications for orders and inventory
-              </p>
-            </div>
-
-            {getConnectionStatus()}
-          </div>
-        </div>
+    <AdminPageLayout
+      title="Telegram Notifications"
+      subtitle="Configure automated notifications for orders and inventory"
+      actions={pageActions}
+      tabs={tabs}
+      loading={loading}
+    >
 
         {/* Bot Status Alert */}
         {!botConfigured && (
@@ -484,26 +495,6 @@ export default function NotificationsPage() {
                     </p>
                   </div>
                 </div>
-
-                <Button
-                  onClick={testDailySummary}
-                  disabled={testingChannels['daily-summary']}
-                  size="lg"
-                  variant="outline"
-                  className="w-full h-12 text-base border-purple-300 text-purple-700 hover:bg-purple-50"
-                >
-                  {testingChannels['daily-summary'] ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-3" />
-                      Sending daily summary...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5 mr-3" />
-                      Send Test Daily Summary
-                    </>
-                  )}
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -559,7 +550,6 @@ export default function NotificationsPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

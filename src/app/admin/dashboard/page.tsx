@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface DashboardStats {
   totalOrders: number;
@@ -206,35 +207,36 @@ export default function AdminDashboard() {
     );
   }
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Dashboard
+  const tabs: TabConfig[] = [
+    { id: 'overview', label: 'Overview', href: '/admin/dashboard' },
+    { id: 'analytics', label: 'Analytics', href: '/admin/reports' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-2">
+      <Button variant="outline" onClick={fetchDashboardAnalytics}>
+        <Activity className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+      <Button asChild>
+        <Link href="/admin/reports">
+          <Eye className="h-4 w-4 mr-2" />
+          View Reports
+        </Link>
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <BarChart3 className="h-8 w-8 text-blue-600" />
-                Admin Dashboard
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Real-time insights and analytics for your e-commerce platform
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={fetchDashboardAnalytics}>
-                <Activity className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button asChild>
-                <Link href="/admin/reports">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Reports
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
+    <AdminPageLayout
+      title="Admin Dashboard"
+      subtitle="Real-time insights and analytics for your e-commerce platform"
+      actions={pageActions}
+      tabs={tabs}
+      loading={loading}
+    >
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -875,7 +877,6 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

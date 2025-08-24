@@ -27,6 +27,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
 
 interface Customer {
   id: string;
@@ -140,18 +141,90 @@ export default function AdminCustomers() {
     }
   };
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers
+  const tabs: TabConfig[] = [
+    { id: 'directory', label: 'Directory', href: '/admin/customers' },
+    { id: 'membership', label: 'Membership', href: '/admin/membership' },
+    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <Button onClick={handleExport}>
+      <Download className="w-4 h-4 mr-2" />
+      Export Customers
+    </Button>
+  );
+
+  // Extract filters component
+  const filtersComponent = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search customers..."
+          value={filters.search || ''}
+          onChange={e =>
+            setFilters(prev => ({ ...prev, search: e.target.value }))
+          }
+          className="pl-10"
+        />
+      </div>
+      <Select
+        value={filters.membership || ''}
+        onValueChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            membership: value === 'all' ? '' : value,
+          }))
+        }
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Membership Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Customers</SelectItem>
+          <SelectItem value="members">Members Only</SelectItem>
+          <SelectItem value="non-members">Non-Members</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={filters.status || ''}
+        onValueChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            status: value === 'all' ? '' : value,
+          }))
+        }
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Account Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="ACTIVE">Active</SelectItem>
+          <SelectItem value="INACTIVE">Inactive</SelectItem>
+          <SelectItem value="SUSPENDED">Suspended</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  // Define breadcrumbs to show location
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.customers.main,
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Customer Management
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage customer accounts and membership status
-          </p>
-        </div>
+    <AdminPageLayout
+      title="Customer Management"
+      subtitle="Manage customer accounts and membership status"
+      actions={pageActions}
+      tabs={tabs}
+      filters={filtersComponent}
+      breadcrumbs={breadcrumbs}
+      loading={loading}
+    >
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -213,76 +286,6 @@ export default function AdminCustomers() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Input
-                  placeholder="Search customers..."
-                  value={filters.search || ''}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, search: e.target.value }))
-                  }
-                  className="w-full"
-                />
-              </div>
-              <Select
-                value={filters.membership || ''}
-                onValueChange={value =>
-                  setFilters(prev => ({
-                    ...prev,
-                    membership: value === 'all' ? '' : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Membership Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Customers</SelectItem>
-                  <SelectItem value="members">Members Only</SelectItem>
-                  <SelectItem value="non-members">Non-Members</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.status || ''}
-                onValueChange={value =>
-                  setFilters(prev => ({
-                    ...prev,
-                    status: value === 'all' ? '' : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Account Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-between mt-4">
-              <Button onClick={fetchCustomers} variant="outline">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-              <Button onClick={handleExport} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export Customers
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Customers Table */}
         <Card>
@@ -472,7 +475,6 @@ export default function AdminCustomers() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

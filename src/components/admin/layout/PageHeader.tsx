@@ -2,8 +2,10 @@
 
 import { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ParentSection } from './AdminPageLayout';
 
 interface ActionButton {
   label: string;
@@ -18,6 +20,9 @@ interface PageHeaderProps {
   subtitle?: string;
   actions?: ReactNode | ActionButton[];
   showBackButton?: boolean;
+  backButtonLabel?: string;
+  backButtonHref?: string;
+  parentSection?: ParentSection;
   loading?: boolean;
   className?: string;
 }
@@ -27,6 +32,9 @@ export function PageHeader({
   subtitle,
   actions,
   showBackButton = false,
+  backButtonLabel,
+  backButtonHref,
+  parentSection,
   loading = false,
   className = '',
 }: PageHeaderProps) {
@@ -65,15 +73,47 @@ export function PageHeader({
       <div className="px-6 py-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-4 min-w-0 flex-1">
           {showBackButton && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              disabled={loading}
-              className="p-2 h-8 w-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-3">
+              {backButtonHref ? (
+                <Link href={backButtonHref}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={loading}
+                    className="flex items-center space-x-2 h-8"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {backButtonLabel && (
+                      <span className="text-sm">{backButtonLabel}</span>
+                    )}
+                  </Button>
+                </Link>
+              ) : parentSection ? (
+                <Link href={parentSection.href}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={loading}
+                    className="flex items-center space-x-2 h-8"
+                    title={`Back to ${parentSection.label}`}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm">Back to {parentSection.label}</span>
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.back()}
+                  disabled={loading}
+                  className="p-2 h-8 w-8"
+                  title="Go back"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           )}
           
           <div className="min-w-0 flex-1">

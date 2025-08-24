@@ -18,6 +18,7 @@ import {
   // Trash2, // Not currently used
 } from 'lucide-react';
 import Link from 'next/link';
+import { AdminPageLayout, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
 
 interface Customer {
   id: string;
@@ -161,44 +162,55 @@ export default function AdminCustomerView({
     );
   }
 
+  // Define breadcrumbs to show hierarchical location
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.customers.main,
+    {
+      label: `${customer.firstName} ${customer.lastName}`,
+      href: `/admin/customers/${customer.id}`,
+    },
+  ];
+
+  // Page actions
+  const pageActions = (
+    <div className="flex items-center gap-2">
+      <Link href={`/admin/customers/${customer.id}/edit`}>
+        <Button size="sm">
+          <Edit className="h-4 w-4 mr-2" />
+          Edit Customer
+        </Button>
+      </Link>
+      <Badge className={getStatusColor(customer.status)}>
+        {customer.status}
+      </Badge>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href="/admin/customers">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                {customer.firstName} {customer.lastName}
-                {customer.isMember && (
-                  <Crown className="h-6 w-6 text-yellow-500" />
-                )}
-              </h1>
-              <p className="text-gray-600">Customer ID: {customer.id}</p>
-            </div>
-          </div>
+    <AdminPageLayout
+      title={`${customer.firstName} ${customer.lastName}`}
+      subtitle={`Customer ID: ${customer.id}`}
+      actions={pageActions}
+      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
+      className="max-w-4xl mx-auto"
+    >
 
-          <div className="flex gap-2">
-            <Link href={`/admin/customers/${customer.id}/edit`}>
-              <Button size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Customer
-              </Button>
-            </Link>
-            <Badge className={getStatusColor(customer.status)}>
-              {customer.status}
-            </Badge>
-          </div>
+      {/* Member Badge */}
+      {customer.isMember && (
+        <div className="mb-6 flex items-center gap-2 text-yellow-600">
+          <Crown className="h-5 w-5" />
+          <span className="font-medium">VIP Member</span>
+          {customer.memberSince && (
+            <span className="text-sm text-gray-600">
+              since {new Date(customer.memberSince).toLocaleDateString('en-MY')}
+            </span>
+          )}
         </div>
+      )}
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -238,9 +250,9 @@ export default function AdminCustomerView({
               </div>
             </CardContent>
           </Card>
-        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Contact Information */}
           <Card>
             <CardHeader>
@@ -329,10 +341,10 @@ export default function AdminCustomerView({
               )}
             </CardContent>
           </Card>
-        </div>
+      </div>
 
-        {/* Recent Orders */}
-        <Card className="mt-6">
+      {/* Recent Orders */}
+      <Card className="mt-6">
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
           </CardHeader>
@@ -370,8 +382,7 @@ export default function AdminCustomerView({
               <p className="text-gray-500">No orders found</p>
             )}
           </CardContent>
-        </Card>
-      </div>
-    </div>
+      </Card>
+    </AdminPageLayout>
   );
 }

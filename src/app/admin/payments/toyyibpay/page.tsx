@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,7 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react';
+import { AdminPageLayout, TabConfig, BreadcrumbItem } from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 interface ToyyibPayCredentialStatus {
@@ -383,24 +384,41 @@ export default function ToyyibPayConfigPage() {
     );
   }
 
+  // Define contextual tabs for toyyibPay gateway configuration
+  const tabs: TabConfig[] = [
+    { id: 'configuration', label: 'Configuration', href: '/admin/payments/toyyibpay' },
+    { id: 'testing', label: 'Test Connection', href: '/admin/payments/toyyibpay#testing' },
+    { id: 'webhooks', label: 'Webhooks', href: '/admin/payments/toyyibpay#webhooks' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex items-center space-x-2">
+      <Badge variant={credentialStatus.isConfigured ? "default" : "destructive"}>
+        {credentialStatus.isConfigured ? 'Configured' : 'Not Configured'}
+      </Badge>
+      <Badge variant="outline">
+        {credentialStatus.environment === 'sandbox' ? 'Sandbox' : 'Production'}
+      </Badge>
+    </div>
+  );
+
+  // Define breadcrumbs to show hierarchical location
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Payments', href: '/admin/payments', icon: CreditCard },
+    { label: 'toyyibPay', href: '/admin/payments/toyyibpay' },
+  ];
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">toyyibPay Payment Gateway</h1>
-          <p className="text-muted-foreground">
-            Configure and manage toyyibPay payment gateway integration
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant={credentialStatus.isConfigured ? "default" : "destructive"}>
-            {credentialStatus.isConfigured ? 'Configured' : 'Not Configured'}
-          </Badge>
-          <Badge variant="outline">
-            {credentialStatus.environment === 'sandbox' ? 'Sandbox' : 'Production'}
-          </Badge>
-        </div>
-      </div>
+    <AdminPageLayout
+      title="toyyibPay Payment Gateway"
+      subtitle="Configure and manage toyyibPay payment gateway integration"
+      actions={pageActions}
+      tabs={tabs}
+      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Payments', href: '/admin/payments' }}
+      loading={loading}
+    >
 
       <Tabs defaultValue="credentials" className="space-y-6">
         <TabsList>
@@ -784,6 +802,6 @@ export default function ToyyibPayConfigPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminPageLayout>
   );
 }

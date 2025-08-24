@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,7 @@ import {
   Lock,
   Unlock,
 } from 'lucide-react';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 // Import our proper types from business configuration
@@ -107,320 +108,12 @@ interface ShippingDashboardData {
   balance?: BalanceInfo;
 }
 
-export default function UnifiedShippingAdminPage() {
-  const { data: session, status } = useSession();
-  const [dashboardData, setDashboardData] = useState<ShippingDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // Authentication check
-  if (status === 'loading') {
-    return <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>;
-  }
-
-  if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
-    redirect('/auth/signin');
-  }
-
-  async function loadDashboardData() {
-    try {
-      setLoading(true);
-      
-      // Load shipping config and balance data in parallel
-      const [configResponse, balanceResponse] = await Promise.all([
-        fetch('/api/admin/shipping/config', {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        }),
-        fetch('/api/admin/shipping/balance', {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        }).catch(err => {
-          console.warn('Balance API not available:', err);
-          return null;
-        })
-      ]);
-
-      if (!configResponse.ok) {
-        throw new Error(`HTTP ${configResponse.status}: ${configResponse.statusText}`);
-      }
-
-      const configData = await configResponse.json();
-      const balanceData = balanceResponse?.ok ? await balanceResponse.json() : null;
-      
-      // Transform API response to our unified dashboard format
-      const dashboardData: ShippingDashboardData = {
-        profile: configData.profile,
-        courierPreferences: configData.courierPreferences || [],
-        statistics: configData.statistics,
-        apiStatus: {
-          configured: configData.apiStatus?.apiConfigured || false,
-          apiConnected: configData.apiStatus?.hasApiKey && configData.apiStatus?.hasApiSecret || false,
-          lastCheck: new Date().toISOString(),
-          errorCount: 0
-        },
-        configured: configData.configured || false,
-        balance: balanceData?.balance || null
-      };
-
-      setDashboardData(dashboardData);
-      
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load shipping configuration');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function refreshDashboard() {
-    loadDashboardData();
-  }
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const saveConfiguration = async (updatedData: Partial<BusinessProfile>) => {
-    if (!dashboardData) return;
-    
-    setSaving(true);
-    try {
-      const response = await fetch('/api/admin/shipping/config', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save configuration');
-      }
-
-      const result = await response.json();
-      toast.success('Configuration updated successfully');
-      
-      // Reload dashboard data
-      await loadDashboardData();
-      
-    } catch (error) {
-      console.error('Save error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save configuration');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const testEasyParcelConnection = async () => {
-    setTesting(true);
-    try {
-      const response = await fetch('/api/admin/shipping/config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'test_connection' }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success(`EasyParcel connection successful! Found ${result.ratesReturned} shipping rates.`);
-        
-        // Update API status
-        if (dashboardData) {
-          setDashboardData({
-            ...dashboardData,
-            apiStatus: {
-              ...dashboardData.apiStatus,
-              apiConnected: true,
-              lastCheck: new Date().toISOString(),
-              responseTime: result.responseTime,
-              errorCount: 0
-            }
-          });
-        }
-      } else {
-        throw new Error(result.error || 'Connection test failed');
-      }
-    } catch (error) {
-      console.error('Test connection error:', error);
-      toast.error(`Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
-      // Update API status with error
-      if (dashboardData) {
-        setDashboardData({
-          ...dashboardData,
-          apiStatus: {
-            ...dashboardData.apiStatus,
-            apiConnected: false,
-            lastCheck: new Date().toISOString(),
-            errorCount: dashboardData.apiStatus.errorCount + 1
-          }
-        });
-      }
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const refreshBalance = async () => {
-    try {
-      const response = await fetch('/api/admin/shipping/balance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'refresh' })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (dashboardData) {
-          setDashboardData({
-            ...dashboardData,
-            balance: result.balance
-          });
-        }
-        toast.success('Balance refreshed successfully');
-      } else {
-        throw new Error('Failed to refresh balance');
-      }
-    } catch (error) {
-      console.error('Balance refresh error:', error);
-      toast.error('Failed to refresh balance');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3">Loading shipping management...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!dashboardData) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">Failed to load shipping configuration</p>
-          <Button onClick={loadDashboardData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Truck className="h-8 w-8" />
-            Shipping Management
-          </h1>
-          <p className="text-gray-600">
-            Complete shipping configuration and monitoring dashboard
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={testEasyParcelConnection}
-            disabled={testing}
-          >
-            <TestTube className="h-4 w-4 mr-2" />
-            {testing ? 'Testing...' : 'Test API'}
-          </Button>
-          <Button onClick={loadDashboardData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-6 w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="business">Business Profile</TabsTrigger>
-          <TabsTrigger value="couriers">Courier Management</TabsTrigger>
-          <TabsTrigger value="policies">Shipping Policies</TabsTrigger>
-          <TabsTrigger value="services">Additional Services</TabsTrigger>
-          <TabsTrigger value="api">API Configuration</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <OverviewTab 
-            dashboardData={dashboardData} 
-            onRefresh={loadDashboardData}
-            onRefreshBalance={refreshBalance}
-          />
-        </TabsContent>
-
-        <TabsContent value="business">
-          <BusinessProfileTab 
-            profile={dashboardData.profile}
-            onSave={saveConfiguration}
-            saving={saving}
-          />
-        </TabsContent>
-
-        <TabsContent value="couriers">
-          <CourierManagementTab 
-            profile={dashboardData.profile}
-            courierPreferences={dashboardData.courierPreferences}
-            onSave={saveConfiguration}
-            saving={saving}
-          />
-        </TabsContent>
-
-        <TabsContent value="policies">
-          <ShippingPoliciesTab 
-            profile={dashboardData.profile}
-            onSave={saveConfiguration}
-            saving={saving}
-          />
-        </TabsContent>
-
-        <TabsContent value="services">
-          <AdditionalServicesTab 
-            profile={dashboardData.profile}
-            onSave={saveConfiguration}
-            saving={saving}
-          />
-        </TabsContent>
-
-        <TabsContent value="api">
-          <APIConfigurationTab />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-// Overview Tab Component
-function OverviewTab({ 
-  dashboardData, 
-  onRefresh,
-  onRefreshBalance 
-}: { 
+// Overview Tab Component  
+const OverviewTab: React.FC<{
   dashboardData: ShippingDashboardData;
   onRefresh: () => void;
   onRefreshBalance: () => void;
-}) {
+}> = ({ dashboardData, onRefresh, onRefreshBalance }) => {
   return (
     <div className="space-y-6">
       {/* Balance Alert */}
@@ -692,7 +385,319 @@ function OverviewTab({
       </Card>
     </div>
   );
+};
+
+export default function UnifiedShippingAdminPage() {
+  const { data: session, status } = useSession();
+  const [dashboardData, setDashboardData] = useState<ShippingDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Authentication check
+  if (status === 'loading') {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>;
+  }
+
+  if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
+    redirect('/auth/signin');
+    return null;
+  }
+
+  async function loadDashboardData() {
+    try {
+      setLoading(true);
+      
+      // Load shipping config and balance data in parallel
+      const [configResponse, balanceResponse] = await Promise.all([
+        fetch('/api/admin/shipping/config', {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        fetch('/api/admin/shipping/balance', {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(err => {
+          console.warn('Balance API not available:', err);
+          return null;
+        })
+      ]);
+
+      if (!configResponse.ok) {
+        throw new Error(`HTTP ${configResponse.status}: ${configResponse.statusText}`);
+      }
+
+      const configData = await configResponse.json();
+      const balanceData = balanceResponse?.ok ? await balanceResponse.json() : null;
+      
+      // Transform API response to our unified dashboard format
+      const dashboardData: ShippingDashboardData = {
+        profile: configData.profile,
+        courierPreferences: configData.courierPreferences || [],
+        statistics: configData.statistics,
+        apiStatus: {
+          configured: configData.apiStatus?.apiConfigured || false,
+          apiConnected: configData.apiStatus?.hasApiKey && configData.apiStatus?.hasApiSecret || false,
+          lastCheck: new Date().toISOString(),
+          errorCount: 0
+        },
+        configured: configData.configured || false,
+        balance: balanceData?.balance || null
+      };
+
+      setDashboardData(dashboardData);
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Failed to load shipping configuration');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function refreshDashboard() {
+    loadDashboardData();
+  }
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const saveConfiguration = async (updatedData: Partial<BusinessProfile>) => {
+    if (!dashboardData) return;
+    
+    setSaving(true);
+    try {
+      const response = await fetch('/api/admin/shipping/config', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save configuration');
+      }
+
+      const result = await response.json();
+      toast.success('Configuration updated successfully');
+      
+      // Reload dashboard data
+      await loadDashboardData();
+      
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save configuration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const testEasyParcelConnection = async () => {
+    setTesting(true);
+    try {
+      const response = await fetch('/api/admin/shipping/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'test_connection' }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(`EasyParcel connection successful! Found ${result.ratesReturned} shipping rates.`);
+        
+        // Update API status
+        if (dashboardData) {
+          setDashboardData({
+            ...dashboardData,
+            apiStatus: {
+              ...dashboardData.apiStatus,
+              apiConnected: true,
+              lastCheck: new Date().toISOString(),
+              responseTime: result.responseTime,
+              errorCount: 0
+            }
+          });
+        }
+      } else {
+        throw new Error(result.error || 'Connection test failed');
+      }
+    } catch (error) {
+      console.error('Test connection error:', error);
+      toast.error(`Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Update API status with error
+      if (dashboardData) {
+        setDashboardData({
+          ...dashboardData,
+          apiStatus: {
+            ...dashboardData.apiStatus,
+            apiConnected: false,
+            lastCheck: new Date().toISOString(),
+            errorCount: dashboardData.apiStatus.errorCount + 1
+          }
+        });
+      }
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const refreshBalance = async () => {
+    try {
+      const response = await fetch('/api/admin/shipping/balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'refresh' })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (dashboardData) {
+          setDashboardData({
+            ...dashboardData,
+            balance: result.balance
+          });
+        }
+        toast.success('Balance refreshed successfully');
+      } else {
+        throw new Error('Failed to refresh balance');
+      }
+    } catch (error) {
+      console.error('Balance refresh error:', error);
+      toast.error('Failed to refresh balance');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3">Loading shipping management...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 mb-4">Failed to load shipping configuration</p>
+          <Button onClick={loadDashboardData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Shipping
+  const tabs: TabConfig[] = [
+    { id: 'overview', label: 'Configuration', href: '/admin/shipping' },
+    { id: 'orders', label: 'Shipping Orders', href: '/admin/shipping/orders' },
+    { id: 'couriers', label: 'Couriers', href: '/admin/shipping/config' },
+    { id: 'tracking', label: 'Tracking', href: '/admin/shipping/fulfillment' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex gap-2">
+      <Button 
+        variant="outline" 
+        onClick={testEasyParcelConnection}
+        disabled={testing}
+      >
+        <TestTube className="h-4 w-4 mr-2" />
+        {testing ? 'Testing...' : 'Test API'}
+      </Button>
+      <Button onClick={loadDashboardData} variant="outline">
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+
+  return (
+    <AdminPageLayout
+      title="Shipping Management"
+      subtitle="Complete shipping configuration and monitoring dashboard"
+      actions={pageActions}
+      tabs={tabs}
+      loading={loading}
+    >
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid grid-cols-6 w-full">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="business">Business Profile</TabsTrigger>
+          <TabsTrigger value="couriers">Courier Management</TabsTrigger>
+          <TabsTrigger value="policies">Shipping Policies</TabsTrigger>
+          <TabsTrigger value="services">Additional Services</TabsTrigger>
+          <TabsTrigger value="api">API Configuration</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <OverviewTab 
+            dashboardData={dashboardData} 
+            onRefresh={loadDashboardData}
+            onRefreshBalance={refreshBalance}
+          />
+        </TabsContent>
+
+        <TabsContent value="business">
+          <BusinessProfileTab 
+            profile={dashboardData.profile}
+            onSave={saveConfiguration}
+            saving={saving}
+          />
+        </TabsContent>
+
+        <TabsContent value="couriers">
+          <CourierManagementTab 
+            profile={dashboardData.profile}
+            courierPreferences={dashboardData.courierPreferences}
+            onSave={saveConfiguration}
+            saving={saving}
+          />
+        </TabsContent>
+
+        <TabsContent value="policies">
+          <ShippingPoliciesTab 
+            profile={dashboardData.profile}
+            onSave={saveConfiguration}
+            saving={saving}
+          />
+        </TabsContent>
+
+        <TabsContent value="services">
+          <AdditionalServicesTab 
+            profile={dashboardData.profile}
+            onSave={saveConfiguration}
+            saving={saving}
+          />
+        </TabsContent>
+
+        <TabsContent value="api">
+          <APIConfigurationTab />
+        </TabsContent>
+      </Tabs>
+    </AdminPageLayout>
+  );
 }
+
 
 // Business Profile Tab Component
 function BusinessProfileTab({ 

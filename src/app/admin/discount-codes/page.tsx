@@ -46,7 +46,7 @@ import {
   CheckCircle2,
   Crown,
 } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface DiscountCode {
   id: string;
@@ -221,36 +221,71 @@ export default function DiscountCodesPage() {
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs */}
-      <Breadcrumbs
-        items={[
-          { label: 'Membership', href: '/admin/membership' },
-          { label: 'Discount Codes' },
-        ]}
-        className="mb-6"
-      />
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md - Promotions section
+  const tabs: TabConfig[] = [
+    { id: 'discount-codes', label: 'Discount Codes', href: '/admin/discount-codes' },
+    { id: 'member-promotions', label: 'Member Promotions', href: '/admin/member-promotions' },
+  ];
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Ticket className="h-8 w-8 text-purple-600" />
-            Discount Codes
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Manage all discount codes and coupons in your system
-          </p>
+  // Extract page actions
+  const pageActions = (
+    <Button onClick={() => router.push('/admin/discount-codes/create')}>
+      <Plus className="h-4 w-4 mr-2" />
+      Create Discount Code
+    </Button>
+  );
+
+  // Extract filters component
+  const filtersComponent = (
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search codes..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-        <Button onClick={() => router.push('/admin/discount-codes/create')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Discount Code
-        </Button>
       </div>
 
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-full md:w-48">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="ACTIVE">Active</SelectItem>
+          <SelectItem value="INACTIVE">Inactive</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <SelectTrigger className="w-full md:w-48">
+          <SelectValue placeholder="Filter by type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="member">Member-Only</SelectItem>
+          <SelectItem value="general">General</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  return (
+    <AdminPageLayout
+      title="Discount Codes"
+      subtitle="Manage all discount codes and coupons in your system"
+      actions={pageActions}
+      tabs={tabs}
+      filters={filtersComponent}
+      loading={loading}
+    >
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -305,47 +340,6 @@ export default function DiscountCodesPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search codes..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="member">Member-Only</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Discount Codes Table */}
       <Card>
@@ -465,6 +459,6 @@ export default function DiscountCodesPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 }

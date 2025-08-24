@@ -43,7 +43,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface OrderItem {
   id: string;
@@ -455,52 +455,46 @@ export default function AdminOrderDetailsPage() {
     return null;
   }
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Order Details
+  const tabs: TabConfig[] = [
+    { id: 'all-orders', label: 'All Orders', href: '/admin/orders' },
+    { id: 'shipping', label: 'Shipping Management', href: '/admin/orders/shipping' },
+    { id: 'fulfillment', label: 'Fulfillment Queue', href: '/admin/orders/fulfillment' },
+    { id: 'analytics', label: 'Order Analytics', href: '/admin/orders/analytics' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <div className="flex items-center gap-3">
+      <Badge
+        className={`${getStatusColor(order.status)} border px-3 py-1`}
+      >
+        {order.status}
+      </Badge>
+      <Badge
+        className={`${getPaymentStatusColor(order.paymentStatus)} border px-3 py-1`}
+      >
+        {order.paymentStatus}
+      </Badge>
+      <Button
+        variant="ghost"
+        onClick={() => router.push('/admin/orders')}
+        className="flex items-center gap-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Orders
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Breadcrumbs */}
-        <Breadcrumbs
-          items={[
-            { label: 'Orders', href: '/admin/orders' },
-            { label: `Order #${order.orderNumber}` },
-          ]}
-          className="mb-6"
-        />
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/admin/orders')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Orders
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Order #{order.orderNumber}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Placed on {formatDate(order.createdAt)}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Badge
-              className={`${getStatusColor(order.status)} border px-3 py-1`}
-            >
-              {order.status}
-            </Badge>
-            <Badge
-              className={`${getPaymentStatusColor(order.paymentStatus)} border px-3 py-1`}
-            >
-              {order.paymentStatus}
-            </Badge>
-          </div>
-        </div>
+    <AdminPageLayout
+      title={`Order #${order.orderNumber}`}
+      subtitle={`Placed on ${formatDate(order.createdAt)}`}
+      actions={pageActions}
+      tabs={tabs}
+      showBackButton={true}
+    >
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -1005,7 +999,6 @@ export default function AdminOrderDetailsPage() {
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

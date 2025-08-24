@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,7 @@ import {
   RefreshCw,
   Search,
 } from 'lucide-react';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 interface Order {
@@ -251,16 +252,26 @@ export default function AdminOrderShippingPage() {
     return <div className="p-6">Loading orders...</div>;
   }
 
+  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Shipping
+  const tabs: TabConfig[] = [
+    { id: 'orders', label: 'Shipping Orders', href: '/admin/shipping/orders' },
+    { id: 'configuration', label: 'Configuration', href: '/admin/shipping/config' },
+    { id: 'couriers', label: 'Couriers', href: '/admin/shipping' },
+    { id: 'tracking', label: 'Tracking', href: '/admin/shipping/fulfillment' },
+  ];
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Truck className="h-8 w-8" />
-          Order Shipping Management
-        </h1>
+    <AdminPageLayout
+      title="Order Shipping Management"
+      subtitle="Select and manage courier services for orders"
+      tabs={tabs}
+      loading={loading}
+    >
+      {/* Page Actions */}
+      <div className="flex items-center justify-between mb-6">
         <Button onClick={loadOrders} variant="outline">
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+          Refresh Orders
         </Button>
       </div>
 
@@ -395,22 +406,17 @@ export default function AdminOrderShippingPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 }
 
 // Courier Selection Form Component
-function CourierSelectionForm({ 
-  selection, 
-  onSelectionChange, 
-  onSave, 
-  saving 
-}: {
+const CourierSelectionForm: React.FC<{
   selection: CourierSelectionData;
   onSelectionChange: (selection: CourierSelectionData) => void;
   onSave: () => void;
   saving: boolean;
-}) {
+}> = ({ selection, onSelectionChange, onSave, saving }) => {
   const formatPrice = (price: number | string | null | undefined) => {
     if (price === null || price === undefined) return 'RM 0.00';
     const numPrice = typeof price === 'number' ? price : Number(price);
