@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import {
   Monitor,
@@ -48,6 +49,8 @@ interface HeroSection {
   backgroundVideo?: string;
   overlayOpacity: number;
   textAlignment: 'left' | 'center' | 'right';
+  showTitle?: boolean;
+  showCTA?: boolean;
   isActive: boolean;
   creator?: {
     firstName: string;
@@ -87,6 +90,8 @@ export default function HeroSectionManagement() {
     text: string;
   } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showTitle, setShowTitle] = useState(true);
+  const [showCTA, setShowCTA] = useState(true);
 
   useEffect(() => {
     fetchHeroSection();
@@ -99,6 +104,9 @@ export default function HeroSectionManagement() {
       if (response.ok) {
         const data = await response.json();
         setHeroSection(data.heroSection);
+        // Initialize toggle states from database
+        setShowTitle(data.heroSection.showTitle ?? true);
+        setShowCTA(data.heroSection.showCTA ?? true);
         // Only set form data with content fields, not metadata
         setFormData({
           title: data.heroSection.title,
@@ -143,19 +151,22 @@ export default function HeroSectionManagement() {
 
     try {
       // Only send the fields required by the API schema
+      // Conditionally include fields based on toggle states
       const submitData = {
-        title: formData.title || '',
-        subtitle: formData.subtitle || '',
-        description: formData.description || '',
-        ctaPrimaryText: formData.ctaPrimaryText || '',
-        ctaPrimaryLink: formData.ctaPrimaryLink || '',
-        ctaSecondaryText: formData.ctaSecondaryText || '',
-        ctaSecondaryLink: formData.ctaSecondaryLink || '',
+        title: showTitle ? (formData.title || '') : '',
+        subtitle: showTitle ? (formData.subtitle || '') : '',
+        description: showTitle ? (formData.description || '') : '',
+        ctaPrimaryText: showCTA ? (formData.ctaPrimaryText || 'Join as Member') : 'Hidden',
+        ctaPrimaryLink: showCTA ? (formData.ctaPrimaryLink || '/auth/signup') : '#',
+        ctaSecondaryText: showCTA ? (formData.ctaSecondaryText || 'Browse Products') : 'Hidden',
+        ctaSecondaryLink: showCTA ? (formData.ctaSecondaryLink || '/products') : '#',
         backgroundType: formData.backgroundType || 'IMAGE',
         backgroundImage: formData.backgroundImage || null,
         backgroundVideo: formData.backgroundVideo || null,
         overlayOpacity: formData.overlayOpacity ?? 0.1,
         textAlignment: formData.textAlignment || 'left',
+        showTitle,
+        showCTA,
       };
 
       console.log('Submitting hero section data:', submitData);
@@ -200,6 +211,9 @@ export default function HeroSectionManagement() {
 
       if (response.ok) {
         setHeroSection(data.heroSection);
+        // Reset toggle states to defaults
+        setShowTitle(data.heroSection.showTitle ?? true);
+        setShowCTA(data.heroSection.showCTA ?? true);
         // Only set form data with content fields, not metadata
         setFormData({
           title: data.heroSection.title,
@@ -473,26 +487,32 @@ export default function HeroSectionManagement() {
                       <div
                         className={`relative z-10 max-w-2xl mx-auto px-6 text-${formData.textAlignment || 'left'}`}
                       >
-                        <h1 className="text-4xl font-bold mb-4">
-                          {formData.title || 'Hero Title'}
-                        </h1>
-                        <h2 className="text-xl text-blue-100 mb-4">
-                          {formData.subtitle || 'Hero Subtitle'}
-                        </h2>
-                        <p className="text-blue-100 mb-6">
-                          {formData.description || 'Hero Description'}
-                        </p>
-                        <div className="flex gap-4">
-                          <Button className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
-                            {formData.ctaPrimaryText || 'Primary CTA'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-white border-white hover:bg-white hover:text-blue-800"
-                          >
-                            {formData.ctaSecondaryText || 'Secondary CTA'}
-                          </Button>
-                        </div>
+                        {showTitle && (
+                          <>
+                            <h1 className="text-4xl font-bold mb-4">
+                              {formData.title || 'Hero Title'}
+                            </h1>
+                            <h2 className="text-xl text-blue-100 mb-4">
+                              {formData.subtitle || 'Hero Subtitle'}
+                            </h2>
+                            <p className="text-blue-100 mb-6">
+                              {formData.description || 'Hero Description'}
+                            </p>
+                          </>
+                        )}
+                        {showCTA && (
+                          <div className="flex gap-4">
+                            <Button className="bg-yellow-500 text-blue-900 hover:bg-yellow-400">
+                              {formData.ctaPrimaryText || 'Primary CTA'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-white border-white hover:bg-white hover:text-blue-800"
+                            >
+                              {formData.ctaSecondaryText || 'Secondary CTA'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -506,6 +526,34 @@ export default function HeroSectionManagement() {
                     </TabsList>
 
                     <TabsContent value="content" className="space-y-4">
+                      {/* Toggle Controls */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base font-medium">Show Title Section</Label>
+                            <p className="text-sm text-gray-600">Display title, subtitle, and description</p>
+                          </div>
+                          <Switch
+                            checked={showTitle}
+                            onCheckedChange={setShowTitle}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base font-medium">Show CTA Buttons</Label>
+                            <p className="text-sm text-gray-600">Display call-to-action buttons</p>
+                          </div>
+                          <Switch
+                            checked={showCTA}
+                            onCheckedChange={setShowCTA}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Title Section */}
+                      {showTitle && (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium text-gray-900">Title Content</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="title">Title</Label>
@@ -552,7 +600,13 @@ export default function HeroSectionManagement() {
                           rows={3}
                         />
                       </div>
+                        </div>
+                      )}
 
+                      {/* CTA Section */}
+                      {showCTA && (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-medium text-gray-900">Call-to-Action Buttons</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="ctaPrimary">Primary CTA Text</Label>
@@ -620,6 +674,8 @@ export default function HeroSectionManagement() {
                           />
                         </div>
                       </div>
+                        </div>
+                      )}
                     </TabsContent>
 
                     <TabsContent value="media" className="space-y-4">

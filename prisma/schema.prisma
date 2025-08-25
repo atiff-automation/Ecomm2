@@ -1025,6 +1025,8 @@ model HeroSection {
   backgroundVideo   String?   // URL to background video
   overlayOpacity    Float     @default(0.1) // Background overlay opacity (0-1)
   textAlignment     String    @default("left") // left, center, right
+  showTitle         Boolean   @default(true) // Show title section toggle
+  showCTA           Boolean   @default(true) // Show CTA buttons toggle
   isActive          Boolean   @default(false) // Only one hero section can be active
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt

@@ -94,6 +94,20 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
+    // Check if the user exists before creating the upload record
+    let uploaderId: string | null = null;
+    try {
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
+      });
+      if (userExists) {
+        uploaderId = session.user.id;
+      }
+    } catch (error) {
+      console.log('User not found, continuing without uploader reference');
+    }
+
     // Create media upload record in database
     const mediaUpload = await prisma.mediaUpload.create({
       data: {
@@ -104,29 +118,30 @@ export async function POST(request: NextRequest) {
         url: `/uploads/hero/${filename}`,
         mediaType,
         usage,
-        uploadedBy: session.user.id,
+        uploadedBy: uploaderId,
       },
       include: {
-        uploader: {
+        uploader: uploaderId ? {
           select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
           },
-        },
+        } : undefined,
       },
     });
 
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: 'MEDIA_UPLOADED',
-        resource: 'SITE_CUSTOMIZATION',
-        details: {
-          mediaId: mediaUpload.id,
-          filename: mediaUpload.filename,
+    // Create audit log if user exists
+    if (uploaderId) {
+      await prisma.auditLog.create({
+        data: {
+          userId: uploaderId,
+          action: 'MEDIA_UPLOADED',
+          resource: 'SITE_CUSTOMIZATION',
+          details: {
+            mediaId: mediaUpload.id,
+            filename: mediaUpload.filename,
           originalName: mediaUpload.originalName,
           mediaType: mediaUpload.mediaType,
           size: mediaUpload.size,
@@ -137,6 +152,7 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
+    }
 
     return NextResponse.json({
       mediaUpload,

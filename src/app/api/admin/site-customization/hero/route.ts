@@ -22,6 +22,14 @@ const heroSectionSchema = z.object({
   backgroundVideo: z.string().optional().nullable(),
   overlayOpacity: z.number().min(0).max(1),
   textAlignment: z.enum(['left', 'center', 'right']),
+  showTitle: z.boolean().optional().default(true),
+  showCTA: z.boolean().optional().default(true),
+}).refine((data) => {
+  // If showTitle is false, title fields can be empty
+  // If showCTA is false, CTA fields can be empty or use placeholder values
+  return true; // Always pass refinement since we handle defaults in the application
+}, {
+  message: "Invalid hero section configuration"
 });
 
 /**
@@ -55,6 +63,20 @@ export async function GET() {
 
     // Create default hero section if none exists
     if (!heroSection) {
+      // Check if the user exists before creating the hero section record
+      let creatorId: string | null = null;
+      try {
+        const userExists = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { id: true },
+        });
+        if (userExists) {
+          creatorId = session.user.id;
+        }
+      } catch (error) {
+        console.log('User not found, continuing without creator reference');
+      }
+
       heroSection = await prisma.heroSection.create({
         data: {
           title: 'Welcome to JRM E-commerce',
@@ -68,18 +90,20 @@ export async function GET() {
           backgroundType: 'IMAGE',
           overlayOpacity: 0.1,
           textAlignment: 'left',
+          showTitle: true,
+          showCTA: true,
           isActive: true,
-          createdBy: session.user.id,
+          createdBy: creatorId,
         },
         include: {
-          creator: {
+          creator: creatorId ? {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               email: true,
             },
-          },
+          } : undefined,
         },
       });
     }
@@ -116,6 +140,20 @@ export async function PUT(request: NextRequest) {
       'Hero section update request body:',
       JSON.stringify(body, null, 2)
     );
+
+    // Check if the user exists before proceeding (for audit logging)
+    let userId: string | null = null;
+    try {
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
+      });
+      if (userExists) {
+        userId = session.user.id;
+      }
+    } catch (error) {
+      console.log('User not found, continuing without user reference for audit');
+    }
 
     let validatedData;
     try {
@@ -156,6 +194,8 @@ export async function PUT(request: NextRequest) {
         where: { id: currentHero.id },
         data: {
           ...validatedData,
+          showTitle: validatedData.showTitle ?? true,
+          showCTA: validatedData.showCTA ?? true,
           updatedAt: new Date(),
         },
         include: {
@@ -170,30 +210,47 @@ export async function PUT(request: NextRequest) {
         },
       });
     } else {
+      // Check if the user exists before creating the hero section record
+      let creatorId: string | null = null;
+      try {
+        const userExists = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { id: true },
+        });
+        if (userExists) {
+          creatorId = session.user.id;
+        }
+      } catch (error) {
+        console.log('User not found, continuing without creator reference');
+      }
+
       // Create new hero section
       updatedHero = await prisma.heroSection.create({
         data: {
           ...validatedData,
+          showTitle: validatedData.showTitle ?? true,
+          showCTA: validatedData.showCTA ?? true,
           isActive: true,
-          createdBy: session.user.id,
+          createdBy: creatorId,
         },
         include: {
-          creator: {
+          creator: creatorId ? {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               email: true,
             },
-          },
+          } : undefined,
         },
       });
     }
 
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
+    // Create audit log if user exists
+    if (userId) {
+      await prisma.auditLog.create({
+        data: {
+          userId: userId,
         action: 'HERO_SECTION_UPDATED',
         resource: 'SITE_CUSTOMIZATION',
         details: {
@@ -205,6 +262,7 @@ export async function PUT(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
+    }
 
     return NextResponse.json({
       heroSection: updatedHero,
@@ -238,6 +296,20 @@ export async function POST(request: NextRequest) {
       data: { isActive: false },
     });
 
+    // Check if the user exists before creating the hero section record
+    let creatorId: string | null = null;
+    try {
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
+      });
+      if (userExists) {
+        creatorId = session.user.id;
+      }
+    } catch (error) {
+      console.log('User not found, continuing without creator reference');
+    }
+
     // Create new default hero section
     const defaultHero = await prisma.heroSection.create({
       data: {
@@ -252,26 +324,29 @@ export async function POST(request: NextRequest) {
         backgroundType: 'IMAGE',
         overlayOpacity: 0.1,
         textAlignment: 'left',
+        showTitle: true,
+        showCTA: true,
         isActive: true,
-        createdBy: session.user.id,
+        createdBy: creatorId,
       },
       include: {
-        creator: {
+        creator: creatorId ? {
           select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
           },
-        },
+        } : undefined,
       },
     });
 
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: 'HERO_SECTION_RESET',
+    // Create audit log if user exists
+    if (creatorId) {
+      await prisma.auditLog.create({
+        data: {
+          userId: creatorId,
+          action: 'HERO_SECTION_RESET',
         resource: 'SITE_CUSTOMIZATION',
         details: {
           heroSectionId: defaultHero.id,
@@ -281,6 +356,7 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       },
     });
+    }
 
     return NextResponse.json({
       heroSection: defaultHero,
