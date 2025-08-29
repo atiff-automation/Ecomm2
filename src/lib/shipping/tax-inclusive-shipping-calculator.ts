@@ -5,7 +5,10 @@
  */
 
 import { easyParcelService, EasyParcelService } from './easyparcel-service';
-import { MalaysianTaxService, ServiceTaxCategory } from '../tax/malaysian-tax-service';
+import {
+  MalaysianTaxService,
+  ServiceTaxCategory,
+} from '../tax/malaysian-tax-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 interface TaxInclusiveShippingRate {
@@ -14,19 +17,19 @@ interface TaxInclusiveShippingRate {
   courierName: string;
   serviceName: string;
   serviceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT';
-  
+
   // Pricing breakdown
-  basePrice: number;              // Price before tax
-  taxAmount: number;              // Tax amount (SST)
-  finalPrice: number;             // Total price including tax
-  taxRate: number;                // Applied tax rate
-  
+  basePrice: number; // Price before tax
+  taxAmount: number; // Tax amount (SST)
+  finalPrice: number; // Total price including tax
+  taxRate: number; // Applied tax rate
+
   // Additional information
   estimatedDeliveryDays: number;
   deliveryGuarantee: boolean;
   insuranceIncluded: boolean;
   codAvailable: boolean;
-  
+
   // Tax details
   taxBreakdown: {
     taxableAmount: number;
@@ -56,7 +59,7 @@ interface TaxInclusiveRateRequest {
   serviceTypes?: string[];
   includeInsurance?: boolean;
   includeCOD?: boolean;
-  displayTaxInclusive?: boolean;  // Whether to show tax-inclusive prices
+  displayTaxInclusive?: boolean; // Whether to show tax-inclusive prices
 }
 
 export class TaxInclusiveShippingCalculator {
@@ -71,11 +74,14 @@ export class TaxInclusiveShippingCalculator {
   /**
    * Calculate shipping rates with Malaysian tax inclusion
    */
-  async calculateTaxInclusiveRates(request: TaxInclusiveRateRequest): Promise<TaxInclusiveShippingRate[]> {
+  async calculateTaxInclusiveRates(
+    request: TaxInclusiveRateRequest
+  ): Promise<TaxInclusiveShippingRate[]> {
     try {
       // Get business pickup address
-      const businessPickupAddress = await businessShippingConfig.getPickupAddress();
-      
+      const businessPickupAddress =
+        await businessShippingConfig.getPickupAddress();
+
       // Get base rates from EasyParcel using business pickup address
       const baseRates = await this.easyParcelService.calculateRates({
         pickup_address: {
@@ -86,7 +92,7 @@ export class TaxInclusiveShippingCalculator {
           city: businessPickupAddress.city,
           state: businessPickupAddress.state,
           postcode: businessPickupAddress.postcode,
-          country: businessPickupAddress.country
+          country: businessPickupAddress.country,
         },
         delivery_address: {
           name: 'Customer',
@@ -95,7 +101,7 @@ export class TaxInclusiveShippingCalculator {
           city: request.deliveryAddress.city,
           state: request.deliveryAddress.state as any,
           postcode: request.deliveryAddress.postcode,
-          country: 'MY'
+          country: 'MY',
         },
         parcel: {
           weight: request.parcel.weight,
@@ -104,11 +110,11 @@ export class TaxInclusiveShippingCalculator {
           height: request.parcel.height,
           content: 'General merchandise',
           value: request.parcel.value,
-          quantity: 1
+          quantity: 1,
         },
         service_types: request.serviceTypes,
         insurance: request.includeInsurance,
-        cod: request.includeCOD
+        cod: request.includeCOD,
       });
 
       // Process each rate with tax calculations
@@ -117,8 +123,11 @@ export class TaxInclusiveShippingCalculator {
       for (const rate of baseRates.rates || []) {
         try {
           // Determine service tax category based on service type
-          const taxCategory = this.determineServiceTaxCategory(rate.service_name, rate.courier_name);
-          
+          const taxCategory = this.determineServiceTaxCategory(
+            rate.service_name,
+            rate.courier_name
+          );
+
           // Calculate tax for this shipping rate
           const taxCalculation = await this.taxService.calculateShippingTax(
             rate.price,
@@ -134,30 +143,35 @@ export class TaxInclusiveShippingCalculator {
             courierName: rate.courier_name,
             serviceName: rate.service_name,
             serviceType,
-            
+
             basePrice: taxCalculation.taxExclusiveAmount,
             taxAmount: taxCalculation.taxAmount,
-            finalPrice: request.displayTaxInclusive !== false 
-              ? taxCalculation.taxInclusiveAmount 
-              : taxCalculation.taxExclusiveAmount,
+            finalPrice:
+              request.displayTaxInclusive !== false
+                ? taxCalculation.taxInclusiveAmount
+                : taxCalculation.taxExclusiveAmount,
             taxRate: taxCalculation.taxRate,
-            
-            estimatedDeliveryDays: rate.estimated_delivery_days || this.getEstimatedDeliveryDays(serviceType),
+
+            estimatedDeliveryDays:
+              rate.estimated_delivery_days ||
+              this.getEstimatedDeliveryDays(serviceType),
             deliveryGuarantee: rate.delivery_guarantee || false,
             insuranceIncluded: rate.insurance_included || false,
             codAvailable: rate.cod_available || false,
-            
+
             taxBreakdown: {
               taxableAmount: taxCalculation.taxExclusiveAmount,
               taxDescription: `Service Tax (${(taxCalculation.taxRate * 100).toFixed(0)}%)`,
-              taxCategory
-            }
+              taxCategory,
+            },
           };
 
           taxInclusiveRates.push(taxInclusiveRate);
-
         } catch (error) {
-          console.error(`Error processing rate for ${rate.courier_name}:`, error);
+          console.error(
+            `Error processing rate for ${rate.courier_name}:`,
+            error
+          );
           // Continue with other rates even if one fails
         }
       }
@@ -166,7 +180,6 @@ export class TaxInclusiveShippingCalculator {
       taxInclusiveRates.sort((a, b) => a.finalPrice - b.finalPrice);
 
       return taxInclusiveRates;
-
     } catch (error) {
       console.error('Error calculating tax-inclusive shipping rates:', error);
       throw new Error('Failed to calculate shipping rates with tax');
@@ -196,25 +209,28 @@ export class TaxInclusiveShippingCalculator {
         taxSummary: {
           averageTaxRate: 0,
           totalTaxAmount: 0,
-          taxDescription: 'No rates available'
-        }
+          taxDescription: 'No rates available',
+        },
       };
     }
 
     // Find best options by service type
     const economy = rates.find(r => r.serviceType === 'STANDARD') || rates[0];
-    const standard = rates.find(r => r.serviceType === 'EXPRESS') || 
-                    rates.find(r => r.estimatedDeliveryDays <= 3) || 
-                    rates[Math.floor(rates.length / 2)];
-    const express = rates.find(r => r.serviceType === 'OVERNIGHT') || 
-                    rates.find(r => r.estimatedDeliveryDays <= 1) || 
-                    rates[rates.length - 1];
+    const standard =
+      rates.find(r => r.serviceType === 'EXPRESS') ||
+      rates.find(r => r.estimatedDeliveryDays <= 3) ||
+      rates[Math.floor(rates.length / 2)];
+    const express =
+      rates.find(r => r.serviceType === 'OVERNIGHT') ||
+      rates.find(r => r.estimatedDeliveryDays <= 1) ||
+      rates[rates.length - 1];
 
     // Calculate tax summary
     const totalTaxAmount = rates.reduce((sum, rate) => sum + rate.taxAmount, 0);
-    const averageTaxRate = totalTaxAmount > 0 
-      ? rates.reduce((sum, rate) => sum + rate.taxRate, 0) / rates.length 
-      : 0;
+    const averageTaxRate =
+      totalTaxAmount > 0
+        ? rates.reduce((sum, rate) => sum + rate.taxRate, 0) / rates.length
+        : 0;
 
     return {
       economy,
@@ -223,8 +239,8 @@ export class TaxInclusiveShippingCalculator {
       taxSummary: {
         averageTaxRate,
         totalTaxAmount,
-        taxDescription: `Malaysian Service Tax (${(averageTaxRate * 100).toFixed(1)}% average)`
-      }
+        taxDescription: `Malaysian Service Tax (${(averageTaxRate * 100).toFixed(1)}% average)`,
+      },
     };
   }
 
@@ -245,7 +261,8 @@ export class TaxInclusiveShippingCalculator {
     const { selectedRate, orderValue, freeShippingThreshold = 0 } = params;
 
     // Check for free shipping
-    const isFreeShipping = freeShippingThreshold > 0 && orderValue >= freeShippingThreshold;
+    const isFreeShipping =
+      freeShippingThreshold > 0 && orderValue >= freeShippingThreshold;
 
     if (isFreeShipping) {
       return {
@@ -253,7 +270,7 @@ export class TaxInclusiveShippingCalculator {
         taxAmount: 0,
         totalCost: 0,
         isFreeShipping: true,
-        taxBreakdown: 'Free shipping applied'
+        taxBreakdown: 'Free shipping applied',
       };
     }
 
@@ -262,14 +279,17 @@ export class TaxInclusiveShippingCalculator {
       taxAmount: selectedRate.taxAmount,
       totalCost: selectedRate.finalPrice,
       isFreeShipping: false,
-      taxBreakdown: selectedRate.taxBreakdown.taxDescription
+      taxBreakdown: selectedRate.taxBreakdown.taxDescription,
     };
   }
 
   /**
    * Determine service tax category based on courier and service
    */
-  private determineServiceTaxCategory(serviceName: string, courierName: string): ServiceTaxCategory {
+  private determineServiceTaxCategory(
+    serviceName: string,
+    courierName: string
+  ): ServiceTaxCategory {
     const service = serviceName.toLowerCase();
     const courier = courierName.toLowerCase();
 
@@ -293,14 +313,24 @@ export class TaxInclusiveShippingCalculator {
   /**
    * Determine service type from service name
    */
-  private determineServiceType(serviceName: string): 'STANDARD' | 'EXPRESS' | 'OVERNIGHT' {
+  private determineServiceType(
+    serviceName: string
+  ): 'STANDARD' | 'EXPRESS' | 'OVERNIGHT' {
     const service = serviceName.toLowerCase();
 
-    if (service.includes('overnight') || service.includes('next day') || service.includes('same day')) {
+    if (
+      service.includes('overnight') ||
+      service.includes('next day') ||
+      service.includes('same day')
+    ) {
       return 'OVERNIGHT';
     }
 
-    if (service.includes('express') || service.includes('priority') || service.includes('fast')) {
+    if (
+      service.includes('express') ||
+      service.includes('priority') ||
+      service.includes('fast')
+    ) {
       return 'EXPRESS';
     }
 
@@ -310,7 +340,9 @@ export class TaxInclusiveShippingCalculator {
   /**
    * Get estimated delivery days based on service type
    */
-  private getEstimatedDeliveryDays(serviceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT'): number {
+  private getEstimatedDeliveryDays(
+    serviceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT'
+  ): number {
     switch (serviceType) {
       case 'OVERNIGHT':
         return 1;
@@ -325,7 +357,10 @@ export class TaxInclusiveShippingCalculator {
   /**
    * Format rate for display with tax information
    */
-  formatRateDisplay(rate: TaxInclusiveShippingRate, showTaxBreakdown: boolean = true): {
+  formatRateDisplay(
+    rate: TaxInclusiveShippingRate,
+    showTaxBreakdown: boolean = true
+  ): {
     title: string;
     price: string;
     estimatedDelivery: string;
@@ -334,7 +369,7 @@ export class TaxInclusiveShippingCalculator {
     const title = `${rate.courierName} - ${rate.serviceName}`;
     const price = `RM ${rate.finalPrice.toFixed(2)}`;
     const estimatedDelivery = `${rate.estimatedDeliveryDays} ${rate.estimatedDeliveryDays === 1 ? 'day' : 'days'}`;
-    
+
     let taxInfo;
     if (showTaxBreakdown && rate.taxAmount > 0) {
       taxInfo = `Includes RM ${rate.taxAmount.toFixed(2)} ${rate.taxBreakdown.taxDescription}`;
@@ -344,7 +379,7 @@ export class TaxInclusiveShippingCalculator {
       title,
       price,
       estimatedDelivery,
-      taxInfo
+      taxInfo,
     };
   }
 }

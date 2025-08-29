@@ -7,8 +7,9 @@
  * Capitalize first letter of each word
  */
 export function titleCase(str: string): string {
-  return str.replace(/\w\S*/g, (txt) => 
-    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  return str.replace(
+    /\w\S*/g,
+    txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
   );
 }
 
@@ -17,7 +18,7 @@ export function titleCase(str: string): string {
  */
 export function camelCase(str: string): string {
   return str
-    .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => 
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
       index === 0 ? word.toLowerCase() : word.toUpperCase()
     )
     .replace(/\s+/g, '');
@@ -64,12 +65,14 @@ export function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '');
 }
 
-
 /**
  * Count words in text
  */
 export function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter(word => word.length > 0).length;
 }
 
 /**
@@ -114,9 +117,14 @@ export function highlightText(
   searchTerm: string,
   className: string = 'highlight'
 ): string {
-  if (!searchTerm.trim()) return text;
-  
-  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  if (!searchTerm.trim()) {
+    return text;
+  }
+
+  const regex = new RegExp(
+    `(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+    'gi'
+  );
   return text.replace(regex, `<span class="${className}">$1</span>`);
 }
 
@@ -135,7 +143,11 @@ export function createSlug(text: string): string {
 /**
  * Pluralize word based on count
  */
-export function pluralize(word: string, count: number, suffix: string = 's'): string {
+export function pluralize(
+  word: string,
+  count: number,
+  suffix: string = 's'
+): string {
   return count === 1 ? word : word + suffix;
 }
 
@@ -145,23 +157,25 @@ export function pluralize(word: string, count: number, suffix: string = 's'): st
 export function similarity(str1: string, str2: string): number {
   const longer = str1.length > str2.length ? str1 : str2;
   const shorter = str1.length > str2.length ? str2 : str1;
-  
-  if (longer.length === 0) return 1.0;
-  
+
+  if (longer.length === 0) {
+    return 1.0;
+  }
+
   return (longer.length - editDistance(longer, shorter)) / longer.length;
 }
 
 function editDistance(str1: string, str2: string): number {
   const matrix = [];
-  
+
   for (let i = 0; i <= str2.length; i++) {
     matrix[i] = [i];
   }
-  
+
   for (let j = 0; j <= str1.length; j++) {
     matrix[0][j] = j;
   }
-  
+
   for (let i = 1; i <= str2.length; i++) {
     for (let j = 1; j <= str1.length; j++) {
       if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
@@ -175,7 +189,7 @@ function editDistance(str1: string, str2: string): number {
       }
     }
   }
-  
+
   return matrix[str2.length][str1.length];
 }
 
@@ -191,11 +205,11 @@ export function maskString(
   if (str.length <= visibleStart + visibleEnd) {
     return str;
   }
-  
+
   const start = str.slice(0, visibleStart);
   const end = str.slice(-visibleEnd);
   const maskLength = str.length - visibleStart - visibleEnd;
-  
+
   return start + maskChar.repeat(maskLength) + end;
 }
 
@@ -203,18 +217,14 @@ export function maskString(
  * Format text for display with proper line breaks
  */
 export function formatTextWithBreaks(text: string): string {
-  return text
-    .replace(/\n/g, '<br>')
-    .replace(/\r/g, '');
+  return text.replace(/\n/g, '<br>').replace(/\r/g, '');
 }
 
 /**
  * Remove extra whitespace and normalize
  */
 export function normalizeWhitespace(str: string): string {
-  return str
-    .replace(/\s+/g, ' ')
-    .trim();
+  return str.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -223,7 +233,7 @@ export function normalizeWhitespace(str: string): string {
 export function containsProfanity(text: string): boolean {
   const profanityList = ['badword1', 'badword2']; // Add actual profanity list
   const lowerText = text.toLowerCase();
-  
+
   return profanityList.some(word => lowerText.includes(word));
 }
 

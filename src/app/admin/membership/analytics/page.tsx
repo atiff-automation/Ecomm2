@@ -21,7 +21,6 @@ import {
   Award,
   DollarSign,
   Target,
-  Calendar,
   BarChart3,
   PieChart,
   Download,
@@ -196,7 +195,6 @@ export default function MemberAnalyticsPage() {
     const totalPrevious = data[data.length - 2]?.newMembers || 0;
     const totalGrowth = calculateGrowthRate(totalCurrent, totalPrevious);
 
-    let positiveMonths = 0;
     let totalChange = 0;
 
     for (let i = 1; i < data.length; i++) {
@@ -205,9 +203,6 @@ export default function MemberAnalyticsPage() {
         data[i - 1].newMembers
       );
       totalChange += change;
-      if (change > 0) {
-        positiveMonths++;
-      }
     }
 
     const avgGrowth = totalChange / (data.length - 1);
@@ -229,7 +224,11 @@ export default function MemberAnalyticsPage() {
   const tabs: TabConfig[] = [
     { id: 'directory', label: 'Directory', href: '/admin/customers' },
     { id: 'membership', label: 'Membership', href: '/admin/membership' },
-    { id: 'analytics', label: 'Analytics', href: '/admin/membership/analytics' },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      href: '/admin/membership/analytics',
+    },
     { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
   ];
 
@@ -242,15 +241,10 @@ export default function MemberAnalyticsPage() {
         disabled={refreshing}
         size="sm"
       >
-        <RefreshCw
-          className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-        />
+        <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         Refresh Data
       </Button>
-      <Button
-        onClick={handleExportData}
-        size="sm"
-      >
+      <Button onClick={handleExportData} size="sm">
         <Download className="w-4 h-4 mr-2" />
         Export
       </Button>
@@ -265,7 +259,6 @@ export default function MemberAnalyticsPage() {
       tabs={tabs}
       loading={loading}
     >
-
       {stats && (
         <>
           {/* Key Metrics Overview */}

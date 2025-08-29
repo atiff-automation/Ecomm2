@@ -61,9 +61,9 @@ export async function GET(
         shipment: {
           include: {
             trackingEvents: {
-              orderBy: { eventTime: 'desc' }
-            }
-          }
+              orderBy: { eventTime: 'desc' },
+            },
+          },
         },
       },
     });

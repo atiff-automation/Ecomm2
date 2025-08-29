@@ -12,8 +12,8 @@ import { authOptions } from '@/lib/auth/config';
 /**
  * GET /api/customer/orders/[id]/tracking
  * Get tracking information for a customer's order
- * 
- * Security: 
+ *
+ * Security:
  * - Requires authentication
  * - User can only access their own orders
  * - Filters sensitive tracking data
@@ -24,7 +24,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -44,11 +44,11 @@ export async function GET(
         shipment: {
           include: {
             trackingEvents: {
-              orderBy: { eventTime: 'desc' }
-            }
-          }
-        }
-      }
+              orderBy: { eventTime: 'desc' },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -66,8 +66,8 @@ export async function GET(
           orderNumber: order.orderNumber,
           status: order.status,
           hasShipment: false,
-          message: 'Order not yet shipped'
-        }
+          message: 'Order not yet shipped',
+        },
       });
     }
 
@@ -82,21 +82,20 @@ export async function GET(
       estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
       actualDelivery: order.shipment.actualDelivery?.toISOString(),
       hasShipment: true,
-      
+
       // Filter tracking events to remove sensitive internal data
       trackingEvents: order.shipment.trackingEvents.map(event => ({
         eventName: event.eventName,
         description: event.description,
         timestamp: event.eventTime.toISOString(),
         location: event.location || undefined, // Only include if available
-      }))
+      })),
     };
 
     return NextResponse.json({
       success: true,
-      tracking: customerTrackingData
+      tracking: customerTrackingData,
     });
-
   } catch (error) {
     console.error('Error fetching customer tracking:', error);
     return NextResponse.json(
@@ -109,7 +108,7 @@ export async function GET(
 /**
  * POST /api/customer/orders/[id]/tracking/refresh
  * Refresh tracking data from EasyParcel API
- * 
+ *
  * Security:
  * - Requires authentication
  * - Rate limited: 10 requests per minute per user
@@ -121,7 +120,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -138,8 +137,8 @@ export async function POST(
         userId: session.user.id,
       },
       include: {
-        shipment: true
-      }
+        shipment: true,
+      },
     });
 
     if (!order) {
@@ -160,40 +159,54 @@ export async function POST(
     // For now, we'll implement a simple time-based check
     const lastUpdate = order.shipment.updatedAt;
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    
+
     if (lastUpdate > fiveMinutesAgo) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Tracking was updated recently. Please wait before refreshing again.',
-          nextRefreshAvailable: new Date(lastUpdate.getTime() + 5 * 60 * 1000).toISOString()
+        {
+          success: false,
+          error:
+            'Tracking was updated recently. Please wait before refreshing again.',
+          nextRefreshAvailable: new Date(
+            lastUpdate.getTime() + 5 * 60 * 1000
+          ).toISOString(),
         },
         { status: 429 }
       );
     }
 
     // Import and use existing admin tracking refresh logic
-    const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
-    
+    const { easyParcelService } = await import(
+      '@/lib/shipping/easyparcel-service'
+    );
+
     try {
-      const trackingData = await easyParcelService.trackShipment(order.shipment.trackingNumber);
-      
+      const trackingData = await easyParcelService.trackShipment(
+        order.shipment.trackingNumber
+      );
+
       // Update shipment with new tracking data
       await prisma.shipment.update({
         where: { id: order.shipment.id },
         data: {
           status: trackingData.status as any,
           statusDescription: trackingData.description || trackingData.status,
-          estimatedDelivery: trackingData.estimated_delivery ? new Date(trackingData.estimated_delivery) : null,
-          actualDelivery: trackingData.actual_delivery ? new Date(trackingData.actual_delivery) : null,
-        }
+          estimatedDelivery: trackingData.estimated_delivery
+            ? new Date(trackingData.estimated_delivery)
+            : null,
+          actualDelivery: trackingData.actual_delivery
+            ? new Date(trackingData.actual_delivery)
+            : null,
+        },
       });
 
       // Update tracking events if available
-      if (trackingData.tracking_events && trackingData.tracking_events.length > 0) {
+      if (
+        trackingData.tracking_events &&
+        trackingData.tracking_events.length > 0
+      ) {
         // Get existing events to avoid duplicates
         const existingEvents = await prisma.shipmentTracking.findMany({
-          where: { shipmentId: order.shipment.id }
+          where: { shipmentId: order.shipment.id },
         });
 
         const existingEventKeys = new Set(
@@ -212,11 +225,12 @@ export async function POST(
               shipmentId: order.shipment!.id,
               eventCode: event.event_code || event.status,
               eventName: event.event_name || event.status,
-              description: event.description || event.event_name || event.status,
+              description:
+                event.description || event.event_name || event.status,
               location: event.location,
               eventTime: new Date(event.timestamp || event.event_time),
-              source: 'EASYPARCEL'
-            }))
+              source: 'EASYPARCEL',
+            })),
           });
         }
       }
@@ -231,27 +245,26 @@ export async function POST(
           details: {
             orderId: order.id,
             orderNumber: order.orderNumber,
-            trackingNumber: order.shipment.trackingNumber
-          }
-        }
+            trackingNumber: order.shipment.trackingNumber,
+          },
+        },
       });
 
       return NextResponse.json({
         success: true,
-        message: 'Tracking information updated successfully'
+        message: 'Tracking information updated successfully',
       });
-
     } catch (apiError) {
       console.error('EasyParcel API error:', apiError);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Unable to fetch latest tracking information. Please try again later.' 
+        {
+          success: false,
+          error:
+            'Unable to fetch latest tracking information. Please try again later.',
         },
         { status: 503 } // Service Unavailable
       );
     }
-
   } catch (error) {
     console.error('Error refreshing customer tracking:', error);
     return NextResponse.json(

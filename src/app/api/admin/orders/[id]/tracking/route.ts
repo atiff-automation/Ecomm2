@@ -16,15 +16,15 @@ export async function GET(
 
     const order = await prisma.order.findUnique({
       where: { id: params.id },
-      include: { 
+      include: {
         shipment: {
           include: {
             trackingEvents: {
-              orderBy: { eventTime: 'desc' }
-            }
-          }
-        }
-      }
+              orderBy: { eventTime: 'desc' },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -32,7 +32,10 @@ export async function GET(
     }
 
     if (!order.shipment?.trackingNumber) {
-      return NextResponse.json({ error: 'No tracking available for this order' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No tracking available for this order' },
+        { status: 404 }
+      );
     }
 
     // Return cached tracking data
@@ -50,15 +53,18 @@ export async function GET(
           timestamp: event.eventTime.toISOString(),
           status: event.eventName,
           location: event.location,
-          description: event.description
+          description: event.description,
         })),
         lastTrackedAt: order.shipment.updatedAt,
-        updatedAt: order.shipment.updatedAt
-      }
+        updatedAt: order.shipment.updatedAt,
+      },
     });
   } catch (error) {
     console.error('Error fetching tracking data:', error);
-    return NextResponse.json({ error: 'Failed to fetch tracking data' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch tracking data' },
+      { status: 500 }
+    );
   }
 }
 
@@ -74,9 +80,9 @@ export async function POST(
 
     const order = await prisma.order.findUnique({
       where: { id: params.id },
-      include: { 
-        shipment: true 
-      }
+      include: {
+        shipment: true,
+      },
     });
 
     if (!order) {
@@ -84,29 +90,41 @@ export async function POST(
     }
 
     if (!order.shipment?.trackingNumber) {
-      return NextResponse.json({ error: 'No tracking available for this order' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No tracking available for this order' },
+        { status: 404 }
+      );
     }
 
     // Force refresh tracking from EasyParcel API
     try {
-      const trackingData = await easyParcelService.trackShipment(order.shipment.trackingNumber);
-      
+      const trackingData = await easyParcelService.trackShipment(
+        order.shipment.trackingNumber
+      );
+
       // Update database with fresh tracking data
       const updatedShipment = await prisma.shipment.update({
         where: { id: order.shipment.id },
         data: {
           status: trackingData.status as any, // Cast to match enum
           statusDescription: trackingData.description || trackingData.status,
-          estimatedDelivery: trackingData.estimated_delivery ? new Date(trackingData.estimated_delivery) : null,
-          actualDelivery: trackingData.actual_delivery ? new Date(trackingData.actual_delivery) : null,
-        }
+          estimatedDelivery: trackingData.estimated_delivery
+            ? new Date(trackingData.estimated_delivery)
+            : null,
+          actualDelivery: trackingData.actual_delivery
+            ? new Date(trackingData.actual_delivery)
+            : null,
+        },
       });
 
       // Update tracking events if available
-      if (trackingData.tracking_events && trackingData.tracking_events.length > 0) {
+      if (
+        trackingData.tracking_events &&
+        trackingData.tracking_events.length > 0
+      ) {
         // Clear existing events and add new ones
         await prisma.shipmentTracking.deleteMany({
-          where: { shipmentId: order.shipment.id }
+          where: { shipmentId: order.shipment.id },
         });
 
         await prisma.shipmentTracking.createMany({
@@ -117,8 +135,8 @@ export async function POST(
             description: event.description || event.event_name || event.status,
             location: event.location,
             eventTime: new Date(event.timestamp || event.event_time),
-            source: 'EASYPARCEL'
-          }))
+            source: 'EASYPARCEL',
+          })),
         });
       }
 
@@ -133,23 +151,23 @@ export async function POST(
             trackingNumber: order.shipment.trackingNumber,
             previousStatus: order.shipment.status,
             newStatus: trackingData.status,
-            eventsCount: trackingData.tracking_events?.length || 0
-          }
-        }
+            eventsCount: trackingData.tracking_events?.length || 0,
+          },
+        },
       });
 
       // Fetch updated data with events
       const refreshedOrder = await prisma.order.findUnique({
         where: { id: params.id },
-        include: { 
+        include: {
           shipment: {
             include: {
               trackingEvents: {
-                orderBy: { eventTime: 'desc' }
-              }
-            }
-          }
-        }
+                orderBy: { eventTime: 'desc' },
+              },
+            },
+          },
+        },
       });
 
       return NextResponse.json({
@@ -163,39 +181,47 @@ export async function POST(
           serviceName: refreshedOrder!.shipment!.serviceName,
           estimatedDelivery: refreshedOrder!.shipment!.estimatedDelivery,
           actualDelivery: refreshedOrder!.shipment!.actualDelivery,
-          trackingEvents: refreshedOrder!.shipment!.trackingEvents.map(event => ({
-            timestamp: event.eventTime.toISOString(),
-            status: event.eventName,
-            location: event.location,
-            description: event.description
-          })),
+          trackingEvents: refreshedOrder!.shipment!.trackingEvents.map(
+            event => ({
+              timestamp: event.eventTime.toISOString(),
+              status: event.eventName,
+              location: event.location,
+              description: event.description,
+            })
+          ),
           lastTrackedAt: refreshedOrder!.shipment!.updatedAt,
-          updatedAt: refreshedOrder!.shipment!.updatedAt
-        }
+          updatedAt: refreshedOrder!.shipment!.updatedAt,
+        },
       });
     } catch (trackingError) {
       console.error('Error refreshing tracking:', trackingError);
-      
+
       // Return existing data with error flag
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to refresh tracking from courier',
-        tracking: {
-          trackingNumber: order.shipment.trackingNumber,
-          status: order.shipment.status,
-          statusDescription: order.shipment.statusDescription,
-          courierName: order.shipment.courierName,
-          serviceName: order.shipment.serviceName,
-          estimatedDelivery: order.shipment.estimatedDelivery,
-          actualDelivery: order.shipment.actualDelivery,
-          trackingEvents: [],
-          lastTrackedAt: order.shipment.updatedAt,
-          updatedAt: order.shipment.updatedAt
-        }
-      }, { status: 206 }); // 206 Partial Content
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to refresh tracking from courier',
+          tracking: {
+            trackingNumber: order.shipment.trackingNumber,
+            status: order.shipment.status,
+            statusDescription: order.shipment.statusDescription,
+            courierName: order.shipment.courierName,
+            serviceName: order.shipment.serviceName,
+            estimatedDelivery: order.shipment.estimatedDelivery,
+            actualDelivery: order.shipment.actualDelivery,
+            trackingEvents: [],
+            lastTrackedAt: order.shipment.updatedAt,
+            updatedAt: order.shipment.updatedAt,
+          },
+        },
+        { status: 206 }
+      ); // 206 Partial Content
     }
   } catch (error) {
     console.error('Error in tracking refresh:', error);
-    return NextResponse.json({ error: 'Failed to refresh tracking data' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to refresh tracking data' },
+      { status: 500 }
+    );
   }
 }

@@ -35,17 +35,27 @@ interface BalanceInfo {
   };
 }
 
-function determineBalanceStatus(balance: number): 'sufficient' | 'low' | 'critical' {
+function determineBalanceStatus(
+  balance: number
+): 'sufficient' | 'low' | 'critical' {
   const lowThreshold = parseFloat(process.env.BALANCE_LOW_THRESHOLD || '100');
-  const criticalThreshold = parseFloat(process.env.BALANCE_CRITICAL_THRESHOLD || '20');
+  const criticalThreshold = parseFloat(
+    process.env.BALANCE_CRITICAL_THRESHOLD || '20'
+  );
 
-  if (balance <= criticalThreshold) return 'critical';
-  if (balance <= lowThreshold) return 'low';
+  if (balance <= criticalThreshold) {
+    return 'critical';
+  }
+  if (balance <= lowThreshold) {
+    return 'low';
+  }
   return 'sufficient';
 }
 
 function isCacheValid(): boolean {
-  if (!balanceCache) return false;
+  if (!balanceCache) {
+    return false;
+  }
   const age = Date.now() - balanceCache.timestamp;
   return age < CACHE_DURATION_MS;
 }
@@ -54,13 +64,13 @@ async function getBalanceFromAPI(): Promise<any> {
   try {
     console.log('💳 Fetching EasyParcel balance from API...');
     const result = await easyParcelService.checkCreditBalance();
-    
+
     // Cache the result
     balanceCache = {
       data: result,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     console.log(`✅ Balance retrieved: RM ${result.balance}`);
     return result;
   } catch (error) {
@@ -76,8 +86,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -97,30 +113,33 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate cache age
-    const cacheAge = balanceCache ? Math.floor((Date.now() - balanceCache.timestamp) / 1000) : 0;
-    
+    const cacheAge = balanceCache
+      ? Math.floor((Date.now() - balanceCache.timestamp) / 1000)
+      : 0;
+
     // Build response
     const balanceInfo: BalanceInfo = {
       current: balanceData.balance,
       currency: balanceData.currency || 'MYR',
-      lastUpdated: new Date(balanceCache?.timestamp || Date.now()).toISOString(),
+      lastUpdated: new Date(
+        balanceCache?.timestamp || Date.now()
+      ).toISOString(),
       status: determineBalanceStatus(balanceData.balance),
       threshold: {
         low: parseFloat(process.env.BALANCE_LOW_THRESHOLD || '100'),
-        critical: parseFloat(process.env.BALANCE_CRITICAL_THRESHOLD || '20')
+        critical: parseFloat(process.env.BALANCE_CRITICAL_THRESHOLD || '20'),
       },
       cacheInfo: {
         cached: fromCache,
-        age: cacheAge
-      }
+        age: cacheAge,
+      },
     };
 
     return NextResponse.json({
       success: true,
       balance: balanceInfo,
-      wallets: balanceData.wallets || []
+      wallets: balanceData.wallets || [],
     });
-
   } catch (error) {
     console.error('Balance API error:', error);
     return handleApiError(error);
@@ -134,8 +153,14 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -145,7 +170,7 @@ export async function POST(request: NextRequest) {
       case 'refresh':
         // Force refresh balance from API
         const balanceData = await getBalanceFromAPI();
-        
+
         const balanceInfo: BalanceInfo = {
           current: balanceData.balance,
           currency: balanceData.currency || 'MYR',
@@ -153,28 +178,35 @@ export async function POST(request: NextRequest) {
           status: determineBalanceStatus(balanceData.balance),
           threshold: {
             low: parseFloat(process.env.BALANCE_LOW_THRESHOLD || '100'),
-            critical: parseFloat(process.env.BALANCE_CRITICAL_THRESHOLD || '20')
+            critical: parseFloat(
+              process.env.BALANCE_CRITICAL_THRESHOLD || '20'
+            ),
           },
           cacheInfo: {
             cached: false,
-            age: 0
-          }
+            age: 0,
+          },
         };
 
         return NextResponse.json({
           success: true,
           balance: balanceInfo,
-          message: 'Balance refreshed successfully'
+          message: 'Balance refreshed successfully',
         });
 
       case 'deduct_estimate':
         // Update cache with estimated balance after shipping action
         if (balanceCache && typeof estimatedDeduction === 'number') {
-          const newBalance = Math.max(0, balanceCache.data.balance - estimatedDeduction);
+          const newBalance = Math.max(
+            0,
+            balanceCache.data.balance - estimatedDeduction
+          );
           balanceCache.data.balance = newBalance;
-          
-          console.log(`💸 Estimated deduction: RM ${estimatedDeduction}, new balance: RM ${newBalance}`);
-          
+
+          console.log(
+            `💸 Estimated deduction: RM ${estimatedDeduction}, new balance: RM ${newBalance}`
+          );
+
           const updatedInfo: BalanceInfo = {
             current: newBalance,
             currency: 'MYR',
@@ -182,27 +214,26 @@ export async function POST(request: NextRequest) {
             status: determineBalanceStatus(newBalance),
             threshold: {
               low: parseFloat(process.env.BALANCE_LOW_THRESHOLD || '100'),
-              critical: parseFloat(process.env.BALANCE_CRITICAL_THRESHOLD || '20')
+              critical: parseFloat(
+                process.env.BALANCE_CRITICAL_THRESHOLD || '20'
+              ),
             },
             cacheInfo: {
               cached: true,
-              age: Math.floor((Date.now() - balanceCache.timestamp) / 1000)
-            }
+              age: Math.floor((Date.now() - balanceCache.timestamp) / 1000),
+            },
           };
 
           return NextResponse.json({
             success: true,
             balance: updatedInfo,
-            message: 'Balance updated with estimated deduction'
+            message: 'Balance updated with estimated deduction',
           });
         }
         break;
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
     console.error('Balance action error:', error);

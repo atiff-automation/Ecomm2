@@ -36,12 +36,14 @@ export async function initializeCache(options: CacheInitOptions = {}): Promise<{
   if (options.enableRedis !== false) {
     try {
       await redisClient.connect();
-      
+
       if (options.healthCheck !== false) {
         const health = await redisClient.healthCheck();
         if (health.status === 'healthy') {
           results.redis = true;
-          console.log(`✅ Redis connected successfully (${health.latency}ms latency)`);
+          console.log(
+            `✅ Redis connected successfully (${health.latency}ms latency)`
+          );
         } else {
           results.errors.push(`Redis health check failed: ${health.error}`);
         }
@@ -50,9 +52,12 @@ export async function initializeCache(options: CacheInitOptions = {}): Promise<{
         console.log('✅ Redis connection established');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown Redis error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown Redis error';
       results.errors.push(`Redis initialization failed: ${errorMessage}`);
-      console.warn('⚠️ Redis initialization failed, using memory cache fallback');
+      console.warn(
+        '⚠️ Redis initialization failed, using memory cache fallback'
+      );
     }
   }
 
@@ -66,7 +71,8 @@ export async function initializeCache(options: CacheInitOptions = {}): Promise<{
       await CacheWarmer.warmUp(options.warmupTasks);
       console.log('🔥 Cache warming completed');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Cache warming failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Cache warming failed';
       results.errors.push(`Cache warming failed: ${errorMessage}`);
       console.warn('⚠️ Cache warming partially failed');
     }
@@ -105,15 +111,21 @@ export function createCacheHealthCheck() {
   return async (req: any, res: any, next: any) => {
     try {
       const health = await cacheManager.healthCheck();
-      
+
       // Add cache health to request context
       req.cacheHealth = health;
-      
+
       // Log slow cache operations
-      if (health.redis.status === 'healthy' && health.redis.latency && health.redis.latency > 100) {
-        console.warn(`⚠️ Slow cache operation detected: ${health.redis.latency}ms`);
+      if (
+        health.redis.status === 'healthy' &&
+        health.redis.latency &&
+        health.redis.latency > 100
+      ) {
+        console.warn(
+          `⚠️ Slow cache operation detected: ${health.redis.latency}ms`
+        );
       }
-      
+
       next();
     } catch (error) {
       console.error('Cache health check failed:', error);
@@ -134,7 +146,7 @@ export async function getCacheStatistics() {
   try {
     const stats = await cacheManager.getStats();
     const health = await cacheManager.healthCheck();
-    
+
     return {
       timestamp: new Date().toISOString(),
       health,
@@ -166,11 +178,13 @@ export class CacheWarmingScheduler {
   /**
    * Start scheduled cache warming
    */
-  start(schedules: Array<{
-    name: string;
-    task: string[];
-    interval: number; // milliseconds
-  }>): void {
+  start(
+    schedules: Array<{
+      name: string;
+      task: string[];
+      interval: number; // milliseconds
+    }>
+  ): void {
     if (this.isRunning) {
       console.warn('Cache warming scheduler is already running');
       return;
@@ -186,14 +200,19 @@ export class CacheWarmingScheduler {
           await CacheWarmer.warmUp(schedule.task);
           console.log(`✅ Completed scheduled cache warming: ${schedule.name}`);
         } catch (error) {
-          console.error(`❌ Scheduled cache warming failed: ${schedule.name}`, error);
+          console.error(
+            `❌ Scheduled cache warming failed: ${schedule.name}`,
+            error
+          );
         }
       }, schedule.interval);
 
       this.intervals.set(schedule.name, interval);
     });
 
-    console.log(`✅ Cache warming scheduler started with ${schedules.length} tasks`);
+    console.log(
+      `✅ Cache warming scheduler started with ${schedules.length} tasks`
+    );
   }
 
   /**

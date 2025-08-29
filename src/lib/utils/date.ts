@@ -23,7 +23,7 @@ export function formatDate(
   } = options;
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -70,7 +70,7 @@ export function formatDateTime(
   } = options;
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -92,20 +92,17 @@ export function formatRelativeTime(
     numeric?: 'always' | 'auto';
   } = {}
 ): string {
-  const {
-    locale = 'en-MY',
-    numeric = 'auto',
-  } = options;
+  const { locale = 'en-MY', numeric = 'auto' } = options;
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
 
   const diffInSeconds = (now.getTime() - dateObj.getTime()) / 1000;
-  
+
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric });
 
   if (Math.abs(diffInSeconds) < 60) {
@@ -129,7 +126,7 @@ export function formatRelativeTime(
 export function isToday(date: Date | string): boolean {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const today = new Date();
-  
+
   return (
     dateObj.getDate() === today.getDate() &&
     dateObj.getMonth() === today.getMonth() &&
@@ -145,7 +142,7 @@ export function isWithinDays(date: Date | string, days: number): boolean {
   const now = new Date();
   const diffInMs = now.getTime() - dateObj.getTime();
   const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-  
+
   return diffInDays >= 0 && diffInDays <= days;
 }
 
@@ -199,23 +196,23 @@ export function getBusinessHoursStatus(
   const now = new Date();
   const [openHour, openMinute] = openTime.split(':').map(Number);
   const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-  
+
   const today = new Date(now);
   const openToday = new Date(today);
   openToday.setHours(openHour, openMinute, 0, 0);
-  
+
   const closeToday = new Date(today);
   closeToday.setHours(closeHour, closeMinute, 0, 0);
-  
+
   const currentTime = now.getTime();
   const openTime_ts = openToday.getTime();
   const closeTime_ts = closeToday.getTime();
-  
+
   const isOpen = currentTime >= openTime_ts && currentTime < closeTime_ts;
-  
+
   let status: 'open' | 'closed' | 'opening_soon' | 'closing_soon';
   let nextChange: Date;
-  
+
   if (isOpen) {
     const timeUntilClose = closeTime_ts - currentTime;
     status = timeUntilClose < 60 * 60 * 1000 ? 'closing_soon' : 'open'; // 1 hour
@@ -233,7 +230,7 @@ export function getBusinessHoursStatus(
       status = 'closed';
     }
   }
-  
+
   return { isOpen, nextChange, status };
 }
 
@@ -257,7 +254,7 @@ export function formatDuration(milliseconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
   if (days > 0) {
     return `${days} day${days !== 1 ? 's' : ''}`;
   } else if (hours > 0) {

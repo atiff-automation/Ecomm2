@@ -134,14 +134,19 @@ export default function OrderDetailPage() {
   }, [session, orderId, router]);
 
   const handleTrackingRefresh = async () => {
-    if (!order?.shipment?.trackingNumber) return;
-    
+    if (!order?.shipment?.trackingNumber) {
+      return;
+    }
+
     setRefreshingTracking(true);
     try {
-      const response = await fetch(`/api/customer/orders/${orderId}/tracking/refresh`, {
-        method: 'POST',
-      });
-      
+      const response = await fetch(
+        `/api/customer/orders/${orderId}/tracking/refresh`,
+        {
+          method: 'POST',
+        }
+      );
+
       if (response.ok) {
         // Refetch order data to get updated tracking
         await fetchOrder();
@@ -169,12 +174,13 @@ export default function OrderDetailPage() {
       return {
         priceType: 'regular',
         savingsText: '',
-        savingsColor: ''
+        savingsColor: '',
       };
     }
 
     // Use stored order-level discount data to determine price type (Source of Truth)
-    const hasPromotionalDiscount = order.discountAmount && order.discountAmount > 0;
+    const hasPromotionalDiscount =
+      order.discountAmount && order.discountAmount > 0;
     const hasMemberDiscount = order.memberDiscount && order.memberDiscount > 0;
 
     if (hasPromotionalDiscount && hasMemberDiscount) {
@@ -183,26 +189,26 @@ export default function OrderDetailPage() {
         return {
           priceType: 'promotional',
           savingsText: 'Promotional savings',
-          savingsColor: 'text-red-600'
+          savingsColor: 'text-red-600',
         };
       } else if (item.appliedPrice === item.memberPrice) {
         return {
           priceType: 'member',
           savingsText: 'Member savings',
-          savingsColor: 'text-green-600'
+          savingsColor: 'text-green-600',
         };
       }
     } else if (hasPromotionalDiscount) {
       return {
         priceType: 'promotional',
         savingsText: 'Promotional savings',
-        savingsColor: 'text-red-600'
+        savingsColor: 'text-red-600',
       };
     } else if (hasMemberDiscount || item.appliedPrice === item.memberPrice) {
       return {
         priceType: 'member',
         savingsText: 'Member savings',
-        savingsColor: 'text-green-600'
+        savingsColor: 'text-green-600',
       };
     }
 
@@ -210,7 +216,7 @@ export default function OrderDetailPage() {
     return {
       priceType: 'discounted',
       savingsText: 'Savings',
-      savingsColor: 'text-gray-600'
+      savingsColor: 'text-gray-600',
     };
   };
 
@@ -366,18 +372,21 @@ export default function OrderDetailPage() {
                     <p className="text-sm text-muted-foreground">
                       {formatPrice(item.appliedPrice)} each
                     </p>
-                    {item.appliedPrice < item.regularPrice && (() => {
-                      const priceInfo = getPriceTypeInfo(item, order);
-                      return priceInfo.savingsText && (
-                        <p className={`text-xs ${priceInfo.savingsColor}`}>
-                          {priceInfo.savingsText}:{' '}
-                          {formatPrice(
-                            (item.regularPrice - item.appliedPrice) *
-                              item.quantity
-                          )}
-                        </p>
-                      );
-                    })()}
+                    {item.appliedPrice < item.regularPrice &&
+                      (() => {
+                        const priceInfo = getPriceTypeInfo(item, order);
+                        return (
+                          priceInfo.savingsText && (
+                            <p className={`text-xs ${priceInfo.savingsColor}`}>
+                              {priceInfo.savingsText}:{' '}
+                              {formatPrice(
+                                (item.regularPrice - item.appliedPrice) *
+                                  item.quantity
+                              )}
+                            </p>
+                          )
+                        );
+                      })()}
                   </div>
                 </div>
               ))}
@@ -408,7 +417,11 @@ export default function OrderDetailPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigator.clipboard.writeText(order.shipment!.trackingNumber!)}
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              order.shipment!.trackingNumber!
+                            )
+                          }
                           className="h-7 w-7 p-0"
                         >
                           <ExternalLink className="h-3 w-3" />
@@ -421,14 +434,18 @@ export default function OrderDetailPage() {
                     <label className="text-sm font-medium text-muted-foreground">
                       Courier
                     </label>
-                    <p className="mt-1">{order.shipment.courierName || 'N/A'}</p>
+                    <p className="mt-1">
+                      {order.shipment.courierName || 'N/A'}
+                    </p>
                   </div>
 
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
                       Service
                     </label>
-                    <p className="mt-1">{order.shipment.serviceName || 'N/A'}</p>
+                    <p className="mt-1">
+                      {order.shipment.serviceName || 'N/A'}
+                    </p>
                   </div>
 
                   <div>
@@ -436,9 +453,9 @@ export default function OrderDetailPage() {
                       Status
                     </label>
                     <div className="mt-1">
-                      <TrackingStatus 
-                        status={order.shipment.status || 'unknown'} 
-                        size="md" 
+                      <TrackingStatus
+                        status={order.shipment.status || 'unknown'}
+                        size="md"
                       />
                     </div>
                   </div>
@@ -478,8 +495,12 @@ export default function OrderDetailPage() {
                       disabled={refreshingTracking}
                       size="sm"
                     >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${refreshingTracking ? 'animate-spin' : ''}`} />
-                      {refreshingTracking ? 'Refreshing...' : 'Refresh Tracking'}
+                      <RefreshCw
+                        className={`h-4 w-4 mr-2 ${refreshingTracking ? 'animate-spin' : ''}`}
+                      />
+                      {refreshingTracking
+                        ? 'Refreshing...'
+                        : 'Refresh Tracking'}
                     </Button>
                   </div>
                 )}
@@ -488,15 +509,16 @@ export default function OrderDetailPage() {
           )}
 
           {/* Tracking Timeline */}
-          {order.shipment?.trackingEvents && order.shipment.trackingEvents.length > 0 && (
-            <TrackingTimelineCard
-              events={order.shipment.trackingEvents}
-              currentStatus={order.shipment.status || 'unknown'}
-              estimatedDelivery={order.shipment.estimatedDelivery}
-              onRefresh={handleTrackingRefresh}
-              refreshing={refreshingTracking}
-            />
-          )}
+          {order.shipment?.trackingEvents &&
+            order.shipment.trackingEvents.length > 0 && (
+              <TrackingTimelineCard
+                events={order.shipment.trackingEvents}
+                currentStatus={order.shipment.status || 'unknown'}
+                estimatedDelivery={order.shipment.estimatedDelivery}
+                onRefresh={handleTrackingRefresh}
+                refreshing={refreshingTracking}
+              />
+            )}
 
           {/* Shipping Address */}
           {order.shippingAddress && (

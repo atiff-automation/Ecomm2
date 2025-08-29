@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
     // Get business configuration
     const profile = await businessShippingConfig.getBusinessProfile();
     const pickupAddress = await businessShippingConfig.getPickupAddress();
-    
+
     if (!profile) {
       return NextResponse.json(
         { error: 'Business profile not configured' },
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
         city: pickupAddress.city,
         state: pickupAddress.state,
         postcode: pickupAddress.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       delivery_address: {
         name: 'Test Customer',
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
         city: testDestination.city,
         state: testDestination.state,
         postcode: testDestination.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       parcel: {
         weight: 1.0,
@@ -72,24 +75,25 @@ export async function POST(request: NextRequest) {
         width: 15,
         height: 10,
         content: 'Test package',
-        value: 100
+        value: 100,
       },
       service_types: ['STANDARD'],
       insurance: false,
-      cod: false
+      cod: false,
     };
 
     console.log('🧪 Testing shipping configuration with:', testRequest);
 
     // Get rates from EasyParcel
-    const easyParcelResponse = await easyParcelService.calculateRates(testRequest);
-    
+    const easyParcelResponse =
+      await easyParcelService.calculateRates(testRequest);
+
     if (!easyParcelResponse.rates || easyParcelResponse.rates.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'No shipping rates available for test destination',
-          details: easyParcelResponse
+          details: easyParcelResponse,
         },
         { status: 400 }
       );
@@ -128,28 +132,27 @@ export async function POST(request: NextRequest) {
           autoSelectEnabled: profile.courierPreferences.autoSelectCheapest,
           customerChoiceHidden: !profile.courierPreferences.showCustomerChoice,
           preferredCouriers: profile.courierPreferences.preferredCouriers,
-          freeShippingThreshold: profile.shippingPolicies.freeShippingThreshold
+          freeShippingThreshold: profile.shippingPolicies.freeShippingThreshold,
         },
         testParameters: {
           pickup: {
             city: pickupAddress.city,
             state: pickupAddress.state,
-            postcode: pickupAddress.postcode
+            postcode: pickupAddress.postcode,
           },
           destination: testDestination,
-          parcel: testRequest.parcel
-        }
-      }
+          parcel: testRequest.parcel,
+        },
+      },
     });
-
   } catch (error) {
     console.error('❌ Shipping configuration test error:', error);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Shipping test failed',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

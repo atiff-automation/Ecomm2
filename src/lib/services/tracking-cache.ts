@@ -14,7 +14,11 @@ import {
   TrackingRefactorError,
   CacheConsistencyError,
 } from '../types/tracking-refactor';
-import { TRACKING_REFACTOR_CONFIG, calculateNextUpdate, isTerminalStatus } from '../config/tracking-refactor';
+import {
+  TRACKING_REFACTOR_CONFIG,
+  calculateNextUpdate,
+  isTerminalStatus,
+} from '../config/tracking-refactor';
 
 const prisma = new PrismaClient();
 
@@ -23,12 +27,20 @@ const prisma = new PrismaClient();
 /**
  * Create a new tracking cache entry
  */
-export const createTrackingCache = async (data: CreateTrackingCacheData): Promise<TrackingCacheWithRelations> => {
+export const createTrackingCache = async (
+  data: CreateTrackingCacheData
+): Promise<TrackingCacheWithRelations> => {
   try {
     // Validate order exists
     const order = await prisma.order.findUnique({
       where: { id: data.orderId },
-      select: { id: true, orderNumber: true, userId: true, guestEmail: true, status: true },
+      select: {
+        id: true,
+        orderNumber: true,
+        userId: true,
+        guestEmail: true,
+        status: true,
+      },
     });
 
     if (!order) {
@@ -63,7 +75,9 @@ export const createTrackingCache = async (data: CreateTrackingCacheData): Promis
         estimatedDelivery: data.estimatedDelivery,
         lastApiUpdate: data.lastApiUpdate,
         nextUpdateDue: data.nextUpdateDue,
-        updateFrequencyMinutes: data.updateFrequencyMinutes || TRACKING_REFACTOR_CONFIG.UPDATE_FREQUENCIES.IN_TRANSIT,
+        updateFrequencyMinutes:
+          data.updateFrequencyMinutes ||
+          TRACKING_REFACTOR_CONFIG.UPDATE_FREQUENCIES.IN_TRANSIT,
         isDelivered: isTerminalStatus(data.currentStatus),
         isActive: !isTerminalStatus(data.currentStatus),
       },
@@ -100,7 +114,9 @@ export const createTrackingCache = async (data: CreateTrackingCacheData): Promis
 /**
  * Get tracking cache by order ID
  */
-export const getTrackingCacheByOrderId = async (orderId: string): Promise<TrackingCacheWithRelations | null> => {
+export const getTrackingCacheByOrderId = async (
+  orderId: string
+): Promise<TrackingCacheWithRelations | null> => {
   try {
     const trackingCache = await prisma.trackingCache.findUnique({
       where: { orderId },
@@ -140,7 +156,9 @@ export const getTrackingCacheByOrderId = async (orderId: string): Promise<Tracki
 /**
  * Get tracking cache by tracking number
  */
-export const getTrackingCacheByTrackingNumber = async (trackingNumber: string): Promise<TrackingCacheWithRelations | null> => {
+export const getTrackingCacheByTrackingNumber = async (
+  trackingNumber: string
+): Promise<TrackingCacheWithRelations | null> => {
   try {
     const trackingCache = await prisma.trackingCache.findFirst({
       where: { courierTrackingNumber: trackingNumber },
@@ -199,19 +217,21 @@ export const updateTrackingCache = async (
     }
 
     // Check if status changed and calculate new update schedule
-    const statusChanged = data.currentStatus && data.currentStatus !== currentCache.currentStatus;
-    const newNextUpdateDue = data.nextUpdateDue || (statusChanged 
-      ? calculateNextUpdate(
-          data.currentStatus || currentCache.currentStatus,
-          new Date(),
-          data.consecutiveFailures || currentCache.consecutiveFailures,
-          data.estimatedDelivery || currentCache.estimatedDelivery
-        )
-      : currentCache.nextUpdateDue
-    );
+    const statusChanged =
+      data.currentStatus && data.currentStatus !== currentCache.currentStatus;
+    const newNextUpdateDue =
+      data.nextUpdateDue ||
+      (statusChanged
+        ? calculateNextUpdate(
+            data.currentStatus || currentCache.currentStatus,
+            new Date(),
+            data.consecutiveFailures || currentCache.consecutiveFailures,
+            data.estimatedDelivery || currentCache.estimatedDelivery
+          )
+        : currentCache.nextUpdateDue);
 
     // Update delivered and active flags based on status
-    let updateData = { ...data };
+    const updateData = { ...data };
     if (data.currentStatus) {
       updateData.isDelivered = isTerminalStatus(data.currentStatus);
       updateData.isActive = !isTerminalStatus(data.currentStatus);
@@ -263,10 +283,12 @@ export const updateTrackingCache = async (
 /**
  * Get tracking caches due for update
  */
-export const getTrackingCachesDueForUpdate = async (limit: number = 10): Promise<TrackingCacheWithRelations[]> => {
+export const getTrackingCachesDueForUpdate = async (
+  limit: number = 10
+): Promise<TrackingCacheWithRelations[]> => {
   try {
     const now = new Date();
-    
+
     const caches = await prisma.trackingCache.findMany({
       where: {
         isActive: true,
@@ -372,7 +394,8 @@ export const createJob = async (data: CreateJobData): Promise<string> => {
       data: {
         trackingCacheId: data.trackingCacheId,
         jobType: data.jobType,
-        priority: data.priority || TRACKING_REFACTOR_CONFIG.JOB_PRIORITIES.SCHEDULED,
+        priority:
+          data.priority || TRACKING_REFACTOR_CONFIG.JOB_PRIORITIES.SCHEDULED,
         scheduledFor: data.scheduledFor,
         maxAttempts: data.maxAttempts || 3,
       },
@@ -473,7 +496,9 @@ export const updateJobStatus = async (
 /**
  * Create update log
  */
-export const createUpdateLog = async (data: CreateUpdateLogData): Promise<string> => {
+export const createUpdateLog = async (
+  data: CreateUpdateLogData
+): Promise<string> => {
   try {
     const log = await prisma.trackingUpdateLog.create({
       data,
@@ -494,7 +519,10 @@ export const createUpdateLog = async (data: CreateUpdateLogData): Promise<string
 /**
  * Get update logs for a tracking cache
  */
-export const getUpdateLogs = async (trackingCacheId: string, limit: number = 50) => {
+export const getUpdateLogs = async (
+  trackingCacheId: string,
+  limit: number = 50
+) => {
   try {
     const logs = await prisma.trackingUpdateLog.findMany({
       where: { trackingCacheId },
@@ -567,7 +595,9 @@ export const getCacheStatistics = async () => {
 /**
  * Clean up old completed jobs
  */
-export const cleanupCompletedJobs = async (olderThanDays: number = 7): Promise<number> => {
+export const cleanupCompletedJobs = async (
+  olderThanDays: number = 7
+): Promise<number> => {
   try {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
@@ -596,7 +626,9 @@ export const cleanupCompletedJobs = async (olderThanDays: number = 7): Promise<n
 /**
  * Validate cache consistency
  */
-export const validateCacheConsistency = async (): Promise<Array<{ orderId: string; issues: string[] }>> => {
+export const validateCacheConsistency = async (): Promise<
+  Array<{ orderId: string; issues: string[] }>
+> => {
   try {
     const issues: Array<{ orderId: string; issues: string[] }> = [];
 
@@ -627,20 +659,26 @@ export const validateCacheConsistency = async (): Promise<Array<{ orderId: strin
           { isActive: false, isDelivered: false, isFailed: false },
         ],
       },
-      select: { orderId: true, currentStatus: true, isDelivered: true, isActive: true, isFailed: true },
+      select: {
+        orderId: true,
+        currentStatus: true,
+        isDelivered: true,
+        isActive: true,
+        isFailed: true,
+      },
     });
 
     inconsistentCaches.forEach(cache => {
       const cacheIssues: string[] = [];
-      
+
       if (!cache.isDelivered && cache.currentStatus === 'DELIVERED') {
         cacheIssues.push('Status is DELIVERED but isDelivered is false');
       }
-      
+
       if (cache.isActive && cache.isDelivered) {
         cacheIssues.push('Cache is both active and delivered');
       }
-      
+
       if (!cache.isActive && !cache.isDelivered && !cache.isFailed) {
         cacheIssues.push('Cache is inactive but not delivered or failed');
       }
@@ -664,6 +702,4 @@ export const validateCacheConsistency = async (): Promise<Array<{ orderId: strin
 
 // ==================== EXPORTS ====================
 
-export {
-  prisma as trackingCachePrisma,
-};
+export { prisma as trackingCachePrisma };

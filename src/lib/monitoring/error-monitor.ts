@@ -56,7 +56,11 @@ export interface MonitoringConfig {
 class ErrorMonitor {
   private static instance: ErrorMonitor;
   private config: MonitoringConfig;
-  private breadcrumbs: Array<{ timestamp: string; message: string; level: string }> = [];
+  private breadcrumbs: Array<{
+    timestamp: string;
+    message: string;
+    level: string;
+  }> = [];
   private performanceObserver?: PerformanceObserver;
   private errorCount = 0;
   private lastErrorTime = 0;
@@ -94,7 +98,9 @@ class ErrorMonitor {
   }
 
   private initialize() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     this.setupGlobalErrorHandlers();
     this.setupPerformanceMonitoring();
@@ -104,10 +110,10 @@ class ErrorMonitor {
 
   private setupGlobalErrorHandlers() {
     // Catch unhandled JavaScript errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       const error = new Error(event.message);
       error.stack = `${event.filename}:${event.lineno}:${event.colno}`;
-      
+
       this.reportError(error, {
         type: 'javascript-error',
         filename: event.filename,
@@ -117,11 +123,12 @@ class ErrorMonitor {
     });
 
     // Catch unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      const error = event.reason instanceof Error 
-        ? event.reason 
-        : new Error(String(event.reason));
-      
+    window.addEventListener('unhandledrejection', event => {
+      const error =
+        event.reason instanceof Error
+          ? event.reason
+          : new Error(String(event.reason));
+
       this.reportError(error, {
         type: 'promise-rejection',
         reason: event.reason,
@@ -133,7 +140,9 @@ class ErrorMonitor {
   }
 
   private setupPerformanceMonitoring() {
-    if (!this.config.enablePerformanceMonitoring) return;
+    if (!this.config.enablePerformanceMonitoring) {
+      return;
+    }
 
     // Core Web Vitals monitoring
     this.observePerformanceMetrics();
@@ -152,10 +161,10 @@ class ErrorMonitor {
   private observePerformanceMetrics() {
     try {
       // Largest Contentful Paint
-      const lcpObserver = new PerformanceObserver((list) => {
+      const lcpObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        
+
         this.reportPerformanceMetric('lcp', lastEntry.startTime, {
           element: lastEntry.element?.tagName,
           url: lastEntry.url,
@@ -164,43 +173,52 @@ class ErrorMonitor {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
       // First Input Delay
-      const fidObserver = new PerformanceObserver((list) => {
+      const fidObserver = new PerformanceObserver(list => {
         const firstEntry = list.getEntries()[0];
-        
-        this.reportPerformanceMetric('fid', firstEntry.processingStart - firstEntry.startTime, {
-          eventType: firstEntry.name,
-        });
+
+        this.reportPerformanceMetric(
+          'fid',
+          firstEntry.processingStart - firstEntry.startTime,
+          {
+            eventType: firstEntry.name,
+          }
+        );
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
 
       // Cumulative Layout Shift
-      const clsObserver = new PerformanceObserver((list) => {
+      const clsObserver = new PerformanceObserver(list => {
         let clsValue = 0;
-        
+
         for (const entry of list.getEntries()) {
           if (!entry.hadRecentInput) {
             clsValue += entry.value;
           }
         }
-        
+
         if (clsValue > 0) {
           this.reportPerformanceMetric('cls', clsValue);
         }
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
-
     } catch (error) {
       console.warn('Performance monitoring setup failed:', error);
     }
   }
 
   private collectPagePerformanceMetrics() {
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    if (!navigation) return;
+    const navigation = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming;
+    if (!navigation) {
+      return;
+    }
 
     const metrics: PerformanceMetrics = {
       pageLoadTime: navigation.loadEventEnd - navigation.loadEventStart,
-      domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+      domContentLoaded:
+        navigation.domContentLoadedEventEnd -
+        navigation.domContentLoadedEventStart,
       firstContentfulPaint: 0,
       largestContentfulPaint: 0,
       firstInputDelay: 0,
@@ -210,7 +228,7 @@ class ErrorMonitor {
 
     // Get paint metrics
     const paintEntries = performance.getEntriesByType('paint');
-    paintEntries.forEach((entry) => {
+    paintEntries.forEach(entry => {
       if (entry.name === 'first-contentful-paint') {
         metrics.firstContentfulPaint = entry.startTime;
       }
@@ -220,12 +238,13 @@ class ErrorMonitor {
   }
 
   private monitorResourcePerformance() {
-    const resourceObserver = new PerformanceObserver((list) => {
-      list.getEntries().forEach((entry) => {
+    const resourceObserver = new PerformanceObserver(list => {
+      list.getEntries().forEach(entry => {
         const resourceEntry = entry as PerformanceResourceTiming;
-        
+
         // Report slow resources
-        if (resourceEntry.duration > 1000) { // > 1 second
+        if (resourceEntry.duration > 1000) {
+          // > 1 second
           this.reportSlowResource({
             name: resourceEntry.name,
             type: resourceEntry.initiatorType,
@@ -240,36 +259,44 @@ class ErrorMonitor {
   }
 
   private setupUserInteractionTracking() {
-    if (!this.config.enableUserTracking) return;
+    if (!this.config.enableUserTracking) {
+      return;
+    }
 
     // Track page navigation
     window.addEventListener('popstate', () => {
-      this.addBreadcrumb(`Navigation to ${window.location.pathname}`, 'navigation');
+      this.addBreadcrumb(
+        `Navigation to ${window.location.pathname}`,
+        'navigation'
+      );
     });
 
     // Track clicks on important elements
-    document.addEventListener('click', (event) => {
+    document.addEventListener('click', event => {
       const target = event.target as HTMLElement;
-      
+
       // Track clicks on buttons, links, and interactive elements
       if (target.matches('button, a, [role="button"], [onclick]')) {
         const text = target.textContent?.trim().slice(0, 50) || 'Unknown';
         const id = target.id || target.className || 'unknown';
-        
+
         this.addBreadcrumb(`Click: ${text} (${id})`, 'user');
       }
     });
 
     // Track form submissions
-    document.addEventListener('submit', (event) => {
+    document.addEventListener('submit', event => {
       const form = event.target as HTMLFormElement;
       const formId = form.id || form.action || 'unknown-form';
-      
+
       this.addBreadcrumb(`Form submit: ${formId}`, 'user');
     });
   }
 
-  public addBreadcrumb(message: string, level: 'info' | 'warn' | 'error' | 'user' | 'navigation' = 'info') {
+  public addBreadcrumb(
+    message: string,
+    level: 'info' | 'warn' | 'error' | 'user' | 'navigation' = 'info'
+  ) {
     this.breadcrumbs.push({
       timestamp: new Date().toISOString(),
       message,
@@ -285,7 +312,8 @@ class ErrorMonitor {
   public reportError(error: Error, context?: Record<string, any>) {
     // Rate limiting
     const now = Date.now();
-    if (now - this.lastErrorTime < 1000) { // Max 1 error per second
+    if (now - this.lastErrorTime < 1000) {
+      // Max 1 error per second
       return;
     }
     this.lastErrorTime = now;
@@ -301,7 +329,7 @@ class ErrorMonitor {
     }
 
     this.errorCount++;
-    
+
     const errorReport: ErrorReport = {
       errorId: this.generateErrorId(),
       message: error.message,
@@ -327,7 +355,7 @@ class ErrorMonitor {
 
   private shouldIgnoreError(error: Error): boolean {
     const message = error.message;
-    
+
     return this.config.ignoredErrors.some(ignored => {
       if (ignored instanceof RegExp) {
         return ignored.test(message);
@@ -336,7 +364,9 @@ class ErrorMonitor {
     });
   }
 
-  private categorizeError(error: Error): 'low' | 'medium' | 'high' | 'critical' {
+  private categorizeError(
+    error: Error
+  ): 'low' | 'medium' | 'high' | 'critical' {
     const message = error.message.toLowerCase();
     const stack = error.stack?.toLowerCase() || '';
 
@@ -382,7 +412,8 @@ class ErrorMonitor {
 
   private getUserContext() {
     try {
-      const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+      const userStr =
+        sessionStorage.getItem('user') || localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         return {
@@ -405,11 +436,13 @@ class ErrorMonitor {
   }
 
   private reportPerformanceMetric(
-    metric: string, 
-    value: number, 
+    metric: string,
+    value: number,
     context?: Record<string, any>
   ) {
-    if (!this.config.enablePerformanceMonitoring) return;
+    if (!this.config.enablePerformanceMonitoring) {
+      return;
+    }
 
     this.sendToEndpoint(this.config.endpoints.performance, {
       metric,
@@ -421,7 +454,9 @@ class ErrorMonitor {
   }
 
   private reportPerformanceMetrics(metrics: PerformanceMetrics) {
-    if (!this.config.enablePerformanceMonitoring) return;
+    if (!this.config.enablePerformanceMonitoring) {
+      return;
+    }
 
     this.sendToEndpoint(this.config.endpoints.performance, {
       type: 'page-performance',
@@ -437,8 +472,11 @@ class ErrorMonitor {
     duration: number;
     size?: number;
   }) {
-    this.addBreadcrumb(`Slow resource: ${resource.name} (${resource.duration}ms)`, 'warn');
-    
+    this.addBreadcrumb(
+      `Slow resource: ${resource.name} (${resource.duration}ms)`,
+      'warn'
+    );
+
     this.sendToEndpoint(this.config.endpoints.performance, {
       type: 'slow-resource',
       resource,
@@ -505,7 +543,10 @@ export function useErrorMonitor() {
     reportError: (error: Error, context?: Record<string, any>) => {
       errorMonitor.reportError(error, context);
     },
-    addBreadcrumb: (message: string, level?: 'info' | 'warn' | 'error' | 'user' | 'navigation') => {
+    addBreadcrumb: (
+      message: string,
+      level?: 'info' | 'warn' | 'error' | 'user' | 'navigation'
+    ) => {
       errorMonitor.addBreadcrumb(message, level);
     },
     getStats: () => errorMonitor.getStats(),

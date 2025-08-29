@@ -36,10 +36,7 @@ export function ResponsiveSidebar({ className = '' }: ResponsiveSidebarProps) {
               <span className="sr-only">Open navigation menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent
-            side="left"
-            className="w-80 p-0 bg-white"
-          >
+          <SheetContent side="left" className="w-80 p-0 bg-white">
             <div className="h-full flex flex-col">
               <Sidebar isMobile onNavigate={closeMobileMenu} />
             </div>

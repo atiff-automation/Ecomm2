@@ -1,16 +1,16 @@
 /**
- * Admin Bulk Refresh API  
+ * Admin Bulk Refresh API
  * Allows admin to trigger bulk tracking updates
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getTrackingCacheByOrderId,
   createJob,
   getTrackingCachesDueForUpdate,
 } from '@/lib/services/tracking-cache';
-import { 
+import {
   getJobPriority,
   TRACKING_REFACTOR_CONFIG,
 } from '@/lib/config/tracking-refactor';
@@ -24,7 +24,7 @@ import {
   trackTrackingAPIPerformance,
 } from '@/lib/utils/tracking-error-handling';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 
 /**
@@ -32,11 +32,11 @@ import { prisma } from '@/lib/db/prisma';
  */
 async function validateAdminAccess(): Promise<boolean> {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || !session.user) {
     return false;
   }
-  
+
   // Check if user has admin role
   const userRole = (session.user as any).role;
   return userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -78,7 +78,8 @@ export async function POST(request: NextRequest) {
     const scheduledFor = scheduleFor ? new Date(scheduleFor) : new Date();
 
     // Validate schedule time
-    if (scheduledFor < new Date(Date.now() - 5 * 60 * 1000)) { // Can't schedule more than 5 minutes in past
+    if (scheduledFor < new Date(Date.now() - 5 * 60 * 1000)) {
+      // Can't schedule more than 5 minutes in past
       throw new TrackingRefactorError(
         'Schedule time cannot be in the past',
         'VALIDATION_ERROR',
@@ -88,12 +89,15 @@ export async function POST(request: NextRequest) {
 
     if (orderIds && orderIds.length > 0) {
       // Process specific order IDs
-      console.log(`🔄 Processing bulk refresh for ${orderIds.length} orders...`);
-      
-      for (const orderId of orderIds.slice(0, 50)) { // Limit to 50 orders at once
+      console.log(
+        `🔄 Processing bulk refresh for ${orderIds.length} orders...`
+      );
+
+      for (const orderId of orderIds.slice(0, 50)) {
+        // Limit to 50 orders at once
         try {
           const trackingCache = await getTrackingCacheByOrderId(orderId);
-          
+
           if (!trackingCache) {
             errors.push({
               id: orderId,
@@ -111,7 +115,6 @@ export async function POST(request: NextRequest) {
 
           jobIds.push(jobId);
           processedCount++;
-
         } catch (error) {
           errors.push({
             id: orderId,
@@ -121,9 +124,12 @@ export async function POST(request: NextRequest) {
       }
     } else if (trackingCacheIds && trackingCacheIds.length > 0) {
       // Process specific tracking cache IDs
-      console.log(`🔄 Processing bulk refresh for ${trackingCacheIds.length} tracking caches...`);
-      
-      for (const cacheId of trackingCacheIds.slice(0, 50)) { // Limit to 50 caches at once
+      console.log(
+        `🔄 Processing bulk refresh for ${trackingCacheIds.length} tracking caches...`
+      );
+
+      for (const cacheId of trackingCacheIds.slice(0, 50)) {
+        // Limit to 50 caches at once
         try {
           // Verify cache exists
           const cache = await prisma.trackingCache.findUnique({
@@ -148,7 +154,6 @@ export async function POST(request: NextRequest) {
 
           jobIds.push(jobId);
           processedCount++;
-
         } catch (error) {
           errors.push({
             id: cacheId,
@@ -159,14 +164,14 @@ export async function POST(request: NextRequest) {
     } else {
       // No specific IDs provided - refresh caches that are due for update
       console.log('🔄 Processing bulk refresh for caches due for update...');
-      
+
       const batchSize = Math.min(
         TRACKING_REFACTOR_CONFIG.JOB_PROCESSING.BATCH_SIZE * 2,
         50
       );
-      
+
       const cachesDue = await getTrackingCachesDueForUpdate(batchSize);
-      
+
       if (cachesDue.length === 0) {
         return NextResponse.json({
           success: true,
@@ -186,7 +191,6 @@ export async function POST(request: NextRequest) {
 
           jobIds.push(jobId);
           processedCount++;
-
         } catch (error) {
           errors.push({
             id: cache.id,
@@ -208,24 +212,20 @@ export async function POST(request: NextRequest) {
       (response as any).errors = errors;
     }
 
-    console.log(`✅ Bulk refresh completed: ${jobIds.length} jobs created, ${errors.length} errors`);
-
-    // Track performance
-    trackTrackingAPIPerformance(
-      'admin-bulk-refresh',
-      startTime,
-      true,
-      {
-        jobsCreated: jobIds.length,
-        errorsCount: errors.length,
-        processedCount,
-        action,
-        scheduledFor: scheduledFor.toISOString(),
-      }
+    console.log(
+      `✅ Bulk refresh completed: ${jobIds.length} jobs created, ${errors.length} errors`
     );
 
-    return NextResponse.json(response);
+    // Track performance
+    trackTrackingAPIPerformance('admin-bulk-refresh', startTime, true, {
+      jobsCreated: jobIds.length,
+      errorsCount: errors.length,
+      processedCount,
+      action,
+      scheduledFor: scheduledFor.toISOString(),
+    });
 
+    return NextResponse.json(response);
   } catch (error) {
     // Track performance for errors
     trackTrackingAPIPerformance(

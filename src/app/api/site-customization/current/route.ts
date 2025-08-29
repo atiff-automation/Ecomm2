@@ -5,55 +5,42 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import config from '@/lib/config/app-config';
 
 /**
  * GET /api/site-customization/current - Get current active theme and hero section
  */
 export async function GET() {
   try {
-    // Get active theme and hero section in parallel
-    const [activeTheme, activeHeroSection] = await Promise.all([
-      prisma.siteTheme.findFirst({
-        where: { isActive: true },
-        select: {
-          id: true,
-          name: true,
-          primaryColor: true,
-          secondaryColor: true,
-          backgroundColor: true,
-          textColor: true,
-          isActive: true,
-        },
-      }),
-      prisma.heroSection.findFirst({
-        where: { isActive: true },
-        select: {
-          id: true,
-          title: true,
-          subtitle: true,
-          description: true,
-          ctaPrimaryText: true,
-          ctaPrimaryLink: true,
-          ctaSecondaryText: true,
-          ctaSecondaryLink: true,
-          backgroundType: true,
-          backgroundImage: true,
-          backgroundVideo: true,
-          overlayOpacity: true,
-          textAlignment: true,
-          isActive: true,
-        },
-      }),
-    ]);
+    // Get active hero section
+    const activeHeroSection = await prisma.heroSection.findFirst({
+      where: { isActive: true },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        description: true,
+        ctaPrimaryText: true,
+        ctaPrimaryLink: true,
+        ctaSecondaryText: true,
+        ctaSecondaryLink: true,
+        backgroundType: true,
+        backgroundImage: true,
+        backgroundVideo: true,
+        overlayOpacity: true,
+        textAlignment: true,
+        isActive: true,
+      },
+    });
 
-    // Return default values if none found
-    const theme = activeTheme || {
+    // Return centralized theme configuration
+    const theme = {
       id: 'default',
       name: 'Default Theme',
-      primaryColor: '#3B82F6',
-      secondaryColor: '#FDE047',
-      backgroundColor: '#F8FAFC',
-      textColor: '#1E293B',
+      primaryColor: config.ui.theme.primaryColor,
+      secondaryColor: config.ui.theme.secondaryColor,
+      backgroundColor: config.ui.theme.backgroundColor,
+      textColor: config.ui.theme.textColor,
       isActive: true,
     };
 
@@ -89,10 +76,10 @@ export async function GET() {
       theme: {
         id: 'default',
         name: 'Default Theme',
-        primaryColor: '#3B82F6',
-        secondaryColor: '#FDE047',
-        backgroundColor: '#F8FAFC',
-        textColor: '#1E293B',
+        primaryColor: config.ui.theme.primaryColor,
+        secondaryColor: config.ui.theme.secondaryColor,
+        backgroundColor: config.ui.theme.backgroundColor,
+        textColor: config.ui.theme.textColor,
         isActive: true,
       },
       heroSection: {

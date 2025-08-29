@@ -16,7 +16,9 @@ interface MonitoringInitOptions {
 /**
  * Initialize monitoring system
  */
-export async function initializeMonitoring(options: MonitoringInitOptions = {}): Promise<{
+export async function initializeMonitoring(
+  options: MonitoringInitOptions = {}
+): Promise<{
   success: boolean;
   errorReporting: boolean;
   performanceMonitoring: boolean;
@@ -37,9 +39,12 @@ export async function initializeMonitoring(options: MonitoringInitOptions = {}):
     // Update monitoring configuration
     const config = {
       enableErrorReporting: options.enableErrorReporting !== false,
-      enablePerformanceMonitoring: options.enablePerformanceMonitoring !== false,
+      enablePerformanceMonitoring:
+        options.enablePerformanceMonitoring !== false,
       enableUserTracking: options.enableUserTracking !== false,
-      sampleRate: options.sampleRate || (process.env.NODE_ENV === 'production' ? 0.1 : 1.0),
+      sampleRate:
+        options.sampleRate ||
+        (process.env.NODE_ENV === 'production' ? 0.1 : 1.0),
       endpoints: {
         errors: '/api/monitoring/errors',
         performance: '/api/monitoring/performance',
@@ -57,7 +62,7 @@ export async function initializeMonitoring(options: MonitoringInitOptions = {}):
     };
 
     errorMonitor.updateConfig(config);
-    
+
     results.errorReporting = config.enableErrorReporting;
     results.performanceMonitoring = config.enablePerformanceMonitoring;
     results.userTracking = config.enableUserTracking;
@@ -72,9 +77,9 @@ export async function initializeMonitoring(options: MonitoringInitOptions = {}):
 
     results.success = true;
     console.log('✅ Monitoring system initialized successfully');
-
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     results.errors.push(`Monitoring initialization failed: ${errorMessage}`);
     console.error('❌ Monitoring system initialization failed:', error);
   }
@@ -92,7 +97,7 @@ async function testMonitoringEndpoints(): Promise<void> {
     '/api/monitoring/events',
   ];
 
-  const testPromises = endpoints.map(async (endpoint) => {
+  const testPromises = endpoints.map(async endpoint => {
     try {
       const response = await fetch(endpoint, { method: 'GET' });
       if (!response.ok) {
@@ -121,24 +126,24 @@ export async function getMonitoringHealth(): Promise<{
   timestamp: string;
 }> {
   const timestamp = new Date().toISOString();
-  
+
   try {
     // Check error monitor
     const stats = errorMonitor.getStats();
     const errorMonitorStatus = stats ? 'healthy' : 'unhealthy';
-    
+
     // Check API endpoints
     let apiEndpointsStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     let healthyEndpoints = 0;
     const totalEndpoints = 3;
-    
+
     const endpointChecks = [
       '/api/monitoring/errors',
-      '/api/monitoring/performance', 
+      '/api/monitoring/performance',
       '/api/monitoring/events',
-    ].map(async (endpoint) => {
+    ].map(async endpoint => {
       try {
-        const response = await fetch(endpoint, { 
+        const response = await fetch(endpoint, {
           method: 'GET',
           signal: AbortSignal.timeout(5000), // 5 second timeout
         });
@@ -166,8 +171,11 @@ export async function getMonitoringHealth(): Promise<{
 
     // Determine overall status
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
-    if (errorMonitorStatus === 'unhealthy' || apiEndpointsStatus === 'unhealthy') {
+
+    if (
+      errorMonitorStatus === 'unhealthy' ||
+      apiEndpointsStatus === 'unhealthy'
+    ) {
       overallStatus = 'unhealthy';
     } else if (apiEndpointsStatus === 'degraded') {
       overallStatus = 'degraded';
@@ -182,10 +190,9 @@ export async function getMonitoringHealth(): Promise<{
       },
       timestamp,
     };
-
   } catch (error) {
     console.error('Error checking monitoring health:', error);
-    
+
     return {
       status: 'unhealthy',
       details: {
@@ -203,13 +210,13 @@ export async function getMonitoringHealth(): Promise<{
  */
 export async function shutdownMonitoring(): Promise<void> {
   console.log('🔄 Shutting down monitoring system...');
-  
+
   try {
     errorMonitor.addBreadcrumb('Monitoring system shutting down', 'info');
-    
+
     // Clear any remaining breadcrumbs
     errorMonitor.clearBreadcrumbs();
-    
+
     console.log('✅ Monitoring system shutdown completed');
   } catch (error) {
     console.error('❌ Error during monitoring shutdown:', error);
@@ -223,17 +230,20 @@ export function createMonitoringHealthCheck() {
   return async (req: any, res: any, next: any) => {
     try {
       const health = await getMonitoringHealth();
-      
+
       // Add monitoring health to request context
       req.monitoringHealth = health;
-      
+
       // Log degraded status
       if (health.status === 'degraded') {
-        console.warn('⚠️ Monitoring system is in degraded state:', health.details);
+        console.warn(
+          '⚠️ Monitoring system is in degraded state:',
+          health.details
+        );
       } else if (health.status === 'unhealthy') {
         console.error('❌ Monitoring system is unhealthy:', health.details);
       }
-      
+
       next();
     } catch (error) {
       console.error('Monitoring health check failed:', error);

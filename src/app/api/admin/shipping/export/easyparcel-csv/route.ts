@@ -9,23 +9,43 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
-import { easyParcelCSVExporter, type OrderForExport } from '@/lib/shipping/easyparcel-csv-exporter';
+import {
+  easyParcelCSVExporter,
+  type OrderForExport,
+} from '@/lib/shipping/easyparcel-csv-exporter';
 
 const exportRequestSchema = z.object({
   action: z.enum(['preview', 'export']).default('export'),
   orderIds: z.array(z.string()).optional(),
-  filters: z.object({
-    status: z.array(z.enum(['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])).optional(),
-    paymentStatus: z.array(z.enum(['PENDING', 'PAID', 'FAILED', 'REFUNDED'])).optional(),
-    dateFrom: z.string().optional(),
-    dateTo: z.string().optional(),
-    courierFilter: z.array(z.string()).optional(),
-  }).optional(),
-  options: z.object({
-    includeHeaders: z.boolean().default(true),
-    validateRequired: z.boolean().default(true),
-    previewLimit: z.number().min(1).max(20).default(5),
-  }).optional(),
+  filters: z
+    .object({
+      status: z
+        .array(
+          z.enum([
+            'PENDING',
+            'CONFIRMED',
+            'PROCESSING',
+            'SHIPPED',
+            'DELIVERED',
+            'CANCELLED',
+          ])
+        )
+        .optional(),
+      paymentStatus: z
+        .array(z.enum(['PENDING', 'PAID', 'FAILED', 'REFUNDED']))
+        .optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
+      courierFilter: z.array(z.string()).optional(),
+    })
+    .optional(),
+  options: z
+    .object({
+      includeHeaders: z.boolean().default(true),
+      validateRequired: z.boolean().default(true),
+      previewLimit: z.number().min(1).max(20).default(5),
+    })
+    .optional(),
 });
 
 /**
@@ -35,22 +55,29 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { action, orderIds, filters, options } = exportRequestSchema.parse(body);
+    const { action, orderIds, filters, options } =
+      exportRequestSchema.parse(body);
 
-    console.log(`[EasyParcel CSV Export] ${action} requested by ${session.user.email}`, {
-      orderIds: orderIds?.length || 0,
-      filters,
-      options
-    });
+    console.log(
+      `[EasyParcel CSV Export] ${action} requested by ${session.user.email}`,
+      {
+        orderIds: orderIds?.length || 0,
+        filters,
+        options,
+      }
+    );
 
     // Build query based on filters or specific order IDs
     const whereClause = buildWhereClause(orderIds, filters);
-    
+
     // Fetch orders with all required data
     const orders = await fetchOrdersForExport(whereClause);
 
@@ -60,8 +87,8 @@ export async function POST(request: NextRequest) {
         message: 'No orders found matching the criteria',
         data: {
           totalOrders: 0,
-          exportedOrders: 0
-        }
+          exportedOrders: 0,
+        },
       });
     }
 
@@ -84,23 +111,25 @@ export async function POST(request: NextRequest) {
             status: order.status,
             paymentStatus: order.paymentStatus,
             total: parseFloat(order.total.toString()),
-            createdAt: order.createdAt
-          }))
-        }
+            createdAt: order.createdAt,
+          })),
+        },
       });
     }
 
     // Generate CSV export
     const csvContent = await easyParcelCSVExporter.exportOrdersToCSV(orders, {
       includeHeaders: options?.includeHeaders ?? true,
-      validateRequired: options?.validateRequired ?? true
+      validateRequired: options?.validateRequired ?? true,
     });
 
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `easyparcel-bulk-export-${timestamp}.csv`;
 
     // Log export activity
-    console.log(`[EasyParcel CSV Export] Generated CSV for ${orders.length} orders by ${session.user.email}`);
+    console.log(
+      `[EasyParcel CSV Export] Generated CSV for ${orders.length} orders by ${session.user.email}`
+    );
 
     return new NextResponse(csvContent, {
       status: 200,
@@ -109,10 +138,9 @@ export async function POST(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
         'X-Export-Count': orders.length.toString(),
         'X-Export-Date': new Date().toISOString(),
-        'X-Export-User': session.user.email || 'unknown'
+        'X-Export-User': session.user.email || 'unknown',
       },
     });
-
   } catch (error) {
     console.error('[EasyParcel CSV Export] Error:', error);
 
@@ -157,7 +185,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -169,48 +200,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         headers: easyParcelCSVExporter.constructor.getCSVHeaders(),
-        description: 'EasyParcel bulk upload CSV format headers'
+        description: 'EasyParcel bulk upload CSV format headers',
       });
     }
 
     // Get export statistics
     const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
     const startOfWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const [
-      totalOrders,
-      readyToShip,
-      pendingPayment,
-      processing,
-      recentOrders,
-    ] = await Promise.all([
-      prisma.order.count(),
-      prisma.order.count({
-        where: {
-          status: 'CONFIRMED',
-          paymentStatus: 'PAID',
-        },
-      }),
-      prisma.order.count({
-        where: {
-          status: 'PENDING',
-          paymentStatus: 'PENDING',
-        },
-      }),
-      prisma.order.count({
-        where: {
-          status: 'PROCESSING',
-        },
-      }),
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: startOfWeek,
+    const [totalOrders, readyToShip, pendingPayment, processing, recentOrders] =
+      await Promise.all([
+        prisma.order.count(),
+        prisma.order.count({
+          where: {
+            status: 'CONFIRMED',
+            paymentStatus: 'PAID',
           },
-        },
-      }),
-    ]);
+        }),
+        prisma.order.count({
+          where: {
+            status: 'PENDING',
+            paymentStatus: 'PENDING',
+          },
+        }),
+        prisma.order.count({
+          where: {
+            status: 'PROCESSING',
+          },
+        }),
+        prisma.order.count({
+          where: {
+            createdAt: {
+              gte: startOfWeek,
+            },
+          },
+        }),
+      ]);
 
     return NextResponse.json({
       success: true,
@@ -222,7 +252,14 @@ export async function GET(request: NextRequest) {
         recentOrders,
       },
       exportOptions: {
-        supportedStatuses: ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
+        supportedStatuses: [
+          'PENDING',
+          'CONFIRMED',
+          'PROCESSING',
+          'SHIPPED',
+          'DELIVERED',
+          'CANCELLED',
+        ],
         supportedPaymentStatuses: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],
         maxExportLimit: 1000,
         csvHeaders: easyParcelCSVExporter.constructor.getCSVHeaders().length,
@@ -230,10 +267,9 @@ export async function GET(request: NextRequest) {
       recommendations: {
         idealStatuses: ['CONFIRMED', 'PROCESSING'],
         idealPaymentStatus: 'PAID',
-        note: 'Export orders that are paid and ready for shipping'
-      }
+        note: 'Export orders that are paid and ready for shipping',
+      },
     });
-
   } catch (error) {
     console.error('[EasyParcel CSV Export] Error getting statistics:', error);
     return NextResponse.json(
@@ -283,12 +319,12 @@ function buildWhereClause(orderIds?: string[], filters?: any) {
     where.OR = [
       {
         status: { in: ['CONFIRMED', 'PROCESSING'] },
-        paymentStatus: 'PAID'
+        paymentStatus: 'PAID',
       },
       {
         status: 'PENDING',
-        paymentStatus: 'PENDING'
-      }
+        paymentStatus: 'PENDING',
+      },
     ];
   }
 
@@ -298,7 +334,9 @@ function buildWhereClause(orderIds?: string[], filters?: any) {
 /**
  * Fetch orders with all required data for export
  */
-async function fetchOrdersForExport(whereClause: any): Promise<OrderForExport[]> {
+async function fetchOrdersForExport(
+  whereClause: any
+): Promise<OrderForExport[]> {
   const orders = await prisma.order.findMany({
     where: whereClause,
     include: {
@@ -342,21 +380,25 @@ async function fetchOrdersForExport(whereClause: any): Promise<OrderForExport[]>
     guestPhone: order.guestPhone || undefined,
     deliveryInstructions: order.deliveryInstructions || undefined,
     selectedCourierId: order.selectedCourierId || undefined,
-    user: order.user ? {
-      firstName: order.user.firstName || undefined,
-      lastName: order.user.lastName || undefined,
-      email: order.user.email,
-      phone: order.user.phone || undefined,
-    } : undefined,
-    shippingAddress: order.shippingAddress ? {
-      name: order.shippingAddress.name || undefined,
-      addressLine1: order.shippingAddress.addressLine1,
-      addressLine2: order.shippingAddress.addressLine2 || undefined,
-      city: order.shippingAddress.city,
-      state: order.shippingAddress.state,
-      postalCode: order.shippingAddress.postalCode,
-      country: order.shippingAddress.country || undefined,
-    } : undefined,
+    user: order.user
+      ? {
+          firstName: order.user.firstName || undefined,
+          lastName: order.user.lastName || undefined,
+          email: order.user.email,
+          phone: order.user.phone || undefined,
+        }
+      : undefined,
+    shippingAddress: order.shippingAddress
+      ? {
+          name: order.shippingAddress.name || undefined,
+          addressLine1: order.shippingAddress.addressLine1,
+          addressLine2: order.shippingAddress.addressLine2 || undefined,
+          city: order.shippingAddress.city,
+          state: order.shippingAddress.state,
+          postalCode: order.shippingAddress.postalCode,
+          country: order.shippingAddress.country || undefined,
+        }
+      : undefined,
     orderItems: order.orderItems.map(item => ({
       id: item.id,
       productName: item.productName,

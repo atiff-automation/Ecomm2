@@ -32,12 +32,22 @@ export const metadata: Metadata = {
     template: '%s | JRM E-commerce',
     default: 'JRM E-commerce - Malaysian Online Store with Membership',
   },
-  description: 'Complete Malaysian e-commerce platform with intelligent membership system, dual pricing, and local payment integration.',
-  keywords: ['malaysia', 'ecommerce', 'online store', 'membership', 'shopping', 'retail'],
+  description:
+    'Complete Malaysian e-commerce platform with intelligent membership system, dual pricing, and local payment integration.',
+  keywords: [
+    'malaysia',
+    'ecommerce',
+    'online store',
+    'membership',
+    'shopping',
+    'retail',
+  ],
   authors: [{ name: 'JRM E-commerce Team' }],
   creator: 'JRM E-commerce',
   publisher: 'JRM E-commerce',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  ),
   alternates: {
     canonical: '/',
   },
@@ -46,13 +56,15 @@ export const metadata: Metadata = {
     locale: 'en_MY',
     url: '/',
     title: 'JRM E-commerce - Malaysian Online Store',
-    description: 'Complete Malaysian e-commerce platform with intelligent membership system',
+    description:
+      'Complete Malaysian e-commerce platform with intelligent membership system',
     siteName: 'JRM E-commerce',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'JRM E-commerce - Malaysian Online Store',
-    description: 'Complete Malaysian e-commerce platform with intelligent membership system',
+    description:
+      'Complete Malaysian e-commerce platform with intelligent membership system',
   },
   robots: {
     index: true,
@@ -86,22 +98,31 @@ export default function RootLayout({
       <head>
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
+
         {/* DNS prefetch for commonly used domains */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-        
+
         {/* Theme color for mobile browsers */}
         <meta name="theme-color" content="#2563eb" />
-        
+
         {/* Performance hints */}
         <meta httpEquiv="x-dns-prefetch-control" content="on" />
-        
+
         {/* Security headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+        <meta
+          httpEquiv="Referrer-Policy"
+          content="strict-origin-when-cross-origin"
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <GlobalErrorBoundary>
           <MonitoringProvider
             config={{
@@ -116,8 +137,8 @@ export default function RootLayout({
                 <MainLayout>{children}</MainLayout>
               </Suspense>
               <TelegramHealthCheck />
-              <Toaster 
-                position="top-right" 
+              <Toaster
+                position="top-right"
                 duration={3000}
                 pauseWhenPageIsHidden
                 closeButton
@@ -128,16 +149,16 @@ export default function RootLayout({
                   style: {
                     background: 'white',
                     border: '1px solid #e5e7eb',
-                    color: '#374151'
+                    color: '#374151',
                   },
                   className: 'group',
-                  descriptionClassName: 'group-[.toast]:text-muted-foreground'
+                  descriptionClassName: 'group-[.toast]:text-muted-foreground',
                 }}
               />
             </AuthProvider>
           </MonitoringProvider>
         </GlobalErrorBoundary>
-        
+
         {/* Initialize performance optimizations */}
         <script
           dangerouslySetInnerHTML={{
@@ -151,15 +172,7 @@ export default function RootLayout({
                   }
                 });
                 
-                // Initialize performance monitoring utilities
-                if (window.requestIdleCallback) {
-                  window.requestIdleCallback(function() {
-                    // Import performance utilities when browser is idle
-                    import('/src/lib/optimization/performance-optimizer.js').then(module => {
-                      module.PerformanceOptimizer.initialize();
-                    }).catch(console.warn);
-                  });
-                }
+                // Performance monitoring is handled by the MonitoringProvider
               }
             `,
           }}

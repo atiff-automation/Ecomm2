@@ -16,17 +16,17 @@ export async function POST(request: NextRequest) {
       where: {
         trackingNumber: { not: null },
         status: {
-          notIn: ['DELIVERED', 'CANCELLED', 'FAILED']
+          notIn: ['DELIVERED', 'CANCELLED', 'FAILED'],
         },
         // Only refresh shipments updated more than 1 hour ago to avoid rate limiting
         updatedAt: {
-          lt: new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
-        }
+          lt: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+        },
       },
       include: {
-        order: true
+        order: true,
       },
-      take: 50 // Limit to 50 shipments per batch to avoid overwhelming the API
+      take: 50, // Limit to 50 shipments per batch to avoid overwhelming the API
     });
 
     const results = {
@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
       successful: 0,
       failed: 0,
       skipped: 0,
-      errors: [] as string[]
+      errors: [] as string[],
     };
 
     if (activeShipments.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'No shipments need tracking refresh at this time',
-        results
+        results,
       });
     }
 
@@ -53,24 +53,33 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const trackingData = await easyParcelService.trackShipment(shipment.trackingNumber);
-        
+        const trackingData = await easyParcelService.trackShipment(
+          shipment.trackingNumber
+        );
+
         // Update shipment status
         await prisma.shipment.update({
           where: { id: shipment.id },
           data: {
             status: trackingData.status as any,
             statusDescription: trackingData.description || trackingData.status,
-            estimatedDelivery: trackingData.estimated_delivery ? new Date(trackingData.estimated_delivery) : null,
-            actualDelivery: trackingData.actual_delivery ? new Date(trackingData.actual_delivery) : null,
-          }
+            estimatedDelivery: trackingData.estimated_delivery
+              ? new Date(trackingData.estimated_delivery)
+              : null,
+            actualDelivery: trackingData.actual_delivery
+              ? new Date(trackingData.actual_delivery)
+              : null,
+          },
         });
 
         // Update tracking events if available
-        if (trackingData.tracking_events && trackingData.tracking_events.length > 0) {
+        if (
+          trackingData.tracking_events &&
+          trackingData.tracking_events.length > 0
+        ) {
           // Get existing events to avoid duplicates
           const existingEvents = await prisma.shipmentTracking.findMany({
-            where: { shipmentId: shipment.id }
+            where: { shipmentId: shipment.id },
           });
 
           const existingEventKeys = new Set(
@@ -78,10 +87,12 @@ export async function POST(request: NextRequest) {
           );
 
           // Only add new events
-          const newEvents = trackingData.tracking_events.filter((event: any) => {
-            const eventKey = `${new Date(event.timestamp || event.event_time).getTime()}_${event.event_code || event.status}`;
-            return !existingEventKeys.has(eventKey);
-          });
+          const newEvents = trackingData.tracking_events.filter(
+            (event: any) => {
+              const eventKey = `${new Date(event.timestamp || event.event_time).getTime()}_${event.event_code || event.status}`;
+              return !existingEventKeys.has(eventKey);
+            }
+          );
 
           if (newEvents.length > 0) {
             await prisma.shipmentTracking.createMany({
@@ -89,24 +100,28 @@ export async function POST(request: NextRequest) {
                 shipmentId: shipment.id,
                 eventCode: event.event_code || event.status,
                 eventName: event.event_name || event.status,
-                description: event.description || event.event_name || event.status,
+                description:
+                  event.description || event.event_name || event.status,
                 location: event.location,
                 eventTime: new Date(event.timestamp || event.event_time),
-                source: 'EASYPARCEL'
-              }))
+                source: 'EASYPARCEL',
+              })),
             });
           }
         }
 
         results.successful++;
-        
+
         // Rate limiting - delay between API calls (2 seconds)
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
         results.failed++;
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        results.errors.push(`${shipment.order.orderNumber} (${shipment.trackingNumber}): ${errorMessage}`);
-        
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.errors.push(
+          `${shipment.order.orderNumber} (${shipment.trackingNumber}): ${errorMessage}`
+        );
+
         // If we get rate limited, wait longer
         if (errorMessage.includes('rate') || errorMessage.includes('429')) {
           await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
@@ -126,18 +141,21 @@ export async function POST(request: NextRequest) {
           successful: results.successful,
           failed: results.failed,
           skipped: results.skipped,
-          errors: results.errors.slice(0, 10) // Store only first 10 errors
-        }
-      }
+          errors: results.errors.slice(0, 10), // Store only first 10 errors
+        },
+      },
     });
 
     return NextResponse.json({
       success: true,
       message: `Batch tracking refresh completed: ${results.successful} successful, ${results.failed} failed, ${results.skipped} skipped`,
-      results
+      results,
     });
   } catch (error) {
     console.error('Error in batch tracking refresh:', error);
-    return NextResponse.json({ error: 'Failed to refresh tracking data' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to refresh tracking data' },
+      { status: 500 }
+    );
   }
 }

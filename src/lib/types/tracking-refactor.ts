@@ -4,7 +4,13 @@
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md
  */
 
-import { TrackingCache, TrackingUpdateLog, TrackingJobQueue, TrackingJobStatus, TrackingJobType } from '@prisma/client';
+import {
+  TrackingCache,
+  TrackingUpdateLog,
+  TrackingJobQueue,
+  TrackingJobStatus,
+  TrackingJobType,
+} from '@prisma/client';
 
 // ==================== CORE INTERFACES ====================
 
@@ -41,13 +47,13 @@ export interface CachedTrackingResponse {
     actualDelivery?: string;
     courierService: string;
     courierTrackingNumber: string;
-    
+
     // Cache metadata
     lastApiUpdate: string;
     nextUpdateDue: string;
     dataFreshness: 'FRESH' | 'STALE' | 'EXPIRED';
     cacheAge: number; // seconds
-    
+
     // Privacy filtered for guests
     isFiltered?: boolean;
   };

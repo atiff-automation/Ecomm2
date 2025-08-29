@@ -13,27 +13,30 @@ export async function POST(request: NextRequest) {
     }
 
     const { orderIds } = await request.json();
-    
+
     if (!Array.isArray(orderIds) || orderIds.length === 0) {
       return NextResponse.json({ error: 'Invalid order IDs' }, { status: 400 });
     }
 
     // Fetch orders with shipment data
     const orders = await prisma.order.findMany({
-      where: { 
+      where: {
         id: { in: orderIds },
         shipment: {
           easyParcelShipmentId: { not: null },
-          trackingNumber: { not: null }
-        }
+          trackingNumber: { not: null },
+        },
       },
-      include: { 
-        shipment: true 
-      }
+      include: {
+        shipment: true,
+      },
     });
 
     if (orders.length === 0) {
-      return NextResponse.json({ error: 'No orders with shipping labels found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No orders with shipping labels found' },
+        { status: 404 }
+      );
     }
 
     const zip = new JSZip();
@@ -41,39 +44,50 @@ export async function POST(request: NextRequest) {
       total: orders.length,
       successful: 0,
       failed: 0,
-      errors: [] as string[]
+      errors: [] as string[],
     };
 
     // Download labels and add to ZIP
     for (const order of orders) {
-      if (!order.shipment?.easyParcelShipmentId) continue;
+      if (!order.shipment?.easyParcelShipmentId) {
+        continue;
+      }
 
       try {
         // Get label from EasyParcel
-        const labelData = await easyParcelService.downloadLabel(order.shipment.easyParcelShipmentId);
-        
+        const labelData = await easyParcelService.downloadLabel(
+          order.shipment.easyParcelShipmentId
+        );
+
         if (labelData) {
           const filename = `${order.orderNumber}_${order.shipment.trackingNumber}.pdf`;
           zip.file(filename, labelData);
           results.successful++;
         } else {
           results.failed++;
-          results.errors.push(`Order ${order.orderNumber}: Label not available`);
+          results.errors.push(
+            `Order ${order.orderNumber}: Label not available`
+          );
         }
-        
+
         // Rate limiting between downloads
         await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
         results.failed++;
-        results.errors.push(`Order ${order.orderNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        results.errors.push(
+          `Order ${order.orderNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
     if (results.successful === 0) {
-      return NextResponse.json({ 
-        error: 'No labels could be downloaded',
-        results 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'No labels could be downloaded',
+          results,
+        },
+        { status: 404 }
+      );
     }
 
     // Generate ZIP file
@@ -90,9 +104,9 @@ export async function POST(request: NextRequest) {
           orderCount: orders.length,
           successful: results.successful,
           failed: results.failed,
-          orderIds: orderIds
-        }
-      }
+          orderIds: orderIds,
+        },
+      },
     });
 
     // Return ZIP file
@@ -106,6 +120,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in bulk label download:', error);
-    return NextResponse.json({ error: 'Failed to download labels' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to download labels' },
+      { status: 500 }
+    );
   }
 }

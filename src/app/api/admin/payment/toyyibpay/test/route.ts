@@ -14,7 +14,7 @@ import { z } from 'zod';
 const testConnectionSchema = z.object({
   userSecretKey: z.string().min(1, 'User Secret Key is required').optional(),
   environment: z.enum(['sandbox', 'production']).optional(),
-  useStoredCredentials: z.boolean().default(true)
+  useStoredCredentials: z.boolean().default(true),
 });
 
 /**
@@ -41,13 +41,14 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'Invalid request data',
-          details: validationResult.error.errors
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
     }
 
-    const { userSecretKey, environment, useStoredCredentials } = validationResult.data;
+    const { userSecretKey, environment, useStoredCredentials } =
+      validationResult.data;
 
     let testUserSecretKey: string;
     let testEnvironment: 'sandbox' | 'production';
@@ -55,14 +56,15 @@ export async function POST(request: NextRequest) {
     if (useStoredCredentials) {
       // Use stored credentials
       console.log('🔍 Testing with stored credentials');
-      const credentials = await toyyibPayCredentialsService.getCredentialsForService();
-      
+      const credentials =
+        await toyyibPayCredentialsService.getCredentialsForService();
+
       if (!credentials) {
         return NextResponse.json(
           {
             success: false,
             error: 'No stored credentials found',
-            details: 'Please configure toyyibPay credentials first'
+            details: 'Please configure toyyibPay credentials first',
           },
           { status: 400 }
         );
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error: 'Missing credentials for testing',
-            details: 'Please provide userSecretKey and environment for testing'
+            details: 'Please provide userSecretKey and environment for testing',
           },
           { status: 400 }
         );
@@ -88,10 +90,16 @@ export async function POST(request: NextRequest) {
       testEnvironment = environment;
     }
 
-    console.log(`🔍 Testing toyyibPay API with environment: ${testEnvironment}`);
+    console.log(
+      `🔍 Testing toyyibPay API with environment: ${testEnvironment}`
+    );
 
     // Perform comprehensive test
-    const testResults = await performComprehensiveTest(testUserSecretKey, testEnvironment, session.user.id);
+    const testResults = await performComprehensiveTest(
+      testUserSecretKey,
+      testEnvironment,
+      session.user.id
+    );
 
     // Log the test operation
     await toyyibPayCredentialsService.logCredentialOperation(
@@ -102,16 +110,16 @@ export async function POST(request: NextRequest) {
         useStoredCredentials,
         success: testResults.overallSuccess,
         responseTime: testResults.basicTest.responseTime,
-        endpoint: testResults.basicTest.endpoint
+        endpoint: testResults.basicTest.endpoint,
       }
     );
 
     return NextResponse.json({
       success: testResults.overallSuccess,
-      message: testResults.overallSuccess 
-        ? 'Connection test completed successfully' 
+      message: testResults.overallSuccess
+        ? 'Connection test completed successfully'
         : 'Connection test failed',
-      results: testResults
+      results: testResults,
     });
   } catch (error) {
     console.error('Error testing toyyibPay connection:', error);
@@ -119,7 +127,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Failed to test connection',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -144,7 +152,8 @@ export async function GET() {
 
     // Get current configuration status
     const configStatus = await toyyibPayService.getConfigurationStatus();
-    const credentialStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const credentialStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
 
     return NextResponse.json({
       success: true,
@@ -155,8 +164,8 @@ export async function GET() {
         hasCategoryCode: configStatus.hasCategoryCode,
         hasCredentials: credentialStatus.hasCredentials,
         lastUpdated: credentialStatus.lastUpdated,
-        updatedBy: credentialStatus.updatedBy
-      }
+        updatedBy: credentialStatus.updatedBy,
+      },
     });
   } catch (error) {
     console.error('Error getting toyyibPay connection status:', error);
@@ -164,7 +173,7 @@ export async function GET() {
       {
         success: false,
         error: 'Failed to get connection status',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -175,7 +184,7 @@ export async function GET() {
  * Perform comprehensive test of toyyibPay API
  */
 async function performComprehensiveTest(
-  userSecretKey: string, 
+  userSecretKey: string,
   environment: 'sandbox' | 'production',
   userId: string
 ): Promise<{
@@ -191,7 +200,7 @@ async function performComprehensiveTest(
     basicTest: {},
     categoryTest: {},
     serviceTest: {},
-    summary: {}
+    summary: {},
   };
 
   try {
@@ -199,7 +208,10 @@ async function performComprehensiveTest(
 
     // Test 1: Basic credential validation
     console.log('🧪 Test 1: Basic credential validation');
-    results.basicTest = await toyyibPayCredentialsService.validateCredentials(userSecretKey, environment);
+    results.basicTest = await toyyibPayCredentialsService.validateCredentials(
+      userSecretKey,
+      environment
+    );
 
     if (!results.basicTest.isValid) {
       results.overallSuccess = false;
@@ -208,7 +220,7 @@ async function performComprehensiveTest(
         passedTests: 0,
         failedTests: 1,
         totalTime: Date.now() - startTime,
-        criticalError: 'Basic credential validation failed'
+        criticalError: 'Basic credential validation failed',
       };
       return results;
     }
@@ -216,8 +228,10 @@ async function performComprehensiveTest(
     // Test 2: Category functionality test
     console.log('🧪 Test 2: Category functionality test');
     try {
-      const { toyyibPayCategoryService } = await import('@/lib/services/toyyibpay-category');
-      
+      const { toyyibPayCategoryService } = await import(
+        '@/lib/services/toyyibpay-category'
+      );
+
       // Try to get or create a test category
       const testCategoryName = `TEST_${Date.now()}`;
       const categoryResult = await toyyibPayCategoryService.createCategory(
@@ -229,12 +243,15 @@ async function performComprehensiveTest(
         success: categoryResult.success,
         categoryCode: categoryResult.categoryCode,
         error: categoryResult.error,
-        testCategoryName: testCategoryName
+        testCategoryName: testCategoryName,
       };
     } catch (error) {
       results.categoryTest = {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error in category test'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unknown error in category test',
       };
     }
 
@@ -244,18 +261,21 @@ async function performComprehensiveTest(
       // Refresh service configuration and test
       await toyyibPayService.refreshConfiguration();
       const serviceStatus = await toyyibPayService.getConfigurationStatus();
-      
+
       results.serviceTest = {
         success: serviceStatus.isConfigured,
         environment: serviceStatus.environment,
         baseURL: serviceStatus.baseURL,
         hasCategoryCode: serviceStatus.hasCategoryCode,
-        error: serviceStatus.error
+        error: serviceStatus.error,
       };
     } catch (error) {
       results.serviceTest = {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error in service test'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unknown error in service test',
       };
     }
 
@@ -264,7 +284,7 @@ async function performComprehensiveTest(
     const passedTests = [
       results.basicTest.isValid,
       results.categoryTest.success,
-      results.serviceTest.success
+      results.serviceTest.success,
     ].filter(Boolean).length;
 
     results.overallSuccess = passedTests >= 2; // At least basic test and one other must pass
@@ -275,7 +295,7 @@ async function performComprehensiveTest(
       totalTime: Date.now() - startTime,
       environment,
       endpoint: results.basicTest.endpoint,
-      overallResponseTime: results.basicTest.responseTime
+      overallResponseTime: results.basicTest.responseTime,
     };
 
     console.log(`🧪 Test completed: ${passedTests}/${totalTests} tests passed`);
@@ -283,14 +303,14 @@ async function performComprehensiveTest(
     return results;
   } catch (error) {
     console.error('Error in comprehensive test:', error);
-    
+
     results.overallSuccess = false;
     results.summary = {
       totalTests: 3,
       passedTests: 0,
       failedTests: 3,
       totalTime: Date.now() - startTime,
-      criticalError: error instanceof Error ? error.message : 'Unknown error'
+      criticalError: error instanceof Error ? error.message : 'Unknown error',
     };
 
     return results;

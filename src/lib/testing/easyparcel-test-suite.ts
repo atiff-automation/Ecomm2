@@ -45,7 +45,7 @@ export class EasyParcelTestSuite {
       city: 'Kuala Lumpur',
       state: 'KUL',
       postcode: '50000',
-      country: 'MY'
+      country: 'MY',
     },
     selangor: {
       name: 'Test Customer Selangor',
@@ -56,7 +56,7 @@ export class EasyParcelTestSuite {
       city: 'Shah Alam',
       state: 'SEL',
       postcode: '40000',
-      country: 'MY'
+      country: 'MY',
     },
     johor: {
       name: 'Test Customer Johor',
@@ -66,7 +66,7 @@ export class EasyParcelTestSuite {
       city: 'Johor Bahru',
       state: 'JOH',
       postcode: '80000',
-      country: 'MY'
+      country: 'MY',
     },
     // East Malaysia
     sabah: {
@@ -77,7 +77,7 @@ export class EasyParcelTestSuite {
       city: 'Kota Kinabalu',
       state: 'SAB',
       postcode: '88000',
-      country: 'MY'
+      country: 'MY',
     },
     sarawak: {
       name: 'Test Customer Sarawak',
@@ -87,8 +87,8 @@ export class EasyParcelTestSuite {
       city: 'Kuching',
       state: 'SWK',
       postcode: '93000',
-      country: 'MY'
-    }
+      country: 'MY',
+    },
   };
 
   // Test parcel configurations
@@ -100,7 +100,7 @@ export class EasyParcelTestSuite {
       height: 10,
       content: 'Small test package',
       value: 100,
-      quantity: 1
+      quantity: 1,
     },
     medium: {
       weight: 2.0,
@@ -109,7 +109,7 @@ export class EasyParcelTestSuite {
       height: 20,
       content: 'Medium test package',
       value: 500,
-      quantity: 1
+      quantity: 1,
     },
     large: {
       weight: 10.0,
@@ -118,7 +118,7 @@ export class EasyParcelTestSuite {
       height: 30,
       content: 'Large test package',
       value: 1000,
-      quantity: 1
+      quantity: 1,
     },
     oversized: {
       weight: 30.0,
@@ -127,8 +127,8 @@ export class EasyParcelTestSuite {
       height: 60,
       content: 'Oversized test package',
       value: 2000,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   };
 
   constructor() {
@@ -166,11 +166,17 @@ export class EasyParcelTestSuite {
 
       // Calculate summary
       const summary = {
-        totalTests: suiteResults.reduce((sum, suite) => sum + suite.totalTests, 0),
+        totalTests: suiteResults.reduce(
+          (sum, suite) => sum + suite.totalTests,
+          0
+        ),
         totalPassed: suiteResults.reduce((sum, suite) => sum + suite.passed, 0),
         totalFailed: suiteResults.reduce((sum, suite) => sum + suite.failed, 0),
-        totalWarnings: suiteResults.reduce((sum, suite) => sum + suite.warnings, 0),
-        totalDuration: Date.now() - startTime
+        totalWarnings: suiteResults.reduce(
+          (sum, suite) => sum + suite.warnings,
+          0
+        ),
+        totalDuration: Date.now() - startTime,
       };
 
       // Determine overall result
@@ -182,7 +188,6 @@ export class EasyParcelTestSuite {
       }
 
       return { overallResult, suiteResults, summary };
-
     } catch (error) {
       console.error('Critical error in test suite:', error);
       return {
@@ -193,8 +198,8 @@ export class EasyParcelTestSuite {
           totalPassed: 0,
           totalFailed: 1,
           totalWarnings: 0,
-          totalDuration: Date.now() - startTime
-        }
+          totalDuration: Date.now() - startTime,
+        },
       };
     }
   }
@@ -208,10 +213,26 @@ export class EasyParcelTestSuite {
 
     // Test rate calculation for each state combination
     const stateTests = [
-      { from: this.testAddresses.kualaLumpur, to: this.testAddresses.selangor, name: 'KL to Selangor' },
-      { from: this.testAddresses.selangor, to: this.testAddresses.johor, name: 'Selangor to Johor' },
-      { from: this.testAddresses.kualaLumpur, to: this.testAddresses.sabah, name: 'KL to Sabah (East Malaysia)' },
-      { from: this.testAddresses.johor, to: this.testAddresses.sarawak, name: 'Johor to Sarawak (East Malaysia)' }
+      {
+        from: this.testAddresses.kualaLumpur,
+        to: this.testAddresses.selangor,
+        name: 'KL to Selangor',
+      },
+      {
+        from: this.testAddresses.selangor,
+        to: this.testAddresses.johor,
+        name: 'Selangor to Johor',
+      },
+      {
+        from: this.testAddresses.kualaLumpur,
+        to: this.testAddresses.sabah,
+        name: 'KL to Sabah (East Malaysia)',
+      },
+      {
+        from: this.testAddresses.johor,
+        to: this.testAddresses.sarawak,
+        name: 'Johor to Sarawak (East Malaysia)',
+      },
     ];
 
     for (const test of stateTests) {
@@ -221,7 +242,7 @@ export class EasyParcelTestSuite {
           pickup_address: test.from,
           delivery_address: test.to,
           parcel: this.testParcels.medium,
-          service_types: ['STANDARD', 'EXPRESS']
+          service_types: ['STANDARD', 'EXPRESS'],
         });
 
         if (rates.rates && rates.rates.length > 0) {
@@ -230,7 +251,10 @@ export class EasyParcelTestSuite {
             status: 'PASS',
             message: `Found ${rates.rates.length} rates`,
             duration: Date.now() - testStart,
-            data: { rateCount: rates.rates.length, cheapestRate: rates.rates[0]?.price }
+            data: {
+              rateCount: rates.rates.length,
+              cheapestRate: rates.rates[0]?.price,
+            },
           });
         } else {
           results.push({
@@ -238,7 +262,7 @@ export class EasyParcelTestSuite {
             status: 'WARNING',
             message: 'No rates returned',
             duration: Date.now() - testStart,
-            data: rates
+            data: rates,
           });
         }
       } catch (error) {
@@ -247,7 +271,7 @@ export class EasyParcelTestSuite {
           status: 'FAIL',
           message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           duration: Date.now() - testStart,
-          error
+          error,
         });
       }
     }
@@ -261,15 +285,17 @@ export class EasyParcelTestSuite {
           pickup_address: this.testAddresses.kualaLumpur,
           delivery_address: this.testAddresses.selangor,
           parcel,
-          service_types: ['STANDARD']
+          service_types: ['STANDARD'],
         });
 
         results.push({
           testName: `Rate Calculation: ${size} parcel`,
           status: rates.rates && rates.rates.length > 0 ? 'PASS' : 'WARNING',
-          message: rates.rates ? `${rates.rates.length} rates found` : 'No rates found',
+          message: rates.rates
+            ? `${rates.rates.length} rates found`
+            : 'No rates found',
           duration: Date.now() - testStart,
-          data: { parcelSize: size, rateCount: rates.rates?.length }
+          data: { parcelSize: size, rateCount: rates.rates?.length },
         });
       } catch (error) {
         results.push({
@@ -277,12 +303,16 @@ export class EasyParcelTestSuite {
           status: 'FAIL',
           message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           duration: Date.now() - testStart,
-          error
+          error,
         });
       }
     }
 
-    return this.summarizeTestResults('Rate Calculation Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Rate Calculation Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -303,10 +333,11 @@ export class EasyParcelTestSuite {
         reference: `TEST-${Date.now()}`,
         special_instruction: 'Test booking - please handle with care',
         insurance: true,
-        signature_required: false
+        signature_required: false,
       };
 
-      const bookingResponse = await this.easyParcelService.bookShipment(bookingRequest);
+      const bookingResponse =
+        await this.easyParcelService.bookShipment(bookingRequest);
 
       if (bookingResponse.shipment_id) {
         results.push({
@@ -317,8 +348,8 @@ export class EasyParcelTestSuite {
           data: {
             shipmentId: bookingResponse.shipment_id,
             trackingNumber: bookingResponse.tracking_number,
-            reference: bookingResponse.reference
-          }
+            reference: bookingResponse.reference,
+          },
         });
       } else {
         results.push({
@@ -326,7 +357,7 @@ export class EasyParcelTestSuite {
           status: 'WARNING',
           message: 'Booking response received but no shipment ID',
           duration: Date.now() - testStart,
-          data: bookingResponse
+          data: bookingResponse,
         });
       }
     } catch (error) {
@@ -335,11 +366,15 @@ export class EasyParcelTestSuite {
         status: 'FAIL',
         message: `Booking failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         duration: Date.now() - testStart,
-        error
+        error,
       });
     }
 
-    return this.summarizeTestResults('Shipment Booking Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Shipment Booking Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -355,9 +390,10 @@ export class EasyParcelTestSuite {
     try {
       // Test label generation (would normally use real shipment ID)
       const mockShipmentId = 'TEST_SHIPMENT_ID';
-      
+
       // In sandbox mode, this might work with test IDs
-      const labelBuffer = await this.easyParcelService.generateLabel(mockShipmentId);
+      const labelBuffer =
+        await this.easyParcelService.generateLabel(mockShipmentId);
 
       if (labelBuffer && labelBuffer.length > 0) {
         results.push({
@@ -365,14 +401,14 @@ export class EasyParcelTestSuite {
           status: 'PASS',
           message: `Label generated successfully (${labelBuffer.length} bytes)`,
           duration: Date.now() - testStart,
-          data: { labelSize: labelBuffer.length }
+          data: { labelSize: labelBuffer.length },
         });
       } else {
         results.push({
           testName: 'Label Generation',
           status: 'WARNING',
           message: 'Label generation returned empty buffer',
-          duration: Date.now() - testStart
+          duration: Date.now() - testStart,
         });
       }
     } catch (error) {
@@ -382,11 +418,15 @@ export class EasyParcelTestSuite {
         status: 'WARNING',
         message: `Label generation test skipped in sandbox mode: ${error instanceof Error ? error.message : 'Unknown error'}`,
         duration: Date.now() - testStart,
-        error
+        error,
       });
     }
 
-    return this.summarizeTestResults('Label Generation Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Label Generation Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -400,15 +440,16 @@ export class EasyParcelTestSuite {
     const testStart = Date.now();
     try {
       const mockTrackingNumber = 'TEST123456789';
-      
-      const trackingResponse = await this.easyParcelService.trackShipment(mockTrackingNumber);
+
+      const trackingResponse =
+        await this.easyParcelService.trackShipment(mockTrackingNumber);
 
       results.push({
         testName: 'Tracking API',
         status: 'WARNING',
         message: 'Tracking test completed (sandbox mode)',
         duration: Date.now() - testStart,
-        data: trackingResponse
+        data: trackingResponse,
       });
     } catch (error) {
       results.push({
@@ -416,7 +457,7 @@ export class EasyParcelTestSuite {
         status: 'WARNING',
         message: `Tracking test skipped: ${error instanceof Error ? error.message : 'Unknown error'}`,
         duration: Date.now() - testStart,
-        error
+        error,
       });
     }
 
@@ -424,14 +465,15 @@ export class EasyParcelTestSuite {
     const webhookTestStart = Date.now();
     try {
       // Test if webhook endpoint is properly configured
-      const webhookUrl = process.env.NEXT_PUBLIC_APP_URL + '/api/webhooks/easyparcel-tracking';
-      
+      const webhookUrl =
+        process.env.NEXT_PUBLIC_APP_URL + '/api/webhooks/easyparcel-tracking';
+
       results.push({
         testName: 'Webhook Configuration',
         status: 'PASS',
         message: `Webhook URL configured: ${webhookUrl}`,
         duration: Date.now() - webhookTestStart,
-        data: { webhookUrl }
+        data: { webhookUrl },
       });
     } catch (error) {
       results.push({
@@ -439,11 +481,15 @@ export class EasyParcelTestSuite {
         status: 'FAIL',
         message: 'Webhook configuration error',
         duration: Date.now() - webhookTestStart,
-        error
+        error,
       });
     }
 
-    return this.summarizeTestResults('Tracking and Webhook Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Tracking and Webhook Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -459,7 +505,7 @@ export class EasyParcelTestSuite {
       const taxBreakdown = await this.taxService.calculateTaxBreakdown({
         productSubtotal: 1000,
         shippingCost: 50,
-        taxInclusive: false
+        taxInclusive: false,
       });
 
       results.push({
@@ -467,7 +513,7 @@ export class EasyParcelTestSuite {
         status: 'PASS',
         message: `Tax calculated: RM${taxBreakdown.totalTax.toFixed(2)}`,
         duration: Date.now() - testStart,
-        data: taxBreakdown
+        data: taxBreakdown,
       });
     } catch (error) {
       results.push({
@@ -475,37 +521,38 @@ export class EasyParcelTestSuite {
         status: 'FAIL',
         message: `Tax calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         duration: Date.now() - testStart,
-        error
+        error,
       });
     }
 
     // Test tax-inclusive shipping rates
     const taxRateTestStart = Date.now();
     try {
-      const taxInclusiveRates = await this.taxCalculator.calculateTaxInclusiveRates({
-        pickupAddress: {
-          postcode: '50000',
-          state: 'KUL',
-          city: 'Kuala Lumpur'
-        },
-        deliveryAddress: {
-          postcode: '40000',
-          state: 'SEL',
-          city: 'Shah Alam'
-        },
-        parcel: {
-          weight: 1.0,
-          value: 100
-        },
-        displayTaxInclusive: true
-      });
+      const taxInclusiveRates =
+        await this.taxCalculator.calculateTaxInclusiveRates({
+          pickupAddress: {
+            postcode: '50000',
+            state: 'KUL',
+            city: 'Kuala Lumpur',
+          },
+          deliveryAddress: {
+            postcode: '40000',
+            state: 'SEL',
+            city: 'Shah Alam',
+          },
+          parcel: {
+            weight: 1.0,
+            value: 100,
+          },
+          displayTaxInclusive: true,
+        });
 
       results.push({
         testName: 'Tax-Inclusive Shipping Rates',
         status: taxInclusiveRates.length > 0 ? 'PASS' : 'WARNING',
         message: `${taxInclusiveRates.length} tax-inclusive rates calculated`,
         duration: Date.now() - taxRateTestStart,
-        data: { rateCount: taxInclusiveRates.length }
+        data: { rateCount: taxInclusiveRates.length },
       });
     } catch (error) {
       results.push({
@@ -513,11 +560,15 @@ export class EasyParcelTestSuite {
         status: 'FAIL',
         message: `Tax-inclusive rate calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         duration: Date.now() - taxRateTestStart,
-        error
+        error,
       });
     }
 
-    return this.summarizeTestResults('Tax Calculation Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Tax Calculation Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -531,16 +582,19 @@ export class EasyParcelTestSuite {
     const invalidAddressTest = Date.now();
     try {
       await this.easyParcelService.calculateRates({
-        pickup_address: { ...this.testAddresses.kualaLumpur, postcode: '00000' }, // Invalid postcode
+        pickup_address: {
+          ...this.testAddresses.kualaLumpur,
+          postcode: '00000',
+        }, // Invalid postcode
         delivery_address: this.testAddresses.selangor,
-        parcel: this.testParcels.small
+        parcel: this.testParcels.small,
       });
 
       results.push({
         testName: 'Invalid Address Handling',
         status: 'WARNING',
         message: 'Invalid address was accepted (unexpected)',
-        duration: Date.now() - invalidAddressTest
+        duration: Date.now() - invalidAddressTest,
       });
     } catch (error) {
       results.push({
@@ -548,7 +602,10 @@ export class EasyParcelTestSuite {
         status: 'PASS',
         message: 'Invalid address properly rejected',
         duration: Date.now() - invalidAddressTest,
-        data: { errorMessage: error instanceof Error ? error.message : 'Unknown error' }
+        data: {
+          errorMessage:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
       });
     }
 
@@ -558,14 +615,14 @@ export class EasyParcelTestSuite {
       await this.easyParcelService.calculateRates({
         pickup_address: this.testAddresses.kualaLumpur,
         delivery_address: this.testAddresses.selangor,
-        parcel: { ...this.testParcels.oversized, weight: 100 } // Exceeds 70kg limit
+        parcel: { ...this.testParcels.oversized, weight: 100 }, // Exceeds 70kg limit
       });
 
       results.push({
         testName: 'Oversized Parcel Handling',
         status: 'WARNING',
         message: 'Oversized parcel was accepted (unexpected)',
-        duration: Date.now() - oversizedTest
+        duration: Date.now() - oversizedTest,
       });
     } catch (error) {
       results.push({
@@ -573,11 +630,18 @@ export class EasyParcelTestSuite {
         status: 'PASS',
         message: 'Oversized parcel properly rejected',
         duration: Date.now() - oversizedTest,
-        data: { errorMessage: error instanceof Error ? error.message : 'Unknown error' }
+        data: {
+          errorMessage:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
       });
     }
 
-    return this.summarizeTestResults('Error Handling Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Error Handling Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
@@ -603,7 +667,7 @@ export class EasyParcelTestSuite {
       { code: 'SWK', name: 'Sarawak', postcode: '93000' },
       { code: 'KUL', name: 'Kuala Lumpur', postcode: '50000' },
       { code: 'LBN', name: 'Labuan', postcode: '87000' },
-      { code: 'PJY', name: 'Putrajaya', postcode: '62000' }
+      { code: 'PJY', name: 'Putrajaya', postcode: '62000' },
     ];
 
     // Test a sample of states (to avoid overwhelming the API)
@@ -616,21 +680,23 @@ export class EasyParcelTestSuite {
           ...this.testAddresses.kualaLumpur,
           city: state.name,
           state: state.code,
-          postcode: state.postcode
+          postcode: state.postcode,
         };
 
         const rates = await this.easyParcelService.calculateRates({
           pickup_address: this.testAddresses.kualaLumpur,
           delivery_address: testAddress,
-          parcel: this.testParcels.small
+          parcel: this.testParcels.small,
         });
 
         results.push({
           testName: `State Coverage: ${state.name}`,
           status: rates.rates && rates.rates.length > 0 ? 'PASS' : 'WARNING',
-          message: rates.rates ? `${rates.rates.length} rates available` : 'No rates available',
+          message: rates.rates
+            ? `${rates.rates.length} rates available`
+            : 'No rates available',
           duration: Date.now() - testStart,
-          data: { state: state.code, rateCount: rates.rates?.length }
+          data: { state: state.code, rateCount: rates.rates?.length },
         });
       } catch (error) {
         results.push({
@@ -638,18 +704,26 @@ export class EasyParcelTestSuite {
           status: 'FAIL',
           message: `State test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           duration: Date.now() - testStart,
-          error
+          error,
         });
       }
     }
 
-    return this.summarizeTestResults('Malaysian States Coverage Tests', results, Date.now() - startTime);
+    return this.summarizeTestResults(
+      'Malaysian States Coverage Tests',
+      results,
+      Date.now() - startTime
+    );
   }
 
   /**
    * Helper method to summarize test results
    */
-  private summarizeTestResults(suiteName: string, results: TestResult[], duration: number): TestSuiteResult {
+  private summarizeTestResults(
+    suiteName: string,
+    results: TestResult[],
+    duration: number
+  ): TestSuiteResult {
     const passed = results.filter(r => r.status === 'PASS').length;
     const failed = results.filter(r => r.status === 'FAIL').length;
     const warnings = results.filter(r => r.status === 'WARNING').length;
@@ -661,7 +735,7 @@ export class EasyParcelTestSuite {
       failed,
       warnings,
       duration,
-      results
+      results,
     };
   }
 
@@ -681,7 +755,12 @@ export class EasyParcelTestSuite {
       report += `- Duration: ${suite.duration}ms\n\n`;
 
       for (const result of suite.results) {
-        const status = result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⚠️';
+        const status =
+          result.status === 'PASS'
+            ? '✅'
+            : result.status === 'FAIL'
+              ? '❌'
+              : '⚠️';
         report += `${status} **${result.testName}**: ${result.message} (${result.duration}ms)\n`;
       }
       report += '\n';

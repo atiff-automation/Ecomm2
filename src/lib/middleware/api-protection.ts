@@ -4,7 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientIP, isTrustedOrigin, isSuspiciousUserAgent, SECURITY_HEADERS } from '@/lib/utils/security';
+import {
+  getClientIP,
+  isTrustedOrigin,
+  isSuspiciousUserAgent,
+  SECURITY_HEADERS,
+} from '@/lib/utils/security';
 import { rateLimit } from '@/lib/utils/rate-limit';
 
 export interface ApiProtectionConfig {
@@ -100,7 +105,7 @@ export async function protectApiEndpoint(
   const userAgent = request.headers.get('user-agent') || 'unknown';
   const method = request.method;
   const url = request.url;
-  
+
   // Log request if enabled
   if (mergedConfig.logging?.logRequests) {
     console.log(`🛡️ API Protection Check: ${method} ${url} from ${clientIP}`);
@@ -109,7 +114,10 @@ export async function protectApiEndpoint(
   try {
     // 1. Production-only endpoint protection
     if (mergedConfig.productionOnly?.enabled) {
-      if (process.env.NODE_ENV !== 'production' && mergedConfig.productionOnly.blockInDevelopment) {
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        mergedConfig.productionOnly.blockInDevelopment
+      ) {
         return {
           allowed: false,
           response: NextResponse.json(
@@ -131,14 +139,19 @@ export async function protectApiEndpoint(
     // 2. Rate limiting protection
     if (mergedConfig.rateLimiting?.enabled) {
       const limiter = rateLimiters.moderate; // Default to moderate
-      
+
       try {
-        await limiter.check(mergedConfig.rateLimiting.requestsPerMinute, clientIP);
+        await limiter.check(
+          mergedConfig.rateLimiting.requestsPerMinute,
+          clientIP
+        );
       } catch {
         if (mergedConfig.logging?.logErrors) {
-          console.warn(`🚫 Rate limit exceeded for ${clientIP} on ${method} ${url}`);
+          console.warn(
+            `🚫 Rate limit exceeded for ${clientIP} on ${method} ${url}`
+          );
         }
-        
+
         return {
           allowed: false,
           response: NextResponse.json(
@@ -152,7 +165,8 @@ export async function protectApiEndpoint(
               headers: {
                 ...SECURITY_HEADERS,
                 'Retry-After': '60',
-                'X-RateLimit-Limit': mergedConfig.rateLimiting.requestsPerMinute.toString(),
+                'X-RateLimit-Limit':
+                  mergedConfig.rateLimiting.requestsPerMinute.toString(),
                 'X-RateLimit-Remaining': '0',
                 'X-RateLimit-Reset': (Date.now() + 60000).toString(),
               },
@@ -166,12 +180,17 @@ export async function protectApiEndpoint(
     // 3. CORS protection
     if (mergedConfig.corsProtection?.enabled) {
       const origin = request.headers.get('origin');
-      
-      if (origin && !isTrustedOrigin(request, mergedConfig.corsProtection.allowedOrigins)) {
+
+      if (
+        origin &&
+        !isTrustedOrigin(request, mergedConfig.corsProtection.allowedOrigins)
+      ) {
         if (mergedConfig.logging?.logErrors) {
-          console.warn(`🚫 Untrusted origin blocked: ${origin} for ${clientIP}`);
+          console.warn(
+            `🚫 Untrusted origin blocked: ${origin} for ${clientIP}`
+          );
         }
-        
+
         return {
           allowed: false,
           response: NextResponse.json(
@@ -191,12 +210,17 @@ export async function protectApiEndpoint(
     }
 
     // 4. User Agent validation
-    if (mergedConfig.userAgentValidation?.enabled && mergedConfig.userAgentValidation.blockSuspicious) {
+    if (
+      mergedConfig.userAgentValidation?.enabled &&
+      mergedConfig.userAgentValidation.blockSuspicious
+    ) {
       if (isSuspiciousUserAgent(userAgent)) {
         if (mergedConfig.logging?.logErrors) {
-          console.warn(`🚫 Suspicious user agent blocked: ${userAgent} from ${clientIP}`);
+          console.warn(
+            `🚫 Suspicious user agent blocked: ${userAgent} from ${clientIP}`
+          );
         }
-        
+
         return {
           allowed: false,
           response: NextResponse.json(
@@ -218,9 +242,10 @@ export async function protectApiEndpoint(
     // 5. Authentication requirement (basic implementation)
     if (mergedConfig.requireAuth) {
       const authHeader = request.headers.get('authorization');
-      const sessionCookie = request.cookies.get('next-auth.session-token') || 
-                           request.cookies.get('__Secure-next-auth.session-token');
-      
+      const sessionCookie =
+        request.cookies.get('next-auth.session-token') ||
+        request.cookies.get('__Secure-next-auth.session-token');
+
       if (!authHeader && !sessionCookie) {
         return {
           allowed: false,
@@ -242,12 +267,11 @@ export async function protectApiEndpoint(
 
     // All checks passed
     return { allowed: true };
-
   } catch (error) {
     if (mergedConfig.logging?.logErrors) {
       console.error(`🚨 API Protection Error for ${clientIP}:`, error);
     }
-    
+
     return {
       allowed: false,
       response: NextResponse.json(
@@ -281,14 +305,14 @@ export const protectionConfigs = {
   // Standard API endpoints
   standard: {
     rateLimiting: { enabled: true, requestsPerMinute: 60 },
-    corsProtection: { 
-      enabled: true, 
+    corsProtection: {
+      enabled: true,
       allowedOrigins: [
         'http://localhost:3000',
         'https://localhost:3000',
         process.env.NEXTAUTH_URL || '',
         process.env.NEXT_PUBLIC_APP_URL || '',
-      ].filter(Boolean)
+      ].filter(Boolean),
     },
     userAgentValidation: { enabled: false, blockSuspicious: false }, // Allow all user agents for cart operations
     requireAuth: false,
@@ -338,24 +362,27 @@ export function withApiProtection(
   handler: (request?: NextRequest, context?: any) => Promise<NextResponse>,
   config: Partial<ApiProtectionConfig> = {}
 ) {
-  return async (request?: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (
+    request?: NextRequest,
+    context?: any
+  ): Promise<NextResponse> => {
     // For handlers without request parameter (like GET), create a minimal request object
     const actualRequest = request || new NextRequest('http://localhost/api');
-    
+
     const protection = await protectApiEndpoint(actualRequest, config);
-    
+
     if (!protection.allowed) {
       return protection.response!;
     }
-    
+
     // Add security headers to successful responses
     const response = await handler(request, context);
-    
+
     // Add security headers
     Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
-    
+
     return response;
   };
 }

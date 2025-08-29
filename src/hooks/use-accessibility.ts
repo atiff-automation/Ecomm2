@@ -19,10 +19,15 @@ import {
 // Focus trap hook
 export function useFocusTrap(isActive: boolean = false) {
   const elementRef = useRef<HTMLElement>(null);
-  const focusTrapRef = useRef<{ activate: () => void; deactivate: () => void } | null>(null);
+  const focusTrapRef = useRef<{
+    activate: () => void;
+    deactivate: () => void;
+  } | null>(null);
 
   useEffect(() => {
-    if (!elementRef.current) return;
+    if (!elementRef.current) {
+      return;
+    }
 
     if (isActive) {
       focusTrapRef.current = createFocusTrap(elementRef.current);
@@ -48,7 +53,7 @@ export function useKeyboardNavigation(
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const key = event.key as keyof typeof KeyboardKeys;
     const handler = handlers[key];
-    
+
     if (handler) {
       event.preventDefault();
       handler();
@@ -63,12 +68,12 @@ export function useKeyboardNavigation(
 
 // Screen reader announcements hook
 export function useScreenReaderAnnouncements() {
-  const announce = useCallback((
-    message: string,
-    priority: 'polite' | 'assertive' = 'polite'
-  ) => {
-    announceToScreenReader(message, priority);
-  }, []);
+  const announce = useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      announceToScreenReader(message, priority);
+    },
+    []
+  );
 
   return { announce };
 }
@@ -97,9 +102,15 @@ export function useFormFieldAccessibility(
     helpText?: string;
   } = {}
 ) {
-  const { required = false, hasError = false, hasHelp = false, errorMessage, helpText } = options;
+  const {
+    required = false,
+    hasError = false,
+    hasHelp = false,
+    errorMessage,
+    helpText,
+  } = options;
   const ids = generateFormFieldIds(fieldName);
-  
+
   const fieldProps = getFormFieldAriaAttributes(fieldName, {
     hasError,
     hasHelp,
@@ -112,17 +123,21 @@ export function useFormFieldAccessibility(
     htmlFor: ids.fieldId,
   };
 
-  const errorProps = hasError ? {
-    id: ids.errorId,
-    role: 'alert',
-    'aria-live': 'assertive' as const,
-    'aria-atomic': true,
-  } : {};
+  const errorProps = hasError
+    ? {
+        id: ids.errorId,
+        role: 'alert',
+        'aria-live': 'assertive' as const,
+        'aria-atomic': true,
+      }
+    : {};
 
-  const helpProps = hasHelp ? {
-    id: ids.helpId,
-    'aria-live': 'polite' as const,
-  } : {};
+  const helpProps = hasHelp
+    ? {
+        id: ids.helpId,
+        'aria-live': 'polite' as const,
+      }
+    : {};
 
   return {
     fieldProps,
@@ -139,7 +154,7 @@ export function useLoadingAccessibility(
   loadingText: string = 'Loading content, please wait...'
 ) {
   const { announce } = useScreenReaderAnnouncements();
-  
+
   useEffect(() => {
     if (isLoading) {
       announce(loadingText, 'polite');
@@ -189,9 +204,12 @@ export function useModalAccessibility(
   }, [isOpen, restoreFocus]);
 
   // Handle escape key
-  useKeyboardNavigation({
-    Escape: closeOnEscape && onClose ? onClose : undefined,
-  }, [closeOnEscape, onClose]);
+  useKeyboardNavigation(
+    {
+      Escape: closeOnEscape && onClose ? onClose : undefined,
+    },
+    [closeOnEscape, onClose]
+  );
 
   const modalProps = {
     ref: modalRef,
@@ -216,7 +234,7 @@ export function useRovingTabIndex<T extends HTMLElement>(
   }, [items.length]);
 
   const moveToPrevious = useCallback(() => {
-    setActiveIndex(prev => prev === 0 ? items.length - 1 : prev - 1);
+    setActiveIndex(prev => (prev === 0 ? items.length - 1 : prev - 1));
   }, [items.length]);
 
   const moveToFirst = useCallback(() => {
@@ -227,19 +245,27 @@ export function useRovingTabIndex<T extends HTMLElement>(
     setActiveIndex(items.length - 1);
   }, [items.length]);
 
-  const keyHandlers = orientation === 'horizontal' ? {
-    ArrowRight: moveToNext,
-    ArrowLeft: moveToPrevious,
-    Home: moveToFirst,
-    End: moveToLast,
-  } : {
-    ArrowDown: moveToNext,
-    ArrowUp: moveToPrevious,
-    Home: moveToFirst,
-    End: moveToLast,
-  };
+  const keyHandlers =
+    orientation === 'horizontal'
+      ? {
+          ArrowRight: moveToNext,
+          ArrowLeft: moveToPrevious,
+          Home: moveToFirst,
+          End: moveToLast,
+        }
+      : {
+          ArrowDown: moveToNext,
+          ArrowUp: moveToPrevious,
+          Home: moveToFirst,
+          End: moveToLast,
+        };
 
-  useKeyboardNavigation(keyHandlers, [moveToNext, moveToPrevious, moveToFirst, moveToLast]);
+  useKeyboardNavigation(keyHandlers, [
+    moveToNext,
+    moveToPrevious,
+    moveToFirst,
+    moveToLast,
+  ]);
 
   useEffect(() => {
     if (items[activeIndex]) {
@@ -247,10 +273,13 @@ export function useRovingTabIndex<T extends HTMLElement>(
     }
   }, [activeIndex, items]);
 
-  const getItemProps = useCallback((index: number) => ({
-    tabIndex: index === activeIndex ? 0 : -1,
-    onFocus: () => setActiveIndex(index),
-  }), [activeIndex]);
+  const getItemProps = useCallback(
+    (index: number) => ({
+      tabIndex: index === activeIndex ? 0 : -1,
+      onFocus: () => setActiveIndex(index),
+    }),
+    [activeIndex]
+  );
 
   return {
     activeIndex,
@@ -352,12 +381,16 @@ export function useFocusVisible() {
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const handleFocus = () => setIsFocusVisible(true);
     const handleBlur = () => setIsFocusVisible(false);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') setIsFocusVisible(true);
+      if (e.key === 'Tab') {
+        setIsFocusVisible(true);
+      }
     };
     const handleMouseDown = () => setIsFocusVisible(false);
 
@@ -378,21 +411,27 @@ export function useFocusVisible() {
 }
 
 // Auto-scroll for keyboard navigation
-export function useAutoScroll(activeIndex: number, containerRef: React.RefObject<HTMLElement>) {
+export function useAutoScroll(
+  activeIndex: number,
+  containerRef: React.RefObject<HTMLElement>
+) {
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const activeElement = container.children[activeIndex] as HTMLElement;
-    if (!activeElement) return;
+    if (!activeElement) {
+      return;
+    }
 
     const containerRect = container.getBoundingClientRect();
     const elementRect = activeElement.getBoundingClientRect();
 
-    const isVisible = (
+    const isVisible =
       elementRect.top >= containerRect.top &&
-      elementRect.bottom <= containerRect.bottom
-    );
+      elementRect.bottom <= containerRect.bottom;
 
     if (!isVisible) {
       activeElement.scrollIntoView({
@@ -414,20 +453,29 @@ export function useAccessibleFormSubmission(
   const { announce } = useScreenReaderAnnouncements();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitForm = useCallback(async (data: any) => {
-    setIsSubmitting(true);
-    announce('Submitting form, please wait...', 'polite');
+  const submitForm = useCallback(
+    async (data: any) => {
+      setIsSubmitting(true);
+      announce('Submitting form, please wait...', 'polite');
 
-    try {
-      await onSubmit(data);
-      announce(options.successMessage || 'Form submitted successfully', 'assertive');
-    } catch (error) {
-      announce(options.errorMessage || 'Form submission failed, please try again', 'assertive');
-      throw error;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [onSubmit, announce, options.successMessage, options.errorMessage]);
+      try {
+        await onSubmit(data);
+        announce(
+          options.successMessage || 'Form submitted successfully',
+          'assertive'
+        );
+      } catch (error) {
+        announce(
+          options.errorMessage || 'Form submission failed, please try again',
+          'assertive'
+        );
+        throw error;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [onSubmit, announce, options.successMessage, options.errorMessage]
+  );
 
   return {
     submitForm,

@@ -1,6 +1,6 @@
 /**
  * Zone-Based Shipping Calculator
- * 
+ *
  * This service implements the smart zone-based shipping calculation system
  * Reference: IMPLEMENTATION_ROADMAP.md Sprint 1.2
  * Reference: ZONE_BASED_SHIPPING_DESIGN.md
@@ -94,7 +94,7 @@ export interface ShippingCalculationResult {
 export class ZoneBasedShippingCalculator {
   private zoneCache = new Map<string, ShippingZoneInfo>();
   private rulesCache = new Map<string, ShippingRuleInfo[]>();
-  private freeShippingThreshold = 150.00; // Default threshold
+  private freeShippingThreshold = 150.0; // Default threshold
 
   constructor() {
     this.initializeCache();
@@ -109,7 +109,7 @@ export class ZoneBasedShippingCalculator {
       // Load zones
       const zones = await prisma.shippingZone.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: 'asc' }
+        orderBy: { sortOrder: 'asc' },
       });
 
       zones.forEach(zone => {
@@ -121,7 +121,7 @@ export class ZoneBasedShippingCalculator {
           multiplier: zone.multiplier.toNumber(),
           deliveryTimeMin: zone.deliveryTimeMin,
           deliveryTimeMax: zone.deliveryTimeMax,
-          features: zone.features as any
+          features: zone.features as any,
         });
       });
 
@@ -129,19 +129,13 @@ export class ZoneBasedShippingCalculator {
       const rules = await prisma.shippingRule.findMany({
         where: {
           isActive: true,
-          OR: [
-            { effectiveTo: null },
-            { effectiveTo: { gte: new Date() } }
-          ]
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: new Date() } }],
         },
         include: {
           zone: true,
-          ruleSet: true
+          ruleSet: true,
         },
-        orderBy: [
-          { zoneId: 'asc' },
-          { weightMin: 'asc' }
-        ]
+        orderBy: [{ zoneId: 'asc' }, { weightMin: 'asc' }],
       });
 
       // Group rules by zone
@@ -151,7 +145,7 @@ export class ZoneBasedShippingCalculator {
         if (!rulesByZone.has(zoneCode)) {
           rulesByZone.set(zoneCode, []);
         }
-        
+
         rulesByZone.get(zoneCode)!.push({
           id: rule.id,
           zoneId: rule.zoneId,
@@ -159,7 +153,7 @@ export class ZoneBasedShippingCalculator {
           weightMax: rule.weightMax.toNumber(),
           price: rule.price.toNumber(),
           serviceType: rule.serviceType,
-          description: rule.description || undefined
+          description: rule.description || undefined,
         });
       });
 
@@ -167,9 +161,9 @@ export class ZoneBasedShippingCalculator {
 
       // Load free shipping threshold
       const threshold = await prisma.systemConfig.findUnique({
-        where: { key: 'free_shipping_threshold' }
+        where: { key: 'free_shipping_threshold' },
       });
-      
+
       if (threshold) {
         this.freeShippingThreshold = parseFloat(threshold.value);
       }
@@ -177,11 +171,13 @@ export class ZoneBasedShippingCalculator {
       console.log('✅ Zone-based shipping calculator cache initialized:', {
         zones: this.zoneCache.size,
         ruleGroups: this.rulesCache.size,
-        freeShippingThreshold: this.freeShippingThreshold
+        freeShippingThreshold: this.freeShippingThreshold,
       });
-
     } catch (error) {
-      console.error('❌ Failed to initialize shipping calculator cache:', error);
+      console.error(
+        '❌ Failed to initialize shipping calculator cache:',
+        error
+      );
       throw new Error('Shipping calculator initialization failed');
     }
   }
@@ -190,7 +186,9 @@ export class ZoneBasedShippingCalculator {
    * Map customer state to shipping zone
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 1: Implement state-to-zone mapping function
    */
-  public async resolveShippingZone(customerState: string): Promise<ShippingZoneInfo | null> {
+  public async resolveShippingZone(
+    customerState: string
+  ): Promise<ShippingZoneInfo | null> {
     // Ensure cache is initialized
     if (this.zoneCache.size === 0) {
       await this.initializeCache();
@@ -198,7 +196,7 @@ export class ZoneBasedShippingCalculator {
 
     // Normalize state code
     const normalizedState = this.normalizeStateCode(customerState);
-    
+
     // Find zone containing this state
     for (const [zoneCode, zone] of this.zoneCache) {
       if (zone.states.includes(normalizedState)) {
@@ -218,29 +216,40 @@ export class ZoneBasedShippingCalculator {
   private normalizeStateCode(state: string): string {
     const stateMapping: Record<string, string> = {
       // Full names to codes
-      'Johor': 'JOH',
-      'Kedah': 'KDH', 
-      'Kelantan': 'KTN',
-      'Melaka': 'MLK',
-      'Malacca': 'MLK',
+      Johor: 'JOH',
+      Kedah: 'KDH',
+      Kelantan: 'KTN',
+      Melaka: 'MLK',
+      Malacca: 'MLK',
       'Negeri Sembilan': 'NSN',
-      'Pahang': 'PHG',
-      'Perak': 'PRK',
-      'Perlis': 'PLS',
+      Pahang: 'PHG',
+      Perak: 'PRK',
+      Perlis: 'PLS',
       'Pulau Pinang': 'PNG',
-      'Penang': 'PNG',
+      Penang: 'PNG',
       'Kuala Lumpur': 'KUL',
-      'Terengganu': 'TRG',
-      'Selangor': 'SEL',
-      'Sabah': 'SBH',
-      'Sarawak': 'SWK',
-      'Labuan': 'LBN',
-      
+      Terengganu: 'TRG',
+      Selangor: 'SEL',
+      Sabah: 'SBH',
+      Sarawak: 'SWK',
+      Labuan: 'LBN',
+
       // Already correct codes
-      'JOH': 'JOH', 'KDH': 'KDH', 'KTN': 'KTN', 'MLK': 'MLK',
-      'NSN': 'NSN', 'PHG': 'PHG', 'PRK': 'PRK', 'PLS': 'PLS',
-      'PNG': 'PNG', 'KUL': 'KUL', 'TRG': 'TRG', 'SEL': 'SEL',
-      'SBH': 'SBH', 'SWK': 'SWK', 'LBN': 'LBN'
+      JOH: 'JOH',
+      KDH: 'KDH',
+      KTN: 'KTN',
+      MLK: 'MLK',
+      NSN: 'NSN',
+      PHG: 'PHG',
+      PRK: 'PRK',
+      PLS: 'PLS',
+      PNG: 'PNG',
+      KUL: 'KUL',
+      TRG: 'TRG',
+      SEL: 'SEL',
+      SBH: 'SBH',
+      SWK: 'SWK',
+      LBN: 'LBN',
     };
 
     return stateMapping[state] || state.toUpperCase();
@@ -258,29 +267,41 @@ export class ZoneBasedShippingCalculator {
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 2: Add packaging weight calculation
    */
   private calculatePackagingWeight(
-    items: Array<{ weight: number; quantity: number; dimensions?: any; shippingClass?: string }>,
+    items: Array<{
+      weight: number;
+      quantity: number;
+      dimensions?: any;
+      shippingClass?: string;
+    }>,
     packagingPreference: 'MINIMAL' | 'STANDARD' | 'SECURE' = 'STANDARD'
   ): number {
-    const itemWeight = items.reduce((total, item) => total + (item.weight * item.quantity), 0);
-    
+    const itemWeight = items.reduce(
+      (total, item) => total + item.weight * item.quantity,
+      0
+    );
+
     // Packaging weight multipliers
     const packagingMultipliers = {
-      MINIMAL: 0.05,   // 5% additional weight
-      STANDARD: 0.10,  // 10% additional weight
-      SECURE: 0.20     // 20% additional weight for fragile items
+      MINIMAL: 0.05, // 5% additional weight
+      STANDARD: 0.1, // 10% additional weight
+      SECURE: 0.2, // 20% additional weight for fragile items
     };
 
     // Check if any items are fragile or hazardous
-    const hasSpecialHandling = items.some(item => 
-      item.shippingClass === 'FRAGILE' || item.shippingClass === 'HAZARDOUS'
+    const hasSpecialHandling = items.some(
+      item =>
+        item.shippingClass === 'FRAGILE' || item.shippingClass === 'HAZARDOUS'
     );
 
     // Use SECURE packaging for special handling items
-    const effectivePreference = hasSpecialHandling ? 'SECURE' : packagingPreference;
-    
-    const packagingWeight = itemWeight * packagingMultipliers[effectivePreference];
+    const effectivePreference = hasSpecialHandling
+      ? 'SECURE'
+      : packagingPreference;
+
+    const packagingWeight =
+      itemWeight * packagingMultipliers[effectivePreference];
     const minPackagingWeight = 0.1; // Minimum 100g packaging
-    
+
     return Math.max(packagingWeight, minPackagingWeight);
   }
 
@@ -290,12 +311,11 @@ export class ZoneBasedShippingCalculator {
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 2: Create rule precedence handling
    */
   public async findShippingRule(
-    zone: ShippingZoneInfo, 
-    weight: number, 
+    zone: ShippingZoneInfo,
+    weight: number,
     serviceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT' | 'ECONOMY' = 'STANDARD',
     effectiveDate: Date = new Date()
   ): Promise<ShippingRuleInfo | null> {
-    
     // Ensure cache is initialized
     if (this.rulesCache.size === 0) {
       await this.initializeCache();
@@ -312,12 +332,14 @@ export class ZoneBasedShippingCalculator {
     zoneRules = await this.filterRulesByEffectiveDate(zoneRules, effectiveDate);
 
     // Find all matching rules for weight
-    const candidateRules = zoneRules.filter(rule => 
-      weight >= rule.weightMin && weight <= rule.weightMax
+    const candidateRules = zoneRules.filter(
+      rule => weight >= rule.weightMin && weight <= rule.weightMax
     );
 
     if (candidateRules.length === 0) {
-      console.warn(`⚠️ No weight-matching rules for zone ${zone.code}, weight ${weight}kg`);
+      console.warn(
+        `⚠️ No weight-matching rules for zone ${zone.code}, weight ${weight}kg`
+      );
       return null;
     }
 
@@ -325,21 +347,27 @@ export class ZoneBasedShippingCalculator {
     // 1. Exact service type match
     // 2. Most specific weight band (smallest range)
     // 3. Higher service level as fallback
-    
+
     // Try exact service type match first
-    let matchingRule = candidateRules.find(rule => rule.serviceType === serviceType);
-    
+    let matchingRule = candidateRules.find(
+      rule => rule.serviceType === serviceType
+    );
+
     if (!matchingRule) {
       // Service type precedence: OVERNIGHT > EXPRESS > STANDARD > ECONOMY
       const servicePrecedence = ['OVERNIGHT', 'EXPRESS', 'STANDARD', 'ECONOMY'];
       const requestedIndex = servicePrecedence.indexOf(serviceType);
-      
+
       // Try higher service levels first, then fallback to STANDARD
       for (let i = 0; i < servicePrecedence.length; i++) {
-        matchingRule = candidateRules.find(rule => rule.serviceType === servicePrecedence[i]);
+        matchingRule = candidateRules.find(
+          rule => rule.serviceType === servicePrecedence[i]
+        );
         if (matchingRule) {
           if (i !== requestedIndex) {
-            console.warn(`⚠️ Service type ${serviceType} not available, using ${matchingRule.serviceType} for weight ${weight}kg`);
+            console.warn(
+              `⚠️ Service type ${serviceType} not available, using ${matchingRule.serviceType} for weight ${weight}kg`
+            );
           }
           break;
         }
@@ -347,19 +375,22 @@ export class ZoneBasedShippingCalculator {
     }
 
     if (!matchingRule) {
-      console.warn(`⚠️ No applicable rule found for zone ${zone.code}, weight ${weight}kg, service ${serviceType}`);
+      console.warn(
+        `⚠️ No applicable rule found for zone ${zone.code}, weight ${weight}kg, service ${serviceType}`
+      );
       return null;
     }
 
     // If multiple rules match, prefer the most specific weight band
-    const sameServiceRules = candidateRules.filter(rule => 
-      rule.serviceType === matchingRule!.serviceType
+    const sameServiceRules = candidateRules.filter(
+      rule => rule.serviceType === matchingRule!.serviceType
     );
 
     if (sameServiceRules.length > 1) {
       // Find rule with smallest weight range (most specific)
       matchingRule = sameServiceRules.reduce((mostSpecific, current) => {
-        const mostSpecificRange = mostSpecific.weightMax - mostSpecific.weightMin;
+        const mostSpecificRange =
+          mostSpecific.weightMax - mostSpecific.weightMin;
         const currentRange = current.weightMax - current.weightMin;
         return currentRange < mostSpecificRange ? current : mostSpecific;
       });
@@ -373,12 +404,12 @@ export class ZoneBasedShippingCalculator {
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 2: Implement effective date filtering
    */
   private async filterRulesByEffectiveDate(
-    rules: ShippingRuleInfo[], 
+    rules: ShippingRuleInfo[],
     effectiveDate: Date
   ): Promise<ShippingRuleInfo[]> {
     // Note: This is a simplified version since we're working with cached data
     // In a full implementation, this would query the database with date filters
-    
+
     // For now, return all rules since our seed data doesn't have expiry dates
     // In production, this would filter based on effectiveFrom and effectiveTo dates
     return rules.filter(rule => {
@@ -391,22 +422,25 @@ export class ZoneBasedShippingCalculator {
    * Enhanced weight calculation including packaging
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 2: Add packaging weight calculation
    */
-  private calculateTotalShippingWeight(request: ShippingCalculationRequest): number {
+  private calculateTotalShippingWeight(
+    request: ShippingCalculationRequest
+  ): number {
     if (request.items && request.items.length > 0) {
       // Calculate from individual items
-      const itemWeight = request.items.reduce((total, item) => 
-        total + (item.weight * item.quantity), 0
+      const itemWeight = request.items.reduce(
+        (total, item) => total + item.weight * item.quantity,
+        0
       );
-      
+
       // Add packaging weight
       const packagingWeight = this.calculatePackagingWeight(
-        request.items, 
+        request.items,
         request.packagingPreference
       );
-      
+
       return itemWeight + packagingWeight;
     }
-    
+
     // Fallback to provided total weight
     return request.totalWeight;
   }
@@ -415,23 +449,33 @@ export class ZoneBasedShippingCalculator {
    * Calculate shipping cost with zone-based pricing
    * Reference: IMPLEMENTATION_ROADMAP.md - Day 3: Build base price calculation with zone multipliers
    */
-  public async calculateShipping(request: ShippingCalculationRequest): Promise<ShippingCalculationResult | null> {
+  public async calculateShipping(
+    request: ShippingCalculationRequest
+  ): Promise<ShippingCalculationResult | null> {
     try {
       const startTime = Date.now();
 
       // Step 1: Resolve shipping zone
       const zone = await this.resolveShippingZone(request.customerState);
       if (!zone) {
-        throw new Error(`Unable to determine shipping zone for state: ${request.customerState}`);
+        throw new Error(
+          `Unable to determine shipping zone for state: ${request.customerState}`
+        );
       }
 
       // Step 2: Calculate total shipping weight (including packaging)
       const totalShippingWeight = this.calculateTotalShippingWeight(request);
 
       // Step 3: Find appropriate shipping rule
-      const rule = await this.findShippingRule(zone, totalShippingWeight, request.serviceType);
+      const rule = await this.findShippingRule(
+        zone,
+        totalShippingWeight,
+        request.serviceType
+      );
       if (!rule) {
-        throw new Error(`No shipping rule found for zone ${zone.name}, weight ${totalShippingWeight}kg`);
+        throw new Error(
+          `No shipping rule found for zone ${zone.name}, weight ${totalShippingWeight}kg`
+        );
       }
 
       // Step 4: Calculate base price with zone multiplier
@@ -439,7 +483,8 @@ export class ZoneBasedShippingCalculator {
       const priceWithMultiplier = basePrice * zone.multiplier;
 
       // Step 5: Apply free shipping logic
-      const isFreeShippingEligible = request.orderValue >= this.freeShippingThreshold;
+      const isFreeShippingEligible =
+        request.orderValue >= this.freeShippingThreshold;
       const finalPrice = isFreeShippingEligible ? 0 : priceWithMultiplier;
 
       // Step 6: Build calculation result
@@ -463,18 +508,17 @@ export class ZoneBasedShippingCalculator {
           totalShippingWeight: totalShippingWeight,
           originalItemWeight: request.totalWeight,
           packagingWeight: totalShippingWeight - request.totalWeight,
-          packagingPreference: request.packagingPreference || 'STANDARD'
-        }
+          packagingPreference: request.packagingPreference || 'STANDARD',
+        },
       };
 
       // Step 6: Log calculation for analytics
       await this.logCalculation(request, result, Date.now() - startTime);
 
       return result;
-
     } catch (error) {
       console.error('❌ Shipping calculation failed:', error);
-      
+
       // Return fallback result
       return this.getFallbackCalculation(request);
     }
@@ -509,8 +553,8 @@ export class ZoneBasedShippingCalculator {
           calculationData: result.calculationData,
           responseTimeMs: responseTimeMs,
           userId: request.userId || null,
-          userType: request.userId ? 'MEMBER' : 'GUEST'
-        }
+          userType: request.userId ? 'MEMBER' : 'GUEST',
+        },
       });
     } catch (error) {
       console.error('⚠️ Failed to log shipping calculation:', error);
@@ -521,10 +565,14 @@ export class ZoneBasedShippingCalculator {
   /**
    * Get fallback calculation when main calculation fails
    */
-  private getFallbackCalculation(request: ShippingCalculationRequest): ShippingCalculationResult {
+  private getFallbackCalculation(
+    request: ShippingCalculationRequest
+  ): ShippingCalculationResult {
     const fallbackZone = this.getFallbackZone();
-    const isEastMalaysia = ['SBH', 'SWK', 'LBN'].includes(this.normalizeStateCode(request.customerState));
-    const fallbackPrice = isEastMalaysia ? 15.00 : 8.00;
+    const isEastMalaysia = ['SBH', 'SWK', 'LBN'].includes(
+      this.normalizeStateCode(request.customerState)
+    );
+    const fallbackPrice = isEastMalaysia ? 15.0 : 8.0;
     const isFreeShipping = request.orderValue >= this.freeShippingThreshold;
 
     return {
@@ -542,8 +590,8 @@ export class ZoneBasedShippingCalculator {
         zoneMultiplier: 1.0,
         originalPrice: fallbackPrice,
         freeShippingThreshold: this.freeShippingThreshold,
-        serviceType: 'STANDARD'
-      }
+        serviceType: 'STANDARD',
+      },
     };
   }
 
@@ -585,7 +633,7 @@ export class ZoneBasedShippingCalculator {
       zones: this.zoneCache.size,
       ruleGroups: this.rulesCache.size,
       freeShippingThreshold: this.freeShippingThreshold,
-      lastRefresh: new Date().toISOString()
+      lastRefresh: new Date().toISOString(),
     };
   }
 }

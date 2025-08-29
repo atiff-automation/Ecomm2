@@ -18,8 +18,11 @@ const bulkBookingSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -54,18 +57,18 @@ export async function POST(request: NextRequest) {
                       weight: true,
                       dimensions: true,
                       shippingClass: true,
-                    }
-                  }
-                }
-              }
-            }
+                    },
+                  },
+                },
+              },
+            },
           });
 
           if (!order) {
             results.push({
               shipmentId,
               success: false,
-              error: 'Order not found'
+              error: 'Order not found',
             });
             errorCount++;
             continue;
@@ -87,20 +90,20 @@ export async function POST(request: NextRequest) {
                           weight: true,
                           dimensions: true,
                           shippingClass: true,
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           });
 
           if (!existingShipment) {
             results.push({
               shipmentId,
               success: false,
-              error: 'Shipment not found'
+              error: 'Shipment not found',
             });
             errorCount++;
             continue;
@@ -114,45 +117,50 @@ export async function POST(request: NextRequest) {
           results.push({
             shipmentId,
             success: false,
-            error: 'Shipment already processed'
+            error: 'Shipment already processed',
           });
-            errorCount++;
-            continue;
+          errorCount++;
+          continue;
         }
 
         // Get business address from config
         const businessConfig = await prisma.systemConfig.findFirst({
-          where: { key: 'business_address' }
+          where: { key: 'business_address' },
         });
 
-        const businessAddress = businessConfig?.value ? JSON.parse(businessConfig.value) : {
-          name: 'Your Business Name',
-          phone: '+60123456789',
-          email: 'business@example.com',
-          addressLine1: 'Business Address',
-          city: 'Kuala Lumpur',
-          state: 'KUL',
-          postalCode: '50000'
-        };
+        const businessAddress = businessConfig?.value
+          ? JSON.parse(businessConfig.value)
+          : {
+              name: 'Your Business Name',
+              phone: '+60123456789',
+              email: 'business@example.com',
+              addressLine1: 'Business Address',
+              city: 'Kuala Lumpur',
+              state: 'KUL',
+              postalCode: '50000',
+            };
 
         // Calculate parcel details
         const totalWeight = order.orderItems.reduce((sum, item) => {
           const productWeight = item.product.weight || 0.5; // Default 0.5kg
-          return sum + (productWeight * item.quantity);
+          return sum + productWeight * item.quantity;
         }, 0);
 
         // Get largest dimensions
-        const dimensions = order.orderItems.reduce((max, item) => {
-          const productDimensions = item.product.dimensions as any;
-          if (productDimensions && typeof productDimensions === 'object') {
-            return {
-              length: Math.max(max.length, productDimensions.length || 0),
-              width: Math.max(max.width, productDimensions.width || 0),
-              height: Math.max(max.height, productDimensions.height || 0),
-            };
-          }
-          return max;
-        }, { length: 30, width: 20, height: 10 }); // Default dimensions
+        const dimensions = order.orderItems.reduce(
+          (max, item) => {
+            const productDimensions = item.product.dimensions as any;
+            if (productDimensions && typeof productDimensions === 'object') {
+              return {
+                length: Math.max(max.length, productDimensions.length || 0),
+                width: Math.max(max.width, productDimensions.width || 0),
+                height: Math.max(max.height, productDimensions.height || 0),
+              };
+            }
+            return max;
+          },
+          { length: 30, width: 20, height: 10 }
+        ); // Default dimensions
 
         // Prepare shipment booking request
         const bookingRequest = {
@@ -165,18 +173,23 @@ export async function POST(request: NextRequest) {
             city: businessAddress.city,
             state: businessAddress.state,
             postcode: businessAddress.postalCode,
-            country: 'MY'
+            country: 'MY',
           },
           delivery_address: {
-            name: order.shippingAddress?.name || order.user?.name || order.guestEmail || 'Customer',
+            name:
+              order.shippingAddress?.name ||
+              order.user?.name ||
+              order.guestEmail ||
+              'Customer',
             phone: order.user?.phone || order.guestPhone || '+60123456789',
-            email: order.user?.email || order.guestEmail || 'customer@example.com',
+            email:
+              order.user?.email || order.guestEmail || 'customer@example.com',
             address_line_1: order.shippingAddress?.addressLine1 || '',
             address_line_2: order.shippingAddress?.addressLine2 || '',
             city: order.shippingAddress?.city || '',
             state: order.shippingAddress?.state || '',
             postcode: order.shippingAddress?.postalCode || '',
-            country: 'MY'
+            country: 'MY',
           },
           parcel: {
             weight: Math.max(totalWeight, 0.1), // Minimum 0.1kg
@@ -185,17 +198,18 @@ export async function POST(request: NextRequest) {
             height: dimensions.height,
             content: `Order ${order.orderNumber} - ${order.orderItems.length} items`,
             value: order.total,
-            quantity: 1
+            quantity: 1,
           },
           service_id: order.selectedCourierId || 'default-service',
           reference: order.orderNumber,
           special_instruction: order.deliveryInstructions || 'Handle with care',
           insurance: order.total > 100, // Auto-insure orders over RM100
-          signature_required: order.total > 200 // Require signature for high-value orders
+          signature_required: order.total > 200, // Require signature for high-value orders
         };
 
         // Book the shipment with EasyParcel
-        const bookingResponse = await easyParcelService.bookShipment(bookingRequest);
+        const bookingResponse =
+          await easyParcelService.bookShipment(bookingRequest);
 
         if (bookingResponse.shipment_id) {
           // Create or update shipment record
@@ -210,20 +224,23 @@ export async function POST(request: NextRequest) {
             pickupAddress: bookingRequest.pickup_address,
             deliveryAddress: bookingRequest.delivery_address,
             parcelDetails: bookingRequest.parcel,
-            originalPrice: bookingResponse.total_price || order.shippingCost || 0,
+            originalPrice:
+              bookingResponse.total_price || order.shippingCost || 0,
             finalPrice: bookingResponse.total_price || order.shippingCost || 0,
-            estimatedDelivery: bookingResponse.estimated_delivery ? new Date(bookingResponse.estimated_delivery) : undefined,
+            estimatedDelivery: bookingResponse.estimated_delivery
+              ? new Date(bookingResponse.estimated_delivery)
+              : undefined,
             specialInstructions: bookingRequest.special_instruction,
             signatureRequired: bookingRequest.signature_required || false,
             insuranceRequired: bookingRequest.insurance || false,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           };
 
           if (existingShipment) {
             // Update existing shipment
             await prisma.shipment.update({
               where: { id: existingShipment.id },
-              data: shipmentData
+              data: shipmentData,
             });
           } else {
             // Create new shipment
@@ -232,7 +249,7 @@ export async function POST(request: NextRequest) {
                 ...shipmentData,
                 orderId: order.id,
                 courierId: order.selectedCourierId || 'default',
-              }
+              },
             });
           }
 
@@ -241,8 +258,8 @@ export async function POST(request: NextRequest) {
             where: { id: order.id },
             data: {
               status: 'PROCESSING',
-              shippedAt: new Date()
-            }
+              shippedAt: new Date(),
+            },
           });
 
           results.push({
@@ -250,25 +267,23 @@ export async function POST(request: NextRequest) {
             success: true,
             trackingNumber: bookingResponse.tracking_number,
             courierName: bookingResponse.courier?.name,
-            orderNumber: order.orderNumber
+            orderNumber: order.orderNumber,
           });
           successCount++;
-
         } else {
           results.push({
             shipmentId,
             success: false,
-            error: 'EasyParcel booking failed - no shipment ID returned'
+            error: 'EasyParcel booking failed - no shipment ID returned',
           });
           errorCount++;
         }
-
       } catch (error) {
         console.error(`Error booking shipment ${shipmentId}:`, error);
         results.push({
           shipmentId,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         errorCount++;
       }
@@ -281,10 +296,9 @@ export async function POST(request: NextRequest) {
         total: shipmentIds.length,
         successCount,
         errorCount,
-        successRate: `${Math.round((successCount / shipmentIds.length) * 100)}%`
-      }
+        successRate: `${Math.round((successCount / shipmentIds.length) * 100)}%`,
+      },
     });
-
   } catch (error) {
     console.error('Error in bulk shipment booking:', error);
     return NextResponse.json(

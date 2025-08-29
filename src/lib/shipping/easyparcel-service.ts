@@ -8,7 +8,11 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
-import { easyParcelConfig, getEasyParcelUrl, getEasyParcelTimeout } from '@/lib/config/easyparcel-config';
+import {
+  easyParcelConfig,
+  getEasyParcelUrl,
+  getEasyParcelTimeout,
+} from '@/lib/config/easyparcel-config';
 
 // ===== EasyParcel API v1.4.0 Type Definitions =====
 // Reference: Malaysia_Individual_1.4.0.0.pdf Section 3.1 - Address Structure Validation
@@ -30,7 +34,7 @@ export interface AddressStructure {
 export interface ParcelDetails {
   weight: number; // In KG, max 70kg
   length?: number; // In CM
-  width?: number; // In CM  
+  width?: number; // In CM
   height?: number; // In CM
   content: string; // Description, max 100 chars
   value: number; // In MYR for insurance
@@ -81,7 +85,7 @@ export interface ShipmentBookingRequest {
   signature_required?: boolean;
   cod?: {
     amount: number;
-    payment_method: "CASH" | "CHEQUE";
+    payment_method: 'CASH' | 'CHEQUE';
   };
 }
 
@@ -105,7 +109,7 @@ export interface ShipmentBookingResponse {
 export interface PickupRequest {
   shipment_ids: string[];
   pickup_date: string; // YYYY-MM-DD
-  pickup_time: "morning" | "afternoon" | "evening";
+  pickup_time: 'morning' | 'afternoon' | 'evening';
   contact_person: string;
   contact_phone: string;
   special_instruction?: string;
@@ -156,9 +160,22 @@ export interface EasyParcelError {
 }
 
 // Malaysian State type (Malaysia_Individual_1.4.0.0.pdf Appendix B)
-export type MalaysianState = 
-  | "JOH" | "KDH" | "KTN" | "MLK" | "NSN" | "PHG" | "PRK" | "PLS" 
-  | "PNG" | "KUL" | "TRG" | "SEL" | "SBH" | "SWK" | "LBN";
+export type MalaysianState =
+  | 'JOH'
+  | 'KDH'
+  | 'KTN'
+  | 'MLK'
+  | 'NSN'
+  | 'PHG'
+  | 'PRK'
+  | 'PLS'
+  | 'PNG'
+  | 'KUL'
+  | 'TRG'
+  | 'SEL'
+  | 'SBH'
+  | 'SWK'
+  | 'LBN';
 
 export class EasyParcelService {
   private apiClient!: AxiosInstance;
@@ -167,12 +184,13 @@ export class EasyParcelService {
   private baseURL: string = easyParcelConfig.urls.sandbox; // Default to sandbox
   private credentialSource: 'database' | 'environment' | 'none' = 'none';
   private lastCredentialCheck: number = 0;
-  private readonly CREDENTIAL_CACHE_DURATION = easyParcelConfig.cache.credentialDuration;
+  private readonly CREDENTIAL_CACHE_DURATION =
+    easyParcelConfig.cache.credentialDuration;
 
   constructor() {
     // Initialize with default sandbox URL from config
-    this.baseURL = easyParcelConfig.urls.sandbox;  // Default to sandbox for safety
-    
+    this.baseURL = easyParcelConfig.urls.sandbox; // Default to sandbox for safety
+
     // Initialize with credentials (async initialization will be handled per request)
     this.initializeCredentials();
   }
@@ -184,31 +202,37 @@ export class EasyParcelService {
     try {
       // Check if we need to refresh credentials (cache duration check)
       const now = Date.now();
-      if (this.isConfigured && (now - this.lastCredentialCheck) < this.CREDENTIAL_CACHE_DURATION) {
+      if (
+        this.isConfigured &&
+        now - this.lastCredentialCheck < this.CREDENTIAL_CACHE_DURATION
+      ) {
         return; // Use cached configuration
       }
 
       // Try to get credentials from database first
-      const credentials = await easyParcelCredentialsService.getCredentialsForService();
-      
+      const credentials =
+        await easyParcelCredentialsService.getCredentialsForService();
+
       if (credentials) {
         this.isConfigured = true;
         this.isSandbox = credentials.isSandbox;
         this.credentialSource = credentials.source;
         this.lastCredentialCheck = now;
-        
+
         // CRITICAL FIX: Set the correct baseURL based on environment
         const newBaseURL = getEasyParcelUrl(this.isSandbox);
-        
+
         // Update baseURL if it changed
         if (this.baseURL !== newBaseURL) {
           this.baseURL = newBaseURL;
           console.log(`🔄 EasyParcel baseURL switched to: ${newBaseURL}`);
         }
-        
+
         this.initializeClient(credentials.apiKey, credentials.apiSecret);
-        
-        console.log(`🚚 EasyParcel configured from ${credentials.source} (${this.isSandbox ? 'sandbox' : 'production'}) - URL: ${this.baseURL}`);
+
+        console.log(
+          `🚚 EasyParcel configured from ${credentials.source} (${this.isSandbox ? 'sandbox' : 'production'}) - URL: ${this.baseURL}`
+        );
         return;
       }
 
@@ -217,7 +241,6 @@ export class EasyParcelService {
       this.isConfigured = false;
       this.credentialSource = 'none';
       this.lastCredentialCheck = now;
-      
     } catch (error) {
       console.error('Error initializing EasyParcel credentials:', error);
       this.isConfigured = false;
@@ -229,12 +252,17 @@ export class EasyParcelService {
    * Ensure credentials are loaded before making API calls
    */
   private async ensureCredentials(): Promise<void> {
-    if (!this.isConfigured || (Date.now() - this.lastCredentialCheck) >= this.CREDENTIAL_CACHE_DURATION) {
+    if (
+      !this.isConfigured ||
+      Date.now() - this.lastCredentialCheck >= this.CREDENTIAL_CACHE_DURATION
+    ) {
       await this.initializeCredentials();
     }
-    
+
     if (!this.isConfigured) {
-      throw new Error('EasyParcel credentials not configured. Please configure API credentials in admin panel.');
+      throw new Error(
+        'EasyParcel credentials not configured. Please configure API credentials in admin panel.'
+      );
     }
   }
 
@@ -243,16 +271,16 @@ export class EasyParcelService {
       apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
       apiSecret: apiSecret ? `${apiSecret.substring(0, 8)}...` : 'MISSING',
       baseURL: this.baseURL,
-      isSandbox: this.isSandbox
+      isSandbox: this.isSandbox,
     });
-    
+
     // Set instance variables BEFORE creating client
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
-    
+
     // Get timeout values from centralized config
     const timeout = getEasyParcelTimeout(this.isSandbox);
-    
+
     this.apiClient = axios.create({
       baseURL: this.baseURL,
       timeout, // Configurable timeout from centralized config
@@ -300,14 +328,18 @@ export class EasyParcelService {
   }
 
   // ===== Helper Methods =====
-  
+
   /**
    * Map EasyParcel service detail to our service type
    */
   private mapServiceType(serviceDetail: string): string {
     const detail = serviceDetail.toLowerCase();
-    if (detail.includes('overnight') || detail.includes('next day')) return 'OVERNIGHT';
-    if (detail.includes('express') || detail.includes('same day')) return 'EXPRESS';
+    if (detail.includes('overnight') || detail.includes('next day')) {
+      return 'OVERNIGHT';
+    }
+    if (detail.includes('express') || detail.includes('same day')) {
+      return 'EXPRESS';
+    }
     return 'STANDARD';
   }
 
@@ -340,44 +372,54 @@ export class EasyParcelService {
       // Prepare form data for Individual API EPRateCheckingBulk
       const formData = new URLSearchParams();
       formData.append('api', this.apiKey);
-      
+
       // Bulk format (single item for now) - fix duplicate pick_addr issue
       formData.append('bulk[0][pick_name]', request.pickup_address.name);
       formData.append('bulk[0][pick_mobile]', request.pickup_address.phone);
-      
+
       // Combine address lines properly
       let pickupFullAddress = request.pickup_address.address_line_1;
       if (request.pickup_address.address_line_2) {
         pickupFullAddress += `, ${request.pickup_address.address_line_2}`;
       }
       formData.append('bulk[0][pick_addr]', pickupFullAddress);
-      
+
       formData.append('bulk[0][pick_city]', request.pickup_address.city);
       formData.append('bulk[0][pick_code]', request.pickup_address.postcode);
-      formData.append('bulk[0][pick_state]', request.pickup_address.state.toLowerCase());
+      formData.append(
+        'bulk[0][pick_state]',
+        request.pickup_address.state.toLowerCase()
+      );
       formData.append('bulk[0][pick_country]', 'MY');
-      
+
       // Receiver details - fix duplicate send_addr issue
       formData.append('bulk[0][send_name]', request.delivery_address.name);
       formData.append('bulk[0][send_mobile]', request.delivery_address.phone);
-      
+
       // Combine address lines properly
       let deliveryFullAddress = request.delivery_address.address_line_1;
       if (request.delivery_address.address_line_2) {
         deliveryFullAddress += `, ${request.delivery_address.address_line_2}`;
       }
       formData.append('bulk[0][send_addr]', deliveryFullAddress);
-      
+
       formData.append('bulk[0][send_city]', request.delivery_address.city);
       formData.append('bulk[0][send_code]', request.delivery_address.postcode);
-      formData.append('bulk[0][send_state]', request.delivery_address.state.toLowerCase());
+      formData.append(
+        'bulk[0][send_state]',
+        request.delivery_address.state.toLowerCase()
+      );
       formData.append('bulk[0][send_country]', 'MY');
-      
+
       // Parcel details
       formData.append('bulk[0][weight]', request.parcel.weight.toString());
       formData.append('bulk[0][content]', request.parcel.content);
       formData.append('bulk[0][value]', request.parcel.value.toString());
-      if (request.parcel.length && request.parcel.width && request.parcel.height) {
+      if (
+        request.parcel.length &&
+        request.parcel.width &&
+        request.parcel.height
+      ) {
         formData.append('bulk[0][length]', request.parcel.length.toString());
         formData.append('bulk[0][width]', request.parcel.width.toString());
         formData.append('bulk[0][height]', request.parcel.height.toString());
@@ -389,10 +431,13 @@ export class EasyParcelService {
         pickupState: request.pickup_address.state,
         deliveryState: request.delivery_address.state,
         weight: request.parcel.weight,
-        formDataSize: formData.toString().length
+        formDataSize: formData.toString().length,
       });
 
-      const response = await this.apiClient.post('/?ac=EPRateCheckingBulk', formData.toString());
+      const response = await this.apiClient.post(
+        '/?ac=EPRateCheckingBulk',
+        formData.toString()
+      );
 
       console.log('🔍 EasyParcel Full Response:', {
         status: response.status,
@@ -401,7 +446,7 @@ export class EasyParcelService {
         data: response.data,
         hasRates: !!response.data?.rates,
         dataType: typeof response.data,
-        dataLength: response.data ? JSON.stringify(response.data).length : 0
+        dataLength: response.data ? JSON.stringify(response.data).length : 0,
       });
 
       if (!response.data) {
@@ -410,50 +455,78 @@ export class EasyParcelService {
       }
 
       // Check for API error response (Individual API format)
-      if (response.data.error || (response.data.api_status && response.data.api_status !== 'Success')) {
+      if (
+        response.data.error ||
+        (response.data.api_status && response.data.api_status !== 'Success')
+      ) {
         const errorCode = response.data.error_code;
-        const errorMsg = response.data.error_remark || response.data.error || response.data.message || 'Unknown API error';
+        const errorMsg =
+          response.data.error_remark ||
+          response.data.error ||
+          response.data.message ||
+          'Unknown API error';
         console.error('❌ EasyParcel API Error:', {
           code: errorCode,
           message: errorMsg,
-          status: response.data.api_status
+          status: response.data.api_status,
         });
-        
+
         // Handle specific error codes
         if (errorCode === '5') {
-          throw new Error(`EasyParcel API Error: ${errorMsg}. Please verify your API key is activated and has sufficient credits.`);
+          throw new Error(
+            `EasyParcel API Error: ${errorMsg}. Please verify your API key is activated and has sufficient credits.`
+          );
         }
-        
+
         throw new Error(`EasyParcel API Error: ${errorMsg}`);
       }
 
       // Transform Individual API response to our format
       // EasyParcel Individual API returns: { api_status: "Success", result: [{ rates: [...] }] }
-      if (response.data.api_status === 'Success' && response.data.result && Array.isArray(response.data.result)) {
+      if (
+        response.data.api_status === 'Success' &&
+        response.data.result &&
+        Array.isArray(response.data.result)
+      ) {
         const firstResult = response.data.result[0];
-        if (firstResult && firstResult.rates && Array.isArray(firstResult.rates)) {
+        if (
+          firstResult &&
+          firstResult.rates &&
+          Array.isArray(firstResult.rates)
+        ) {
           const transformedRates = firstResult.rates.map((rate: any) => ({
             courier_id: rate.courier_id || rate.service_id || 'unknown',
-            courier_name: rate.courier_name || rate.service_name || 'Unknown Courier',
+            courier_name:
+              rate.courier_name || rate.service_name || 'Unknown Courier',
             service_name: rate.service_name || 'Standard Service',
-            service_type: this.mapServiceType(rate.service_detail || rate.service_type || 'pickup'),
+            service_type: this.mapServiceType(
+              rate.service_detail || rate.service_type || 'pickup'
+            ),
             price: parseFloat(rate.price || '0'),
-            estimated_delivery_days: this.parseDeliveryDays(rate.delivery || '3 working day(s)'),
-            description: rate.service_name ? `${rate.service_name} delivery service` : 'Standard delivery service',
+            estimated_delivery_days: this.parseDeliveryDays(
+              rate.delivery || '3 working day(s)'
+            ),
+            description: rate.service_name
+              ? `${rate.service_name} delivery service`
+              : 'Standard delivery service',
             features: {
               insurance_available: rate.addon_insurance_available !== false,
               cod_available: rate.cod_service_available !== false,
               signature_required_available: true,
-            }
+            },
           }));
 
-          console.log('✅ Transformed EasyParcel rates:', transformedRates.length, 'options found');
+          console.log(
+            '✅ Transformed EasyParcel rates:',
+            transformedRates.length,
+            'options found'
+          );
 
           return {
             rates: transformedRates,
             pickup_address: request.pickup_address,
             delivery_address: request.delivery_address,
-            parcel: request.parcel
+            parcel: request.parcel,
           };
         }
       }
@@ -467,15 +540,17 @@ export class EasyParcelService {
         statusText: error.response?.statusText,
         data: error.response?.data,
         url: error.config?.url,
-        method: error.config?.method
+        method: error.config?.method,
       });
-      
+
       // Only fall back to mock data in sandbox/development mode
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
-        console.log('🔄 Falling back to mock shipping rates due to API error (development mode)');
+        console.log(
+          '🔄 Falling back to mock shipping rates due to API error (development mode)'
+        );
         return this.getMockRateResponse(request);
       }
-      
+
       // In production, throw the error to be handled by the business layer
       throw this.handleApiError(error);
     }
@@ -485,7 +560,9 @@ export class EasyParcelService {
    * Book a shipment
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 5.1 - Shipment Creation API
    */
-  async bookShipment(request: ShipmentBookingRequest): Promise<ShipmentBookingResponse> {
+  async bookShipment(
+    request: ShipmentBookingRequest
+  ): Promise<ShipmentBookingResponse> {
     // Ensure credentials are loaded
     await this.ensureCredentials();
     try {
@@ -505,7 +582,7 @@ export class EasyParcelService {
       return response.data;
     } catch (error) {
       console.error('Error booking shipment:', error);
-      
+
       // Return mock booking in development
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
         return this.getMockShipmentBooking(request);
@@ -527,14 +604,17 @@ export class EasyParcelService {
         return this.getMockLabel();
       }
 
-      const response = await this.apiClient.get(`/shipments/${shipmentId}/label`, {
-        responseType: 'arraybuffer'
-      });
+      const response = await this.apiClient.get(
+        `/shipments/${shipmentId}/label`,
+        {
+          responseType: 'arraybuffer',
+        }
+      );
 
       return Buffer.from(response.data);
     } catch (error) {
       console.error('Error generating label:', error);
-      
+
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
         return this.getMockLabel();
       }
@@ -555,7 +635,9 @@ export class EasyParcelService {
    * Schedule pickup
    * Reference: Malaysia_Individual_1.4.0.0.pdf Section 8.1 - Pickup Booking API
    */
-  async schedulePickup(request: PickupRequest): Promise<{ pickup_id: string; status: string }> {
+  async schedulePickup(
+    request: PickupRequest
+  ): Promise<{ pickup_id: string; status: string }> {
     try {
       if (!this.isConfigured) {
         return { pickup_id: `pickup_${Date.now()}`, status: 'scheduled' };
@@ -565,7 +647,7 @@ export class EasyParcelService {
       return response.data;
     } catch (error) {
       console.error('Error scheduling pickup:', error);
-      
+
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
         return { pickup_id: `pickup_${Date.now()}`, status: 'scheduled' };
       }
@@ -578,45 +660,60 @@ export class EasyParcelService {
    * Check account credit balance
    * Reference: Malaysia_Individual_1.4.0.0.pdf - EPCheckCreditBalance endpoint
    */
-  async checkCreditBalance(): Promise<{ balance: number; currency: string; wallets: Array<{ balance: number; currency_code: string }> }> {
+  async checkCreditBalance(): Promise<{
+    balance: number;
+    currency: string;
+    wallets: Array<{ balance: number; currency_code: string }>;
+  }> {
     // Ensure credentials are loaded
     await this.ensureCredentials();
     try {
-      console.log(`🔍 CheckCreditBalance - isConfigured: ${this.isConfigured}, apiKey: ${this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'MISSING'}`);
-      
+      console.log(
+        `🔍 CheckCreditBalance - isConfigured: ${this.isConfigured}, apiKey: ${this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'MISSING'}`
+      );
+
       if (!this.isConfigured) {
         console.log(`❌ Service not configured, returning mock balance`);
-        const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
+        const mockBalance = parseFloat(
+          process.env.MOCK_CREDIT_BALANCE || '1000.00'
+        );
         return {
           balance: mockBalance,
           currency: 'MYR',
-          wallets: [{ balance: mockBalance, currency_code: 'MYR' }]
+          wallets: [{ balance: mockBalance, currency_code: 'MYR' }],
         };
       }
 
       const formData = new URLSearchParams();
       formData.append('api', this.apiKey);
 
-      const response = await this.apiClient.post('/?ac=EPCheckCreditBalance', formData.toString());
+      const response = await this.apiClient.post(
+        '/?ac=EPCheckCreditBalance',
+        formData.toString()
+      );
 
       if (!response.data || response.data.api_status !== 'Success') {
-        throw new Error(`Credit balance check failed: ${response.data?.error_remark || 'Unknown error'}`);
+        throw new Error(
+          `Credit balance check failed: ${response.data?.error_remark || 'Unknown error'}`
+        );
       }
 
       return {
         balance: parseFloat(response.data.result || '0'),
         currency: response.data.currency || 'MYR',
-        wallets: response.data.wallet || []
+        wallets: response.data.wallet || [],
       };
     } catch (error) {
       console.error('Error checking credit balance:', error);
-      
+
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
-        const mockBalance = parseFloat(process.env.MOCK_CREDIT_BALANCE || '1000.00');
+        const mockBalance = parseFloat(
+          process.env.MOCK_CREDIT_BALANCE || '1000.00'
+        );
         return {
           balance: mockBalance,
           currency: 'MYR',
-          wallets: [{ balance: mockBalance, currency_code: 'MYR' }]
+          wallets: [{ balance: mockBalance, currency_code: 'MYR' }],
         };
       }
 
@@ -645,7 +742,7 @@ export class EasyParcelService {
       return response.data;
     } catch (error) {
       console.error('Error tracking shipment:', error);
-      
+
       if (this.isSandbox || process.env.NODE_ENV === 'development') {
         return this.getMockTrackingResponse(trackingNumber);
       }
@@ -660,18 +757,20 @@ export class EasyParcelService {
     // Validate addresses
     this.validateAddress(request.pickup_address, 'pickup');
     this.validateAddress(request.delivery_address, 'delivery');
-    
+
     // Validate parcel
     this.validateParcel(request.parcel);
   }
 
-  private validateShipmentBookingRequest(request: ShipmentBookingRequest): void {
+  private validateShipmentBookingRequest(
+    request: ShipmentBookingRequest
+  ): void {
     this.validateRateRequest(request);
-    
+
     if (!request.service_id) {
       throw new Error('Service ID is required for shipment booking');
     }
-    
+
     if (!request.reference) {
       throw new Error('Reference (order number) is required');
     }
@@ -679,29 +778,40 @@ export class EasyParcelService {
 
   private validateAddress(address: AddressStructure, type: string): void {
     if (!address.name || address.name.length > 100) {
-      throw new Error(`${type} address name is required and must be max 100 characters`);
+      throw new Error(
+        `${type} address name is required and must be max 100 characters`
+      );
     }
-    
+
     if (!address.phone || !this.validateMalaysianPhone(address.phone)) {
-      throw new Error(`${type} address must have valid Malaysian phone number (+60XXXXXXXXX)`);
+      throw new Error(
+        `${type} address must have valid Malaysian phone number (+60XXXXXXXXX)`
+      );
     }
-    
+
     if (!address.address_line_1 || address.address_line_1.length > 100) {
-      throw new Error(`${type} address line 1 is required and must be max 100 characters`);
+      throw new Error(
+        `${type} address line 1 is required and must be max 100 characters`
+      );
     }
-    
+
     if (!address.city || address.city.length > 50) {
       throw new Error(`${type} city is required and must be max 50 characters`);
     }
-    
+
     if (!address.state || !this.isValidMalaysianState(address.state)) {
       throw new Error(`${type} state must be valid Malaysian state code`);
     }
-    
-    if (!address.postcode || !this.validateMalaysianPostcode(address.postcode)) {
-      throw new Error(`${type} postcode must be valid 5-digit Malaysian postcode`);
+
+    if (
+      !address.postcode ||
+      !this.validateMalaysianPostcode(address.postcode)
+    ) {
+      throw new Error(
+        `${type} postcode must be valid 5-digit Malaysian postcode`
+      );
     }
-    
+
     if (address.country && address.country !== 'MY') {
       throw new Error('Only Malaysian addresses are supported (country: MY)');
     }
@@ -711,13 +821,17 @@ export class EasyParcelService {
     if (!parcel.weight || parcel.weight <= 0 || parcel.weight > 70) {
       throw new Error('Parcel weight must be between 0.1 and 70 kg');
     }
-    
+
     if (!parcel.content || parcel.content.length > 100) {
-      throw new Error('Parcel content description is required and must be max 100 characters');
+      throw new Error(
+        'Parcel content description is required and must be max 100 characters'
+      );
     }
-    
+
     if (!parcel.value || parcel.value <= 0) {
-      throw new Error('Parcel value must be greater than 0 for insurance purposes');
+      throw new Error(
+        'Parcel value must be greater than 0 for insurance purposes'
+      );
     }
   }
 
@@ -736,35 +850,53 @@ export class EasyParcelService {
 
   private isValidMalaysianState(state: string): boolean {
     const validStates: MalaysianState[] = [
-      "JOH", "KDH", "KTN", "MLK", "NSN", "PHG", "PRK", "PLS",
-      "PNG", "KUL", "TRG", "SEL", "SBH", "SWK", "LBN"
+      'JOH',
+      'KDH',
+      'KTN',
+      'MLK',
+      'NSN',
+      'PHG',
+      'PRK',
+      'PLS',
+      'PNG',
+      'KUL',
+      'TRG',
+      'SEL',
+      'SBH',
+      'SWK',
+      'LBN',
     ];
     return validStates.includes(state as MalaysianState);
   }
 
   // Reference: Malaysia_Individual_1.4.0.0.pdf Appendix A - Postcode Validation
-  private readonly MALAYSIAN_POSTCODE_RANGES: Record<MalaysianState, [number, number]> = {
-    "KUL": [50000, 60999], // Kuala Lumpur & Putrajaya
-    "SEL": [40000, 48999], // Selangor
-    "JOH": [79000, 86999], // Johor
-    "MLK": [75000, 78999], // Melaka
-    "NSN": [70000, 73999], // Negeri Sembilan
-    "PHG": [25000, 39999], // Pahang
-    "PRK": [30000, 36999], // Perak
-    "PLS": [1000, 2999],   // Perlis
-    "PNG": [10000, 14999], // Pulau Pinang
-    "KDH": [5000, 9999],   // Kedah
-    "TRG": [20000, 24999], // Terengganu
-    "KTN": [15000, 18999], // Kelantan
-    "SBH": [87000, 91999], // Sabah
-    "SWK": [93000, 98999], // Sarawak
-    "LBN": [87000, 87999], // Labuan
+  private readonly MALAYSIAN_POSTCODE_RANGES: Record<
+    MalaysianState,
+    [number, number]
+  > = {
+    KUL: [50000, 60999], // Kuala Lumpur & Putrajaya
+    SEL: [40000, 48999], // Selangor
+    JOH: [79000, 86999], // Johor
+    MLK: [75000, 78999], // Melaka
+    NSN: [70000, 73999], // Negeri Sembilan
+    PHG: [25000, 39999], // Pahang
+    PRK: [30000, 36999], // Perak
+    PLS: [1000, 2999], // Perlis
+    PNG: [10000, 14999], // Pulau Pinang
+    KDH: [5000, 9999], // Kedah
+    TRG: [20000, 24999], // Terengganu
+    KTN: [15000, 18999], // Kelantan
+    SBH: [87000, 91999], // Sabah
+    SWK: [93000, 98999], // Sarawak
+    LBN: [87000, 87999], // Labuan
   };
 
   validatePostcodeForState(postcode: string, state: MalaysianState): boolean {
     const range = this.MALAYSIAN_POSTCODE_RANGES[state];
-    if (!range) return false;
-    
+    if (!range) {
+      return false;
+    }
+
     const code = parseInt(postcode);
     return code >= range[0] && code <= range[1];
   }
@@ -804,21 +936,36 @@ export class EasyParcelService {
   // ===== Mock Methods for Development =====
 
   private getMockRateResponse(request: RateRequest): RateResponse {
-    const isWestMalaysia = this.isWestMalaysianState(request.delivery_address.state);
-    
+    const isWestMalaysia = this.isWestMalaysianState(
+      request.delivery_address.state
+    );
+
     // Use environment variables for mock pricing or sensible defaults
-    const westMalaysiaBasePrice = parseFloat(process.env.MOCK_WEST_MALAYSIA_BASE_PRICE || '8');
-    const eastMalaysiaBasePrice = parseFloat(process.env.MOCK_EAST_MALAYSIA_BASE_PRICE || '15');
-    const basePrice = isWestMalaysia ? westMalaysiaBasePrice : eastMalaysiaBasePrice;
-    
+    const westMalaysiaBasePrice = parseFloat(
+      process.env.MOCK_WEST_MALAYSIA_BASE_PRICE || '8'
+    );
+    const eastMalaysiaBasePrice = parseFloat(
+      process.env.MOCK_EAST_MALAYSIA_BASE_PRICE || '15'
+    );
+    const basePrice = isWestMalaysia
+      ? westMalaysiaBasePrice
+      : eastMalaysiaBasePrice;
+
     const weightMultiplier = Math.ceil(request.parcel.weight);
-    const standardMultiplier = parseFloat(process.env.MOCK_STANDARD_WEIGHT_MULTIPLIER || '2');
-    const expressMultiplier = parseFloat(process.env.MOCK_EXPRESS_WEIGHT_MULTIPLIER || '3');
-    const expressBasePremium = parseFloat(process.env.MOCK_EXPRESS_BASE_PREMIUM || '5');
-    
+    const standardMultiplier = parseFloat(
+      process.env.MOCK_STANDARD_WEIGHT_MULTIPLIER || '2'
+    );
+    const expressMultiplier = parseFloat(
+      process.env.MOCK_EXPRESS_WEIGHT_MULTIPLIER || '3'
+    );
+    const expressBasePremium = parseFloat(
+      process.env.MOCK_EXPRESS_BASE_PREMIUM || '5'
+    );
+
     // Note: Free shipping logic will be applied later in the business layer
     const standardPrice = basePrice + weightMultiplier * standardMultiplier;
-    const expressPrice = basePrice + weightMultiplier * expressMultiplier + expressBasePremium;
+    const expressPrice =
+      basePrice + weightMultiplier * expressMultiplier + expressBasePremium;
 
     return {
       rates: [
@@ -834,7 +981,7 @@ export class EasyParcelService {
             insurance_available: true,
             cod_available: true,
             signature_required_available: true,
-          }
+          },
         },
         {
           courier_id: 'poslaju',
@@ -848,29 +995,33 @@ export class EasyParcelService {
             insurance_available: true,
             cod_available: false,
             signature_required_available: true,
-          }
-        }
+          },
+        },
       ],
       pickup_address: request.pickup_address,
       delivery_address: request.delivery_address,
-      parcel: request.parcel
+      parcel: request.parcel,
     };
   }
 
-  private getMockShipmentBooking(request: ShipmentBookingRequest): ShipmentBookingResponse {
+  private getMockShipmentBooking(
+    request: ShipmentBookingRequest
+  ): ShipmentBookingResponse {
     return {
       shipment_id: `EP${Date.now()}`,
       tracking_number: `EP${Date.now()}TRK`,
       reference: request.reference,
       status: 'BOOKED',
-      estimated_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      estimated_delivery: new Date(
+        Date.now() + 3 * 24 * 60 * 60 * 1000
+      ).toISOString(),
       label_url: `https://labels.easyparcel.my/EP${Date.now()}.pdf`,
-      total_price: 15.00,
+      total_price: 15.0,
       courier: {
         id: request.service_id,
         name: 'City-Link Express',
-        service_name: 'Standard Delivery'
-      }
+        service_name: 'Standard Delivery',
+      },
     };
   }
 
@@ -879,23 +1030,29 @@ export class EasyParcelService {
       tracking_number: trackingNumber,
       status: 'IN_TRANSIT',
       status_description: 'Package is in transit to destination',
-      estimated_delivery: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+      estimated_delivery: new Date(
+        Date.now() + 1 * 24 * 60 * 60 * 1000
+      ).toISOString(),
       events: [
         {
           event_code: 'PICKED_UP',
           event_name: 'Package Picked Up',
           description: 'Package picked up from sender',
           location: 'Origin Hub - Kuala Lumpur',
-          event_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          event_time: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(),
         },
         {
           event_code: 'IN_TRANSIT',
           event_name: 'In Transit',
           description: 'Package in transit to destination',
           location: 'Transit Hub - Johor',
-          event_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        }
-      ]
+          event_time: new Date(
+            Date.now() - 1 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        },
+      ],
     };
   }
 
@@ -939,7 +1096,7 @@ trailer
 startxref
 250
 %%EOF`;
-    
+
     return Buffer.from(pdfContent);
   }
 
@@ -984,13 +1141,14 @@ startxref
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Webhook configuration failed: ${errorData.message || response.statusText}`);
+        throw new Error(
+          `Webhook configuration failed: ${errorData.message || response.statusText}`
+        );
       }
 
       const result = await response.json();
       console.log('✅ Webhook configured successfully:', result);
       return result;
-
     } catch (error) {
       console.error('❌ Webhook configuration error:', error);
       throw error;
@@ -1021,13 +1179,14 @@ startxref
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Webhook disable failed: ${errorData.message || response.statusText}`);
+        throw new Error(
+          `Webhook disable failed: ${errorData.message || response.statusText}`
+        );
       }
 
       const result = await response.json();
       console.log('✅ Webhook disabled successfully:', result);
       return result;
-
     } catch (error) {
       console.error('❌ Webhook disable error:', error);
       throw error;
@@ -1048,7 +1207,9 @@ startxref
           url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/easyparcel-tracking`,
           events: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'],
           status: 'active',
-          last_triggered: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          last_triggered: new Date(
+            Date.now() - 2 * 60 * 60 * 1000
+          ).toISOString(),
         };
       }
 
@@ -1060,13 +1221,14 @@ startxref
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Get webhook status failed: ${errorData.message || response.statusText}`);
+        throw new Error(
+          `Get webhook status failed: ${errorData.message || response.statusText}`
+        );
       }
 
       const result = await response.json();
       console.log('✅ Webhook status retrieved:', result);
       return result;
-
     } catch (error) {
       console.error('❌ Get webhook status error:', error);
       throw error;
@@ -1075,7 +1237,18 @@ startxref
 
   private isWestMalaysianState(state: string): boolean {
     const westStates: MalaysianState[] = [
-      'KUL', 'SEL', 'JOH', 'MLK', 'NSN', 'PHG', 'PRK', 'PLS', 'PNG', 'KDH', 'TRG', 'KTN'
+      'KUL',
+      'SEL',
+      'JOH',
+      'MLK',
+      'NSN',
+      'PHG',
+      'PRK',
+      'PLS',
+      'PNG',
+      'KDH',
+      'TRG',
+      'KTN',
     ];
     return westStates.includes(state as MalaysianState);
   }
@@ -1085,7 +1258,7 @@ startxref
   protected getHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
+      Accept: 'application/json',
     };
   }
 
@@ -1115,7 +1288,11 @@ startxref
     await this.initializeCredentials();
   }
 
-  getMalaysianStates(): Array<{ code: MalaysianState; name: string; zone: 'west' | 'east' }> {
+  getMalaysianStates(): Array<{
+    code: MalaysianState;
+    name: string;
+    zone: 'west' | 'east';
+  }> {
     return [
       // West Malaysia
       { code: 'KUL', name: 'Kuala Lumpur', zone: 'west' },

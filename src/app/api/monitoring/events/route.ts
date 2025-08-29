@@ -9,7 +9,13 @@ import { rateLimit } from '@/lib/rate-limit';
 
 interface UserEvent {
   eventId: string;
-  eventType: 'page_view' | 'click' | 'form_submit' | 'purchase' | 'error' | 'custom';
+  eventType:
+    | 'page_view'
+    | 'click'
+    | 'form_submit'
+    | 'purchase'
+    | 'error'
+    | 'custom';
   timestamp: string;
   url: string;
   userAgent: string;
@@ -47,7 +53,9 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!event.eventId || !event.eventType || !event.timestamp || !event.url) {
       return NextResponse.json(
-        { error: 'Missing required fields: eventId, eventType, timestamp, url' },
+        {
+          error: 'Missing required fields: eventId, eventType, timestamp, url',
+        },
         { status: 400 }
       );
     }
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest) {
     const headersList = headers();
     const userAgent = headersList.get('user-agent');
     const referer = headersList.get('referer');
-    
+
     // Basic security checks
     if (userAgent && userAgent.includes('bot')) {
       return NextResponse.json(
@@ -73,14 +81,13 @@ export async function POST(request: NextRequest) {
       eventId: event.eventId,
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Error processing user event:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -121,7 +128,6 @@ async function processUserEvent(event: UserEvent) {
 
     // Update analytics
     await updateEventAnalytics(event);
-
   } catch (error) {
     console.error('Failed to process user event:', error);
     throw error;
@@ -140,7 +146,7 @@ async function processPageView(event: UserEvent) {
 
   // Track page popularity
   await incrementPageViewCount(event.url);
-  
+
   // Track user journey
   if (event.sessionId) {
     await trackUserJourney(event.sessionId, event.url);
@@ -153,7 +159,7 @@ async function processPageView(event: UserEvent) {
 async function processClickEvent(event: UserEvent) {
   const element = event.properties?.element || 'unknown';
   const text = event.properties?.text || '';
-  
+
   console.log(`🖱️ Click Event: ${element}`, {
     text: text.slice(0, 50),
     url: event.url,
@@ -162,9 +168,12 @@ async function processClickEvent(event: UserEvent) {
 
   // Track button/link popularity
   await incrementClickCount(element, event.url);
-  
+
   // Detect potential UI issues
-  if (text.toLowerCase().includes('error') || text.toLowerCase().includes('failed')) {
+  if (
+    text.toLowerCase().includes('error') ||
+    text.toLowerCase().includes('failed')
+  ) {
     await trackPotentialUIIssue(event);
   }
 }
@@ -174,7 +183,7 @@ async function processClickEvent(event: UserEvent) {
  */
 async function processFormSubmit(event: UserEvent) {
   const formData = event.data || {};
-  
+
   console.log(`📝 Form Submit: ${event.url}`, {
     formFields: Object.keys(formData).length,
     userId: event.userId || 'anonymous',
@@ -183,9 +192,13 @@ async function processFormSubmit(event: UserEvent) {
 
   // Track form completion rates
   await trackFormCompletion(event.url, formData);
-  
+
   // Detect form issues
-  if (formData.errors && Array.isArray(formData.errors) && formData.errors.length > 0) {
+  if (
+    formData.errors &&
+    Array.isArray(formData.errors) &&
+    formData.errors.length > 0
+  ) {
     await trackFormErrors(event.url, formData.errors);
   }
 }
@@ -195,7 +208,7 @@ async function processFormSubmit(event: UserEvent) {
  */
 async function processPurchaseEvent(event: UserEvent) {
   const purchaseData = event.data || {};
-  
+
   console.log(`💰 Purchase Event:`, {
     orderId: purchaseData.orderId,
     amount: purchaseData.amount,
@@ -207,12 +220,12 @@ async function processPurchaseEvent(event: UserEvent) {
 
   // Track revenue and conversions
   await trackRevenue(purchaseData);
-  
+
   // Update conversion funnel
   if (event.sessionId) {
     await updateConversionFunnel(event.sessionId, purchaseData);
   }
-  
+
   // Alert for high-value purchases
   if (purchaseData.amount && purchaseData.amount > 1000) {
     await sendHighValuePurchaseAlert(purchaseData);
@@ -224,7 +237,7 @@ async function processPurchaseEvent(event: UserEvent) {
  */
 async function processErrorEvent(event: UserEvent) {
   const errorData = event.data || {};
-  
+
   console.error(`❌ User-Reported Error:`, {
     message: errorData.message,
     url: event.url,
@@ -234,7 +247,7 @@ async function processErrorEvent(event: UserEvent) {
 
   // Track user-facing errors
   await trackUserError(event.url, errorData);
-  
+
   // Alert for critical user errors
   if (errorData.severity === 'critical') {
     await sendUserErrorAlert(event);
@@ -245,12 +258,15 @@ async function processErrorEvent(event: UserEvent) {
  * Process custom events
  */
 async function processCustomEvent(event: UserEvent) {
-  console.log(`🔧 Custom Event: ${event.properties?.category || 'uncategorized'}`, {
-    label: event.properties?.label,
-    value: event.properties?.value,
-    url: event.url,
-    data: event.data,
-  });
+  console.log(
+    `🔧 Custom Event: ${event.properties?.category || 'uncategorized'}`,
+    {
+      label: event.properties?.label,
+      value: event.properties?.value,
+      url: event.url,
+      data: event.data,
+    }
+  );
 
   // Store custom event data
   await storeCustomEventData(event);
@@ -340,7 +356,7 @@ async function updateEventAnalytics(event: UserEvent) {
   // Update real-time analytics
   const date = new Date().toISOString().split('T')[0];
   const statsKey = `event_stats:${date}`;
-  
+
   console.log(`Updating event analytics for ${statsKey}:`, {
     eventType: event.eventType,
     url: event.url,

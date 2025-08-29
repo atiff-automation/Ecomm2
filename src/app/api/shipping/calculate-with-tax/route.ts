@@ -45,14 +45,19 @@ export async function POST(request: NextRequest) {
     const rates = await calculator.calculateTaxInclusiveRates(validatedData);
 
     // Get recommended options
-    const recommendations = await calculator.getRecommendedOptionWithTax(validatedData);
+    const recommendations =
+      await calculator.getRecommendedOptionWithTax(validatedData);
 
     // Calculate free shipping if order value is provided
     let freeShippingAnalysis = null;
-    if (validatedData.orderValue !== undefined && validatedData.freeShippingThreshold) {
-      const qualifiesForFreeShipping = validatedData.orderValue >= validatedData.freeShippingThreshold;
-      const amountNeededForFreeShipping = qualifiesForFreeShipping 
-        ? 0 
+    if (
+      validatedData.orderValue !== undefined &&
+      validatedData.freeShippingThreshold
+    ) {
+      const qualifiesForFreeShipping =
+        validatedData.orderValue >= validatedData.freeShippingThreshold;
+      const amountNeededForFreeShipping = qualifiesForFreeShipping
+        ? 0
         : validatedData.freeShippingThreshold - validatedData.orderValue;
 
       freeShippingAnalysis = {
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
         amountNeeded: amountNeededForFreeShipping,
         message: qualifiesForFreeShipping
           ? 'Congratulations! You qualify for free shipping.'
-          : `Add RM ${amountNeededForFreeShipping.toFixed(2)} more to qualify for free shipping.`
+          : `Add RM ${amountNeededForFreeShipping.toFixed(2)} more to qualify for free shipping.`,
       };
     }
 
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
       const display = calculator.formatRateDisplay(rate, true);
       return {
         ...rate,
-        display
+        display,
       };
     });
 
@@ -81,38 +86,38 @@ export async function POST(request: NextRequest) {
       recommendations,
       freeShippingAnalysis,
       taxInformation: {
-        description: 'All prices include Malaysian Service Tax (SST) where applicable',
+        description:
+          'All prices include Malaysian Service Tax (SST) where applicable',
         authority: 'Royal Malaysian Customs Department',
         taxInclusivePricing: validatedData.displayTaxInclusive,
         averageTaxRate: recommendations.taxSummary.averageTaxRate,
-        totalAvailableRates: rates.length
+        totalAvailableRates: rates.length,
       },
       metadata: {
         calculatedAt: new Date().toISOString(),
         currency: 'MYR',
-        country: 'Malaysia'
-      }
+        country: 'Malaysia',
+      },
     });
-
   } catch (error) {
     console.error('Error calculating tax-inclusive shipping rates:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid request data', 
-          details: error.errors 
+        {
+          success: false,
+          error: 'Invalid request data',
+          details: error.errors,
         },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to calculate shipping rates with tax',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -121,7 +126,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  
+
   // Simple rate calculation for GET requests
   const pickupPostcode = searchParams.get('pickupPostcode');
   const deliveryPostcode = searchParams.get('deliveryPostcode');
@@ -130,9 +135,10 @@ export async function GET(request: NextRequest) {
 
   if (!pickupPostcode || !deliveryPostcode || !weight || !value) {
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Missing required parameters: pickupPostcode, deliveryPostcode, weight, value' 
+      {
+        success: false,
+        error:
+          'Missing required parameters: pickupPostcode, deliveryPostcode, weight, value',
       },
       { status: 400 }
     );
@@ -146,18 +152,18 @@ export async function GET(request: NextRequest) {
       pickupAddress: {
         postcode: pickupPostcode,
         state: 'KUL', // Default to KL for GET requests
-        city: 'Kuala Lumpur'
+        city: 'Kuala Lumpur',
       },
       deliveryAddress: {
         postcode: deliveryPostcode,
         state: 'SEL', // Default to Selangor for GET requests
-        city: 'Shah Alam'
+        city: 'Shah Alam',
       },
       parcel: {
         weight: parseFloat(weight),
-        value: parseFloat(value)
+        value: parseFloat(value),
       },
-      displayTaxInclusive: searchParams.get('includeTax') !== 'false'
+      displayTaxInclusive: searchParams.get('includeTax') !== 'false',
     });
 
     const cheapestRate = rates.length > 0 ? rates[0] : null;
@@ -168,16 +174,15 @@ export async function GET(request: NextRequest) {
       totalRatesAvailable: rates.length,
       taxInformation: {
         description: 'Prices include Malaysian Service Tax (SST)',
-        includedInPrice: searchParams.get('includeTax') !== 'false'
-      }
+        includedInPrice: searchParams.get('includeTax') !== 'false',
+      },
     });
-
   } catch (error) {
     console.error('Error in GET shipping calculation:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to calculate shipping rates' 
+      {
+        success: false,
+        error: 'Failed to calculate shipping rates',
       },
       { status: 500 }
     );

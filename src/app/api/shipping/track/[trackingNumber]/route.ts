@@ -19,10 +19,7 @@ interface RouteParams {
 /**
  * GET - Track shipment by tracking number
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { trackingNumber } = params;
     const { searchParams } = new URL(request.url);
@@ -40,16 +37,16 @@ export async function GET(
       where: { trackingNumber },
       include: {
         order: {
-          select: { 
-            id: true, 
-            orderNumber: true, 
+          select: {
+            id: true,
+            orderNumber: true,
             userId: true,
             status: true,
             paymentStatus: true,
             user: {
-              select: { firstName: true, lastName: true, email: true }
-            }
-          }
+              select: { firstName: true, lastName: true, email: true },
+            },
+          },
         },
         trackingEvents: {
           orderBy: { eventTime: 'desc' },
@@ -68,9 +65,11 @@ export async function GET(
     // Verify access rights (for non-admin requests)
     if (source === 'customer') {
       const session = await getServerSession(authOptions);
-      const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
-      const isOwner = session?.user?.id && shipment.order.userId === session.user.id;
-      
+      const isAdmin =
+        session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
+      const isOwner =
+        session?.user?.id && shipment.order.userId === session.user.id;
+
       if (!isAdmin && !isOwner) {
         return NextResponse.json(
           { message: 'Unauthorized access to tracking information' },
@@ -81,31 +80,45 @@ export async function GET(
 
     // Get fresh tracking data from EasyParcel if requested or if data is stale
     let liveTrackingData = null;
-    const shouldRefreshTracking = refresh || 
-      !shipment.updatedAt || 
+    const shouldRefreshTracking =
+      refresh ||
+      !shipment.updatedAt ||
       Date.now() - shipment.updatedAt.getTime() > 30 * 60 * 1000; // 30 minutes
 
     if (shouldRefreshTracking && shipment.easyParcelShipmentId) {
       try {
         console.log('🔄 Fetching live tracking data from EasyParcel...');
-        liveTrackingData = await easyParcelService.trackShipment(trackingNumber);
-        
+        liveTrackingData =
+          await easyParcelService.trackShipment(trackingNumber);
+
         // Update shipment status if changed
-        if (liveTrackingData.status && liveTrackingData.status !== shipment.status) {
+        if (
+          liveTrackingData.status &&
+          liveTrackingData.status !== shipment.status
+        ) {
           await prisma.shipment.update({
             where: { id: shipment.id },
             data: {
               status: liveTrackingData.status,
-              statusDescription: liveTrackingData.status_description || liveTrackingData.status,
-              actualDelivery: liveTrackingData.delivered_at ? new Date(liveTrackingData.delivered_at) : null,
+              statusDescription:
+                liveTrackingData.status_description || liveTrackingData.status,
+              actualDelivery: liveTrackingData.delivered_at
+                ? new Date(liveTrackingData.delivered_at)
+                : null,
               lastTrackedAt: new Date(),
             },
           });
         }
 
         // Update tracking events with new data
-        if (liveTrackingData.tracking_events && liveTrackingData.tracking_events.length > 0) {
-          await updateTrackingEvents(shipment.id, liveTrackingData.tracking_events);
+        if (
+          liveTrackingData.tracking_events &&
+          liveTrackingData.tracking_events.length > 0
+        ) {
+          await updateTrackingEvents(
+            shipment.id,
+            liveTrackingData.tracking_events
+          );
         }
 
         console.log('✅ Live tracking data updated');
@@ -121,35 +134,38 @@ export async function GET(
         id: shipment.id,
         trackingNumber: shipment.trackingNumber,
         orderNumber: shipment.order.orderNumber,
-        
+
         // Status information
         status: shipment.status,
         statusDescription: shipment.statusDescription,
-        
+
         // Delivery information
         estimatedDelivery: shipment.estimatedDelivery,
         actualDelivery: shipment.actualDelivery,
-        
+
         // Courier information
         courierName: shipment.courierName,
         serviceName: shipment.serviceName,
         serviceType: shipment.serviceType,
-        
+
         // Progress indicators
         progress: calculateDeliveryProgress(shipment.status),
         isDelivered: ['DELIVERED', 'COMPLETED'].includes(shipment.status),
-        inTransit: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(shipment.status),
-        
+        inTransit: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(
+          shipment.status
+        ),
+
         // Timestamps
         createdAt: shipment.createdAt,
         lastTrackedAt: shipment.lastTrackedAt || shipment.updatedAt,
-        
+
         // Customer information (for admin view)
         ...(source === 'admin' && {
-          customerName: shipment.order.user ? 
-            `${shipment.order.user.firstName} ${shipment.order.user.lastName}` : 
-            'Guest Customer',
-          customerEmail: shipment.order.user?.email || shipment.order.guestEmail,
+          customerName: shipment.order.user
+            ? `${shipment.order.user.firstName} ${shipment.order.user.lastName}`
+            : 'Guest Customer',
+          customerEmail:
+            shipment.order.user?.email || shipment.order.guestEmail,
         }),
       },
 
@@ -205,10 +221,9 @@ export async function GET(
     };
 
     return NextResponse.json(trackingResponse);
-
   } catch (error) {
     console.error('❌ Tracking API error:', error);
-    
+
     if (error.message.includes('not found')) {
       return NextResponse.json(
         { message: 'Tracking number not found' },
@@ -226,10 +241,7 @@ export async function GET(
 /**
  * POST - Manual tracking update (webhook or admin)
  */
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { trackingNumber } = params;
     const body = await request.json();
@@ -241,7 +253,10 @@ export async function POST(
     });
 
     // Verify admin access for manual updates
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required for manual tracking updates' },
         { status: 403 }
@@ -265,7 +280,9 @@ export async function POST(
       data: {
         status: body.status || shipment.status,
         statusDescription: body.statusDescription || shipment.statusDescription,
-        actualDelivery: body.deliveredAt ? new Date(body.deliveredAt) : shipment.actualDelivery,
+        actualDelivery: body.deliveredAt
+          ? new Date(body.deliveredAt)
+          : shipment.actualDelivery,
         lastTrackedAt: new Date(),
       },
     });
@@ -277,7 +294,8 @@ export async function POST(
           shipmentId: shipment.id,
           eventCode: body.eventCode,
           eventName: body.eventName,
-          description: body.description || `Manual update by ${session.user.firstName}`,
+          description:
+            body.description || `Manual update by ${session.user.firstName}`,
           location: body.location || 'System Update',
           eventTime: body.eventTime ? new Date(body.eventTime) : new Date(),
           source: 'MANUAL',
@@ -317,7 +335,6 @@ export async function POST(
         lastTrackedAt: updatedShipment.lastTrackedAt,
       },
     });
-
   } catch (error) {
     console.error('❌ Manual tracking update error:', error);
     return NextResponse.json(
@@ -365,18 +382,18 @@ async function updateTrackingEvents(shipmentId: string, newEvents: any[]) {
  */
 function calculateDeliveryProgress(status: string): number {
   const progressMap: Record<string, number> = {
-    'BOOKED': 10,
-    'LABEL_GENERATED': 20,
-    'PICKUP_SCHEDULED': 30,
-    'PICKED_UP': 40,
-    'IN_TRANSIT': 60,
-    'OUT_FOR_DELIVERY': 80,
-    'DELIVERED': 100,
-    'COMPLETED': 100,
-    'CANCELLED': 0,
-    'FAILED': 0,
+    BOOKED: 10,
+    LABEL_GENERATED: 20,
+    PICKUP_SCHEDULED: 30,
+    PICKED_UP: 40,
+    IN_TRANSIT: 60,
+    OUT_FOR_DELIVERY: 80,
+    DELIVERED: 100,
+    COMPLETED: 100,
+    CANCELLED: 0,
+    FAILED: 0,
   };
-  
+
   return progressMap[status] || 0;
 }
 
@@ -384,12 +401,26 @@ function calculateDeliveryProgress(status: string): number {
  * Categorize tracking events for better UI organization
  */
 function categorizeTrackingEvent(eventCode: string): string {
-  if (['BOOKED', 'LABEL_GENERATED'].includes(eventCode)) return 'preparation';
-  if (['PICKUP_SCHEDULED', 'PICKED_UP'].includes(eventCode)) return 'pickup';
-  if (['IN_TRANSIT', 'ARRIVED_AT_HUB', 'DEPARTED_FROM_HUB'].includes(eventCode)) return 'transit';
-  if (['OUT_FOR_DELIVERY', 'DELIVERY_ATTEMPTED'].includes(eventCode)) return 'delivery';
-  if (['DELIVERED', 'COMPLETED'].includes(eventCode)) return 'completed';
-  if (['CANCELLED', 'FAILED', 'RETURNED'].includes(eventCode)) return 'exception';
+  if (['BOOKED', 'LABEL_GENERATED'].includes(eventCode)) {
+    return 'preparation';
+  }
+  if (['PICKUP_SCHEDULED', 'PICKED_UP'].includes(eventCode)) {
+    return 'pickup';
+  }
+  if (
+    ['IN_TRANSIT', 'ARRIVED_AT_HUB', 'DEPARTED_FROM_HUB'].includes(eventCode)
+  ) {
+    return 'transit';
+  }
+  if (['OUT_FOR_DELIVERY', 'DELIVERY_ATTEMPTED'].includes(eventCode)) {
+    return 'delivery';
+  }
+  if (['DELIVERED', 'COMPLETED'].includes(eventCode)) {
+    return 'completed';
+  }
+  if (['CANCELLED', 'FAILED', 'RETURNED'].includes(eventCode)) {
+    return 'exception';
+  }
   return 'other';
 }
 
@@ -398,8 +429,12 @@ function categorizeTrackingEvent(eventCode: string): string {
  */
 function isImportantEvent(eventCode: string): boolean {
   const importantEvents = [
-    'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 
-    'DELIVERY_ATTEMPTED', 'CANCELLED', 'FAILED'
+    'PICKED_UP',
+    'OUT_FOR_DELIVERY',
+    'DELIVERED',
+    'DELIVERY_ATTEMPTED',
+    'CANCELLED',
+    'FAILED',
   ];
   return importantEvents.includes(eventCode);
 }
@@ -408,7 +443,9 @@ function isImportantEvent(eventCode: string): boolean {
  * Determine delivery zone from state
  */
 function getDeliveryZone(state: string): 'west' | 'east' | 'unknown' {
-  if (!state) return 'unknown';
+  if (!state) {
+    return 'unknown';
+  }
   const eastStates = ['SBH', 'SWK', 'LBN'];
   return eastStates.includes(state) ? 'east' : 'west';
 }

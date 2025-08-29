@@ -60,7 +60,7 @@ export function ProductCard({
     product.images?.find(img => img.isPrimary) || product.images?.[0];
 
   // Check if user doesn't have access, but don't return early to maintain hook consistency
-  const isRestricted = 
+  const isRestricted =
     pricing.effectivePrice === 0 &&
     pricing.priceDescription.includes('restricted');
 

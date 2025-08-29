@@ -10,7 +10,8 @@ export const ValidationPatterns = {
   email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
   phone: /^(\+?6?01)[0-46-9]-*[0-9]{7,8}$/, // Malaysian phone format
   postalCode: /^[0-9]{5}$/, // Malaysian postal code
-  password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+  password:
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
   slug: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
   currency: /^\d+(\.\d{1,2})?$/,
   positiveNumber: /^\d*\.?\d+$/,
@@ -23,7 +24,8 @@ export const ValidationMessages = {
   email: 'Please enter a valid email address',
   phone: 'Please enter a valid Malaysian phone number (e.g., 01X-XXXXXXX)',
   postalCode: 'Please enter a valid 5-digit postal code',
-  password: 'Password must be at least 8 characters with uppercase, lowercase, number and special character',
+  password:
+    'Password must be at least 8 characters with uppercase, lowercase, number and special character',
   passwordConfirm: 'Passwords do not match',
   minLength: (min: number) => `Must be at least ${min} characters`,
   maxLength: (max: number) => `Must be no more than ${max} characters`,
@@ -140,7 +142,22 @@ export interface FormValidationResult {
 
 // Validation rule type
 export interface ValidationRule {
-  type: 'required' | 'email' | 'phone' | 'password' | 'minLength' | 'maxLength' | 'min' | 'max' | 'slug' | 'currency' | 'url' | 'date' | 'future' | 'past' | 'custom';
+  type:
+    | 'required'
+    | 'email'
+    | 'phone'
+    | 'password'
+    | 'minLength'
+    | 'maxLength'
+    | 'min'
+    | 'max'
+    | 'slug'
+    | 'currency'
+    | 'url'
+    | 'date'
+    | 'future'
+    | 'past'
+    | 'custom';
   message?: string;
   value?: any;
   validator?: (value: any) => boolean;
@@ -291,10 +308,16 @@ export class FieldValidator {
           isValid = !value || validateMaxLength(value, rule.value);
           break;
         case 'min':
-          isValid = value === null || value === undefined || validateMin(Number(value), rule.value);
+          isValid =
+            value === null ||
+            value === undefined ||
+            validateMin(Number(value), rule.value);
           break;
         case 'max':
-          isValid = value === null || value === undefined || validateMax(Number(value), rule.value);
+          isValid =
+            value === null ||
+            value === undefined ||
+            validateMax(Number(value), rule.value);
           break;
         case 'slug':
           isValid = !value || validateSlug(value);
@@ -347,7 +370,7 @@ export class FormValidator {
 
     for (const [fieldName, validator] of Object.entries(this.fields)) {
       const result = validator.validate(data[fieldName]);
-      
+
       if (result.isValid) {
         validatedData[fieldName] = result.value;
       } else {
@@ -397,10 +420,13 @@ export const CommonValidators = {
     validator.field('addressLine2').maxLength(200);
     validator.field('city').required().minLength(2).maxLength(100);
     validator.field('state').required().minLength(2).maxLength(100);
-    validator.field('postalCode').required().custom(
-      (value) => ValidationPatterns.postalCode.test(value),
-      ValidationMessages.postalCode
-    );
+    validator
+      .field('postalCode')
+      .required()
+      .custom(
+        value => ValidationPatterns.postalCode.test(value),
+        ValidationMessages.postalCode
+      );
     validator.field('phone').required().phone();
     return validator;
   },
@@ -414,10 +440,13 @@ export const CommonValidators = {
     validator.field('description').required().minLength(10);
     validator.field('regularPrice').required().currency().min(0.01);
     validator.field('memberPrice').currency().min(0.01);
-    validator.field('stockQuantity').required().custom(
-      (value) => Number.isInteger(Number(value)) && Number(value) >= 0,
-      'Must be a non-negative integer'
-    );
+    validator
+      .field('stockQuantity')
+      .required()
+      .custom(
+        value => Number.isInteger(Number(value)) && Number(value) >= 0,
+        'Must be a non-negative integer'
+      );
     return validator;
   },
 
@@ -430,10 +459,13 @@ export const CommonValidators = {
     validator.field('discountValue').required().min(0.01);
     validator.field('minimumOrderValue').min(0);
     validator.field('maximumDiscount').min(0);
-    validator.field('usageLimit').custom(
-      (value) => !value || (Number.isInteger(Number(value)) && Number(value) > 0),
-      'Must be a positive integer'
-    );
+    validator
+      .field('usageLimit')
+      .custom(
+        value =>
+          !value || (Number.isInteger(Number(value)) && Number(value) > 0),
+        'Must be a positive integer'
+      );
     return validator;
   },
 
@@ -447,22 +479,34 @@ export const CommonValidators = {
 };
 
 // Utility functions for form handling
-export function getFieldErrors(errors: ValidationError[], fieldName: string): string[] {
+export function getFieldErrors(
+  errors: ValidationError[],
+  fieldName: string
+): string[] {
   return errors
     .filter(error => error.field === fieldName)
     .map(error => error.message);
 }
 
-export function hasFieldError(errors: ValidationError[], fieldName: string): boolean {
+export function hasFieldError(
+  errors: ValidationError[],
+  fieldName: string
+): boolean {
   return errors.some(error => error.field === fieldName);
 }
 
-export function getFirstFieldError(errors: ValidationError[], fieldName: string): string | undefined {
+export function getFirstFieldError(
+  errors: ValidationError[],
+  fieldName: string
+): string | undefined {
   const fieldErrors = getFieldErrors(errors, fieldName);
   return fieldErrors.length > 0 ? fieldErrors[0] : undefined;
 }
 
-export function clearFieldErrors(errors: ValidationError[], fieldName: string): ValidationError[] {
+export function clearFieldErrors(
+  errors: ValidationError[],
+  fieldName: string
+): ValidationError[] {
   return errors.filter(error => error.field !== fieldName);
 }
 
@@ -470,7 +514,7 @@ export function clearFieldErrors(errors: ValidationError[], fieldName: string): 
 export function createFieldValidator(rules: ValidationRule[]) {
   return (value: any): FieldValidationResult => {
     const validator = new FieldValidator();
-    
+
     for (const rule of rules) {
       switch (rule.type) {
         case 'required':
@@ -499,12 +543,15 @@ export function createFieldValidator(rules: ValidationRule[]) {
           break;
         case 'custom':
           if (rule.validator) {
-            validator.custom(rule.validator, rule.message || 'Validation failed');
+            validator.custom(
+              rule.validator,
+              rule.message || 'Validation failed'
+            );
           }
           break;
       }
     }
-    
+
     return validator.validate(value);
   };
 }

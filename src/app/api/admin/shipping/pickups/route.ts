@@ -12,8 +12,11 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,12 +30,12 @@ export async function GET(request: NextRequest) {
     const shipmentsNeedingPickup = await prisma.shipment.findMany({
       where: {
         status: {
-          in: ['PICKUP_SCHEDULED', 'LABEL_GENERATED']
+          in: ['PICKUP_SCHEDULED', 'LABEL_GENERATED'],
         },
         pickupDate: {
           gte: now,
-          lte: thirtyDaysFromNow
-        }
+          lte: thirtyDaysFromNow,
+        },
       },
       include: {
         order: {
@@ -42,31 +45,36 @@ export async function GET(request: NextRequest) {
               select: {
                 name: true,
                 email: true,
-                phone: true
-              }
+                phone: true,
+              },
             },
             guestEmail: true,
-            guestPhone: true
-          }
-        }
+            guestPhone: true,
+          },
+        },
       },
       orderBy: {
-        pickupDate: 'asc'
-      }
+        pickupDate: 'asc',
+      },
     });
 
     // Group shipments by pickup date and time slot
-    const pickupSchedulesMap = new Map<string, {
-      date: string;
-      timeSlot: string;
-      shipments: any[];
-      contactPerson: string;
-      contactPhone: string;
-      status: string;
-    }>();
+    const pickupSchedulesMap = new Map<
+      string,
+      {
+        date: string;
+        timeSlot: string;
+        shipments: any[];
+        contactPerson: string;
+        contactPhone: string;
+        status: string;
+      }
+    >();
 
     shipmentsNeedingPickup.forEach(shipment => {
-      if (!shipment.pickupDate) return;
+      if (!shipment.pickupDate) {
+        return;
+      }
 
       const dateStr = shipment.pickupDate.toISOString().split('T')[0];
       const timeSlot = shipment.pickupTimeSlot || 'morning';
@@ -79,7 +87,7 @@ export async function GET(request: NextRequest) {
           shipments: [],
           contactPerson: 'Admin User', // Default contact
           contactPhone: '+60123456789', // Default phone
-          status: 'PENDING'
+          status: 'PENDING',
         });
       }
 
@@ -88,30 +96,35 @@ export async function GET(request: NextRequest) {
         id: shipment.id,
         orderNumber: shipment.order.orderNumber,
         trackingNumber: shipment.trackingNumber,
-        customerName: shipment.order.user?.name || shipment.order.guestEmail || 'Guest',
-        status: shipment.status
+        customerName:
+          shipment.order.user?.name || shipment.order.guestEmail || 'Guest',
+        status: shipment.status,
       });
 
       // Update status based on shipment statuses
       if (schedule.shipments.some(s => s.status === 'PICKED_UP')) {
         schedule.status = 'COMPLETED';
-      } else if (schedule.shipments.every(s => s.status === 'PICKUP_SCHEDULED')) {
+      } else if (
+        schedule.shipments.every(s => s.status === 'PICKUP_SCHEDULED')
+      ) {
         schedule.status = 'CONFIRMED';
       }
     });
 
     // Convert map to array and add IDs
-    const pickupSchedules = Array.from(pickupSchedulesMap.entries()).map(([key, schedule], index) => ({
-      id: key,
-      date: schedule.date,
-      timeSlot: schedule.timeSlot,
-      shipmentCount: schedule.shipments.length,
-      contactPerson: schedule.contactPerson,
-      contactPhone: schedule.contactPhone,
-      status: schedule.status,
-      shipments: schedule.shipments.map(s => s.id),
-      shipmentDetails: schedule.shipments
-    }));
+    const pickupSchedules = Array.from(pickupSchedulesMap.entries()).map(
+      ([key, schedule], index) => ({
+        id: key,
+        date: schedule.date,
+        timeSlot: schedule.timeSlot,
+        shipmentCount: schedule.shipments.length,
+        contactPerson: schedule.contactPerson,
+        contactPhone: schedule.contactPhone,
+        status: schedule.status,
+        shipments: schedule.shipments.map(s => s.id),
+        shipmentDetails: schedule.shipments,
+      })
+    );
 
     // Also get some historical data for the last 7 days
     const sevenDaysAgo = new Date(now);
@@ -120,12 +133,12 @@ export async function GET(request: NextRequest) {
     const recentPickups = await prisma.shipment.findMany({
       where: {
         status: {
-          in: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED']
+          in: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'],
         },
         pickupDate: {
           gte: sevenDaysAgo,
-          lt: now
-        }
+          lt: now,
+        },
       },
       select: {
         id: true,
@@ -134,19 +147,21 @@ export async function GET(request: NextRequest) {
         status: true,
         order: {
           select: {
-            orderNumber: true
-          }
-        }
+            orderNumber: true,
+          },
+        },
       },
       orderBy: {
-        pickupDate: 'desc'
-      }
+        pickupDate: 'desc',
+      },
     });
 
     // Group recent pickups for historical view
     const recentPickupSchedules = new Map<string, any>();
     recentPickups.forEach(pickup => {
-      if (!pickup.pickupDate) return;
+      if (!pickup.pickupDate) {
+        return;
+      }
 
       const dateStr = pickup.pickupDate.toISOString().split('T')[0];
       const timeSlot = pickup.pickupTimeSlot || 'morning';
@@ -161,7 +176,7 @@ export async function GET(request: NextRequest) {
           contactPerson: 'Admin User',
           contactPhone: '+60123456789',
           status: 'COMPLETED',
-          shipments: []
+          shipments: [],
         });
       }
 
@@ -173,7 +188,7 @@ export async function GET(request: NextRequest) {
     // Combine upcoming and recent schedules
     const allSchedules = [
       ...pickupSchedules,
-      ...Array.from(recentPickupSchedules.values())
+      ...Array.from(recentPickupSchedules.values()),
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json({
@@ -181,9 +196,11 @@ export async function GET(request: NextRequest) {
       schedules: allSchedules,
       upcoming: pickupSchedules.length,
       completed: Array.from(recentPickupSchedules.values()).length,
-      totalShipments: pickupSchedules.reduce((sum, schedule) => sum + schedule.shipmentCount, 0)
+      totalShipments: pickupSchedules.reduce(
+        (sum, schedule) => sum + schedule.shipmentCount,
+        0
+      ),
     });
-
   } catch (error) {
     console.error('Error fetching pickup schedules:', error);
     return NextResponse.json(

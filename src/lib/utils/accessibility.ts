@@ -189,7 +189,9 @@ export function createFocusTrap(element: HTMLElement): {
   const lastElement = focusableElements[focusableElements.length - 1];
 
   const handleTabKey = (e: KeyboardEvent) => {
-    if (e.key !== 'Tab') return;
+    if (e.key !== 'Tab') {
+      return;
+    }
 
     if (e.shiftKey) {
       if (document.activeElement === firstElement) {
@@ -246,7 +248,7 @@ export function handleKeyboardNavigation(
 ) {
   const key = event.key as keyof typeof KeyboardKeys;
   const handler = handlers[key];
-  
+
   if (handler) {
     event.preventDefault();
     handler();
@@ -289,16 +291,22 @@ export function announceToScreenReader(
 }
 
 // Focus management
-export function moveFocus(direction: 'next' | 'previous' | 'first' | 'last'): void {
+export function moveFocus(
+  direction: 'next' | 'previous' | 'first' | 'last'
+): void {
   const focusableElements = Array.from(
     document.querySelectorAll(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
   ) as HTMLElement[];
 
-  if (focusableElements.length === 0) return;
+  if (focusableElements.length === 0) {
+    return;
+  }
 
-  const currentIndex = focusableElements.indexOf(document.activeElement as HTMLElement);
+  const currentIndex = focusableElements.indexOf(
+    document.activeElement as HTMLElement
+  );
 
   let targetIndex: number;
   switch (direction) {
@@ -306,7 +314,8 @@ export function moveFocus(direction: 'next' | 'previous' | 'first' | 'last'): vo
       targetIndex = (currentIndex + 1) % focusableElements.length;
       break;
     case 'previous':
-      targetIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
+      targetIndex =
+        currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
       break;
     case 'first':
       targetIndex = 0;
@@ -322,7 +331,10 @@ export function moveFocus(direction: 'next' | 'previous' | 'first' | 'last'): vo
 }
 
 // Skip link utilities
-export function createSkipLink(targetId: string, text: string = 'Skip to main content'): {
+export function createSkipLink(
+  targetId: string,
+  text: string = 'Skip to main content'
+): {
   element: HTMLElement;
   activate: () => void;
 } {
@@ -343,7 +355,7 @@ export function createSkipLink(targetId: string, text: string = 'Skip to main co
     }
   };
 
-  skipLink.addEventListener('click', (e) => {
+  skipLink.addEventListener('click', e => {
     e.preventDefault();
     activate();
   });
@@ -380,13 +392,18 @@ export function getFormFieldAriaAttributes(
   const ids = generateFormFieldIds(fieldName);
 
   const describedBy: string[] = [];
-  if (hasError) describedBy.push(ids.errorId);
-  if (hasHelp) describedBy.push(ids.helpId);
+  if (hasError) {
+    describedBy.push(ids.errorId);
+  }
+  if (hasHelp) {
+    describedBy.push(ids.helpId);
+  }
 
   return {
     id: ids.fieldId,
     'aria-labelledby': ids.labelId,
-    'aria-describedby': describedBy.length > 0 ? describedBy.join(' ') : undefined,
+    'aria-describedby':
+      describedBy.length > 0 ? describedBy.join(' ') : undefined,
     'aria-required': required,
     'aria-invalid': invalid || hasError,
   };

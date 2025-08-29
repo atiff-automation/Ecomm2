@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
 
     if (!postcode) {
       return NextResponse.json(
-        { 
-          valid: false, 
-          error: 'Postcode is required' 
+        {
+          valid: false,
+          error: 'Postcode is required',
         },
         { status: 400 }
       );
@@ -23,34 +23,45 @@ export async function POST(request: NextRequest) {
 
     // Validate the postcode
     const validation = malaysianPostcodeService.validatePostcode(postcode);
-    
+
     if (!validation.valid) {
-      return NextResponse.json({
-        valid: false,
-        error: validation.error,
-        formatted: validation.formatted
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          valid: false,
+          error: validation.error,
+          formatted: validation.formatted,
+        },
+        { status: 400 }
+      );
     }
 
     // Get location data
-    const location = malaysianPostcodeService.getLocationByPostcode(validation.formatted);
-    
+    const location = malaysianPostcodeService.getLocationByPostcode(
+      validation.formatted
+    );
+
     if (!location) {
-      return NextResponse.json({
-        valid: false,
-        error: 'Invalid postcode - no location found',
-        formatted: validation.formatted
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          valid: false,
+          error: 'Invalid postcode - no location found',
+          formatted: validation.formatted,
+        },
+        { status: 400 }
+      );
     }
 
     // Optional state validation
     if (state && state !== location.state) {
-      return NextResponse.json({
-        valid: false,
-        error: `Postcode ${validation.formatted} belongs to ${location.stateName}, not ${state}`,
-        formatted: validation.formatted,
-        correctState: location.stateName
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          valid: false,
+          error: `Postcode ${validation.formatted} belongs to ${location.stateName}, not ${state}`,
+          formatted: validation.formatted,
+          correctState: location.stateName,
+        },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({
@@ -61,15 +72,14 @@ export async function POST(request: NextRequest) {
       stateName: location.stateName,
       stateCode: location.stateCode,
       zone: location.zone,
-      area: location.area
+      area: location.area,
     });
-
   } catch (error) {
     console.error('Address validation error:', error);
     return NextResponse.json(
-      { 
-        valid: false, 
-        error: 'Internal server error' 
+      {
+        valid: false,
+        error: 'Internal server error',
       },
       { status: 500 }
     );
@@ -84,31 +94,33 @@ export async function GET(request: NextRequest) {
 
     if (!postcode) {
       return NextResponse.json(
-        { 
-          valid: false, 
-          error: 'Postcode parameter is required' 
+        {
+          valid: false,
+          error: 'Postcode parameter is required',
         },
         { status: 400 }
       );
     }
 
     const validation = malaysianPostcodeService.validatePostcode(postcode);
-    
+
     if (!validation.valid) {
       return NextResponse.json({
         valid: false,
         error: validation.error,
-        formatted: validation.formatted
+        formatted: validation.formatted,
       });
     }
 
-    const location = malaysianPostcodeService.getLocationByPostcode(validation.formatted);
-    
+    const location = malaysianPostcodeService.getLocationByPostcode(
+      validation.formatted
+    );
+
     if (!location) {
       return NextResponse.json({
         valid: false,
         error: 'Invalid postcode - no location found',
-        formatted: validation.formatted
+        formatted: validation.formatted,
       });
     }
 
@@ -120,15 +132,14 @@ export async function GET(request: NextRequest) {
       stateName: location.stateName,
       stateCode: location.stateCode,
       zone: location.zone,
-      area: location.area
+      area: location.area,
     });
-
   } catch (error) {
     console.error('Address validation error:', error);
     return NextResponse.json(
-      { 
-        valid: false, 
-        error: 'Internal server error' 
+      {
+        valid: false,
+        error: 'Internal server error',
       },
       { status: 500 }
     );

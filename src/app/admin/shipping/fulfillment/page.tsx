@@ -114,8 +114,12 @@ interface PickupSchedule {
 
 export default function AdminShippingFulfillmentDashboard() {
   const { data: session, status } = useSession();
-  const [pendingShipments, setPendingShipments] = useState<PendingShipment[]>([]);
-  const [shippingStats, setShippingStats] = useState<ShippingStats | null>(null);
+  const [pendingShipments, setPendingShipments] = useState<PendingShipment[]>(
+    []
+  );
+  const [shippingStats, setShippingStats] = useState<ShippingStats | null>(
+    null
+  );
   const [pickupSchedules, setPickupSchedules] = useState<PickupSchedule[]>([]);
   const [selectedShipments, setSelectedShipments] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -191,12 +195,12 @@ export default function AdminShippingFulfillmentDashboard() {
       if (response.ok) {
         const data = await response.json();
         toast.success(`Generated ${data.successCount} labels successfully`);
-        
+
         // Download the generated labels ZIP file
         if (data.downloadUrl) {
           window.open(data.downloadUrl, '_blank');
         }
-        
+
         fetchDashboardData(); // Refresh data
         setSelectedShipments([]);
       } else {
@@ -289,13 +293,18 @@ export default function AdminShippingFulfillmentDashboard() {
 
   // Filter shipments based on search and status
   const filteredShipments = pendingShipments.filter(shipment => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch =
+      searchQuery === '' ||
       shipment.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       shipment.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (shipment.trackingNumber && shipment.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'all' || shipment.status === statusFilter;
-    
+      (shipment.trackingNumber &&
+        shipment.trackingNumber
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()));
+
+    const matchesStatus =
+      statusFilter === 'all' || shipment.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -307,10 +316,10 @@ export default function AdminShippingFulfillmentDashboard() {
       month: 'short',
       year: 'numeric',
       timeZone: 'Asia/Kuala_Lumpur',
-      ...(includeTime && { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: false
+      ...(includeTime && {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
       }),
     };
     return date.toLocaleDateString('en-MY', options);
@@ -370,11 +379,15 @@ export default function AdminShippingFulfillmentDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Shipments</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Shipments
+              </CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{shippingStats.totalShipments}</div>
+              <div className="text-2xl font-bold">
+                {shippingStats.totalShipments}
+              </div>
               <p className="text-xs text-muted-foreground">
                 All time shipments
               </p>
@@ -383,11 +396,15 @@ export default function AdminShippingFulfillmentDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Labels</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Pending Labels
+              </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{shippingStats.pendingLabels || 0}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {shippingStats.pendingLabels || 0}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Need label generation
               </p>
@@ -396,11 +413,15 @@ export default function AdminShippingFulfillmentDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Pickups</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Today's Pickups
+              </CardTitle>
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{shippingStats.todayPickups || 0}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {shippingStats.todayPickups || 0}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Scheduled for today
               </p>
@@ -413,7 +434,9 @@ export default function AdminShippingFulfillmentDashboard() {
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{shippingStats.delivered}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {shippingStats.delivered}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Successfully delivered
               </p>
@@ -422,7 +445,11 @@ export default function AdminShippingFulfillmentDashboard() {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pending">Pending Shipments</TabsTrigger>
           <TabsTrigger value="pickups">Pickup Scheduling</TabsTrigger>
@@ -442,7 +469,9 @@ export default function AdminShippingFulfillmentDashboard() {
                   size="sm"
                   disabled={loading}
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+                  />
                   Refresh
                 </Button>
               </CardTitle>
@@ -458,12 +487,12 @@ export default function AdminShippingFulfillmentDashboard() {
                       id="search"
                       placeholder="Search by order number, customer name, or tracking..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={e => setSearchQuery(e.target.value)}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                
+
                 <div className="w-full md:w-48">
                   <Label htmlFor="status-filter">Filter by Status</Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -474,7 +503,9 @@ export default function AdminShippingFulfillmentDashboard() {
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="DRAFT">Draft</SelectItem>
                       <SelectItem value="BOOKED">Booked</SelectItem>
-                      <SelectItem value="LABEL_GENERATED">Label Generated</SelectItem>
+                      <SelectItem value="LABEL_GENERATED">
+                        Label Generated
+                      </SelectItem>
                       <SelectItem value="PICKED_UP">Picked Up</SelectItem>
                       <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
                     </SelectContent>
@@ -488,7 +519,7 @@ export default function AdminShippingFulfillmentDashboard() {
                   <span className="text-sm text-blue-700 mr-4">
                     {selectedShipments.length} shipment(s) selected
                   </span>
-                  
+
                   <Button
                     size="sm"
                     onClick={handleBulkShipmentBooking}
@@ -497,7 +528,7 @@ export default function AdminShippingFulfillmentDashboard() {
                     <Package className="w-4 h-4 mr-2" />
                     Book Shipments
                   </Button>
-                  
+
                   <Button
                     size="sm"
                     onClick={handleBulkLabelGeneration}
@@ -506,16 +537,19 @@ export default function AdminShippingFulfillmentDashboard() {
                     <FileText className="w-4 h-4 mr-2" />
                     Generate Labels
                   </Button>
-                  
+
                   <div className="flex items-center gap-2">
                     <Input
                       type="date"
                       value={pickupDate}
-                      onChange={(e) => setPickupDate(e.target.value)}
+                      onChange={e => setPickupDate(e.target.value)}
                       min={getTomorrowDate()}
                       className="w-40"
                     />
-                    <Select value={pickupTimeSlot} onValueChange={setPickupTimeSlot}>
+                    <Select
+                      value={pickupTimeSlot}
+                      onValueChange={setPickupTimeSlot}
+                    >
                       <SelectTrigger className="w-32">
                         <SelectValue placeholder="Time" />
                       </SelectTrigger>
@@ -534,7 +568,7 @@ export default function AdminShippingFulfillmentDashboard() {
                       Schedule Pickup
                     </Button>
                   </div>
-                  
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -552,10 +586,16 @@ export default function AdminShippingFulfillmentDashboard() {
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedShipments.length === filteredShipments.length && filteredShipments.length > 0}
-                          onCheckedChange={(checked) => {
+                          checked={
+                            selectedShipments.length ===
+                              filteredShipments.length &&
+                            filteredShipments.length > 0
+                          }
+                          onCheckedChange={checked => {
                             if (checked) {
-                              setSelectedShipments(filteredShipments.map(s => s.id));
+                              setSelectedShipments(
+                                filteredShipments.map(s => s.id)
+                              );
                             } else {
                               setSelectedShipments([]);
                             }
@@ -573,35 +613,54 @@ export default function AdminShippingFulfillmentDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredShipments.map((shipment) => (
+                    {filteredShipments.map(shipment => (
                       <TableRow key={shipment.id}>
                         <TableCell>
                           <Checkbox
                             checked={selectedShipments.includes(shipment.id)}
-                            onCheckedChange={(checked) => {
+                            onCheckedChange={checked => {
                               if (checked) {
-                                setSelectedShipments([...selectedShipments, shipment.id]);
+                                setSelectedShipments([
+                                  ...selectedShipments,
+                                  shipment.id,
+                                ]);
                               } else {
-                                setSelectedShipments(selectedShipments.filter(id => id !== shipment.id));
+                                setSelectedShipments(
+                                  selectedShipments.filter(
+                                    id => id !== shipment.id
+                                  )
+                                );
                               }
                             }}
                           />
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{shipment.orderNumber}</div>
-                            <div className="text-sm text-gray-500">ID: {shipment.orderId}</div>
+                            <div className="font-medium">
+                              {shipment.orderNumber}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ID: {shipment.orderId}
+                            </div>
                             {shipment.trackingNumber && (
-                              <div className="text-sm text-blue-600">#{shipment.trackingNumber}</div>
+                              <div className="text-sm text-blue-600">
+                                #{shipment.trackingNumber}
+                              </div>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{shipment.customerName}</div>
-                            <div className="text-sm text-gray-500">{shipment.customerEmail}</div>
+                            <div className="font-medium">
+                              {shipment.customerName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {shipment.customerEmail}
+                            </div>
                             {shipment.customerPhone && (
-                              <div className="text-sm text-gray-500">{shipment.customerPhone}</div>
+                              <div className="text-sm text-gray-500">
+                                {shipment.customerPhone}
+                              </div>
                             )}
                           </div>
                         </TableCell>
@@ -609,13 +668,18 @@ export default function AdminShippingFulfillmentDashboard() {
                           <div className="text-sm">
                             <div>{shipment.deliveryAddress.name}</div>
                             <div className="text-gray-500">
-                              {shipment.deliveryAddress.city}, {shipment.deliveryAddress.state}
+                              {shipment.deliveryAddress.city},{' '}
+                              {shipment.deliveryAddress.state}
                             </div>
-                            <div className="text-gray-500">{shipment.deliveryAddress.postalCode}</div>
+                            <div className="text-gray-500">
+                              {shipment.deliveryAddress.postalCode}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getStatusBadgeColor(shipment.status)}>
+                          <Badge
+                            className={getStatusBadgeColor(shipment.status)}
+                          >
                             {shipment.status.replace(/_/g, ' ')}
                           </Badge>
                         </TableCell>
@@ -623,19 +687,27 @@ export default function AdminShippingFulfillmentDashboard() {
                           <div className="text-sm">
                             {shipment.courierName && (
                               <>
-                                <div className="font-medium">{shipment.courierName}</div>
-                                <div className="text-gray-500">{shipment.serviceName}</div>
+                                <div className="font-medium">
+                                  {shipment.courierName}
+                                </div>
+                                <div className="text-gray-500">
+                                  {shipment.serviceName}
+                                </div>
                               </>
                             )}
                             {!shipment.courierName && (
-                              <span className="text-gray-400">Not selected</span>
+                              <span className="text-gray-400">
+                                Not selected
+                              </span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           RM {shipment.totalValue.toFixed(2)}
                           {shipment.weight && (
-                            <div className="text-sm text-gray-500">{shipment.weight}kg</div>
+                            <div className="text-sm text-gray-500">
+                              {shipment.weight}kg
+                            </div>
                           )}
                         </TableCell>
                         <TableCell>{formatDate(shipment.createdAt)}</TableCell>
@@ -648,7 +720,10 @@ export default function AdminShippingFulfillmentDashboard() {
                             </Button>
                             {shipment.labelGenerated && (
                               <Button variant="outline" size="sm" asChild>
-                                <a href={`/api/shipping/labels/${shipment.id}`} target="_blank">
+                                <a
+                                  href={`/api/shipping/labels/${shipment.id}`}
+                                  target="_blank"
+                                >
                                   <Download className="w-3 h-3" />
                                 </a>
                               </Button>
@@ -679,14 +754,18 @@ export default function AdminShippingFulfillmentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {pickupSchedules.map((schedule) => (
-                  <div key={schedule.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {pickupSchedules.map(schedule => (
+                  <div
+                    key={schedule.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div>
                       <div className="font-medium">
                         {formatDate(schedule.date, false)} - {schedule.timeSlot}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {schedule.shipmentCount} shipments • Contact: {schedule.contactPerson}
+                        {schedule.shipmentCount} shipments • Contact:{' '}
+                        {schedule.contactPerson}
                       </div>
                       <div className="text-sm text-gray-500">
                         Phone: {schedule.contactPhone}
@@ -710,7 +789,9 @@ export default function AdminShippingFulfillmentDashboard() {
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No pickup schedules found</p>
-                    <p className="text-sm">Schedule pickups from the "Pending Shipments" tab</p>
+                    <p className="text-sm">
+                      Schedule pickups from the "Pending Shipments" tab
+                    </p>
                   </div>
                 )}
               </div>
@@ -729,28 +810,35 @@ export default function AdminShippingFulfillmentDashboard() {
                 <Alert>
                   <FileText className="h-4 w-4" />
                   <AlertDescription>
-                    Use the "Pending Shipments" tab to select orders and generate shipping labels in bulk.
-                    Generated labels will be automatically saved and can be downloaded as a ZIP file.
+                    Use the "Pending Shipments" tab to select orders and
+                    generate shipping labels in bulk. Generated labels will be
+                    automatically saved and can be downloaded as a ZIP file.
                   </AlertDescription>
                 </Alert>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <PrinterIcon className="h-8 w-8 mx-auto mb-2 text-blue-500" />
                     <h3 className="font-medium">Bulk Generation</h3>
-                    <p className="text-sm text-gray-600">Generate multiple labels at once</p>
+                    <p className="text-sm text-gray-600">
+                      Generate multiple labels at once
+                    </p>
                   </div>
-                  
+
                   <div className="text-center p-4 border rounded-lg">
                     <Download className="h-8 w-8 mx-auto mb-2 text-green-500" />
                     <h3 className="font-medium">ZIP Download</h3>
-                    <p className="text-sm text-gray-600">Download all labels as ZIP</p>
+                    <p className="text-sm text-gray-600">
+                      Download all labels as ZIP
+                    </p>
                   </div>
-                  
+
                   <div className="text-center p-4 border rounded-lg">
                     <RefreshCw className="h-8 w-8 mx-auto mb-2 text-orange-500" />
                     <h3 className="font-medium">Auto-Regenerate</h3>
-                    <p className="text-sm text-gray-600">Regenerate if labels are lost</p>
+                    <p className="text-sm text-gray-600">
+                      Regenerate if labels are lost
+                    </p>
                   </div>
                 </div>
               </div>
@@ -774,17 +862,24 @@ export default function AdminShippingFulfillmentDashboard() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Delivery Success Rate</span>
                       <span className="font-bold text-green-600">
-                        {shippingStats.totalShipments > 0 
-                          ? ((shippingStats.delivered / shippingStats.totalShipments) * 100).toFixed(1)
-                          : '0'}%
+                        {shippingStats.totalShipments > 0
+                          ? (
+                              (shippingStats.delivered /
+                                shippingStats.totalShipments) *
+                              100
+                            ).toFixed(1)
+                          : '0'}
+                        %
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Average Delivery Time</span>
-                      <span className="font-bold">{shippingStats.averageDeliveryTime || 0} days</span>
+                      <span className="font-bold">
+                        {shippingStats.averageDeliveryTime || 0} days
+                      </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Total Revenue</span>
                       <span className="font-bold text-blue-600">
@@ -808,14 +903,16 @@ export default function AdminShippingFulfillmentDashboard() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Pending Booking</span>
-                      <Badge variant="outline">{shippingStats.pendingBooking}</Badge>
+                      <Badge variant="outline">
+                        {shippingStats.pendingBooking}
+                      </Badge>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm">In Transit</span>
                       <Badge variant="outline">{shippingStats.inTransit}</Badge>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Failed/Cancelled</span>
                       <Badge variant="outline">{shippingStats.failed}</Badge>

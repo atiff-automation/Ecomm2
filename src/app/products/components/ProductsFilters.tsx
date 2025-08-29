@@ -50,10 +50,10 @@ export function ProductsFilters({
   disabled = false,
 }: ProductsFiltersProps) {
   const [searchInput, setSearchInput] = useState(currentSearch);
-  
+
   // Debounce search input to avoid too many API calls
   const debouncedSearch = useDebounce(searchInput, 500);
-  
+
   // Trigger search when debounced value changes
   useState(() => {
     if (debouncedSearch !== currentSearch) {
@@ -69,9 +69,11 @@ export function ProductsFilters({
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
-    return currentSearch !== '' || 
-           currentCategory !== 'all' || 
-           currentSort !== 'created-desc';
+    return (
+      currentSearch !== '' ||
+      currentCategory !== 'all' ||
+      currentSort !== 'created-desc'
+    );
   }, [currentSearch, currentCategory, currentSort]);
 
   return (
@@ -101,7 +103,7 @@ export function ProductsFilters({
             <Input
               placeholder="Search products..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={e => setSearchInput(e.target.value)}
               className="pl-10 pr-10"
               disabled={disabled}
             />
@@ -140,7 +142,12 @@ export function ProductsFilters({
                 All Categories
                 {categories.length > 0 && (
                   <span className="text-muted-foreground ml-1">
-                    ({categories.reduce((sum, cat) => sum + (cat.productCount || 0), 0)})
+                    (
+                    {categories.reduce(
+                      (sum, cat) => sum + (cat.productCount || 0),
+                      0
+                    )}
+                    )
                   </span>
                 )}
               </SelectItem>
@@ -162,7 +169,11 @@ export function ProductsFilters({
         {/* Sort By */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Sort By</label>
-          <Select value={currentSort} onValueChange={onSortChange} disabled={disabled}>
+          <Select
+            value={currentSort}
+            onValueChange={onSortChange}
+            disabled={disabled}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -182,7 +193,9 @@ export function ProductsFilters({
         {/* Filter Summary */}
         {hasActiveFilters && (
           <div className="pt-4 border-t border-gray-200">
-            <p className="text-xs text-muted-foreground mb-2">Active filters:</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Active filters:
+            </p>
             <div className="flex flex-wrap gap-1">
               {currentSearch && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
@@ -191,16 +204,20 @@ export function ProductsFilters({
               )}
               {currentCategory !== 'all' && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                  {categories.find(cat => cat.id === currentCategory)?.name || 'Category'}
+                  {categories.find(cat => cat.id === currentCategory)?.name ||
+                    'Category'}
                 </span>
               )}
               {currentSort !== 'created-desc' && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-                  {currentSort.split('-')[0] === 'created' ? 'Date' : 
-                   currentSort.split('-')[0] === 'name' ? 'Name' : 
-                   currentSort.split('-')[0] === 'price' ? 'Price' : 'Rating'}: {
-                   currentSort.split('-')[1] === 'asc' ? '↑' : '↓'
-                  }
+                  {currentSort.split('-')[0] === 'created'
+                    ? 'Date'
+                    : currentSort.split('-')[0] === 'name'
+                      ? 'Name'
+                      : currentSort.split('-')[0] === 'price'
+                        ? 'Price'
+                        : 'Rating'}
+                  : {currentSort.split('-')[1] === 'asc' ? '↑' : '↓'}
                 </span>
               )}
             </div>

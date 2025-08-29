@@ -12,12 +12,18 @@ import { z } from 'zod';
 
 // Validation schemas
 const createCategorySchema = z.object({
-  categoryName: z.string().min(1, 'Category name is required').max(50, 'Category name too long'),
-  categoryDescription: z.string().min(1, 'Category description is required').max(100, 'Category description too long')
+  categoryName: z
+    .string()
+    .min(1, 'Category name is required')
+    .max(50, 'Category name too long'),
+  categoryDescription: z
+    .string()
+    .min(1, 'Category description is required')
+    .max(100, 'Category description too long'),
 });
 
 const getCategorySchema = z.object({
-  categoryCode: z.string().min(1, 'Category code is required')
+  categoryCode: z.string().min(1, 'Category code is required'),
 });
 
 /**
@@ -38,15 +44,19 @@ export async function GET(request: NextRequest) {
     const categoryCode = searchParams.get('categoryCode');
     const action = searchParams.get('action');
 
-    console.log('🔍 Admin requesting category operation:', { categoryCode, action });
+    console.log('🔍 Admin requesting category operation:', {
+      categoryCode,
+      action,
+    });
 
     // Check if credentials are configured
-    const credentialStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const credentialStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
     if (!credentialStatus.hasCredentials) {
       return NextResponse.json(
         {
           success: false,
-          error: 'toyyibPay credentials not configured'
+          error: 'toyyibPay credentials not configured',
         },
         { status: 400 }
       );
@@ -55,22 +65,23 @@ export async function GET(request: NextRequest) {
     if (action === 'default') {
       // Get or create default category
       console.log('🔍 Getting or creating default category');
-      const result = await toyyibPayCategoryService.getOrCreateDefaultCategory();
-      
+      const result =
+        await toyyibPayCategoryService.getOrCreateDefaultCategory();
+
       return NextResponse.json({
         success: result.success,
         categoryCode: result.categoryCode,
-        error: result.error
+        error: result.error,
       });
     } else if (categoryCode) {
       // Get specific category details
       console.log(`🔍 Getting category details for: ${categoryCode}`);
       const result = await toyyibPayCategoryService.getCategory(categoryCode);
-      
+
       return NextResponse.json({
         success: result.success,
         category: result.category,
-        error: result.error
+        error: result.error,
       });
     } else {
       // Return current default category from credentials
@@ -78,7 +89,7 @@ export async function GET(request: NextRequest) {
         success: true,
         currentCategory: credentialStatus.categoryCode || null,
         hasCredentials: credentialStatus.hasCredentials,
-        environment: credentialStatus.environment
+        environment: credentialStatus.environment,
       });
     }
   } catch (error) {
@@ -87,7 +98,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: 'Failed to process category request',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -118,7 +129,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'Invalid request data',
-          details: validationResult.error.errors
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -127,19 +138,24 @@ export async function POST(request: NextRequest) {
     const { categoryName, categoryDescription } = validationResult.data;
 
     // Check if credentials are configured
-    const credentialStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const credentialStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
     if (!credentialStatus.hasCredentials) {
       return NextResponse.json(
         {
           success: false,
-          error: 'toyyibPay credentials not configured. Please configure credentials first.'
+          error:
+            'toyyibPay credentials not configured. Please configure credentials first.',
         },
         { status: 400 }
       );
     }
 
     // Create category
-    const result = await toyyibPayCategoryService.createCategory(categoryName, categoryDescription);
+    const result = await toyyibPayCategoryService.createCategory(
+      categoryName,
+      categoryDescription
+    );
 
     if (result.success && result.categoryCode) {
       // Log the operation
@@ -149,7 +165,7 @@ export async function POST(request: NextRequest) {
         {
           categoryName,
           categoryCode: result.categoryCode,
-          environment: credentialStatus.environment
+          environment: credentialStatus.environment,
         }
       );
 
@@ -160,14 +176,14 @@ export async function POST(request: NextRequest) {
         message: 'Category created successfully',
         categoryCode: result.categoryCode,
         categoryName: categoryName,
-        categoryDescription: categoryDescription
+        categoryDescription: categoryDescription,
       });
     } else {
       console.log(`❌ Category creation failed: ${result.error}`);
       return NextResponse.json(
         {
           success: false,
-          error: result.error || 'Failed to create category'
+          error: result.error || 'Failed to create category',
         },
         { status: 400 }
       );
@@ -178,7 +194,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Failed to create category',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -206,13 +222,14 @@ export async function PUT(request: NextRequest) {
 
     if (action === 'setDefault' && categoryCode) {
       // Validate that the category exists
-      const categoryResult = await toyyibPayCategoryService.getCategory(categoryCode);
-      
+      const categoryResult =
+        await toyyibPayCategoryService.getCategory(categoryCode);
+
       if (!categoryResult.success) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Category not found or invalid'
+            error: 'Category not found or invalid',
           },
           { status: 400 }
         );
@@ -220,18 +237,18 @@ export async function PUT(request: NextRequest) {
 
       // Update the stored category code in credentials
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       await prisma.systemConfig.upsert({
         where: { key: 'toyyibpay_category_code' },
         update: {
           value: categoryCode,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'toyyibpay_category_code',
           value: categoryCode,
-          type: 'string'
-        }
+          type: 'string',
+        },
       });
 
       // Log the operation
@@ -240,7 +257,7 @@ export async function PUT(request: NextRequest) {
         session.user.id,
         {
           categoryCode,
-          categoryName: categoryResult.category?.categoryName
+          categoryName: categoryResult.category?.categoryName,
         }
       );
 
@@ -250,13 +267,13 @@ export async function PUT(request: NextRequest) {
         success: true,
         message: 'Default category updated successfully',
         categoryCode: categoryCode,
-        category: categoryResult.category
+        category: categoryResult.category,
       });
     } else {
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid action or missing category code'
+          error: 'Invalid action or missing category code',
         },
         { status: 400 }
       );
@@ -267,7 +284,7 @@ export async function PUT(request: NextRequest) {
       {
         success: false,
         error: 'Failed to update category',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

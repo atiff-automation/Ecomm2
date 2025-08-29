@@ -224,17 +224,23 @@ export default function MembershipRegistrationModal({
 
         // For checkout flow, don't activate membership immediately
         // Instead, signal that membership will be pending until payment
-        if (typeof window !== 'undefined' && window.location.pathname === '/checkout') {
-          console.log('🔄 Checkout flow: Membership will be pending until payment completion');
-          
+        if (
+          typeof window !== 'undefined' &&
+          window.location.pathname === '/checkout'
+        ) {
+          console.log(
+            '🔄 Checkout flow: Membership will be pending until payment completion'
+          );
+
           onSuccess({
-            message: 'Account created! Your membership will be activated after successful payment.',
+            message:
+              'Account created! Your membership will be activated after successful payment.',
             membershipStatus: 'pending_payment',
             membership: {
               isActive: false,
               pendingPayment: true,
               qualifyingAmount: eligibility.qualifyingTotal,
-            }
+            },
           });
 
           // Stay on checkout page - don't navigate away
@@ -258,7 +264,8 @@ export default function MembershipRegistrationModal({
             onClose();
           } else {
             setErrors({
-              submit: membershipResult.message || 'Failed to activate membership',
+              submit:
+                membershipResult.message || 'Failed to activate membership',
             });
           }
         }

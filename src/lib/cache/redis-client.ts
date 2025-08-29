@@ -35,15 +35,15 @@ export class RedisClient {
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD,
       db: parseInt(process.env.REDIS_DB || '0'),
-      
+
       // Connection settings
       connectTimeout: 10000,
       commandTimeout: 5000,
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
-      
+
       // Reconnection strategy
-      retryStrategy: (times) => {
+      retryStrategy: times => {
         if (times > this.maxReconnectAttempts) {
           console.error('Redis: Max reconnection attempts reached');
           return null;
@@ -52,10 +52,10 @@ export class RedisClient {
         console.log(`Redis: Reconnecting in ${delay}ms (attempt ${times})`);
         return delay;
       },
-      
+
       // Enable offline queue
       enableOfflineQueue: false,
-      
+
       // Lazy connection
       lazyConnect: true,
     };
@@ -88,7 +88,7 @@ export class RedisClient {
       console.log('🚀 Redis: Ready to accept commands');
     });
 
-    this.redis.on('error', (error) => {
+    this.redis.on('error', error => {
       console.error('❌ Redis: Connection error:', error.message);
       this.isConnected = false;
     });
@@ -98,9 +98,11 @@ export class RedisClient {
       this.isConnected = false;
     });
 
-    this.redis.on('reconnecting', (ms) => {
+    this.redis.on('reconnecting', ms => {
       this.reconnectAttempts++;
-      console.log(`🔄 Redis: Reconnecting in ${ms}ms (attempt ${this.reconnectAttempts})`);
+      console.log(
+        `🔄 Redis: Reconnecting in ${ms}ms (attempt ${this.reconnectAttempts})`
+      );
     });
 
     this.redis.on('end', () => {
@@ -113,7 +115,9 @@ export class RedisClient {
    * Connect to Redis (lazy connection)
    */
   async connect(): Promise<void> {
-    if (this.isConnected) return;
+    if (this.isConnected) {
+      return;
+    }
 
     try {
       await this.redis.connect();
@@ -154,8 +158,8 @@ export class RedisClient {
    * Set cache value with options
    */
   async set<T>(
-    key: string, 
-    value: T, 
+    key: string,
+    value: T,
     options: CacheOptions = {}
   ): Promise<boolean> {
     if (!this.isConnected) {
@@ -182,7 +186,8 @@ export class RedisClient {
       }
 
       // Set with TTL
-      const ttl = options.ttl || parseInt(process.env.REDIS_DEFAULT_TTL || '3600');
+      const ttl =
+        options.ttl || parseInt(process.env.REDIS_DEFAULT_TTL || '3600');
       await this.redis.setex(cacheKey, ttl, serializedValue);
 
       // Handle tags for cache invalidation
@@ -208,15 +213,17 @@ export class RedisClient {
     try {
       const cacheKey = this.generateKey(key, options.namespace);
       let value = await this.redis.get(cacheKey);
-      
+
       if (value === null) {
         // Try compressed version
         const compressedKey = cacheKey + ':compressed';
         const compressedValue = await this.redis.get(compressedKey);
-        
+
         if (compressedValue) {
           const zlib = await import('zlib');
-          const decompressed = zlib.gunzipSync(Buffer.from(compressedValue, 'base64'));
+          const decompressed = zlib.gunzipSync(
+            Buffer.from(compressedValue, 'base64')
+          );
           value = decompressed.toString();
         }
       }
@@ -245,15 +252,17 @@ export class RedisClient {
    * Delete cache key
    */
   async delete(key: string, namespace?: string): Promise<boolean> {
-    if (!this.isConnected) return false;
+    if (!this.isConnected) {
+      return false;
+    }
 
     try {
       const cacheKey = this.generateKey(key, namespace);
       const deleted = await this.redis.del(cacheKey);
-      
+
       // Also try to delete compressed version
       await this.redis.del(cacheKey + ':compressed');
-      
+
       return deleted > 0;
     } catch (error) {
       console.error('Redis DELETE error:', error);
@@ -265,7 +274,9 @@ export class RedisClient {
    * Check if key exists
    */
   async exists(key: string, namespace?: string): Promise<boolean> {
-    if (!this.isConnected) return false;
+    if (!this.isConnected) {
+      return false;
+    }
 
     try {
       const cacheKey = this.generateKey(key, namespace);
@@ -281,8 +292,8 @@ export class RedisClient {
    * Set cache with expiry timestamp
    */
   async setWithExpiry<T>(
-    key: string, 
-    value: T, 
+    key: string,
+    value: T,
     expiryTimestamp: number,
     namespace?: string
   ): Promise<boolean> {
@@ -294,7 +305,9 @@ export class RedisClient {
    * Get remaining TTL for key
    */
   async getTTL(key: string, namespace?: string): Promise<number> {
-    if (!this.isConnected) return -1;
+    if (!this.isConnected) {
+      return -1;
+    }
 
     try {
       const cacheKey = this.generateKey(key, namespace);
@@ -308,8 +321,14 @@ export class RedisClient {
   /**
    * Increment counter
    */
-  async increment(key: string, namespace?: string, by: number = 1): Promise<number> {
-    if (!this.isConnected) await this.connect();
+  async increment(
+    key: string,
+    namespace?: string,
+    by: number = 1
+  ): Promise<number> {
+    if (!this.isConnected) {
+      await this.connect();
+    }
 
     try {
       const cacheKey = this.generateKey(key, namespace);
@@ -325,13 +344,13 @@ export class RedisClient {
    */
   private async addTagsForKey(key: string, tags: string[]): Promise<void> {
     const pipeline = this.redis.pipeline();
-    
+
     for (const tag of tags) {
       const tagKey = this.generateKey(`tag:${tag}`, 'tags');
       pipeline.sadd(tagKey, key);
       pipeline.expire(tagKey, 86400); // Tags expire in 24 hours
     }
-    
+
     await pipeline.exec();
   }
 
@@ -339,24 +358,26 @@ export class RedisClient {
    * Invalidate cache by tags
    */
   async invalidateByTags(tags: string[]): Promise<number> {
-    if (!this.isConnected) return 0;
+    if (!this.isConnected) {
+      return 0;
+    }
 
     try {
       let totalDeleted = 0;
-      
+
       for (const tag of tags) {
         const tagKey = this.generateKey(`tag:${tag}`, 'tags');
         const keys = await this.redis.smembers(tagKey);
-        
+
         if (keys.length > 0) {
           const deleted = await this.redis.del(...keys);
           totalDeleted += deleted;
-          
+
           // Remove the tag set itself
           await this.redis.del(tagKey);
         }
       }
-      
+
       return totalDeleted;
     } catch (error) {
       console.error('Redis INVALIDATE BY TAGS error:', error);
@@ -368,14 +389,18 @@ export class RedisClient {
    * Clear cache by pattern
    */
   async clearByPattern(pattern: string, namespace?: string): Promise<number> {
-    if (!this.isConnected) return 0;
+    if (!this.isConnected) {
+      return 0;
+    }
 
     try {
       const searchPattern = this.generateKey(pattern, namespace);
       const keys = await this.redis.keys(searchPattern);
-      
-      if (keys.length === 0) return 0;
-      
+
+      if (keys.length === 0) {
+        return 0;
+      }
+
       return await this.redis.del(...keys);
     } catch (error) {
       console.error('Redis CLEAR BY PATTERN error:', error);
@@ -387,9 +412,10 @@ export class RedisClient {
    * Get cache statistics
    */
   async getStats(): Promise<CacheStats> {
-    const hitRate = this.stats.hits + this.stats.misses > 0 
-      ? (this.stats.hits / (this.stats.hits + this.stats.misses)) * 100 
-      : 0;
+    const hitRate =
+      this.stats.hits + this.stats.misses > 0
+        ? (this.stats.hits / (this.stats.hits + this.stats.misses)) * 100
+        : 0;
 
     let keys = 0;
     let memory = '0B';
@@ -398,13 +424,13 @@ export class RedisClient {
       try {
         const info = await this.redis.info('memory');
         const keyspace = await this.redis.info('keyspace');
-        
+
         // Parse memory usage
         const memoryMatch = info.match(/used_memory_human:(.+)/);
         if (memoryMatch) {
           memory = memoryMatch[1].trim();
         }
-        
+
         // Parse key count
         const keysMatch = keyspace.match(/keys=(\d+)/);
         if (keysMatch) {
@@ -427,12 +453,16 @@ export class RedisClient {
   /**
    * Health check
    */
-  async healthCheck(): Promise<{ status: 'healthy' | 'unhealthy'; latency?: number; error?: string }> {
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    latency?: number;
+    error?: string;
+  }> {
     try {
       const start = Date.now();
       await this.redis.ping();
       const latency = Date.now() - start;
-      
+
       return {
         status: 'healthy',
         latency,
@@ -449,8 +479,10 @@ export class RedisClient {
    * Flush all cache (use with caution)
    */
   async flushAll(): Promise<void> {
-    if (!this.isConnected) return;
-    
+    if (!this.isConnected) {
+      return;
+    }
+
     try {
       await this.redis.flushdb();
       console.log('🗑️ Redis: All cache cleared');

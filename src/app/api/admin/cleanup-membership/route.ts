@@ -13,28 +13,32 @@ export async function POST(request: NextRequest) {
       where: {
         isMember: true, // User is already an approved member
         pendingMemberships: {
-          some: {} // But still has pending membership records
-        }
+          some: {}, // But still has pending membership records
+        },
       },
       include: {
-        pendingMemberships: true
-      }
+        pendingMemberships: true,
+      },
     });
 
-    console.log(`🔍 Found ${conflictingUsers.length} users with conflicting membership status`);
+    console.log(
+      `🔍 Found ${conflictingUsers.length} users with conflicting membership status`
+    );
 
     let cleanedCount = 0;
-    
+
     for (const user of conflictingUsers) {
       console.log(`🧹 Cleaning up user ${user.id} (${user.email})`);
-      
+
       // Remove all pending membership records for this approved member
       const deleted = await prisma.pendingMembership.deleteMany({
-        where: { userId: user.id }
+        where: { userId: user.id },
       });
-      
+
       cleanedCount += deleted.count;
-      console.log(`✅ Removed ${deleted.count} orphaned pending membership records for user ${user.id}`);
+      console.log(
+        `✅ Removed ${deleted.count} orphaned pending membership records for user ${user.id}`
+      );
     }
 
     return NextResponse.json({
@@ -43,10 +47,9 @@ export async function POST(request: NextRequest) {
       cleanedUsers: conflictingUsers.map(u => ({
         id: u.id,
         email: u.email,
-        pendingRecordsRemoved: u.pendingMemberships.length
-      }))
+        pendingRecordsRemoved: u.pendingMemberships.length,
+      })),
     });
-
   } catch (error) {
     console.error('❌ Membership cleanup error:', error);
     return NextResponse.json(

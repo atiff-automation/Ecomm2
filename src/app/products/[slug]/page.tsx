@@ -110,21 +110,23 @@ export default function ProductDetailPage() {
 
   // Always call pricing hook to maintain hook order (Rules of Hooks)
   // Use a default empty product object when no product data is available
-  const pricing = usePricing(product || {
-    id: '',
-    name: '',
-    regularPrice: 0,
-    memberPrice: 0,
-    stockQuantity: 0,
-    featured: false,
-    isPromotional: false,
-    isQualifyingForMembership: false,
-    promotionalPrice: null,
-    promotionStartDate: null,
-    promotionEndDate: null,
-    memberOnlyUntil: null,
-    earlyAccessStart: null
-  });
+  const pricing = usePricing(
+    product || {
+      id: '',
+      name: '',
+      regularPrice: 0,
+      memberPrice: 0,
+      stockQuantity: 0,
+      featured: false,
+      isPromotional: false,
+      isQualifyingForMembership: false,
+      promotionalPrice: null,
+      promotionStartDate: null,
+      promotionEndDate: null,
+      memberOnlyUntil: null,
+      earlyAccessStart: null,
+    }
+  );
 
   const slug = params.slug as string;
   const isLoggedIn = !!session?.user;
@@ -220,7 +222,9 @@ export default function ProductDetailPage() {
   const isOutOfStock = product ? product.stockQuantity === 0 : false;
 
   // Check if product is restricted (only when product and pricing exist)
-  const isRestricted = product && pricing && 
+  const isRestricted =
+    product &&
+    pricing &&
     pricing.effectivePrice === 0 &&
     pricing.priceDescription.includes('restricted');
 
@@ -370,18 +374,21 @@ export default function ProductDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               {/* Centralized badges from pricing service */}
-              {pricing && product && product.id && pricing.badges.map((badge, index) => (
-                <Badge
-                  key={`${badge.type}-${index}`}
-                  variant={badge.variant}
-                  className={badge.className}
-                >
-                  {badge.type === 'featured' && (
-                    <Award className="w-3 h-3 mr-1" />
-                  )}
-                  {badge.text}
-                </Badge>
-              ))}
+              {pricing &&
+                product &&
+                product.id &&
+                pricing.badges.map((badge, index) => (
+                  <Badge
+                    key={`${badge.type}-${index}`}
+                    variant={badge.variant}
+                    className={badge.className}
+                  >
+                    {badge.type === 'featured' && (
+                      <Award className="w-3 h-3 mr-1" />
+                    )}
+                    {badge.text}
+                  </Badge>
+                ))}
               {/* Stock status badges */}
               {isLowStock && (
                 <Badge
@@ -462,7 +469,10 @@ export default function ProductDetailPage() {
                     <p className="text-sm text-blue-800">
                       <strong>{pricing.memberPreviewText}</strong>
                       <br />
-                      Save {pricing.formattedPotentialMemberSavings || pricing.formattedSavings} with membership
+                      Save{' '}
+                      {pricing.formattedPotentialMemberSavings ||
+                        pricing.formattedSavings}{' '}
+                      with membership
                     </p>
                   </div>
                 )}
@@ -494,7 +504,8 @@ export default function ProductDetailPage() {
               </div>
               {product.memberPrice < product.regularPrice && (
                 <div className="text-sm text-muted-foreground">
-                  Member Price: {new Intl.NumberFormat('en-MY', {
+                  Member Price:{' '}
+                  {new Intl.NumberFormat('en-MY', {
                     style: 'currency',
                     currency: 'MYR',
                   }).format(product.memberPrice)}

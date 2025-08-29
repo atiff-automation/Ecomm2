@@ -24,7 +24,7 @@ class RateLimiter {
   async check(limit: number, token: string): Promise<void> {
     const now = Date.now();
     const key = token;
-    
+
     // Clean up old entries periodically
     if (Math.random() < 0.01) {
       this.cleanup(now);
@@ -87,13 +87,13 @@ export const rateLimiters = {
     interval: 60 * 1000, // 1 minute
     uniqueTokenPerInterval: 100,
   }),
-  
+
   // Moderate rate limiting for general API usage
   moderate: rateLimit({
     interval: 60 * 1000, // 1 minute
     uniqueTokenPerInterval: 500,
   }),
-  
+
   // Lenient rate limiting for public endpoints
   lenient: rateLimit({
     interval: 60 * 1000, // 1 minute

@@ -33,7 +33,7 @@ export function CartButton({
     };
 
     window.addEventListener('openCartSidebar', handleOpenCart);
-    
+
     return () => {
       window.removeEventListener('openCartSidebar', handleOpenCart);
     };

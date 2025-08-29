@@ -41,8 +41,10 @@ export function PageHeader({
   const router = useRouter();
 
   const renderActions = () => {
-    if (!actions) return null;
-    
+    if (!actions) {
+      return null;
+    }
+
     if (Array.isArray(actions)) {
       return (
         <div className="flex items-center space-x-3">
@@ -64,7 +66,7 @@ export function PageHeader({
         </div>
       );
     }
-    
+
     return <div className="flex items-center space-x-3">{actions}</div>;
   };
 
@@ -98,7 +100,9 @@ export function PageHeader({
                     title={`Back to ${parentSection.label}`}
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    <span className="text-sm">Back to {parentSection.label}</span>
+                    <span className="text-sm">
+                      Back to {parentSection.label}
+                    </span>
                   </Button>
                 </Link>
               ) : (
@@ -115,7 +119,7 @@ export function PageHeader({
               )}
             </div>
           )}
-          
+
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-3">
               <h1 className="text-xl font-semibold text-gray-900 truncate">
@@ -126,17 +130,13 @@ export function PageHeader({
               )}
             </div>
             {subtitle && (
-              <p className="mt-1 text-sm text-gray-500 truncate">
-                {subtitle}
-              </p>
+              <p className="mt-1 text-sm text-gray-500 truncate">{subtitle}</p>
             )}
           </div>
         </div>
 
         {actions && (
-          <div className="flex items-center ml-4">
-            {renderActions()}
-          </div>
+          <div className="flex items-center ml-4">{renderActions()}</div>
         )}
       </div>
     </header>

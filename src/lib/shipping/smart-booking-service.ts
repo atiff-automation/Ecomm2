@@ -4,7 +4,12 @@
  * Reference: Malaysia_Individual_1.4.0.0.pdf Section 5 - Booking Process
  */
 
-import { easyParcelService, EasyParcelService, type BookingRequest, type ShipmentBookingResponse } from './easyparcel-service';
+import {
+  easyParcelService,
+  EasyParcelService,
+  type BookingRequest,
+  type ShipmentBookingResponse,
+} from './easyparcel-service';
 import { prisma } from '@/lib/db/prisma';
 
 export interface CourierBookingData {
@@ -62,21 +67,33 @@ export class SmartBookingService {
   /**
    * Book shipment with main courier and fallback to alternative if needed
    */
-  async bookShipmentWithFallback(request: SmartBookingRequest): Promise<SmartBookingResult> {
+  async bookShipmentWithFallback(
+    request: SmartBookingRequest
+  ): Promise<SmartBookingResult> {
     const attempts: SmartBookingResult['attempts'] = [];
-    
+
     console.log('🎯 Starting smart booking for order:', request.orderId);
     console.log('📋 Main courier:', request.mainCourier.courier_name);
-    console.log('🔄 Alternative courier:', request.alternativeCourier?.courier_name || 'None');
+    console.log(
+      '🔄 Alternative courier:',
+      request.alternativeCourier?.courier_name || 'None'
+    );
 
     // Attempt 1: Try main courier
-    console.log('🚀 Attempting booking with main courier:', request.mainCourier.courier_name);
-    
-    const mainBookingRequest = this.buildBookingRequest(request, request.mainCourier);
-    
+    console.log(
+      '🚀 Attempting booking with main courier:',
+      request.mainCourier.courier_name
+    );
+
+    const mainBookingRequest = this.buildBookingRequest(
+      request,
+      request.mainCourier
+    );
+
     try {
-      const mainResult = await this.easyParcelService.bookShipment(mainBookingRequest);
-      
+      const mainResult =
+        await this.easyParcelService.bookShipment(mainBookingRequest);
+
       attempts.push({
         courier: request.mainCourier.courier_name,
         success: true,
@@ -90,7 +107,12 @@ export class SmartBookingService {
       });
 
       // Update shipment record with booking details
-      await this.updateShipmentWithBooking(request.orderId, mainResult, request.mainCourier, false);
+      await this.updateShipmentWithBooking(
+        request.orderId,
+        mainResult,
+        request.mainCourier,
+        false
+      );
 
       return {
         success: true,
@@ -101,9 +123,9 @@ export class SmartBookingService {
         shipmentId: mainResult.shipment_id,
         trackingNumber: mainResult.tracking_number,
       };
-
     } catch (mainError) {
-      const errorMessage = mainError instanceof Error ? mainError.message : 'Unknown error';
+      const errorMessage =
+        mainError instanceof Error ? mainError.message : 'Unknown error';
       console.warn('⚠️ Main courier booking failed:', {
         courier: request.mainCourier.courier_name,
         error: errorMessage,
@@ -118,13 +140,20 @@ export class SmartBookingService {
 
       // Attempt 2: Try alternative courier if available
       if (request.alternativeCourier) {
-        console.log('🔄 Attempting fallback to alternative courier:', request.alternativeCourier.courier_name);
-        
-        const altBookingRequest = this.buildBookingRequest(request, request.alternativeCourier);
-        
+        console.log(
+          '🔄 Attempting fallback to alternative courier:',
+          request.alternativeCourier.courier_name
+        );
+
+        const altBookingRequest = this.buildBookingRequest(
+          request,
+          request.alternativeCourier
+        );
+
         try {
-          const altResult = await this.easyParcelService.bookShipment(altBookingRequest);
-          
+          const altResult =
+            await this.easyParcelService.bookShipment(altBookingRequest);
+
           attempts.push({
             courier: request.alternativeCourier.courier_name,
             success: true,
@@ -138,7 +167,12 @@ export class SmartBookingService {
           });
 
           // Update shipment record with fallback booking details
-          await this.updateShipmentWithBooking(request.orderId, altResult, request.alternativeCourier, true);
+          await this.updateShipmentWithBooking(
+            request.orderId,
+            altResult,
+            request.alternativeCourier,
+            true
+          );
 
           return {
             success: true,
@@ -149,9 +183,9 @@ export class SmartBookingService {
             shipmentId: altResult.shipment_id,
             trackingNumber: altResult.tracking_number,
           };
-
         } catch (altError) {
-          const altErrorMessage = altError instanceof Error ? altError.message : 'Unknown error';
+          const altErrorMessage =
+            altError instanceof Error ? altError.message : 'Unknown error';
           console.error('❌ Alternative courier booking also failed:', {
             courier: request.alternativeCourier.courier_name,
             error: altErrorMessage,
@@ -176,7 +210,7 @@ export class SmartBookingService {
         }
       } else {
         console.error('❌ No alternative courier available, booking failed');
-        
+
         // Update shipment status with failure
         await this.updateShipmentWithFailure(request.orderId, attempts);
 
@@ -193,20 +227,26 @@ export class SmartBookingService {
   /**
    * Build EasyParcel booking request for specific courier
    */
-  private buildBookingRequest(request: SmartBookingRequest, courier: CourierBookingData): BookingRequest {
+  private buildBookingRequest(
+    request: SmartBookingRequest,
+    courier: CourierBookingData
+  ): BookingRequest {
     const baseRequest = request.bookingData;
-    
+
     return {
       ...baseRequest,
       service_type: courier.service_type as any,
       courier_name: courier.courier_name,
       service_name: courier.service_name,
       // Apply options if provided
-      insurance: request.options?.insurance && courier.features.insurance_available,
+      insurance:
+        request.options?.insurance && courier.features.insurance_available,
       insurance_amount: request.options?.insuranceAmount,
       cod: request.options?.cod && courier.features.cod_available,
       cod_amount: request.options?.codAmount,
-      signature_required: request.options?.signatureRequired && courier.features.signature_required_available,
+      signature_required:
+        request.options?.signatureRequired &&
+        courier.features.signature_required_available,
       special_instructions: request.options?.specialInstructions,
     };
   }
@@ -215,13 +255,13 @@ export class SmartBookingService {
    * Update shipment record with successful booking details
    */
   private async updateShipmentWithBooking(
-    orderId: string, 
-    bookingResult: ShipmentBookingResponse, 
+    orderId: string,
+    bookingResult: ShipmentBookingResponse,
     usedCourier: CourierBookingData,
     fallbackUsed: boolean
   ): Promise<void> {
     try {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async tx => {
         // Update shipment
         const shipment = await tx.shipment.updateMany({
           where: { orderId },
@@ -232,7 +272,7 @@ export class SmartBookingService {
             serviceName: usedCourier.service_name,
             serviceType: usedCourier.service_type as any,
             status: 'BOOKED',
-            statusDescription: fallbackUsed 
+            statusDescription: fallbackUsed
               ? `Booked with ${usedCourier.courier_name} (fallback used)`
               : `Booked with ${usedCourier.courier_name}`,
             updatedAt: new Date(),
@@ -246,14 +286,14 @@ export class SmartBookingService {
                 bookedAt: new Date().toISOString(),
                 estimatedDelivery: bookingResult.estimated_delivery,
                 pickupDate: bookingResult.pickup_date,
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         // Create tracking event
         const shipmentRecord = await tx.shipment.findFirst({
-          where: { orderId }
+          where: { orderId },
         });
 
         if (shipmentRecord) {
@@ -262,12 +302,12 @@ export class SmartBookingService {
               shipmentId: shipmentRecord.id,
               eventCode: 'BOOKED',
               eventName: 'Shipment Booked',
-              description: fallbackUsed 
+              description: fallbackUsed
                 ? `Shipment successfully booked with ${usedCourier.courier_name} (alternative courier used due to main courier failure)`
                 : `Shipment successfully booked with ${usedCourier.courier_name}`,
               eventTime: new Date(),
               source: 'EASYPARCEL',
-            }
+            },
           });
         }
 
@@ -278,7 +318,7 @@ export class SmartBookingService {
             status: 'SHIPPED',
             shippedAt: new Date(),
             trackingNumber: bookingResult.tracking_number,
-          }
+          },
         });
       });
 
@@ -293,11 +333,11 @@ export class SmartBookingService {
    * Update shipment record with booking failure details
    */
   private async updateShipmentWithFailure(
-    orderId: string, 
+    orderId: string,
     attempts: SmartBookingResult['attempts']
   ): Promise<void> {
     try {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async tx => {
         // Update shipment with failure
         await tx.shipment.updateMany({
           where: { orderId },
@@ -314,14 +354,14 @@ export class SmartBookingService {
                   timestamp: attempt.timestamp.toISOString(),
                 })),
                 failedAt: new Date().toISOString(),
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         // Create tracking event for failure
         const shipmentRecord = await tx.shipment.findFirst({
-          where: { orderId }
+          where: { orderId },
         });
 
         if (shipmentRecord) {
@@ -333,7 +373,7 @@ export class SmartBookingService {
               description: `Failed to book shipment with all selected couriers: ${attempts.map(a => `${a.courier} (${a.success ? 'success' : 'failed'})`).join(', ')}`,
               eventTime: new Date(),
               source: 'SYSTEM',
-            }
+            },
           });
         }
       });
@@ -358,9 +398,9 @@ export class SmartBookingService {
         where: { orderId },
         include: {
           trackingEvents: {
-            orderBy: { eventTime: 'desc' }
-          }
-        }
+            orderBy: { eventTime: 'desc' },
+          },
+        },
       });
 
       if (!shipment) {

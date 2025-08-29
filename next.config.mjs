@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Transpile packages to handle lodash dependencies
+  transpilePackages: ['archiver', 'archiver-utils'],
+  
   // Enable instrumentation for server-side initialization
   experimental: {
     instrumentationHook: true,
     // Enable server components for better performance
     serverComponentsExternalPackages: ['ioredis', '@prisma/client'],
-    // Optimize CSS imports
-    optimizeCss: true,
+    // Optimize CSS imports - disabled due to CSS 404 issues
+    // optimizeCss: true,
     // Enable experimental features
     turbo: {
       rules: {
@@ -78,15 +81,21 @@ const nextConfig = {
       };
     }
 
-    // Tree shaking for lodash
+    // Resolve lodash modules properly
     config.resolve.alias = {
       ...config.resolve.alias,
-      'lodash': 'lodash-es',
+      'lodash/flatten': 'lodash/flatten.js',
+      'lodash/difference': 'lodash/difference.js',
+      'lodash/union': 'lodash/union.js',
+      'lodash/isPlainObject': 'lodash/isPlainObject.js',
+      'lodash/defaults': 'lodash/defaults.js',
     };
 
-    // Optimize imports
-    config.optimization.providedExports = true;
-    config.optimization.usedExports = true;
+    // Optimize imports (only in production to avoid cache conflicts)
+    if (!dev) {
+      config.optimization.providedExports = true;
+      config.optimization.usedExports = true;
+    }
 
     return config;
   },

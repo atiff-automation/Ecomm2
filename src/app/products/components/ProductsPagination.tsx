@@ -26,34 +26,34 @@ export function ProductsPagination({
   const generatePageNumbers = () => {
     const delta = 2; // Number of pages to show on each side of current page
     const pages: (number | 'ellipsis')[] = [];
-    
+
     // Always show first page
     pages.push(1);
-    
+
     // Calculate start and end of middle range
     const start = Math.max(2, currentPage - delta);
     const end = Math.min(totalPages - 1, currentPage + delta);
-    
+
     // Add ellipsis after first page if needed
     if (start > 2) {
       pages.push('ellipsis');
     }
-    
+
     // Add middle pages
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
-    
+
     // Add ellipsis before last page if needed
     if (end < totalPages - 1) {
       pages.push('ellipsis');
     }
-    
+
     // Always show last page (if more than 1 page)
     if (totalPages > 1) {
       pages.push(totalPages);
     }
-    
+
     return pages;
   };
 
@@ -64,7 +64,7 @@ export function ProductsPagination({
   }
 
   return (
-    <div className={cn("flex justify-center items-center gap-2", className)}>
+    <div className={cn('flex justify-center items-center gap-2', className)}>
       {/* Previous button */}
       <Button
         variant="outline"
@@ -98,8 +98,8 @@ export function ProductsPagination({
               size="sm"
               onClick={() => onPageChange(page)}
               className={cn(
-                "w-9 h-9",
-                currentPage === page && "bg-primary text-primary-foreground"
+                'w-9 h-9',
+                currentPage === page && 'bg-primary text-primary-foreground'
               )}
               aria-label={`Go to page ${page}`}
               aria-current={currentPage === page ? 'page' : undefined}
@@ -144,7 +144,7 @@ export function SimplePagination({
   }
 
   return (
-    <div className={cn("flex justify-between items-center gap-4", className)}>
+    <div className={cn('flex justify-between items-center gap-4', className)}>
       <Button
         variant="outline"
         size="sm"

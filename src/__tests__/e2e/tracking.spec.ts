@@ -3,14 +3,14 @@
  * These tests simulate real user interactions with the tracking system
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 // Test data setup
 const testOrder = {
   orderNumber: 'ORD-TEST-001',
   trackingNumber: 'TRK123456789',
   customerName: 'John Doe',
-  courierName: 'Pos Laju'
+  courierName: 'Pos Laju',
 };
 
 const mockTrackingData = {
@@ -23,16 +23,16 @@ const mockTrackingData = {
       event_name: 'Package picked up',
       description: 'Package picked up from origin',
       timestamp: '2025-08-20T10:00:00Z',
-      location: 'Kuala Lumpur Hub'
+      location: 'Kuala Lumpur Hub',
     },
     {
       event_code: 'IN_TRANSIT',
       event_name: 'In transit',
       description: 'Package in transit to destination',
       timestamp: '2025-08-21T08:00:00Z',
-      location: 'Selangor Hub'
-    }
-  ]
+      location: 'Selangor Hub',
+    },
+  ],
 };
 
 test.describe('Tracking System E2E Tests', () => {
@@ -43,8 +43,8 @@ test.describe('Tracking System E2E Tests', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          user: { id: 'admin-1', role: 'ADMIN', name: 'Admin User' }
-        })
+          user: { id: 'admin-1', role: 'ADMIN', name: 'Admin User' },
+        }),
       });
     });
 
@@ -63,7 +63,7 @@ test.describe('Tracking System E2E Tests', () => {
               shippingAddress: {
                 name: testOrder.customerName,
                 city: 'Kuala Lumpur',
-                state: 'Selangor'
+                state: 'Selangor',
               },
               shipment: {
                 id: 'shipment-1',
@@ -74,14 +74,14 @@ test.describe('Tracking System E2E Tests', () => {
                 estimatedDelivery: '2025-08-25T00:00:00Z',
                 trackingEvents: mockTrackingData.tracking_events.map(event => ({
                   ...event,
-                  eventTime: event.timestamp
-                }))
-              }
-            }
+                  eventTime: event.timestamp,
+                })),
+              },
+            },
           ],
           totalCount: 1,
-          totalPages: 1
-        })
+          totalPages: 1,
+        }),
       });
     });
 
@@ -98,10 +98,10 @@ test.describe('Tracking System E2E Tests', () => {
               courierName: testOrder.courierName,
               trackingEvents: mockTrackingData.tracking_events.map(event => ({
                 ...event,
-                eventTime: event.timestamp
-              }))
-            }
-          })
+                eventTime: event.timestamp,
+              })),
+            },
+          }),
         });
       } else if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -109,8 +109,8 @@ test.describe('Tracking System E2E Tests', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             success: true,
-            message: 'Tracking data refreshed successfully'
-          })
+            message: 'Tracking data refreshed successfully',
+          }),
         });
       }
     });
@@ -133,49 +133,59 @@ test.describe('Tracking System E2E Tests', () => {
                 courierName: 'Pos Laju',
                 shipmentCount: 15,
                 deliveryRate: 96.0,
-                averageTime: 2.8
+                averageTime: 2.8,
               },
               {
                 courierName: 'GDex',
                 shipmentCount: 10,
                 deliveryRate: 88.0,
-                averageTime: 3.5
-              }
-            ]
-          }
-        })
+                averageTime: 3.5,
+              },
+            ],
+          },
+        }),
       });
     });
   });
 
-  test('Admin can view orders list with tracking information', async ({ page }) => {
+  test('Admin can view orders list with tracking information', async ({
+    page,
+  }) => {
     await page.goto('/admin/orders');
 
     // Wait for orders to load
     await expect(page.locator('text=' + testOrder.orderNumber)).toBeVisible();
 
     // Check tracking number is displayed
-    await expect(page.locator('text=' + testOrder.trackingNumber)).toBeVisible();
+    await expect(
+      page.locator('text=' + testOrder.trackingNumber)
+    ).toBeVisible();
 
     // Check status badge
-    await expect(page.locator('.tracking-status', { hasText: 'in_transit' })).toBeVisible();
+    await expect(
+      page.locator('.tracking-status', { hasText: 'in_transit' })
+    ).toBeVisible();
 
     // Check courier name
     await expect(page.locator('text=' + testOrder.courierName)).toBeVisible();
   });
 
-  test('Admin can click tracking number to copy to clipboard', async ({ page }) => {
+  test('Admin can click tracking number to copy to clipboard', async ({
+    page,
+  }) => {
     await page.goto('/admin/orders');
 
     // Wait for orders to load
-    await expect(page.locator('text=' + testOrder.trackingNumber)).toBeVisible();
+    await expect(
+      page.locator('text=' + testOrder.trackingNumber)
+    ).toBeVisible();
 
     // Mock clipboard API
     await page.evaluate(() => {
       Object.assign(navigator, {
         clipboard: {
-          writeText: jest.fn().mockResolvedValue(undefined)
-        }
+          writeText: jest.fn().mockResolvedValue(undefined),
+        },
       });
     });
 
@@ -186,17 +196,23 @@ test.describe('Tracking System E2E Tests', () => {
     // await expect(page.locator('.toast', { hasText: 'Tracking number copied' })).toBeVisible();
   });
 
-  test('Admin can view detailed order tracking information', async ({ page }) => {
+  test('Admin can view detailed order tracking information', async ({
+    page,
+  }) => {
     await page.goto('/admin/orders/order-1');
 
     // Wait for order details to load
     await expect(page.locator('text=' + testOrder.orderNumber)).toBeVisible();
 
     // Check tracking section exists
-    await expect(page.locator('[data-testid="tracking-section"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="tracking-section"]')
+    ).toBeVisible();
 
     // Check tracking number display
-    await expect(page.locator('text=' + testOrder.trackingNumber)).toBeVisible();
+    await expect(
+      page.locator('text=' + testOrder.trackingNumber)
+    ).toBeVisible();
 
     // Check status display
     await expect(page.locator('text=in_transit')).toBeVisible();
@@ -223,7 +239,9 @@ test.describe('Tracking System E2E Tests', () => {
     await expect(page.locator('.loading-spinner')).toBeVisible();
 
     // Wait for refresh to complete and check for success message
-    await expect(page.locator('text=Tracking data refreshed successfully')).toBeVisible();
+    await expect(
+      page.locator('text=Tracking data refreshed successfully')
+    ).toBeVisible();
   });
 
   test('Admin can access external courier tracking', async ({ page }) => {
@@ -235,11 +253,16 @@ test.describe('Tracking System E2E Tests', () => {
     // Check external tracking link
     const externalLink = page.locator('[data-testid="external-tracking-link"]');
     await expect(externalLink).toBeVisible();
-    await expect(externalLink).toHaveAttribute('href', expect.stringContaining(testOrder.trackingNumber));
+    await expect(externalLink).toHaveAttribute(
+      'href',
+      expect.stringContaining(testOrder.trackingNumber)
+    );
     await expect(externalLink).toHaveAttribute('target', '_blank');
   });
 
-  test('Admin can use fulfillment page for bulk operations', async ({ page }) => {
+  test('Admin can use fulfillment page for bulk operations', async ({
+    page,
+  }) => {
     // Mock fulfillment page data
     await page.route('**/api/admin/orders/fulfillment*', async route => {
       await route.fulfill({
@@ -251,7 +274,7 @@ test.describe('Tracking System E2E Tests', () => {
               id: 'order-1',
               orderNumber: testOrder.orderNumber,
               status: 'PROCESSING',
-              shipment: null
+              shipment: null,
             },
             {
               id: 'order-2',
@@ -260,11 +283,11 @@ test.describe('Tracking System E2E Tests', () => {
               shipment: {
                 trackingNumber: 'TRK987654321',
                 status: 'in_transit',
-                courierName: 'GDex'
-              }
-            }
-          ]
-        })
+                courierName: 'GDex',
+              },
+            },
+          ],
+        }),
       });
     });
 
@@ -278,15 +301,21 @@ test.describe('Tracking System E2E Tests', () => {
     await expect(page.locator('text=ORD-TEST-002')).toBeVisible();
 
     // Check bulk actions are available
-    await expect(page.locator('[data-testid="bulk-ship-button"]')).toBeVisible();
-    await expect(page.locator('[data-testid="bulk-tracking-refresh"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="bulk-ship-button"]')
+    ).toBeVisible();
+    await expect(
+      page.locator('[data-testid="bulk-tracking-refresh"]')
+    ).toBeVisible();
 
     // Select orders for bulk operation
     await page.check('[data-testid="order-checkbox-order-1"]');
     await page.check('[data-testid="order-checkbox-order-2"]');
 
     // Check bulk actions become enabled
-    await expect(page.locator('[data-testid="bulk-ship-button"]')).toBeEnabled();
+    await expect(
+      page.locator('[data-testid="bulk-ship-button"]')
+    ).toBeEnabled();
   });
 
   test('Admin can view tracking analytics dashboard', async ({ page }) => {
@@ -330,8 +359,10 @@ test.describe('Tracking System E2E Tests', () => {
     await page.click('text=Last 7 days');
 
     // Verify API call is made with new date range
-    await page.waitForResponse(response => 
-      response.url().includes('/api/admin/tracking/analytics?days=7') && response.status() === 200
+    await page.waitForResponse(
+      response =>
+        response.url().includes('/api/admin/tracking/analytics?days=7') &&
+        response.status() === 200
     );
   });
 
@@ -342,9 +373,15 @@ test.describe('Tracking System E2E Tests', () => {
         status: 200,
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="tracking-report-2025-08-20.csv"'
+          'Content-Disposition':
+            'attachment; filename="tracking-report-2025-08-20.csv"',
         },
-        body: 'Order Number,Tracking Number,Status\n' + testOrder.orderNumber + ',' + testOrder.trackingNumber + ',in_transit'
+        body:
+          'Order Number,Tracking Number,Status\n' +
+          testOrder.orderNumber +
+          ',' +
+          testOrder.trackingNumber +
+          ',in_transit',
       });
     });
 
@@ -372,8 +409,8 @@ test.describe('Tracking System E2E Tests', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             success: false,
-            error: 'Failed to refresh tracking data'
-          })
+            error: 'Failed to refresh tracking data',
+          }),
         });
       }
     });
@@ -387,7 +424,9 @@ test.describe('Tracking System E2E Tests', () => {
     await page.click('[data-testid="refresh-tracking"]');
 
     // Check error message is displayed
-    await expect(page.locator('text=Failed to refresh tracking data')).toBeVisible();
+    await expect(
+      page.locator('text=Failed to refresh tracking data')
+    ).toBeVisible();
   });
 
   test('Mobile responsive design works correctly', async ({ page }) => {
@@ -401,22 +440,26 @@ test.describe('Tracking System E2E Tests', () => {
 
     // Check that mobile-specific elements are visible
     // This would depend on the actual responsive design implementation
-    await expect(page.locator('[data-testid="mobile-tracking-card"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="mobile-tracking-card"]')
+    ).toBeVisible();
 
     // Check that desktop-only elements are hidden
-    await expect(page.locator('[data-testid="desktop-tracking-table"]')).not.toBeVisible();
+    await expect(
+      page.locator('[data-testid="desktop-tracking-table"]')
+    ).not.toBeVisible();
   });
 
   test('Performance: Page loads within acceptable time', async ({ page }) => {
     const startTime = Date.now();
-    
+
     await page.goto('/admin/orders');
-    
+
     // Wait for critical content to load
     await expect(page.locator('text=' + testOrder.orderNumber)).toBeVisible();
-    
+
     const loadTime = Date.now() - startTime;
-    
+
     // Page should load within 3 seconds
     expect(loadTime).toBeLessThan(3000);
   });
@@ -440,7 +483,9 @@ test.describe('Tracking System E2E Tests', () => {
 
     // Check color contrast (this would require additional tools in real implementation)
     // For now, just verify important text is visible
-    await expect(page.locator('text=' + testOrder.trackingNumber)).toBeVisible();
+    await expect(
+      page.locator('text=' + testOrder.trackingNumber)
+    ).toBeVisible();
   });
 });
 
@@ -467,7 +512,7 @@ test.describe('Tracking System Error Scenarios', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true })
+          body: JSON.stringify({ success: true }),
         });
       }
     });
@@ -497,9 +542,9 @@ test.describe('Tracking System Error Scenarios', () => {
               trackingNumber: testOrder.trackingNumber,
               status: 'unknown',
               courierName: null,
-              trackingEvents: []
-            }
-          })
+              trackingEvents: [],
+            },
+          }),
         });
       }
     });
@@ -507,8 +552,12 @@ test.describe('Tracking System Error Scenarios', () => {
     await page.goto('/admin/orders/order-1');
 
     // Check that partial data is handled gracefully
-    await expect(page.locator('text=' + testOrder.trackingNumber)).toBeVisible();
+    await expect(
+      page.locator('text=' + testOrder.trackingNumber)
+    ).toBeVisible();
     await expect(page.locator('text=unknown')).toBeVisible();
-    await expect(page.locator('text=No tracking events available')).toBeVisible();
+    await expect(
+      page.locator('text=No tracking events available')
+    ).toBeVisible();
   });
 });

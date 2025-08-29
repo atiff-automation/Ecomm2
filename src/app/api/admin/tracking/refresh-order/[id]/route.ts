@@ -5,13 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getTrackingCacheByOrderId,
   createJob,
 } from '@/lib/services/tracking-cache';
-import { 
-  getJobPriority,
-} from '@/lib/config/tracking-refactor';
+import { getJobPriority } from '@/lib/config/tracking-refactor';
 import {
   AdminTrackingManagementResponse,
   TrackingRefactorError,
@@ -21,18 +19,18 @@ import {
   trackTrackingAPIPerformance,
 } from '@/lib/utils/tracking-error-handling';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { authOptions } from '@/lib/auth/config';
 
 /**
  * Validate admin access
  */
 async function validateAdminAccess(): Promise<boolean> {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || !session.user) {
     return false;
   }
-  
+
   // Check if user has admin role
   const userRole = (session.user as any).role;
   return userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -70,7 +68,7 @@ export async function POST(
 
     // Get tracking cache for order
     const trackingCache = await getTrackingCacheByOrderId(orderId);
-    
+
     if (!trackingCache) {
       throw new TrackingRefactorError(
         'No tracking cache found for this order',
@@ -95,19 +93,13 @@ export async function POST(
     };
 
     // Track performance
-    trackTrackingAPIPerformance(
-      'admin-refresh-order',
-      startTime,
-      true,
-      {
-        orderId,
-        jobType: 'MANUAL',
-        jobId,
-      }
-    );
+    trackTrackingAPIPerformance('admin-refresh-order', startTime, true, {
+      orderId,
+      jobType: 'MANUAL',
+      jobId,
+    });
 
     return NextResponse.json(response);
-
   } catch (error) {
     // Track performance for errors
     trackTrackingAPIPerformance(

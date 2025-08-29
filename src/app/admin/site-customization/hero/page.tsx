@@ -153,13 +153,21 @@ export default function HeroSectionManagement() {
       // Only send the fields required by the API schema
       // Conditionally include fields based on toggle states
       const submitData = {
-        title: showTitle ? (formData.title || '') : '',
-        subtitle: showTitle ? (formData.subtitle || '') : '',
-        description: showTitle ? (formData.description || '') : '',
-        ctaPrimaryText: showCTA ? (formData.ctaPrimaryText || 'Join as Member') : 'Hidden',
-        ctaPrimaryLink: showCTA ? (formData.ctaPrimaryLink || '/auth/signup') : '#',
-        ctaSecondaryText: showCTA ? (formData.ctaSecondaryText || 'Browse Products') : 'Hidden',
-        ctaSecondaryLink: showCTA ? (formData.ctaSecondaryLink || '/products') : '#',
+        title: showTitle ? formData.title || '' : '',
+        subtitle: showTitle ? formData.subtitle || '' : '',
+        description: showTitle ? formData.description || '' : '',
+        ctaPrimaryText: showCTA
+          ? formData.ctaPrimaryText || 'Join as Member'
+          : 'Hidden',
+        ctaPrimaryLink: showCTA
+          ? formData.ctaPrimaryLink || '/auth/signup'
+          : '#',
+        ctaSecondaryText: showCTA
+          ? formData.ctaSecondaryText || 'Browse Products'
+          : 'Hidden',
+        ctaSecondaryLink: showCTA
+          ? formData.ctaSecondaryLink || '/products'
+          : '#',
         backgroundType: formData.backgroundType || 'IMAGE',
         backgroundImage: formData.backgroundImage || null,
         backgroundVideo: formData.backgroundVideo || null,
@@ -530,8 +538,12 @@ export default function HeroSectionManagement() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label className="text-base font-medium">Show Title Section</Label>
-                            <p className="text-sm text-gray-600">Display title, subtitle, and description</p>
+                            <Label className="text-base font-medium">
+                              Show Title Section
+                            </Label>
+                            <p className="text-sm text-gray-600">
+                              Display title, subtitle, and description
+                            </p>
                           </div>
                           <Switch
                             checked={showTitle}
@@ -540,8 +552,12 @@ export default function HeroSectionManagement() {
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label className="text-base font-medium">Show CTA Buttons</Label>
-                            <p className="text-sm text-gray-600">Display call-to-action buttons</p>
+                            <Label className="text-base font-medium">
+                              Show CTA Buttons
+                            </Label>
+                            <p className="text-sm text-gray-600">
+                              Display call-to-action buttons
+                            </p>
                           </div>
                           <Switch
                             checked={showCTA}
@@ -553,127 +569,133 @@ export default function HeroSectionManagement() {
                       {/* Title Section */}
                       {showTitle && (
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-gray-900">Title Content</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="title">Title</Label>
-                          <Input
-                            id="title"
-                            value={formData.title || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                title: e.target.value,
-                              })
-                            }
-                            placeholder="Welcome to JRM E-commerce"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="subtitle">Subtitle</Label>
-                          <Input
-                            id="subtitle"
-                            value={formData.subtitle || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                subtitle: e.target.value,
-                              })
-                            }
-                            placeholder="Malaysia's premier online marketplace"
-                          />
-                        </div>
-                      </div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            Title Content
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="title">Title</Label>
+                              <Input
+                                id="title"
+                                value={formData.title || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    title: e.target.value,
+                                  })
+                                }
+                                placeholder="Welcome to JRM E-commerce"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="subtitle">Subtitle</Label>
+                              <Input
+                                id="subtitle"
+                                value={formData.subtitle || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    subtitle: e.target.value,
+                                  })
+                                }
+                                placeholder="Malaysia's premier online marketplace"
+                              />
+                            </div>
+                          </div>
 
-                      <div>
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                          id="description"
-                          value={formData.description || ''}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="Describe your platform's key benefits"
-                          rows={3}
-                        />
-                      </div>
+                          <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              value={formData.description || ''}
+                              onChange={e =>
+                                setFormData({
+                                  ...formData,
+                                  description: e.target.value,
+                                })
+                              }
+                              placeholder="Describe your platform's key benefits"
+                              rows={3}
+                            />
+                          </div>
                         </div>
                       )}
 
                       {/* CTA Section */}
                       {showCTA && (
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-gray-900">Call-to-Action Buttons</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="ctaPrimary">Primary CTA Text</Label>
-                          <Input
-                            id="ctaPrimary"
-                            value={formData.ctaPrimaryText || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                ctaPrimaryText: e.target.value,
-                              })
-                            }
-                            placeholder="Join as Member"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ctaPrimaryLink">
-                            Primary CTA Link
-                          </Label>
-                          <Input
-                            id="ctaPrimaryLink"
-                            value={formData.ctaPrimaryLink || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                ctaPrimaryLink: e.target.value,
-                              })
-                            }
-                            placeholder="/auth/signup"
-                          />
-                        </div>
-                      </div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            Call-to-Action Buttons
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="ctaPrimary">
+                                Primary CTA Text
+                              </Label>
+                              <Input
+                                id="ctaPrimary"
+                                value={formData.ctaPrimaryText || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    ctaPrimaryText: e.target.value,
+                                  })
+                                }
+                                placeholder="Join as Member"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="ctaPrimaryLink">
+                                Primary CTA Link
+                              </Label>
+                              <Input
+                                id="ctaPrimaryLink"
+                                value={formData.ctaPrimaryLink || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    ctaPrimaryLink: e.target.value,
+                                  })
+                                }
+                                placeholder="/auth/signup"
+                              />
+                            </div>
+                          </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="ctaSecondary">
-                            Secondary CTA Text
-                          </Label>
-                          <Input
-                            id="ctaSecondary"
-                            value={formData.ctaSecondaryText || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                ctaSecondaryText: e.target.value,
-                              })
-                            }
-                            placeholder="Browse Products"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ctaSecondaryLink">
-                            Secondary CTA Link
-                          </Label>
-                          <Input
-                            id="ctaSecondaryLink"
-                            value={formData.ctaSecondaryLink || ''}
-                            onChange={e =>
-                              setFormData({
-                                ...formData,
-                                ctaSecondaryLink: e.target.value,
-                              })
-                            }
-                            placeholder="/products"
-                          />
-                        </div>
-                      </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="ctaSecondary">
+                                Secondary CTA Text
+                              </Label>
+                              <Input
+                                id="ctaSecondary"
+                                value={formData.ctaSecondaryText || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    ctaSecondaryText: e.target.value,
+                                  })
+                                }
+                                placeholder="Browse Products"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="ctaSecondaryLink">
+                                Secondary CTA Link
+                              </Label>
+                              <Input
+                                id="ctaSecondaryLink"
+                                value={formData.ctaSecondaryLink || ''}
+                                onChange={e =>
+                                  setFormData({
+                                    ...formData,
+                                    ctaSecondaryLink: e.target.value,
+                                  })
+                                }
+                                placeholder="/products"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </TabsContent>

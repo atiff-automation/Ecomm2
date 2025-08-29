@@ -37,9 +37,9 @@ import Link from 'next/link';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 // Define tracking status type
-type TrackingStatus = 
+type TrackingStatus =
   | 'pending'
-  | 'booked' 
+  | 'booked'
   | 'picked_up'
   | 'in_transit'
   | 'out_for_delivery'
@@ -64,7 +64,7 @@ interface FulfillmentOrder {
   };
   createdAt: string;
   priority: 'HIGH' | 'NORMAL' | 'LOW';
-  
+
   // ENHANCED: More detailed shipment info
   shipment?: {
     trackingNumber?: string;
@@ -140,7 +140,9 @@ export default function OrderFulfillmentPage() {
       return order?.status === 'PROCESSING' && !order?.shipment?.trackingNumber;
     });
 
-    if (shippableOrders.length === 0) return;
+    if (shippableOrders.length === 0) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/admin/orders/bulk-ship', {
@@ -164,7 +166,9 @@ export default function OrderFulfillmentPage() {
       return order?.shipment?.trackingNumber;
     });
 
-    if (ordersWithTracking.length === 0) return;
+    if (ordersWithTracking.length === 0) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/admin/orders/bulk-tracking-refresh', {
@@ -187,7 +191,9 @@ export default function OrderFulfillmentPage() {
       return order?.shipment?.trackingNumber;
     });
 
-    if (ordersWithShipments.length === 0) return;
+    if (ordersWithShipments.length === 0) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/admin/orders/bulk-labels', {
@@ -290,19 +296,31 @@ export default function OrderFulfillmentPage() {
   };
 
   const formatTrackingStatus = (status?: TrackingStatus): string => {
-    if (!status) return 'No Status';
+    if (!status) {
+      return 'No Status';
+    }
     return status.replace(/_/g, ' ').toUpperCase();
   };
 
   const formatRelativeTime = (dateString?: string): string => {
-    if (!dateString) return '';
+    if (!dateString) {
+      return '';
+    }
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
+    if (diffInMinutes < 1) {
+      return 'just now';
+    }
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)}h ago`;
+    }
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
@@ -357,9 +375,21 @@ export default function OrderFulfillmentPage() {
   // Define contextual tabs for fulfillment page
   const tabs: TabConfig[] = [
     { id: 'all-orders', label: 'All Orders', href: '/admin/orders' },
-    { id: 'shipping', label: 'Shipping Management', href: '/admin/orders/shipping' },
-    { id: 'fulfillment', label: 'Fulfillment Queue', href: '/admin/orders/fulfillment' },
-    { id: 'analytics', label: 'Order Analytics', href: '/admin/orders/analytics' },
+    {
+      id: 'shipping',
+      label: 'Shipping Management',
+      href: '/admin/orders/shipping',
+    },
+    {
+      id: 'fulfillment',
+      label: 'Fulfillment Queue',
+      href: '/admin/orders/fulfillment',
+    },
+    {
+      id: 'analytics',
+      label: 'Order Analytics',
+      href: '/admin/orders/analytics',
+    },
   ];
 
   // Header actions
@@ -391,7 +421,7 @@ export default function OrderFulfillmentPage() {
         <Input
           placeholder="Search orders..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           className="w-full"
         />
       </div>
@@ -419,387 +449,405 @@ export default function OrderFulfillmentPage() {
       filters={filtersComponent}
       loading={loading}
     >
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Clock className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Pending Processing
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {orders.filter(o => o.status === 'CONFIRMED').length}
-                  </p>
-                </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-8 w-8 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Package className="h-8 w-8 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    In Processing
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {orders.filter(o => o.status === 'PROCESSING').length}
-                  </p>
-                </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Pending Processing
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {orders.filter(o => o.status === 'CONFIRMED').length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Truck className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Shipped</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {orders.filter(o => o.status === 'SHIPPED').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <AlertTriangle className="h-8 w-8 text-red-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    High Priority
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {orders.filter(o => o.priority === 'HIGH').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Actions */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Fulfillment Queue
-              </CardTitle>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => handleBulkStatusUpdate('PROCESSING')}
-                  disabled={selectedOrders.length === 0}
-                  size="sm"
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Start Processing ({selectedOrders.length})
-                </Button>
-                
-                <Button
-                  onClick={() => handleBulkShip()}
-                  disabled={selectedOrders.length === 0 || !canBulkShip()}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Truck className="h-4 w-4 mr-2" />
-                  Ship Orders ({getShippableCount()})
-                </Button>
-                
-                <Button
-                  onClick={() => handleBulkTrackingRefresh()}
-                  disabled={selectedOrders.length === 0 || !hasTrackingNumbers()}
-                  size="sm"
-                  variant="outline"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Tracking
-                </Button>
-                
-                <Button
-                  onClick={() => handleBulkLabelDownload()}
-                  disabled={selectedOrders.length === 0 || !hasShipments()}
-                  size="sm"
-                  variant="outline"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Labels
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search orders by number, customer name, or email..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="CONFIRMED">Ready to Process</SelectItem>
-                  <SelectItem value="PROCESSING">In Processing</SelectItem>
-                  <SelectItem value="SHIPPED">Shipped</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Orders Table */}
         <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  checked={
-                    selectedOrders.length === orders.length && orders.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                />
-                <span className="text-sm text-gray-600">
-                  {selectedOrders.length > 0
-                    ? `${selectedOrders.length} selected`
-                    : `${orders.length} orders`}
-                </span>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Package className="h-8 w-8 text-yellow-600" />
               </div>
-              <Button variant="outline" size="sm">
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  In Processing
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {orders.filter(o => o.status === 'PROCESSING').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Truck className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Shipped</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {orders.filter(o => o.status === 'SHIPPED').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  High Priority
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {orders.filter(o => o.priority === 'HIGH').length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters and Actions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Fulfillment Queue
+            </CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => handleBulkStatusUpdate('PROCESSING')}
+                disabled={selectedOrders.length === 0}
+                size="sm"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Start Processing ({selectedOrders.length})
+              </Button>
+
+              <Button
+                onClick={() => handleBulkShip()}
+                disabled={selectedOrders.length === 0 || !canBulkShip()}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Truck className="h-4 w-4 mr-2" />
+                Ship Orders ({getShippableCount()})
+              </Button>
+
+              <Button
+                onClick={() => handleBulkTrackingRefresh()}
+                disabled={selectedOrders.length === 0 || !hasTrackingNumbers()}
+                size="sm"
+                variant="outline"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Tracking
+              </Button>
+
+              <Button
+                onClick={() => handleBulkLabelDownload()}
+                disabled={selectedOrders.length === 0 || !hasShipments()}
+                size="sm"
+                variant="outline"
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Export Queue
+                Download Labels
               </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search orders by number, customer name, or email..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="CONFIRMED">Ready to Process</SelectItem>
+                <SelectItem value="PROCESSING">In Processing</SelectItem>
+                <SelectItem value="SHIPPED">Shipped</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <Checkbox
+                checked={
+                  selectedOrders.length === orders.length && orders.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm text-gray-600">
+                {selectedOrders.length > 0
+                  ? `${selectedOrders.length} selected`
+                  : `${orders.length} orders`}
+              </span>
+            </div>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export Queue
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Items
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Priority
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Shipping
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Items
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Priority
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Shipping
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <td colSpan={7} className="px-6 py-4 text-center">
+                      <div className="animate-pulse">Loading orders...</div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center">
-                        <div className="animate-pulse">Loading orders...</div>
-                      </td>
-                    </tr>
-                  ) : orders.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="px-6 py-4 text-center text-gray-500"
-                      >
-                        No orders found for fulfillment
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.map(order => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <Checkbox
-                              checked={selectedOrders.includes(order.id)}
-                              onCheckedChange={checked =>
-                                handleSelectOrder(order.id, checked as boolean)
-                              }
-                              className="mr-3"
-                            />
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {order.orderNumber}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {new Date(order.createdAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                ) : orders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No orders found for fulfillment
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map(order => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Checkbox
+                            checked={selectedOrders.includes(order.id)}
+                            onCheckedChange={checked =>
+                              handleSelectOrder(order.id, checked as boolean)
+                            }
+                            className="mr-3"
+                          />
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {order.customerName}
+                              {order.orderNumber}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {order.customerEmail}
+                              {new Date(order.createdAt).toLocaleDateString()}
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {order.itemCount}{' '}
-                            {order.itemCount === 1 ? 'item' : 'items'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {order.customerName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            RM{order.total}
+                            {order.customerEmail}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={getPriorityColor(order.priority)}>
-                            {order.priority}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={getStatusColor(order.status)}>
-                            {order.status}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-2">
-                            {/* Shipping Method */}
-                            <div className="text-sm text-gray-900 font-medium">
-                              {order.shipment?.serviceName || 'Standard'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {order.itemCount}{' '}
+                          {order.itemCount === 1 ? 'item' : 'items'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          RM{order.total}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge className={getPriorityColor(order.priority)}>
+                          {order.priority}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge className={getStatusColor(order.status)}>
+                          {order.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="space-y-2">
+                          {/* Shipping Method */}
+                          <div className="text-sm text-gray-900 font-medium">
+                            {order.shipment?.serviceName || 'Standard'}
+                          </div>
+
+                          {/* Courier Name */}
+                          {order.shipment?.courierName && (
+                            <div className="text-xs text-gray-600">
+                              via {order.shipment.courierName}
                             </div>
-                            
-                            {/* Courier Name */}
-                            {order.shipment?.courierName && (
-                              <div className="text-xs text-gray-600">
-                                via {order.shipment.courierName}
+                          )}
+
+                          {/* Tracking Information */}
+                          {order.shipment?.trackingNumber ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-blue-600">
+                                  {order.shipment.trackingNumber}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(
+                                      order.shipment!.trackingNumber!
+                                    )
+                                  }
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
                               </div>
-                            )}
-                            
-                            {/* Tracking Information */}
-                            {order.shipment?.trackingNumber ? (
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-mono text-blue-600">
-                                    {order.shipment.trackingNumber}
+
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  className={`${getTrackingStatusColor(order.shipment.status)} text-xs`}
+                                  variant="outline"
+                                >
+                                  {formatTrackingStatus(order.shipment.status)}
+                                </Badge>
+
+                                {order.shipment.lastTrackedAt && (
+                                  <span
+                                    className="text-xs text-gray-400"
+                                    title={`Last updated: ${formatDateTime(order.shipment.lastTrackedAt)}`}
+                                  >
+                                    {formatRelativeTime(
+                                      order.shipment.lastTrackedAt
+                                    )}
                                   </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-4 w-4 p-0"
-                                    onClick={() => navigator.clipboard.writeText(order.shipment!.trackingNumber!)}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                                
-                                <div className="flex items-center gap-2">
-                                  <Badge 
-                                    className={`${getTrackingStatusColor(order.shipment.status)} text-xs`}
-                                    variant="outline"
-                                  >
-                                    {formatTrackingStatus(order.shipment.status)}
-                                  </Badge>
-                                  
-                                  {order.shipment.lastTrackedAt && (
-                                    <span className="text-xs text-gray-400" title={`Last updated: ${formatDateTime(order.shipment.lastTrackedAt)}`}>
-                                      {formatRelativeTime(order.shipment.lastTrackedAt)}
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {order.shipment.estimatedDelivery && (
-                                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    Est: {formatDate(order.shipment.estimatedDelivery)}
-                                  </div>
                                 )}
                               </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                                <span className="text-xs text-gray-400">Awaiting shipment</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex gap-1">
-                            {/* View Order */}
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/admin/orders/${order.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
+
+                              {order.shipment.estimatedDelivery && (
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  Est:{' '}
+                                  {formatDate(order.shipment.estimatedDelivery)}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                              <span className="text-xs text-gray-400">
+                                Awaiting shipment
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex gap-1">
+                          {/* View Order */}
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/admin/orders/${order.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+
+                          {/* Quick Tracking */}
+                          {order.shipment?.trackingNumber && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                window.open(
+                                  `https://track.easyparcel.my/${order.shipment!.trackingNumber}`,
+                                  '_blank'
+                                )
+                              }
+                              title="Track shipment"
+                            >
+                              <Truck className="h-4 w-4" />
                             </Button>
-                            
-                            {/* Quick Tracking */}
-                            {order.shipment?.trackingNumber && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.open(`https://track.easyparcel.my/${order.shipment!.trackingNumber}`, '_blank')}
-                                title="Track shipment"
-                              >
-                                <Truck className="h-4 w-4" />
-                              </Button>
-                            )}
-                            
-                            {/* Ship Order / Edit Tracking */}
-                            {order.status === 'PROCESSING' && !order.shipment?.trackingNumber ? (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleShipOrder(order.id)}
-                                title="Ship order"
-                              >
-                                <Package className="h-4 w-4" />
-                              </Button>
-                            ) : (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditShipment(order.id)}
-                                title="Edit shipment"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                          )}
+
+                          {/* Ship Order / Edit Tracking */}
+                          {order.status === 'PROCESSING' &&
+                          !order.shipment?.trackingNumber ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleShipOrder(order.id)}
+                              title="Ship order"
+                            >
+                              <Package className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditShipment(order.id)}
+                              title="Edit shipment"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </AdminPageLayout>
   );
 }

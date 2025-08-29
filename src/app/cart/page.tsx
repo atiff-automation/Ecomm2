@@ -61,7 +61,8 @@ export default function CartPage() {
   const isLoggedIn = freshMembership.isLoggedIn;
   const isMember = freshMembership.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
+  const membershipThreshold =
+    cart?.membershipThreshold || config.business.membership.threshold;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -91,7 +92,8 @@ export default function CartPage() {
   const handleClearCart = async () => {
     showConfirmation({
       title: 'Clear Cart',
-      description: 'Are you sure you want to clear your cart? This action cannot be undone.',
+      description:
+        'Are you sure you want to clear your cart? This action cannot be undone.',
       confirmText: 'Clear Cart',
       cancelText: 'Keep Items',
       variant: 'destructive',
@@ -285,52 +287,68 @@ export default function CartPage() {
                           }
 
                           // Get the best price for this product (convert strings to numbers)
-                          const bestPrice = getBestPrice({
-                            regularPrice: Number(item.product.regularPrice),
-                            memberPrice: Number(item.product.memberPrice),
-                            isPromotional: item.product.isPromotional || false,
-                            promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
-                            promotionStartDate: item.product.promotionStartDate,
-                            promotionEndDate: item.product.promotionEndDate,
-                            isQualifyingForMembership: item.product.isQualifyingForMembership || false,
-                            memberOnlyUntil: item.product.memberOnlyUntil,
-                            earlyAccessStart: item.product.earlyAccessStart
-                          }, isMember);
+                          const bestPrice = getBestPrice(
+                            {
+                              regularPrice: Number(item.product.regularPrice),
+                              memberPrice: Number(item.product.memberPrice),
+                              isPromotional:
+                                item.product.isPromotional || false,
+                              promotionalPrice: item.product.promotionalPrice
+                                ? Number(item.product.promotionalPrice)
+                                : null,
+                              promotionStartDate:
+                                item.product.promotionStartDate,
+                              promotionEndDate: item.product.promotionEndDate,
+                              isQualifyingForMembership:
+                                item.product.isQualifyingForMembership || false,
+                              memberOnlyUntil: item.product.memberOnlyUntil,
+                              earlyAccessStart: item.product.earlyAccessStart,
+                            },
+                            isMember
+                          );
 
                           // Price type styling configuration (centralized)
                           const priceTypeConfig = {
                             promotional: {
                               textColor: 'text-red-600',
                               badgeVariant: 'destructive' as const,
-                              badgeText: 'Promotional'
+                              badgeText: 'Promotional',
                             },
                             member: {
-                              textColor: 'text-green-600', 
+                              textColor: 'text-green-600',
                               badgeVariant: 'secondary' as const,
-                              badgeText: 'Member Price'
+                              badgeText: 'Member Price',
                             },
                             'early-access': {
                               textColor: 'text-blue-600',
-                              badgeVariant: 'default' as const, 
-                              badgeText: 'Early Access'
+                              badgeVariant: 'default' as const,
+                              badgeText: 'Early Access',
                             },
                             regular: {
                               textColor: 'text-gray-900',
                               badgeVariant: 'outline' as const,
-                              badgeText: 'Regular Price'
-                            }
+                              badgeText: 'Regular Price',
+                            },
                           };
 
-                          const currentConfig = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
+                          const currentConfig =
+                            priceTypeConfig[
+                              bestPrice.priceType as keyof typeof priceTypeConfig
+                            ] || priceTypeConfig.regular;
 
                           return (
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className={`font-bold text-lg ${currentConfig.textColor}`}>
+                                <span
+                                  className={`font-bold text-lg ${currentConfig.textColor}`}
+                                >
                                   {formatPrice(bestPrice.price)}
                                 </span>
                                 {bestPrice.priceType !== 'regular' && (
-                                  <Badge variant={currentConfig.badgeVariant} className="text-xs">
+                                  <Badge
+                                    variant={currentConfig.badgeVariant}
+                                    className="text-xs"
+                                  >
                                     {currentConfig.badgeText}
                                   </Badge>
                                 )}
@@ -340,7 +358,9 @@ export default function CartPage() {
                                   <span className="text-muted-foreground line-through">
                                     {formatPrice(bestPrice.originalPrice)}
                                   </span>
-                                  <span className={`font-medium ${currentConfig.textColor}`}>
+                                  <span
+                                    className={`font-medium ${currentConfig.textColor}`}
+                                  >
                                     Save {formatPrice(bestPrice.savings)}
                                   </span>
                                 </div>
@@ -482,12 +502,14 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {isMember && !freshMembership.loading && memberDiscount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Member Discount</span>
-                      <span>-{formatPrice(memberDiscount)}</span>
-                    </div>
-                  )}
+                  {isMember &&
+                    !freshMembership.loading &&
+                    memberDiscount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Member Discount</span>
+                        <span>-{formatPrice(memberDiscount)}</span>
+                      </div>
+                    )}
 
                   <div className="flex justify-between text-muted-foreground">
                     <span>Shipping</span>
@@ -516,8 +538,8 @@ export default function CartPage() {
 
                 {/* Checkout Button */}
                 <Link href="/checkout">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     size="lg"
                     disabled={totalItems === 0 || isLoading}
                   >
@@ -551,7 +573,7 @@ export default function CartPage() {
           )}
         </div>
       </div>
-      
+
       <ConfirmationDialog />
     </div>
   );

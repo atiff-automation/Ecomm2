@@ -29,9 +29,12 @@ class MemoryCache {
 
   constructor() {
     // Cleanup expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   set<T>(key: string, value: T, ttl: number): boolean {
@@ -59,8 +62,10 @@ class MemoryCache {
   get<T>(key: string): T | null {
     try {
       const entry = this.cache.get(key);
-      
-      if (!entry) return null;
+
+      if (!entry) {
+        return null;
+      }
 
       // Check if expired
       if (Date.now() - entry.timestamp > entry.ttl) {
@@ -70,7 +75,7 @@ class MemoryCache {
 
       // Increment hit count
       entry.hits++;
-      
+
       return entry.data as T;
     } catch (error) {
       console.error('Memory cache GET error:', error);
@@ -84,7 +89,9 @@ class MemoryCache {
 
   exists(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {
+      return false;
+    }
 
     // Check if expired
     if (Date.now() - entry.timestamp > entry.ttl) {
@@ -114,16 +121,18 @@ class MemoryCache {
     }
 
     keysToDelete.forEach(key => this.cache.delete(key));
-    
+
     if (keysToDelete.length > 0) {
-      console.log(`🧹 Memory cache: Cleaned up ${keysToDelete.length} expired entries`);
+      console.log(
+        `🧹 Memory cache: Cleaned up ${keysToDelete.length} expired entries`
+      );
     }
   }
 
   getStats() {
     const entries = Array.from(this.cache.values());
     const totalHits = entries.reduce((sum, entry) => sum + entry.hits, 0);
-    
+
     return {
       size: this.cache.size,
       maxSize: this.maxSize,
@@ -174,7 +183,7 @@ export class CacheManager {
     // Categories - Redis primary, memory fallback, 6 hours TTL
     this.strategies.set('categories', {
       primary: 'redis',
-      fallback: 'memory', 
+      fallback: 'memory',
       ttl: 21600, // 6 hours
     });
 
@@ -218,8 +227,8 @@ export class CacheManager {
    * Set cache value using appropriate strategy
    */
   async set<T>(
-    key: string, 
-    value: T, 
+    key: string,
+    value: T,
     options: CacheOptions & { strategy?: string } = {}
   ): Promise<boolean> {
     const strategy = this.strategies.get(options.strategy || 'default') || {
@@ -234,12 +243,16 @@ export class CacheManager {
     // Try primary cache
     if (strategy.primary === 'redis') {
       const success = await redisClient.set(key, value, cacheOptions);
-      if (success) return true;
+      if (success) {
+        return true;
+      }
 
       console.warn(`Redis SET failed for key: ${key}, trying fallback`);
     } else if (strategy.primary === 'memory') {
       const success = this.memoryCache.set(key, value, ttl);
-      if (success) return true;
+      if (success) {
+        return true;
+      }
     }
 
     // Try fallback cache
@@ -254,7 +267,7 @@ export class CacheManager {
    * Get cache value using appropriate strategy
    */
   async get<T>(
-    key: string, 
+    key: string,
     options: { strategy?: string; namespace?: string } = {}
   ): Promise<T | null> {
     const strategy = this.strategies.get(options.strategy || 'default') || {
@@ -266,10 +279,14 @@ export class CacheManager {
     // Try primary cache
     if (strategy.primary === 'redis') {
       const value = await redisClient.get<T>(key, options);
-      if (value !== null) return value;
+      if (value !== null) {
+        return value;
+      }
     } else if (strategy.primary === 'memory') {
       const value = this.memoryCache.get<T>(key);
-      if (value !== null) return value;
+      if (value !== null) {
+        return value;
+      }
     }
 
     // Try fallback cache
@@ -284,7 +301,7 @@ export class CacheManager {
    * Delete cache value from all layers
    */
   async delete(
-    key: string, 
+    key: string,
     options: { strategy?: string; namespace?: string } = {}
   ): Promise<boolean> {
     const strategy = this.strategies.get(options.strategy || 'default') || {
@@ -314,7 +331,7 @@ export class CacheManager {
    * Check if key exists in any cache layer
    */
   async exists(
-    key: string, 
+    key: string,
     options: { strategy?: string; namespace?: string } = {}
   ): Promise<boolean> {
     const strategy = this.strategies.get(options.strategy || 'default') || {
@@ -326,10 +343,14 @@ export class CacheManager {
     // Check primary cache
     if (strategy.primary === 'redis') {
       const exists = await redisClient.exists(key, options.namespace);
-      if (exists) return true;
+      if (exists) {
+        return true;
+      }
     } else if (strategy.primary === 'memory') {
       const exists = this.memoryCache.exists(key);
-      if (exists) return true;
+      if (exists) {
+        return true;
+      }
     }
 
     // Check fallback cache
@@ -356,10 +377,10 @@ export class CacheManager {
 
     // Get fresh data
     const freshData = await getter();
-    
+
     // Cache the fresh data
     await this.set(key, freshData, options);
-    
+
     return freshData;
   }
 
@@ -369,7 +390,7 @@ export class CacheManager {
   async invalidateByTags(tags: string[]): Promise<void> {
     // Redis tag-based invalidation
     await redisClient.invalidateByTags(tags);
-    
+
     // Memory cache doesn't support tags, so we clear relevant patterns
     // This is a limitation - for full tag support, use Redis
     console.log(`Cache invalidated by tags: ${tags.join(', ')}`);
@@ -387,7 +408,7 @@ export class CacheManager {
 
     // Memory cache doesn't support patterns easily
     // This is a limitation of the memory cache implementation
-    
+
     return totalCleared;
   }
 
@@ -417,7 +438,7 @@ export class CacheManager {
    */
   async healthCheck() {
     const redisHealth = await redisClient.healthCheck();
-    
+
     return {
       redis: redisHealth,
       memory: {
@@ -432,14 +453,14 @@ export class CacheManager {
    */
   async warmUp(): Promise<void> {
     console.log('🔥 Starting cache warm-up...');
-    
+
     try {
       // This would typically load:
       // - Featured products
       // - Categories
       // - Common search results
       // - System configuration
-      
+
       console.log('✅ Cache warm-up completed');
     } catch (error) {
       console.error('❌ Cache warm-up failed:', error);

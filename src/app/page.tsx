@@ -391,7 +391,10 @@ export default function HomePage() {
         {/* Product Recommendations */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
-            <ProductRecommendations type="general" limit={Math.floor(config.ui.pagination.defaultPageSize / 2.5)} />
+            <ProductRecommendations
+              type="general"
+              limit={Math.floor(config.ui.pagination.defaultPageSize / 2.5)}
+            />
           </div>
         </section>
       </div>

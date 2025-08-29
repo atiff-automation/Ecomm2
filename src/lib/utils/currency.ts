@@ -25,9 +25,11 @@ export function formatPrice(
   } = options;
 
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-  
+
   if (isNaN(numericPrice)) {
-    return showSymbol ? `${config.business.pricing.currencySymbol} 0.00` : '0.00';
+    return showSymbol
+      ? `${config.business.pricing.currencySymbol} 0.00`
+      : '0.00';
   }
 
   const formattedPrice = new Intl.NumberFormat(locale, {
@@ -51,7 +53,7 @@ export function formatPriceRange(
   if (minPrice === maxPrice) {
     return formatPrice(minPrice, options);
   }
-  
+
   return `${formatPrice(minPrice, options)} - ${formatPrice(maxPrice, options)}`;
 }
 
@@ -65,7 +67,7 @@ export function calculateSavingsPercentage(
   if (originalPrice <= 0 || salePrice >= originalPrice) {
     return 0;
   }
-  
+
   return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
 }
 
@@ -79,7 +81,7 @@ export function calculateDiscountAmount(
   if (discountPercentage <= 0 || discountPercentage > 100) {
     return 0;
   }
-  
+
   return (originalPrice * discountPercentage) / 100;
 }
 
@@ -90,7 +92,10 @@ export function applyDiscount(
   originalPrice: number,
   discountPercentage: number
 ): number {
-  const discountAmount = calculateDiscountAmount(originalPrice, discountPercentage);
+  const discountAmount = calculateDiscountAmount(
+    originalPrice,
+    discountPercentage
+  );
   return Math.max(0, originalPrice - discountAmount);
 }
 
@@ -122,7 +127,7 @@ export function parsePrice(priceString: string): number {
   const cleanPrice = priceString
     .replace(/[RM$,\s]/g, '')
     .replace(/[^\d.-]/g, '');
-    
+
   const parsed = parseFloat(cleanPrice);
   return isNaN(parsed) ? 0 : parsed;
 }
@@ -145,14 +150,20 @@ export function roundPrice(price: number): number {
 /**
  * Compare prices with tolerance for floating point errors
  */
-export function pricesEqual(price1: number, price2: number, tolerance: number = 0.01): boolean {
+export function pricesEqual(
+  price1: number,
+  price2: number,
+  tolerance: number = 0.01
+): boolean {
   return Math.abs(price1 - price2) < tolerance;
 }
 
 /**
  * Get price display classes based on type
  */
-export function getPriceDisplayClasses(priceType: 'regular' | 'sale' | 'member'): string {
+export function getPriceDisplayClasses(
+  priceType: 'regular' | 'sale' | 'member'
+): string {
   switch (priceType) {
     case 'sale':
       return 'text-red-600 font-semibold';

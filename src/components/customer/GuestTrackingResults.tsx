@@ -10,16 +10,16 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  Truck, 
-  Calendar, 
-  RefreshCw, 
+import {
+  Package,
+  Truck,
+  Calendar,
+  RefreshCw,
   ArrowLeft,
   ExternalLink,
   CheckCircle,
   Clock,
-  MapPin
+  MapPin,
 } from 'lucide-react';
 import TrackingStatus from './TrackingStatus';
 
@@ -64,7 +64,7 @@ const formatDate = (dateString: string) => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-    })
+    }),
   };
 };
 
@@ -74,14 +74,22 @@ const formatDate = (dateString: string) => {
 const getStatusInfo = (status: string) => {
   switch (status.toLowerCase()) {
     case 'delivered':
-      return { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50' };
+      return {
+        icon: CheckCircle,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+      };
     case 'shipped':
     case 'in_transit':
     case 'out_for_delivery':
       return { icon: Truck, color: 'text-blue-600', bgColor: 'bg-blue-50' };
     case 'processing':
     case 'confirmed':
-      return { icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-50' };
+      return {
+        icon: Package,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+      };
     default:
       return { icon: Clock, color: 'text-gray-600', bgColor: 'bg-gray-50' };
   }
@@ -92,14 +100,18 @@ export default function GuestTrackingResults({
   onRefresh,
   onBack,
   refreshing = false,
-  className = ''
+  className = '',
 }: GuestTrackingResultsProps) {
   const statusInfo = getStatusInfo(tracking.status);
   const StatusIcon = statusInfo.icon;
 
   const orderDate = formatDate(tracking.orderDate);
-  const estimatedDelivery = tracking.estimatedDelivery ? formatDate(tracking.estimatedDelivery) : null;
-  const actualDelivery = tracking.actualDelivery ? formatDate(tracking.actualDelivery) : null;
+  const estimatedDelivery = tracking.estimatedDelivery
+    ? formatDate(tracking.estimatedDelivery)
+    : null;
+  const actualDelivery = tracking.actualDelivery
+    ? formatDate(tracking.actualDelivery)
+    : null;
 
   return (
     <div className={`guest-tracking-results space-y-6 ${className}`}>
@@ -112,13 +124,15 @@ export default function GuestTrackingResults({
           </Button>
         )}
         {onRefresh && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onRefresh}
             disabled={refreshing}
             size="sm"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`}
+            />
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         )}
@@ -216,44 +230,56 @@ export default function GuestTrackingResults({
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-              
+
               {/* Timeline events */}
               <div className="space-y-4">
                 {tracking.basicEvents.map((event, index) => {
                   const eventDate = formatDate(event.timestamp);
                   const isLatest = index === 0;
-                  
+
                   return (
-                    <div key={`${event.timestamp}-${index}`} className="relative flex items-start gap-4">
+                    <div
+                      key={`${event.timestamp}-${index}`}
+                      className="relative flex items-start gap-4"
+                    >
                       {/* Timeline dot */}
-                      <div className={`
+                      <div
+                        className={`
                         relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2
-                        ${isLatest 
-                          ? 'bg-blue-100 border-blue-300' 
-                          : 'bg-gray-100 border-gray-200'
+                        ${
+                          isLatest
+                            ? 'bg-blue-100 border-blue-300'
+                            : 'bg-gray-100 border-gray-200'
                         }
-                      `}>
-                        <div className={`w-3 h-3 rounded-full ${
-                          isLatest ? 'bg-blue-600' : 'bg-gray-400'
-                        }`} />
+                      `}
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            isLatest ? 'bg-blue-600' : 'bg-gray-400'
+                          }`}
+                        />
                       </div>
 
                       {/* Event content */}
                       <div className="flex-1 min-w-0 pb-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className={`font-medium ${
-                              isLatest ? 'text-blue-900' : 'text-gray-700'
-                            }`}>
+                            <h4
+                              className={`font-medium ${
+                                isLatest ? 'text-blue-900' : 'text-gray-700'
+                              }`}
+                            >
                               {event.eventName}
                             </h4>
                           </div>
 
                           {/* Timestamp */}
                           <div className="text-right ml-4 flex-shrink-0">
-                            <div className={`text-sm font-medium ${
-                              isLatest ? 'text-blue-700' : 'text-gray-700'
-                            }`}>
+                            <div
+                              className={`text-sm font-medium ${
+                                isLatest ? 'text-blue-700' : 'text-gray-700'
+                              }`}
+                            >
                               {eventDate.short}
                             </div>
                             <div className="text-xs text-gray-500">
@@ -280,9 +306,13 @@ export default function GuestTrackingResults({
               Order Not Yet Shipped
             </h3>
             <p className="text-gray-600 mb-4">
-              Your order is being prepared for shipment. You'll receive tracking information once it's dispatched.
+              Your order is being prepared for shipment. You'll receive tracking
+              information once it's dispatched.
             </p>
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+            <Badge
+              variant="outline"
+              className="bg-yellow-50 text-yellow-800 border-yellow-200"
+            >
               Processing
             </Badge>
           </CardContent>
@@ -297,21 +327,22 @@ export default function GuestTrackingResults({
         <CardContent>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              This is a summary view of your order status. For detailed information or assistance:
+              This is a summary view of your order status. For detailed
+              information or assistance:
             </p>
-            
+
             <div className="flex flex-wrap gap-2 sm:gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => window.open('/contact', '_blank')}
               >
                 Contact Support
               </Button>
-              
+
               {tracking.courierName && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     // Generate tracking URL for guest users (basic external link)
@@ -333,8 +364,8 @@ export default function GuestTrackingResults({
       {/* Privacy Notice */}
       <div className="text-xs text-center text-muted-foreground">
         <p>
-          This tracking information is provided for order verification only. 
-          No personal data is stored during this lookup.
+          This tracking information is provided for order verification only. No
+          personal data is stored during this lookup.
         </p>
       </div>
     </div>
@@ -345,7 +376,11 @@ export default function GuestTrackingResults({
  * GuestTrackingResultsSkeleton Component
  * Loading skeleton for tracking results
  */
-export function GuestTrackingResultsSkeleton({ className = '' }: { className?: string }) {
+export function GuestTrackingResultsSkeleton({
+  className = '',
+}: {
+  className?: string;
+}) {
   return (
     <div className={`guest-tracking-results-skeleton space-y-6 ${className}`}>
       {/* Header Skeleton */}

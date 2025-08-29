@@ -30,14 +30,38 @@ const ratesRequestSchema = z.object({
 // State code mapping
 function mapToMalaysianStateCode(state: string): string {
   const stateMapping: Record<string, string> = {
-    'Johor': 'JOH', 'Kedah': 'KDH', 'Kelantan': 'KTN', 'Melaka': 'MLK', 
-    'Malacca': 'MLK', 'Negeri Sembilan': 'NSN', 'Pahang': 'PHG', 'Perak': 'PRK',
-    'Perlis': 'PLS', 'Pulau Pinang': 'PNG', 'Penang': 'PNG', 'Kuala Lumpur': 'KUL',
-    'Terengganu': 'TRG', 'Selangor': 'SEL', 'Sabah': 'SBH', 'Sarawak': 'SWK', 
-    'Labuan': 'LBN',
-    'JOH': 'JOH', 'KDH': 'KDH', 'KTN': 'KTN', 'MLK': 'MLK', 'NSN': 'NSN',
-    'PHG': 'PHG', 'PRK': 'PRK', 'PLS': 'PLS', 'PNG': 'PNG', 'KUL': 'KUL',
-    'TRG': 'TRG', 'SEL': 'SEL', 'SBH': 'SBH', 'SWK': 'SWK', 'LBN': 'LBN'
+    Johor: 'JOH',
+    Kedah: 'KDH',
+    Kelantan: 'KTN',
+    Melaka: 'MLK',
+    Malacca: 'MLK',
+    'Negeri Sembilan': 'NSN',
+    Pahang: 'PHG',
+    Perak: 'PRK',
+    Perlis: 'PLS',
+    'Pulau Pinang': 'PNG',
+    Penang: 'PNG',
+    'Kuala Lumpur': 'KUL',
+    Terengganu: 'TRG',
+    Selangor: 'SEL',
+    Sabah: 'SBH',
+    Sarawak: 'SWK',
+    Labuan: 'LBN',
+    JOH: 'JOH',
+    KDH: 'KDH',
+    KTN: 'KTN',
+    MLK: 'MLK',
+    NSN: 'NSN',
+    PHG: 'PHG',
+    PRK: 'PRK',
+    PLS: 'PLS',
+    PNG: 'PNG',
+    KUL: 'KUL',
+    TRG: 'TRG',
+    SEL: 'SEL',
+    SBH: 'SBH',
+    SWK: 'SWK',
+    LBN: 'LBN',
   };
   return stateMapping[state] || state;
 }
@@ -49,7 +73,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -58,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Validate request
     const validatedData = ratesRequestSchema.parse(body);
-    
+
     // Get business configuration
     const pickupAddress = await businessShippingConfig.getPickupAddress();
     const stateCode = mapToMalaysianStateCode(validatedData.destination.state);
@@ -75,7 +102,7 @@ export async function POST(request: NextRequest) {
         city: pickupAddress.city,
         state: pickupAddress.state,
         postcode: pickupAddress.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       delivery_address: {
         name: 'Customer',
@@ -84,7 +111,7 @@ export async function POST(request: NextRequest) {
         city: validatedData.destination.city,
         state: stateCode,
         postcode: validatedData.destination.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       parcel: {
         weight: validatedData.parcel.weight,
@@ -92,18 +119,19 @@ export async function POST(request: NextRequest) {
         width: validatedData.parcel.width || 15,
         height: validatedData.parcel.height || 10,
         content: 'Order items',
-        value: validatedData.parcel.declared_value
+        value: validatedData.parcel.declared_value,
       },
       service_types: ['STANDARD', 'EXPRESS'],
       insurance: false,
-      cod: false
+      cod: false,
     };
 
     console.log('📦 Calling EasyParcel API with:', easyParcelRequest);
 
     // Get rates from EasyParcel
-    const easyParcelResponse = await easyParcelService.calculateRates(easyParcelRequest);
-    
+    const easyParcelResponse =
+      await easyParcelService.calculateRates(easyParcelRequest);
+
     if (!easyParcelResponse.rates || easyParcelResponse.rates.length === 0) {
       return NextResponse.json({
         success: false,
@@ -113,8 +141,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply business filtering
-    const filteredRates = await businessShippingConfig.filterRatesForBusiness(easyParcelResponse.rates);
-    
+    const filteredRates = await businessShippingConfig.filterRatesForBusiness(
+      easyParcelResponse.rates
+    );
+
     // Use courier selector to get recommendations
     const selectionCriteria = {
       destinationState: stateCode as any,
@@ -129,14 +159,17 @@ export async function POST(request: NextRequest) {
 
     if (filteredRates.length > 0) {
       try {
-        const selection = await courierSelector.selectCourier(filteredRates, selectionCriteria);
-        recommendedMain = selection.selectedRate;
-        
-        // Find best alternative (different courier, next best option)
-        const alternatives = selection.alternatives.filter(alt => 
-          alt.courier_name !== recommendedMain.courier_name
+        const selection = await courierSelector.selectCourier(
+          filteredRates,
+          selectionCriteria
         );
-        
+        recommendedMain = selection.selectedRate;
+
+        // Find best alternative (different courier, next best option)
+        const alternatives = selection.alternatives.filter(
+          alt => alt.courier_name !== recommendedMain.courier_name
+        );
+
         if (alternatives.length > 0) {
           recommendedAlternative = alternatives[0];
         }
@@ -148,13 +181,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Sort rates by price for display
-    const sortedRates = filteredRates.sort((a, b) => (a.price || 0) - (b.price || 0));
+    const sortedRates = filteredRates.sort(
+      (a, b) => (a.price || 0) - (b.price || 0)
+    );
 
     // Calculate price statistics
     const prices = sortedRates.map(rate => rate.price || 0);
     const cheapestPrice = Math.min(...prices);
     const mostExpensivePrice = Math.max(...prices);
-    const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const averagePrice =
+      prices.reduce((sum, price) => sum + price, 0) / prices.length;
 
     console.log('✅ Retrieved rates:', {
       total: sortedRates.length,
@@ -178,10 +214,13 @@ export async function POST(request: NextRequest) {
           max: mostExpensivePrice,
           average: Number(averagePrice.toFixed(2)),
         },
-        courierBreakdown: sortedRates.reduce((acc, rate) => {
-          acc[rate.courier_name] = (acc[rate.courier_name] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
+        courierBreakdown: sortedRates.reduce(
+          (acc, rate) => {
+            acc[rate.courier_name] = (acc[rate.courier_name] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       },
       requestDetails: {
         destination: validatedData.destination,
@@ -189,7 +228,6 @@ export async function POST(request: NextRequest) {
         parcelValue: validatedData.parcel.declared_value,
       },
     });
-
   } catch (error) {
     console.error('❌ Admin rates fetch error:', error);
 
@@ -208,10 +246,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to fetch courier rates',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

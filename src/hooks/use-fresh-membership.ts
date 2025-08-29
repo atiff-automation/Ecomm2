@@ -22,31 +22,35 @@ export function useFreshMembership(): MembershipStatus {
     isLoggedIn: false,
     isMember: false,
     hasPendingMembership: false,
-    loading: true
+    loading: true,
   });
 
   useEffect(() => {
     async function fetchMembershipStatus() {
-      if (status === 'loading') return;
-      
+      if (status === 'loading') {
+        return;
+      }
+
       if (!session?.user) {
         setMembershipStatus({
           isLoggedIn: false,
           isMember: false,
           hasPendingMembership: false,
-          loading: false
+          loading: false,
         });
         return;
       }
 
       try {
         // Add cache busting parameter to ensure fresh data
-        const response = await fetch(`/api/auth/membership-status?t=${Date.now()}`);
+        const response = await fetch(
+          `/api/auth/membership-status?t=${Date.now()}`
+        );
         const data = await response.json();
 
         console.log('🔍 Fresh membership status API response:', {
           status: response.status,
-          data
+          data,
         });
 
         if (response.ok) {
@@ -54,12 +58,12 @@ export function useFreshMembership(): MembershipStatus {
             isLoggedIn: data.isLoggedIn,
             isMember: data.isMember,
             hasPendingMembership: data.hasPendingMembership,
-            loading: false
+            loading: false,
           });
           console.log('✅ Fresh membership status updated:', {
             isLoggedIn: data.isLoggedIn,
             isMember: data.isMember,
-            hasPendingMembership: data.hasPendingMembership
+            hasPendingMembership: data.hasPendingMembership,
           });
         } else {
           throw new Error(data.error || 'Failed to fetch membership status');
@@ -71,7 +75,7 @@ export function useFreshMembership(): MembershipStatus {
           isMember: session?.user?.isMember || false, // Fallback to session
           hasPendingMembership: false,
           loading: false,
-          error: 'Failed to get fresh membership status'
+          error: 'Failed to get fresh membership status',
         });
       }
     }

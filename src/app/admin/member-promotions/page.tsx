@@ -29,7 +29,12 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
-import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  TabConfig,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface MemberPromotionForm {
   name: string;
@@ -256,7 +261,6 @@ export default function AdminMemberPromotionsPage() {
       parentSection={{ label: 'Customers', href: '/admin/customers' }}
       loading={loading}
     >
-
       {/* Message Display */}
       {message && (
         <Card
@@ -280,7 +284,6 @@ export default function AdminMemberPromotionsPage() {
           </CardContent>
         </Card>
       )}
-
 
       {/* Custom Promotion Form */}
       {activeTab === 'custom' && (

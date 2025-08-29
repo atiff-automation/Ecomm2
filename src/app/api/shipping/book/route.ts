@@ -8,7 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { easyParcelService, type ShipmentBookingRequest } from '@/lib/shipping/easyparcel-service';
+import {
+  easyParcelService,
+  type ShipmentBookingRequest,
+} from '@/lib/shipping/easyparcel-service';
 import { z } from 'zod';
 
 // Validation schema for shipment booking
@@ -19,22 +22,26 @@ const shipmentBookingSchema = z.object({
   pickupDate: z.string().optional(), // YYYY-MM-DD
   pickupTime: z.enum(['morning', 'afternoon', 'evening']).optional(),
   specialInstructions: z.string().max(500).optional(),
-  shippingPreferences: z.object({
-    insurance: z.boolean().default(false),
-    signatureRequired: z.boolean().default(false),
-    cod: z.object({
-      enabled: z.boolean().default(false),
-      amount: z.number().optional(),
-      paymentMethod: z.enum(['CASH', 'CHEQUE']).optional(),
-    }).optional(),
-  }).optional(),
+  shippingPreferences: z
+    .object({
+      insurance: z.boolean().default(false),
+      signatureRequired: z.boolean().default(false),
+      cod: z
+        .object({
+          enabled: z.boolean().default(false),
+          amount: z.number().optional(),
+          paymentMethod: z.enum(['CASH', 'CHEQUE']).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
-    
+
     console.log('📦 Shipment Booking Request:', {
       userId: session?.user?.id || 'guest',
       data: body,
@@ -42,26 +49,32 @@ export async function POST(request: NextRequest) {
 
     // Validate request
     const validatedData = shipmentBookingSchema.parse(body);
-    
+
     // Get order with all necessary information
     const order = await prisma.order.findUnique({
       where: { id: validatedData.orderId },
       include: {
         user: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
         },
         orderItems: {
           include: {
             product: {
-              select: { 
-                name: true, 
-                weight: true, 
+              select: {
+                name: true,
+                weight: true,
                 dimensions: true,
                 shippingClass: true,
-                customsDescription: true 
-              }
-            }
-          }
+                customsDescription: true,
+              },
+            },
+          },
         },
         shippingAddress: true,
         billingAddress: true,
@@ -70,10 +83,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Verify order ownership
@@ -95,9 +105,9 @@ export async function POST(request: NextRequest) {
     // Check if shipment already exists
     if (order.shipment) {
       return NextResponse.json(
-        { 
+        {
           message: 'Shipment already exists for this order',
-          shipment: order.shipment 
+          shipment: order.shipment,
         },
         { status: 409 }
       );
@@ -109,7 +119,8 @@ export async function POST(request: NextRequest) {
       company: process.env.BUSINESS_NAME || 'JRM E-commerce',
       phone: process.env.BUSINESS_PHONE || '+60123456789',
       email: process.env.BUSINESS_EMAIL || 'noreply@jrmecommerce.com',
-      address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Example',
+      address_line_1:
+        process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Example',
       address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || '',
       city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
       state: (process.env.BUSINESS_STATE || 'KUL') as any,
@@ -132,8 +143,10 @@ export async function POST(request: NextRequest) {
 
     // Calculate parcel details
     const totalWeight = order.orderItems.reduce((sum, item) => {
-      const productWeight = item.product.weight ? Number(item.product.weight) : 0.5; // Default 0.5kg
-      return sum + (productWeight * item.quantity);
+      const productWeight = item.product.weight
+        ? Number(item.product.weight)
+        : 0.5; // Default 0.5kg
+      return sum + productWeight * item.quantity;
     }, 0);
 
     const totalValue = Number(order.total);
@@ -146,10 +159,11 @@ export async function POST(request: NextRequest) {
 
     // Get largest product dimensions if available
     let parcelDimensions: any = {};
-    const itemWithDimensions = order.orderItems.find(item => 
-      item.product.dimensions && typeof item.product.dimensions === 'object'
+    const itemWithDimensions = order.orderItems.find(
+      item =>
+        item.product.dimensions && typeof item.product.dimensions === 'object'
     );
-    
+
     if (itemWithDimensions?.product.dimensions) {
       const dims = itemWithDimensions.product.dimensions as any;
       if (dims.length && dims.width && dims.height) {
@@ -169,7 +183,10 @@ export async function POST(request: NextRequest) {
         weight: Math.max(totalWeight, 0.1), // Minimum 0.1kg
         value: totalValue,
         content: contentDescription,
-        quantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+        quantity: order.orderItems.reduce(
+          (sum, item) => sum + item.quantity,
+          0
+        ),
         ...parcelDimensions,
       },
       service_id: validatedData.courierId,
@@ -178,11 +195,15 @@ export async function POST(request: NextRequest) {
       pickup_time: validatedData.pickupTime,
       special_instruction: validatedData.specialInstructions,
       insurance: validatedData.shippingPreferences?.insurance || false,
-      signature_required: validatedData.shippingPreferences?.signatureRequired || false,
-      cod: validatedData.shippingPreferences?.cod?.enabled ? {
-        amount: validatedData.shippingPreferences.cod.amount || totalValue,
-        payment_method: validatedData.shippingPreferences.cod.paymentMethod || 'CASH',
-      } : undefined,
+      signature_required:
+        validatedData.shippingPreferences?.signatureRequired || false,
+      cod: validatedData.shippingPreferences?.cod?.enabled
+        ? {
+            amount: validatedData.shippingPreferences.cod.amount || totalValue,
+            payment_method:
+              validatedData.shippingPreferences.cod.paymentMethod || 'CASH',
+          }
+        : undefined,
     };
 
     console.log('🚚 Creating EasyParcel shipment:', {
@@ -193,7 +214,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Book shipment with EasyParcel
-    const easyParcelResponse = await easyParcelService.bookShipment(shipmentRequest);
+    const easyParcelResponse =
+      await easyParcelService.bookShipment(shipmentRequest);
 
     console.log('✅ EasyParcel shipment created:', {
       shipmentId: easyParcelResponse.shipment_id,
@@ -206,44 +228,51 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         easyParcelShipmentId: easyParcelResponse.shipment_id,
         trackingNumber: easyParcelResponse.tracking_number,
-        
+
         // Courier information
         courierId: easyParcelResponse.courier.id,
         courierName: easyParcelResponse.courier.name,
         serviceName: easyParcelResponse.courier.service_name,
         serviceType: validatedData.serviceType,
-        
+
         // Addresses
         pickupAddress: pickupAddress,
         deliveryAddress: deliveryAddress,
         parcelDetails: shipmentRequest.parcel,
-        
+
         // Pricing
         originalPrice: easyParcelResponse.total_price,
         finalPrice: easyParcelResponse.total_price,
-        insuranceAmount: validatedData.shippingPreferences?.insurance ? 
-          Math.min(totalValue * 0.02, 5000) : null,
-        codAmount: validatedData.shippingPreferences?.cod?.enabled ?
-          validatedData.shippingPreferences.cod.amount : null,
-        
+        insuranceAmount: validatedData.shippingPreferences?.insurance
+          ? Math.min(totalValue * 0.02, 5000)
+          : null,
+        codAmount: validatedData.shippingPreferences?.cod?.enabled
+          ? validatedData.shippingPreferences.cod.amount
+          : null,
+
         // Status
         status: 'BOOKED',
         statusDescription: 'Shipment booked with EasyParcel',
-        estimatedDelivery: easyParcelResponse.estimated_delivery ? 
-          new Date(easyParcelResponse.estimated_delivery) : null,
-        
+        estimatedDelivery: easyParcelResponse.estimated_delivery
+          ? new Date(easyParcelResponse.estimated_delivery)
+          : null,
+
         // Label
         labelUrl: easyParcelResponse.label_url,
         labelGenerated: !!easyParcelResponse.label_url,
-        
+
         // Pickup
-        pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : null,
+        pickupDate: validatedData.pickupDate
+          ? new Date(validatedData.pickupDate)
+          : null,
         pickupTimeSlot: validatedData.pickupTime,
-        
+
         // Special instructions
         specialInstructions: validatedData.specialInstructions,
-        signatureRequired: validatedData.shippingPreferences?.signatureRequired || false,
-        insuranceRequired: validatedData.shippingPreferences?.insurance || false,
+        signatureRequired:
+          validatedData.shippingPreferences?.signatureRequired || false,
+        insuranceRequired:
+          validatedData.shippingPreferences?.insurance || false,
       },
     });
 
@@ -253,8 +282,9 @@ export async function POST(request: NextRequest) {
       data: {
         trackingNumber: easyParcelResponse.tracking_number,
         selectedCourierId: easyParcelResponse.courier.id,
-        estimatedDeliveryDate: easyParcelResponse.estimated_delivery ?
-          new Date(easyParcelResponse.estimated_delivery) : null,
+        estimatedDeliveryDate: easyParcelResponse.estimated_delivery
+          ? new Date(easyParcelResponse.estimated_delivery)
+          : null,
         status: 'PROCESSING', // Update order status
       },
     });
@@ -295,7 +325,6 @@ export async function POST(request: NextRequest) {
         totalPrice: easyParcelResponse.total_price,
       },
     });
-
   } catch (error) {
     console.error('❌ Shipment booking error:', error);
 
@@ -348,16 +377,16 @@ export async function GET(request: NextRequest) {
       where: { orderId },
       include: {
         order: {
-          select: { 
-            id: true, 
-            orderNumber: true, 
+          select: {
+            id: true,
+            orderNumber: true,
             userId: true,
             status: true,
             paymentStatus: true,
-          }
+          },
         },
         trackingEvents: {
-          orderBy: { eventTime: 'desc' }
+          orderBy: { eventTime: 'desc' },
         },
       },
     });
@@ -401,7 +430,6 @@ export async function GET(request: NextRequest) {
         shipmentId: shipment.easyParcelShipmentId,
       },
     });
-
   } catch (error) {
     console.error('❌ Get shipment error:', error);
     return NextResponse.json(

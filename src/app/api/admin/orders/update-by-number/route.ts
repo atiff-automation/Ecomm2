@@ -13,7 +13,7 @@ const updateByNumberSchema = z.object({
   orderNumber: z.string().min(1, 'Order number is required'),
   status: z.enum([
     'PENDING',
-    'CONFIRMED', 
+    'CONFIRMED',
     'PROCESSING',
     'SHIPPED',
     'DELIVERED',
@@ -28,15 +28,17 @@ const updateByNumberSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderNumber, status, paymentStatus, triggeredBy, metadata } = 
+    const { orderNumber, status, paymentStatus, triggeredBy, metadata } =
       updateByNumberSchema.parse(body);
 
-    console.log(`🔄 Updating order status by number: ${orderNumber} → ${status}${paymentStatus ? `, Payment: ${paymentStatus}` : ''}`);
+    console.log(
+      `🔄 Updating order status by number: ${orderNumber} → ${status}${paymentStatus ? `, Payment: ${paymentStatus}` : ''}`
+    );
 
     // Find the order by order number
     const order = await prisma.order.findFirst({
       where: { orderNumber },
-      select: { id: true, status: true, paymentStatus: true }
+      select: { id: true, status: true, paymentStatus: true },
     });
 
     if (!order) {
@@ -49,7 +51,8 @@ export async function POST(request: NextRequest) {
 
     // Check if status change is needed
     const statusChanged = order.status !== status;
-    const paymentStatusChanged = paymentStatus && order.paymentStatus !== paymentStatus;
+    const paymentStatusChanged =
+      paymentStatus && order.paymentStatus !== paymentStatus;
 
     if (!statusChanged && !paymentStatusChanged) {
       console.log(`✅ Order ${orderNumber} already has the requested status`);
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
         message: 'No status change needed',
         orderId: order.id,
         currentStatus: order.status,
-        currentPaymentStatus: order.paymentStatus
+        currentPaymentStatus: order.paymentStatus,
       });
     }
 
@@ -75,7 +78,7 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Order ${orderNumber} status updated successfully:`, {
         status: updatedOrder.status,
         paymentStatus: updatedOrder.paymentStatus,
-        triggeredBy
+        triggeredBy,
       });
 
       return NextResponse.json({
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
         orderNumber: updatedOrder.orderNumber,
         status: updatedOrder.status,
         paymentStatus: updatedOrder.paymentStatus,
-        triggeredBy
+        triggeredBy,
       });
     } else {
       console.error(`❌ Failed to update order ${orderNumber}`);
@@ -99,10 +102,10 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           message: 'Invalid request data',
-          errors: error.errors
+          errors: error.errors,
         },
         { status: 400 }
       );

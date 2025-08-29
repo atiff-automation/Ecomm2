@@ -40,10 +40,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Verify order belongs to current user (if logged in)
@@ -65,8 +62,9 @@ export async function GET(request: NextRequest) {
 
     // Determine customer info
     const customerInfo = {
-      name: order.user?.name || 
-            `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+      name:
+        order.user?.name ||
+        `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
       email: order.user?.email || order.guestEmail || '',
       phone: order.shippingAddress?.phone,
     };
@@ -74,12 +72,17 @@ export async function GET(request: NextRequest) {
     // Get payment method from order or use default
     const paymentMethodFromOrder = order.paymentMethod?.toUpperCase();
     let paymentMethod: 'BILLPLZ' | 'TOYYIBPAY' | undefined;
-    
-    if (paymentMethodFromOrder === 'BILLPLZ' || paymentMethodFromOrder === 'TOYYIBPAY') {
+
+    if (
+      paymentMethodFromOrder === 'BILLPLZ' ||
+      paymentMethodFromOrder === 'TOYYIBPAY'
+    ) {
       paymentMethod = paymentMethodFromOrder;
     }
 
-    console.log(`💳 Payment method for order ${order.orderNumber}: ${paymentMethod || 'AUTO'}`);
+    console.log(
+      `💳 Payment method for order ${order.orderNumber}: ${paymentMethod || 'AUTO'}`
+    );
 
     // Create payment using the payment router
     const paymentResult = await paymentRouter.createPayment({
@@ -117,7 +120,9 @@ export async function GET(request: NextRequest) {
       data: updateData,
     });
 
-    console.log(`✅ Payment created successfully for order ${order.orderNumber}`);
+    console.log(
+      `✅ Payment created successfully for order ${order.orderNumber}`
+    );
     console.log(`🔗 Payment URL: ${paymentResult.paymentUrl}`);
 
     // Redirect to payment URL
@@ -141,7 +146,6 @@ export async function GET(request: NextRequest) {
         externalReference: paymentResult.externalReference,
       },
     });
-
   } catch (error) {
     console.error('❌ Payment bill creation error:', error);
     return handleApiError(error);
@@ -163,7 +167,7 @@ export async function POST(request: NextRequest) {
   // Create a new request with the orderId as a query parameter
   const url = new URL(request.url);
   url.searchParams.set('orderId', orderId);
-  
+
   const newRequest = new NextRequest(url, {
     method: 'GET',
     headers: request.headers,

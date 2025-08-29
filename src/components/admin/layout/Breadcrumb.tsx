@@ -17,13 +17,13 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   return (
-    <nav 
+    <nav
       className={`flex items-center space-x-1 text-sm text-gray-500 ${className}`}
       aria-label="Breadcrumb"
     >
       {/* Home link */}
-      <Link 
-        href="/admin/dashboard" 
+      <Link
+        href="/admin/dashboard"
         className="flex items-center hover:text-gray-700 transition-colors"
         title="Dashboard Home"
       >
@@ -38,10 +38,10 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
           <React.Fragment key={item.href}>
             {/* Separator */}
             <ChevronRight className="w-4 h-4 text-gray-400" />
-            
+
             {/* Breadcrumb Item */}
             {isLast ? (
-              <span 
+              <span
                 className="font-medium text-gray-900 flex items-center"
                 aria-current="page"
               >
@@ -49,7 +49,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                 {item.label}
               </span>
             ) : (
-              <Link 
+              <Link
                 href={item.href}
                 className="hover:text-gray-700 transition-colors flex items-center"
               >
@@ -68,28 +68,30 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
 export function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs: BreadcrumbItem[] = [];
-  
-  if (segments[0] !== 'admin') return breadcrumbs;
-  
+
+  if (segments[0] !== 'admin') {
+    return breadcrumbs;
+  }
+
   let path = '/admin';
-  
+
   // Skip 'admin' segment and start from the actual sections
   for (let i = 1; i < segments.length; i++) {
     path += `/${segments[i]}`;
     const segment = segments[i];
-    
+
     // Convert segment to readable label
     const label = segment
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-    
+
     breadcrumbs.push({
       label,
       href: path,
     });
   }
-  
+
   return breadcrumbs;
 }
 
@@ -98,7 +100,10 @@ export const BREADCRUMB_CONFIGS = {
   customers: {
     main: { label: 'Customers', href: '/admin/customers' },
     directory: { label: 'Customer Directory', href: '/admin/customers' },
-    membership: { label: 'Membership Analytics', href: '/admin/customers/membership' },
+    membership: {
+      label: 'Membership Analytics',
+      href: '/admin/customers/membership',
+    },
     referrals: { label: 'Referral System', href: '/admin/customers/referrals' },
   },
   products: {

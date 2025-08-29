@@ -3,9 +3,12 @@
  * @jest-environment node
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { createMocks } from 'node-mocks-http';
-import { GET as getTracking, POST as refreshTracking } from '@/app/api/admin/orders/[id]/tracking/route';
+import {
+  GET as getTracking,
+  POST as refreshTracking,
+} from '@/app/api/admin/orders/[id]/tracking/route';
 import { POST as bulkRefresh } from '@/app/api/admin/orders/bulk-tracking-refresh/route';
 import { GET as getAnalytics } from '@/app/api/admin/tracking/analytics/route';
 
@@ -28,13 +31,13 @@ jest.mock('@/lib/prisma', () => ({
     auditLog: {
       create: jest.fn(),
     },
-  }
+  },
 }));
 
 jest.mock('@/lib/shipping/easyparcel-service', () => ({
   easyParcelService: {
     trackShipment: jest.fn(),
-  }
+  },
 }));
 
 jest.mock('next-auth', () => ({
@@ -45,13 +48,35 @@ jest.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
-const mockPrisma = require('@/lib/prisma').prisma;
-const mockEasyParcelService = require('@/lib/shipping/easyparcel-service').easyParcelService;
-const mockGetServerSession = require('next-auth').getServerSession;
+import { prisma } from '@/lib/prisma';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
+import { getServerSession } from 'next-auth';
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockEasyParcelService = easyParcelService as jest.Mocked<
+  typeof easyParcelService
+>;
+const mockGetServerSession = getServerSession as jest.MockedFunction<
+  typeof getServerSession
+>;
 
 describe('Tracking API Endpoints', () => {
   const mockAdminSession = {
-    user: { id: 'admin-1', role: 'ADMIN' }
+    user: { id: 'admin-1', role: 'ADMIN' },
+  };
+
+  const mockTrackingDataForRefresh = {
+    status: 'out_for_delivery',
+    description: 'Out for delivery',
+    tracking_events: [
+      {
+        event_code: 'OUT_FOR_DELIVERY',
+        event_name: 'Out for Delivery',
+        description: 'Package is out for delivery',
+        timestamp: '2025-08-20T14:00:00Z',
+        location: 'Kuala Lumpur',
+      },
+    ],
   };
 
   const mockOrder = {
@@ -69,9 +94,9 @@ describe('Tracking API Endpoints', () => {
           eventName: 'picked_up',
           description: 'Package picked up',
           location: 'Kuala Lumpur',
-        }
-      ]
-    }
+        },
+      ],
+    },
   };
 
   beforeEach(() => {
@@ -83,7 +108,7 @@ describe('Tracking API Endpoints', () => {
     test('should return tracking data for valid order', async () => {
       mockPrisma.order.findUnique.mockResolvedValue(mockOrder);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
       });
 
@@ -100,7 +125,7 @@ describe('Tracking API Endpoints', () => {
     test('should return 404 for order without tracking', async () => {
       mockPrisma.order.findUnique.mockResolvedValue({
         ...mockOrder,
-        shipment: null
+        shipment: null,
       });
 
       const { req } = createMocks({
@@ -126,20 +151,6 @@ describe('Tracking API Endpoints', () => {
   });
 
   describe('POST /api/admin/orders/[id]/tracking', () => {
-    const mockTrackingData = {
-      status: 'out_for_delivery',
-      description: 'Out for delivery',
-      tracking_events: [
-        {
-          event_code: 'OUT_FOR_DELIVERY',
-          event_name: 'Out for Delivery',
-          description: 'Package is out for delivery',
-          timestamp: '2025-08-20T14:00:00Z',
-          location: 'Kuala Lumpur'
-        }
-      ]
-    };
-
     test('should refresh tracking data successfully', async () => {
       mockPrisma.order.findUnique
         .mockResolvedValueOnce(mockOrder)
@@ -148,14 +159,16 @@ describe('Tracking API Endpoints', () => {
           shipment: {
             ...mockOrder.shipment,
             status: 'out_for_delivery',
-            trackingEvents: []
-          }
+            trackingEvents: [],
+          },
         });
 
-      mockEasyParcelService.trackShipment.mockResolvedValue(mockTrackingData);
+      mockEasyParcelService.trackShipment.mockResolvedValue(
+        mockTrackingDataForRefresh
+      );
       mockPrisma.shipment.update.mockResolvedValue({
         ...mockOrder.shipment,
-        status: 'out_for_delivery'
+        status: 'out_for_delivery',
       });
       mockPrisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 1 });
       mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 });
@@ -165,26 +178,34 @@ describe('Tracking API Endpoints', () => {
         method: 'POST',
       });
 
-      const response = await refreshTracking(req, { params: { id: 'order-1' } });
+      const response = await refreshTracking(req, {
+        params: { id: 'order-1' },
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.message).toContain('refreshed successfully');
-      expect(mockEasyParcelService.trackShipment).toHaveBeenCalledWith('TRK123456');
+      expect(mockEasyParcelService.trackShipment).toHaveBeenCalledWith(
+        'TRK123456'
+      );
       expect(mockPrisma.shipment.update).toHaveBeenCalled();
       expect(mockPrisma.auditLog.create).toHaveBeenCalled();
     });
 
     test('should handle tracking API failure gracefully', async () => {
       mockPrisma.order.findUnique.mockResolvedValue(mockOrder);
-      mockEasyParcelService.trackShipment.mockRejectedValue(new Error('API unavailable'));
+      mockEasyParcelService.trackShipment.mockRejectedValue(
+        new Error('API unavailable')
+      );
 
       const { req } = createMocks({
         method: 'POST',
       });
 
-      const response = await refreshTracking(req, { params: { id: 'order-1' } });
+      const response = await refreshTracking(req, {
+        params: { id: 'order-1' },
+      });
       const data = await response.json();
 
       expect(response.status).toBe(206); // Partial Content
@@ -198,18 +219,20 @@ describe('Tracking API Endpoints', () => {
       {
         id: 'shipment-1',
         trackingNumber: 'TRK123456',
-        order: { orderNumber: 'ORD-001' }
+        order: { orderNumber: 'ORD-001' },
       },
       {
         id: 'shipment-2',
         trackingNumber: 'TRK789012',
-        order: { orderNumber: 'ORD-002' }
-      }
+        order: { orderNumber: 'ORD-002' },
+      },
     ];
 
     test('should refresh multiple shipments successfully', async () => {
       mockPrisma.order.findMany.mockResolvedValue(mockShipments);
-      mockEasyParcelService.trackShipment.mockResolvedValue(mockTrackingData);
+      mockEasyParcelService.trackShipment.mockResolvedValue(
+        mockTrackingDataForRefresh
+      );
       mockPrisma.shipment.update.mockResolvedValue({});
       mockPrisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
       mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 });
@@ -218,7 +241,7 @@ describe('Tracking API Endpoints', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          orderIds: ['order-1', 'order-2']
+          orderIds: ['order-1', 'order-2'],
         },
       });
 
@@ -234,7 +257,7 @@ describe('Tracking API Endpoints', () => {
     test('should handle mixed success/failure scenarios', async () => {
       mockPrisma.order.findMany.mockResolvedValue(mockShipments);
       mockEasyParcelService.trackShipment
-        .mockResolvedValueOnce(mockTrackingData)
+        .mockResolvedValueOnce(mockTrackingDataForRefresh)
         .mockRejectedValueOnce(new Error('API timeout'));
       mockPrisma.shipment.update.mockResolvedValue({});
       mockPrisma.auditLog.create.mockResolvedValue({});
@@ -242,7 +265,7 @@ describe('Tracking API Endpoints', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          orderIds: ['order-1', 'order-2']
+          orderIds: ['order-1', 'order-2'],
         },
       });
 
@@ -260,7 +283,7 @@ describe('Tracking API Endpoints', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          orderIds: []
+          orderIds: [],
         },
       });
 
@@ -280,7 +303,7 @@ describe('Tracking API Endpoints', () => {
         actualDelivery: new Date('2025-08-03'),
         estimatedDelivery: new Date('2025-08-04'),
         order: { id: 'order-1' },
-        trackingEvents: []
+        trackingEvents: [],
       },
       {
         id: 'shipment-2',
@@ -290,8 +313,8 @@ describe('Tracking API Endpoints', () => {
         actualDelivery: null,
         estimatedDelivery: new Date('2025-08-22'),
         order: { id: 'order-2' },
-        trackingEvents: []
-      }
+        trackingEvents: [],
+      },
     ];
 
     test('should return analytics data', async () => {
@@ -299,7 +322,7 @@ describe('Tracking API Endpoints', () => {
 
       const { req } = createMocks({
         method: 'GET',
-        query: { days: '30' }
+        query: { days: '30' },
       });
 
       const response = await getAnalytics(req);
@@ -320,7 +343,7 @@ describe('Tracking API Endpoints', () => {
 
       const { req } = createMocks({
         method: 'GET',
-        query: { days: '7' }
+        query: { days: '7' },
       });
 
       const response = await getAnalytics(req);
@@ -342,7 +365,7 @@ describe('Tracking System Integration Tests', () => {
     // 3. Tracking number assignment
     // 4. Status updates
     // 5. Analytics calculation
-    
+
     // Implementation would depend on test database setup
     expect(true).toBe(true); // Placeholder
   });

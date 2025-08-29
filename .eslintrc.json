@@ -38,5 +38,18 @@
     "browser": true,
     "node": true,
     "es6": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**/*", "**/*.test.*", "**/*.spec.*"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off"
+      }
+    }
+  ]
 }

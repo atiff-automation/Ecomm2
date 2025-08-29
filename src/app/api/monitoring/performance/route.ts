@@ -50,12 +50,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const performanceReport: PerformanceReport = await request.json();
-
-    // Validate required fields
-    if (!performanceReport.timestamp || !performanceReport.url || !performanceReport.type) {
+    // Parse JSON with error handling
+    let performanceReport: PerformanceReport;
+    try {
+      const body = await request.text();
+      if (!body || body.trim() === '') {
+        return NextResponse.json(
+          { error: 'Empty request body' },
+          { status: 400 }
+        );
+      }
+      performanceReport = JSON.parse(body);
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError);
       return NextResponse.json(
-        { error: 'Missing required fields: timestamp, url, type' },
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
+    // Validate required fields - support multiple data formats
+    if (!performanceReport.timestamp || !performanceReport.url) {
+      return NextResponse.json(
+        { error: 'Missing required fields: timestamp, url' },
+        { status: 400 }
+      );
+    }
+
+    // Must have either 'type' (for performance reports) or 'metric' (for individual metrics)
+    if (!performanceReport.type && !performanceReport.metric) {
+      return NextResponse.json(
+        { error: 'Missing data type: must have either type or metric field' },
         { status: 400 }
       );
     }
@@ -67,14 +92,13 @@ export async function POST(request: NextRequest) {
       success: true,
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Error processing performance report:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -99,7 +123,6 @@ async function processPerformanceReport(report: PerformanceReport) {
 
     // Update performance statistics
     await updatePerformanceStats(report);
-
   } catch (error) {
     console.error('Failed to process performance report:', error);
     throw error;
@@ -110,26 +133,36 @@ async function processPerformanceReport(report: PerformanceReport) {
  * Process page performance metrics
  */
 async function processPagePerformance(report: PerformanceReport) {
-  if (!report.metrics) return;
+  if (!report.metrics) {
+    return;
+  }
 
   const metrics = report.metrics;
   const alerts: string[] = [];
 
   // Check Core Web Vitals thresholds
   if (metrics.largestContentfulPaint > 2500) {
-    alerts.push(`LCP too slow: ${metrics.largestContentfulPaint}ms (should be < 2500ms)`);
+    alerts.push(
+      `LCP too slow: ${metrics.largestContentfulPaint}ms (should be < 2500ms)`
+    );
   }
 
   if (metrics.firstInputDelay > 100) {
-    alerts.push(`FID too slow: ${metrics.firstInputDelay}ms (should be < 100ms)`);
+    alerts.push(
+      `FID too slow: ${metrics.firstInputDelay}ms (should be < 100ms)`
+    );
   }
 
   if (metrics.cumulativeLayoutShift > 0.1) {
-    alerts.push(`CLS too high: ${metrics.cumulativeLayoutShift} (should be < 0.1)`);
+    alerts.push(
+      `CLS too high: ${metrics.cumulativeLayoutShift} (should be < 0.1)`
+    );
   }
 
   if (metrics.pageLoadTime > 3000) {
-    alerts.push(`Page load too slow: ${metrics.pageLoadTime}ms (should be < 3000ms)`);
+    alerts.push(
+      `Page load too slow: ${metrics.pageLoadTime}ms (should be < 3000ms)`
+    );
   }
 
   // Log performance metrics
@@ -139,7 +172,7 @@ async function processPagePerformance(report: PerformanceReport) {
     console.log('LCP:', metrics.largestContentfulPaint + 'ms');
     console.log('FID:', metrics.firstInputDelay + 'ms');
     console.log('CLS:', metrics.cumulativeLayoutShift);
-    
+
     if (alerts.length > 0) {
       console.warn('Performance Alerts:', alerts);
     }
@@ -164,10 +197,12 @@ async function processPagePerformance(report: PerformanceReport) {
  * Process slow resource reports
  */
 async function processSlowResource(report: PerformanceReport) {
-  if (!report.resource) return;
+  if (!report.resource) {
+    return;
+  }
 
   const resource = report.resource;
-  
+
   // Log slow resource
   console.warn(`🐌 Slow Resource Detected:`, {
     name: resource.name,
@@ -185,7 +220,8 @@ async function processSlowResource(report: PerformanceReport) {
   });
 
   // Alert if resource is extremely slow
-  if (resource.duration > 5000) { // > 5 seconds
+  if (resource.duration > 5000) {
+    // > 5 seconds
     await sendSlowResourceAlert(report.url, resource);
   }
 }
@@ -194,7 +230,9 @@ async function processSlowResource(report: PerformanceReport) {
  * Process generic performance metric
  */
 async function processGenericMetric(report: PerformanceReport) {
-  if (!report.metric || report.value === undefined) return;
+  if (!report.metric || report.value === undefined) {
+    return;
+  }
 
   console.log(`📈 Performance Metric: ${report.metric} = ${report.value}`, {
     url: report.url,
@@ -217,7 +255,7 @@ async function processGenericMetric(report: PerformanceReport) {
 async function updatePerformanceStats(report: PerformanceReport) {
   const date = new Date().toISOString().split('T')[0];
   const statsKey = `performance_stats:${date}`;
-  
+
   try {
     // In a real implementation, this would use Redis or a time-series database
     console.log(`Updating performance stats for ${statsKey}:`, {
@@ -225,7 +263,6 @@ async function updatePerformanceStats(report: PerformanceReport) {
       url: report.url,
       timestamp: report.timestamp,
     });
-
   } catch (error) {
     console.error('Failed to update performance stats:', error);
   }
@@ -246,7 +283,7 @@ Timestamp: ${new Date().toISOString()}
   `;
 
   console.warn('PERFORMANCE ALERT:', alertMessage);
-  
+
   // Here you would integrate with your notification system
   // Example: await slackNotifier.send(alertMessage);
 }
@@ -298,12 +335,14 @@ async function storeGenericMetric(data: any) {
  * Format bytes to human readable format
  */
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 

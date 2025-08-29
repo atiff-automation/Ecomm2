@@ -114,7 +114,7 @@ export default function CheckoutPage() {
     qualifiesForMembership,
     membershipProgress,
     membershipRemaining,
-    refreshCart
+    refreshCart,
   } = useCart();
 
   const [loading, setLoading] = useState(true);
@@ -176,20 +176,23 @@ export default function CheckoutPage() {
     billing: { valid: boolean; error?: string; loading?: boolean };
   }>({
     shipping: { valid: true },
-    billing: { valid: true }
+    billing: { valid: true },
   });
 
   const freshMembership = useFreshMembership();
-  
+
   const isLoggedIn = freshMembership.isLoggedIn;
-  const isMember = freshMembership.isMember || (membershipActivated && !membershipPending);
+  const isMember =
+    freshMembership.isMember || (membershipActivated && !membershipPending);
 
   // Memoize cartItems for MembershipCheckoutBanner to prevent unnecessary re-renders
   const memoizedCartItems = useMemo(() => {
-    return cart?.items.map(item => ({
-      productId: item.product.id,
-      quantity: item.quantity,
-    })) || [];
+    return (
+      cart?.items.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })) || []
+    );
   }, [cart?.items]);
 
   // Malaysian states from centralized service
@@ -197,7 +200,7 @@ export default function CheckoutPage() {
     return malaysianPostcodeService.getAllStates().map(state => ({
       code: state.code,
       name: state.name,
-      zone: state.zone
+      zone: state.zone,
     }));
   }, []);
 
@@ -208,7 +211,9 @@ export default function CheckoutPage() {
 
       // If we're processing payment, don't fetch cart or redirect
       if (paymentProcessed) {
-        console.log('⏸️ Payment already processed, skipping cart initialization');
+        console.log(
+          '⏸️ Payment already processed, skipping cart initialization'
+        );
         setLoading(false);
         return;
       }
@@ -217,20 +222,21 @@ export default function CheckoutPage() {
 
       // Check if we have payment parameters in URL - if so, don't redirect to cart
       const urlParams = new URLSearchParams(window.location.search);
-      const hasPaymentParams = urlParams.has('payment') && urlParams.has('orderRef');
-      
+      const hasPaymentParams =
+        urlParams.has('payment') && urlParams.has('orderRef');
+
       // FIXED: Use totalItems from cart service instead of cart.items.length for consistency
       // This prevents the checkout page from thinking cart is empty when it has items
       const isCartLoaded = !cartLoading && cart !== null;
-      
-      console.log('📊 Checkout cart state check:', { 
-        totalItems, 
+
+      console.log('📊 Checkout cart state check:', {
+        totalItems,
         cartItemsLength: cart?.items?.length,
         cartLoading,
         isCartLoaded,
-        hasPaymentParams
+        hasPaymentParams,
       });
-      
+
       // Only redirect to cart if empty AND not processing payment AND no payment params AND cart is loaded
       // Use totalItems from cart service for consistency across components
       if (totalItems === 0 && !hasPaymentParams && isCartLoaded) {
@@ -238,7 +244,9 @@ export default function CheckoutPage() {
         router.push('/cart');
         return;
       } else if (totalItems === 0 && hasPaymentParams) {
-        console.log('⏸️ Cart empty but payment params detected, staying on checkout');
+        console.log(
+          '⏸️ Cart empty but payment params detected, staying on checkout'
+        );
       } else if (totalItems > 0) {
         console.log('✅ Cart has items, proceeding with checkout');
       }
@@ -251,35 +259,14 @@ export default function CheckoutPage() {
           if (addressResponse.ok) {
             const { address } = await addressResponse.json();
 
-              if (address) {
-                // Use saved address
-                setShippingAddress(address);
-                if (useSameAddress) {
-                  setBillingAddress(address);
-                }
-              } else {
-                // Fallback to basic user info
-                const [firstName, lastName] = session.user.name?.split(' ') || [
-                  '',
-                  '',
-                ];
-                const basicInfo = {
-                  firstName: firstName || '',
-                  lastName: lastName || '',
-                  email: session.user.email || '',
-                  phone: '',
-                  address: '',
-                  address2: '',
-                  city: '',
-                  state: '',
-                  postcode: '',
-                  country: 'MY',
-                };
-                setShippingAddress(prev => ({ ...prev, ...basicInfo }));
-                setBillingAddress(prev => ({ ...prev, ...basicInfo }));
+            if (address) {
+              // Use saved address
+              setShippingAddress(address);
+              if (useSameAddress) {
+                setBillingAddress(address);
               }
             } else {
-              // Fallback to basic user info if API fails
+              // Fallback to basic user info
               const [firstName, lastName] = session.user.name?.split(' ') || [
                 '',
                 '',
@@ -299,9 +286,8 @@ export default function CheckoutPage() {
               setShippingAddress(prev => ({ ...prev, ...basicInfo }));
               setBillingAddress(prev => ({ ...prev, ...basicInfo }));
             }
-          } catch (error) {
-            console.error('Error fetching default address:', error);
-            // Fallback to basic user info
+          } else {
+            // Fallback to basic user info if API fails
             const [firstName, lastName] = session.user.name?.split(' ') || [
               '',
               '',
@@ -321,7 +307,29 @@ export default function CheckoutPage() {
             setShippingAddress(prev => ({ ...prev, ...basicInfo }));
             setBillingAddress(prev => ({ ...prev, ...basicInfo }));
           }
+        } catch (error) {
+          console.error('Error fetching default address:', error);
+          // Fallback to basic user info
+          const [firstName, lastName] = session.user.name?.split(' ') || [
+            '',
+            '',
+          ];
+          const basicInfo = {
+            firstName: firstName || '',
+            lastName: lastName || '',
+            email: session.user.email || '',
+            phone: '',
+            address: '',
+            address2: '',
+            city: '',
+            state: '',
+            postcode: '',
+            country: 'MY',
+          };
+          setShippingAddress(prev => ({ ...prev, ...basicInfo }));
+          setBillingAddress(prev => ({ ...prev, ...basicInfo }));
         }
+      }
     } catch (error) {
       console.error('Failed to initialize checkout data:', error);
     } finally {
@@ -347,56 +355,60 @@ export default function CheckoutPage() {
   };
 
   // Handle postcode change with auto-fill
-  const handlePostcodeChange = (addressType: 'shipping' | 'billing', postcode: string) => {
+  const handlePostcodeChange = (
+    addressType: 'shipping' | 'billing',
+    postcode: string
+  ) => {
     // Update the postcode value immediately
-    const addressSetter = addressType === 'shipping' ? setShippingAddress : setBillingAddress;
+    const addressSetter =
+      addressType === 'shipping' ? setShippingAddress : setBillingAddress;
     addressSetter(prev => ({ ...prev, postcode }));
 
     // Set loading state
     setPostcodeValidation(prev => ({
       ...prev,
-      [addressType]: { valid: true, loading: true }
+      [addressType]: { valid: true, loading: true },
     }));
 
     // Debounce the validation and auto-fill
     setTimeout(() => {
       const validation = malaysianPostcodeService.validatePostcode(postcode);
-      
+
       if (validation.valid && validation.location) {
         // Auto-fill state and city
         addressSetter(prev => ({
           ...prev,
           postcode: validation.formatted || postcode,
           state: validation.location!.stateName,
-          city: validation.location!.city
+          city: validation.location!.city,
         }));
 
         setPostcodeValidation(prev => ({
           ...prev,
-          [addressType]: { valid: true, loading: false }
+          [addressType]: { valid: true, loading: false },
         }));
 
         console.log(`✅ Auto-filled ${addressType} address:`, {
           postcode: validation.formatted,
           state: validation.location.stateName,
           city: validation.location.city,
-          zone: validation.location.zone
+          zone: validation.location.zone,
         });
       } else if (postcode.length === 5) {
         // Invalid postcode
         setPostcodeValidation(prev => ({
           ...prev,
-          [addressType]: { 
-            valid: false, 
+          [addressType]: {
+            valid: false,
             error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
-            loading: false 
-          }
+            loading: false,
+          },
         }));
       } else {
         // Still typing
         setPostcodeValidation(prev => ({
           ...prev,
-          [addressType]: { valid: true, loading: false }
+          [addressType]: { valid: true, loading: false },
         }));
       }
     }, 500); // 500ms debounce
@@ -506,7 +518,9 @@ export default function CheckoutPage() {
     try {
       // Check if cart is empty using totalItems for consistency
       if (!cart || totalItems === 0) {
-        setOrderError('Your cart is empty. Please add items before proceeding.');
+        setOrderError(
+          'Your cart is empty. Please add items before proceeding.'
+        );
         setProcessing(false);
         router.push('/cart');
         return;
@@ -514,45 +528,73 @@ export default function CheckoutPage() {
 
       // Client-side validation before submitting
       const errors: { [key: string]: string } = {};
-      
+
       // Validate shipping address
-      if (!shippingAddress.firstName.trim()) errors['shippingAddress.firstName'] = 'First name is required';
-      if (!shippingAddress.lastName.trim()) errors['shippingAddress.lastName'] = 'Last name is required';
-      if (!shippingAddress.phone.trim()) errors['shippingAddress.phone'] = 'Phone number is required';
-      if (!shippingAddress.address.trim()) errors['shippingAddress.address'] = 'Address is required';
-      if (!shippingAddress.city.trim()) errors['shippingAddress.city'] = 'City is required';
-      if (!shippingAddress.state.trim()) errors['shippingAddress.state'] = 'State is required';
+      if (!shippingAddress.firstName.trim()) {
+        errors['shippingAddress.firstName'] = 'First name is required';
+      }
+      if (!shippingAddress.lastName.trim()) {
+        errors['shippingAddress.lastName'] = 'Last name is required';
+      }
+      if (!shippingAddress.phone.trim()) {
+        errors['shippingAddress.phone'] = 'Phone number is required';
+      }
+      if (!shippingAddress.address.trim()) {
+        errors['shippingAddress.address'] = 'Address is required';
+      }
+      if (!shippingAddress.city.trim()) {
+        errors['shippingAddress.city'] = 'City is required';
+      }
+      if (!shippingAddress.state.trim()) {
+        errors['shippingAddress.state'] = 'State is required';
+      }
       if (!shippingAddress.postcode.trim()) {
         errors['shippingAddress.postcode'] = 'Postcode is required';
       } else if (!postcodeValidation.shipping.valid) {
-        errors['shippingAddress.postcode'] = 'Please enter a valid Malaysian postcode for accurate shipping calculation';
+        errors['shippingAddress.postcode'] =
+          'Please enter a valid Malaysian postcode for accurate shipping calculation';
       }
-      
+
       // Validate billing address if different from shipping
       if (!useSameAddress) {
-        if (!billingAddress.firstName.trim()) errors['billingAddress.firstName'] = 'First name is required';
-        if (!billingAddress.lastName.trim()) errors['billingAddress.lastName'] = 'Last name is required';
-        if (!billingAddress.phone.trim()) errors['billingAddress.phone'] = 'Phone number is required';
-        if (!billingAddress.address.trim()) errors['billingAddress.address'] = 'Address is required';
-        if (!billingAddress.city.trim()) errors['billingAddress.city'] = 'City is required';
-        if (!billingAddress.state.trim()) errors['billingAddress.state'] = 'State is required';
+        if (!billingAddress.firstName.trim()) {
+          errors['billingAddress.firstName'] = 'First name is required';
+        }
+        if (!billingAddress.lastName.trim()) {
+          errors['billingAddress.lastName'] = 'Last name is required';
+        }
+        if (!billingAddress.phone.trim()) {
+          errors['billingAddress.phone'] = 'Phone number is required';
+        }
+        if (!billingAddress.address.trim()) {
+          errors['billingAddress.address'] = 'Address is required';
+        }
+        if (!billingAddress.city.trim()) {
+          errors['billingAddress.city'] = 'City is required';
+        }
+        if (!billingAddress.state.trim()) {
+          errors['billingAddress.state'] = 'State is required';
+        }
         if (!billingAddress.postcode.trim()) {
           errors['billingAddress.postcode'] = 'Postcode is required';
         } else if (!postcodeValidation.billing.valid) {
-          errors['billingAddress.postcode'] = 'Please enter a valid Malaysian postcode';
+          errors['billingAddress.postcode'] =
+            'Please enter a valid Malaysian postcode';
         }
       }
 
       // Admin-controlled shipping should be automatically selected
       if (!selectedShippingRate) {
-        errors['shipping'] = 'Shipping method not available. Please check your address.';
+        errors['shipping'] =
+          'Shipping method not available. Please check your address.';
       }
 
       // Validate payment method selection
       if (!paymentMethod) {
         errors['paymentMethod'] = 'Please select a payment method';
       } else if (!hasAvailableGateways) {
-        errors['paymentMethod'] = 'No payment gateways are currently available. Please try again later.';
+        errors['paymentMethod'] =
+          'No payment gateways are currently available. Please try again later.';
       }
 
       // If there are validation errors, show them and stop processing
@@ -597,7 +639,9 @@ export default function CheckoutPage() {
             router.push(result.paymentUrl);
           } else {
             // Fallback to test payment gateway if no payment URL provided
-            console.log('⚠️ No payment URL provided, using test payment gateway');
+            console.log(
+              '⚠️ No payment URL provided, using test payment gateway'
+            );
             const paymentParams = new URLSearchParams({
               amount: total.toString() || '100',
               currency: 'MYR',
@@ -669,7 +713,7 @@ export default function CheckoutPage() {
       console.log('💳 Creating payment bill:', {
         method: paymentMethod,
         amount: paymentData.amount,
-        orderNumber: paymentData.orderNumber
+        orderNumber: paymentData.orderNumber,
       });
 
       const paymentResponse = await fetch('/api/payment/create-bill', {
@@ -685,7 +729,7 @@ export default function CheckoutPage() {
         console.log('✅ Payment bill created successfully:', {
           method: paymentResult.paymentMethod,
           billId: paymentResult.billId || paymentResult.billCode,
-          hasPaymentUrl: !!paymentResult.paymentUrl
+          hasPaymentUrl: !!paymentResult.paymentUrl,
         });
 
         // Redirect to payment gateway
@@ -693,13 +737,17 @@ export default function CheckoutPage() {
           console.log('🔄 Redirecting to payment gateway...');
           window.location.href = paymentResult.paymentUrl;
         } else {
-          setOrderError(paymentResult.error || 'Failed to create payment. Please try again.');
+          setOrderError(
+            paymentResult.error || 'Failed to create payment. Please try again.'
+          );
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       } else {
         const paymentError = await paymentResponse.json();
         console.error('❌ Payment creation failed:', paymentError);
-        setOrderError(paymentError.error || 'Failed to create payment. Please try again.');
+        setOrderError(
+          paymentError.error || 'Failed to create payment. Please try again.'
+        );
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
@@ -724,16 +772,20 @@ export default function CheckoutPage() {
       const paymentResult = urlParams.get('payment');
       const orderRef = urlParams.get('orderRef');
       const amount = urlParams.get('amount');
-      
-      console.log('🔍 Checking URL params:', { 
+
+      console.log('🔍 Checking URL params:', {
         hasPayment: !!paymentResult,
         hasOrderRef: !!orderRef,
         paymentProcessed,
-        currentUrl: window.location.href
+        currentUrl: window.location.href,
       });
 
       if (paymentResult && orderRef && !paymentProcessed) {
-        console.log('🔔 Payment result detected:', { paymentResult, orderRef, amount });
+        console.log('🔔 Payment result detected:', {
+          paymentResult,
+          orderRef,
+          amount,
+        });
         setPaymentProcessed(true);
 
         // Clear URL params immediately to prevent re-processing
@@ -755,7 +807,11 @@ export default function CheckoutPage() {
 
   // Initialize email from session once
   useEffect(() => {
-    if (session?.user?.email && !shippingAddress.email && !billingAddress.email) {
+    if (
+      session?.user?.email &&
+      !shippingAddress.email &&
+      !billingAddress.email
+    ) {
       const email = session.user.email;
       setShippingAddress(prev => ({ ...prev, email }));
       setBillingAddress(prev => ({ ...prev, email }));
@@ -872,7 +928,9 @@ export default function CheckoutPage() {
               <Alert className="mt-2">
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Auto-fill:</strong> Enter your 5-digit Malaysian postcode and we'll automatically fill in your state and city for accurate shipping calculation.
+                  <strong>Auto-fill:</strong> Enter your 5-digit Malaysian
+                  postcode and we'll automatically fill in your state and city
+                  for accurate shipping calculation.
                 </AlertDescription>
               </Alert>
             </CardHeader>
@@ -1012,14 +1070,17 @@ export default function CheckoutPage() {
                     Postcode *
                     {postcodeValidation.shipping.loading && (
                       <span className="ml-2 text-xs text-blue-600">
-                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                        <Loader2 className="inline h-3 w-3 animate-spin" />{' '}
+                        Looking up...
                       </span>
                     )}
                   </Label>
                   <Input
                     id="shippingPostcode"
                     value={shippingAddress.postcode}
-                    onChange={e => handlePostcodeChange('shipping', e.target.value)}
+                    onChange={e =>
+                      handlePostcodeChange('shipping', e.target.value)
+                    }
                     placeholder="e.g. 50000"
                     maxLength={5}
                     required
@@ -1027,20 +1088,22 @@ export default function CheckoutPage() {
                       !postcodeValidation.shipping.valid
                         ? 'border-red-300 focus:border-red-500'
                         : postcodeValidation.shipping.loading
-                        ? 'border-blue-300 focus:border-blue-500'
-                        : ''
+                          ? 'border-blue-300 focus:border-blue-500'
+                          : ''
                     }
                   />
-                  {!postcodeValidation.shipping.valid && postcodeValidation.shipping.error && (
-                    <p className="mt-1 text-xs text-red-600">
-                      {postcodeValidation.shipping.error}
-                    </p>
-                  )}
-                  {postcodeValidation.shipping.valid && shippingAddress.postcode.length === 5 && (
-                    <p className="mt-1 text-xs text-green-600">
-                      ✓ Valid Malaysian postcode
-                    </p>
-                  )}
+                  {!postcodeValidation.shipping.valid &&
+                    postcodeValidation.shipping.error && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {postcodeValidation.shipping.error}
+                      </p>
+                    )}
+                  {postcodeValidation.shipping.valid &&
+                    shippingAddress.postcode.length === 5 && (
+                      <p className="mt-1 text-xs text-green-600">
+                        ✓ Valid Malaysian postcode
+                      </p>
+                    )}
                 </div>
               </div>
             </CardContent>
@@ -1048,21 +1111,31 @@ export default function CheckoutPage() {
 
           {/* Admin-Controlled Shipping */}
           <AdminControlledShippingComponent
-            cartItems={cart?.items.map(item => ({
-              id: item.id,
-              quantity: item.quantity,
-              product: {
-                id: item.product.id,
-                name: item.product.name,
-                regularPrice: Number(item.product.regularPrice),
-                weight: Number(item.product.weight) || undefined,
-                dimensions: item.product.dimensions ? {
-                  length: Number(item.product.dimensions.split('x')[0]) || undefined,
-                  width: Number(item.product.dimensions.split('x')[1]) || undefined,
-                  height: Number(item.product.dimensions.split('x')[2]) || undefined,
-                } : undefined,
-              },
-            })) || []}
+            cartItems={
+              cart?.items.map(item => ({
+                id: item.id,
+                quantity: item.quantity,
+                product: {
+                  id: item.product.id,
+                  name: item.product.name,
+                  regularPrice: Number(item.product.regularPrice),
+                  weight: Number(item.product.weight) || undefined,
+                  dimensions: item.product.dimensions
+                    ? {
+                        length:
+                          Number(item.product.dimensions.split('x')[0]) ||
+                          undefined,
+                        width:
+                          Number(item.product.dimensions.split('x')[1]) ||
+                          undefined,
+                        height:
+                          Number(item.product.dimensions.split('x')[2]) ||
+                          undefined,
+                      }
+                    : undefined,
+                },
+              })) || []
+            }
             shippingAddress={shippingAddress}
             onShippingChange={handleShippingChange}
           />
@@ -1214,14 +1287,17 @@ export default function CheckoutPage() {
                       Postcode *
                       {postcodeValidation.billing.loading && (
                         <span className="ml-2 text-xs text-blue-600">
-                          <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                          <Loader2 className="inline h-3 w-3 animate-spin" />{' '}
+                          Looking up...
                         </span>
                       )}
                     </Label>
                     <Input
                       id="billingPostcode"
                       value={billingAddress.postcode}
-                      onChange={e => handlePostcodeChange('billing', e.target.value)}
+                      onChange={e =>
+                        handlePostcodeChange('billing', e.target.value)
+                      }
                       placeholder="e.g. 50000"
                       maxLength={5}
                       required
@@ -1229,20 +1305,22 @@ export default function CheckoutPage() {
                         !postcodeValidation.billing.valid
                           ? 'border-red-300 focus:border-red-500'
                           : postcodeValidation.billing.loading
-                          ? 'border-blue-300 focus:border-blue-500'
-                          : ''
+                            ? 'border-blue-300 focus:border-blue-500'
+                            : ''
                       }
                     />
-                    {!postcodeValidation.billing.valid && postcodeValidation.billing.error && (
-                      <p className="mt-1 text-xs text-red-600">
-                        {postcodeValidation.billing.error}
-                      </p>
-                    )}
-                    {postcodeValidation.billing.valid && billingAddress.postcode.length === 5 && (
-                      <p className="mt-1 text-xs text-green-600">
-                        ✓ Valid Malaysian postcode
-                      </p>
-                    )}
+                    {!postcodeValidation.billing.valid &&
+                      postcodeValidation.billing.error && (
+                        <p className="mt-1 text-xs text-red-600">
+                          {postcodeValidation.billing.error}
+                        </p>
+                      )}
+                    {postcodeValidation.billing.valid &&
+                      billingAddress.postcode.length === 5 && (
+                        <p className="mt-1 text-xs text-green-600">
+                          ✓ Valid Malaysian postcode
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -1255,7 +1333,7 @@ export default function CheckoutPage() {
             onMethodChange={handlePaymentMethodChange}
             onMethodsLoaded={handlePaymentMethodsLoaded}
           />
-          
+
           {/* Payment Method Validation Error */}
           {fieldErrors['paymentMethod'] && (
             <Alert className="border-red-200 bg-red-50 -mt-4">
@@ -1298,7 +1376,8 @@ export default function CheckoutPage() {
                         <Image
                           src={item.product.primaryImage.url}
                           alt={
-                            item.product.primaryImage.altText || item.product.name
+                            item.product.primaryImage.altText ||
+                            item.product.name
                           }
                           width={48}
                           height={48}
@@ -1327,31 +1406,45 @@ export default function CheckoutPage() {
                     {(() => {
                       // Wait for fresh membership data to load
                       if (freshMembership.loading) {
-                        return formatPrice(Number(item.product.regularPrice) * item.quantity);
+                        return formatPrice(
+                          Number(item.product.regularPrice) * item.quantity
+                        );
                       }
 
                       // Get the best price for this product
-                      const bestPrice = getBestPrice({
-                        regularPrice: Number(item.product.regularPrice),
-                        memberPrice: Number(item.product.memberPrice),
-                        isPromotional: item.product.isPromotional || false,
-                        promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
-                        promotionStartDate: item.product.promotionStartDate,
-                        promotionEndDate: item.product.promotionEndDate,
-                        isQualifyingForMembership: item.product.isQualifyingForMembership || false,
-                        memberOnlyUntil: item.product.memberOnlyUntil,
-                        earlyAccessStart: item.product.earlyAccessStart
-                      }, isMember);
+                      const bestPrice = getBestPrice(
+                        {
+                          regularPrice: Number(item.product.regularPrice),
+                          memberPrice: Number(item.product.memberPrice),
+                          isPromotional: item.product.isPromotional || false,
+                          promotionalPrice: item.product.promotionalPrice
+                            ? Number(item.product.promotionalPrice)
+                            : null,
+                          promotionStartDate: item.product.promotionStartDate,
+                          promotionEndDate: item.product.promotionEndDate,
+                          isQualifyingForMembership:
+                            item.product.isQualifyingForMembership || false,
+                          memberOnlyUntil: item.product.memberOnlyUntil,
+                          earlyAccessStart: item.product.earlyAccessStart,
+                        },
+                        isMember
+                      );
 
                       // Price type styling configuration
                       const priceTypeConfig = {
                         promotional: { color: 'text-red-600', label: 'Promo' },
                         member: { color: 'text-green-600', label: 'Member' },
-                        'early-access': { color: 'text-blue-600', label: 'Early' },
-                        regular: { color: 'text-gray-900', label: '' }
+                        'early-access': {
+                          color: 'text-blue-600',
+                          label: 'Early',
+                        },
+                        regular: { color: 'text-gray-900', label: '' },
                       };
 
-                      const config = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
+                      const config =
+                        priceTypeConfig[
+                          bestPrice.priceType as keyof typeof priceTypeConfig
+                        ] || priceTypeConfig.regular;
 
                       return (
                         <div className="space-y-1">
@@ -1386,18 +1479,14 @@ export default function CheckoutPage() {
                 {promotionalDiscount > 0 && (
                   <div className="flex justify-between text-blue-600">
                     <span>Promotional Discount</span>
-                    <span>
-                      -{formatPrice(promotionalDiscount)}
-                    </span>
+                    <span>-{formatPrice(promotionalDiscount)}</span>
                   </div>
                 )}
 
                 {isMember && !freshMembership.loading && memberDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Member Discount</span>
-                    <span>
-                      -{formatPrice(memberDiscount)}
-                    </span>
+                    <span>-{formatPrice(memberDiscount)}</span>
                   </div>
                 )}
 
@@ -1407,7 +1496,9 @@ export default function CheckoutPage() {
                     {freeShippingApplied && shippingCost === 0 ? (
                       <span className="text-green-600">FREE</span>
                     ) : shippingCost === 0 ? (
-                      <span className="text-muted-foreground">Select shipping method</span>
+                      <span className="text-muted-foreground">
+                        Select shipping method
+                      </span>
                     ) : (
                       formatPrice(shippingCost)
                     )}
@@ -1458,47 +1549,50 @@ export default function CheckoutPage() {
           )}
 
           {/* Membership Progress - for non-members */}
-          {!isMember && !freshMembership.loading && cart && cart.qualifyingTotal > 0 && (
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-blue-800">
-                  <Award className="w-5 h-5" />
-                  Membership Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Progress 
-                  value={membershipProgress} 
-                  className="h-3" 
-                />
+          {!isMember &&
+            !freshMembership.loading &&
+            cart &&
+            cart.qualifyingTotal > 0 && (
+              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-blue-800">
+                    <Award className="w-5 h-5" />
+                    Membership Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Progress value={membershipProgress} className="h-3" />
 
-                <div className="flex justify-between text-sm text-blue-700">
-                  <span>{formatPrice(cart.qualifyingTotal)}</span>
-                  <span>{formatPrice(cart.membershipThreshold)}</span>
-                </div>
+                  <div className="flex justify-between text-sm text-blue-700">
+                    <span>{formatPrice(cart.qualifyingTotal)}</span>
+                    <span>{formatPrice(cart.membershipThreshold)}</span>
+                  </div>
 
-                {qualifiesForMembership ? (
-                  <div className="text-center">
-                    <p className="text-sm text-blue-800 font-medium mb-2">
-                      🎉 Congratulations! You're eligible for membership benefits!
-                    </p>
-                    <p className="text-xs text-blue-700">
-                      Your membership will be activated after successful payment
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <p className="text-sm text-blue-700 mb-1">
-                      Add {formatPrice(membershipRemaining)} more to qualify for membership
-                    </p>
-                    <p className="text-xs text-blue-600">
-                      Only qualifying products count towards membership
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  {qualifiesForMembership ? (
+                    <div className="text-center">
+                      <p className="text-sm text-blue-800 font-medium mb-2">
+                        🎉 Congratulations! You're eligible for membership
+                        benefits!
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Your membership will be activated after successful
+                        payment
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-sm text-blue-700 mb-1">
+                        Add {formatPrice(membershipRemaining)} more to qualify
+                        for membership
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        Only qualifying products count towards membership
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
           {/* Place Order Button */}
           <Button
@@ -1515,8 +1609,7 @@ export default function CheckoutPage() {
             ) : (
               <>
                 <Shield className="w-4 h-4 mr-2" />
-                Place Order{' '}
-                {cart && formatPrice(total)}
+                Place Order {cart && formatPrice(total)}
               </>
             )}
           </Button>

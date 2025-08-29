@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Zone-Based Shipping Calculator
- * 
+ *
  * Comprehensive test suite for zone resolution and shipping calculation
  * Reference: IMPLEMENTATION_ROADMAP.md Sprint 1.2 - Day 1: Write comprehensive unit tests
  */
@@ -39,13 +39,26 @@ describe('ZoneBasedShippingCalculator', () => {
       id: 'zone-peninsular',
       name: 'Peninsular Malaysia',
       code: 'PENINSULAR',
-      states: ['JOH', 'KDH', 'KTN', 'MLK', 'NSN', 'PHG', 'PRK', 'PLS', 'PNG', 'KUL', 'TRG', 'SEL'],
+      states: [
+        'JOH',
+        'KDH',
+        'KTN',
+        'MLK',
+        'NSN',
+        'PHG',
+        'PRK',
+        'PLS',
+        'PNG',
+        'KUL',
+        'TRG',
+        'SEL',
+      ],
       multiplier: { toNumber: () => 1.0 },
       deliveryTimeMin: 1,
       deliveryTimeMax: 3,
       isActive: true,
       sortOrder: 1,
-      features: { same_day: true, cod: true, insurance: true }
+      features: { same_day: true, cod: true, insurance: true },
     },
     {
       id: 'zone-east-malaysia',
@@ -57,8 +70,8 @@ describe('ZoneBasedShippingCalculator', () => {
       deliveryTimeMax: 7,
       isActive: true,
       sortOrder: 2,
-      features: { same_day: false, cod: true, insurance: true }
-    }
+      features: { same_day: false, cod: true, insurance: true },
+    },
   ];
 
   const mockRules = [
@@ -67,47 +80,47 @@ describe('ZoneBasedShippingCalculator', () => {
       zoneId: 'zone-peninsular',
       weightMin: { toNumber: () => 0 },
       weightMax: { toNumber: () => 1 },
-      price: { toNumber: () => 5.00 },
+      price: { toNumber: () => 5.0 },
       serviceType: 'STANDARD',
       isActive: true,
       effectiveTo: null,
       zone: { code: 'PENINSULAR' },
-      ruleSet: { id: 'standard-rates' }
+      ruleSet: { id: 'standard-rates' },
     },
     {
       id: 'rule-peninsular-1-2kg',
       zoneId: 'zone-peninsular',
       weightMin: { toNumber: () => 1 },
       weightMax: { toNumber: () => 2 },
-      price: { toNumber: () => 7.00 },
+      price: { toNumber: () => 7.0 },
       serviceType: 'STANDARD',
       isActive: true,
       effectiveTo: null,
       zone: { code: 'PENINSULAR' },
-      ruleSet: { id: 'standard-rates' }
+      ruleSet: { id: 'standard-rates' },
     },
     {
       id: 'rule-east-0-1kg',
       zoneId: 'zone-east-malaysia',
       weightMin: { toNumber: () => 0 },
       weightMax: { toNumber: () => 1 },
-      price: { toNumber: () => 8.00 },
+      price: { toNumber: () => 8.0 },
       serviceType: 'STANDARD',
       isActive: true,
       effectiveTo: null,
       zone: { code: 'EAST_MALAYSIA' },
-      ruleSet: { id: 'standard-rates' }
-    }
+      ruleSet: { id: 'standard-rates' },
+    },
   ];
 
   const mockSystemConfig = {
     key: 'free_shipping_threshold',
-    value: '150'
+    value: '150',
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup mock responses
     mockPrisma.shippingZone.findMany.mockResolvedValue(mockZones);
     mockPrisma.shippingRule.findMany.mockResolvedValue(mockRules);
@@ -121,7 +134,7 @@ describe('ZoneBasedShippingCalculator', () => {
     describe('resolveShippingZone', () => {
       it('should resolve Johor to Peninsular Malaysia zone', async () => {
         const zone = await calculator.resolveShippingZone('JOH');
-        
+
         expect(zone).not.toBeNull();
         expect(zone?.code).toBe('PENINSULAR');
         expect(zone?.name).toBe('Peninsular Malaysia');
@@ -130,7 +143,7 @@ describe('ZoneBasedShippingCalculator', () => {
 
       it('should resolve Sabah to East Malaysia zone', async () => {
         const zone = await calculator.resolveShippingZone('SBH');
-        
+
         expect(zone).not.toBeNull();
         expect(zone?.code).toBe('EAST_MALAYSIA');
         expect(zone?.name).toBe('East Malaysia');
@@ -139,7 +152,7 @@ describe('ZoneBasedShippingCalculator', () => {
 
       it('should handle full state names correctly', async () => {
         const zone = await calculator.resolveShippingZone('Johor');
-        
+
         expect(zone).not.toBeNull();
         expect(zone?.code).toBe('PENINSULAR');
       });
@@ -147,7 +160,7 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should handle alternative state names', async () => {
         const zone1 = await calculator.resolveShippingZone('Penang');
         const zone2 = await calculator.resolveShippingZone('Pulau Pinang');
-        
+
         expect(zone1?.code).toBe('PENINSULAR');
         expect(zone2?.code).toBe('PENINSULAR');
         expect(zone1?.states).toContain('PNG');
@@ -156,7 +169,7 @@ describe('ZoneBasedShippingCalculator', () => {
 
       it('should fallback to Peninsular Malaysia for unknown states', async () => {
         const zone = await calculator.resolveShippingZone('UNKNOWN_STATE');
-        
+
         expect(zone).not.toBeNull();
         expect(zone?.code).toBe('PENINSULAR'); // Fallback zone
       });
@@ -164,7 +177,7 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should handle case insensitive state codes', async () => {
         const zone1 = await calculator.resolveShippingZone('joh');
         const zone2 = await calculator.resolveShippingZone('JOH');
-        
+
         expect(zone1?.code).toBe(zone2?.code);
         expect(zone1?.code).toBe('PENINSULAR');
       });
@@ -193,10 +206,10 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should find correct rule for 0.5kg in Peninsular Malaysia', async () => {
         const zone = await calculator.resolveShippingZone('JOH');
         const rule = await calculator.findShippingRule(zone!, 0.5, 'STANDARD');
-        
+
         expect(rule).not.toBeNull();
         expect(rule?.id).toBe('rule-peninsular-0-1kg');
-        expect(rule?.price).toBe(5.00);
+        expect(rule?.price).toBe(5.0);
         expect(rule?.weightMin).toBe(0);
         expect(rule?.weightMax).toBe(1);
       });
@@ -204,32 +217,32 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should find correct rule for 1.5kg in Peninsular Malaysia', async () => {
         const zone = await calculator.resolveShippingZone('JOH');
         const rule = await calculator.findShippingRule(zone!, 1.5, 'STANDARD');
-        
+
         expect(rule).not.toBeNull();
         expect(rule?.id).toBe('rule-peninsular-1-2kg');
-        expect(rule?.price).toBe(7.00);
+        expect(rule?.price).toBe(7.0);
       });
 
       it('should find correct rule for East Malaysia', async () => {
         const zone = await calculator.resolveShippingZone('SBH');
         const rule = await calculator.findShippingRule(zone!, 0.5, 'STANDARD');
-        
+
         expect(rule).not.toBeNull();
         expect(rule?.id).toBe('rule-east-0-1kg');
-        expect(rule?.price).toBe(8.00);
+        expect(rule?.price).toBe(8.0);
       });
 
       it('should return null for weight outside available rules', async () => {
         const zone = await calculator.resolveShippingZone('JOH');
         const rule = await calculator.findShippingRule(zone!, 10.0, 'STANDARD');
-        
+
         expect(rule).toBeNull();
       });
 
       it('should fallback to STANDARD service when requested service unavailable', async () => {
         const zone = await calculator.resolveShippingZone('JOH');
         const rule = await calculator.findShippingRule(zone!, 0.5, 'EXPRESS');
-        
+
         // Should fallback to STANDARD since EXPRESS is not in mock data
         expect(rule).not.toBeNull();
         expect(rule?.serviceType).toBe('STANDARD');
@@ -243,18 +256,18 @@ describe('ZoneBasedShippingCalculator', () => {
         const request = {
           customerState: 'JOH',
           totalWeight: 0.5,
-          orderValue: 100.00,
+          orderValue: 100.0,
           itemCount: 1,
           serviceType: 'STANDARD' as const,
-          sessionId: 'test-session'
+          sessionId: 'test-session',
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
         expect(result?.zoneName).toBe('Peninsular Malaysia');
-        expect(result?.basePrice).toBe(5.00);
-        expect(result?.finalPrice).toBe(5.00); // 5.00 * 1.0 multiplier
+        expect(result?.basePrice).toBe(5.0);
+        expect(result?.finalPrice).toBe(5.0); // 5.00 * 1.0 multiplier
         expect(result?.freeShippingApplied).toBe(false);
         expect(result?.calculationData.zoneMultiplier).toBe(1.0);
       });
@@ -263,17 +276,17 @@ describe('ZoneBasedShippingCalculator', () => {
         const request = {
           customerState: 'SBH',
           totalWeight: 0.5,
-          orderValue: 100.00,
+          orderValue: 100.0,
           itemCount: 1,
-          serviceType: 'STANDARD' as const
+          serviceType: 'STANDARD' as const,
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
         expect(result?.zoneName).toBe('East Malaysia');
-        expect(result?.basePrice).toBe(8.00);
-        expect(result?.finalPrice).toBe(15.00); // 8.00 * 1.875 multiplier
+        expect(result?.basePrice).toBe(8.0);
+        expect(result?.finalPrice).toBe(15.0); // 8.00 * 1.875 multiplier
         expect(result?.calculationData.zoneMultiplier).toBe(1.875);
       });
 
@@ -281,53 +294,57 @@ describe('ZoneBasedShippingCalculator', () => {
         const request = {
           customerState: 'JOH',
           totalWeight: 0.5,
-          orderValue: 200.00, // Above 150 threshold
+          orderValue: 200.0, // Above 150 threshold
           itemCount: 1,
-          serviceType: 'STANDARD' as const
+          serviceType: 'STANDARD' as const,
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
-        expect(result?.basePrice).toBe(5.00);
+        expect(result?.basePrice).toBe(5.0);
         expect(result?.finalPrice).toBe(0); // Free shipping applied
         expect(result?.freeShippingApplied).toBe(true);
       });
 
       it('should return fallback calculation on error', async () => {
         // Simulate database error
-        mockPrisma.shippingZone.findMany.mockRejectedValueOnce(new Error('Database error'));
-        
+        mockPrisma.shippingZone.findMany.mockRejectedValueOnce(
+          new Error('Database error')
+        );
+
         const request = {
           customerState: 'JOH',
           totalWeight: 0.5,
-          orderValue: 100.00,
-          itemCount: 1
+          orderValue: 100.0,
+          itemCount: 1,
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
         expect(result?.calculationMethod).toBe('FALLBACK');
-        expect(result?.finalPrice).toBe(8.00); // Fallback rate for Peninsular
+        expect(result?.finalPrice).toBe(8.0); // Fallback rate for Peninsular
       });
 
       it('should use higher fallback rate for East Malaysia states', async () => {
         // Simulate database error
-        mockPrisma.shippingZone.findMany.mockRejectedValueOnce(new Error('Database error'));
-        
+        mockPrisma.shippingZone.findMany.mockRejectedValueOnce(
+          new Error('Database error')
+        );
+
         const request = {
           customerState: 'SBH', // East Malaysia
           totalWeight: 0.5,
-          orderValue: 100.00,
-          itemCount: 1
+          orderValue: 100.0,
+          itemCount: 1,
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
         expect(result?.calculationMethod).toBe('FALLBACK');
-        expect(result?.finalPrice).toBe(15.00); // Higher fallback rate for East Malaysia
+        expect(result?.finalPrice).toBe(15.0); // Higher fallback rate for East Malaysia
       });
     });
 
@@ -336,7 +353,7 @@ describe('ZoneBasedShippingCalculator', () => {
         // Mock different threshold
         mockPrisma.systemConfig.findUnique.mockResolvedValueOnce({
           key: 'free_shipping_threshold',
-          value: '200'
+          value: '200',
         });
 
         // Recreate calculator to pick up new threshold
@@ -345,12 +362,12 @@ describe('ZoneBasedShippingCalculator', () => {
         const request = {
           customerState: 'JOH',
           totalWeight: 0.5,
-          orderValue: 180.00, // Between 150 and 200
-          itemCount: 1
+          orderValue: 180.0, // Between 150 and 200
+          itemCount: 1,
         };
 
         const result = await calculator.calculateShipping(request);
-        
+
         expect(result).not.toBeNull();
         expect(result?.freeShippingApplied).toBe(false); // Should not qualify
         expect(result?.finalPrice).toBeGreaterThan(0);
@@ -362,10 +379,10 @@ describe('ZoneBasedShippingCalculator', () => {
     describe('Cache Management', () => {
       it('should initialize cache on first use', async () => {
         const stats = calculator.getCacheStats();
-        
+
         // Trigger cache initialization
         await calculator.resolveShippingZone('JOH');
-        
+
         expect(mockPrisma.shippingZone.findMany).toHaveBeenCalled();
         expect(mockPrisma.shippingRule.findMany).toHaveBeenCalled();
         expect(mockPrisma.systemConfig.findUnique).toHaveBeenCalled();
@@ -374,7 +391,7 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should provide cache statistics', async () => {
         // Trigger cache initialization
         await calculator.resolveShippingZone('JOH');
-        
+
         const stats = calculator.getCacheStats();
         expect(stats.zones).toBeGreaterThan(0);
         expect(stats.ruleGroups).toBeGreaterThan(0);
@@ -385,18 +402,18 @@ describe('ZoneBasedShippingCalculator', () => {
       it('should allow cache refresh', async () => {
         // Initial cache load
         await calculator.resolveShippingZone('JOH');
-        
+
         // Clear mock call history
         jest.clearAllMocks();
-        
+
         // Setup fresh mock data
         mockPrisma.shippingZone.findMany.mockResolvedValue(mockZones);
         mockPrisma.shippingRule.findMany.mockResolvedValue(mockRules);
         mockPrisma.systemConfig.findUnique.mockResolvedValue(mockSystemConfig);
-        
+
         // Refresh cache
         await calculator.refreshCache();
-        
+
         expect(mockPrisma.shippingZone.findMany).toHaveBeenCalled();
         expect(mockPrisma.shippingRule.findMany).toHaveBeenCalled();
       });
@@ -408,40 +425,42 @@ describe('ZoneBasedShippingCalculator', () => {
       const request = {
         customerState: 'JOH',
         totalWeight: 0.5,
-        orderValue: 100.00,
+        orderValue: 100.0,
         itemCount: 1,
         serviceType: 'STANDARD' as const,
         sessionId: 'test-session',
         orderId: 'order-123',
-        userId: 'user-456'
+        userId: 'user-456',
       };
 
       await calculator.calculateShipping(request);
-      
+
       expect(mockPrisma.shippingCalculation.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           orderId: 'order-123',
           sessionId: 'test-session',
           customerState: 'JOH',
           totalWeight: 0.5,
-          orderValue: 100.00,
+          orderValue: 100.0,
           itemCount: 1,
           userId: 'user-456',
           userType: 'MEMBER',
-          responseTimeMs: expect.any(Number)
-        })
+          responseTimeMs: expect.any(Number),
+        }),
       });
     });
 
     it('should handle logging failures gracefully', async () => {
       // Simulate logging failure
-      mockPrisma.shippingCalculation.create.mockRejectedValueOnce(new Error('Logging failed'));
-      
+      mockPrisma.shippingCalculation.create.mockRejectedValueOnce(
+        new Error('Logging failed')
+      );
+
       const request = {
         customerState: 'JOH',
         totalWeight: 0.5,
-        orderValue: 100.00,
-        itemCount: 1
+        orderValue: 100.0,
+        itemCount: 1,
       };
 
       // Should not throw error even if logging fails
@@ -453,7 +472,7 @@ describe('ZoneBasedShippingCalculator', () => {
   describe('Utility Functions', () => {
     it('should return available zones', async () => {
       const zones = await calculator.getAvailableZones();
-      
+
       expect(zones).toHaveLength(2);
       expect(zones.map(z => z.code)).toContain('PENINSULAR');
       expect(zones.map(z => z.code)).toContain('EAST_MALAYSIA');
@@ -461,15 +480,15 @@ describe('ZoneBasedShippingCalculator', () => {
 
     it('should return rules for specific zone', async () => {
       const rules = await calculator.getZoneRules('PENINSULAR');
-      
+
       expect(rules).toHaveLength(2); // 0-1kg and 1-2kg rules
-      expect(rules[0].price).toBe(5.00);
-      expect(rules[1].price).toBe(7.00);
+      expect(rules[0].price).toBe(5.0);
+      expect(rules[1].price).toBe(7.0);
     });
 
     it('should return empty array for unknown zone', async () => {
       const rules = await calculator.getZoneRules('UNKNOWN_ZONE');
-      
+
       expect(rules).toHaveLength(0);
     });
   });

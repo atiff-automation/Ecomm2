@@ -72,7 +72,6 @@ model User {
   referralSettings  ReferralSetting[]
   
   // Site customization relationships
-  themesCreated     SiteTheme[] @relation("ThemeCreator")
   heroSectionsCreated HeroSection[] @relation("HeroCreator")
   mediaUploads      MediaUpload[] @relation("MediaUploader")
   
@@ -995,21 +994,6 @@ enum MediaType {
   VIDEO
 }
 
-model SiteTheme {
-  id                String    @id @default(cuid())
-  name              String    @unique // Theme name (e.g., "default", "custom")
-  primaryColor      String    @default("#3B82F6") // Primary color (blue by default)
-  secondaryColor    String    @default("#FDE047") // Secondary/accent color (yellow by default)
-  backgroundColor   String    @default("#F8FAFC") // Page background color
-  textColor         String    @default("#1E293B") // Primary text color
-  isActive          Boolean   @default(false) // Only one theme can be active
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  createdBy         String?
-  creator           User?     @relation("ThemeCreator", fields: [createdBy], references: [id])
-
-  @@map("site_themes")
-}
 
 model HeroSection {
   id                String    @id @default(cuid())

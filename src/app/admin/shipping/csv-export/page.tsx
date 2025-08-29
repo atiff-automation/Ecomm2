@@ -40,14 +40,21 @@ const CSVExportPage = () => {
   const [statistics, setStatistics] = useState<ExportStatistics | null>(null);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
-  const [exportMode, setExportMode] = useState<'filtered' | 'selected'>('filtered');
-  
+  const [exportMode, setExportMode] = useState<'filtered' | 'selected'>(
+    'filtered'
+  );
+
   // Filter states
-  const [statusFilter, setStatusFilter] = useState<string[]>(['CONFIRMED', 'PROCESSING']);
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(['PAID']);
+  const [statusFilter, setStatusFilter] = useState<string[]>([
+    'CONFIRMED',
+    'PROCESSING',
+  ]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>([
+    'PAID',
+  ]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  
+
   // Export options
   const [includeHeaders, setIncludeHeaders] = useState(true);
   const [validateRequired, setValidateRequired] = useState(true);
@@ -73,7 +80,7 @@ const CSVExportPage = () => {
     try {
       const requestBody = {
         action: 'preview',
-        ...(exportMode === 'selected' 
+        ...(exportMode === 'selected'
           ? { orderIds: selectedOrders }
           : {
               filters: {
@@ -81,21 +88,23 @@ const CSVExportPage = () => {
                 paymentStatus: paymentStatusFilter,
                 dateFrom: dateFrom || undefined,
                 dateTo: dateTo || undefined,
-              }
-            }
-        ),
+              },
+            }),
         options: {
           includeHeaders,
           validateRequired,
-          previewLimit: 5
-        }
+          previewLimit: 5,
+        },
       };
 
-      const response = await fetch('/api/admin/shipping/export/easyparcel-csv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
+      const response = await fetch(
+        '/api/admin/shipping/export/easyparcel-csv',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       const data = await response.json();
       if (data.success) {
@@ -116,7 +125,7 @@ const CSVExportPage = () => {
     try {
       const requestBody = {
         action: 'export',
-        ...(exportMode === 'selected' 
+        ...(exportMode === 'selected'
           ? { orderIds: selectedOrders }
           : {
               filters: {
@@ -124,33 +133,41 @@ const CSVExportPage = () => {
                 paymentStatus: paymentStatusFilter,
                 dateFrom: dateFrom || undefined,
                 dateTo: dateTo || undefined,
-              }
-            }
-        ),
+              },
+            }),
         options: {
           includeHeaders,
-          validateRequired
-        }
+          validateRequired,
+        },
       };
 
-      const response = await fetch('/api/admin/shipping/export/easyparcel-csv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
+      const response = await fetch(
+        '/api/admin/shipping/export/easyparcel-csv',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'easyparcel-export.csv';
+        a.download =
+          response.headers
+            .get('Content-Disposition')
+            ?.split('filename=')[1]
+            ?.replace(/"/g, '') || 'easyparcel-export.csv';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
-        alert(`CSV exported successfully! (${response.headers.get('X-Export-Count')} orders)`);
+
+        alert(
+          `CSV exported successfully! (${response.headers.get('X-Export-Count')} orders)`
+        );
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Export failed');
@@ -184,8 +201,13 @@ const CSVExportPage = () => {
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">EasyParcel CSV Export</h1>
-        <p className="text-gray-600">Export orders in EasyParcel bulk upload format as a fallback when API is unavailable</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          EasyParcel CSV Export
+        </h1>
+        <p className="text-gray-600">
+          Export orders in EasyParcel bulk upload format as a fallback when API
+          is unavailable
+        </p>
       </div>
 
       {/* Statistics Cards */}
@@ -193,23 +215,35 @@ const CSVExportPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-            <p className="text-2xl font-bold text-gray-900">{statistics.totalOrders}</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {statistics.totalOrders}
+            </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Ready to Ship</h3>
-            <p className="text-2xl font-bold text-green-600">{statistics.readyToShip}</p>
+            <p className="text-2xl font-bold text-green-600">
+              {statistics.readyToShip}
+            </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Processing</h3>
-            <p className="text-2xl font-bold text-blue-600">{statistics.processing}</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {statistics.processing}
+            </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-sm font-medium text-gray-500">Pending Payment</h3>
-            <p className="text-2xl font-bold text-yellow-600">{statistics.pendingPayment}</p>
+            <h3 className="text-sm font-medium text-gray-500">
+              Pending Payment
+            </h3>
+            <p className="text-2xl font-bold text-yellow-600">
+              {statistics.pendingPayment}
+            </p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-sm font-medium text-gray-500">Recent Orders</h3>
-            <p className="text-2xl font-bold text-purple-600">{statistics.recentOrders}</p>
+            <p className="text-2xl font-bold text-purple-600">
+              {statistics.recentOrders}
+            </p>
           </div>
         </div>
       )}
@@ -218,17 +252,19 @@ const CSVExportPage = () => {
         {/* Export Configuration */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <h2 className="text-xl font-semibold mb-4">Export Configuration</h2>
-          
+
           {/* Export Mode */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Export Mode</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Export Mode
+            </label>
             <div className="space-y-2">
               <label className="flex items-center">
                 <input
                   type="radio"
                   value="filtered"
                   checked={exportMode === 'filtered'}
-                  onChange={(e) => setExportMode(e.target.value as 'filtered')}
+                  onChange={e => setExportMode(e.target.value as 'filtered')}
                   className="mr-2"
                 />
                 Filter by criteria
@@ -238,7 +274,7 @@ const CSVExportPage = () => {
                   type="radio"
                   value="selected"
                   checked={exportMode === 'selected'}
-                  onChange={(e) => setExportMode(e.target.value as 'selected')}
+                  onChange={e => setExportMode(e.target.value as 'selected')}
                   className="mr-2"
                 />
                 Select specific orders ({selectedOrders.length} selected)
@@ -251,18 +287,29 @@ const CSVExportPage = () => {
             <>
               {/* Status Filter */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Order Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Order Status
+                </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(status => (
+                  {[
+                    'PENDING',
+                    'CONFIRMED',
+                    'PROCESSING',
+                    'SHIPPED',
+                    'DELIVERED',
+                    'CANCELLED',
+                  ].map(status => (
                     <label key={status} className="flex items-center">
                       <input
                         type="checkbox"
                         checked={statusFilter.includes(status)}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (e.target.checked) {
                             setStatusFilter([...statusFilter, status]);
                           } else {
-                            setStatusFilter(statusFilter.filter(s => s !== status));
+                            setStatusFilter(
+                              statusFilter.filter(s => s !== status)
+                            );
                           }
                         }}
                         className="mr-2"
@@ -275,18 +322,25 @@ const CSVExportPage = () => {
 
               {/* Payment Status Filter */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Status
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {['PENDING', 'PAID', 'FAILED', 'REFUNDED'].map(status => (
                     <label key={status} className="flex items-center">
                       <input
                         type="checkbox"
                         checked={paymentStatusFilter.includes(status)}
-                        onChange={(e) => {
+                        onChange={e => {
                           if (e.target.checked) {
-                            setPaymentStatusFilter([...paymentStatusFilter, status]);
+                            setPaymentStatusFilter([
+                              ...paymentStatusFilter,
+                              status,
+                            ]);
                           } else {
-                            setPaymentStatusFilter(paymentStatusFilter.filter(s => s !== status));
+                            setPaymentStatusFilter(
+                              paymentStatusFilter.filter(s => s !== status)
+                            );
                           }
                         }}
                         className="mr-2"
@@ -299,19 +353,21 @@ const CSVExportPage = () => {
 
               {/* Date Range */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date Range
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="date"
                     value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
+                    onChange={e => setDateFrom(e.target.value)}
                     className="border rounded px-3 py-2"
                     placeholder="From"
                   />
                   <input
                     type="date"
                     value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
+                    onChange={e => setDateTo(e.target.value)}
                     className="border rounded px-3 py-2"
                     placeholder="To"
                   />
@@ -322,13 +378,15 @@ const CSVExportPage = () => {
 
           {/* Export Options */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Export Options</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Export Options
+            </label>
             <div className="space-y-2">
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={includeHeaders}
-                  onChange={(e) => setIncludeHeaders(e.target.checked)}
+                  onChange={e => setIncludeHeaders(e.target.checked)}
                   className="mr-2"
                 />
                 Include CSV headers
@@ -337,7 +395,7 @@ const CSVExportPage = () => {
                 <input
                   type="checkbox"
                   checked={validateRequired}
-                  onChange={(e) => setValidateRequired(e.target.checked)}
+                  onChange={e => setValidateRequired(e.target.checked)}
                   className="mr-2"
                 />
                 Validate required fields
@@ -367,7 +425,7 @@ const CSVExportPage = () => {
         {/* Preview Results */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <h2 className="text-xl font-semibold mb-4">Export Preview</h2>
-          
+
           {previewData ? (
             <>
               {/* Summary */}
@@ -385,13 +443,20 @@ const CSVExportPage = () => {
               {/* Validation Issues */}
               {previewData.validationIssues.length > 0 && (
                 <div className="mb-4 p-4 bg-red-50 rounded border border-red-200">
-                  <h4 className="font-medium text-red-800 mb-2">Validation Issues:</h4>
+                  <h4 className="font-medium text-red-800 mb-2">
+                    Validation Issues:
+                  </h4>
                   <ul className="text-sm text-red-700 space-y-1">
-                    {previewData.validationIssues.slice(0, 5).map((issue, index) => (
-                      <li key={index}>• {issue}</li>
-                    ))}
+                    {previewData.validationIssues
+                      .slice(0, 5)
+                      .map((issue, index) => (
+                        <li key={index}>• {issue}</li>
+                      ))}
                     {previewData.validationIssues.length > 5 && (
-                      <li>... and {previewData.validationIssues.length - 5} more issues</li>
+                      <li>
+                        ... and {previewData.validationIssues.length - 5} more
+                        issues
+                      </li>
                     )}
                   </ul>
                 </div>
@@ -418,12 +483,14 @@ const CSVExportPage = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="max-h-64 overflow-y-auto border rounded">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        {exportMode === 'selected' && <th className="p-2 text-left">Select</th>}
+                        {exportMode === 'selected' && (
+                          <th className="p-2 text-left">Select</th>
+                        )}
                         <th className="p-2 text-left">Order #</th>
                         <th className="p-2 text-left">Customer</th>
                         <th className="p-2 text-left">Status</th>
@@ -438,19 +505,31 @@ const CSVExportPage = () => {
                               <input
                                 type="checkbox"
                                 checked={selectedOrders.includes(order.id)}
-                                onChange={(e) => handleOrderSelection(order.id, e.target.checked)}
+                                onChange={e =>
+                                  handleOrderSelection(
+                                    order.id,
+                                    e.target.checked
+                                  )
+                                }
                               />
                             </td>
                           )}
-                          <td className="p-2 font-mono text-xs">{order.orderNumber}</td>
+                          <td className="p-2 font-mono text-xs">
+                            {order.orderNumber}
+                          </td>
                           <td className="p-2">{order.customerName}</td>
                           <td className="p-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              order.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                              order.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
-                              order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded text-xs ${
+                                order.status === 'CONFIRMED'
+                                  ? 'bg-green-100 text-green-800'
+                                  : order.status === 'PROCESSING'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : order.status === 'PENDING'
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
                               {order.status}
                             </span>
                           </td>
@@ -477,17 +556,27 @@ const CSVExportPage = () => {
 
       {/* Help Section */}
       <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h3 className="font-medium text-blue-800 mb-2">How to use EasyParcel CSV Export:</h3>
+        <h3 className="font-medium text-blue-800 mb-2">
+          How to use EasyParcel CSV Export:
+        </h3>
         <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
           <li>Configure your export criteria using the filters above</li>
-          <li>Click "Preview Export" to review the orders that will be exported</li>
-          <li>Download the CSV file when you're satisfied with the selection</li>
-          <li>Upload the CSV file to EasyParcel's bulk upload feature on their website</li>
+          <li>
+            Click "Preview Export" to review the orders that will be exported
+          </li>
+          <li>
+            Download the CSV file when you're satisfied with the selection
+          </li>
+          <li>
+            Upload the CSV file to EasyParcel's bulk upload feature on their
+            website
+          </li>
           <li>Process the shipments directly through EasyParcel's interface</li>
         </ol>
         <p className="text-xs text-blue-600 mt-2">
-          <strong>Note:</strong> This is a fallback method when the EasyParcel API is unavailable.
-          The CSV format follows EasyParcel's bulk upload template specification.
+          <strong>Note:</strong> This is a fallback method when the EasyParcel
+          API is unavailable. The CSV format follows EasyParcel's bulk upload
+          template specification.
         </p>
       </div>
     </div>

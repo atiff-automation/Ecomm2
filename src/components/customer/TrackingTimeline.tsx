@@ -7,17 +7,20 @@
 'use client';
 
 import React from 'react';
-import { 
-  CheckCircle, 
-  Circle, 
-  Clock, 
-  MapPin, 
+import {
+  CheckCircle,
+  Circle,
+  Clock,
+  MapPin,
   Package,
   Truck,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import TrackingStatus from './TrackingStatus';
-import { formatTrackingDate, sortTrackingEventsByDate } from '@/lib/utils/date-formatter';
+import {
+  formatTrackingDate,
+  sortTrackingEventsByDate,
+} from '@/lib/utils/date-formatter';
 import { TrackingEvent, TrackingTimelineProps } from '@/lib/types/tracking';
 
 interface TrackingEvent {
@@ -37,20 +40,27 @@ interface TrackingTimelineProps {
 /**
  * Get icon for tracking event
  */
-const getEventIcon = (eventName: string, isCompleted: boolean, isCurrent: boolean) => {
+const getEventIcon = (
+  eventName: string,
+  isCompleted: boolean,
+  isCurrent: boolean
+) => {
   const iconClass = `h-4 w-4 ${
-    isCompleted 
-      ? 'text-green-600' 
-      : isCurrent 
-        ? 'text-blue-600' 
+    isCompleted
+      ? 'text-green-600'
+      : isCurrent
+        ? 'text-blue-600'
         : 'text-gray-400'
   }`;
 
   const eventType = eventName.toLowerCase();
-  
+
   if (eventType.includes('delivered')) {
     return <CheckCircle className={iconClass} />;
-  } else if (eventType.includes('out_for_delivery') || eventType.includes('delivery')) {
+  } else if (
+    eventType.includes('out_for_delivery') ||
+    eventType.includes('delivery')
+  ) {
     return <Truck className={iconClass} />;
   } else if (eventType.includes('transit') || eventType.includes('shipped')) {
     return <Truck className={iconClass} />;
@@ -58,7 +68,11 @@ const getEventIcon = (eventName: string, isCompleted: boolean, isCurrent: boolea
     return <Package className={iconClass} />;
   } else if (eventType.includes('exception') || eventType.includes('failed')) {
     return <AlertCircle className={iconClass} />;
-  } else if (eventType.includes('depot') || eventType.includes('hub') || eventType.includes('location')) {
+  } else if (
+    eventType.includes('depot') ||
+    eventType.includes('hub') ||
+    eventType.includes('location')
+  ) {
     return <MapPin className={iconClass} />;
   } else if (isCompleted) {
     return <CheckCircle className={iconClass} />;
@@ -72,7 +86,7 @@ const getEventIcon = (eventName: string, isCompleted: boolean, isCurrent: boolea
  */
 const formatTimestamp = (timestamp: string) => {
   const date = new Date(timestamp);
-  
+
   return {
     date: date.toLocaleDateString('en-MY', {
       month: 'short',
@@ -84,7 +98,7 @@ const formatTimestamp = (timestamp: string) => {
       minute: '2-digit',
       hour12: true,
     }),
-    relative: getRelativeTime(date)
+    relative: getRelativeTime(date),
   };
 };
 
@@ -94,7 +108,7 @@ const formatTimestamp = (timestamp: string) => {
 const getRelativeTime = (date: Date) => {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) {
     return 'Just now';
   } else if (diffInSeconds < 3600) {
@@ -115,33 +129,34 @@ const getRelativeTime = (date: Date) => {
  * Determine if event is completed, current, or pending
  */
 const getEventState = (
-  event: TrackingEvent, 
-  index: number, 
-  currentStatus: string, 
+  event: TrackingEvent,
+  index: number,
+  currentStatus: string,
   allEvents: TrackingEvent[]
 ) => {
   const eventStatus = event.eventName.toLowerCase();
   const normalizedCurrentStatus = currentStatus.toLowerCase();
-  
+
   // Latest event is typically current
   const isLatest = index === 0;
-  
+
   // If this event matches current status
-  const isCurrentStatus = eventStatus.includes(normalizedCurrentStatus) || 
-                         normalizedCurrentStatus.includes(eventStatus);
-  
+  const isCurrentStatus =
+    eventStatus.includes(normalizedCurrentStatus) ||
+    normalizedCurrentStatus.includes(eventStatus);
+
   return {
     isCompleted: !isLatest && !isCurrentStatus,
     isCurrent: isLatest || isCurrentStatus,
-    isPending: false
+    isPending: false,
   };
 };
 
-export default function TrackingTimeline({ 
-  events, 
-  currentStatus, 
+export default function TrackingTimeline({
+  events,
+  currentStatus,
   estimatedDelivery,
-  className = ''
+  className = '',
 }: TrackingTimelineProps) {
   // Sort events by timestamp (newest first)
   const sortedEvents = [...events].sort(
@@ -151,13 +166,13 @@ export default function TrackingTimeline({
   // Add estimated delivery as a future event if not delivered
   const isDelivered = currentStatus.toLowerCase() === 'delivered';
   const timelineEvents = [...sortedEvents];
-  
+
   if (!isDelivered && estimatedDelivery) {
     timelineEvents.push({
       eventName: 'Estimated Delivery',
       description: 'Expected delivery date',
       timestamp: estimatedDelivery,
-      location: undefined
+      location: undefined,
     });
   }
 
@@ -191,71 +206,92 @@ export default function TrackingTimeline({
       <div className="relative">
         {/* Timeline line */}
         <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-        
+
         {/* Timeline events */}
         <div className="space-y-6">
           {timelineEvents.map((event, index) => {
-            const eventState = getEventState(event, index, currentStatus, sortedEvents);
+            const eventState = getEventState(
+              event,
+              index,
+              currentStatus,
+              sortedEvents
+            );
             const timestamp = formatTimestamp(event.timestamp);
             const isEstimated = event.eventName === 'Estimated Delivery';
             const isPast = new Date(event.timestamp) < new Date();
-            
+
             return (
-              <div key={`${event.timestamp}-${index}`} className="relative flex items-start gap-4">
+              <div
+                key={`${event.timestamp}-${index}`}
+                className="relative flex items-start gap-4"
+              >
                 {/* Timeline dot */}
-                <div className={`
+                <div
+                  className={`
                   relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2
-                  ${eventState.isCompleted 
-                    ? 'bg-green-100 border-green-300' 
-                    : eventState.isCurrent 
-                      ? 'bg-blue-100 border-blue-300' 
-                      : isEstimated && !isPast
-                        ? 'bg-gray-50 border-gray-300'
-                        : 'bg-gray-100 border-gray-200'
+                  ${
+                    eventState.isCompleted
+                      ? 'bg-green-100 border-green-300'
+                      : eventState.isCurrent
+                        ? 'bg-blue-100 border-blue-300'
+                        : isEstimated && !isPast
+                          ? 'bg-gray-50 border-gray-300'
+                          : 'bg-gray-100 border-gray-200'
                   }
-                `}>
-                  {getEventIcon(event.eventName, eventState.isCompleted, eventState.isCurrent)}
+                `}
+                >
+                  {getEventIcon(
+                    event.eventName,
+                    eventState.isCompleted,
+                    eventState.isCurrent
+                  )}
                 </div>
 
                 {/* Event content */}
                 <div className="flex-1 min-w-0 pb-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <h4 className={`font-medium ${
-                        eventState.isCurrent 
-                          ? 'text-blue-900' 
-                          : eventState.isCompleted 
-                            ? 'text-green-900'
-                            : isEstimated && !isPast
-                              ? 'text-gray-600'
-                              : 'text-gray-700'
-                      }`}>
+                      <h4
+                        className={`font-medium ${
+                          eventState.isCurrent
+                            ? 'text-blue-900'
+                            : eventState.isCompleted
+                              ? 'text-green-900'
+                              : isEstimated && !isPast
+                                ? 'text-gray-600'
+                                : 'text-gray-700'
+                        }`}
+                      >
                         {event.eventName}
                       </h4>
-                      
+
                       {event.description && (
                         <p className="text-sm text-gray-600 mt-1">
                           {event.description}
                         </p>
                       )}
-                      
+
                       {event.location && (
                         <div className="flex items-center gap-1 mt-1">
                           <MapPin className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-500">{event.location}</span>
+                          <span className="text-xs text-gray-500">
+                            {event.location}
+                          </span>
                         </div>
                       )}
                     </div>
 
                     {/* Timestamp */}
                     <div className="text-right ml-2 sm:ml-4 flex-shrink-0 min-w-0">
-                      <div className={`text-sm font-medium ${
-                        isEstimated && !isPast 
-                          ? 'text-gray-500' 
-                          : eventState.isCurrent
-                            ? 'text-blue-700'
-                            : 'text-gray-700'
-                      }`}>
+                      <div
+                        className={`text-sm font-medium ${
+                          isEstimated && !isPast
+                            ? 'text-gray-500'
+                            : eventState.isCurrent
+                              ? 'text-blue-700'
+                              : 'text-gray-700'
+                        }`}
+                      >
                         {timestamp.date}
                       </div>
                       {!isEstimated && (
@@ -269,9 +305,7 @@ export default function TrackingTimeline({
                         </>
                       )}
                       {isEstimated && !isPast && (
-                        <div className="text-xs text-gray-400">
-                          Expected
-                        </div>
+                        <div className="text-xs text-gray-400">Expected</div>
                       )}
                     </div>
                   </div>
@@ -286,7 +320,8 @@ export default function TrackingTimeline({
       {sortedEvents.length > 0 && (
         <div className="mt-6 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center">
-            Showing {sortedEvents.length} tracking event{sortedEvents.length > 1 ? 's' : ''}
+            Showing {sortedEvents.length} tracking event
+            {sortedEvents.length > 1 ? 's' : ''}
             {estimatedDelivery && !isDelivered && ' + estimated delivery'}
           </p>
         </div>
@@ -305,11 +340,11 @@ interface TrackingTimelineCardProps extends TrackingTimelineProps {
   refreshing?: boolean;
 }
 
-export function TrackingTimelineCard({ 
-  title = "Shipping Timeline",
+export function TrackingTimelineCard({
+  title = 'Shipping Timeline',
   onRefresh,
   refreshing = false,
-  ...timelineProps 
+  ...timelineProps
 }: TrackingTimelineCardProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -326,7 +361,7 @@ export function TrackingTimelineCard({
           </button>
         )}
       </div>
-      
+
       {/* Timeline content */}
       <TrackingTimeline {...timelineProps} />
     </div>

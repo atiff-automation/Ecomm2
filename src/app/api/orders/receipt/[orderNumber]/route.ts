@@ -46,25 +46,27 @@ export async function GET(
   const startTime = Date.now();
   const clientIP = getClientIP(request);
   const userAgent = request.headers.get('user-agent') || 'unknown';
-  
+
   try {
     // Rate limiting
     try {
       await limiter.check(5, clientIP); // 5 requests per minute per IP
     } catch {
-      console.warn(`🚫 Receipt download rate limit exceeded for IP: ${clientIP}`);
+      console.warn(
+        `🚫 Receipt download rate limit exceeded for IP: ${clientIP}`
+      );
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Too many requests. Please try again later.',
-          error: 'RATE_LIMIT_EXCEEDED'
+          error: 'RATE_LIMIT_EXCEEDED',
         },
-        { 
+        {
           status: 429,
           headers: {
             ...SECURITY_HEADERS,
             'Retry-After': '60',
-          }
+          },
         }
       );
     }
@@ -77,48 +79,57 @@ export async function GET(
     const orderNumber = params.orderNumber;
     const sanitizedOrderNumber = sanitizeInput(orderNumber);
 
-    if (!sanitizedOrderNumber || !ORDER_NUMBER_REGEX.test(sanitizedOrderNumber)) {
-      console.warn(`🚫 Invalid order number format from IP: ${clientIP}, order: ${orderNumber}`);
+    if (
+      !sanitizedOrderNumber ||
+      !ORDER_NUMBER_REGEX.test(sanitizedOrderNumber)
+    ) {
+      console.warn(
+        `🚫 Invalid order number format from IP: ${clientIP}, order: ${orderNumber}`
+      );
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Invalid order number format',
-          error: 'INVALID_ORDER_NUMBER'
+          error: 'INVALID_ORDER_NUMBER',
         },
-        { 
+        {
           status: 400,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
 
-    console.log(`🧾 Receipt download request: ${sanitizedOrderNumber} from IP: ${clientIP}`);
+    console.log(
+      `🧾 Receipt download request: ${sanitizedOrderNumber} from IP: ${clientIP}`
+    );
 
     // Find the order with security constraints
     const order = await prisma.order.findFirst({
-      where: { 
+      where: {
         orderNumber: sanitizedOrderNumber,
         // Only allow recent orders for security
         createdAt: {
-          gte: new Date(Date.now() - MAX_ORDER_AGE_MS)
+          gte: new Date(Date.now() - MAX_ORDER_AGE_MS),
         },
         // Only allow paid orders
-        paymentStatus: 'PAID'
+        paymentStatus: 'PAID',
       },
     });
 
     if (!order) {
-      console.warn(`❌ Receipt not available: ${sanitizedOrderNumber} from IP: ${clientIP}`);
-      
+      console.warn(
+        `❌ Receipt not available: ${sanitizedOrderNumber} from IP: ${clientIP}`
+      );
+
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Receipt not available or order not found',
-          error: 'RECEIPT_NOT_AVAILABLE'
+          error: 'RECEIPT_NOT_AVAILABLE',
         },
-        { 
+        {
           status: 404,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
@@ -127,16 +138,18 @@ export async function GET(
     const receiptData = await invoiceService.getReceiptData(order.id);
 
     if (!receiptData) {
-      console.error(`💥 Failed to generate receipt data for order: ${sanitizedOrderNumber}`);
+      console.error(
+        `💥 Failed to generate receipt data for order: ${sanitizedOrderNumber}`
+      );
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Failed to generate receipt',
-          error: 'RECEIPT_GENERATION_FAILED'
+          error: 'RECEIPT_GENERATION_FAILED',
         },
-        { 
+        {
           status: 500,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
@@ -149,7 +162,7 @@ export async function GET(
       try {
         // Dynamic import to avoid SSR issues
         const puppeteer = (await import('puppeteer')).default;
-        
+
         browser = await puppeteer.launch({
           headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -170,15 +183,17 @@ export async function GET(
         });
 
         await browser.close();
-        
+
         const responseTime = Date.now() - startTime;
-        console.log(`✅ Receipt PDF generated in ${responseTime}ms for order: ${sanitizedOrderNumber}`);
+        console.log(
+          `✅ Receipt PDF generated in ${responseTime}ms for order: ${sanitizedOrderNumber}`
+        );
 
         return new NextResponse(pdfBuffer, {
           headers: {
             ...SECURITY_HEADERS,
             'Content-Type': 'application/pdf',
-            'Content-Disposition': download 
+            'Content-Disposition': download
               ? `attachment; filename="Receipt-${sanitizedOrderNumber}.pdf"`
               : `inline; filename="Receipt-${sanitizedOrderNumber}.pdf"`,
           },
@@ -193,9 +208,11 @@ export async function GET(
     } else {
       // Return HTML receipt
       const htmlReceipt = invoiceService.generateReceiptHTML(receiptData);
-      
+
       const responseTime = Date.now() - startTime;
-      console.log(`✅ Receipt HTML generated in ${responseTime}ms for order: ${sanitizedOrderNumber}`);
+      console.log(
+        `✅ Receipt HTML generated in ${responseTime}ms for order: ${sanitizedOrderNumber}`
+      );
 
       return new NextResponse(htmlReceipt, {
         headers: {
@@ -204,20 +221,19 @@ export async function GET(
         },
       });
     }
-
   } catch (error) {
     const responseTime = Date.now() - startTime;
     console.error(`💥 Receipt download error (${responseTime}ms):`, error);
 
     return NextResponse.json(
-      { 
+      {
         success: false,
         message: 'Internal server error during receipt generation',
-        error: 'INTERNAL_ERROR'
+        error: 'INTERNAL_ERROR',
       },
-      { 
+      {
         status: 500,
-        headers: SECURITY_HEADERS
+        headers: SECURITY_HEADERS,
       }
     );
   }

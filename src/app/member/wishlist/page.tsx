@@ -59,17 +59,27 @@ interface WishlistItem {
 }
 
 // Centralized pricing component for member wishlist
-const MemberWishlistPricing = ({ product }: { product: WishlistItem['product'] }) => {
+const MemberWishlistPricing = ({
+  product,
+}: {
+  product: WishlistItem['product'];
+}) => {
   const pricing = usePricing(product);
-  
+
   return (
     <div className="space-y-1">
       <div className="flex items-center space-x-2">
-        <span className={`text-lg font-bold ${pricing.displayClasses.priceColor}`}>
+        <span
+          className={`text-lg font-bold ${pricing.displayClasses.priceColor}`}
+        >
           {pricing.formattedPrice}
         </span>
         {pricing.badges.map((badge, index) => (
-          <Badge key={index} variant={badge.variant} className={badge.className}>
+          <Badge
+            key={index}
+            variant={badge.variant}
+            className={badge.className}
+          >
             {badge.text}
           </Badge>
         ))}
@@ -79,7 +89,9 @@ const MemberWishlistPricing = ({ product }: { product: WishlistItem['product'] }
           <span className="text-sm text-gray-500 line-through">
             {pricing.formattedOriginalPrice}
           </span>
-          <span className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}>
+          <span
+            className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}
+          >
             Save {pricing.formattedSavings}
           </span>
         </div>

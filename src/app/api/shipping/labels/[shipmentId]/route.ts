@@ -21,10 +21,7 @@ interface RouteParams {
 /**
  * GET - Generate and download shipping label
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { shipmentId } = params;
     const { searchParams } = new URL(request.url);
@@ -44,13 +41,13 @@ export async function GET(
       where: { id: shipmentId },
       include: {
         order: {
-          select: { 
-            id: true, 
-            orderNumber: true, 
+          select: {
+            id: true,
+            orderNumber: true,
             userId: true,
             status: true,
             paymentStatus: true,
-          }
+          },
         },
       },
     });
@@ -63,9 +60,11 @@ export async function GET(
     }
 
     // Verify access rights (admin or order owner)
-    const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
-    const isOwner = session?.user?.id && shipment.order.userId === session.user.id;
-    
+    const isAdmin =
+      session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
+    const isOwner =
+      session?.user?.id && shipment.order.userId === session.user.id;
+
     if (!isAdmin && !isOwner) {
       return NextResponse.json(
         { message: 'Unauthorized access to shipping label' },
@@ -74,7 +73,11 @@ export async function GET(
     }
 
     // Check if shipment is in valid status for label generation
-    if (!['BOOKED', 'LABEL_GENERATED', 'PICKUP_SCHEDULED', 'PICKED_UP'].includes(shipment.status)) {
+    if (
+      !['BOOKED', 'LABEL_GENERATED', 'PICKUP_SCHEDULED', 'PICKED_UP'].includes(
+        shipment.status
+      )
+    ) {
       return NextResponse.json(
         { message: 'Shipment is not in valid status for label generation' },
         { status: 400 }
@@ -113,7 +116,9 @@ export async function GET(
         await fs.mkdir(labelsDir, { recursive: true });
 
         // Download label from EasyParcel
-        const labelBuffer = await easyParcelService.generateLabel(shipment.easyParcelShipmentId);
+        const labelBuffer = await easyParcelService.generateLabel(
+          shipment.easyParcelShipmentId
+        );
 
         // Save label to file system
         await fs.writeFile(labelPath, labelBuffer);
@@ -124,7 +129,10 @@ export async function GET(
           data: {
             labelUrl: labelUrl,
             labelGenerated: true,
-            status: shipment.status === 'BOOKED' ? 'LABEL_GENERATED' : shipment.status,
+            status:
+              shipment.status === 'BOOKED'
+                ? 'LABEL_GENERATED'
+                : shipment.status,
             statusDescription: 'Shipping label generated',
           },
         });
@@ -142,7 +150,6 @@ export async function GET(
         });
 
         console.log('✅ Label generated and saved:', labelPath);
-
       } catch (error) {
         console.error('❌ Label generation failed:', error);
         return NextResponse.json(
@@ -157,7 +164,7 @@ export async function GET(
       try {
         // Read and serve the PDF file
         const labelBuffer = await fs.readFile(labelPath);
-        
+
         return new NextResponse(labelBuffer, {
           status: 200,
           headers: {
@@ -195,7 +202,6 @@ export async function GET(
         },
       });
     }
-
   } catch (error) {
     console.error('❌ Label API error:', error);
     return NextResponse.json(
@@ -208,16 +214,16 @@ export async function GET(
 /**
  * DELETE - Remove label file (admin only)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { shipmentId } = params;
     const session = await getServerSession(authOptions);
 
     // Check admin permissions
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -228,7 +234,7 @@ export async function DELETE(
       where: { id: shipmentId },
       include: {
         order: {
-          select: { orderNumber: true }
+          select: { orderNumber: true },
         },
       },
     });
@@ -265,7 +271,6 @@ export async function DELETE(
       success: true,
       message: 'Label deleted successfully',
     });
-
   } catch (error) {
     console.error('❌ Label deletion error:', error);
     return NextResponse.json(

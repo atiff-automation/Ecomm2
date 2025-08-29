@@ -175,11 +175,11 @@ export default function WishlistPage() {
   };
 
   // Wishlist Item Card Component with centralized pricing
-  const WishlistItemCard = ({ 
-    item, 
-    onRemove, 
-    onAddToCart, 
-    addingToCart 
+  const WishlistItemCard = ({
+    item,
+    onRemove,
+    onAddToCart,
+    addingToCart,
   }: {
     item: WishlistItem;
     onRemove: (productId: string) => void;
@@ -207,7 +207,11 @@ export default function WishlistPage() {
           {/* Centralized Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {pricing.badges.map((badge, index) => (
-              <Badge key={index} variant={badge.variant} className={badge.className}>
+              <Badge
+                key={index}
+                variant={badge.variant}
+                className={badge.className}
+              >
                 {badge.text}
               </Badge>
             ))}
@@ -289,7 +293,9 @@ export default function WishlistPage() {
             {/* Centralized Pricing */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className={`font-bold text-lg ${pricing.displayClasses.priceColor}`}>
+                <span
+                  className={`font-bold text-lg ${pricing.displayClasses.priceColor}`}
+                >
                   {pricing.formattedPrice}
                 </span>
               </div>
@@ -298,7 +304,9 @@ export default function WishlistPage() {
                   <span className="text-sm text-muted-foreground line-through">
                     {pricing.formattedOriginalPrice}
                   </span>
-                  <span className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}>
+                  <span
+                    className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}
+                  >
                     Save {pricing.formattedSavings}
                   </span>
                 </div>
@@ -313,7 +321,10 @@ export default function WishlistPage() {
             {/* Add to Cart Button */}
             <Button
               className="w-full"
-              disabled={item.product.stockQuantity === 0 || addingToCart === item.product.id}
+              disabled={
+                item.product.stockQuantity === 0 ||
+                addingToCart === item.product.id
+              }
               onClick={() => onAddToCart(item.product.id)}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />

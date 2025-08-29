@@ -92,16 +92,12 @@ export function AdminPageLayout({
       />
 
       {/* Contextual Tabs - 48px height when present */}
-      {tabs && tabs.length > 0 && (
-        <ContextualTabs tabs={tabs} />
-      )}
+      {tabs && tabs.length > 0 && <ContextualTabs tabs={tabs} />}
 
       {/* Filters/Search Bar - 52px height when present */}
       {filters && (
         <div className="bg-white border-b border-gray-200 px-6 py-3">
-          <div className="h-7 flex items-center">
-            {filters}
-          </div>
+          <div className="h-7 flex items-center">{filters}</div>
         </div>
       )}
 
@@ -119,9 +115,7 @@ export function AdminPageLayout({
             </div>
           </div>
         ) : (
-          <div className="p-6">
-            {children}
-          </div>
+          <div className="p-6">{children}</div>
         )}
       </div>
     </div>

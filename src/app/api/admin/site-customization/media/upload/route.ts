@@ -121,14 +121,16 @@ export async function POST(request: NextRequest) {
         uploadedBy: uploaderId,
       },
       include: {
-        uploader: uploaderId ? {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        } : undefined,
+        uploader: uploaderId
+          ? {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            }
+          : undefined,
       },
     });
 
@@ -142,16 +144,16 @@ export async function POST(request: NextRequest) {
           details: {
             mediaId: mediaUpload.id,
             filename: mediaUpload.filename,
-          originalName: mediaUpload.originalName,
-          mediaType: mediaUpload.mediaType,
-          size: mediaUpload.size,
-          usage,
-          performedBy: session.user.email,
+            originalName: mediaUpload.originalName,
+            mediaType: mediaUpload.mediaType,
+            size: mediaUpload.size,
+            usage,
+            performedBy: session.user.email,
+          },
+          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+      });
     }
 
     return NextResponse.json({

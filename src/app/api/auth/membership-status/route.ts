@@ -16,35 +16,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         isLoggedIn: false,
         isMember: false,
-        hasPendingMembership: false
+        hasPendingMembership: false,
       });
     }
 
     // Get fresh membership status from database
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         isMember: true,
-        memberSince: true 
-      }
+        memberSince: true,
+      },
     });
 
     // Check for pending membership
     const pendingMembership = await prisma.pendingMembership.findFirst({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
 
     // Effective membership status (pending membership overrides approved status)
-    const effectiveMemberStatus = pendingMembership ? false : (user?.isMember || false);
+    const effectiveMemberStatus = pendingMembership
+      ? false
+      : user?.isMember || false;
 
     return NextResponse.json({
       isLoggedIn: true,
       isMember: effectiveMemberStatus,
       hasPendingMembership: !!pendingMembership,
       sessionIsMember: session.user.isMember, // For debugging
-      databaseIsMember: user?.isMember || false
+      databaseIsMember: user?.isMember || false,
     });
-
   } catch (error) {
     console.error('❌ Membership status error:', error);
     return NextResponse.json(

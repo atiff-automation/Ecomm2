@@ -223,8 +223,16 @@ export default function DiscountCodesPage() {
 
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md - Promotions section
   const tabs: TabConfig[] = [
-    { id: 'discount-codes', label: 'Discount Codes', href: '/admin/discount-codes' },
-    { id: 'member-promotions', label: 'Member Promotions', href: '/admin/member-promotions' },
+    {
+      id: 'discount-codes',
+      label: 'Discount Codes',
+      href: '/admin/discount-codes',
+    },
+    {
+      id: 'member-promotions',
+      label: 'Member Promotions',
+      href: '/admin/member-promotions',
+    },
   ];
 
   // Extract page actions
@@ -283,7 +291,6 @@ export default function DiscountCodesPage() {
       filters={filtersComponent}
       loading={loading}
     >
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>

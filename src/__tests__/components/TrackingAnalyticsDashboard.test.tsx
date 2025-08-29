@@ -15,38 +15,48 @@ global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
 jest.mock('next-auth/react', () => ({
   useSession: () => ({
     data: { user: { id: 'admin-1', role: 'ADMIN' } },
-    status: 'authenticated'
-  })
+    status: 'authenticated',
+  }),
 }));
 
 // Mock UI components
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: any) => <div className={`card ${className}`}>{children}</div>,
-  CardContent: ({ children, className }: any) => <div className={`card-content ${className}`}>{children}</div>,
-  CardHeader: ({ children, className }: any) => <div className={`card-header ${className}`}>{children}</div>,
-  CardTitle: ({ children, className }: any) => <div className={`card-title ${className}`}>{children}</div>,
+  Card: ({ children, className }: any) => (
+    <div className={`card ${className}`}>{children}</div>
+  ),
+  CardContent: ({ children, className }: any) => (
+    <div className={`card-content ${className}`}>{children}</div>
+  ),
+  CardHeader: ({ children, className }: any) => (
+    <div className={`card-header ${className}`}>{children}</div>
+  ),
+  CardTitle: ({ children, className }: any) => (
+    <div className={`card-title ${className}`}>{children}</div>
+  ),
 }));
 
 jest.mock('@/components/ui/button', () => ({
   Button: ({ children, onClick, disabled, variant, className }: any) => (
-    <button 
-      onClick={onClick} 
-      disabled={disabled} 
+    <button
+      onClick={onClick}
+      disabled={disabled}
       className={`btn ${variant} ${className}`}
     >
       {children}
     </button>
-  )
+  ),
 }));
 
 jest.mock('@/components/ui/select', () => ({
   Select: ({ children, value, onValueChange }: any) => (
-    <select value={value} onChange={(e) => onValueChange(e.target.value)}>
+    <select value={value} onChange={e => onValueChange(e.target.value)}>
       {children}
     </select>
   ),
   SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
+  SelectItem: ({ children, value }: any) => (
+    <option value={value}>{children}</option>
+  ),
   SelectTrigger: ({ children }: any) => <div>{children}</div>,
   SelectValue: () => <span>Select Value</span>,
 }));
@@ -54,12 +64,14 @@ jest.mock('@/components/ui/select', () => ({
 jest.mock('@/components/ui/badge', () => ({
   Badge: ({ children, className, variant }: any) => (
     <span className={`badge ${variant} ${className}`}>{children}</span>
-  )
+  ),
 }));
 
 jest.mock('@/components/ui/alert', () => ({
   Alert: ({ children }: any) => <div className="alert">{children}</div>,
-  AlertDescription: ({ children }: any) => <div className="alert-description">{children}</div>,
+  AlertDescription: ({ children }: any) => (
+    <div className="alert-description">{children}</div>
+  ),
 }));
 
 const mockAnalyticsData = {
@@ -76,22 +88,22 @@ const mockAnalyticsData = {
         courierName: 'Pos Laju',
         shipmentCount: 75,
         deliveryRate: 96.0,
-        averageTime: 2.8
+        averageTime: 2.8,
       },
       {
         courierName: 'GDex',
         shipmentCount: 50,
         deliveryRate: 88.0,
-        averageTime: 3.5
+        averageTime: 3.5,
       },
       {
         courierName: 'City-Link',
         shipmentCount: 25,
         deliveryRate: 92.0,
-        averageTime: 3.0
-      }
-    ]
-  }
+        averageTime: 3.0,
+      },
+    ],
+  },
 };
 
 describe('TrackingAnalyticsDashboard', () => {
@@ -100,7 +112,7 @@ describe('TrackingAnalyticsDashboard', () => {
     (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
       json: async () => mockAnalyticsData,
-      blob: async () => new Blob(['csv content'], { type: 'text/csv' })
+      blob: async () => new Blob(['csv content'], { type: 'text/csv' }),
     } as Response);
   });
 
@@ -147,23 +159,27 @@ describe('TrackingAnalyticsDashboard', () => {
     fireEvent.change(select, { target: { value: '7' } });
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/tracking/analytics?days=7');
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/admin/tracking/analytics?days=7'
+      );
     });
   });
 
   test('handles batch refresh functionality', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockImplementation((url) => {
-      if (url === '/api/admin/orders/batch-tracking-refresh') {
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockImplementation(
+      url => {
+        if (url === '/api/admin/orders/batch-tracking-refresh') {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, message: 'Refresh completed' }),
+          } as Response);
+        }
         return Promise.resolve({
           ok: true,
-          json: async () => ({ success: true, message: 'Refresh completed' })
+          json: async () => mockAnalyticsData,
         } as Response);
       }
-      return Promise.resolve({
-        ok: true,
-        json: async () => mockAnalyticsData
-      } as Response);
-    });
+    );
 
     render(<TrackingAnalyticsDashboard />);
 
@@ -175,9 +191,12 @@ describe('TrackingAnalyticsDashboard', () => {
     fireEvent.click(refreshButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/orders/batch-tracking-refresh', {
-        method: 'POST'
-      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/admin/orders/batch-tracking-refresh',
+        {
+          method: 'POST',
+        }
+      );
     });
   });
 
@@ -227,7 +246,9 @@ describe('TrackingAnalyticsDashboard', () => {
     fireEvent.click(exportButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/tracking/export?days=30');
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/admin/tracking/export?days=30'
+      );
       expect(mockCreateObjectURL).toHaveBeenCalled();
       expect(mockClick).toHaveBeenCalled();
     });
@@ -241,7 +262,9 @@ describe('TrackingAnalyticsDashboard', () => {
     render(<TrackingAnalyticsDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to load tracking analytics')).toBeInTheDocument();
+      expect(
+        screen.getByText('Failed to load tracking analytics')
+      ).toBeInTheDocument();
     });
   });
 
@@ -250,13 +273,13 @@ describe('TrackingAnalyticsDashboard', () => {
       ...mockAnalyticsData,
       stats: {
         ...mockAnalyticsData.stats,
-        courierPerformance: []
-      }
+        courierPerformance: [],
+      },
     };
 
     (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
-      json: async () => emptyData
+      json: async () => emptyData,
     } as Response);
 
     render(<TrackingAnalyticsDashboard />);
@@ -275,10 +298,10 @@ describe('TrackingAnalyticsDashboard', () => {
 
     // Check delivery rate calculation (120/150 * 100 = 80.0%)
     expect(screen.getByText('80.0% delivery rate')).toBeInTheDocument();
-    
+
     // Check in-transit percentage (25/150 * 100 = 16.7%)
     expect(screen.getByText('16.7% of total')).toBeInTheDocument();
-    
+
     // Check exception rate (5/150 * 100 = 3.3%)
     expect(screen.getByText('3.3% exception rate')).toBeInTheDocument();
   });
@@ -298,7 +321,9 @@ describe('TrackingAnalyticsDashboard', () => {
   });
 
   test('applies custom className prop', () => {
-    const { container } = render(<TrackingAnalyticsDashboard className="custom-class" />);
+    const { container } = render(
+      <TrackingAnalyticsDashboard className="custom-class" />
+    );
     expect(container.firstChild).toHaveClass('custom-class');
   });
 
@@ -325,14 +350,14 @@ describe('TrackingAnalyticsDashboard Performance', () => {
           courierName: `Courier ${i + 1}`,
           shipmentCount: Math.floor(Math.random() * 1000),
           deliveryRate: Math.random() * 100,
-          averageTime: Math.random() * 10
-        }))
-      }
+          averageTime: Math.random() * 10,
+        })),
+      },
     };
 
     (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
-      json: async () => largeDataset
+      json: async () => largeDataset,
     } as Response);
 
     const startTime = performance.now();
@@ -357,7 +382,7 @@ describe('TrackingAnalyticsDashboard Performance', () => {
     });
 
     const select = screen.getByRole('combobox');
-    
+
     // Rapid changes
     fireEvent.change(select, { target: { value: '7' } });
     fireEvent.change(select, { target: { value: '30' } });
@@ -365,7 +390,9 @@ describe('TrackingAnalyticsDashboard Performance', () => {
 
     await waitFor(() => {
       // Should only make the final API call
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/tracking/analytics?days=90');
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/admin/tracking/analytics?days=90'
+      );
     });
   });
 });

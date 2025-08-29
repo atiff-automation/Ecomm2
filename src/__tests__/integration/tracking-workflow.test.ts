@@ -3,12 +3,15 @@
  * @jest-environment node
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { createMocks } from 'node-mocks-http';
 
 // Import the actual API routes for integration testing
 import { POST as createShipment } from '@/app/api/admin/orders/bulk-ship/route';
-import { GET as getTracking, POST as refreshTracking } from '@/app/api/admin/orders/[id]/tracking/route';
+import {
+  GET as getTracking,
+  POST as refreshTracking,
+} from '@/app/api/admin/orders/[id]/tracking/route';
 import { POST as bulkRefresh } from '@/app/api/admin/orders/bulk-tracking-refresh/route';
 import { GET as getAnalytics } from '@/app/api/admin/tracking/analytics/route';
 
@@ -27,20 +30,20 @@ jest.mock('@/lib/prisma', () => {
       city: 'Kuala Lumpur',
       state: 'Selangor',
       postcode: '50000',
-      country: 'Malaysia'
+      country: 'Malaysia',
     },
     orderItems: [
       {
         id: 'item-1',
         quantity: 2,
-        price: 50.00,
+        price: 50.0,
         product: {
           name: 'Test Product',
           weight: 0.5,
-          dimensions: { length: 20, width: 15, height: 10 }
-        }
-      }
-    ]
+          dimensions: { length: 20, width: 15, height: 10 },
+        },
+      },
+    ],
   };
 
   const mockShipment = {
@@ -54,7 +57,7 @@ jest.mock('@/lib/prisma', () => {
     actualDelivery: null,
     createdAt: new Date('2025-08-01'),
     updatedAt: new Date('2025-08-01'),
-    trackingEvents: []
+    trackingEvents: [],
   };
 
   return {
@@ -90,7 +93,7 @@ jest.mock('@/lib/shipping/easyparcel-service', () => ({
     createShipment: jest.fn(),
     trackShipment: jest.fn(),
     calculateShipping: jest.fn(),
-  }
+  },
 }));
 
 jest.mock('next-auth', () => ({
@@ -101,56 +104,112 @@ jest.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
-const { prisma, mockOrder, mockShipment } = require('@/lib/prisma');
-const { easyParcelService } = require('@/lib/shipping/easyparcel-service');
-const { getServerSession } = require('next-auth');
+import { prisma } from '@/lib/prisma';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
+import { getServerSession } from 'next-auth';
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockEasyParcelService = easyParcelService as jest.Mocked<
+  typeof easyParcelService
+>;
+const mockGetServerSession = getServerSession as jest.MockedFunction<
+  typeof getServerSession
+>;
+
+// Mock data
+const mockOrder = {
+  id: 'order-1',
+  orderNumber: 'ORD-001',
+  status: 'PROCESSING' as const,
+  createdAt: new Date('2025-08-01'),
+  shipment: null,
+  shippingAddress: {
+    name: 'John Doe',
+    phone: '+60123456789',
+    addressLine1: '123 Test Street',
+    city: 'Kuala Lumpur',
+    state: 'Selangor',
+    postcode: '50000',
+    country: 'Malaysia',
+  },
+  orderItems: [
+    {
+      id: 'item-1',
+      quantity: 2,
+      price: 50.0,
+      product: {
+        name: 'Test Product',
+        weight: 0.5,
+        dimensions: { length: 20, width: 15, height: 10 },
+      },
+    },
+  ],
+};
+
+const mockShipment = {
+  id: 'shipment-1',
+  orderId: 'order-1',
+  trackingNumber: 'TRK123456789',
+  status: 'CREATED' as const,
+  courierName: 'Pos Laju',
+  serviceName: 'Standard',
+  estimatedDelivery: new Date('2025-08-05'),
+  actualDelivery: null,
+  createdAt: new Date('2025-08-01'),
+  updatedAt: new Date('2025-08-01'),
+  trackingEvents: [],
+};
 
 describe('Tracking Workflow Integration Tests', () => {
   const mockAdminSession = {
-    user: { id: 'admin-1', role: 'ADMIN' }
+    user: { id: 'admin-1', role: 'ADMIN' },
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getServerSession.mockResolvedValue(mockAdminSession);
+    mockGetServerSession.mockResolvedValue(mockAdminSession);
   });
 
   describe('End-to-End Order Fulfillment and Tracking Workflow', () => {
     test('should complete full workflow: order creation → shipment → tracking → delivery', async () => {
       // Step 1: Setup initial order
-      prisma.order.findMany.mockResolvedValue([{
-        ...mockOrder,
-        id: 'order-1'
-      }]);
+      mockPrisma.order.findMany.mockResolvedValue([
+        {
+          ...mockOrder,
+          id: 'order-1',
+        },
+      ]);
 
       // Step 2: Create shipment via bulk shipping
       const shipmentResponse = {
         waybill_number: 'TRK123456789',
         service_id: 'poslaju-standard',
         estimated_delivery: '2025-08-05',
-        labels: [{
-          url: 'https://example.com/label.pdf',
-          format: 'PDF'
-        }]
+        labels: [
+          {
+            url: 'https://example.com/label.pdf',
+            format: 'PDF',
+          },
+        ],
       };
 
-      easyParcelService.createShipment.mockResolvedValue(shipmentResponse);
-      prisma.shipment.create.mockResolvedValue({
+      mockEasyParcelService.createShipment.mockResolvedValue(shipmentResponse);
+      mockPrisma.shipment.create.mockResolvedValue({
         ...mockShipment,
-        trackingNumber: 'TRK123456789'
+        trackingNumber: 'TRK123456789',
       });
-      prisma.order.update.mockResolvedValue({
+      mockPrisma.order.update.mockResolvedValue({
         ...mockOrder,
-        status: 'SHIPPED'
+        status: 'SHIPPED',
       });
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const { req: shipReq } = createMocks({
         method: 'POST',
         body: {
           orderIds: ['order-1'],
-          courierService: 'poslaju-standard'
-        }
+          courierService: 'poslaju-standard',
+        },
       });
 
       const shipResponse = await createShipment(shipReq);
@@ -161,21 +220,23 @@ describe('Tracking Workflow Integration Tests', () => {
       expect(shipData.results.successful).toBe(1);
 
       // Step 3: Verify tracking data is available
-      prisma.order.findUnique.mockResolvedValue({
+      mockPrisma.order.findUnique.mockResolvedValue({
         ...mockOrder,
         shipment: {
           ...mockShipment,
           trackingNumber: 'TRK123456789',
           status: 'CREATED',
-          trackingEvents: []
-        }
+          trackingEvents: [],
+        },
       });
 
       const { req: trackingReq } = createMocks({
-        method: 'GET'
+        method: 'GET',
       });
 
-      const trackingResponse = await getTracking(trackingReq, { params: { id: 'order-1' } });
+      const trackingResponse = await getTracking(trackingReq, {
+        params: { id: 'order-1' },
+      });
       const trackingData = await trackingResponse.json();
 
       expect(trackingResponse.status).toBe(200);
@@ -192,31 +253,33 @@ describe('Tracking Workflow Integration Tests', () => {
             event_name: 'Package picked up',
             description: 'Package picked up from origin',
             timestamp: '2025-08-01T10:00:00Z',
-            location: 'Kuala Lumpur Hub'
+            location: 'Kuala Lumpur Hub',
           },
           {
             event_code: 'IN_TRANSIT',
             event_name: 'In transit',
             description: 'Package in transit to destination',
             timestamp: '2025-08-02T08:00:00Z',
-            location: 'Selangor Hub'
-          }
-        ]
+            location: 'Selangor Hub',
+          },
+        ],
       };
 
-      easyParcelService.trackShipment.mockResolvedValue(trackingUpdateData);
-      prisma.shipment.update.mockResolvedValue({
+      mockEasyParcelService.trackShipment.mockResolvedValue(trackingUpdateData);
+      mockPrisma.shipment.update.mockResolvedValue({
         ...mockShipment,
-        status: 'IN_TRANSIT'
+        status: 'IN_TRANSIT',
       });
-      prisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
-      prisma.shipmentTracking.createMany.mockResolvedValue({ count: 2 });
+      mockPrisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 2 });
 
       const { req: refreshReq } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
-      const refreshResponse = await refreshTracking(refreshReq, { params: { id: 'order-1' } });
+      const refreshResponse = await refreshTracking(refreshReq, {
+        params: { id: 'order-1' },
+      });
       const refreshData = await refreshResponse.json();
 
       expect(refreshResponse.status).toBe(200);
@@ -224,16 +287,18 @@ describe('Tracking Workflow Integration Tests', () => {
       expect(refreshData.message).toContain('refreshed successfully');
 
       // Step 5: Verify analytics reflect the changes
-      prisma.shipment.findMany.mockResolvedValue([{
-        ...mockShipment,
-        status: 'IN_TRANSIT',
-        order: mockOrder,
-        trackingEvents: []
-      }]);
+      mockPrisma.shipment.findMany.mockResolvedValue([
+        {
+          ...mockShipment,
+          status: 'IN_TRANSIT',
+          order: mockOrder,
+          trackingEvents: [],
+        },
+      ]);
 
       const { req: analyticsReq } = createMocks({
         method: 'GET',
-        query: { days: '30' }
+        query: { days: '30' },
       });
 
       const analyticsResponse = await getAnalytics(analyticsReq);
@@ -257,19 +322,21 @@ describe('Tracking Workflow Integration Tests', () => {
             eventName: 'Package delivered',
             description: 'Package delivered to recipient',
             eventTime: new Date('2025-08-04T14:30:00Z'),
-            location: 'Kuala Lumpur'
-          }
-        ]
+            location: 'Kuala Lumpur',
+          },
+        ],
       };
 
-      prisma.shipment.findMany.mockResolvedValue([{
-        ...deliveredShipment,
-        order: mockOrder
-      }]);
+      mockPrisma.shipment.findMany.mockResolvedValue([
+        {
+          ...deliveredShipment,
+          order: mockOrder,
+        },
+      ]);
 
       const { req } = createMocks({
         method: 'GET',
-        query: { days: '7' }
+        query: { days: '7' },
       });
 
       const response = await getAnalytics(req);
@@ -289,47 +356,51 @@ describe('Tracking Workflow Integration Tests', () => {
           trackingNumber: 'TRK123456',
           status: 'IN_TRANSIT',
           order: { orderNumber: 'ORD-001' },
-          updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+          updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
         },
         {
           id: 'shipment-2',
           trackingNumber: 'TRK789012',
           status: 'PICKED_UP',
           order: { orderNumber: 'ORD-002' },
-          updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
-        }
+          updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+        },
       ];
 
-      prisma.shipment.findMany.mockResolvedValue(multipleShipments);
-      
+      mockPrisma.shipment.findMany.mockResolvedValue(multipleShipments);
+
       // Mock successful tracking updates
-      easyParcelService.trackShipment
+      mockEasyParcelService.trackShipment
         .mockResolvedValueOnce({
           status: 'out_for_delivery',
-          tracking_events: [{
-            event_code: 'OUT_FOR_DELIVERY',
-            event_name: 'Out for delivery',
-            timestamp: '2025-08-03T09:00:00Z',
-            location: 'Kuala Lumpur'
-          }]
+          tracking_events: [
+            {
+              event_code: 'OUT_FOR_DELIVERY',
+              event_name: 'Out for delivery',
+              timestamp: '2025-08-03T09:00:00Z',
+              location: 'Kuala Lumpur',
+            },
+          ],
         })
         .mockResolvedValueOnce({
           status: 'in_transit',
-          tracking_events: [{
-            event_code: 'IN_TRANSIT',
-            event_name: 'In transit',
-            timestamp: '2025-08-02T15:00:00Z',
-            location: 'Selangor Hub'
-          }]
+          tracking_events: [
+            {
+              event_code: 'IN_TRANSIT',
+              event_name: 'In transit',
+              timestamp: '2025-08-02T15:00:00Z',
+              location: 'Selangor Hub',
+            },
+          ],
         });
 
-      prisma.shipment.update.mockResolvedValue({});
-      prisma.shipmentTracking.findMany.mockResolvedValue([]);
-      prisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 });
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.shipment.update.mockResolvedValue({});
+      mockPrisma.shipmentTracking.findMany.mockResolvedValue([]);
+      mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 });
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
       const response = await bulkRefresh(req);
@@ -348,32 +419,32 @@ describe('Tracking Workflow Integration Tests', () => {
           trackingNumber: 'TRK123456',
           status: 'IN_TRANSIT',
           order: { orderNumber: 'ORD-001' },
-          updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+          updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
         },
         {
           id: 'shipment-2',
           trackingNumber: 'TRK789012',
           status: 'PICKED_UP',
           order: { orderNumber: 'ORD-002' },
-          updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000)
-        }
+          updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        },
       ];
 
-      prisma.shipment.findMany.mockResolvedValue(shipmentsWithMixedResults);
-      
+      mockPrisma.shipment.findMany.mockResolvedValue(shipmentsWithMixedResults);
+
       // Mock one success, one failure
-      easyParcelService.trackShipment
+      mockEasyParcelService.trackShipment
         .mockResolvedValueOnce({
           status: 'delivered',
-          tracking_events: []
+          tracking_events: [],
         })
         .mockRejectedValueOnce(new Error('Tracking not found'));
 
-      prisma.shipment.update.mockResolvedValue({});
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.shipment.update.mockResolvedValue({});
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
       const response = await bulkRefresh(req);
@@ -389,21 +460,23 @@ describe('Tracking Workflow Integration Tests', () => {
 
   describe('Error Handling and Recovery', () => {
     test('should handle database transaction failures gracefully', async () => {
-      prisma.order.findMany.mockResolvedValue([mockOrder]);
-      easyParcelService.createShipment.mockResolvedValue({
+      mockPrisma.order.findMany.mockResolvedValue([mockOrder]);
+      mockEasyParcelService.createShipment.mockResolvedValue({
         waybill_number: 'TRK123456',
-        service_id: 'poslaju-standard'
+        service_id: 'poslaju-standard',
       });
-      
+
       // Simulate database failure
-      prisma.shipment.create.mockRejectedValue(new Error('Database connection failed'));
+      mockPrisma.shipment.create.mockRejectedValue(
+        new Error('Database connection failed')
+      );
 
       const { req } = createMocks({
         method: 'POST',
         body: {
           orderIds: ['order-1'],
-          courierService: 'poslaju-standard'
-        }
+          courierService: 'poslaju-standard',
+        },
       });
 
       const response = await createShipment(req);
@@ -417,16 +490,16 @@ describe('Tracking Workflow Integration Tests', () => {
     test('should handle EasyParcel API rate limiting', async () => {
       const shipment = {
         ...mockShipment,
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       };
 
-      prisma.shipment.findMany.mockResolvedValue([shipment]);
-      easyParcelService.trackShipment.mockRejectedValue(
+      mockPrisma.shipment.findMany.mockResolvedValue([shipment]);
+      mockEasyParcelService.trackShipment.mockRejectedValue(
         new Error('Rate limit exceeded - 429')
       );
 
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
       const response = await bulkRefresh(req);
@@ -438,36 +511,38 @@ describe('Tracking Workflow Integration Tests', () => {
     });
 
     test('should handle tracking data inconsistencies', async () => {
-      prisma.order.findUnique.mockResolvedValue({
+      mockPrisma.order.findUnique.mockResolvedValue({
         ...mockOrder,
         shipment: {
           ...mockShipment,
-          trackingNumber: 'TRK123456'
-        }
+          trackingNumber: 'TRK123456',
+        },
       });
 
       // Mock inconsistent tracking data
-      easyParcelService.trackShipment.mockResolvedValue({
+      mockEasyParcelService.trackShipment.mockResolvedValue({
         status: null,
         tracking_events: [
           {
             // Missing required fields
             event_code: null,
-            timestamp: 'invalid-date'
-          }
-        ]
+            timestamp: 'invalid-date',
+          },
+        ],
       });
 
-      prisma.shipment.update.mockResolvedValue({});
-      prisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
-      prisma.shipmentTracking.createMany.mockResolvedValue({ count: 0 });
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.shipment.update.mockResolvedValue({});
+      mockPrisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 0 });
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
-      const response = await refreshTracking(req, { params: { id: 'order-1' } });
+      const response = await refreshTracking(req, {
+        params: { id: 'order-1' },
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -484,44 +559,46 @@ describe('Tracking Workflow Integration Tests', () => {
         trackingNumber: `TRK${String(i + 1).padStart(6, '0')}`,
         status: 'IN_TRANSIT',
         order: { orderNumber: `ORD-${String(i + 1).padStart(3, '0')}` },
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       }));
 
       // But only process first 50 due to batch limit
-      prisma.shipment.findMany.mockResolvedValue(largeShipmentBatch.slice(0, 50));
-      
+      mockPrisma.shipment.findMany.mockResolvedValue(
+        largeShipmentBatch.slice(0, 50)
+      );
+
       // Mock successful responses for all
-      easyParcelService.trackShipment.mockResolvedValue({
+      mockEasyParcelService.trackShipment.mockResolvedValue({
         status: 'in_transit',
-        tracking_events: []
+        tracking_events: [],
       });
 
-      prisma.shipment.update.mockResolvedValue({});
-      prisma.shipmentTracking.findMany.mockResolvedValue([]);
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.shipment.update.mockResolvedValue({});
+      mockPrisma.shipmentTracking.findMany.mockResolvedValue([]);
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const startTime = Date.now();
-      
+
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
       const response = await bulkRefresh(req);
       const data = await response.json();
-      
+
       const endTime = Date.now();
       const processingTime = endTime - startTime;
 
       expect(response.status).toBe(200);
       expect(data.results.successful).toBe(50);
-      
+
       // Should respect batch limits
-      expect(prisma.shipment.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.shipment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          take: 50
+          take: 50,
         })
       );
-      
+
       // Processing time should be reasonable (allowing for rate limiting delays)
       expect(processingTime).toBeLessThan(120000); // 2 minutes max
     });
@@ -529,12 +606,12 @@ describe('Tracking Workflow Integration Tests', () => {
     test('should maintain data consistency under concurrent operations', async () => {
       const shipment = {
         ...mockShipment,
-        trackingNumber: 'TRK123456'
+        trackingNumber: 'TRK123456',
       };
 
-      prisma.order.findUnique.mockResolvedValue({
+      mockPrisma.order.findUnique.mockResolvedValue({
         ...mockOrder,
-        shipment
+        shipment,
       });
 
       // Simulate concurrent tracking events
@@ -542,8 +619,8 @@ describe('Tracking Workflow Integration Tests', () => {
         {
           id: 'event-1',
           eventCode: 'PICKED_UP',
-          eventTime: new Date('2025-08-01T10:00:00Z')
-        }
+          eventTime: new Date('2025-08-01T10:00:00Z'),
+        },
       ];
 
       const newTrackingData = {
@@ -551,39 +628,41 @@ describe('Tracking Workflow Integration Tests', () => {
         tracking_events: [
           {
             event_code: 'PICKED_UP',
-            timestamp: '2025-08-01T10:00:00Z' // Duplicate
+            timestamp: '2025-08-01T10:00:00Z', // Duplicate
           },
           {
             event_code: 'IN_TRANSIT',
-            timestamp: '2025-08-02T08:00:00Z' // New
-          }
-        ]
+            timestamp: '2025-08-02T08:00:00Z', // New
+          },
+        ],
       };
 
-      prisma.shipmentTracking.findMany.mockResolvedValue(existingEvents);
-      easyParcelService.trackShipment.mockResolvedValue(newTrackingData);
-      prisma.shipment.update.mockResolvedValue({});
-      prisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
-      prisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 }); // Only new event
-      prisma.auditLog.create.mockResolvedValue({});
+      mockPrisma.shipmentTracking.findMany.mockResolvedValue(existingEvents);
+      mockEasyParcelService.trackShipment.mockResolvedValue(newTrackingData);
+      mockPrisma.shipment.update.mockResolvedValue({});
+      mockPrisma.shipmentTracking.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.shipmentTracking.createMany.mockResolvedValue({ count: 1 }); // Only new event
+      mockPrisma.auditLog.create.mockResolvedValue({});
 
       const { req } = createMocks({
-        method: 'POST'
+        method: 'POST',
       });
 
-      const response = await refreshTracking(req, { params: { id: 'order-1' } });
+      const response = await refreshTracking(req, {
+        params: { id: 'order-1' },
+      });
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      
+
       // Should only create new events, not duplicates
-      expect(prisma.shipmentTracking.createMany).toHaveBeenCalledWith({
+      expect(mockPrisma.shipmentTracking.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
           expect.objectContaining({
-            eventCode: 'IN_TRANSIT'
-          })
-        ])
+            eventCode: 'IN_TRANSIT',
+          }),
+        ]),
       });
     });
   });

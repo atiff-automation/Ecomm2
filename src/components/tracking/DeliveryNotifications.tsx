@@ -36,7 +36,13 @@ interface NotificationPreferences {
 
 interface DeliveryNotification {
   id: string;
-  type: 'pickup' | 'transit' | 'delivery' | 'delivered' | 'exception' | 'important';
+  type:
+    | 'pickup'
+    | 'transit'
+    | 'delivery'
+    | 'delivered'
+    | 'exception'
+    | 'important';
   title: string;
   message: string;
   timestamp: string;
@@ -60,7 +66,9 @@ export default function DeliveryNotifications({
   customerPhone,
   className = '',
 }: DeliveryNotificationsProps) {
-  const [notifications, setNotifications] = useState<DeliveryNotification[]>([]);
+  const [notifications, setNotifications] = useState<DeliveryNotification[]>(
+    []
+  );
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     email: true,
     sms: false,
@@ -75,7 +83,9 @@ export default function DeliveryNotifications({
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await fetch(`/api/notifications/delivery/${trackingNumber}`);
+        const response = await fetch(
+          `/api/notifications/delivery/${trackingNumber}`
+        );
         if (response.ok) {
           const data = await response.json();
           setNotifications(data.notifications || []);
@@ -92,7 +102,9 @@ export default function DeliveryNotifications({
 
   // Load notification preferences
   useEffect(() => {
-    const savedPreferences = localStorage.getItem(`notification-preferences-${trackingNumber}`);
+    const savedPreferences = localStorage.getItem(
+      `notification-preferences-${trackingNumber}`
+    );
     if (savedPreferences) {
       setPreferences(JSON.parse(savedPreferences));
     }
@@ -106,7 +118,7 @@ export default function DeliveryNotifications({
         `notification-preferences-${trackingNumber}`,
         JSON.stringify(newPreferences)
       );
-      
+
       // Optionally save to server for authenticated users
       if (customerEmail) {
         await fetch('/api/notifications/preferences', {
@@ -120,7 +132,7 @@ export default function DeliveryNotifications({
           }),
         });
       }
-      
+
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Failed to save preferences:', error);
@@ -178,7 +190,7 @@ export default function DeliveryNotifications({
       exception: 'bg-red-100 text-red-800',
       important: 'bg-amber-100 text-amber-800',
     };
-    
+
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
@@ -194,7 +206,8 @@ export default function DeliveryNotifications({
           id: 'pickup-notification',
           type: 'pickup',
           title: 'Package Picked Up',
-          message: 'Your package has been collected by the courier and is now in transit.',
+          message:
+            'Your package has been collected by the courier and is now in transit.',
           timestamp: now,
           read: false,
           trackingNumber,
@@ -231,7 +244,8 @@ export default function DeliveryNotifications({
           id: 'delivered-notification',
           type: 'delivered',
           title: 'Package Delivered',
-          message: 'Your package has been successfully delivered. Thank you for your order!',
+          message:
+            'Your package has been successfully delivered. Thank you for your order!',
           timestamp: now,
           read: false,
           trackingNumber,
@@ -244,7 +258,8 @@ export default function DeliveryNotifications({
           id: 'exception-notification',
           type: 'exception',
           title: 'Delivery Issue',
-          message: 'There was an issue with your delivery. Please contact support for assistance.',
+          message:
+            'There was an issue with your delivery. Please contact support for assistance.',
           timestamp: now,
           read: false,
           trackingNumber,
@@ -281,10 +296,9 @@ export default function DeliveryNotifications({
   };
 
   // Combine server notifications with status notifications
-  const allNotifications = [
-    ...getStatusNotifications(),
-    ...notifications,
-  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const allNotifications = [...getStatusNotifications(), ...notifications].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
   const unreadCount = allNotifications.filter(n => !n.read).length;
 
@@ -318,19 +332,22 @@ export default function DeliveryNotifications({
           <CardContent className="border-t">
             <div className="space-y-4">
               <h4 className="font-medium text-sm">Notification Preferences</h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="email-notifications"
                       checked={preferences.email}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         savePreferences({ ...preferences, email: checked })
                       }
                       disabled={loading}
                     />
-                    <Label htmlFor="email-notifications" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="email-notifications"
+                      className="flex items-center gap-2"
+                    >
                       <Mail className="w-4 h-4" />
                       Email notifications
                     </Label>
@@ -340,12 +357,15 @@ export default function DeliveryNotifications({
                     <Switch
                       id="sms-notifications"
                       checked={preferences.sms}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         savePreferences({ ...preferences, sms: checked })
                       }
                       disabled={loading || !customerPhone}
                     />
-                    <Label htmlFor="sms-notifications" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="sms-notifications"
+                      className="flex items-center gap-2"
+                    >
                       <Smartphone className="w-4 h-4" />
                       SMS notifications
                     </Label>
@@ -357,19 +377,21 @@ export default function DeliveryNotifications({
                     <Switch
                       id="important-only"
                       checked={preferences.important}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         savePreferences({ ...preferences, important: checked })
                       }
                       disabled={loading}
                     />
-                    <Label htmlFor="important-only">Important updates only</Label>
+                    <Label htmlFor="important-only">
+                      Important updates only
+                    </Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="all-updates"
                       checked={preferences.allUpdates}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         savePreferences({ ...preferences, allUpdates: checked })
                       }
                       disabled={loading}
@@ -395,12 +417,12 @@ export default function DeliveryNotifications({
       {/* Notifications List */}
       <div className="space-y-3">
         {allNotifications.length > 0 ? (
-          allNotifications.map((notification) => (
-            <Card 
-              key={notification.id} 
+          allNotifications.map(notification => (
+            <Card
+              key={notification.id}
               className={`transition-all ${
-                !notification.read 
-                  ? 'border-l-4 border-l-blue-500 bg-blue-50/30' 
+                !notification.read
+                  ? 'border-l-4 border-l-blue-500 bg-blue-50/30'
                   : 'hover:bg-gray-50'
               }`}
             >
@@ -409,33 +431,40 @@ export default function DeliveryNotifications({
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className={`font-medium text-sm ${
-                            !notification.read ? 'text-gray-900' : 'text-gray-700'
-                          }`}>
+                          <h4
+                            className={`font-medium text-sm ${
+                              !notification.read
+                                ? 'text-gray-900'
+                                : 'text-gray-700'
+                            }`}
+                          >
                             {notification.title}
                           </h4>
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className={`text-xs ${getNotificationTypeBadge(notification.type)}`}
                           >
                             {notification.type}
                           </Badge>
                           {notification.actionRequired && (
-                            <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800">
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-amber-100 text-amber-800"
+                            >
                               Action Required
                             </Badge>
                           )}
                         </div>
-                        
+
                         <p className="text-sm text-gray-600 mb-2">
                           {notification.message}
                         </p>
-                        
+
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -467,9 +496,12 @@ export default function DeliveryNotifications({
           <Card>
             <CardContent className="p-8 text-center">
               <Bell className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="font-medium text-gray-900 mb-2">No notifications yet</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                No notifications yet
+              </h3>
               <p className="text-sm text-gray-600">
-                You'll receive updates here as your package moves through the delivery process.
+                You'll receive updates here as your package moves through the
+                delivery process.
               </p>
             </CardContent>
           </Card>
@@ -484,8 +516,9 @@ export default function DeliveryNotifications({
             <div className="text-sm text-gray-600">
               <p className="font-medium text-gray-900 mb-1">Stay informed</p>
               <p>
-                Get real-time updates about your delivery via email, SMS, or push notifications.
-                Important delivery updates will always be sent regardless of your preferences.
+                Get real-time updates about your delivery via email, SMS, or
+                push notifications. Important delivery updates will always be
+                sent regardless of your preferences.
               </p>
             </div>
           </div>

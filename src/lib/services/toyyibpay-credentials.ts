@@ -35,7 +35,10 @@ export interface EncryptedCredential {
 export class ToyyibPayCredentialsService {
   private static instance: ToyyibPayCredentialsService;
   private masterKey: string;
-  private credentialCache: Map<string, { data: ToyyibPayCredentials; expires: number }> = new Map();
+  private credentialCache: Map<
+    string,
+    { data: ToyyibPayCredentials; expires: number }
+  > = new Map();
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
@@ -54,7 +57,10 @@ export class ToyyibPayCredentialsService {
    * Derive a consistent master key from environment secrets
    */
   private deriveMasterKey(): string {
-    const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'fallback-secret';
+    const secret =
+      process.env.NEXTAUTH_SECRET ||
+      process.env.JWT_SECRET ||
+      'fallback-secret';
     const salt = 'toyyibpay-credentials-salt';
     return crypto.pbkdf2Sync(secret, salt, 10000, 32, 'sha256').toString('hex');
   }
@@ -67,7 +73,7 @@ export class ToyyibPayCredentialsService {
     return {
       encrypted: result.encrypted,
       iv: result.iv,
-      tag: result.tag
+      tag: result.tag,
     };
   }
 
@@ -87,12 +93,17 @@ export class ToyyibPayCredentialsService {
    * Store encrypted credentials in database
    */
   async storeCredentials(
-    credentials: Pick<ToyyibPayCredentials, 'userSecretKey' | 'environment' | 'categoryCode'>,
+    credentials: Pick<
+      ToyyibPayCredentials,
+      'userSecretKey' | 'environment' | 'categoryCode'
+    >,
     updatedBy: string
   ): Promise<void> {
     try {
       // Encrypt the user secret key
-      const encryptedUserSecretKey = this.encryptCredential(credentials.userSecretKey);
+      const encryptedUserSecretKey = this.encryptCredential(
+        credentials.userSecretKey
+      );
 
       // Store in database using upsert pattern
       await Promise.all([
@@ -101,13 +112,13 @@ export class ToyyibPayCredentialsService {
           where: { key: 'toyyibpay_user_secret_key_encrypted' },
           update: {
             value: JSON.stringify(encryptedUserSecretKey),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           create: {
             key: 'toyyibpay_user_secret_key_encrypted',
             value: JSON.stringify(encryptedUserSecretKey),
-            type: 'json'
-          }
+            type: 'json',
+          },
         }),
 
         // Environment
@@ -115,13 +126,13 @@ export class ToyyibPayCredentialsService {
           where: { key: 'toyyibpay_environment' },
           update: {
             value: credentials.environment,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           create: {
             key: 'toyyibpay_environment',
             value: credentials.environment,
-            type: 'string'
-          }
+            type: 'string',
+          },
         }),
 
         // Category Code (optional)
@@ -129,13 +140,13 @@ export class ToyyibPayCredentialsService {
           where: { key: 'toyyibpay_category_code' },
           update: {
             value: credentials.categoryCode || '',
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           create: {
             key: 'toyyibpay_category_code',
             value: credentials.categoryCode || '',
-            type: 'string'
-          }
+            type: 'string',
+          },
         }),
 
         // Metadata
@@ -143,13 +154,13 @@ export class ToyyibPayCredentialsService {
           where: { key: 'toyyibpay_credentials_updated_by' },
           update: {
             value: updatedBy,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           create: {
             key: 'toyyibpay_credentials_updated_by',
             value: updatedBy,
-            type: 'string'
-          }
+            type: 'string',
+          },
         }),
 
         // Enable flag
@@ -157,14 +168,14 @@ export class ToyyibPayCredentialsService {
           where: { key: 'toyyibpay_credentials_enabled' },
           update: {
             value: 'true',
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           create: {
             key: 'toyyibpay_credentials_enabled',
             value: 'true',
-            type: 'boolean'
-          }
-        })
+            type: 'boolean',
+          },
+        }),
       ]);
 
       // Clear cache to force refresh
@@ -198,23 +209,28 @@ export class ToyyibPayCredentialsService {
               'toyyibpay_environment',
               'toyyibpay_category_code',
               'toyyibpay_credentials_updated_by',
-              'toyyibpay_credentials_enabled'
-            ]
-          }
-        }
+              'toyyibpay_credentials_enabled',
+            ],
+          },
+        },
       });
 
       const configMap = new Map(configs.map(c => [c.key, c]));
 
       // Check if credentials are enabled
       const enabledConfig = configMap.get('toyyibpay_credentials_enabled');
-      console.log(`🔍 toyyibPay credentials enabled check:`, enabledConfig?.value);
+      console.log(
+        `🔍 toyyibPay credentials enabled check:`,
+        enabledConfig?.value
+      );
       if (!enabledConfig || enabledConfig.value !== 'true') {
         console.log(`❌ toyyibPay database credentials disabled`);
         return null;
       }
 
-      const userSecretKeyConfig = configMap.get('toyyibpay_user_secret_key_encrypted');
+      const userSecretKeyConfig = configMap.get(
+        'toyyibpay_user_secret_key_encrypted'
+      );
       const environmentConfig = configMap.get('toyyibpay_environment');
       const categoryCodeConfig = configMap.get('toyyibpay_category_code');
       const updatedByConfig = configMap.get('toyyibpay_credentials_updated_by');
@@ -222,7 +238,7 @@ export class ToyyibPayCredentialsService {
       console.log(`🔍 toyyibPay database credential check:`, {
         hasUserSecretKey: !!userSecretKeyConfig,
         environment: environmentConfig?.value,
-        categoryCode: categoryCodeConfig?.value
+        categoryCode: categoryCodeConfig?.value,
       });
 
       if (!userSecretKeyConfig) {
@@ -231,14 +247,19 @@ export class ToyyibPayCredentialsService {
       }
 
       // Decrypt credentials
-      const encryptedUserSecretKey: EncryptedCredential = JSON.parse(userSecretKeyConfig.value);
+      const encryptedUserSecretKey: EncryptedCredential = JSON.parse(
+        userSecretKeyConfig.value
+      );
       const userSecretKey = this.decryptCredential(encryptedUserSecretKey);
-      const environment = (environmentConfig?.value as 'sandbox' | 'production') || 'sandbox';
-      
+      const environment =
+        (environmentConfig?.value as 'sandbox' | 'production') || 'sandbox';
+
       console.log(`🔍 Decrypted toyyibPay credentials:`, {
-        userSecretKey: userSecretKey ? `${userSecretKey.substring(0, 8)}...` : 'MISSING',
+        userSecretKey: userSecretKey
+          ? `${userSecretKey.substring(0, 8)}...`
+          : 'MISSING',
         environment,
-        categoryCode: categoryCodeConfig?.value || 'Not set'
+        categoryCode: categoryCodeConfig?.value || 'Not set',
       });
 
       const credentials: ToyyibPayCredentials = {
@@ -246,13 +267,13 @@ export class ToyyibPayCredentialsService {
         environment,
         categoryCode: categoryCodeConfig?.value || undefined,
         lastUpdated: userSecretKeyConfig.updatedAt,
-        updatedBy: updatedByConfig?.value
+        updatedBy: updatedByConfig?.value,
       };
 
       // Cache the result
       this.credentialCache.set(cacheKey, {
         data: credentials,
-        expires: Date.now() + this.CACHE_DURATION
+        expires: Date.now() + this.CACHE_DURATION,
       });
 
       return credentials;
@@ -268,30 +289,32 @@ export class ToyyibPayCredentialsService {
   async getCredentialStatus(): Promise<ToyyibPayCredentialStatus> {
     try {
       const credentials = await this.getCredentials();
-      
+
       if (credentials) {
         return {
           hasCredentials: true,
           environment: credentials.environment,
-          userSecretKeyMasked: this.maskUserSecretKey(credentials.userSecretKey),
+          userSecretKeyMasked: this.maskUserSecretKey(
+            credentials.userSecretKey
+          ),
           categoryCode: credentials.categoryCode,
           lastUpdated: credentials.lastUpdated,
           updatedBy: credentials.updatedBy,
-          isConfigured: true
+          isConfigured: true,
         };
       }
 
       return {
         hasCredentials: false,
         environment: 'sandbox',
-        isConfigured: false
+        isConfigured: false,
       };
     } catch (error) {
       console.error('Error getting toyyibPay credential status:', error);
       return {
         hasCredentials: false,
         environment: 'sandbox',
-        isConfigured: false
+        isConfigured: false,
       };
     }
   }
@@ -299,38 +322,43 @@ export class ToyyibPayCredentialsService {
   /**
    * Switch between sandbox and production environments
    */
-  async switchEnvironment(environment: 'sandbox' | 'production', updatedBy: string): Promise<void> {
+  async switchEnvironment(
+    environment: 'sandbox' | 'production',
+    updatedBy: string
+  ): Promise<void> {
     try {
       // Check if we have stored credentials first
       const currentCredentials = await this.getCredentials();
       if (!currentCredentials) {
-        throw new Error('No stored credentials found. Please configure toyyibPay API credentials first before switching environments.');
+        throw new Error(
+          'No stored credentials found. Please configure toyyibPay API credentials first before switching environments.'
+        );
       }
 
       await prisma.systemConfig.upsert({
         where: { key: 'toyyibpay_environment' },
         update: {
           value: environment,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'toyyibpay_environment',
           value: environment,
-          type: 'string'
-        }
+          type: 'string',
+        },
       });
 
       await prisma.systemConfig.upsert({
         where: { key: 'toyyibpay_credentials_updated_by' },
         update: {
           value: updatedBy,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'toyyibpay_credentials_updated_by',
           value: updatedBy,
-          type: 'string'
-        }
+          type: 'string',
+        },
       });
 
       // Clear cache to force refresh
@@ -353,13 +381,13 @@ export class ToyyibPayCredentialsService {
           key: {
             in: [
               'toyyibpay_user_secret_key_encrypted',
-              'toyyibpay_credentials_enabled'
-            ]
-          }
+              'toyyibpay_credentials_enabled',
+            ],
+          },
         },
         data: {
-          value: 'false'
-        }
+          value: 'false',
+        },
       });
 
       // Clear cache
@@ -390,73 +418,87 @@ export class ToyyibPayCredentialsService {
       userSecretKey: credentials.userSecretKey,
       environment: credentials.environment,
       categoryCode: credentials.categoryCode,
-      isSandbox: credentials.environment === 'sandbox'
+      isSandbox: credentials.environment === 'sandbox',
     };
   }
 
   /**
    * Validate API credentials by making a test call to toyyibPay
    */
-  async validateCredentials(userSecretKey: string, environment: 'sandbox' | 'production'): Promise<{
+  async validateCredentials(
+    userSecretKey: string,
+    environment: 'sandbox' | 'production'
+  ): Promise<{
     isValid: boolean;
     error?: string;
     responseTime?: number;
     endpoint?: string;
   }> {
     const startTime = Date.now();
-    
+
     try {
       // Use different URLs based on environment
-      const baseUrl = environment === 'sandbox' 
-        ? process.env.TOYYIBPAY_SANDBOX_URL || 'https://dev.toyyibpay.com'
-        : process.env.TOYYIBPAY_PRODUCTION_URL || 'https://toyyibpay.com';
-      
-      console.log(`🔍 Testing toyyibPay API - Environment: ${environment}, URL: ${baseUrl}`);
+      const baseUrl =
+        environment === 'sandbox'
+          ? process.env.TOYYIBPAY_SANDBOX_URL || 'https://dev.toyyibpay.com'
+          : process.env.TOYYIBPAY_PRODUCTION_URL || 'https://toyyibpay.com';
+
+      console.log(
+        `🔍 Testing toyyibPay API - Environment: ${environment}, URL: ${baseUrl}`
+      );
 
       // Test with createCategory endpoint to validate credentials
       const formData = new FormData();
       formData.append('userSecretKey', userSecretKey);
       formData.append('catname', 'TEST_CATEGORY_' + Date.now());
-      formData.append('catdescription', 'Test category for credential validation');
+      formData.append(
+        'catdescription',
+        'Test category for credential validation'
+      );
 
       const response = await fetch(`${baseUrl}/index.php/api/createCategory`, {
         method: 'POST',
         body: formData,
-        timeout: 15000 // 15 second timeout
+        timeout: 15000, // 15 second timeout
       });
 
       const responseTime = Date.now() - startTime;
-      
+
       if (!response.ok) {
         return {
           isValid: false,
           error: `HTTP ${response.status}: ${response.statusText}`,
           responseTime,
-          endpoint: baseUrl
+          endpoint: baseUrl,
         };
       }
 
       const responseText = await response.text();
-      console.log(`🔍 toyyibPay API Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
-      
+      console.log(
+        `🔍 toyyibPay API Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`
+      );
+
       // Parse JSON response
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (e) {
-        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
+        if (
+          responseText.includes('<!DOCTYPE') ||
+          responseText.includes('<html>')
+        ) {
           return {
             isValid: false,
             error: 'Server error - HTML response received',
             responseTime,
-            endpoint: baseUrl
+            endpoint: baseUrl,
           };
         }
         return {
           isValid: false,
           error: 'Invalid JSON response',
           responseTime,
-          endpoint: baseUrl
+          endpoint: baseUrl,
         };
       }
 
@@ -468,14 +510,17 @@ export class ToyyibPayCredentialsService {
         return {
           isValid: true,
           responseTime,
-          endpoint: baseUrl
+          endpoint: baseUrl,
         };
-      } else if (data[0]?.msg && data[0]?.msg.includes('Category already exist')) {
+      } else if (
+        data[0]?.msg &&
+        data[0]?.msg.includes('Category already exist')
+      ) {
         // Also success - means API key is valid but category name exists
         return {
           isValid: true,
           responseTime,
-          endpoint: baseUrl
+          endpoint: baseUrl,
         };
       } else if (data[0]?.msg) {
         // Error message from toyyibPay
@@ -483,7 +528,7 @@ export class ToyyibPayCredentialsService {
           isValid: false,
           error: data[0].msg,
           responseTime,
-          endpoint: baseUrl
+          endpoint: baseUrl,
         };
       }
 
@@ -492,19 +537,20 @@ export class ToyyibPayCredentialsService {
         isValid: false,
         error: 'Unexpected API response format',
         responseTime,
-        endpoint: baseUrl
+        endpoint: baseUrl,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      const baseUrl = environment === 'sandbox' 
-        ? process.env.TOYYIBPAY_SANDBOX_URL || 'https://dev.toyyibpay.com'
-        : process.env.TOYYIBPAY_PRODUCTION_URL || 'https://toyyibpay.com';
-      
+      const baseUrl =
+        environment === 'sandbox'
+          ? process.env.TOYYIBPAY_SANDBOX_URL || 'https://dev.toyyibpay.com'
+          : process.env.TOYYIBPAY_PRODUCTION_URL || 'https://toyyibpay.com';
+
       return {
         isValid: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         responseTime,
-        endpoint: baseUrl
+        endpoint: baseUrl,
       };
     }
   }
@@ -516,7 +562,10 @@ export class ToyyibPayCredentialsService {
     if (!userSecretKey || userSecretKey.length < 6) {
       return '***';
     }
-    return userSecretKey.substring(0, 3) + '*'.repeat(Math.max(6, userSecretKey.length - 3));
+    return (
+      userSecretKey.substring(0, 3) +
+      '*'.repeat(Math.max(6, userSecretKey.length - 3))
+    );
   }
 
   /**
@@ -543,9 +592,9 @@ export class ToyyibPayCredentialsService {
           details: {
             operation,
             timestamp: new Date().toISOString(),
-            ...details
-          }
-        }
+            ...details,
+          },
+        },
       });
     } catch (error) {
       console.error('Error logging toyyibPay credential operation:', error);
@@ -555,4 +604,5 @@ export class ToyyibPayCredentialsService {
 }
 
 // Export singleton instance
-export const toyyibPayCredentialsService = ToyyibPayCredentialsService.getInstance();
+export const toyyibPayCredentialsService =
+  ToyyibPayCredentialsService.getInstance();

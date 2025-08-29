@@ -52,7 +52,9 @@ export async function initializeJobQueue(
     dryRun = false,
   } = options;
 
-  console.log(`🚀 Initializing tracking job queue${dryRun ? ' (DRY RUN)' : ''}...`);
+  console.log(
+    `🚀 Initializing tracking job queue${dryRun ? ' (DRY RUN)' : ''}...`
+  );
 
   const stats: InitializationStats = {
     activeTrackingCaches: 0,
@@ -71,7 +73,7 @@ export async function initializeJobQueue(
     // Get statistics about current tracking caches
     const cacheStats = await getCacheStatistics();
     stats.activeTrackingCaches = cacheStats.caches.active;
-    
+
     console.log(`📊 Current tracking cache stats:`, cacheStats);
 
     if (createInitialJobs) {
@@ -84,7 +86,9 @@ export async function initializeJobQueue(
 
     stats.processingTimeMs = Date.now() - startTime;
 
-    console.log(`✅ Job queue initialization completed in ${stats.processingTimeMs}ms:`);
+    console.log(
+      `✅ Job queue initialization completed in ${stats.processingTimeMs}ms:`
+    );
     console.log(`  - Active tracking caches: ${stats.activeTrackingCaches}`);
     console.log(`  - Jobs created: ${stats.jobsCreated}`);
     console.log(`  - Job types:`, stats.jobsByType);
@@ -99,7 +103,6 @@ export async function initializeJobQueue(
     }
 
     return stats;
-
   } catch (error) {
     console.error('❌ Job queue initialization failed:', error);
     throw new TrackingRefactorError(
@@ -124,7 +127,7 @@ async function createInitialJobs(
   try {
     if (forceRefreshAll) {
       console.log('🔄 Creating jobs for ALL active tracking caches...');
-      
+
       // Get all active tracking caches in batches
       let offset = 0;
       let hasMore = true;
@@ -151,12 +154,16 @@ async function createInitialJobs(
           break;
         }
 
-        console.log(`📦 Processing batch ${Math.floor(offset / batchSize) + 1}: ${activeCaches.length} caches`);
+        console.log(
+          `📦 Processing batch ${Math.floor(offset / batchSize) + 1}: ${activeCaches.length} caches`
+        );
 
         for (const cache of activeCaches) {
           try {
             if (dryRun) {
-              console.log(`🔍 DRY RUN - Would create job for order ${cache.order.orderNumber}`);
+              console.log(
+                `🔍 DRY RUN - Would create job for order ${cache.order.orderNumber}`
+              );
               stats.jobsCreated++;
               stats.jobsByType.UPDATE++;
               continue;
@@ -172,9 +179,11 @@ async function createInitialJobs(
             console.log(`✅ Created job for order ${cache.order.orderNumber}`);
             stats.jobsCreated++;
             stats.jobsByType.UPDATE++;
-
           } catch (error) {
-            console.error(`❌ Failed to create job for cache ${cache.id}:`, error);
+            console.error(
+              `❌ Failed to create job for cache ${cache.id}:`,
+              error
+            );
             stats.errors.push({
               cacheId: cache.id,
               error: error.message,
@@ -183,17 +192,16 @@ async function createInitialJobs(
         }
 
         offset += batchSize;
-        
+
         // Add small delay between batches
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-
     } else {
       console.log('🎯 Creating jobs for tracking caches due for update...');
-      
+
       // Get only caches that are due for update
       const dueForUpdate = await getTrackingCachesDueForUpdate(batchSize * 2);
-      
+
       if (dueForUpdate.length === 0) {
         console.log('📋 No tracking caches are currently due for update');
         return;
@@ -204,7 +212,9 @@ async function createInitialJobs(
       for (const cache of dueForUpdate) {
         try {
           if (dryRun) {
-            console.log(`🔍 DRY RUN - Would create job for order ${cache.order.orderNumber}`);
+            console.log(
+              `🔍 DRY RUN - Would create job for order ${cache.order.orderNumber}`
+            );
             stats.jobsCreated++;
             stats.jobsByType.UPDATE++;
             continue;
@@ -220,9 +230,11 @@ async function createInitialJobs(
           console.log(`✅ Created job for order ${cache.order.orderNumber}`);
           stats.jobsCreated++;
           stats.jobsByType.UPDATE++;
-
         } catch (error) {
-          console.error(`❌ Failed to create job for cache ${cache.id}:`, error);
+          console.error(
+            `❌ Failed to create job for cache ${cache.id}:`,
+            error
+          );
           stats.errors.push({
             cacheId: cache.id,
             error: error.message,
@@ -244,12 +256,10 @@ async function createInitialJobs(
         console.log('🧹 Created cleanup job');
         stats.jobsCreated++;
         stats.jobsByType.CLEANUP++;
-
       } catch (error) {
         console.warn('⚠️ Failed to create cleanup job:', error.message);
       }
     }
-
   } catch (error) {
     throw new TrackingRefactorError(
       `Failed to create initial jobs: ${error.message}`,
@@ -265,7 +275,7 @@ async function createInitialJobs(
 async function startCronJobSystem(): Promise<void> {
   try {
     console.log('⏰ Starting cron job system...');
-    
+
     // Check if cron jobs are already running
     const cronStatus = trackingCronManager.getStatus();
     if (cronStatus.isRunning) {
@@ -275,7 +285,6 @@ async function startCronJobSystem(): Promise<void> {
 
     await trackingCronManager.start();
     console.log('✅ Cron job system started successfully');
-
   } catch (error) {
     throw new TrackingRefactorError(
       `Failed to start cron job system: ${error.message}`,
@@ -291,10 +300,9 @@ async function startCronJobSystem(): Promise<void> {
 export async function stopJobQueue(): Promise<void> {
   try {
     console.log('🛑 Stopping tracking job queue system...');
-    
+
     trackingCronManager.stop();
     console.log('✅ Job queue system stopped');
-
   } catch (error) {
     console.error('❌ Failed to stop job queue system:', error);
     throw new TrackingRefactorError(
@@ -308,10 +316,12 @@ export async function stopJobQueue(): Promise<void> {
 /**
  * Reset job queue (clear all pending jobs)
  */
-export async function resetJobQueue(options: {
-  keepRunningJobs?: boolean;
-  dryRun?: boolean;
-} = {}): Promise<{
+export async function resetJobQueue(
+  options: {
+    keepRunningJobs?: boolean;
+    dryRun?: boolean;
+  } = {}
+): Promise<{
   deletedJobs: number;
   keptJobs: number;
 }> {
@@ -321,7 +331,7 @@ export async function resetJobQueue(options: {
 
   try {
     const whereClause: any = {};
-    
+
     if (keepRunningJobs) {
       whereClause.status = { not: 'RUNNING' };
     }
@@ -330,13 +340,15 @@ export async function resetJobQueue(options: {
       const jobsToDelete = await prisma.trackingJobQueue.count({
         where: whereClause,
       });
-      
+
       const keptJobs = await prisma.trackingJobQueue.count({
         where: keepRunningJobs ? { status: 'RUNNING' } : {},
       });
 
-      console.log(`🔍 DRY RUN - Would delete ${jobsToDelete} jobs, keep ${keptJobs} jobs`);
-      
+      console.log(
+        `🔍 DRY RUN - Would delete ${jobsToDelete} jobs, keep ${keptJobs} jobs`
+      );
+
       return {
         deletedJobs: jobsToDelete,
         keptJobs,
@@ -344,7 +356,7 @@ export async function resetJobQueue(options: {
     }
 
     // Count jobs before deletion
-    const keptJobs = keepRunningJobs 
+    const keptJobs = keepRunningJobs
       ? await prisma.trackingJobQueue.count({ where: { status: 'RUNNING' } })
       : 0;
 
@@ -353,13 +365,14 @@ export async function resetJobQueue(options: {
       where: whereClause,
     });
 
-    console.log(`✅ Job queue reset completed: deleted ${result.count} jobs, kept ${keptJobs} jobs`);
+    console.log(
+      `✅ Job queue reset completed: deleted ${result.count} jobs, kept ${keptJobs} jobs`
+    );
 
     return {
       deletedJobs: result.count,
       keptJobs,
     };
-
   } catch (error) {
     console.error('❌ Failed to reset job queue:', error);
     throw new TrackingRefactorError(
@@ -398,13 +411,18 @@ export async function getJobQueueHealth(): Promise<{
     });
 
     const now = new Date();
-    const waitTimes = pendingJobsWithTime.map(job => 
+    const waitTimes = pendingJobsWithTime.map(job =>
       Math.max(0, now.getTime() - job.scheduledFor.getTime())
     );
-    
-    const avgWaitTime = waitTimes.length > 0 
-      ? Math.round(waitTimes.reduce((sum, time) => sum + time, 0) / waitTimes.length / 1000) // Convert to seconds
-      : 0;
+
+    const avgWaitTime =
+      waitTimes.length > 0
+        ? Math.round(
+            waitTimes.reduce((sum, time) => sum + time, 0) /
+              waitTimes.length /
+              1000
+          ) // Convert to seconds
+        : 0;
 
     const cronStatus = trackingCronManager.getStatus().isRunning;
 
@@ -424,23 +442,32 @@ export async function getJobQueueHealth(): Promise<{
 
     if (failedJobs > 50) {
       issues.push(`High number of failed jobs: ${failedJobs}`);
-      if (status === 'HEALTHY') status = 'DEGRADED';
+      if (status === 'HEALTHY') {
+        status = 'DEGRADED';
+      }
     }
 
     // Check for degraded conditions
     if (pendingJobs > 50) {
       issues.push(`Elevated number of pending jobs: ${pendingJobs}`);
-      if (status === 'HEALTHY') status = 'DEGRADED';
+      if (status === 'HEALTHY') {
+        status = 'DEGRADED';
+      }
     }
 
-    if (avgWaitTime > 300) { // 5 minutes
+    if (avgWaitTime > 300) {
+      // 5 minutes
       issues.push(`Long average wait time: ${avgWaitTime} seconds`);
-      if (status === 'HEALTHY') status = 'DEGRADED';
+      if (status === 'HEALTHY') {
+        status = 'DEGRADED';
+      }
     }
 
     if (runningJobs === 0 && pendingJobs > 0) {
       issues.push('Jobs are pending but none are running');
-      if (status === 'HEALTHY') status = 'DEGRADED';
+      if (status === 'HEALTHY') {
+        status = 'DEGRADED';
+      }
     }
 
     return {
@@ -454,7 +481,6 @@ export async function getJobQueueHealth(): Promise<{
       },
       issues,
     };
-
   } catch (error) {
     return {
       status: 'CRITICAL',

@@ -47,7 +47,7 @@ export async function GET(
   const startTime = Date.now();
   const clientIP = getClientIP(request);
   const userAgent = request.headers.get('user-agent') || 'unknown';
-  
+
   try {
     // Rate limiting
     try {
@@ -55,17 +55,17 @@ export async function GET(
     } catch {
       console.warn(`🚫 Rate limit exceeded for IP: ${clientIP}`);
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Too many requests. Please try again later.',
-          error: 'RATE_LIMIT_EXCEEDED'
+          error: 'RATE_LIMIT_EXCEEDED',
         },
-        { 
+        {
           status: 429,
           headers: {
             ...SECURITY_HEADERS,
             'Retry-After': '60',
-          }
+          },
         }
       );
     }
@@ -76,14 +76,14 @@ export async function GET(
     if (!orderNumber) {
       console.warn(`🚫 Missing order number from IP: ${clientIP}`);
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Order number is required',
-          error: 'VALIDATION_ERROR'
+          error: 'VALIDATION_ERROR',
         },
-        { 
+        {
           status: 400,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
@@ -91,7 +91,7 @@ export async function GET(
     // Sanitize and validate order number format
     const sanitizedOrderNumber = sanitizeInput(orderNumber);
     let actualOrderNumber = sanitizedOrderNumber;
-    
+
     // Check if this is a direct order number or external reference
     if (ORDER_NUMBER_REGEX.test(sanitizedOrderNumber)) {
       // Direct order number format: ORD-20250822-XXXX
@@ -101,33 +101,39 @@ export async function GET(
       const match = sanitizedOrderNumber.match(EXTERNAL_REFERENCE_REGEX);
       if (match && match[1]) {
         actualOrderNumber = match[1]; // Extract ORD-20250822-XXXX
-        console.log(`🔍 Extracted order number from external reference: ${actualOrderNumber}`);
+        console.log(
+          `🔍 Extracted order number from external reference: ${actualOrderNumber}`
+        );
       }
     } else {
-      console.warn(`🚫 Invalid order number format from IP: ${clientIP}, order: ${sanitizedOrderNumber}`);
+      console.warn(
+        `🚫 Invalid order number format from IP: ${clientIP}, order: ${sanitizedOrderNumber}`
+      );
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Invalid order number format',
-          error: 'VALIDATION_ERROR'
+          error: 'VALIDATION_ERROR',
         },
-        { 
+        {
           status: 400,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
 
-    console.log(`🔍 Secure order lookup: ${actualOrderNumber} from IP: ${clientIP}`);
+    console.log(
+      `🔍 Secure order lookup: ${actualOrderNumber} from IP: ${clientIP}`
+    );
 
     // Find the order with security constraints
     const order = await prisma.order.findFirst({
-      where: { 
+      where: {
         orderNumber: actualOrderNumber,
         // Only allow lookup of recent orders for security
         createdAt: {
-          gte: new Date(Date.now() - MAX_ORDER_AGE_MS)
-        }
+          gte: new Date(Date.now() - MAX_ORDER_AGE_MS),
+        },
       },
       include: {
         orderItems: {
@@ -185,39 +191,45 @@ export async function GET(
     });
 
     if (!order) {
-      console.warn(`❌ Order not found or expired: ${actualOrderNumber} from IP: ${clientIP}`);
-      
+      console.warn(
+        `❌ Order not found or expired: ${actualOrderNumber} from IP: ${clientIP}`
+      );
+
       // Generic error message to prevent enumeration
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Order not found or no longer available',
-          error: 'ORDER_NOT_FOUND'
+          error: 'ORDER_NOT_FOUND',
         },
-        { 
+        {
           status: 404,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
 
     // Additional security check: ensure order is not in a sensitive state
     if (order.status === 'CANCELLED' || order.paymentStatus === 'FAILED') {
-      console.warn(`🚫 Access denied to sensitive order: ${actualOrderNumber} from IP: ${clientIP}`);
+      console.warn(
+        `🚫 Access denied to sensitive order: ${actualOrderNumber} from IP: ${clientIP}`
+      );
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Order not found or no longer available',
-          error: 'ORDER_NOT_AVAILABLE'
+          error: 'ORDER_NOT_AVAILABLE',
         },
-        { 
+        {
           status: 404,
-          headers: SECURITY_HEADERS
+          headers: SECURITY_HEADERS,
         }
       );
     }
 
-    console.log(`✅ Secure order lookup successful: ${order.id} from IP: ${clientIP}`);
+    console.log(
+      `✅ Secure order lookup successful: ${order.id} from IP: ${clientIP}`
+    );
 
     // Transform data for secure response - exclude sensitive information
     const orderData = {
@@ -247,20 +259,25 @@ export async function GET(
           },
         })),
         // Complete shipping address for order confirmation
-        shippingAddress: order.shippingAddress ? {
-          firstName: order.shippingAddress.firstName,
-          lastName: order.shippingAddress.lastName,
-          company: order.shippingAddress.company,
-          address: order.shippingAddress.addressLine1,
-          address2: order.shippingAddress.addressLine2,
-          city: order.shippingAddress.city,
-          state: order.shippingAddress.state,
-          postcode: order.shippingAddress.postalCode,
-          country: order.shippingAddress.country,
-          phone: order.shippingAddress.phone,
-        } : null,
+        shippingAddress: order.shippingAddress
+          ? {
+              firstName: order.shippingAddress.firstName,
+              lastName: order.shippingAddress.lastName,
+              company: order.shippingAddress.company,
+              address: order.shippingAddress.addressLine1,
+              address2: order.shippingAddress.addressLine2,
+              city: order.shippingAddress.city,
+              state: order.shippingAddress.state,
+              postcode: order.shippingAddress.postalCode,
+              country: order.shippingAddress.country,
+              phone: order.shippingAddress.phone,
+            }
+          : null,
         customer: {
-          firstName: order.user?.firstName || (order.shippingAddress as any)?.firstName || 'Guest',
+          firstName:
+            order.user?.firstName ||
+            (order.shippingAddress as any)?.firstName ||
+            'Guest',
           isMember: order.user?.isMember || false,
           memberSince: order.user?.memberSince?.toISOString() || null,
         },
@@ -269,35 +286,40 @@ export async function GET(
     };
 
     const responseTime = Date.now() - startTime;
-    console.log(`⚡ Order lookup completed in ${responseTime}ms for IP: ${clientIP}`);
+    console.log(
+      `⚡ Order lookup completed in ${responseTime}ms for IP: ${clientIP}`
+    );
 
     return NextResponse.json(orderData, {
       headers: {
         ...SECURITY_HEADERS,
         'Cache-Control': 'private, no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      }
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
     });
   } catch (error) {
     const responseTime = Date.now() - startTime;
-    console.error(`❌ Secure order lookup error (${responseTime}ms) from IP: ${clientIP}:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      userAgent,
-      orderNumber: params?.orderNumber || 'unknown'
-    });
-    
+    console.error(
+      `❌ Secure order lookup error (${responseTime}ms) from IP: ${clientIP}:`,
+      {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userAgent,
+        orderNumber: params?.orderNumber || 'unknown',
+      }
+    );
+
     // Don't expose internal error details
     return NextResponse.json(
-      { 
+      {
         success: false,
         message: 'Service temporarily unavailable. Please try again later.',
         error: 'INTERNAL_ERROR',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      { 
+      {
         status: 500,
-        headers: SECURITY_HEADERS
+        headers: SECURITY_HEADERS,
       }
     );
   }

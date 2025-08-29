@@ -68,11 +68,11 @@ export default function ProofOfDelivery({
       month: 'long',
       year: 'numeric',
       timeZone: 'Asia/Kuala_Lumpur',
-      ...(includeTime && { 
-        hour: '2-digit', 
-        minute: '2-digit', 
+      ...(includeTime && {
+        hour: '2-digit',
+        minute: '2-digit',
         hour12: false,
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       }),
     };
     return date.toLocaleDateString('en-MY', options);
@@ -81,22 +81,25 @@ export default function ProofOfDelivery({
   // Get receiver relationship display
   const getReceiverRelationshipDisplay = (relationship?: string) => {
     const relationships = {
-      'SELF': 'Received by customer',
-      'FAMILY': 'Received by family member',
-      'NEIGHBOR': 'Received by neighbor',
-      'OFFICE_STAFF': 'Received by office staff',
-      'OTHER': 'Received by authorized person',
+      SELF: 'Received by customer',
+      FAMILY: 'Received by family member',
+      NEIGHBOR: 'Received by neighbor',
+      OFFICE_STAFF: 'Received by office staff',
+      OTHER: 'Received by authorized person',
     };
-    return relationships[relationship as keyof typeof relationships] || 'Received by recipient';
+    return (
+      relationships[relationship as keyof typeof relationships] ||
+      'Received by recipient'
+    );
   };
 
   // Get verification method display
   const getVerificationMethodDisplay = (method?: string) => {
     const methods = {
-      'SIGNATURE': 'Digital signature',
-      'PHOTO': 'Photo confirmation',
-      'OTP': 'OTP verification',
-      'ID_CHECK': 'ID verification',
+      SIGNATURE: 'Digital signature',
+      PHOTO: 'Photo confirmation',
+      OTP: 'OTP verification',
+      ID_CHECK: 'ID verification',
     };
     return methods[method as keyof typeof methods] || 'Standard verification';
   };
@@ -135,7 +138,8 @@ export default function ProofOfDelivery({
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Proof of delivery will be available once your package has been delivered.
+              Proof of delivery will be available once your package has been
+              delivered.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -160,43 +164,49 @@ export default function ProofOfDelivery({
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-green-100 text-green-800">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-100 text-green-800"
+                    >
                       DELIVERED
                     </Badge>
                     <span className="text-sm text-green-700">
                       {formatDate(deliveryProof.deliveredAt)}
                     </span>
                   </div>
-                  
+
                   <div className="text-sm text-gray-600">
                     <div className="flex items-center gap-2 mb-1">
                       <User className="w-4 h-4" />
                       <span>
-                        {getReceiverRelationshipDisplay(deliveryProof.receiverRelationship)}
-                        {deliveryProof.receiverName && `: ${deliveryProof.receiverName}`}
+                        {getReceiverRelationshipDisplay(
+                          deliveryProof.receiverRelationship
+                        )}
+                        {deliveryProof.receiverName &&
+                          `: ${deliveryProof.receiverName}`}
                       </span>
                     </div>
-                    
+
                     {deliveryAddress && (
                       <div className="flex items-center gap-2 mb-1">
                         <MapPin className="w-4 h-4" />
                         <span>{deliveryAddress}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>{getVerificationMethodDisplay(deliveryProof.verificationMethod)}</span>
+                      <span>
+                        {getVerificationMethodDisplay(
+                          deliveryProof.verificationMethod
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
-                
+
                 {deliveryProof.locationCoordinates && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                  >
+                  <Button variant="outline" size="sm" asChild>
                     <a
                       href={`https://maps.google.com/?q=${deliveryProof.locationCoordinates.latitude},${deliveryProof.locationCoordinates.longitude}`}
                       target="_blank"
@@ -217,27 +227,31 @@ export default function ProofOfDelivery({
                 <p className="text-sm text-gray-600">Tracking Number</p>
                 <p className="font-medium">{trackingNumber}</p>
               </div>
-              
+
               {customerName && (
                 <div>
                   <p className="text-sm text-gray-600">Customer Name</p>
                   <p className="font-medium">{customerName}</p>
                 </div>
               )}
-              
+
               {deliveryProof.courierName && (
                 <div>
                   <p className="text-sm text-gray-600">Delivered By</p>
                   <p className="font-medium">{deliveryProof.courierName}</p>
                   {deliveryProof.courierPhone && (
-                    <p className="text-xs text-gray-500">{deliveryProof.courierPhone}</p>
+                    <p className="text-xs text-gray-500">
+                      {deliveryProof.courierPhone}
+                    </p>
                   )}
                 </div>
               )}
-              
+
               <div>
                 <p className="text-sm text-gray-600">Delivery Time</p>
-                <p className="font-medium">{formatDate(deliveryProof.deliveredAt)}</p>
+                <p className="font-medium">
+                  {formatDate(deliveryProof.deliveredAt)}
+                </p>
               </div>
             </div>
 
@@ -246,7 +260,9 @@ export default function ProofOfDelivery({
               <div>
                 <p className="text-sm text-gray-600 mb-2">Delivery Notes</p>
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm italic">"{deliveryProof.deliveryNotes}"</p>
+                  <p className="text-sm italic">
+                    "{deliveryProof.deliveryNotes}"
+                  </p>
                 </div>
               </div>
             )}
@@ -266,20 +282,29 @@ export default function ProofOfDelivery({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleImageDownload(deliveryProof.signatureImage!, 'signature.png')}
+                onClick={() =>
+                  handleImageDownload(
+                    deliveryProof.signatureImage!,
+                    'signature.png'
+                  )
+                }
                 disabled={imageLoading === 'signature.png'}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {imageLoading === 'signature.png' ? 'Downloading...' : 'Download'}
+                {imageLoading === 'signature.png'
+                  ? 'Downloading...'
+                  : 'Download'}
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="text-center">
-                <div 
+                <div
                   className={`inline-block border-2 border-dashed border-gray-300 rounded-lg p-4 bg-white cursor-pointer transition-all ${
-                    showFullSignature ? 'border-blue-500' : 'hover:border-gray-400'
+                    showFullSignature
+                      ? 'border-blue-500'
+                      : 'hover:border-gray-400'
                   }`}
                   onClick={() => setShowFullSignature(!showFullSignature)}
                 >
@@ -287,19 +312,26 @@ export default function ProofOfDelivery({
                     src={deliveryProof.signatureImage}
                     alt="Delivery signature"
                     className={`transition-all ${
-                      showFullSignature ? 'max-w-full max-h-96' : 'max-w-xs max-h-32'
+                      showFullSignature
+                        ? 'max-w-full max-h-96'
+                        : 'max-w-xs max-h-32'
                     }`}
                     onLoad={() => setImageLoading(null)}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  {showFullSignature ? 'Click to minimize' : 'Click to view full size'}
+                  {showFullSignature
+                    ? 'Click to minimize'
+                    : 'Click to view full size'}
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <p className="text-sm text-gray-600">
-                  Signed by: <span className="font-medium">{deliveryProof.receivedBy}</span>
+                  Signed by:{' '}
+                  <span className="font-medium">
+                    {deliveryProof.receivedBy}
+                  </span>
                 </p>
                 <p className="text-xs text-gray-500">
                   Digital signature captured at delivery
@@ -322,18 +354,25 @@ export default function ProofOfDelivery({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleImageDownload(deliveryProof.deliveryPhoto!, 'delivery-photo.jpg')}
+                onClick={() =>
+                  handleImageDownload(
+                    deliveryProof.deliveryPhoto!,
+                    'delivery-photo.jpg'
+                  )
+                }
                 disabled={imageLoading === 'delivery-photo.jpg'}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {imageLoading === 'delivery-photo.jpg' ? 'Downloading...' : 'Download'}
+                {imageLoading === 'delivery-photo.jpg'
+                  ? 'Downloading...'
+                  : 'Download'}
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="text-center">
-                <div 
+                <div
                   className={`inline-block border-2 border-dashed border-gray-300 rounded-lg p-4 bg-white cursor-pointer transition-all ${
                     showFullPhoto ? 'border-blue-500' : 'hover:border-gray-400'
                   }`}
@@ -343,16 +382,20 @@ export default function ProofOfDelivery({
                     src={deliveryProof.deliveryPhoto}
                     alt="Delivery photo"
                     className={`transition-all rounded ${
-                      showFullPhoto ? 'max-w-full max-h-96' : 'max-w-xs max-h-48'
+                      showFullPhoto
+                        ? 'max-w-full max-h-96'
+                        : 'max-w-xs max-h-48'
                     }`}
                     onLoad={() => setImageLoading(null)}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  {showFullPhoto ? 'Click to minimize' : 'Click to view full size'}
+                  {showFullPhoto
+                    ? 'Click to minimize'
+                    : 'Click to view full size'}
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <p className="text-sm text-gray-600">
                   Photo taken at delivery location
@@ -381,37 +424,52 @@ export default function ProofOfDelivery({
               <AlertDescription>
                 This delivery has been verified and confirmed using{' '}
                 <span className="font-medium">
-                  {getVerificationMethodDisplay(deliveryProof.verificationMethod)}
+                  {getVerificationMethodDisplay(
+                    deliveryProof.verificationMethod
+                  )}
                 </span>
-                . The proof of delivery documents above serve as official confirmation that your 
-                package was successfully delivered.
+                . The proof of delivery documents above serve as official
+                confirmation that your package was successfully delivered.
               </AlertDescription>
             </Alert>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-500" />
-                <span>Delivered: {formatDate(deliveryProof.deliveredAt, false)}</span>
+                <span>
+                  Delivered: {formatDate(deliveryProof.deliveredAt, false)}
+                </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-blue-500" />
-                <span>Time: {new Date(deliveryProof.deliveredAt).toLocaleTimeString('en-MY', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'Asia/Kuala_Lumpur',
-                })}</span>
+                <span>
+                  Time:{' '}
+                  {new Date(deliveryProof.deliveredAt).toLocaleTimeString(
+                    'en-MY',
+                    {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZone: 'Asia/Kuala_Lumpur',
+                    }
+                  )}
+                </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-blue-500" />
                 <span>Received by: {deliveryProof.receivedBy}</span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                <span>Verification: {getVerificationMethodDisplay(deliveryProof.verificationMethod)}</span>
+                <span>
+                  Verification:{' '}
+                  {getVerificationMethodDisplay(
+                    deliveryProof.verificationMethod
+                  )}
+                </span>
               </div>
             </div>
           </div>

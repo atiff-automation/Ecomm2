@@ -21,11 +21,13 @@ const webhookPayloadSchema = z.object({
   shipment_id: z.string().min(1, 'Shipment ID is required'),
   signature: z.string().optional(), // Webhook signature verification
   courier_remarks: z.string().optional(),
-  delivery_info: z.object({
-    delivered_at: z.string().datetime().optional(),
-    received_by: z.string().optional(),
-    signature_image: z.string().url().optional(),
-  }).optional(),
+  delivery_info: z
+    .object({
+      delivered_at: z.string().datetime().optional(),
+      received_by: z.string().optional(),
+      signature_image: z.string().url().optional(),
+    })
+    .optional(),
 });
 
 // Webhook payload interface (PDF Section 6.3)
@@ -76,7 +78,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Verify webhook signature (PDF Section 6.3.1)
-    if (!verifyWebhookSignature(rawBody, webhookPayload.signature || '', request)) {
+    if (
+      !verifyWebhookSignature(rawBody, webhookPayload.signature || '', request)
+    ) {
       console.error('❌ Webhook signature verification failed');
       return NextResponse.json(
         { message: 'Invalid webhook signature' },
@@ -97,15 +101,18 @@ export async function POST(request: NextRequest) {
             orderNumber: true,
             userId: true,
             user: {
-              select: { firstName: true, lastName: true, email: true }
-            }
-          }
+              select: { firstName: true, lastName: true, email: true },
+            },
+          },
         },
       },
     });
 
     if (!shipment) {
-      console.warn('⚠️ Shipment not found for tracking number:', validatedData.tracking_number);
+      console.warn(
+        '⚠️ Shipment not found for tracking number:',
+        validatedData.tracking_number
+      );
       return NextResponse.json(
         { message: 'Shipment not found' },
         { status: 404 }
@@ -123,14 +130,15 @@ export async function POST(request: NextRequest) {
     const statusChanged = newStatus && newStatus !== shipment.status;
 
     // Process webhook in database transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Create tracking event record
       const trackingEvent = await tx.shipmentTracking.create({
         data: {
           shipmentId: shipment.id,
           eventCode: validatedData.event_code,
           eventName: validatedData.event_name,
-          description: validatedData.event_description || validatedData.event_name,
+          description:
+            validatedData.event_description || validatedData.event_name,
           location: validatedData.location || 'In Transit',
           eventTime: new Date(validatedData.event_time),
           source: 'EASYPARCEL',
@@ -145,9 +153,11 @@ export async function POST(request: NextRequest) {
           where: { id: shipment.id },
           data: {
             status: newStatus,
-            statusDescription: validatedData.event_description || validatedData.event_name,
-            actualDelivery: validatedData.delivery_info?.delivered_at ? 
-              new Date(validatedData.delivery_info.delivered_at) : null,
+            statusDescription:
+              validatedData.event_description || validatedData.event_name,
+            actualDelivery: validatedData.delivery_info?.delivered_at
+              ? new Date(validatedData.delivery_info.delivered_at)
+              : null,
             lastTrackedAt: new Date(),
           },
         });
@@ -164,12 +174,16 @@ export async function POST(request: NextRequest) {
             where: { id: shipment.order.id },
             data: {
               status: 'DELIVERED',
-              deliveredAt: validatedData.delivery_info?.delivered_at ? 
-                new Date(validatedData.delivery_info.delivered_at) : new Date(),
+              deliveredAt: validatedData.delivery_info?.delivered_at
+                ? new Date(validatedData.delivery_info.delivered_at)
+                : new Date(),
             },
           });
 
-          console.log('📦 Order marked as delivered:', shipment.order.orderNumber);
+          console.log(
+            '📦 Order marked as delivered:',
+            shipment.order.orderNumber
+          );
         }
       }
 
@@ -204,7 +218,11 @@ export async function POST(request: NextRequest) {
 
     // Send notifications for important events (async)
     if (shouldSendNotification(validatedData.event_code)) {
-      await sendTrackingNotification(shipment, validatedData, result.statusChanged);
+      await sendTrackingNotification(
+        shipment,
+        validatedData,
+        result.statusChanged
+      );
     }
 
     console.log('✅ Webhook processed successfully:', {
@@ -221,7 +239,6 @@ export async function POST(request: NextRequest) {
       event_processed: validatedData.event_code,
       status_updated: result.statusChanged,
     });
-
   } catch (error) {
     console.error('❌ Webhook processing error:', error);
 
@@ -269,8 +286,13 @@ export async function GET(request: NextRequest) {
     status: 'active',
     version: '1.4.0',
     supported_events: [
-      'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 
-      'DELIVERED', 'DELIVERY_ATTEMPTED', 'CANCELLED', 'FAILED'
+      'PICKED_UP',
+      'IN_TRANSIT',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'DELIVERY_ATTEMPTED',
+      'CANCELLED',
+      'FAILED',
     ],
   });
 }
@@ -281,8 +303,8 @@ export async function GET(request: NextRequest) {
  * Verify webhook signature (PDF Section 6.3.1)
  */
 function verifyWebhookSignature(
-  payload: string, 
-  signature: string, 
+  payload: string,
+  signature: string,
   request: NextRequest
 ): boolean {
   // Skip verification in development
@@ -304,7 +326,7 @@ function verifyWebhookSignature(
       .digest('hex');
 
     const providedSignature = signature.replace('sha256=', '');
-    
+
     return crypto.timingSafeEqual(
       Buffer.from(expectedSignature, 'hex'),
       Buffer.from(providedSignature, 'hex')
@@ -321,30 +343,30 @@ function verifyWebhookSignature(
 function mapEventCodeToStatus(eventCode: string): string | null {
   const statusMapping: Record<string, string> = {
     // Preparation events
-    'BOOKED': 'BOOKED',
-    'LABEL_GENERATED': 'LABEL_GENERATED',
-    
+    BOOKED: 'BOOKED',
+    LABEL_GENERATED: 'LABEL_GENERATED',
+
     // Pickup events
-    'PICKUP_SCHEDULED': 'PICKUP_SCHEDULED',
-    'PICKED_UP': 'PICKED_UP',
-    
+    PICKUP_SCHEDULED: 'PICKUP_SCHEDULED',
+    PICKED_UP: 'PICKED_UP',
+
     // Transit events
-    'IN_TRANSIT': 'IN_TRANSIT',
-    'ARRIVED_AT_HUB': 'IN_TRANSIT',
-    'DEPARTED_FROM_HUB': 'IN_TRANSIT',
-    'CUSTOMS_CLEARANCE': 'IN_TRANSIT',
-    
+    IN_TRANSIT: 'IN_TRANSIT',
+    ARRIVED_AT_HUB: 'IN_TRANSIT',
+    DEPARTED_FROM_HUB: 'IN_TRANSIT',
+    CUSTOMS_CLEARANCE: 'IN_TRANSIT',
+
     // Delivery events
-    'OUT_FOR_DELIVERY': 'OUT_FOR_DELIVERY',
-    'DELIVERY_ATTEMPTED': 'OUT_FOR_DELIVERY',
-    'DELIVERED': 'DELIVERED',
-    'COMPLETED': 'DELIVERED', // Alternative delivered status
-    
+    OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+    DELIVERY_ATTEMPTED: 'OUT_FOR_DELIVERY',
+    DELIVERED: 'DELIVERED',
+    COMPLETED: 'DELIVERED', // Alternative delivered status
+
     // Exception events
-    'CANCELLED': 'CANCELLED',
-    'FAILED': 'FAILED',
-    'RETURNED': 'FAILED',
-    'DAMAGED': 'FAILED',
+    CANCELLED: 'CANCELLED',
+    FAILED: 'FAILED',
+    RETURNED: 'FAILED',
+    DAMAGED: 'FAILED',
   };
 
   return statusMapping[eventCode] || null;
@@ -355,8 +377,12 @@ function mapEventCodeToStatus(eventCode: string): string | null {
  */
 function shouldSendNotification(eventCode: string): boolean {
   const notificationEvents = [
-    'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 
-    'DELIVERY_ATTEMPTED', 'CANCELLED', 'FAILED'
+    'PICKED_UP',
+    'OUT_FOR_DELIVERY',
+    'DELIVERED',
+    'DELIVERY_ATTEMPTED',
+    'CANCELLED',
+    'FAILED',
   ];
   return notificationEvents.includes(eventCode);
 }
@@ -384,7 +410,7 @@ async function sendTrackingNotification(
 
     // TODO: Implement email notification service
     // This would integrate with your email service (e.g., SendGrid, AWS SES)
-    
+
     // Example structure:
     const notificationData = {
       to: shipment.order.user.email,
@@ -400,7 +426,6 @@ async function sendTrackingNotification(
 
     // Log notification for development
     console.log('📬 Notification queued:', notificationData);
-
   } catch (error) {
     console.error('❌ Notification sending failed:', error);
     // Don't throw error - webhook should still succeed

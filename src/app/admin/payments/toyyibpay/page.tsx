@@ -56,7 +56,11 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react';
-import { AdminPageLayout, TabConfig, BreadcrumbItem } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  TabConfig,
+  BreadcrumbItem,
+} from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 interface ToyyibPayCredentialStatus {
@@ -115,29 +119,32 @@ export default function ToyyibPayConfigPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
-  
+
   // State for credentials
-  const [credentialStatus, setCredentialStatus] = useState<ToyyibPayCredentialStatus>({
-    hasCredentials: false,
-    environment: 'sandbox',
-    isConfigured: false
-  });
-  
+  const [credentialStatus, setCredentialStatus] =
+    useState<ToyyibPayCredentialStatus>({
+      hasCredentials: false,
+      environment: 'sandbox',
+      isConfigured: false,
+    });
+
   // Form state
   const [formData, setFormData] = useState({
     userSecretKey: '',
     environment: 'sandbox' as 'sandbox' | 'production',
-    categoryCode: ''
+    categoryCode: '',
   });
-  
+
   // Test results
-  const [testResults, setTestResults] = useState<ConnectionTestResult | null>(null);
-  
+  const [testResults, setTestResults] = useState<ConnectionTestResult | null>(
+    null
+  );
+
   // Category management
   const [categories, setCategories] = useState<CategoryInfo>({});
   const [newCategory, setNewCategory] = useState({
     name: '',
-    description: ''
+    description: '',
   });
   const [creatingCategory, setCreatingCategory] = useState(false);
 
@@ -161,13 +168,13 @@ export default function ToyyibPayConfigPage() {
       setLoading(true);
       const response = await fetch('/api/admin/payment/toyyibpay/credentials');
       const data = await response.json();
-      
+
       if (data.success) {
         setCredentialStatus(data.status);
         setFormData(prev => ({
           ...prev,
           environment: data.status.environment || 'sandbox',
-          categoryCode: data.status.categoryCode || ''
+          categoryCode: data.status.categoryCode || '',
         }));
       } else {
         toast.error('Failed to load credential status');
@@ -184,7 +191,7 @@ export default function ToyyibPayConfigPage() {
     try {
       const response = await fetch('/api/admin/payment/toyyibpay/categories');
       const data = await response.json();
-      
+
       if (data.success) {
         setCategories({
           categoryCode: data.currentCategory,
@@ -211,7 +218,7 @@ export default function ToyyibPayConfigPage() {
         body: JSON.stringify({
           userSecretKey: formData.userSecretKey,
           environment: formData.environment,
-          categoryCode: formData.categoryCode
+          categoryCode: formData.categoryCode,
         }),
       });
 
@@ -233,7 +240,9 @@ export default function ToyyibPayConfigPage() {
     }
   };
 
-  const handleSwitchEnvironment = async (newEnvironment: 'sandbox' | 'production') => {
+  const handleSwitchEnvironment = async (
+    newEnvironment: 'sandbox' | 'production'
+  ) => {
     try {
       setSaving(true);
       const response = await fetch('/api/admin/payment/toyyibpay/credentials', {
@@ -242,7 +251,7 @@ export default function ToyyibPayConfigPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          environment: newEnvironment
+          environment: newEnvironment,
         }),
       });
 
@@ -267,14 +276,14 @@ export default function ToyyibPayConfigPage() {
     try {
       setTesting(true);
       setTestResults(null);
-      
+
       const response = await fetch('/api/admin/payment/toyyibpay/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          useStoredCredentials: true
+          useStoredCredentials: true,
         }),
       });
 
@@ -295,7 +304,11 @@ export default function ToyyibPayConfigPage() {
   };
 
   const handleClearCredentials = async () => {
-    if (!confirm('Are you sure you want to clear all toyyibPay credentials? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to clear all toyyibPay credentials? This action cannot be undone.'
+      )
+    ) {
       return;
     }
 
@@ -313,7 +326,7 @@ export default function ToyyibPayConfigPage() {
         setFormData({
           userSecretKey: '',
           environment: 'sandbox',
-          categoryCode: ''
+          categoryCode: '',
         });
         setTestResults(null);
       } else {
@@ -342,7 +355,7 @@ export default function ToyyibPayConfigPage() {
         },
         body: JSON.stringify({
           categoryName: newCategory.name,
-          categoryDescription: newCategory.description
+          categoryDescription: newCategory.description,
         }),
       });
 
@@ -368,7 +381,11 @@ export default function ToyyibPayConfigPage() {
   };
 
   const getStatusIcon = (isConfigured: boolean) => {
-    return isConfigured ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />;
+    return isConfigured ? (
+      <CheckCircle className="w-5 h-5" />
+    ) : (
+      <XCircle className="w-5 h-5" />
+    );
   };
 
   if (loading) {
@@ -386,15 +403,29 @@ export default function ToyyibPayConfigPage() {
 
   // Define contextual tabs for toyyibPay gateway configuration
   const tabs: TabConfig[] = [
-    { id: 'configuration', label: 'Configuration', href: '/admin/payments/toyyibpay' },
-    { id: 'testing', label: 'Test Connection', href: '/admin/payments/toyyibpay#testing' },
-    { id: 'webhooks', label: 'Webhooks', href: '/admin/payments/toyyibpay#webhooks' },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/payments/toyyibpay',
+    },
+    {
+      id: 'testing',
+      label: 'Test Connection',
+      href: '/admin/payments/toyyibpay#testing',
+    },
+    {
+      id: 'webhooks',
+      label: 'Webhooks',
+      href: '/admin/payments/toyyibpay#webhooks',
+    },
   ];
 
   // Extract page actions
   const pageActions = (
     <div className="flex items-center space-x-2">
-      <Badge variant={credentialStatus.isConfigured ? "default" : "destructive"}>
+      <Badge
+        variant={credentialStatus.isConfigured ? 'default' : 'destructive'}
+      >
         {credentialStatus.isConfigured ? 'Configured' : 'Not Configured'}
       </Badge>
       <Badge variant="outline">
@@ -419,7 +450,6 @@ export default function ToyyibPayConfigPage() {
       parentSection={{ label: 'Payments', href: '/admin/payments' }}
       loading={loading}
     >
-
       <Tabs defaultValue="credentials" className="space-y-6">
         <TabsList>
           <TabsTrigger value="credentials">Credentials</TabsTrigger>
@@ -436,7 +466,8 @@ export default function ToyyibPayConfigPage() {
                 <span>API Credentials</span>
               </CardTitle>
               <CardDescription>
-                Configure your toyyibPay API credentials. Credentials are encrypted and stored securely.
+                Configure your toyyibPay API credentials. Credentials are
+                encrypted and stored securely.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -445,11 +476,27 @@ export default function ToyyibPayConfigPage() {
                   <Info className="w-4 h-4" />
                   <AlertDescription>
                     <div className="space-y-1">
-                      <p><strong>Current Status:</strong> {credentialStatus.isConfigured ? 'Configured' : 'Not Configured'}</p>
-                      <p><strong>Environment:</strong> {credentialStatus.environment}</p>
-                      <p><strong>Secret Key:</strong> {credentialStatus.userSecretKeyMasked}</p>
+                      <p>
+                        <strong>Current Status:</strong>{' '}
+                        {credentialStatus.isConfigured
+                          ? 'Configured'
+                          : 'Not Configured'}
+                      </p>
+                      <p>
+                        <strong>Environment:</strong>{' '}
+                        {credentialStatus.environment}
+                      </p>
+                      <p>
+                        <strong>Secret Key:</strong>{' '}
+                        {credentialStatus.userSecretKeyMasked}
+                      </p>
                       {credentialStatus.lastUpdated && (
-                        <p><strong>Last Updated:</strong> {new Date(credentialStatus.lastUpdated).toLocaleString()}</p>
+                        <p>
+                          <strong>Last Updated:</strong>{' '}
+                          {new Date(
+                            credentialStatus.lastUpdated
+                          ).toLocaleString()}
+                        </p>
                       )}
                     </div>
                   </AlertDescription>
@@ -462,9 +509,14 @@ export default function ToyyibPayConfigPage() {
                   <div className="flex space-x-2">
                     <Input
                       id="userSecretKey"
-                      type={showSecret ? "text" : "password"}
+                      type={showSecret ? 'text' : 'password'}
                       value={formData.userSecretKey}
-                      onChange={(e) => setFormData(prev => ({ ...prev, userSecretKey: e.target.value }))}
+                      onChange={e =>
+                        setFormData(prev => ({
+                          ...prev,
+                          userSecretKey: e.target.value,
+                        }))
+                      }
                       placeholder="Enter your toyyibPay User Secret Key"
                       className="flex-1"
                     />
@@ -474,7 +526,11 @@ export default function ToyyibPayConfigPage() {
                       size="icon"
                       onClick={() => setShowSecret(!showSecret)}
                     >
-                      {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showSecret ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -486,11 +542,16 @@ export default function ToyyibPayConfigPage() {
                   <Label htmlFor="environment">Environment</Label>
                   <Select
                     value={formData.environment}
-                    onValueChange={(value) => {
+                    onValueChange={value => {
                       if (credentialStatus.hasCredentials) {
-                        handleSwitchEnvironment(value as 'sandbox' | 'production');
+                        handleSwitchEnvironment(
+                          value as 'sandbox' | 'production'
+                        );
                       } else {
-                        setFormData(prev => ({ ...prev, environment: value as 'sandbox' | 'production' }));
+                        setFormData(prev => ({
+                          ...prev,
+                          environment: value as 'sandbox' | 'production',
+                        }));
                       }
                     }}
                   >
@@ -499,14 +560,15 @@ export default function ToyyibPayConfigPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
-                      <SelectItem value="production">Production (Live)</SelectItem>
+                      <SelectItem value="production">
+                        Production (Live)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {formData.environment === 'sandbox' 
+                    {formData.environment === 'sandbox'
                       ? 'Use sandbox for testing with fake transactions'
-                      : 'Production environment for live payments'
-                    }
+                      : 'Production environment for live payments'}
                   </p>
                 </div>
 
@@ -515,11 +577,17 @@ export default function ToyyibPayConfigPage() {
                   <Input
                     id="categoryCode"
                     value={formData.categoryCode}
-                    onChange={(e) => setFormData(prev => ({ ...prev, categoryCode: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        categoryCode: e.target.value,
+                      }))
+                    }
                     placeholder="Enter toyyibPay category code (e.g., xxxx-xxxx-xxxx)"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your toyyibPay category code from the merchant dashboard. This is required for creating bills.
+                    Your toyyibPay category code from the merchant dashboard.
+                    This is required for creating bills.
                   </p>
                   {credentialStatus.categoryCode && (
                     <p className="text-sm text-green-600 mt-1">
@@ -540,7 +608,10 @@ export default function ToyyibPayConfigPage() {
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  <span>{credentialStatus.hasCredentials ? 'Update' : 'Save'} Credentials</span>
+                  <span>
+                    {credentialStatus.hasCredentials ? 'Update' : 'Save'}{' '}
+                    Credentials
+                  </span>
                 </Button>
 
                 {credentialStatus.hasCredentials && (
@@ -567,7 +638,8 @@ export default function ToyyibPayConfigPage() {
                 <span>Category Management</span>
               </CardTitle>
               <CardDescription>
-                Manage toyyibPay categories for organizing your bills and payments.
+                Manage toyyibPay categories for organizing your bills and
+                payments.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -575,7 +647,8 @@ export default function ToyyibPayConfigPage() {
                 <Alert>
                   <AlertTriangle className="w-4 h-4" />
                   <AlertDescription>
-                    Please configure your API credentials first before managing categories.
+                    Please configure your API credentials first before managing
+                    categories.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -584,7 +657,10 @@ export default function ToyyibPayConfigPage() {
                     <Alert>
                       <Info className="w-4 h-4" />
                       <AlertDescription>
-                        <p><strong>Current Default Category:</strong> {categories.categoryCode}</p>
+                        <p>
+                          <strong>Current Default Category:</strong>{' '}
+                          {categories.categoryCode}
+                        </p>
                       </AlertDescription>
                     </Alert>
                   )}
@@ -597,17 +673,29 @@ export default function ToyyibPayConfigPage() {
                         <Input
                           id="categoryName"
                           value={newCategory.name}
-                          onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={e =>
+                            setNewCategory(prev => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           placeholder="e.g., JRM Ecommerce Payments"
                           maxLength={50}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="categoryDescription">Category Description</Label>
+                        <Label htmlFor="categoryDescription">
+                          Category Description
+                        </Label>
                         <Textarea
                           id="categoryDescription"
                           value={newCategory.description}
-                          onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                          onChange={e =>
+                            setNewCategory(prev => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
                           placeholder="Description for this payment category"
                           maxLength={100}
                         />
@@ -616,7 +704,11 @@ export default function ToyyibPayConfigPage() {
 
                     <Button
                       onClick={handleCreateCategory}
-                      disabled={creatingCategory || !newCategory.name.trim() || !newCategory.description.trim()}
+                      disabled={
+                        creatingCategory ||
+                        !newCategory.name.trim() ||
+                        !newCategory.description.trim()
+                      }
                       className="flex items-center space-x-2"
                     >
                       {creatingCategory ? (
@@ -649,7 +741,8 @@ export default function ToyyibPayConfigPage() {
                 <Alert>
                   <AlertTriangle className="w-4 h-4" />
                   <AlertDescription>
-                    Please configure your API credentials first before testing the connection.
+                    Please configure your API credentials first before testing
+                    the connection.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -669,7 +762,13 @@ export default function ToyyibPayConfigPage() {
 
                   {testResults && (
                     <div className="space-y-4">
-                      <Alert className={testResults.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                      <Alert
+                        className={
+                          testResults.success
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-red-200 bg-red-50'
+                        }
+                      >
                         {testResults.success ? (
                           <CheckCircle className="w-4 h-4 text-green-600" />
                         ) : (
@@ -677,13 +776,25 @@ export default function ToyyibPayConfigPage() {
                         )}
                         <AlertDescription>
                           <p className="font-medium">
-                            {testResults.success ? 'Connection Test Successful' : 'Connection Test Failed'}
+                            {testResults.success
+                              ? 'Connection Test Successful'
+                              : 'Connection Test Failed'}
                           </p>
                           {testResults.results?.summary && (
                             <div className="mt-2 space-y-1 text-sm">
-                              <p>Tests Passed: {testResults.results.summary.passedTests}/{testResults.results.summary.totalTests}</p>
-                              <p>Environment: {testResults.results.summary.environment}</p>
-                              <p>Response Time: {testResults.results.summary.totalTime}ms</p>
+                              <p>
+                                Tests Passed:{' '}
+                                {testResults.results.summary.passedTests}/
+                                {testResults.results.summary.totalTests}
+                              </p>
+                              <p>
+                                Environment:{' '}
+                                {testResults.results.summary.environment}
+                              </p>
+                              <p>
+                                Response Time:{' '}
+                                {testResults.results.summary.totalTime}ms
+                              </p>
                             </div>
                           )}
                         </AlertDescription>
@@ -691,42 +802,62 @@ export default function ToyyibPayConfigPage() {
 
                       {testResults.results && (
                         <div className="space-y-3">
-                          <h4 className="font-medium">Detailed Test Results:</h4>
-                          
+                          <h4 className="font-medium">
+                            Detailed Test Results:
+                          </h4>
+
                           <div className="space-y-2">
-                            <div className={`flex items-center space-x-2 p-2 rounded ${testResults.results.basicTest.isValid ? 'bg-green-50' : 'bg-red-50'}`}>
+                            <div
+                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.basicTest.isValid ? 'bg-green-50' : 'bg-red-50'}`}
+                            >
                               {testResults.results.basicTest.isValid ? (
                                 <CheckCircle className="w-4 h-4 text-green-600" />
                               ) : (
                                 <XCircle className="w-4 h-4 text-red-600" />
                               )}
                               <span className="text-sm">
-                                <strong>Basic API Test:</strong> {testResults.results.basicTest.isValid ? 'Passed' : 'Failed'}
-                                {testResults.results.basicTest.error && ` - ${testResults.results.basicTest.error}`}
+                                <strong>Basic API Test:</strong>{' '}
+                                {testResults.results.basicTest.isValid
+                                  ? 'Passed'
+                                  : 'Failed'}
+                                {testResults.results.basicTest.error &&
+                                  ` - ${testResults.results.basicTest.error}`}
                               </span>
                             </div>
 
-                            <div className={`flex items-center space-x-2 p-2 rounded ${testResults.results.categoryTest.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                            <div
+                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.categoryTest.success ? 'bg-green-50' : 'bg-red-50'}`}
+                            >
                               {testResults.results.categoryTest.success ? (
                                 <CheckCircle className="w-4 h-4 text-green-600" />
                               ) : (
                                 <XCircle className="w-4 h-4 text-red-600" />
                               )}
                               <span className="text-sm">
-                                <strong>Category Test:</strong> {testResults.results.categoryTest.success ? 'Passed' : 'Failed'}
-                                {testResults.results.categoryTest.error && ` - ${testResults.results.categoryTest.error}`}
+                                <strong>Category Test:</strong>{' '}
+                                {testResults.results.categoryTest.success
+                                  ? 'Passed'
+                                  : 'Failed'}
+                                {testResults.results.categoryTest.error &&
+                                  ` - ${testResults.results.categoryTest.error}`}
                               </span>
                             </div>
 
-                            <div className={`flex items-center space-x-2 p-2 rounded ${testResults.results.serviceTest.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                            <div
+                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.serviceTest.success ? 'bg-green-50' : 'bg-red-50'}`}
+                            >
                               {testResults.results.serviceTest.success ? (
                                 <CheckCircle className="w-4 h-4 text-green-600" />
                               ) : (
                                 <XCircle className="w-4 h-4 text-red-600" />
                               )}
                               <span className="text-sm">
-                                <strong>Service Test:</strong> {testResults.results.serviceTest.success ? 'Passed' : 'Failed'}
-                                {testResults.results.serviceTest.error && ` - ${testResults.results.serviceTest.error}`}
+                                <strong>Service Test:</strong>{' '}
+                                {testResults.results.serviceTest.success
+                                  ? 'Passed'
+                                  : 'Failed'}
+                                {testResults.results.serviceTest.error &&
+                                  ` - ${testResults.results.serviceTest.error}`}
                               </span>
                             </div>
                           </div>
@@ -755,10 +886,14 @@ export default function ToyyibPayConfigPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Configuration Status</Label>
-                  <div className={`flex items-center space-x-2 ${getStatusColor(credentialStatus.isConfigured)}`}>
+                  <div
+                    className={`flex items-center space-x-2 ${getStatusColor(credentialStatus.isConfigured)}`}
+                  >
                     {getStatusIcon(credentialStatus.isConfigured)}
                     <span className="font-medium">
-                      {credentialStatus.isConfigured ? 'Configured' : 'Not Configured'}
+                      {credentialStatus.isConfigured
+                        ? 'Configured'
+                        : 'Not Configured'}
                     </span>
                   </div>
                 </div>
@@ -767,13 +902,17 @@ export default function ToyyibPayConfigPage() {
                   <Label>Environment</Label>
                   <div className="flex items-center space-x-2">
                     <Globe className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium capitalize">{credentialStatus.environment}</span>
+                    <span className="font-medium capitalize">
+                      {credentialStatus.environment}
+                    </span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Category Status</Label>
-                  <div className={`flex items-center space-x-2 ${categories.categoryCode ? 'text-green-600' : 'text-yellow-600'}`}>
+                  <div
+                    className={`flex items-center space-x-2 ${categories.categoryCode ? 'text-green-600' : 'text-yellow-600'}`}
+                  >
                     {categories.categoryCode ? (
                       <CheckCircle className="w-4 h-4" />
                     ) : (
@@ -790,10 +929,11 @@ export default function ToyyibPayConfigPage() {
                   <div className="flex items-center space-x-2 text-gray-600">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">
-                      {credentialStatus.lastUpdated 
-                        ? new Date(credentialStatus.lastUpdated).toLocaleString()
-                        : 'Never'
-                      }
+                      {credentialStatus.lastUpdated
+                        ? new Date(
+                            credentialStatus.lastUpdated
+                          ).toLocaleString()
+                        : 'Never'}
                     </span>
                   </div>
                 </div>

@@ -71,7 +71,8 @@ export function CartSidebar({
   const isLoggedIn = freshMembership.isLoggedIn;
   const isMember = freshMembership.isMember;
   const cartItems = cart?.items || [];
-  const membershipThreshold = cart?.membershipThreshold || config.business.membership.threshold;
+  const membershipThreshold =
+    cart?.membershipThreshold || config.business.membership.threshold;
 
   // Handle quantity update with loading state
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -101,7 +102,8 @@ export function CartSidebar({
   const handleClearCart = async () => {
     showConfirmation({
       title: 'Clear Cart',
-      description: 'Are you sure you want to clear your cart? This action cannot be undone.',
+      description:
+        'Are you sure you want to clear your cart? This action cannot be undone.',
       confirmText: 'Clear Cart',
       cancelText: 'Keep Items',
       variant: 'destructive',
@@ -223,7 +225,9 @@ export function CartSidebar({
                               return (
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-sm text-gray-400">
-                                    {formatPrice(Number(item.product.regularPrice))}
+                                    {formatPrice(
+                                      Number(item.product.regularPrice)
+                                    )}
                                   </span>
                                   <div className="w-12 h-3 bg-gray-200 rounded animate-pulse"></div>
                                 </div>
@@ -231,48 +235,62 @@ export function CartSidebar({
                             }
 
                             // Get the best price for this product
-                            const bestPrice = getBestPrice({
-                              regularPrice: Number(item.product.regularPrice),
-                              memberPrice: Number(item.product.memberPrice),
-                              isPromotional: item.product.isPromotional || false,
-                              promotionalPrice: item.product.promotionalPrice ? Number(item.product.promotionalPrice) : null,
-                              promotionStartDate: item.product.promotionStartDate,
-                              promotionEndDate: item.product.promotionEndDate,
-                              isQualifyingForMembership: item.product.isQualifyingForMembership || false,
-                              memberOnlyUntil: item.product.memberOnlyUntil,
-                              earlyAccessStart: item.product.earlyAccessStart
-                            }, isMember);
+                            const bestPrice = getBestPrice(
+                              {
+                                regularPrice: Number(item.product.regularPrice),
+                                memberPrice: Number(item.product.memberPrice),
+                                isPromotional:
+                                  item.product.isPromotional || false,
+                                promotionalPrice: item.product.promotionalPrice
+                                  ? Number(item.product.promotionalPrice)
+                                  : null,
+                                promotionStartDate:
+                                  item.product.promotionStartDate,
+                                promotionEndDate: item.product.promotionEndDate,
+                                isQualifyingForMembership:
+                                  item.product.isQualifyingForMembership ||
+                                  false,
+                                memberOnlyUntil: item.product.memberOnlyUntil,
+                                earlyAccessStart: item.product.earlyAccessStart,
+                              },
+                              isMember
+                            );
 
                             // Price type styling configuration (centralized)
                             const priceTypeConfig = {
                               promotional: {
                                 textColor: 'text-red-600',
                                 badgeVariant: 'destructive' as const,
-                                badgeText: 'Promo'
+                                badgeText: 'Promo',
                               },
                               member: {
-                                textColor: 'text-green-600', 
+                                textColor: 'text-green-600',
                                 badgeVariant: 'secondary' as const,
-                                badgeText: 'Member'
+                                badgeText: 'Member',
                               },
                               'early-access': {
                                 textColor: 'text-blue-600',
-                                badgeVariant: 'default' as const, 
-                                badgeText: 'Early'
+                                badgeVariant: 'default' as const,
+                                badgeText: 'Early',
                               },
                               regular: {
                                 textColor: 'text-gray-900',
                                 badgeVariant: 'outline' as const,
-                                badgeText: 'Regular'
-                              }
+                                badgeText: 'Regular',
+                              },
                             };
 
-                            const currentConfig = priceTypeConfig[bestPrice.priceType as keyof typeof priceTypeConfig] || priceTypeConfig.regular;
+                            const currentConfig =
+                              priceTypeConfig[
+                                bestPrice.priceType as keyof typeof priceTypeConfig
+                              ] || priceTypeConfig.regular;
 
                             return (
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className={`font-medium text-sm ${currentConfig.textColor}`}>
+                                  <span
+                                    className={`font-medium text-sm ${currentConfig.textColor}`}
+                                  >
                                     {formatPrice(bestPrice.price)}
                                   </span>
                                   {bestPrice.priceType !== 'regular' && (
@@ -347,7 +365,8 @@ export function CartSidebar({
                         </div>
 
                         {/* Stock Warning */}
-                        {item.product.stockQuantity <= config.business.product.lowStockThreshold && (
+                        {item.product.stockQuantity <=
+                          config.business.product.lowStockThreshold && (
                           <p className="text-xs text-orange-600 mt-1">
                             Only {item.product.stockQuantity} left in stock
                           </p>
@@ -413,12 +432,14 @@ export function CartSidebar({
                     </div>
                   )}
 
-                  {isMember && !freshMembership.loading && memberDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Member Discount</span>
-                      <span>-{formatPrice(memberDiscount)}</span>
-                    </div>
-                  )}
+                  {isMember &&
+                    !freshMembership.loading &&
+                    memberDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Member Discount</span>
+                        <span>-{formatPrice(memberDiscount)}</span>
+                      </div>
+                    )}
 
                   <div className="border-t pt-2">
                     <div className="flex justify-between font-medium">
@@ -460,11 +481,10 @@ export function CartSidebar({
           </Link>
 
           <Link href="/checkout" onClick={() => onOpenChange(false)}>
-            <Button 
-              className="w-full" 
-              disabled={totalItems === 0 || isLoading}
-            >
-              {totalItems === 0 ? 'Cart is Empty' : (
+            <Button className="w-full" disabled={totalItems === 0 || isLoading}>
+              {totalItems === 0 ? (
+                'Cart is Empty'
+              ) : (
                 <>
                   Proceed to Checkout
                   <span className="ml-2">{formatPrice(total)}</span>
@@ -474,7 +494,7 @@ export function CartSidebar({
           </Link>
         </div>
       )}
-      
+
       <ConfirmationDialog />
     </>
   );

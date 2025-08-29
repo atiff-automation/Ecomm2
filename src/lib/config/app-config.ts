@@ -18,10 +18,14 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
 
 const getEnvNumber = (key: string, defaultValue: number): number => {
   const value = process.env[key];
-  if (!value) return defaultValue;
+  if (!value) {
+    return defaultValue;
+  }
   const parsed = parseInt(value, 10);
   if (isNaN(parsed)) {
-    console.warn(`Invalid number for environment variable ${key}: ${value}, using default: ${defaultValue}`);
+    console.warn(
+      `Invalid number for environment variable ${key}: ${value}, using default: ${defaultValue}`
+    );
     return defaultValue;
   }
   return parsed;
@@ -29,7 +33,9 @@ const getEnvNumber = (key: string, defaultValue: number): number => {
 
 const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
   const value = process.env[key];
-  if (!value) return defaultValue;
+  if (!value) {
+    return defaultValue;
+  }
   return value.toLowerCase() === 'true';
 };
 
@@ -83,13 +89,13 @@ export const appConfig = {
     url: getEnvVar('NEXTAUTH_URL', 'http://localhost:3000'),
     sessionMaxAge: getEnvNumber('NEXTAUTH_SESSION_MAX_AGE', 30 * 24 * 60 * 60), // 30 days
     jwtMaxAge: getEnvNumber('NEXTAUTH_JWT_MAX_AGE', 24 * 60 * 60), // 24 hours
-    
+
     // Google OAuth (server-only)
     google: {
       clientId: getServerEnvVar('GOOGLE_CLIENT_ID', ''),
       clientSecret: getServerEnvVar('GOOGLE_CLIENT_SECRET', ''),
     },
-    
+
     // Password requirements
     password: {
       minLength: 8,
@@ -168,7 +174,10 @@ export const appConfig = {
 
     // Session security
     session: {
-      cookieSecure: getEnvBoolean('COOKIE_SECURE', process.env.NODE_ENV === 'production'),
+      cookieSecure: getEnvBoolean(
+        'COOKIE_SECURE',
+        process.env.NODE_ENV === 'production'
+      ),
       cookieHttpOnly: true,
       cookieSameSite: 'lax' as const,
       maxAge: getEnvNumber('SESSION_MAX_AGE', 24 * 60 * 60 * 1000), // 24 hours
@@ -276,8 +285,10 @@ export const appConfig = {
     theme: {
       defaultMode: getEnvVar('DEFAULT_THEME_MODE', 'light'),
       allowToggle: getEnvBoolean('ALLOW_THEME_TOGGLE', true),
-      primaryColor: getEnvVar('PRIMARY_COLOR', '#3b82f6'),
-      secondaryColor: getEnvVar('SECONDARY_COLOR', '#64748b'),
+      primaryColor: getEnvVar('PRIMARY_COLOR', '#3B82F6'),
+      secondaryColor: getEnvVar('SECONDARY_COLOR', '#FDE047'),
+      backgroundColor: getEnvVar('BACKGROUND_COLOR', '#F8FAFC'),
+      textColor: getEnvVar('TEXT_COLOR', '#1E293B'),
     },
   },
 
@@ -293,7 +304,10 @@ export const appConfig = {
 
     // Debug
     debug: {
-      enabled: getEnvBoolean('DEBUG_ENABLED', process.env.NODE_ENV === 'development'),
+      enabled: getEnvBoolean(
+        'DEBUG_ENABLED',
+        process.env.NODE_ENV === 'development'
+      ),
       showQueries: getEnvBoolean('DEBUG_QUERIES', false),
       showPerformance: getEnvBoolean('DEBUG_PERFORMANCE', false),
     },
@@ -301,7 +315,10 @@ export const appConfig = {
     // Testing
     testing: {
       skipAuth: getEnvBoolean('TEST_SKIP_AUTH', false),
-      mockPayments: getEnvBoolean('TEST_MOCK_PAYMENTS', process.env.NODE_ENV !== 'production'),
+      mockPayments: getEnvBoolean(
+        'TEST_MOCK_PAYMENTS',
+        process.env.NODE_ENV !== 'production'
+      ),
       seedDatabase: getEnvBoolean('TEST_SEED_DATABASE', false),
     },
   },
@@ -330,10 +347,7 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
 
   // Only validate server-only environment variables on the server
   if (isServer) {
-    const requiredServerVars = [
-      'DATABASE_URL',
-      'NEXTAUTH_SECRET',
-    ];
+    const requiredServerVars = ['DATABASE_URL', 'NEXTAUTH_SECRET'];
 
     for (const key of requiredServerVars) {
       if (!process.env[key]) {
@@ -343,9 +357,7 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
   }
 
   // Validate client-safe environment variables
-  const requiredClientVars = [
-    'NEXT_PUBLIC_APP_URL',
-  ];
+  const requiredClientVars = ['NEXT_PUBLIC_APP_URL'];
 
   for (const key of requiredClientVars) {
     if (!process.env[key]) {
@@ -358,7 +370,10 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
     errors.push('Membership threshold must be greater than 0');
   }
 
-  if (appConfig.business.pricing.taxRate < 0 || appConfig.business.pricing.taxRate > 100) {
+  if (
+    appConfig.business.pricing.taxRate < 0 ||
+    appConfig.business.pricing.taxRate > 100
+  ) {
     errors.push('Tax rate must be between 0 and 100');
   }
 
@@ -381,14 +396,14 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
 export function getConfigValue<T>(path: string): T | undefined {
   const keys = path.split('.');
   let current: any = appConfig;
-  
+
   for (const key of keys) {
     if (current === null || current === undefined) {
       return undefined;
     }
     current = current[key];
   }
-  
+
   return current as T;
 }
 
@@ -396,7 +411,7 @@ export function getConfigValue<T>(path: string): T | undefined {
  * Type-safe configuration access
  */
 export type AppConfig = typeof appConfig;
-export type ConfigPath = 
+export type ConfigPath =
   | 'business.membership.threshold'
   | 'business.cart.maxItems'
   | 'business.order.numberPrefix'
@@ -410,7 +425,7 @@ export type ConfigPath =
  */
 export const getEnvironmentConfig = () => {
   const env = appConfig.app.environment;
-  
+
   const baseConfig = {
     ...appConfig,
   };

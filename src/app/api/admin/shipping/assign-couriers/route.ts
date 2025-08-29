@@ -26,21 +26,23 @@ const courierAssignmentSchema = z.object({
     }),
     description: z.string().optional(),
   }),
-  alternativeCourier: z.object({
-    courier_id: z.string().min(1),
-    courier_name: z.string().min(1),
-    service_name: z.string().min(1),
-    service_type: z.string(),
-    price: z.number().min(0),
-    estimated_delivery_days: z.number().min(1),
-    estimated_delivery: z.string().min(1),
-    features: z.object({
-      insurance_available: z.boolean(),
-      cod_available: z.boolean(),
-      signature_required_available: z.boolean(),
-    }),
-    description: z.string().optional(),
-  }).optional(),
+  alternativeCourier: z
+    .object({
+      courier_id: z.string().min(1),
+      courier_name: z.string().min(1),
+      service_name: z.string().min(1),
+      service_type: z.string(),
+      price: z.number().min(0),
+      estimated_delivery_days: z.number().min(1),
+      estimated_delivery: z.string().min(1),
+      features: z.object({
+        insurance_available: z.boolean(),
+        cod_available: z.boolean(),
+        signature_required_available: z.boolean(),
+      }),
+      description: z.string().optional(),
+    })
+    .optional(),
   selectionReason: z.string().optional(),
 });
 
@@ -51,7 +53,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -66,23 +71,20 @@ export async function POST(request: NextRequest) {
       where: { id: validatedData.orderId },
       include: {
         user: {
-          select: { firstName: true, lastName: true, email: true }
+          select: { firstName: true, lastName: true, email: true },
         },
         orderItems: {
           include: {
             product: {
-              select: { name: true, weight: true }
-            }
-          }
-        }
-      }
+              select: { name: true, weight: true },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     // Calculate total weight for validation
@@ -90,10 +92,10 @@ export async function POST(request: NextRequest) {
       return sum + (item.product.weight || 0.5) * item.quantity;
     }, 0);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Create or update shipment record
       let shipment = await tx.shipment.findFirst({
-        where: { orderId: validatedData.orderId }
+        where: { orderId: validatedData.orderId },
       });
 
       if (shipment) {
@@ -106,7 +108,14 @@ export async function POST(request: NextRequest) {
             serviceName: validatedData.mainCourier.service_name,
             serviceType: validatedData.mainCourier.service_type as any,
             shippingCost: validatedData.mainCourier.price,
-            estimatedDelivery: new Date(Date.now() + validatedData.mainCourier.estimated_delivery_days * 24 * 60 * 60 * 1000),
+            estimatedDelivery: new Date(
+              Date.now() +
+                validatedData.mainCourier.estimated_delivery_days *
+                  24 *
+                  60 *
+                  60 *
+                  1000
+            ),
             status: 'COURIER_ASSIGNED',
             statusDescription: `Assigned to ${validatedData.mainCourier.courier_name}`,
             updatedAt: new Date(),
@@ -119,9 +128,9 @@ export async function POST(request: NextRequest) {
                 assignedBy: session.user.email,
                 assignedAt: new Date().toISOString(),
                 totalWeight,
-              }
-            }
-          }
+              },
+            },
+          },
         });
       } else {
         // Create new shipment
@@ -133,7 +142,14 @@ export async function POST(request: NextRequest) {
             serviceName: validatedData.mainCourier.service_name,
             serviceType: validatedData.mainCourier.service_type as any,
             shippingCost: validatedData.mainCourier.price,
-            estimatedDelivery: new Date(Date.now() + validatedData.mainCourier.estimated_delivery_days * 24 * 60 * 60 * 1000),
+            estimatedDelivery: new Date(
+              Date.now() +
+                validatedData.mainCourier.estimated_delivery_days *
+                  24 *
+                  60 *
+                  60 *
+                  1000
+            ),
             status: 'COURIER_ASSIGNED',
             statusDescription: `Assigned to ${validatedData.mainCourier.courier_name}`,
             // Store courier selection data in metadata
@@ -145,9 +161,9 @@ export async function POST(request: NextRequest) {
                 assignedBy: session.user.email,
                 assignedAt: new Date().toISOString(),
                 totalWeight,
-              }
-            }
-          }
+              },
+            },
+          },
         });
       }
 
@@ -160,17 +176,17 @@ export async function POST(request: NextRequest) {
           description: `Admin assigned ${validatedData.mainCourier.courier_name} (${validatedData.mainCourier.service_name})${validatedData.alternativeCourier ? ` with ${validatedData.alternativeCourier.courier_name} as alternative` : ''}`,
           eventTime: new Date(),
           source: 'ADMIN',
-        }
+        },
       });
 
       // Update order status if needed
       if (order.status === 'CONFIRMED') {
         await tx.order.update({
           where: { id: validatedData.orderId },
-          data: { 
+          data: {
             status: 'PROCESSING',
             updatedAt: new Date(),
-          }
+          },
         });
       }
 
@@ -188,17 +204,19 @@ export async function POST(request: NextRequest) {
               service: validatedData.mainCourier.service_name,
               price: validatedData.mainCourier.price,
             },
-            alternativeCourier: validatedData.alternativeCourier ? {
-              name: validatedData.alternativeCourier.courier_name,
-              service: validatedData.alternativeCourier.service_name,
-              price: validatedData.alternativeCourier.price,
-            } : null,
+            alternativeCourier: validatedData.alternativeCourier
+              ? {
+                  name: validatedData.alternativeCourier.courier_name,
+                  service: validatedData.alternativeCourier.service_name,
+                  price: validatedData.alternativeCourier.price,
+                }
+              : null,
             selectionReason: validatedData.selectionReason,
             totalWeight,
           },
           ipAddress: request.headers.get('x-forwarded-for') || 'admin',
           userAgent: request.headers.get('user-agent') || 'Admin Panel',
-        }
+        },
       });
 
       return { shipment, order };
@@ -225,18 +243,20 @@ export async function POST(request: NextRequest) {
           price: validatedData.mainCourier.price,
           estimatedDelivery: validatedData.mainCourier.estimated_delivery,
         },
-        alternativeCourier: validatedData.alternativeCourier ? {
-          name: validatedData.alternativeCourier.courier_name,
-          service: validatedData.alternativeCourier.service_name,
-          price: validatedData.alternativeCourier.price,
-          estimatedDelivery: validatedData.alternativeCourier.estimated_delivery,
-        } : null,
+        alternativeCourier: validatedData.alternativeCourier
+          ? {
+              name: validatedData.alternativeCourier.courier_name,
+              service: validatedData.alternativeCourier.service_name,
+              price: validatedData.alternativeCourier.price,
+              estimatedDelivery:
+                validatedData.alternativeCourier.estimated_delivery,
+            }
+          : null,
         status: result.shipment.status,
         assignedBy: session.user.email,
         assignedAt: new Date().toISOString(),
-      }
+      },
     });
-
   } catch (error) {
     console.error('❌ Courier assignment error:', error);
 
@@ -255,10 +275,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to assign couriers',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -272,7 +292,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -288,9 +311,9 @@ export async function GET(request: NextRequest) {
             select: {
               orderNumber: true,
               status: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (!shipment) {
@@ -312,13 +335,13 @@ export async function GET(request: NextRequest) {
           status: shipment.status,
           estimatedDelivery: shipment.estimatedDelivery,
           metadata: shipment.metadata,
-        }
+        },
       });
     } else {
       // Get all recent courier assignments
       const assignments = await prisma.shipment.findMany({
         where: {
-          status: 'COURIER_ASSIGNED'
+          status: 'COURIER_ASSIGNED',
         },
         include: {
           order: {
@@ -326,13 +349,13 @@ export async function GET(request: NextRequest) {
               orderNumber: true,
               status: true,
               user: {
-                select: { firstName: true, lastName: true }
-              }
-            }
-          }
+                select: { firstName: true, lastName: true },
+              },
+            },
+          },
         },
         orderBy: { updatedAt: 'desc' },
-        take: 50
+        take: 50,
       });
 
       return NextResponse.json({
@@ -348,10 +371,9 @@ export async function GET(request: NextRequest) {
           status: shipment.status,
           assignedAt: shipment.updatedAt,
           estimatedDelivery: shipment.estimatedDelivery,
-        }))
+        })),
       });
     }
-
   } catch (error) {
     console.error('❌ Get courier assignments error:', error);
     return NextResponse.json(

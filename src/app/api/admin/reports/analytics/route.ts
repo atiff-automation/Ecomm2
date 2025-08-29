@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get('period') || '30';
 
     const now = new Date();
-    const daysAgo = parseInt(period);
+    const daysAgo = parseInt(period, 10);
     const startDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
 
     // Revenue trend over the specified period

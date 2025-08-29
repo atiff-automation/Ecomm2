@@ -100,16 +100,18 @@ function ThankYouContent() {
   const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [initialSessionState, setInitialSessionState] = useState<'loading' | 'authenticated' | 'guest'>('loading');
+  const [initialSessionState, setInitialSessionState] = useState<
+    'loading' | 'authenticated' | 'guest'
+  >('loading');
 
   const orderRef = searchParams.get('orderRef');
   const amount = searchParams.get('amount');
   const membershipEligible = searchParams.get('membership') === 'true';
-  
+
   // Clear cart immediately when thank-you page loads (after successful payment)
   const clearCartAfterPayment = async () => {
     console.log('🧹 Thank-you page: Clearing cart after successful payment');
-    
+
     try {
       // Clear cart via API
       const response = await fetch('/api/cart', { method: 'DELETE' });
@@ -119,29 +121,32 @@ function ThankYouContent() {
     } catch (error) {
       console.error('❌ Failed to clear cart:', error);
     }
-    
+
     // Clear localStorage
-    ['cart_items', 'guest_cart', 'shopping_cart'].forEach((key) => {
+    ['cart_items', 'guest_cart', 'shopping_cart'].forEach(key => {
       localStorage.removeItem(key);
     });
-    
+
     // Broadcast cart clearing events
     if (typeof window !== 'undefined') {
-      ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach((eventName) => {
+      ['cartUpdated', 'cart_updated', 'cart_cleared'].forEach(eventName => {
         window.dispatchEvent(new CustomEvent(eventName));
       });
-      
+
       // DON'T force refresh after clearing - let the service maintain the empty cart state
       // Force refresh would query the database again and might get new items added after payment
-      console.log('🚫 Skipping force refresh - cart should remain empty after payment');
+      console.log(
+        '🚫 Skipping force refresh - cart should remain empty after payment'
+      );
     }
-    
+
     console.log('✅ Cart clearing completed on thank-you page');
   };
 
   // Track initial session state to distinguish guest vs logged out user
   useEffect(() => {
-    if (session !== undefined) { // session is no longer loading
+    if (session !== undefined) {
+      // session is no longer loading
       if (session?.user) {
         setInitialSessionState('authenticated');
       } else {
@@ -154,7 +159,7 @@ function ThankYouContent() {
   useEffect(() => {
     clearCartAfterPayment();
   }, []); // Run once on mount
-  
+
   useEffect(() => {
     if (!orderRef) {
       setError('Order reference not found');
@@ -176,19 +181,31 @@ function ThankYouContent() {
   useEffect(() => {
     // Only redirect if user was initially authenticated and then logged out
     // Don't redirect guest users (who were never logged in)
-    if (session === null && orderData && initialSessionState === 'authenticated') {
-      console.log('🚪 User logged out from thank-you page, clearing data and redirecting to home');
-      
+    if (
+      session === null &&
+      orderData &&
+      initialSessionState === 'authenticated'
+    ) {
+      console.log(
+        '🚪 User logged out from thank-you page, clearing data and redirecting to home'
+      );
+
       // Clear sensitive order data immediately
       setOrderData(null);
       setError('');
       setMembershipActivated(false);
       setShowWelcomeModal(false);
-      
+
       // Redirect to home page
       router.push('/');
-    } else if (session === null && orderData && initialSessionState === 'guest') {
-      console.log('👤 Guest user on thank-you page, allowing access to order details');
+    } else if (
+      session === null &&
+      orderData &&
+      initialSessionState === 'guest'
+    ) {
+      console.log(
+        '👤 Guest user on thank-you page, allowing access to order details'
+      );
     }
   }, [session, orderData, router, initialSessionState]);
 
@@ -201,19 +218,23 @@ function ThankYouContent() {
       const response = await fetch(`/api/orders/lookup/${orderRef}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch order' }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: 'Failed to fetch order' }));
         if (response.status === 404) {
           throw new Error('Order not found or no longer available');
         }
-        throw new Error(errorData.message || `Failed to fetch order: ${response.statusText}`);
+        throw new Error(
+          errorData.message || `Failed to fetch order: ${response.statusText}`
+        );
       }
 
       const apiResponse: SecureOrderResponse = await response.json();
-      
+
       if (!apiResponse.success || !apiResponse.data) {
         throw new Error('Invalid order data received');
       }
-      
+
       console.log('✅ Secure order data received:', apiResponse.data);
       setOrderData(apiResponse.data);
     } catch (error) {
@@ -326,19 +347,32 @@ function ThankYouContent() {
 
   // Security check: Only show session expired for users who were authenticated and then logged out
   // Allow guest users to view their order details
-  if (session === null && orderData && initialSessionState === 'authenticated') {
+  if (
+    session === null &&
+    orderData &&
+    initialSessionState === 'authenticated'
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center p-6">
             <AlertCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Session Expired</h2>
-            <p className="text-gray-600 mb-4">Please sign in to view your order details</p>
+            <p className="text-gray-600 mb-4">
+              Please sign in to view your order details
+            </p>
             <div className="space-y-2">
-              <Button onClick={() => router.push('/auth/signin')} className="w-full">
+              <Button
+                onClick={() => router.push('/auth/signin')}
+                className="w-full"
+              >
                 Sign In
               </Button>
-              <Button variant="outline" onClick={() => router.push('/')} className="w-full">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/')}
+                className="w-full"
+              >
                 <Home className="w-4 h-4 mr-2" />
                 Return Home
               </Button>
@@ -440,50 +474,70 @@ function ThankYouContent() {
                           Qty: {item.quantity}
                         </span>
                         {/* Show price type badge based on stored order data */}
-                        {item.finalPrice < item.price && (() => {
-                          // Determine price type from actual applied pricing (Source of Truth)
-                          // This logic recreates the pricing decision made during order creation
-                          
-                          if (item.finalPrice < item.memberPrice) {
-                            // Applied price is lower than member price = promotional discount
-                            return (
-                              <Badge variant="destructive" className="text-xs">
-                                Promo
-                              </Badge>
-                            );
-                          } else if (item.finalPrice === item.memberPrice) {
-                            // Applied price equals member price = member discount
-                            return (
-                              <Badge variant="secondary" className="text-xs">
-                                Member
-                              </Badge>
-                            );
-                          } else {
-                            // Applied price is between member and regular = unclear, fallback to order-level analysis
-                            const hasPromotionalDiscount = orderData?.discountAmount && orderData.discountAmount > 0;
-                            const hasMemberDiscount = orderData?.memberDiscount && orderData.memberDiscount > 0;
-                            
-                            if (hasPromotionalDiscount && !hasMemberDiscount) {
+                        {item.finalPrice < item.price &&
+                          (() => {
+                            // Determine price type from actual applied pricing (Source of Truth)
+                            // This logic recreates the pricing decision made during order creation
+
+                            if (item.finalPrice < item.memberPrice) {
+                              // Applied price is lower than member price = promotional discount
                               return (
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   Promo
                                 </Badge>
                               );
-                            } else if (hasMemberDiscount && !hasPromotionalDiscount) {
+                            } else if (item.finalPrice === item.memberPrice) {
+                              // Applied price equals member price = member discount
                               return (
                                 <Badge variant="secondary" className="text-xs">
                                   Member
                                 </Badge>
                               );
                             } else {
-                              return (
-                                <Badge variant="outline" className="text-xs">
-                                  Discounted
-                                </Badge>
-                              );
+                              // Applied price is between member and regular = unclear, fallback to order-level analysis
+                              const hasPromotionalDiscount =
+                                orderData?.discountAmount &&
+                                orderData.discountAmount > 0;
+                              const hasMemberDiscount =
+                                orderData?.memberDiscount &&
+                                orderData.memberDiscount > 0;
+
+                              if (
+                                hasPromotionalDiscount &&
+                                !hasMemberDiscount
+                              ) {
+                                return (
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
+                                    Promo
+                                  </Badge>
+                                );
+                              } else if (
+                                hasMemberDiscount &&
+                                !hasPromotionalDiscount
+                              ) {
+                                return (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    Member
+                                  </Badge>
+                                );
+                              } else {
+                                return (
+                                  <Badge variant="outline" className="text-xs">
+                                    Discounted
+                                  </Badge>
+                                );
+                              }
                             }
-                          }
-                        })()}
+                          })()}
                       </div>
                     </div>
                     <div className="text-right">
@@ -642,7 +696,7 @@ function ThankYouContent() {
                   {[
                     "You'll receive an order confirmation email shortly",
                     "We'll send shipping updates as your order is processed",
-                    "Track your order anytime in your account"
+                    'Track your order anytime in your account',
                   ].map((text, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>

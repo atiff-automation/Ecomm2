@@ -18,7 +18,11 @@ import {
   // Trash2, // Not currently used
 } from 'lucide-react';
 import Link from 'next/link';
-import { AdminPageLayout, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface Customer {
   id: string;
@@ -195,7 +199,6 @@ export default function AdminCustomerView({
       parentSection={{ label: 'Customers', href: '/admin/customers' }}
       className="max-w-4xl mx-auto"
     >
-
       {/* Member Badge */}
       {customer.isMember && (
         <div className="mb-6 flex items-center gap-2 text-yellow-600">
@@ -211,177 +214,169 @@ export default function AdminCustomerView({
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Orders
-              </CardTitle>
-              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customer.totalOrders}</div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{customer.totalOrders}</div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(customer.totalSpent)}
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(customer.totalSpent)}
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Member Since
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {customer.memberSince
-                  ? new Date(customer.memberSince).toLocaleDateString('en-MY')
-                  : 'Not a member'}
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Member Since</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {customer.memberSince
+                ? new Date(customer.memberSince).toLocaleDateString('en-MY')
+                : 'Not a member'}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-600">Email</p>
+                <p className="font-medium">{customer.email}</p>
+              </div>
+            </div>
+
+            {customer.phone && (
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-gray-400" />
+                <Phone className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{customer.email}</p>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="font-medium">{customer.phone}</p>
                 </div>
               </div>
+            )}
 
-              {customer.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-medium">{customer.phone}</p>
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center gap-3">
+              <Calendar className="h-5 w-5 text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-600">Joined</p>
+                <p className="font-medium">
+                  {new Date(customer.createdAt).toLocaleDateString('en-MY')}
+                </p>
+              </div>
+            </div>
 
+            {customer.lastOrderAt && (
               <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-gray-400" />
+                <ShoppingBag className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-600">Joined</p>
+                  <p className="text-sm text-gray-600">Last Order</p>
                   <p className="font-medium">
-                    {new Date(customer.createdAt).toLocaleDateString('en-MY')}
+                    {new Date(customer.lastOrderAt).toLocaleDateString('en-MY')}
                   </p>
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              {customer.lastOrderAt && (
-                <div className="flex items-center gap-3">
-                  <ShoppingBag className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">Last Order</p>
-                    <p className="font-medium">
-                      {new Date(customer.lastOrderAt).toLocaleDateString(
-                        'en-MY'
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Addresses */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Addresses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {customer.addresses && customer.addresses.length > 0 ? (
-                <div className="space-y-4">
-                  {customer.addresses.map(address => (
-                    <div key={address.id} className="border rounded-lg p-3">
-                      <div className="flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div className="flex-1">
-                          {address.isDefault && (
-                            <Badge variant="outline" className="mb-2">
-                              Default
-                            </Badge>
-                          )}
-                          <p className="font-medium">{address.addressLine1}</p>
-                          {address.addressLine2 && (
-                            <p className="text-gray-600">
-                              {address.addressLine2}
-                            </p>
-                          )}
-                          <p className="text-gray-600">
-                            {address.city}, {address.state} {address.postalCode}
-                          </p>
-                          <p className="text-gray-600">{address.country}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">No addresses on file</p>
-              )}
-            </CardContent>
-          </Card>
-      </div>
-
-      {/* Recent Orders */}
-      <Card className="mt-6">
+        {/* Addresses */}
+        <Card>
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+            <CardTitle>Addresses</CardTitle>
           </CardHeader>
           <CardContent>
-            {customer.orders && customer.orders.length > 0 ? (
+            {customer.addresses && customer.addresses.length > 0 ? (
               <div className="space-y-4">
-                {customer.orders.slice(0, 10).map(order => (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between border-b pb-3"
-                  >
-                    <div>
-                      <p className="font-medium">{order.orderNumber}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.createdAt).toLocaleDateString('en-MY')}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={getOrderStatusColor(order.status)}>
-                        {order.status}
-                      </Badge>
-                      <p className="font-medium">
-                        {formatCurrency(order.total)}
-                      </p>
-                      <Link href={`/admin/orders/${order.id}`}>
-                        <Button size="sm" variant="outline">
-                          View
-                        </Button>
-                      </Link>
+                {customer.addresses.map(address => (
+                  <div key={address.id} className="border rounded-lg p-3">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        {address.isDefault && (
+                          <Badge variant="outline" className="mb-2">
+                            Default
+                          </Badge>
+                        )}
+                        <p className="font-medium">{address.addressLine1}</p>
+                        {address.addressLine2 && (
+                          <p className="text-gray-600">
+                            {address.addressLine2}
+                          </p>
+                        )}
+                        <p className="text-gray-600">
+                          {address.city}, {address.state} {address.postalCode}
+                        </p>
+                        <p className="text-gray-600">{address.country}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No orders found</p>
+              <p className="text-gray-500">No addresses on file</p>
             )}
           </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Orders */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Recent Orders</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {customer.orders && customer.orders.length > 0 ? (
+            <div className="space-y-4">
+              {customer.orders.slice(0, 10).map(order => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between border-b pb-3"
+                >
+                  <div>
+                    <p className="font-medium">{order.orderNumber}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(order.createdAt).toLocaleDateString('en-MY')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className={getOrderStatusColor(order.status)}>
+                      {order.status}
+                    </Badge>
+                    <p className="font-medium">{formatCurrency(order.total)}</p>
+                    <Link href={`/admin/orders/${order.id}`}>
+                      <Button size="sm" variant="outline">
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No orders found</p>
+          )}
+        </CardContent>
       </Card>
     </AdminPageLayout>
   );

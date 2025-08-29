@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getCacheStatistics,
   getPendingJobs,
 } from '@/lib/services/tracking-cache';
@@ -19,7 +19,7 @@ import {
   trackTrackingAPIPerformance,
 } from '@/lib/utils/tracking-error-handling';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 
 /**
@@ -27,11 +27,11 @@ import { prisma } from '@/lib/db/prisma';
  */
 async function validateAdminAccess(): Promise<boolean> {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || !session.user) {
     return false;
   }
-  
+
   // Check if user has admin role
   const userRole = (session.user as any).role;
   return userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -50,12 +50,16 @@ function calculateQueueHealth(stats: {
   if (stats.pending > 100 || stats.errorRate > 50) {
     return 'CRITICAL';
   }
-  
-  // Degraded conditions  
-  if (stats.pending > 50 || stats.errorRate > 20 || stats.avgProcessingTime > 10000) {
+
+  // Degraded conditions
+  if (
+    stats.pending > 50 ||
+    stats.errorRate > 20 ||
+    stats.avgProcessingTime > 10000
+  ) {
     return 'DEGRADED';
   }
-  
+
   return 'HEALTHY';
 }
 
@@ -79,7 +83,7 @@ export async function GET(request: NextRequest) {
 
     // Get basic cache statistics
     const cacheStats = await getCacheStatistics();
-    
+
     // Get detailed job statistics
     const [
       pendingJobsCount,
@@ -138,22 +142,33 @@ export async function GET(request: NextRequest) {
     const processingTimes = recentCompletedJobs
       .filter(job => job.completedAt && job.apiResponseTimeMs)
       .map(job => job.apiResponseTimeMs!);
-    
-    const avgProcessingTime = processingTimes.length > 0 
-      ? Math.round(processingTimes.reduce((sum, time) => sum + time, 0) / processingTimes.length)
-      : 0;
 
-    const successfulJobs = recentCompletedJobs.filter(job => job.apiCallSuccess).length;
-    const errorRate = recentCompletedJobs.length > 0 
-      ? Math.round(((recentCompletedJobs.length - successfulJobs) / recentCompletedJobs.length) * 100)
-      : 0;
+    const avgProcessingTime =
+      processingTimes.length > 0
+        ? Math.round(
+            processingTimes.reduce((sum, time) => sum + time, 0) /
+              processingTimes.length
+          )
+        : 0;
+
+    const successfulJobs = recentCompletedJobs.filter(
+      job => job.apiCallSuccess
+    ).length;
+    const errorRate =
+      recentCompletedJobs.length > 0
+        ? Math.round(
+            ((recentCompletedJobs.length - successfulJobs) /
+              recentCompletedJobs.length) *
+              100
+          )
+        : 0;
 
     // Get processor status
     const processorStatus = trackingJobProcessor.getStatus();
 
     // Get next scheduled job
     const nextScheduled = await prisma.trackingJobQueue.findFirst({
-      where: { 
+      where: {
         status: 'PENDING',
         scheduledFor: { gt: new Date() },
       },
@@ -202,19 +217,13 @@ export async function GET(request: NextRequest) {
     };
 
     // Track performance
-    trackTrackingAPIPerformance(
-      'admin-job-status',
-      startTime,
-      true,
-      {
-        queueHealth,
-        pendingJobs: pendingJobsCount,
-        totalJobs: totalJobsCount,
-      }
-    );
+    trackTrackingAPIPerformance('admin-job-status', startTime, true, {
+      queueHealth,
+      pendingJobs: pendingJobsCount,
+      totalJobs: totalJobsCount,
+    });
 
     return NextResponse.json(response);
-
   } catch (error) {
     // Track performance for errors
     trackTrackingAPIPerformance(

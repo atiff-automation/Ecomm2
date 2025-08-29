@@ -9,28 +9,33 @@ import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 
-const heroSectionSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  description: z.string(),
-  ctaPrimaryText: z.string().min(1, 'Primary CTA text is required'),
-  ctaPrimaryLink: z.string().min(1, 'Primary CTA link is required'),
-  ctaSecondaryText: z.string().min(1, 'Secondary CTA text is required'),
-  ctaSecondaryLink: z.string().min(1, 'Secondary CTA link is required'),
-  backgroundType: z.enum(['IMAGE', 'VIDEO']),
-  backgroundImage: z.string().optional().nullable(),
-  backgroundVideo: z.string().optional().nullable(),
-  overlayOpacity: z.number().min(0).max(1),
-  textAlignment: z.enum(['left', 'center', 'right']),
-  showTitle: z.boolean().optional().default(true),
-  showCTA: z.boolean().optional().default(true),
-}).refine((data) => {
-  // If showTitle is false, title fields can be empty
-  // If showCTA is false, CTA fields can be empty or use placeholder values
-  return true; // Always pass refinement since we handle defaults in the application
-}, {
-  message: "Invalid hero section configuration"
-});
+const heroSectionSchema = z
+  .object({
+    title: z.string(),
+    subtitle: z.string(),
+    description: z.string(),
+    ctaPrimaryText: z.string().min(1, 'Primary CTA text is required'),
+    ctaPrimaryLink: z.string().min(1, 'Primary CTA link is required'),
+    ctaSecondaryText: z.string().min(1, 'Secondary CTA text is required'),
+    ctaSecondaryLink: z.string().min(1, 'Secondary CTA link is required'),
+    backgroundType: z.enum(['IMAGE', 'VIDEO']),
+    backgroundImage: z.string().optional().nullable(),
+    backgroundVideo: z.string().optional().nullable(),
+    overlayOpacity: z.number().min(0).max(1),
+    textAlignment: z.enum(['left', 'center', 'right']),
+    showTitle: z.boolean().optional().default(true),
+    showCTA: z.boolean().optional().default(true),
+  })
+  .refine(
+    data => {
+      // If showTitle is false, title fields can be empty
+      // If showCTA is false, CTA fields can be empty or use placeholder values
+      return true; // Always pass refinement since we handle defaults in the application
+    },
+    {
+      message: 'Invalid hero section configuration',
+    }
+  );
 
 /**
  * GET /api/admin/site-customization/hero - Get current hero section configuration
@@ -96,14 +101,16 @@ export async function GET() {
           createdBy: creatorId,
         },
         include: {
-          creator: creatorId ? {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          } : undefined,
+          creator: creatorId
+            ? {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              }
+            : undefined,
         },
       });
     }
@@ -152,7 +159,9 @@ export async function PUT(request: NextRequest) {
         userId = session.user.id;
       }
     } catch (error) {
-      console.log('User not found, continuing without user reference for audit');
+      console.log(
+        'User not found, continuing without user reference for audit'
+      );
     }
 
     let validatedData;
@@ -234,14 +243,16 @@ export async function PUT(request: NextRequest) {
           createdBy: creatorId,
         },
         include: {
-          creator: creatorId ? {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          } : undefined,
+          creator: creatorId
+            ? {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              }
+            : undefined,
         },
       });
     }
@@ -251,17 +262,17 @@ export async function PUT(request: NextRequest) {
       await prisma.auditLog.create({
         data: {
           userId: userId,
-        action: 'HERO_SECTION_UPDATED',
-        resource: 'SITE_CUSTOMIZATION',
-        details: {
-          heroSectionId: updatedHero.id,
-          changes: validatedData,
-          performedBy: session.user.email,
+          action: 'HERO_SECTION_UPDATED',
+          resource: 'SITE_CUSTOMIZATION',
+          details: {
+            heroSectionId: updatedHero.id,
+            changes: validatedData,
+            performedBy: session.user.email,
+          },
+          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+      });
     }
 
     return NextResponse.json({
@@ -330,14 +341,16 @@ export async function POST(request: NextRequest) {
         createdBy: creatorId,
       },
       include: {
-        creator: creatorId ? {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        } : undefined,
+        creator: creatorId
+          ? {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            }
+          : undefined,
       },
     });
 
@@ -347,15 +360,15 @@ export async function POST(request: NextRequest) {
         data: {
           userId: creatorId,
           action: 'HERO_SECTION_RESET',
-        resource: 'SITE_CUSTOMIZATION',
-        details: {
-          heroSectionId: defaultHero.id,
-          performedBy: session.user.email,
+          resource: 'SITE_CUSTOMIZATION',
+          details: {
+            heroSectionId: defaultHero.id,
+            performedBy: session.user.email,
+          },
+          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+      });
     }
 
     return NextResponse.json({

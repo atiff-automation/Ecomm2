@@ -6,7 +6,10 @@
 
 import { EasyParcelService } from './easyparcel-service';
 import { getEasyParcelCache } from '@/lib/cache/easyparcel-cache';
-import { EasyParcelMonitor, withMonitoring } from '@/lib/monitoring/easyparcel-monitor';
+import {
+  EasyParcelMonitor,
+  withMonitoring,
+} from '@/lib/monitoring/easyparcel-monitor';
 
 export class EnhancedEasyParcelService extends EasyParcelService {
   private cache = getEasyParcelCache();
@@ -23,9 +26,9 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       // Check cache first
       const cachedRates = await this.cache.getCachedRates(request);
       if (cachedRates) {
-        this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-          cached: true, 
-          rateCount: cachedRates.length 
+        this.monitor.recordAPICall(operation, startTime, true, undefined, {
+          cached: true,
+          rateCount: cachedRates.length,
         });
         return { rates: cachedRates };
       }
@@ -38,13 +41,12 @@ export class EnhancedEasyParcelService extends EasyParcelService {
         await this.cache.cacheRates(request, result.rates);
       }
 
-      this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-        cached: false, 
-        rateCount: result.rates?.length || 0 
+      this.monitor.recordAPICall(operation, startTime, true, undefined, {
+        cached: false,
+        rateCount: result.rates?.length || 0,
       });
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error);
       throw error;
@@ -63,20 +65,19 @@ export class EnhancedEasyParcelService extends EasyParcelService {
 
       this.monitor.recordAPICall(operation, startTime, true, undefined, {
         shipmentId: result.shipment_id,
-        reference: request.reference
+        reference: request.reference,
       });
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        reference: request.reference
+        reference: request.reference,
       });
 
       // Record failed shipment for alerting
       if (request.reference) {
         this.monitor.recordFailedShipment(
-          request.reference, 
+          request.reference,
           error instanceof Error ? error.message : 'Booking failed',
           { request }
         );
@@ -98,14 +99,13 @@ export class EnhancedEasyParcelService extends EasyParcelService {
 
       this.monitor.recordAPICall(operation, startTime, true, undefined, {
         shipmentId,
-        labelSize: result.length
+        labelSize: result.length,
       });
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        shipmentId
+        shipmentId,
       });
 
       throw error;
@@ -123,11 +123,11 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       // For tracking, we can cache results for a shorter period (5 minutes)
       const cacheKey = `tracking:${trackingNumber}`;
       const cached = await this.cache.getCachedValidation(cacheKey);
-      
+
       if (cached) {
-        this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-          cached: true, 
-          trackingNumber 
+        this.monitor.recordAPICall(operation, startTime, true, undefined, {
+          cached: true,
+          trackingNumber,
         });
         return cached;
       }
@@ -137,17 +137,16 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       // Cache tracking result for 5 minutes
       await this.cache.cacheValidation(cacheKey, result);
 
-      this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-        cached: false, 
+      this.monitor.recordAPICall(operation, startTime, true, undefined, {
+        cached: false,
         trackingNumber,
-        status: result.status
+        status: result.status,
       });
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        trackingNumber
+        trackingNumber,
       });
 
       throw error;
@@ -166,14 +165,13 @@ export class EnhancedEasyParcelService extends EasyParcelService {
 
       this.monitor.recordAPICall(operation, startTime, true, undefined, {
         shipmentCount: request.shipment_ids?.length || 0,
-        pickupDate: request.pickup_date
+        pickupDate: request.pickup_date,
       });
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        shipmentCount: request.shipment_ids?.length || 0
+        shipmentCount: request.shipment_ids?.length || 0,
       });
 
       throw error;
@@ -190,11 +188,11 @@ export class EnhancedEasyParcelService extends EasyParcelService {
     try {
       const addressKey = `${address.postcode}_${address.state}`;
       const cached = await this.cache.getCachedValidation(addressKey);
-      
+
       if (cached) {
-        this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-          cached: true, 
-          postcode: address.postcode 
+        this.monitor.recordAPICall(operation, startTime, true, undefined, {
+          cached: true,
+          postcode: address.postcode,
         });
         return cached;
       }
@@ -205,17 +203,16 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       // Cache validation result
       await this.cache.cacheValidation(addressKey, validationResult);
 
-      this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-        cached: false, 
+      this.monitor.recordAPICall(operation, startTime, true, undefined, {
+        cached: false,
         postcode: address.postcode,
-        valid: validationResult.isValid
+        valid: validationResult.isValid,
       });
 
       return validationResult;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        postcode: address.postcode
+        postcode: address.postcode,
       });
 
       throw error;
@@ -232,10 +229,10 @@ export class EnhancedEasyParcelService extends EasyParcelService {
     try {
       const cached = await this.cache.getCachedServiceList(region);
       if (cached) {
-        this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-          cached: true, 
+        this.monitor.recordAPICall(operation, startTime, true, undefined, {
+          cached: true,
           region,
-          serviceCount: cached.length 
+          serviceCount: cached.length,
         });
         return cached;
       }
@@ -246,17 +243,16 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       // Cache services list
       await this.cache.cacheServiceList(region, services);
 
-      this.monitor.recordAPICall(operation, startTime, true, undefined, { 
-        cached: false, 
+      this.monitor.recordAPICall(operation, startTime, true, undefined, {
+        cached: false,
         region,
-        serviceCount: services.length 
+        serviceCount: services.length,
       });
 
       return services;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
-        region
+        region,
       });
 
       throw error;
@@ -280,10 +276,10 @@ export class EnhancedEasyParcelService extends EasyParcelService {
           results.push({ success: true, result, request: request.reference });
           successCount++;
         } catch (error) {
-          results.push({ 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error', 
-            request: request.reference 
+          results.push({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            request: request.reference,
           });
           failedCount++;
         }
@@ -293,15 +289,14 @@ export class EnhancedEasyParcelService extends EasyParcelService {
         totalRequests: requests.length,
         successCount,
         failedCount,
-        successRate: successCount / requests.length
+        successRate: successCount / requests.length,
       });
 
       return results;
-
     } catch (error) {
       this.monitor.recordAPICall(operation, startTime, false, error, {
         totalRequests: requests.length,
-        processedCount: results.length
+        processedCount: results.length,
       });
 
       throw error;
@@ -334,8 +329,10 @@ export class EnhancedEasyParcelService extends EasyParcelService {
    */
   async refreshRatesCache(request: any): Promise<any> {
     // Clear existing cache
-    await this.cache.invalidateCache(`rate:${request.pickup_address.postcode}*`);
-    
+    await this.cache.invalidateCache(
+      `rate:${request.pickup_address.postcode}*`
+    );
+
     // Fetch fresh data
     return await this.calculateRates(request);
   }
@@ -354,10 +351,10 @@ export class EnhancedEasyParcelService extends EasyParcelService {
     try {
       // Test API connectivity
       const apiHealth = await this.testAPIConnectivity();
-      
+
       // Test cache
       const cacheHealth = await this.testCacheConnectivity();
-      
+
       // Get monitoring stats
       const monitoringStats = this.monitor.getStats(60 * 60 * 1000);
       const monitoringHealth = monitoringStats.totalRequests > 0;
@@ -369,14 +366,19 @@ export class EnhancedEasyParcelService extends EasyParcelService {
         performance: {
           responseTime: Date.now() - startTime,
           errorRate: monitoringStats.errorRate,
-          averageResponseTime: monitoringStats.averageResponseTime
-        }
+          averageResponseTime: monitoringStats.averageResponseTime,
+        },
       };
 
-      this.monitor.recordAPICall('health_check', startTime, true, undefined, result);
+      this.monitor.recordAPICall(
+        'health_check',
+        startTime,
+        true,
+        undefined,
+        result
+      );
 
       return result;
-
     } catch (error) {
       this.monitor.recordAPICall('health_check', startTime, false, error);
       throw error;
@@ -389,11 +391,14 @@ export class EnhancedEasyParcelService extends EasyParcelService {
   private async testAPIConnectivity(): Promise<boolean> {
     try {
       // Simple API test - could be account info or ping endpoint
-      const response = await fetch(`${process.env.EASYPARCEL_BASE_URL}/account`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-        timeout: 5000
-      });
+      const response = await fetch(
+        `${process.env.EASYPARCEL_BASE_URL}/account`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+          timeout: 5000,
+        }
+      );
       return response.ok;
     } catch (error) {
       return false;
@@ -407,10 +412,10 @@ export class EnhancedEasyParcelService extends EasyParcelService {
     try {
       const testKey = 'test_connectivity';
       const testData = { test: true, timestamp: Date.now() };
-      
+
       await this.cache.cacheValidation(testKey, testData);
       const retrieved = await this.cache.getCachedValidation(testKey);
-      
+
       return retrieved !== null;
     } catch (error) {
       return false;
@@ -428,8 +433,8 @@ export class EnhancedEasyParcelService extends EasyParcelService {
       details: {
         postcode: address.postcode,
         state: address.state,
-        city: address.city
-      }
+        city: address.city,
+      },
     };
   }
 
@@ -442,20 +447,26 @@ export class EnhancedEasyParcelService extends EasyParcelService {
     return [
       { id: 'STD', name: 'Standard', type: 'STANDARD' },
       { id: 'EXP', name: 'Express', type: 'EXPRESS' },
-      { id: 'ONT', name: 'Overnight', type: 'OVERNIGHT' }
+      { id: 'ONT', name: 'Overnight', type: 'OVERNIGHT' },
     ];
   }
 }
 
 // Export monitored versions of common functions
-export const monitoredCalculateRates = withMonitoring('calculate_rates', 
-  (service: EnhancedEasyParcelService, request: any) => service.calculateRates(request)
+export const monitoredCalculateRates = withMonitoring(
+  'calculate_rates',
+  (service: EnhancedEasyParcelService, request: any) =>
+    service.calculateRates(request)
 );
 
-export const monitoredBookShipment = withMonitoring('book_shipment',
-  (service: EnhancedEasyParcelService, request: any) => service.bookShipment(request)
+export const monitoredBookShipment = withMonitoring(
+  'book_shipment',
+  (service: EnhancedEasyParcelService, request: any) =>
+    service.bookShipment(request)
 );
 
-export const monitoredTrackShipment = withMonitoring('track_shipment',
-  (service: EnhancedEasyParcelService, trackingNumber: string) => service.trackShipment(trackingNumber)
+export const monitoredTrackShipment = withMonitoring(
+  'track_shipment',
+  (service: EnhancedEasyParcelService, trackingNumber: string) =>
+    service.trackShipment(trackingNumber)
 );

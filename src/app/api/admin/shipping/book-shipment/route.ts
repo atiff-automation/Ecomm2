@@ -13,14 +13,16 @@ import { z } from 'zod';
 
 const bookingRequestSchema = z.object({
   orderId: z.string().min(1),
-  options: z.object({
-    insurance: z.boolean().optional(),
-    insuranceAmount: z.number().min(0).optional(),
-    cod: z.boolean().optional(),
-    codAmount: z.number().min(0).optional(),
-    signatureRequired: z.boolean().optional(),
-    specialInstructions: z.string().max(200).optional(),
-  }).optional(),
+  options: z
+    .object({
+      insurance: z.boolean().optional(),
+      insuranceAmount: z.number().min(0).optional(),
+      cod: z.boolean().optional(),
+      codAmount: z.number().min(0).optional(),
+      signatureRequired: z.boolean().optional(),
+      specialInstructions: z.string().max(200).optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -30,7 +32,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -45,31 +50,28 @@ export async function POST(request: NextRequest) {
       where: { id: validatedData.orderId },
       include: {
         user: {
-          select: { firstName: true, lastName: true, email: true, phone: true }
+          select: { firstName: true, lastName: true, email: true, phone: true },
         },
         shippingAddress: true,
         orderItems: {
           include: {
             product: {
-              select: { name: true, weight: true }
-            }
-          }
+              select: { name: true, weight: true },
+            },
+          },
         },
         shipments: {
           include: {
             order: {
-              select: { orderNumber: true }
-            }
-          }
-        }
-      }
+              select: { orderNumber: true },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     if (!order.shippingAddress) {
@@ -129,18 +131,19 @@ export async function POST(request: NextRequest) {
         city: pickupAddress.city,
         state: pickupAddress.state,
         postcode: pickupAddress.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       delivery_address: {
         name: `${order.user?.firstName} ${order.user?.lastName}`,
-        phone: order.user?.phone || order.shippingAddress.phone || '+60123456789',
+        phone:
+          order.user?.phone || order.shippingAddress.phone || '+60123456789',
         email: order.user?.email,
         address_line_1: order.shippingAddress.address,
         address_line_2: order.shippingAddress.address2 || '',
         city: order.shippingAddress.city,
         state: order.shippingAddress.state,
         postcode: order.shippingAddress.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       parcel: {
         weight: Math.max(0.1, totalWeight),
@@ -148,7 +151,7 @@ export async function POST(request: NextRequest) {
         width: 15,
         height: 10,
         content: order.orderItems.map(item => item.product.name).join(', '),
-        value: order.total
+        value: order.total,
       },
       reference_id: order.orderNumber,
       service_type: mainCourier.service_type,
@@ -167,7 +170,9 @@ export async function POST(request: NextRequest) {
     await prisma.auditLog.create({
       data: {
         userId: session.user.id,
-        action: bookingResult.success ? 'SHIPMENT_BOOKED' : 'SHIPMENT_BOOKING_FAILED',
+        action: bookingResult.success
+          ? 'SHIPMENT_BOOKED'
+          : 'SHIPMENT_BOOKING_FAILED',
         resource: 'Order',
         resourceId: validatedData.orderId,
         details: {
@@ -184,7 +189,7 @@ export async function POST(request: NextRequest) {
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'admin',
         userAgent: request.headers.get('user-agent') || 'Admin Panel',
-      }
+      },
     });
 
     if (bookingResult.success) {
@@ -199,7 +204,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: bookingResult.fallbackUsed 
+        message: bookingResult.fallbackUsed
           ? `Shipment booked successfully with ${bookingResult.usedCourier.courier_name} (fallback used)`
           : `Shipment booked successfully with ${bookingResult.usedCourier.courier_name}`,
         data: {
@@ -210,7 +215,7 @@ export async function POST(request: NextRequest) {
           fallbackUsed: bookingResult.fallbackUsed,
           attempts: bookingResult.attempts.length,
           bookedAt: new Date().toISOString(),
-        }
+        },
       });
     } else {
       console.error('❌ Shipment booking failed:', {
@@ -219,18 +224,20 @@ export async function POST(request: NextRequest) {
         attempts: bookingResult.attempts,
       });
 
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to book shipment with all selected couriers',
-        error: 'Booking failed',
-        details: {
-          attempts: bookingResult.attempts,
-          mainCourier: mainCourier.courier_name,
-          alternativeCourier: alternativeCourier?.courier_name,
-        }
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Failed to book shipment with all selected couriers',
+          error: 'Booking failed',
+          details: {
+            attempts: bookingResult.attempts,
+            mainCourier: mainCourier.courier_name,
+            alternativeCourier: alternativeCourier?.courier_name,
+          },
+        },
+        { status: 400 }
+      );
     }
-
   } catch (error) {
     console.error('❌ Booking API error:', error);
 
@@ -249,10 +256,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to book shipment',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -266,7 +273,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -287,7 +297,6 @@ export async function GET(request: NextRequest) {
       orderId,
       status: bookingStatus,
     });
-
   } catch (error) {
     console.error('❌ Get booking status error:', error);
     return NextResponse.json(

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '30');
-    
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -20,24 +20,24 @@ export async function GET(request: NextRequest) {
     const shipments = await prisma.shipment.findMany({
       where: {
         createdAt: {
-          gte: startDate
-        }
+          gte: startDate,
+        },
       },
       include: {
         order: {
           include: {
             orderItems: {
               include: {
-                product: true
-              }
-            }
-          }
+                product: true,
+              },
+            },
+          },
         },
         trackingEvents: {
-          orderBy: { eventTime: 'desc' }
-        }
+          orderBy: { eventTime: 'desc' },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     // Generate CSV content
@@ -59,17 +59,19 @@ export async function GET(request: NextRequest) {
       'Order Value',
       'Latest Event',
       'Latest Event Date',
-      'Latest Event Location'
+      'Latest Event Location',
     ];
 
     const csvRows = shipments.map(shipment => {
       const order = shipment.order;
       const latestEvent = shipment.trackingEvents[0];
-      
+
       // Calculate delivery days
       let deliveryDays = '';
       if (shipment.actualDelivery && shipment.createdAt) {
-        const deliveryTime = new Date(shipment.actualDelivery).getTime() - new Date(shipment.createdAt).getTime();
+        const deliveryTime =
+          new Date(shipment.actualDelivery).getTime() -
+          new Date(shipment.createdAt).getTime();
         deliveryDays = (deliveryTime / (1000 * 60 * 60 * 24)).toFixed(1);
       }
 
@@ -81,8 +83,12 @@ export async function GET(request: NextRequest) {
         shipment.status,
         shipment.statusDescription || '',
         shipment.createdAt.toISOString().split('T')[0],
-        shipment.estimatedDelivery ? shipment.estimatedDelivery.toISOString().split('T')[0] : '',
-        shipment.actualDelivery ? shipment.actualDelivery.toISOString().split('T')[0] : '',
+        shipment.estimatedDelivery
+          ? shipment.estimatedDelivery.toISOString().split('T')[0]
+          : '',
+        shipment.actualDelivery
+          ? shipment.actualDelivery.toISOString().split('T')[0]
+          : '',
         deliveryDays,
         // Customer name from delivery address
         (shipment.deliveryAddress as any)?.name || 'N/A',
@@ -92,23 +98,29 @@ export async function GET(request: NextRequest) {
         shipment.finalPrice,
         latestEvent?.eventName || '',
         latestEvent ? latestEvent.eventTime.toISOString().split('T')[0] : '',
-        latestEvent?.location || ''
+        latestEvent?.location || '',
       ];
     });
 
     // Convert to CSV format
     const csvContent = [
       csvHeaders.join(','),
-      ...csvRows.map(row => 
-        row.map(field => {
-          // Escape commas and quotes in CSV fields
-          const stringField = String(field);
-          if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
-            return `"${stringField.replace(/"/g, '""')}"`;
-          }
-          return stringField;
-        }).join(',')
-      )
+      ...csvRows.map(row =>
+        row
+          .map(field => {
+            // Escape commas and quotes in CSV fields
+            const stringField = String(field);
+            if (
+              stringField.includes(',') ||
+              stringField.includes('"') ||
+              stringField.includes('\n')
+            ) {
+              return `"${stringField.replace(/"/g, '""')}"`;
+            }
+            return stringField;
+          })
+          .join(',')
+      ),
     ].join('\n');
 
     // Log export activity
@@ -122,9 +134,9 @@ export async function GET(request: NextRequest) {
           exportType: 'CSV',
           dayRange: days,
           recordCount: shipments.length,
-          startDate: startDate.toISOString()
-        }
-      }
+          startDate: startDate.toISOString(),
+        },
+      },
     });
 
     // Return CSV file
@@ -137,6 +149,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error exporting tracking data:', error);
-    return NextResponse.json({ error: 'Failed to export tracking data' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to export tracking data' },
+      { status: 500 }
+    );
   }
 }

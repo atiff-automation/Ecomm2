@@ -15,12 +15,12 @@ import { verifyWebhookSignature, getClientIP } from '@/lib/utils/security';
 
 // toyyibPay callback parameters
 interface ToyyibPayCallback {
-  refno: string;           // Payment reference
+  refno: string; // Payment reference
   status: '1' | '2' | '3'; // 1=success, 2=pending, 3=fail
-  reason: string;          // Status reason
-  billcode: string;        // Bill code
-  order_id: string;        // External reference
-  amount: string;          // Payment amount in cents
+  reason: string; // Status reason
+  billcode: string; // Bill code
+  order_id: string; // External reference
+  amount: string; // Payment amount in cents
   transaction_time: string; // Transaction timestamp
 }
 
@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Security: Verify webhook signature if available
-    const signature = request.headers.get('x-signature') || webhookData.signature;
+    const signature =
+      request.headers.get('x-signature') || webhookData.signature;
     if (signature && process.env.TOYYIBPAY_WEBHOOK_SECRET) {
       const payload = JSON.stringify(webhookData);
       const isValidSignature = verifyWebhookSignature(
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.TOYYIBPAY_WEBHOOK_SECRET
       );
-      
+
       if (!isValidSignature) {
         console.warn('⚠️ Invalid webhook signature from IP:', clientIP);
         return NextResponse.json(
@@ -57,7 +58,9 @@ export async function POST(request: NextRequest) {
       }
       console.log('✅ Webhook signature verified');
     } else {
-      console.warn('⚠️ Webhook signature verification skipped - no signature or secret');
+      console.warn(
+        '⚠️ Webhook signature verification skipped - no signature or secret'
+      );
     }
 
     console.log('🔍 toyyibPay webhook data:', {
@@ -65,11 +68,17 @@ export async function POST(request: NextRequest) {
       status: webhookData.status,
       order_id: webhookData.order_id,
       amount: webhookData.amount,
-      clientIP
+      clientIP,
     });
 
     // Validate required parameters
-    const requiredParams = ['refno', 'status', 'billcode', 'order_id', 'amount'];
+    const requiredParams = [
+      'refno',
+      'status',
+      'billcode',
+      'order_id',
+      'amount',
+    ];
     for (const param of requiredParams) {
       if (!webhookData[param]) {
         console.warn(`Missing required parameter: ${param}`);
@@ -88,7 +97,8 @@ export async function POST(request: NextRequest) {
       billcode: webhookData.billcode,
       order_id: webhookData.order_id,
       amount: webhookData.amount,
-      transaction_time: webhookData.transaction_time || new Date().toISOString()
+      transaction_time:
+        webhookData.transaction_time || new Date().toISOString(),
     };
 
     console.log('Processing toyyibPay webhook:', {
@@ -115,7 +125,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!order) {
-      console.warn('Order not found for toyyibPay bill code:', callback.billcode);
+      console.warn(
+        'Order not found for toyyibPay bill code:',
+        callback.billcode
+      );
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
@@ -128,14 +141,15 @@ export async function POST(request: NextRequest) {
     // Validate payment amount
     const expectedAmountCents = Math.round(Number(order.total) * 100);
     const receivedAmountCents = parseInt(callback.amount, 10);
-    
-    if (Math.abs(expectedAmountCents - receivedAmountCents) > 1) { // Allow 1 cent tolerance
+
+    if (Math.abs(expectedAmountCents - receivedAmountCents) > 1) {
+      // Allow 1 cent tolerance
       console.warn('Amount mismatch:', {
         expected: expectedAmountCents,
         received: receivedAmountCents,
-        orderNumber: order.orderNumber
+        orderNumber: order.orderNumber,
       });
-      
+
       // Log but don't reject - some gateways have minor rounding differences
       await prisma.auditLog.create({
         data: {
@@ -146,7 +160,7 @@ export async function POST(request: NextRequest) {
             orderNumber: order.orderNumber,
             expectedAmount: expectedAmountCents,
             receivedAmount: receivedAmountCents,
-            billCode: callback.billcode
+            billCode: callback.billcode,
           },
           ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
           userAgent: request.headers.get('user-agent') || 'unknown',
@@ -154,7 +168,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let newPaymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' = 'PENDING';
+    let newPaymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' =
+      'PENDING';
     let newOrderStatus:
       | 'PENDING'
       | 'CONFIRMED'

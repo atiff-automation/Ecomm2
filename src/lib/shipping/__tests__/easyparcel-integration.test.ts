@@ -4,7 +4,11 @@
  * Reference: SHIPPING_COMPREHENSIVE_AUDIT.md recommendations
  */
 
-import { EasyParcelService, type RateRequest, type ShipmentBookingRequest } from '../easyparcel-service';
+import {
+  EasyParcelService,
+  type RateRequest,
+  type ShipmentBookingRequest,
+} from '../easyparcel-service';
 import { EnhancedEasyParcelService } from '../enhanced-easyparcel-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
@@ -23,11 +27,15 @@ describe('EasyParcel Integration Tests', () => {
       const invalidPostcodes = ['1234', '123456', 'ABCDE', ''];
 
       validPostcodes.forEach(postcode => {
-        expect(easyParcelService.validatePostcodeForState(postcode, 'KUL')).toBeTruthy();
+        expect(
+          easyParcelService.validatePostcodeForState(postcode, 'KUL')
+        ).toBeTruthy();
       });
 
       invalidPostcodes.forEach(postcode => {
-        expect(easyParcelService.validatePostcodeForState(postcode, 'KUL')).toBeFalsy();
+        expect(
+          easyParcelService.validatePostcodeForState(postcode, 'KUL')
+        ).toBeFalsy();
       });
     });
 
@@ -68,7 +76,7 @@ describe('EasyParcel Integration Tests', () => {
         city: 'Kuala Lumpur',
         state: 'KUL',
         postcode: '50000',
-        country: 'MY'
+        country: 'MY',
       },
       delivery_address: {
         name: 'John Doe',
@@ -77,7 +85,7 @@ describe('EasyParcel Integration Tests', () => {
         city: 'Petaling Jaya',
         state: 'SEL',
         postcode: '47400',
-        country: 'MY'
+        country: 'MY',
       },
       parcel: {
         weight: 1.5,
@@ -86,11 +94,11 @@ describe('EasyParcel Integration Tests', () => {
         height: 10,
         content: 'Electronics',
         value: 100,
-        quantity: 1
+        quantity: 1,
       },
       service_types: ['STANDARD', 'EXPRESS'],
       insurance: false,
-      cod: false
+      cod: false,
     };
 
     test('should calculate rates for West Malaysia delivery', async () => {
@@ -99,7 +107,7 @@ describe('EasyParcel Integration Tests', () => {
       expect(result).toBeDefined();
       expect(result.rates).toBeDefined();
       expect(Array.isArray(result.rates)).toBe(true);
-      
+
       if (result.rates.length > 0) {
         const rate = result.rates[0];
         expect(rate).toHaveProperty('courier_id');
@@ -119,15 +127,16 @@ describe('EasyParcel Integration Tests', () => {
           ...validRateRequest.delivery_address,
           city: 'Kota Kinabalu',
           state: 'SBH',
-          postcode: '88000'
-        }
+          postcode: '88000',
+        },
       };
 
-      const result = await easyParcelService.calculateRates(eastMalaysiaRequest);
+      const result =
+        await easyParcelService.calculateRates(eastMalaysiaRequest);
 
       expect(result).toBeDefined();
       expect(result.rates).toBeDefined();
-      
+
       if (result.rates.length > 0) {
         const rate = result.rates[0];
         expect(rate.price).toBeGreaterThan(0);
@@ -141,11 +150,13 @@ describe('EasyParcel Integration Tests', () => {
         ...validRateRequest,
         delivery_address: {
           ...validRateRequest.delivery_address,
-          postcode: 'INVALID'
-        }
+          postcode: 'INVALID',
+        },
       };
 
-      await expect(easyParcelService.calculateRates(invalidRequest)).rejects.toThrow();
+      await expect(
+        easyParcelService.calculateRates(invalidRequest)
+      ).rejects.toThrow();
     });
 
     test('should handle oversized parcel gracefully', async () => {
@@ -153,18 +164,20 @@ describe('EasyParcel Integration Tests', () => {
         ...validRateRequest,
         parcel: {
           ...validRateRequest.parcel,
-          weight: 100 // Exceeds EasyParcel limit
-        }
+          weight: 100, // Exceeds EasyParcel limit
+        },
       };
 
-      await expect(easyParcelService.calculateRates(oversizedRequest)).rejects.toThrow();
+      await expect(
+        easyParcelService.calculateRates(oversizedRequest)
+      ).rejects.toThrow();
     });
   });
 
   describe('Enhanced Service with Caching', () => {
     test('should cache rate calculation results', async () => {
       const request = validRateRequest;
-      
+
       // First call - should hit API
       const start1 = Date.now();
       const result1 = await enhancedService.calculateRates(request);
@@ -178,7 +191,7 @@ describe('EasyParcel Integration Tests', () => {
       expect(result1).toBeDefined();
       expect(result2).toBeDefined();
       expect(result1.rates.length).toEqual(result2.rates.length);
-      
+
       // Second call should be faster (cached)
       if (process.env.NODE_ENV !== 'test' && result1.rates.length > 0) {
         expect(duration2).toBeLessThan(duration1);
@@ -196,25 +209,29 @@ describe('EasyParcel Integration Tests', () => {
   describe('Business Logic Integration', () => {
     test('should apply business courier filtering', async () => {
       const businessProfile = await businessShippingConfig.getBusinessProfile();
-      
+
       if (businessProfile) {
         const rates = await easyParcelService.calculateRates(validRateRequest);
-        const filteredRates = await businessShippingConfig.filterRatesForBusiness(rates.rates);
-        
+        const filteredRates =
+          await businessShippingConfig.filterRatesForBusiness(rates.rates);
+
         expect(Array.isArray(filteredRates)).toBe(true);
-        
+
         // Filtered rates should not include blocked couriers
         filteredRates.forEach(rate => {
-          expect(businessProfile.courierPreferences.blockedCouriers).not.toContain(rate.courier_id);
+          expect(
+            businessProfile.courierPreferences.blockedCouriers
+          ).not.toContain(rate.courier_id);
         });
       }
     });
 
     test('should apply free shipping threshold correctly', async () => {
       const businessProfile = await businessShippingConfig.getBusinessProfile();
-      
+
       if (businessProfile) {
-        const threshold = businessProfile.shippingPolicies.freeShippingThreshold;
+        const threshold =
+          businessProfile.shippingPolicies.freeShippingThreshold;
         expect(typeof threshold).toBe('number');
         expect(threshold).toBeGreaterThan(0);
       }
@@ -225,7 +242,7 @@ describe('EasyParcel Integration Tests', () => {
     test('should handle API failures gracefully', async () => {
       // Mock an API failure scenario
       const invalidApiKeyService = new EasyParcelService();
-      
+
       try {
         await invalidApiKeyService.calculateRates(validRateRequest);
       } catch (error) {
@@ -247,7 +264,7 @@ describe('EasyParcel Integration Tests', () => {
   describe('Credit Balance Check', () => {
     test('should check account credit balance', async () => {
       const result = await easyParcelService.checkCreditBalance();
-      
+
       expect(result).toBeDefined();
       expect(result).toHaveProperty('balance');
       expect(result).toHaveProperty('currency');
@@ -261,9 +278,10 @@ describe('EasyParcel Integration Tests', () => {
   describe('Shipment Tracking', () => {
     test('should track shipment with valid tracking number format', async () => {
       const mockTrackingNumber = 'EP123456789MY';
-      
+
       try {
-        const result = await easyParcelService.trackShipment(mockTrackingNumber);
+        const result =
+          await easyParcelService.trackShipment(mockTrackingNumber);
         expect(result).toBeDefined();
         expect(result).toHaveProperty('tracking_number');
         expect(result).toHaveProperty('status');
@@ -276,9 +294,11 @@ describe('EasyParcel Integration Tests', () => {
 
     test('should reject invalid tracking number format', async () => {
       const invalidTrackingNumbers = ['', 'invalid', '123'];
-      
+
       for (const trackingNumber of invalidTrackingNumbers) {
-        await expect(easyParcelService.trackShipment(trackingNumber)).rejects.toThrow();
+        await expect(
+          easyParcelService.trackShipment(trackingNumber)
+        ).rejects.toThrow();
       }
     });
   });
@@ -286,12 +306,17 @@ describe('EasyParcel Integration Tests', () => {
 
 describe('Integration with Malaysian Tax Service', () => {
   test('should integrate with tax calculation', async () => {
-    const { MalaysianTaxService } = await import('@/lib/tax/malaysian-tax-service');
+    const { MalaysianTaxService } = await import(
+      '@/lib/tax/malaysian-tax-service'
+    );
     const taxService = MalaysianTaxService.getInstance();
-    
+
     const shippingCost = 15;
-    const taxResult = await taxService.calculateShippingTax(shippingCost, false);
-    
+    const taxResult = await taxService.calculateShippingTax(
+      shippingCost,
+      false
+    );
+
     expect(taxResult).toBeDefined();
     expect(taxResult).toHaveProperty('taxExclusiveAmount');
     expect(taxResult).toHaveProperty('taxAmount');
@@ -305,7 +330,7 @@ describe('Performance Benchmarks', () => {
     const start = Date.now();
     const result = await easyParcelService.calculateRates(validRateRequest);
     const duration = Date.now() - start;
-    
+
     expect(result).toBeDefined();
     expect(duration).toBeLessThan(30000); // Should complete within 30 seconds
   }, 35000);
@@ -313,9 +338,9 @@ describe('Performance Benchmarks', () => {
   test('should handle concurrent requests', async () => {
     const requests = Array(5).fill(validRateRequest);
     const promises = requests.map(req => easyParcelService.calculateRates(req));
-    
+
     const results = await Promise.all(promises);
-    
+
     results.forEach(result => {
       expect(result).toBeDefined();
       expect(result.rates).toBeDefined();

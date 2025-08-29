@@ -13,11 +13,11 @@ import { z } from 'zod';
 const updateCredentialsSchema = z.object({
   apiKey: z.string().min(1, 'API key is required'),
   apiSecret: z.string().min(1, 'API secret is required'),
-  environment: z.enum(['sandbox', 'production'])
+  environment: z.enum(['sandbox', 'production']),
 });
 
 const switchEnvironmentSchema = z.object({
-  environment: z.enum(['sandbox', 'production'])
+  environment: z.enum(['sandbox', 'production']),
 });
 
 /**
@@ -26,9 +26,12 @@ const switchEnvironmentSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check authentication and authorization
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 401 }
@@ -45,13 +48,13 @@ export async function GET(request: NextRequest) {
       {
         hasCredentials: status.hasCredentials,
         environment: status.environment,
-        isUsingEnvFallback: status.isUsingEnvFallback
+        isUsingEnvFallback: status.isUsingEnvFallback,
       }
     );
 
     return NextResponse.json({
       success: true,
-      status
+      status,
     });
   } catch (error) {
     console.error('Error getting credential status:', error);
@@ -68,9 +71,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check authentication and authorization
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 401 }
@@ -84,20 +90,24 @@ export async function POST(request: NextRequest) {
       case 'update_credentials': {
         // Validate request
         const validatedData = updateCredentialsSchema.parse(body);
-        
+
         // Test credentials before storing
-        const testResult = await easyParcelCredentialsService.validateCredentials(
-          validatedData.apiKey,
-          validatedData.apiSecret,
-          validatedData.environment
-        );
+        const testResult =
+          await easyParcelCredentialsService.validateCredentials(
+            validatedData.apiKey,
+            validatedData.apiSecret,
+            validatedData.environment
+          );
 
         if (!testResult.isValid) {
-          return NextResponse.json({
-            success: false,
-            error: 'Invalid credentials',
-            details: testResult.error
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Invalid credentials',
+              details: testResult.error,
+            },
+            { status: 400 }
+          );
         }
 
         // Store credentials
@@ -105,13 +115,15 @@ export async function POST(request: NextRequest) {
           {
             apiKey: validatedData.apiKey,
             apiSecret: validatedData.apiSecret,
-            environment: validatedData.environment
+            environment: validatedData.environment,
           },
           session.user.id
         );
 
         // CRITICAL: Force refresh of EasyParcel service cache
-        const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
+        const { easyParcelService } = await import(
+          '@/lib/shipping/easyparcel-service'
+        );
         await easyParcelService.refreshCredentials();
 
         // Log the operation
@@ -122,8 +134,8 @@ export async function POST(request: NextRequest) {
             environment: validatedData.environment,
             testResult: {
               responseTime: testResult.responseTime,
-              servicesFound: testResult.servicesFound
-            }
+              servicesFound: testResult.servicesFound,
+            },
           }
         );
 
@@ -132,15 +144,15 @@ export async function POST(request: NextRequest) {
           message: 'Credentials updated successfully',
           testResult: {
             responseTime: testResult.responseTime,
-            servicesFound: testResult.servicesFound
-          }
+            servicesFound: testResult.servicesFound,
+          },
         });
       }
 
       case 'switch_environment': {
         // Validate request
         const validatedData = switchEnvironmentSchema.parse(body);
-        
+
         // Switch environment
         await easyParcelCredentialsService.switchEnvironment(
           validatedData.environment,
@@ -148,7 +160,9 @@ export async function POST(request: NextRequest) {
         );
 
         // CRITICAL: Force refresh of EasyParcel service cache
-        const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
+        const { easyParcelService } = await import(
+          '@/lib/shipping/easyparcel-service'
+        );
         await easyParcelService.refreshCredentials();
 
         // Log the operation
@@ -156,37 +170,44 @@ export async function POST(request: NextRequest) {
           'ENVIRONMENT_SWITCHED',
           session.user.id,
           {
-            newEnvironment: validatedData.environment
+            newEnvironment: validatedData.environment,
           }
         );
 
         return NextResponse.json({
           success: true,
-          message: `Environment switched to ${validatedData.environment}`
+          message: `Environment switched to ${validatedData.environment}`,
         });
       }
 
       case 'test_current': {
         // Force refresh to get latest credentials
-        const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
+        const { easyParcelService } = await import(
+          '@/lib/shipping/easyparcel-service'
+        );
         await easyParcelService.refreshCredentials();
-        
+
         // Get current credentials and test them
-        const credentials = await easyParcelCredentialsService.getCredentialsForService();
-        
+        const credentials =
+          await easyParcelCredentialsService.getCredentialsForService();
+
         if (!credentials) {
-          return NextResponse.json({
-            success: false,
-            error: 'No credentials configured'
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'No credentials configured',
+            },
+            { status: 400 }
+          );
         }
 
         const environment = credentials.isSandbox ? 'sandbox' : 'production';
-        const testResult = await easyParcelCredentialsService.validateCredentials(
-          credentials.apiKey,
-          credentials.apiSecret,
-          environment
-        );
+        const testResult =
+          await easyParcelCredentialsService.validateCredentials(
+            credentials.apiKey,
+            credentials.apiSecret,
+            environment
+          );
 
         // Log the test
         await easyParcelCredentialsService.logCredentialOperation(
@@ -199,8 +220,8 @@ export async function POST(request: NextRequest) {
               isValid: testResult.isValid,
               responseTime: testResult.responseTime,
               servicesFound: testResult.servicesFound,
-              error: testResult.error
-            }
+              error: testResult.error,
+            },
           }
         );
 
@@ -209,21 +230,18 @@ export async function POST(request: NextRequest) {
           testResult: {
             ...testResult,
             endpoint: testResult.endpoint,
-            environment: environment
+            environment: environment,
           },
-          credentialSource: credentials.source
+          credentialSource: credentials.source,
         });
       }
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
     console.error('Error in credentials API:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.errors },
@@ -244,9 +262,12 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check authentication and authorization
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 401 }
@@ -261,13 +282,16 @@ export async function DELETE(request: NextRequest) {
       'CREDENTIALS_CLEARED',
       session.user.id,
       {
-        fallbackToEnv: !!(process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET)
+        fallbackToEnv: !!(
+          process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
+        ),
       }
     );
 
     return NextResponse.json({
       success: true,
-      message: 'Credentials cleared. System will use environment variables if available.'
+      message:
+        'Credentials cleared. System will use environment variables if available.',
     });
   } catch (error) {
     console.error('Error clearing credentials:', error);

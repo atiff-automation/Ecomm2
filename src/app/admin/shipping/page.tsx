@@ -61,9 +61,9 @@ import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 // Import our proper types from business configuration
-import type { 
-  BusinessProfile, 
-  CourierPreference 
+import type {
+  BusinessProfile,
+  CourierPreference,
 } from '@/lib/config/business-shipping-config';
 
 interface ShippingStats {
@@ -108,7 +108,7 @@ interface ShippingDashboardData {
   balance?: BalanceInfo;
 }
 
-// Overview Tab Component  
+// Overview Tab Component
 const OverviewTab: React.FC<{
   dashboardData: ShippingDashboardData;
   onRefresh: () => void;
@@ -117,25 +117,39 @@ const OverviewTab: React.FC<{
   return (
     <div className="space-y-6">
       {/* Balance Alert */}
-      {dashboardData.balance && dashboardData.balance.status !== 'sufficient' && (
-        <Alert className={dashboardData.balance.status === 'critical' ? 'border-red-500 bg-red-50' : 'border-yellow-500 bg-yellow-50'}>
-          <AlertTriangle className={`h-4 w-4 ${dashboardData.balance.status === 'critical' ? 'text-red-500' : 'text-yellow-500'}`} />
-          <AlertDescription>
-            <strong>{dashboardData.balance.status === 'critical' ? 'Critical:' : 'Warning:'}</strong>
-            {' '}EasyParcel balance is {dashboardData.balance.status} (RM {dashboardData.balance.current}).
-            {dashboardData.balance.status === 'critical' && ' You may not be able to create shipping labels.'}
-            {' '}
-            <a 
-              href="https://connect.easyparcel.my/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="underline font-medium"
-            >
-              Top up now
-            </a>
-          </AlertDescription>
-        </Alert>
-      )}
+      {dashboardData.balance &&
+        dashboardData.balance.status !== 'sufficient' && (
+          <Alert
+            className={
+              dashboardData.balance.status === 'critical'
+                ? 'border-red-500 bg-red-50'
+                : 'border-yellow-500 bg-yellow-50'
+            }
+          >
+            <AlertTriangle
+              className={`h-4 w-4 ${dashboardData.balance.status === 'critical' ? 'text-red-500' : 'text-yellow-500'}`}
+            />
+            <AlertDescription>
+              <strong>
+                {dashboardData.balance.status === 'critical'
+                  ? 'Critical:'
+                  : 'Warning:'}
+              </strong>{' '}
+              EasyParcel balance is {dashboardData.balance.status} (RM{' '}
+              {dashboardData.balance.current}).
+              {dashboardData.balance.status === 'critical' &&
+                ' You may not be able to create shipping labels.'}{' '}
+              <a
+                href="https://connect.easyparcel.my/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-medium"
+              >
+                Top up now
+              </a>
+            </AlertDescription>
+          </Alert>
+        )}
 
       {/* EasyParcel Balance Card */}
       {dashboardData.balance && (
@@ -150,44 +164,48 @@ const OverviewTab: React.FC<{
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="text-3xl font-bold">
-                  <span className={`${
-                    dashboardData.balance.status === 'critical' ? 'text-red-600' :
-                    dashboardData.balance.status === 'low' ? 'text-yellow-600' :
-                    'text-green-600'
-                  }`}>
-                    {dashboardData.balance.currency} {dashboardData.balance.current.toFixed(2)}
+                  <span
+                    className={`${
+                      dashboardData.balance.status === 'critical'
+                        ? 'text-red-600'
+                        : dashboardData.balance.status === 'low'
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                    }`}
+                  >
+                    {dashboardData.balance.currency}{' '}
+                    {dashboardData.balance.current.toFixed(2)}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <Badge 
+                  <Badge
                     variant={
-                      dashboardData.balance.status === 'critical' ? 'destructive' :
-                      dashboardData.balance.status === 'low' ? 'secondary' :
-                      'default'
+                      dashboardData.balance.status === 'critical'
+                        ? 'destructive'
+                        : dashboardData.balance.status === 'low'
+                          ? 'secondary'
+                          : 'default'
                     }
                   >
                     {dashboardData.balance.status.toUpperCase()}
                   </Badge>
                   <p className="text-sm text-gray-600">
-                    {dashboardData.balance.cacheInfo.cached ? 
-                      `Cached ${dashboardData.balance.cacheInfo.age}s ago` :
-                      'Live data'
-                    }
+                    {dashboardData.balance.cacheInfo.cached
+                      ? `Cached ${dashboardData.balance.cacheInfo.age}s ago`
+                      : 'Live data'}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onRefreshBalance}
-                >
+                <Button variant="outline" size="sm" onClick={onRefreshBalance}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
-                <Button 
+                <Button
                   size="sm"
-                  onClick={() => window.open('https://connect.easyparcel.my/', '_blank')}
+                  onClick={() =>
+                    window.open('https://connect.easyparcel.my/', '_blank')
+                  }
                 >
                   <DollarSign className="h-4 w-4 mr-2" />
                   Top Up
@@ -197,11 +215,15 @@ const OverviewTab: React.FC<{
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium">Low threshold:</span>
-                <span className="ml-2 text-gray-600">RM {dashboardData.balance.threshold.low}</span>
+                <span className="ml-2 text-gray-600">
+                  RM {dashboardData.balance.threshold.low}
+                </span>
               </div>
               <div>
                 <span className="font-medium">Critical threshold:</span>
-                <span className="ml-2 text-gray-600">RM {dashboardData.balance.threshold.critical}</span>
+                <span className="ml-2 text-gray-600">
+                  RM {dashboardData.balance.threshold.critical}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -227,7 +249,9 @@ const OverviewTab: React.FC<{
               <div>
                 <p className="font-medium">Configuration</p>
                 <p className="text-sm text-gray-600">
-                  {dashboardData.apiStatus.configured ? 'Configured' : 'Not Configured'}
+                  {dashboardData.apiStatus.configured
+                    ? 'Configured'
+                    : 'Not Configured'}
                 </p>
               </div>
             </div>
@@ -241,7 +265,9 @@ const OverviewTab: React.FC<{
               <div>
                 <p className="font-medium">API Connection</p>
                 <p className="text-sm text-gray-600">
-                  {dashboardData.apiStatus.apiConnected ? 'Connected' : 'Disconnected'}
+                  {dashboardData.apiStatus.apiConnected
+                    ? 'Connected'
+                    : 'Disconnected'}
                 </p>
               </div>
             </div>
@@ -349,7 +375,9 @@ const OverviewTab: React.FC<{
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">Free Shipping</span>
                 <Badge variant="outline">
-                  RM {dashboardData.profile?.shippingPolicies?.freeShippingThreshold || 0}
+                  RM{' '}
+                  {dashboardData.profile?.shippingPolicies
+                    ?.freeShippingThreshold || 0}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600">
@@ -360,8 +388,17 @@ const OverviewTab: React.FC<{
             <div className="p-4 border rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">Auto Selection</span>
-                <Badge variant={dashboardData.profile?.courierPreferences?.autoSelectCheapest ? 'default' : 'secondary'}>
-                  {dashboardData.profile?.courierPreferences?.autoSelectCheapest ? 'Enabled' : 'Disabled'}
+                <Badge
+                  variant={
+                    dashboardData.profile?.courierPreferences
+                      ?.autoSelectCheapest
+                      ? 'default'
+                      : 'secondary'
+                  }
+                >
+                  {dashboardData.profile?.courierPreferences?.autoSelectCheapest
+                    ? 'Enabled'
+                    : 'Disabled'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600">
@@ -373,7 +410,8 @@ const OverviewTab: React.FC<{
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">Default Service</span>
                 <Badge variant="outline">
-                  {dashboardData.profile?.courierPreferences?.defaultServiceType || 'STANDARD'}
+                  {dashboardData.profile?.courierPreferences
+                    ?.defaultServiceType || 'STANDARD'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600">
@@ -389,7 +427,8 @@ const OverviewTab: React.FC<{
 
 export default function UnifiedShippingAdminPage() {
   const { data: session, status } = useSession();
-  const [dashboardData, setDashboardData] = useState<ShippingDashboardData | null>(null);
+  const [dashboardData, setDashboardData] =
+    useState<ShippingDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -397,12 +436,17 @@ export default function UnifiedShippingAdminPage() {
 
   // Authentication check
   if (status === 'loading') {
-    return <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
-  if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
+  if (
+    !session?.user ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')
+  ) {
     redirect('/auth/signin');
     return null;
   }
@@ -410,29 +454,33 @@ export default function UnifiedShippingAdminPage() {
   async function loadDashboardData() {
     try {
       setLoading(true);
-      
+
       // Load shipping config and balance data in parallel
       const [configResponse, balanceResponse] = await Promise.all([
         fetch('/api/admin/shipping/config', {
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }),
         fetch('/api/admin/shipping/balance', {
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }).catch(err => {
           console.warn('Balance API not available:', err);
           return null;
-        })
+        }),
       ]);
 
       if (!configResponse.ok) {
-        throw new Error(`HTTP ${configResponse.status}: ${configResponse.statusText}`);
+        throw new Error(
+          `HTTP ${configResponse.status}: ${configResponse.statusText}`
+        );
       }
 
       const configData = await configResponse.json();
-      const balanceData = balanceResponse?.ok ? await balanceResponse.json() : null;
-      
+      const balanceData = balanceResponse?.ok
+        ? await balanceResponse.json()
+        : null;
+
       // Transform API response to our unified dashboard format
       const dashboardData: ShippingDashboardData = {
         profile: configData.profile,
@@ -440,16 +488,18 @@ export default function UnifiedShippingAdminPage() {
         statistics: configData.statistics,
         apiStatus: {
           configured: configData.apiStatus?.apiConfigured || false,
-          apiConnected: configData.apiStatus?.hasApiKey && configData.apiStatus?.hasApiSecret || false,
+          apiConnected:
+            (configData.apiStatus?.hasApiKey &&
+              configData.apiStatus?.hasApiSecret) ||
+            false,
           lastCheck: new Date().toISOString(),
-          errorCount: 0
+          errorCount: 0,
         },
         configured: configData.configured || false,
-        balance: balanceData?.balance || null
+        balance: balanceData?.balance || null,
       };
 
       setDashboardData(dashboardData);
-      
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error('Failed to load shipping configuration');
@@ -467,8 +517,10 @@ export default function UnifiedShippingAdminPage() {
   }, []);
 
   const saveConfiguration = async (updatedData: Partial<BusinessProfile>) => {
-    if (!dashboardData) return;
-    
+    if (!dashboardData) {
+      return;
+    }
+
     setSaving(true);
     try {
       const response = await fetch('/api/admin/shipping/config', {
@@ -486,13 +538,14 @@ export default function UnifiedShippingAdminPage() {
 
       const result = await response.json();
       toast.success('Configuration updated successfully');
-      
+
       // Reload dashboard data
       await loadDashboardData();
-      
     } catch (error) {
       console.error('Save error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save configuration');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save configuration'
+      );
     } finally {
       setSaving(false);
     }
@@ -512,8 +565,10 @@ export default function UnifiedShippingAdminPage() {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success(`EasyParcel connection successful! Found ${result.ratesReturned} shipping rates.`);
-        
+        toast.success(
+          `EasyParcel connection successful! Found ${result.ratesReturned} shipping rates.`
+        );
+
         // Update API status
         if (dashboardData) {
           setDashboardData({
@@ -523,8 +578,8 @@ export default function UnifiedShippingAdminPage() {
               apiConnected: true,
               lastCheck: new Date().toISOString(),
               responseTime: result.responseTime,
-              errorCount: 0
-            }
+              errorCount: 0,
+            },
           });
         }
       } else {
@@ -532,8 +587,10 @@ export default function UnifiedShippingAdminPage() {
       }
     } catch (error) {
       console.error('Test connection error:', error);
-      toast.error(`Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
+      toast.error(
+        `Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+
       // Update API status with error
       if (dashboardData) {
         setDashboardData({
@@ -542,8 +599,8 @@ export default function UnifiedShippingAdminPage() {
             ...dashboardData.apiStatus,
             apiConnected: false,
             lastCheck: new Date().toISOString(),
-            errorCount: dashboardData.apiStatus.errorCount + 1
-          }
+            errorCount: dashboardData.apiStatus.errorCount + 1,
+          },
         });
       }
     } finally {
@@ -556,7 +613,7 @@ export default function UnifiedShippingAdminPage() {
       const response = await fetch('/api/admin/shipping/balance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'refresh' })
+        body: JSON.stringify({ action: 'refresh' }),
       });
 
       if (response.ok) {
@@ -564,7 +621,7 @@ export default function UnifiedShippingAdminPage() {
         if (dashboardData) {
           setDashboardData({
             ...dashboardData,
-            balance: result.balance
+            balance: result.balance,
           });
         }
         toast.success('Balance refreshed successfully');
@@ -593,7 +650,9 @@ export default function UnifiedShippingAdminPage() {
       <div className="container mx-auto p-6">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">Failed to load shipping configuration</p>
+          <p className="text-red-600 mb-4">
+            Failed to load shipping configuration
+          </p>
           <Button onClick={loadDashboardData}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
@@ -614,8 +673,8 @@ export default function UnifiedShippingAdminPage() {
   // Extract page actions
   const pageActions = (
     <div className="flex gap-2">
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         onClick={testEasyParcelConnection}
         disabled={testing}
       >
@@ -637,9 +696,12 @@ export default function UnifiedShippingAdminPage() {
       tabs={tabs}
       loading={loading}
     >
-
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="business">Business Profile</TabsTrigger>
@@ -650,15 +712,15 @@ export default function UnifiedShippingAdminPage() {
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab 
-            dashboardData={dashboardData} 
+          <OverviewTab
+            dashboardData={dashboardData}
             onRefresh={loadDashboardData}
             onRefreshBalance={refreshBalance}
           />
         </TabsContent>
 
         <TabsContent value="business">
-          <BusinessProfileTab 
+          <BusinessProfileTab
             profile={dashboardData.profile}
             onSave={saveConfiguration}
             saving={saving}
@@ -666,7 +728,7 @@ export default function UnifiedShippingAdminPage() {
         </TabsContent>
 
         <TabsContent value="couriers">
-          <CourierManagementTab 
+          <CourierManagementTab
             profile={dashboardData.profile}
             courierPreferences={dashboardData.courierPreferences}
             onSave={saveConfiguration}
@@ -675,7 +737,7 @@ export default function UnifiedShippingAdminPage() {
         </TabsContent>
 
         <TabsContent value="policies">
-          <ShippingPoliciesTab 
+          <ShippingPoliciesTab
             profile={dashboardData.profile}
             onSave={saveConfiguration}
             saving={saving}
@@ -683,7 +745,7 @@ export default function UnifiedShippingAdminPage() {
         </TabsContent>
 
         <TabsContent value="services">
-          <AdditionalServicesTab 
+          <AdditionalServicesTab
             profile={dashboardData.profile}
             onSave={saveConfiguration}
             saving={saving}
@@ -698,18 +760,19 @@ export default function UnifiedShippingAdminPage() {
   );
 }
 
-
 // Business Profile Tab Component
-function BusinessProfileTab({ 
-  profile, 
-  onSave, 
-  saving 
-}: { 
+function BusinessProfileTab({
+  profile,
+  onSave,
+  saving,
+}: {
   profile: BusinessProfile | null;
   onSave: (data: Partial<BusinessProfile>) => Promise<void>;
   saving: boolean;
 }) {
-  const [editedProfile, setEditedProfile] = useState<BusinessProfile | null>(profile);
+  const [editedProfile, setEditedProfile] = useState<BusinessProfile | null>(
+    profile
+  );
 
   useEffect(() => {
     setEditedProfile(profile);
@@ -725,7 +788,7 @@ function BusinessProfileTab({
       contactPerson: editedProfile.contactPerson,
       contactPhone: editedProfile.contactPhone,
       contactEmail: editedProfile.contactEmail,
-      pickupAddress: editedProfile.pickupAddress
+      pickupAddress: editedProfile.pickupAddress,
     });
   };
 
@@ -745,10 +808,12 @@ function BusinessProfileTab({
               <Input
                 id="businessName"
                 value={editedProfile.businessName || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  businessName: e.target.value
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    businessName: e.target.value,
+                  })
+                }
                 placeholder="Enter your business name"
               />
             </div>
@@ -758,10 +823,12 @@ function BusinessProfileTab({
               <Input
                 id="contactPerson"
                 value={editedProfile.contactPerson || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  contactPerson: e.target.value
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    contactPerson: e.target.value,
+                  })
+                }
                 placeholder="Contact person name"
               />
             </div>
@@ -771,10 +838,12 @@ function BusinessProfileTab({
               <Input
                 id="contactPhone"
                 value={editedProfile.contactPhone || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  contactPhone: e.target.value
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    contactPhone: e.target.value,
+                  })
+                }
                 placeholder="+60123456789"
               />
             </div>
@@ -785,10 +854,12 @@ function BusinessProfileTab({
                 id="contactEmail"
                 type="email"
                 value={editedProfile.contactEmail || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  contactEmail: e.target.value
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    contactEmail: e.target.value,
+                  })
+                }
                 placeholder="business@example.com"
               />
             </div>
@@ -808,13 +879,15 @@ function BusinessProfileTab({
               <Input
                 id="pickupName"
                 value={editedProfile.pickupAddress?.name || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  pickupAddress: {
-                    ...editedProfile.pickupAddress!,
-                    name: e.target.value
-                  }
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    pickupAddress: {
+                      ...editedProfile.pickupAddress!,
+                      name: e.target.value,
+                    },
+                  })
+                }
                 placeholder="Store/Warehouse Name"
               />
             </div>
@@ -824,13 +897,15 @@ function BusinessProfileTab({
               <Input
                 id="address1"
                 value={editedProfile.pickupAddress?.address_line_1 || ''}
-                onChange={(e) => setEditedProfile({
-                  ...editedProfile,
-                  pickupAddress: {
-                    ...editedProfile.pickupAddress!,
-                    address_line_1: e.target.value
-                  }
-                })}
+                onChange={e =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    pickupAddress: {
+                      ...editedProfile.pickupAddress!,
+                      address_line_1: e.target.value,
+                    },
+                  })
+                }
                 placeholder="Street Address"
               />
             </div>
@@ -841,13 +916,15 @@ function BusinessProfileTab({
                 <Input
                   id="city"
                   value={editedProfile.pickupAddress?.city || ''}
-                  onChange={(e) => setEditedProfile({
-                    ...editedProfile,
-                    pickupAddress: {
-                      ...editedProfile.pickupAddress!,
-                      city: e.target.value
-                    }
-                  })}
+                  onChange={e =>
+                    setEditedProfile({
+                      ...editedProfile,
+                      pickupAddress: {
+                        ...editedProfile.pickupAddress!,
+                        city: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="City"
                 />
               </div>
@@ -857,13 +934,15 @@ function BusinessProfileTab({
                 <Input
                   id="postcode"
                   value={editedProfile.pickupAddress?.postcode || ''}
-                  onChange={(e) => setEditedProfile({
-                    ...editedProfile,
-                    pickupAddress: {
-                      ...editedProfile.pickupAddress!,
-                      postcode: e.target.value
-                    }
-                  })}
+                  onChange={e =>
+                    setEditedProfile({
+                      ...editedProfile,
+                      pickupAddress: {
+                        ...editedProfile.pickupAddress!,
+                        postcode: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="50000"
                   maxLength={5}
                 />
@@ -874,13 +953,15 @@ function BusinessProfileTab({
               <Label htmlFor="state">State</Label>
               <Select
                 value={editedProfile.pickupAddress?.state || ''}
-                onValueChange={(value) => setEditedProfile({
-                  ...editedProfile,
-                  pickupAddress: {
-                    ...editedProfile.pickupAddress!,
-                    state: value
-                  }
-                })}
+                onValueChange={value =>
+                  setEditedProfile({
+                    ...editedProfile,
+                    pickupAddress: {
+                      ...editedProfile.pickupAddress!,
+                      state: value,
+                    },
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select state" />
@@ -919,12 +1000,12 @@ function BusinessProfileTab({
 }
 
 // Courier Management Tab Component
-function CourierManagementTab({ 
-  profile, 
-  courierPreferences, 
-  onSave, 
-  saving 
-}: { 
+function CourierManagementTab({
+  profile,
+  courierPreferences,
+  onSave,
+  saving,
+}: {
   profile: BusinessProfile | null;
   courierPreferences: CourierPreference[];
   onSave: (data: Partial<BusinessProfile>) => Promise<void>;
@@ -941,14 +1022,18 @@ function CourierManagementTab({
   const loadAvailableCouriers = async () => {
     setLoadingCouriers(true);
     try {
-      const response = await fetch('/api/admin/shipping/couriers?action=available');
+      const response = await fetch(
+        '/api/admin/shipping/couriers?action=available'
+      );
       const data = await response.json();
-      
+
       if (data.success) {
         setAvailableCouriers(data.availableCouriers || []);
         setApiConnected(data.apiConnected || false);
         setHasTestedApi(true);
-        toast.success(`Found ${data.availableCouriers?.length || 0} available couriers from API`);
+        toast.success(
+          `Found ${data.availableCouriers?.length || 0} available couriers from API`
+        );
       } else {
         toast.error('Failed to load available couriers');
         setApiConnected(false);
@@ -968,12 +1053,14 @@ function CourierManagementTab({
       const response = await fetch('/api/admin/shipping/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test_connection' })
+        body: JSON.stringify({ action: 'test_connection' }),
       });
-      
+
       const result = await response.json();
       if (result.success) {
-        toast.success(`API test successful! Found ${result.ratesReturned} shipping rates available.`);
+        toast.success(
+          `API test successful! Found ${result.ratesReturned} shipping rates available.`
+        );
         // Load available couriers after successful test
         await loadAvailableCouriers();
       } else {
@@ -989,9 +1076,9 @@ function CourierManagementTab({
   };
 
   const toggleCourierSelection = (courierId: string) => {
-    setAvailableCouriers(prev => 
-      prev.map(courier => 
-        courier.courierId === courierId 
+    setAvailableCouriers(prev =>
+      prev.map(courier =>
+        courier.courierId === courierId
           ? { ...courier, enabled: !courier.enabled }
           : courier
       )
@@ -999,7 +1086,7 @@ function CourierManagementTab({
   };
 
   const selectAllCouriers = (enable: boolean) => {
-    setAvailableCouriers(prev => 
+    setAvailableCouriers(prev =>
       prev.map(courier => ({ ...courier, enabled: enable }))
     );
   };
@@ -1015,17 +1102,19 @@ function CourierManagementTab({
           enabled: true,
           serviceTypes: courier.serviceTypes || ['STANDARD'],
           maxWeight: courier.maxWeight || 30,
-          notes: courier.notes || `Auto-configured from EasyParcel API`
+          notes: courier.notes || `Auto-configured from EasyParcel API`,
         }));
 
       const response = await fetch('/api/admin/shipping/couriers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferences: selectedCouriers })
+        body: JSON.stringify({ preferences: selectedCouriers }),
       });
 
       if (response.ok) {
-        toast.success(`Successfully saved ${selectedCouriers.length} courier preferences`);
+        toast.success(
+          `Successfully saved ${selectedCouriers.length} courier preferences`
+        );
         // TODO: Replace window.location.reload() with seamless data refresh
         // - Use React state updates instead of full page reload for better UX
         // - Implement proper function scoping or useCallback hooks
@@ -1041,12 +1130,14 @@ function CourierManagementTab({
     }
   }
 
-  const saveCourierPreferences = async (updatedPreferences: CourierPreference[]) => {
+  const saveCourierPreferences = async (
+    updatedPreferences: CourierPreference[]
+  ) => {
     try {
       const response = await fetch('/api/admin/shipping/couriers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferences: updatedPreferences })
+        body: JSON.stringify({ preferences: updatedPreferences }),
       });
 
       if (response.ok) {
@@ -1088,7 +1179,8 @@ function CourierManagementTab({
             Discover New Couriers
           </CardTitle>
           <CardDescription>
-            Manually check EasyParcel API to discover available couriers for your location
+            Manually check EasyParcel API to discover available couriers for
+            your location
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -1120,8 +1212,8 @@ function CourierManagementTab({
               )}
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={testApiConnection}
                 disabled={loadingCouriers}
               >
@@ -1138,8 +1230,8 @@ function CourierManagementTab({
                 )}
               </Button>
               {hasTestedApi && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={loadAvailableCouriers}
                   disabled={loadingCouriers}
                 >
@@ -1149,22 +1241,25 @@ function CourierManagementTab({
               )}
             </div>
           </div>
-          
+
           {!hasTestedApi && (
             <Alert className="mt-4">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                <strong>Manual Discovery:</strong> Courier discovery now requires explicit action to avoid unnecessary API costs. 
-                Click "Discover Couriers" to test your EasyParcel connection and find available shipping options.
+                <strong>Manual Discovery:</strong> Courier discovery now
+                requires explicit action to avoid unnecessary API costs. Click
+                "Discover Couriers" to test your EasyParcel connection and find
+                available shipping options.
               </AlertDescription>
             </Alert>
           )}
-          
+
           {hasTestedApi && availableCouriers.length > 0 && (
             <Alert className="mt-4">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                <strong>API Discovery Complete:</strong> Found {availableCouriers.length} courier options from EasyParcel.{' '}
+                <strong>API Discovery Complete:</strong> Found{' '}
+                {availableCouriers.length} courier options from EasyParcel.{' '}
                 {courierPreferences.length > 0 && (
                   <>Your current preferences are shown above. </>
                 )}
@@ -1180,60 +1275,72 @@ function CourierManagementTab({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>📋 Courier Selection ({availableCouriers.length} from API)</span>
+              <span>
+                📋 Courier Selection ({availableCouriers.length} from API)
+              </span>
               <Badge variant="outline">
-                {availableCouriers.filter(c => c.enabled).length} Selected for Update
+                {availableCouriers.filter(c => c.enabled).length} Selected for
+                Update
               </Badge>
             </CardTitle>
             <CardDescription>
-              Fresh results from EasyParcel API. Select which couriers to add/update in your preferences.
+              Fresh results from EasyParcel API. Select which couriers to
+              add/update in your preferences.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {availableCouriers.map((courier) => (
-                <div 
+              {availableCouriers.map(courier => (
+                <div
                   key={courier.courierId}
                   className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                    courier.enabled 
-                      ? 'border-blue-500 bg-blue-50' 
+                    courier.enabled
+                      ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                   onClick={() => toggleCourierSelection(courier.courierId)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        courier.enabled 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300'
-                      }`}>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          courier.enabled
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-300'
+                        }`}
+                      >
                         {courier.enabled && (
                           <CheckCircle className="w-3 h-3 text-white" />
                         )}
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-gray-900">
                           {courier.courierName}
                         </h4>
                         <div className="flex items-center space-x-2 mt-1">
                           <span className="text-sm text-gray-600">
-                            {courier.estimatedDeliveryDays} day{courier.estimatedDeliveryDays !== 1 ? 's' : ''} delivery
+                            {courier.estimatedDeliveryDays} day
+                            {courier.estimatedDeliveryDays !== 1
+                              ? 's'
+                              : ''}{' '}
+                            delivery
                           </span>
-                          {courier.serviceTypes && courier.serviceTypes.length > 0 && (
-                            <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-sm text-gray-600">
-                                {courier.serviceTypes.join(', ')}
-                              </span>
-                            </>
-                          )}
+                          {courier.serviceTypes &&
+                            courier.serviceTypes.length > 0 && (
+                              <>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-sm text-gray-600">
+                                  {courier.serviceTypes.join(', ')}
+                                </span>
+                              </>
+                            )}
                           {courier.priceRange && (
                             <>
                               <span className="text-gray-400">•</span>
                               <span className="text-sm font-medium text-green-600">
-                                RM {courier.priceRange.min}-{courier.priceRange.max}
+                                RM {courier.priceRange.min}-
+                                {courier.priceRange.max}
                               </span>
                             </>
                           )}
@@ -1244,19 +1351,29 @@ function CourierManagementTab({
                     <div className="flex items-center space-x-2">
                       {/* Coverage badges */}
                       {courier.coverage?.westMalaysia && (
-                        <Badge variant="secondary" className="text-xs">West MY</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          West MY
+                        </Badge>
                       )}
                       {courier.coverage?.eastMalaysia && (
-                        <Badge variant="secondary" className="text-xs">East MY</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          East MY
+                        </Badge>
                       )}
-                      
+
                       {/* Feature icons */}
                       <div className="flex space-x-1">
                         {courier.features?.insuranceAvailable && (
-                          <Shield className="h-4 w-4 text-gray-400" title="Insurance Available" />
+                          <Shield
+                            className="h-4 w-4 text-gray-400"
+                            title="Insurance Available"
+                          />
                         )}
                         {courier.features?.codAvailable && (
-                          <DollarSign className="h-4 w-4 text-gray-400" title="COD Available" />
+                          <DollarSign
+                            className="h-4 w-4 text-gray-400"
+                            title="COD Available"
+                          />
                         )}
                       </div>
 
@@ -1275,24 +1392,25 @@ function CourierManagementTab({
             {/* Action buttons */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <div className="text-sm text-gray-600">
-                {availableCouriers.filter(c => c.enabled).length} of {availableCouriers.length} couriers selected
+                {availableCouriers.filter(c => c.enabled).length} of{' '}
+                {availableCouriers.length} couriers selected
               </div>
               <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => selectAllCouriers(false)}
                 >
                   Clear All
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => selectAllCouriers(true)}
                 >
                   Select All
                 </Button>
-                <Button 
+                <Button
                   size="sm"
                   onClick={saveCourierSelections}
                   disabled={saving}
@@ -1309,7 +1427,8 @@ function CourierManagementTab({
           <CardContent className="text-center py-8">
             <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 mb-4">
-              No new couriers found in the last API test. Try refreshing or check your EasyParcel configuration.
+              No new couriers found in the last API test. Try refreshing or
+              check your EasyParcel configuration.
             </p>
             <Button onClick={loadAvailableCouriers} disabled={loadingCouriers}>
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -1324,7 +1443,9 @@ function CourierManagementTab({
         <Card>
           <CardContent className="text-center py-12">
             <Truck className="h-16 w-16 text-gray-400 mx-auto mb-6" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Courier Preferences Set</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Courier Preferences Set
+            </h3>
             <p className="text-gray-600 mb-6">
               Get started by discovering available couriers from EasyParcel API
             </p>
@@ -1353,14 +1474,15 @@ function CourierPreferencesManager({
   courierPreferences,
   onSave,
   saving,
-  hasApiResults
+  hasApiResults,
 }: {
   courierPreferences: CourierPreference[];
   onSave: (preferences: CourierPreference[]) => Promise<void>;
   saving: boolean;
   hasApiResults: boolean;
 }) {
-  const [editedPreferences, setEditedPreferences] = useState<CourierPreference[]>(courierPreferences);
+  const [editedPreferences, setEditedPreferences] =
+    useState<CourierPreference[]>(courierPreferences);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -1380,9 +1502,7 @@ function CourierPreferencesManager({
   const updateCourierPriority = (courierId: string, newPriority: number) => {
     setEditedPreferences(prev =>
       prev.map(pref =>
-        pref.courierId === courierId
-          ? { ...pref, priority: newPriority }
-          : pref
+        pref.courierId === courierId ? { ...pref, priority: newPriority } : pref
       )
     );
   };
@@ -1395,7 +1515,9 @@ function CourierPreferencesManager({
 
   const handleSave = async () => {
     // Re-sort by priority to ensure consistency
-    const sortedPreferences = [...editedPreferences].sort((a, b) => a.priority - b.priority);
+    const sortedPreferences = [...editedPreferences].sort(
+      (a, b) => a.priority - b.priority
+    );
     await onSave(sortedPreferences);
     setIsEditing(false);
   };
@@ -1413,39 +1535,59 @@ function CourierPreferencesManager({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5" />
-              Current Active Couriers ({courierPreferences.filter(c => c.enabled).length})
+              Current Active Couriers (
+              {courierPreferences.filter(c => c.enabled).length})
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline">
                 {courierPreferences.length} total configured
               </Badge>
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Manage
               </Button>
             </div>
           </CardTitle>
           <CardDescription>
-            Your active courier configuration. Click "Manage" to edit priorities or disable couriers.
+            Your active courier configuration. Click "Manage" to edit priorities
+            or disable couriers.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {courierPreferences.filter(pref => pref.enabled).map((pref) => (
-              <div key={pref.courierId} className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
-                <div>
-                  <h4 className="font-medium text-gray-900">{pref.courierName}</h4>
-                  <p className="text-sm text-gray-600">Priority {pref.priority}</p>
+            {courierPreferences
+              .filter(pref => pref.enabled)
+              .map(pref => (
+                <div
+                  key={pref.courierId}
+                  className="flex items-center justify-between p-3 border rounded-lg bg-green-50"
+                >
+                  <div>
+                    <h4 className="font-medium text-gray-900">
+                      {pref.courierName}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      Priority {pref.priority}
+                    </p>
+                  </div>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
                 </div>
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              </div>
-            ))}
+              ))}
           </div>
           {courierPreferences.some(c => !c.enabled) && (
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-gray-600 mb-2">
-                <strong>{courierPreferences.filter(c => !c.enabled).length} disabled:</strong>{' '}
-                {courierPreferences.filter(c => !c.enabled).map(c => c.courierName).join(', ')}
+                <strong>
+                  {courierPreferences.filter(c => !c.enabled).length} disabled:
+                </strong>{' '}
+                {courierPreferences
+                  .filter(c => !c.enabled)
+                  .map(c => c.courierName)
+                  .join(', ')}
               </p>
             </div>
           )}
@@ -1467,13 +1609,12 @@ function CourierPreferencesManager({
             <Badge variant="outline">
               {editedPreferences.filter(c => c.enabled).length} active
             </Badge>
-            <Badge variant="secondary">
-              {editedPreferences.length} total
-            </Badge>
+            <Badge variant="secondary">{editedPreferences.length} total</Badge>
           </div>
         </CardTitle>
         <CardDescription>
-          Enable/disable couriers, set priorities (1 = highest), and remove unwanted options.
+          Enable/disable couriers, set priorities (1 = highest), and remove
+          unwanted options.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -1481,10 +1622,12 @@ function CourierPreferencesManager({
           {editedPreferences
             .sort((a, b) => a.priority - b.priority)
             .map((pref, index) => (
-              <div 
-                key={pref.courierId} 
+              <div
+                key={pref.courierId}
                 className={`p-4 border rounded-lg ${
-                  pref.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+                  pref.enabled
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-gray-200 bg-gray-50'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -1501,11 +1644,14 @@ function CourierPreferencesManager({
 
                     {/* Courier Info */}
                     <div>
-                      <h4 className={`font-medium ${pref.enabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                      <h4
+                        className={`font-medium ${pref.enabled ? 'text-gray-900' : 'text-gray-500'}`}
+                      >
                         {pref.courierName}
                       </h4>
                       <p className="text-sm text-gray-600">
-                        {pref.serviceTypes?.join(', ') || 'Standard'} • Max: {pref.maxWeight || 30}kg
+                        {pref.serviceTypes?.join(', ') || 'Standard'} • Max:{' '}
+                        {pref.maxWeight || 30}kg
                       </p>
                     </div>
                   </div>
@@ -1513,7 +1659,10 @@ function CourierPreferencesManager({
                   <div className="flex items-center space-x-3">
                     {/* Priority Input */}
                     <div className="flex items-center space-x-2">
-                      <Label htmlFor={`priority-${pref.courierId}`} className="text-sm">
+                      <Label
+                        htmlFor={`priority-${pref.courierId}`}
+                        className="text-sm"
+                      >
                         Priority:
                       </Label>
                       <Input
@@ -1522,7 +1671,12 @@ function CourierPreferencesManager({
                         min="1"
                         max="99"
                         value={pref.priority}
-                        onChange={(e) => updateCourierPriority(pref.courierId, parseInt(e.target.value) || 1)}
+                        onChange={e =>
+                          updateCourierPriority(
+                            pref.courierId,
+                            parseInt(e.target.value) || 1
+                          )
+                        }
                         className="w-20 h-8"
                         disabled={!pref.enabled}
                       />
@@ -1546,11 +1700,16 @@ function CourierPreferencesManager({
         {/* Action Buttons */}
         <div className="flex justify-between items-center mt-6 pt-4 border-t">
           <div className="text-sm text-gray-600">
-            {editedPreferences.filter(c => c.enabled).length} of {editedPreferences.length} couriers enabled
+            {editedPreferences.filter(c => c.enabled).length} of{' '}
+            {editedPreferences.length} couriers enabled
           </div>
           <div className="flex space-x-2">
             {isEditing && (
-              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={saving}
+              >
                 Cancel
               </Button>
             )}
@@ -1566,11 +1725,11 @@ function CourierPreferencesManager({
 }
 
 // Shipping Policies Tab Component
-function ShippingPoliciesTab({ 
-  profile, 
-  onSave, 
-  saving 
-}: { 
+function ShippingPoliciesTab({
+  profile,
+  onSave,
+  saving,
+}: {
   profile: BusinessProfile | null;
   onSave: (data: Partial<BusinessProfile>) => Promise<void>;
   saving: boolean;
@@ -1581,7 +1740,9 @@ function ShippingPoliciesTab({
     setPolicies(profile?.shippingPolicies);
   }, [profile]);
 
-  if (!policies) return <div>Loading policies...</div>;
+  if (!policies) {
+    return <div>Loading policies...</div>;
+  }
 
   const handleSave = () => {
     onSave({ shippingPolicies: policies });
@@ -1596,15 +1757,19 @@ function ShippingPoliciesTab({
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="freeShippingThreshold">Free Shipping Threshold (RM)</Label>
+              <Label htmlFor="freeShippingThreshold">
+                Free Shipping Threshold (RM)
+              </Label>
               <Input
                 id="freeShippingThreshold"
                 type="number"
                 value={policies.freeShippingThreshold || 0}
-                onChange={(e) => setPolicies({
-                  ...policies!,
-                  freeShippingThreshold: Number(e.target.value)
-                })}
+                onChange={e =>
+                  setPolicies({
+                    ...policies!,
+                    freeShippingThreshold: Number(e.target.value),
+                  })
+                }
                 min="0"
                 step="0.01"
               />
@@ -1616,10 +1781,12 @@ function ShippingPoliciesTab({
                 id="processingDays"
                 type="number"
                 value={policies.processingDays || 1}
-                onChange={(e) => setPolicies({
-                  ...policies!,
-                  processingDays: Number(e.target.value)
-                })}
+                onChange={e =>
+                  setPolicies({
+                    ...policies!,
+                    processingDays: Number(e.target.value),
+                  })
+                }
                 min="0"
                 max="7"
               />
@@ -1638,10 +1805,12 @@ function ShippingPoliciesTab({
                 id="maxWeight"
                 type="number"
                 value={policies.maxWeight || 30}
-                onChange={(e) => setPolicies({
-                  ...policies!,
-                  maxWeight: Number(e.target.value)
-                })}
+                onChange={e =>
+                  setPolicies({
+                    ...policies!,
+                    maxWeight: Number(e.target.value),
+                  })
+                }
                 min="0"
                 max="70"
               />
@@ -1654,13 +1823,15 @@ function ShippingPoliciesTab({
                   id="maxLength"
                   type="number"
                   value={policies.maxDimensions?.length || 100}
-                  onChange={(e) => setPolicies({
-                    ...policies!,
-                    maxDimensions: {
-                      ...policies.maxDimensions!,
-                      length: Number(e.target.value)
-                    }
-                  })}
+                  onChange={e =>
+                    setPolicies({
+                      ...policies!,
+                      maxDimensions: {
+                        ...policies.maxDimensions!,
+                        length: Number(e.target.value),
+                      },
+                    })
+                  }
                 />
               </div>
               <div>
@@ -1669,13 +1840,15 @@ function ShippingPoliciesTab({
                   id="maxWidth"
                   type="number"
                   value={policies.maxDimensions?.width || 100}
-                  onChange={(e) => setPolicies({
-                    ...policies!,
-                    maxDimensions: {
-                      ...policies.maxDimensions!,
-                      width: Number(e.target.value)
-                    }
-                  })}
+                  onChange={e =>
+                    setPolicies({
+                      ...policies!,
+                      maxDimensions: {
+                        ...policies.maxDimensions!,
+                        width: Number(e.target.value),
+                      },
+                    })
+                  }
                 />
               </div>
               <div>
@@ -1684,13 +1857,15 @@ function ShippingPoliciesTab({
                   id="maxHeight"
                   type="number"
                   value={policies.maxDimensions?.height || 100}
-                  onChange={(e) => setPolicies({
-                    ...policies!,
-                    maxDimensions: {
-                      ...policies.maxDimensions!,
-                      height: Number(e.target.value)
-                    }
-                  })}
+                  onChange={e =>
+                    setPolicies({
+                      ...policies!,
+                      maxDimensions: {
+                        ...policies.maxDimensions!,
+                        height: Number(e.target.value),
+                      },
+                    })
+                  }
                 />
               </div>
             </div>
@@ -1709,11 +1884,11 @@ function ShippingPoliciesTab({
 }
 
 // Additional Services Tab Component
-function AdditionalServicesTab({ 
-  profile, 
-  onSave, 
-  saving 
-}: { 
+function AdditionalServicesTab({
+  profile,
+  onSave,
+  saving,
+}: {
   profile: BusinessProfile | null;
   onSave: (data: Partial<BusinessProfile>) => Promise<void>;
   saving: boolean;
@@ -1724,7 +1899,9 @@ function AdditionalServicesTab({
     setServices(profile?.serviceSettings);
   }, [profile]);
 
-  if (!services) return <div>Loading services...</div>;
+  if (!services) {
+    return <div>Loading services...</div>;
+  }
 
   const handleSave = () => {
     onSave({ serviceSettings: services });
@@ -1745,24 +1922,32 @@ function AdditionalServicesTab({
               <Switch
                 id="insuranceRequired"
                 checked={services.insuranceRequired || false}
-                onCheckedChange={(checked) => setServices({
-                  ...services!,
-                  insuranceRequired: checked
-                })}
+                onCheckedChange={checked =>
+                  setServices({
+                    ...services!,
+                    insuranceRequired: checked,
+                  })
+                }
               />
-              <Label htmlFor="insuranceRequired">Require insurance for all shipments</Label>
+              <Label htmlFor="insuranceRequired">
+                Require insurance for all shipments
+              </Label>
             </div>
 
             <div>
-              <Label htmlFor="maxInsuranceValue">Maximum Insurance Value (RM)</Label>
+              <Label htmlFor="maxInsuranceValue">
+                Maximum Insurance Value (RM)
+              </Label>
               <Input
                 id="maxInsuranceValue"
                 type="number"
                 value={services.maxInsuranceValue || 5000}
-                onChange={(e) => setServices({
-                  ...services!,
-                  maxInsuranceValue: Number(e.target.value)
-                })}
+                onChange={e =>
+                  setServices({
+                    ...services!,
+                    maxInsuranceValue: Number(e.target.value),
+                  })
+                }
                 min="0"
               />
             </div>
@@ -1778,10 +1963,12 @@ function AdditionalServicesTab({
               <Switch
                 id="codEnabled"
                 checked={services.codEnabled || false}
-                onCheckedChange={(checked) => setServices({
-                  ...services!,
-                  codEnabled: checked
-                })}
+                onCheckedChange={checked =>
+                  setServices({
+                    ...services!,
+                    codEnabled: checked,
+                  })
+                }
               />
               <Label htmlFor="codEnabled">Enable COD service</Label>
             </div>
@@ -1792,10 +1979,12 @@ function AdditionalServicesTab({
                 id="maxCodAmount"
                 type="number"
                 value={services.maxCodAmount || 1000}
-                onChange={(e) => setServices({
-                  ...services!,
-                  maxCodAmount: Number(e.target.value)
-                })}
+                onChange={e =>
+                  setServices({
+                    ...services!,
+                    maxCodAmount: Number(e.target.value),
+                  })
+                }
                 min="0"
               />
             </div>
@@ -1824,7 +2013,7 @@ function APIConfigurationTab() {
   const [formData, setFormData] = useState({
     apiKey: '',
     apiSecret: '',
-    environment: 'sandbox' as 'sandbox' | 'production'
+    environment: 'sandbox' as 'sandbox' | 'production',
   });
 
   useEffect(() => {
@@ -1836,12 +2025,12 @@ function APIConfigurationTab() {
       setLoading(true);
       const response = await fetch('/api/admin/easyparcel/credentials');
       const data = await response.json();
-      
+
       if (data.success) {
         setCredentialStatus(data.status);
         setFormData(prev => ({
           ...prev,
-          environment: data.status.environment
+          environment: data.status.environment,
         }));
       } else {
         toast.error('Failed to load credential status');
@@ -1869,12 +2058,12 @@ function APIConfigurationTab() {
           action: 'update_credentials',
           apiKey: formData.apiKey.trim(),
           apiSecret: formData.apiSecret.trim(),
-          environment: formData.environment
-        })
+          environment: formData.environment,
+        }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('Credentials updated and validated successfully!');
         await loadCredentialStatus();
@@ -1882,7 +2071,7 @@ function APIConfigurationTab() {
         setFormData({
           apiKey: '',
           apiSecret: '',
-          environment: formData.environment
+          environment: formData.environment,
         });
       } else {
         toast.error(result.error || 'Failed to update credentials');
@@ -1901,25 +2090,25 @@ function APIConfigurationTab() {
       const response = await fetch('/api/admin/easyparcel/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test_current' })
+        body: JSON.stringify({ action: 'test_current' }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success(
           `✅ API test successful!\n` +
-          `Endpoint: ${result.testResult.endpoint}\n` +
-          `Environment: ${result.testResult.environment}\n` +
-          `Response time: ${result.testResult.responseTime}ms\n` +
-          `Services found: ${result.testResult.servicesFound}`
+            `Endpoint: ${result.testResult.endpoint}\n` +
+            `Environment: ${result.testResult.environment}\n` +
+            `Response time: ${result.testResult.responseTime}ms\n` +
+            `Services found: ${result.testResult.servicesFound}`
         );
       } else {
         toast.error(
           `❌ API test failed!\n` +
-          `Endpoint: ${result.testResult?.endpoint || 'Unknown'}\n` +
-          `Environment: ${result.testResult?.environment || 'Unknown'}\n` +
-          `Error: ${result.testResult?.error || result.error}`
+            `Endpoint: ${result.testResult?.endpoint || 'Unknown'}\n` +
+            `Environment: ${result.testResult?.environment || 'Unknown'}\n` +
+            `Error: ${result.testResult?.error || result.error}`
         );
       }
     } catch (error) {
@@ -1930,7 +2119,9 @@ function APIConfigurationTab() {
     }
   };
 
-  const handleEnvironmentSwitch = async (newEnvironment: 'sandbox' | 'production') => {
+  const handleEnvironmentSwitch = async (
+    newEnvironment: 'sandbox' | 'production'
+  ) => {
     setSaving(true);
     try {
       const response = await fetch('/api/admin/easyparcel/credentials', {
@@ -1938,12 +2129,12 @@ function APIConfigurationTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'switch_environment',
-          environment: newEnvironment
-        })
+          environment: newEnvironment,
+        }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success(`Environment switched to ${newEnvironment}`);
         setFormData(prev => ({ ...prev, environment: newEnvironment }));
@@ -1960,18 +2151,22 @@ function APIConfigurationTab() {
   };
 
   const handleClearCredentials = async () => {
-    if (!confirm('Are you sure you want to clear stored credentials? This will fallback to environment variables if available.')) {
+    if (
+      !confirm(
+        'Are you sure you want to clear stored credentials? This will fallback to environment variables if available.'
+      )
+    ) {
       return;
     }
 
     setSaving(true);
     try {
       const response = await fetch('/api/admin/easyparcel/credentials', {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('Credentials cleared successfully');
         await loadCredentialStatus();
@@ -2005,7 +2200,8 @@ function APIConfigurationTab() {
             EasyParcel API Configuration
           </CardTitle>
           <CardDescription>
-            Manage your EasyParcel API credentials securely. Credentials are encrypted and stored safely.
+            Manage your EasyParcel API credentials securely. Credentials are
+            encrypted and stored safely.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2020,7 +2216,9 @@ function APIConfigurationTab() {
               <div>
                 <p className="font-medium">Configuration</p>
                 <p className="text-sm text-gray-600">
-                  {credentialStatus?.hasCredentials ? 'Configured' : 'Not Configured'}
+                  {credentialStatus?.hasCredentials
+                    ? 'Configured'
+                    : 'Not Configured'}
                 </p>
               </div>
             </div>
@@ -2046,7 +2244,9 @@ function APIConfigurationTab() {
               <div>
                 <p className="font-medium">Source</p>
                 <p className="text-sm text-gray-600">
-                  {credentialStatus?.isUsingEnvFallback ? 'Environment Variables' : 'Database (Encrypted)'}
+                  {credentialStatus?.isUsingEnvFallback
+                    ? 'Environment Variables'
+                    : 'Database (Encrypted)'}
                 </p>
               </div>
             </div>
@@ -2061,8 +2261,9 @@ function APIConfigurationTab() {
                     {credentialStatus.apiKeyMasked}
                   </p>
                   <p className="text-xs text-gray-500">
-                    <strong>Endpoint:</strong> {credentialStatus.environment === 'production' 
-                      ? 'https://connect.easyparcel.my' 
+                    <strong>Endpoint:</strong>{' '}
+                    {credentialStatus.environment === 'production'
+                      ? 'https://connect.easyparcel.my'
                       : 'http://demo.connect.easyparcel.my'}
                   </p>
                 </div>
@@ -2092,7 +2293,8 @@ function APIConfigurationTab() {
               Environment Configuration
             </CardTitle>
             <CardDescription>
-              Switch between sandbox and production environments. Be careful when switching to production.
+              Switch between sandbox and production environments. Be careful
+              when switching to production.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2100,27 +2302,48 @@ function APIConfigurationTab() {
               <div className="space-y-2">
                 <div className="flex items-center gap-4">
                   <Button
-                    variant={credentialStatus.environment === 'sandbox' ? 'default' : 'outline'}
+                    variant={
+                      credentialStatus.environment === 'sandbox'
+                        ? 'default'
+                        : 'outline'
+                    }
                     onClick={() => handleEnvironmentSwitch('sandbox')}
-                    disabled={saving || credentialStatus.environment === 'sandbox'}
+                    disabled={
+                      saving || credentialStatus.environment === 'sandbox'
+                    }
                   >
                     <TestTube className="h-4 w-4 mr-2" />
                     Sandbox (Testing)
                   </Button>
                   <Button
-                    variant={credentialStatus.environment === 'production' ? 'default' : 'outline'}
+                    variant={
+                      credentialStatus.environment === 'production'
+                        ? 'default'
+                        : 'outline'
+                    }
                     onClick={() => handleEnvironmentSwitch('production')}
-                    disabled={saving || credentialStatus.environment === 'production'}
-                    className={credentialStatus.environment === 'production' ? 'bg-red-600 hover:bg-red-700' : ''}
+                    disabled={
+                      saving || credentialStatus.environment === 'production'
+                    }
+                    className={
+                      credentialStatus.environment === 'production'
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : ''
+                    }
                   >
                     <Lock className="h-4 w-4 mr-2" />
                     Production (Live)
                   </Button>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Current: <strong className="capitalize">{credentialStatus.environment}</strong>
+                  Current:{' '}
+                  <strong className="capitalize">
+                    {credentialStatus.environment}
+                  </strong>
                   {credentialStatus.environment === 'production' && (
-                    <span className="text-red-600 ml-2">⚠️ Live environment - real charges apply</span>
+                    <span className="text-red-600 ml-2">
+                      ⚠️ Live environment - real charges apply
+                    </span>
                   )}
                 </p>
               </div>
@@ -2137,7 +2360,8 @@ function APIConfigurationTab() {
             Update API Credentials
           </CardTitle>
           <CardDescription>
-            Enter new EasyParcel API credentials. They will be encrypted and tested before saving.
+            Enter new EasyParcel API credentials. They will be encrypted and
+            tested before saving.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -2148,11 +2372,13 @@ function APIConfigurationTab() {
                 id="apiKey"
                 type={showApiKey ? 'text' : 'password'}
                 value={formData.apiKey}
-                onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, apiKey: e.target.value }))
+                }
                 placeholder="Enter your EasyParcel API key"
                 className="font-mono"
-                onCopy={(e) => e.preventDefault()}
-                onCut={(e) => e.preventDefault()}
+                onCopy={e => e.preventDefault()}
+                onCut={e => e.preventDefault()}
                 autoComplete="new-password"
               />
               <Button
@@ -2162,7 +2388,11 @@ function APIConfigurationTab() {
                 className="ml-2"
                 onClick={() => setShowApiKey(!showApiKey)}
               >
-                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showApiKey ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -2174,11 +2404,13 @@ function APIConfigurationTab() {
                 id="apiSecret"
                 type={showApiSecret ? 'text' : 'password'}
                 value={formData.apiSecret}
-                onChange={(e) => setFormData(prev => ({ ...prev, apiSecret: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, apiSecret: e.target.value }))
+                }
                 placeholder="Enter your EasyParcel API secret"
                 className="font-mono"
-                onCopy={(e) => e.preventDefault()}
-                onCut={(e) => e.preventDefault()}
+                onCopy={e => e.preventDefault()}
+                onCut={e => e.preventDefault()}
                 autoComplete="new-password"
               />
               <Button
@@ -2188,7 +2420,11 @@ function APIConfigurationTab() {
                 className="ml-2"
                 onClick={() => setShowApiSecret(!showApiSecret)}
               >
-                {showApiSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showApiSecret ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -2197,7 +2433,7 @@ function APIConfigurationTab() {
             <Label htmlFor="environment">Environment</Label>
             <Select
               value={formData.environment}
-              onValueChange={(value: 'sandbox' | 'production') => 
+              onValueChange={(value: 'sandbox' | 'production') =>
                 setFormData(prev => ({ ...prev, environment: value }))
               }
             >
@@ -2231,8 +2467,10 @@ function APIConfigurationTab() {
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertDescription>
-          <strong>Security Notice:</strong> Your API credentials are encrypted using AES-256-GCM encryption before storage. 
-          Credential inputs are protected against copying and auto-completion. Only ADMIN and SUPERADMIN users can manage these credentials.
+          <strong>Security Notice:</strong> Your API credentials are encrypted
+          using AES-256-GCM encryption before storage. Credential inputs are
+          protected against copying and auto-completion. Only ADMIN and
+          SUPERADMIN users can manage these credentials.
         </AlertDescription>
       </Alert>
     </div>

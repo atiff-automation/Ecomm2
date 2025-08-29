@@ -174,6 +174,7 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute) {
     const token = await getToken({
       req: request,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       secret: process.env.NEXTAUTH_SECRET!,
     });
 

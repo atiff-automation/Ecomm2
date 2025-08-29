@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getTrackingCacheByOrderId,
   createJob,
 } from '@/lib/services/tracking-cache';
-import { 
+import {
   TRACKING_REFACTOR_CONFIG,
   getJobPriority,
   calculateNextUpdate,
@@ -36,7 +36,12 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
  * Rate limiting for guest tracking requests
  * Uses centralized configuration
  */
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetTime?: number; retryAfter?: number } {
+function checkRateLimit(ip: string): {
+  allowed: boolean;
+  remaining: number;
+  resetTime?: number;
+  retryAfter?: number;
+} {
   const now = Date.now();
   const { REQUESTS_PER_HOUR, WINDOW_MS } = {
     REQUESTS_PER_HOUR: 10, // From TRACKING_REFACTOR_CONFIG or legacy config
@@ -53,13 +58,13 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number; rese
   entriesToDelete.forEach(key => rateLimitStore.delete(key));
 
   const current = rateLimitStore.get(ip);
-  
+
   if (!current) {
     // First request from this IP
     rateLimitStore.set(ip, { count: 1, resetTime: now + WINDOW_MS });
-    return { 
-      allowed: true, 
-      remaining: REQUESTS_PER_HOUR - 1, 
+    return {
+      allowed: true,
+      remaining: REQUESTS_PER_HOUR - 1,
       resetTime: now + WINDOW_MS,
     };
   }
@@ -67,17 +72,17 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number; rese
   if (now > current.resetTime) {
     // Reset window
     rateLimitStore.set(ip, { count: 1, resetTime: now + WINDOW_MS });
-    return { 
-      allowed: true, 
-      remaining: REQUESTS_PER_HOUR - 1, 
+    return {
+      allowed: true,
+      remaining: REQUESTS_PER_HOUR - 1,
       resetTime: now + WINDOW_MS,
     };
   }
 
   if (current.count >= REQUESTS_PER_HOUR) {
     const retryAfter = Math.ceil((current.resetTime - now) / 1000);
-    return { 
-      allowed: false, 
+    return {
+      allowed: false,
       retryAfter,
       remaining: 0,
     };
@@ -85,9 +90,9 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number; rese
 
   // Increment count
   current.count++;
-  return { 
-    allowed: true, 
-    remaining: REQUESTS_PER_HOUR - current.count, 
+  return {
+    allowed: true,
+    remaining: REQUESTS_PER_HOUR - current.count,
     resetTime: current.resetTime,
   };
 }
@@ -96,8 +101,8 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number; rese
  * Validate order ownership for guest users
  */
 async function validateGuestOrderAccess(
-  orderNumber: string, 
-  email?: string, 
+  orderNumber: string,
+  email?: string,
   phone?: string
 ): Promise<{ valid: boolean; orderId?: string }> {
   if (!email && !phone) {
@@ -127,9 +132,9 @@ async function validateGuestOrderAccess(
       select: { id: true, orderNumber: true },
     });
 
-    return { 
-      valid: !!order, 
-      orderId: order?.id 
+    return {
+      valid: !!order,
+      orderId: order?.id,
     };
   } catch (error) {
     console.error('Error validating guest order access:', error);
@@ -140,7 +145,10 @@ async function validateGuestOrderAccess(
 /**
  * Get cache freshness status
  */
-function getCacheFreshness(lastUpdate: Date, nextUpdate: Date): 'FRESH' | 'STALE' | 'EXPIRED' {
+function getCacheFreshness(
+  lastUpdate: Date,
+  nextUpdate: Date
+): 'FRESH' | 'STALE' | 'EXPIRED' {
   const now = new Date();
   const timeSinceUpdate = now.getTime() - lastUpdate.getTime();
   const timeUntilNextUpdate = nextUpdate.getTime() - now.getTime();
@@ -162,13 +170,17 @@ function getCacheFreshness(lastUpdate: Date, nextUpdate: Date): 'FRESH' | 'STALE
  * Filter sensitive data for guest tracking
  */
 function filterSensitiveTrackingData(trackingEvents: any[]): any[] {
-  return trackingEvents.map(event => ({
-    eventName: event.eventName,
-    description: event.description,
-    timestamp: event.timestamp,
-    // Remove detailed location information
-    location: event.location?.includes('Street') ? 'Processing facility' : event.location,
-  })).slice(0, 10); // Limit to 10 most recent events
+  return trackingEvents
+    .map(event => ({
+      eventName: event.eventName,
+      description: event.description,
+      timestamp: event.timestamp,
+      // Remove detailed location information
+      location: event.location?.includes('Street')
+        ? 'Processing facility'
+        : event.location,
+    }))
+    .slice(0, 10); // Limit to 10 most recent events
 }
 
 /**
@@ -198,17 +210,17 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: `Too many requests. Please try again in ${rateLimit.retryAfter} seconds.`,
           retryAfter: rateLimit.retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': rateLimit.retryAfter?.toString() || '3600',
             'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          }
+          },
         }
       );
     }
@@ -228,7 +240,7 @@ export async function POST(request: NextRequest) {
     if (!email && !phone) {
       throw new TrackingRefactorError(
         'Either email or phone number is required',
-        'VALIDATION_ERROR', 
+        'VALIDATION_ERROR',
         400
       );
     }
@@ -252,9 +264,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and get order
-    const { valid, orderId: validatedOrderId } = await validateGuestOrderAccess(orderNumber, email, phone);
+    const { valid, orderId: validatedOrderId } = await validateGuestOrderAccess(
+      orderNumber,
+      email,
+      phone
+    );
     orderId = validatedOrderId;
-    
+
     if (!valid || !orderId) {
       logTrackingSecurityEvent({
         ip,
@@ -274,7 +290,7 @@ export async function POST(request: NextRequest) {
 
     // Get tracking cache (database-first approach)
     const trackingCache = await getTrackingCacheByOrderId(orderId);
-    
+
     if (!trackingCache) {
       // No tracking cache exists - this might be a new order or one without shipping yet
       logTrackingSecurityEvent({
@@ -301,10 +317,12 @@ export async function POST(request: NextRequest) {
     );
 
     // Calculate cache age in seconds
-    const cacheAge = Math.floor((Date.now() - trackingCache.lastApiUpdate.getTime()) / 1000);
+    const cacheAge = Math.floor(
+      (Date.now() - trackingCache.lastApiUpdate.getTime()) / 1000
+    );
 
     // Filter tracking events for guest access
-    const filteredEvents = Array.isArray(trackingCache.trackingEvents) 
+    const filteredEvents = Array.isArray(trackingCache.trackingEvents)
       ? filterSensitiveTrackingData(trackingCache.trackingEvents as any[])
       : [];
 
@@ -358,26 +376,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Track performance
-    trackTrackingAPIPerformance(
-      'guest-track-order',
-      startTime,
-      true,
-      {
-        freshness,
-        cacheAge,
-        eventsCount: filteredEvents.length,
-        backgroundRefreshTriggered: freshness !== 'FRESH',
-      }
-    );
+    trackTrackingAPIPerformance('guest-track-order', startTime, true, {
+      freshness,
+      cacheAge,
+      eventsCount: filteredEvents.length,
+      backgroundRefreshTriggered: freshness !== 'FRESH',
+    });
 
     return NextResponse.json(response, {
       headers: {
         'X-Cache-Status': freshness,
         'X-Cache-Age': cacheAge.toString(),
         'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-      }
+      },
     });
-
   } catch (error) {
     // Track performance for errors
     trackTrackingAPIPerformance(
@@ -404,32 +416,33 @@ export async function GET() {
         orderNumber: {
           required: true,
           format: 'ORD-YYYYMMDD-XXXX',
-          example: 'ORD-20250821-A1B2'
+          example: 'ORD-20250821-A1B2',
         },
         verification: {
           email: {
             required: false,
-            description: 'Email address used for the order'
+            description: 'Email address used for the order',
           },
           phone: {
             required: false,
-            description: 'Phone number used for the order (currently requires email)'
+            description:
+              'Phone number used for the order (currently requires email)',
           },
-          note: 'Email is required for guest tracking'
+          note: 'Email is required for guest tracking',
         },
         rateLimit: {
           maxRequests: 10,
           windowHours: 1,
-          description: 'Maximum 10 tracking requests per hour per IP address'
+          description: 'Maximum 10 tracking requests per hour per IP address',
         },
         caching: {
           description: 'Tracking data is cached for fast response',
           freshness: {
             FRESH: 'Updated within last 15 minutes',
             STALE: 'Older data, background update triggered',
-            EXPIRED: 'Very old data, immediate update recommended'
-          }
-        }
+            EXPIRED: 'Very old data, immediate update recommended',
+          },
+        },
       },
       system: {
         version: 'refactored-v2',
@@ -439,9 +452,9 @@ export async function GET() {
           'Real-time cache status',
           'Background refresh',
           'Enhanced security logging',
-          'Rate limiting protection'
-        ]
-      }
+          'Rate limiting protection',
+        ],
+      },
     });
   } catch (error) {
     return createTrackingErrorResponse(error as Error);

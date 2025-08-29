@@ -1,7 +1,7 @@
 /**
  * Products Server Component - Malaysian E-commerce Platform
  * React Server Component implementation for optimal performance
- * 
+ *
  * Benefits:
  * - Server-side data fetching and rendering
  * - Zero JavaScript bundle impact for static content
@@ -71,7 +71,8 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
           searchTerm={search}
           selectedCategory={category}
           categoryName={
-            categories.find(cat => cat.id === category)?.name || 'All Categories'
+            categories.find(cat => cat.id === category)?.name ||
+            'All Categories'
           }
         />
 
@@ -95,13 +96,13 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
 /**
  * Main Products Page Component with Suspense boundaries
  */
-export default async function ProductsPage({ 
-  searchParams 
-}: { 
-  searchParams: SearchParams 
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
 }) {
   return (
-    <Suspense 
+    <Suspense
       fallback={<ProductsLoading />}
       key={JSON.stringify(searchParams)} // Force re-suspend on param changes
     >
@@ -113,18 +114,24 @@ export default async function ProductsPage({
 /**
  * Generate metadata for SEO (Server Component)
  */
-export async function generateMetadata({ searchParams }: { searchParams: SearchParams }) {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const search = searchParams.search?.trim();
   const category = searchParams.category;
-  
+
   let title = 'Products - JRM E-commerce';
-  let description = 'Browse our collection of quality products with member benefits and competitive prices.';
+  let description =
+    'Browse our collection of quality products with member benefits and competitive prices.';
 
   if (search && category && category !== 'all') {
     // Get category name for title
     try {
       const categories = await categoryService.getCategories();
-      const categoryName = categories.find(cat => cat.id === category)?.name || 'Products';
+      const categoryName =
+        categories.find(cat => cat.id === category)?.name || 'Products';
       title = `"${search}" in ${categoryName} - JRM E-commerce`;
       description = `Search results for "${search}" in ${categoryName} category. Find quality products with member discounts.`;
     } catch {
@@ -137,7 +144,8 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   } else if (category && category !== 'all') {
     try {
       const categories = await categoryService.getCategories();
-      const categoryName = categories.find(cat => cat.id === category)?.name || 'Products';
+      const categoryName =
+        categories.find(cat => cat.id === category)?.name || 'Products';
       title = `${categoryName} - JRM E-commerce`;
       description = `Browse our ${categoryName.toLowerCase()} collection. Quality products with member benefits.`;
     } catch {

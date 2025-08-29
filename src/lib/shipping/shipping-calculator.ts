@@ -4,7 +4,13 @@
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 3
  */
 
-import { easyParcelService, type AddressStructure, type ParcelDetails, type RateRequest, type MalaysianState } from './easyparcel-service';
+import {
+  easyParcelService,
+  type AddressStructure,
+  type ParcelDetails,
+  type RateRequest,
+  type MalaysianState,
+} from './easyparcel-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 export interface ShippingCalculationItem {
@@ -16,7 +22,7 @@ export interface ShippingCalculationItem {
   // Enhanced product properties for EasyParcel v1.4.0
   dimensions?: {
     length: number; // in cm
-    width: number;  // in cm
+    width: number; // in cm
     height: number; // in cm
   };
   shippingClass?: 'STANDARD' | 'FRAGILE' | 'HAZARDOUS';
@@ -43,23 +49,23 @@ export interface EnhancedShippingRate {
   courierName: string;
   serviceName: string;
   serviceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT';
-  
+
   // Pricing
   originalPrice: number;
   price: number; // After free shipping applied
   freeShippingApplied: boolean;
-  
+
   // Delivery information
   estimatedDays: number;
   description?: string;
-  
+
   // Service features (from EasyParcel v1.4.0)
   features: {
     insuranceAvailable: boolean;
     codAvailable: boolean;
     signatureRequiredAvailable: boolean;
   };
-  
+
   // Additional options with pricing
   insurancePrice?: number;
   codPrice?: number;
@@ -128,11 +134,13 @@ export class ShippingCalculator {
       }
 
       // Calculate totals
-      const { totalWeight, totalValue, itemCount } = this.calculateTotals(items);
-      
+      const { totalWeight, totalValue, itemCount } =
+        this.calculateTotals(items);
+
       // Get free shipping threshold from business configuration
       const businessProfile = await businessShippingConfig.getBusinessProfile();
-      const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+      const freeShippingThreshold =
+        businessProfile?.shippingPolicies.freeShippingThreshold || 150;
       const freeShippingEligible = orderValue >= freeShippingThreshold;
 
       // Get business pickup address
@@ -160,7 +168,9 @@ export class ShippingCalculator {
       );
 
       // Determine delivery zones
-      const businessZone = this.getDeliveryZone(pickupAddress.state as MalaysianState);
+      const businessZone = this.getDeliveryZone(
+        pickupAddress.state as MalaysianState
+      );
       const deliveryZone = this.getDeliveryZone(deliveryAddress.state);
 
       // Calculate summary statistics
@@ -192,12 +202,16 @@ export class ShippingCalculator {
       };
     } catch (error) {
       console.error('Enhanced shipping calculation error:', error);
-      
+
       // Return fallback rates for development
       if (process.env.NODE_ENV === 'development') {
-        return await this.getFallbackShippingRates(items, deliveryAddress, orderValue);
+        return await this.getFallbackShippingRates(
+          items,
+          deliveryAddress,
+          orderValue
+        );
       }
-      
+
       throw error;
     }
   }
@@ -210,21 +224,23 @@ export class ShippingCalculator {
     orderValue: number,
     urgency: 'economy' | 'standard' | 'express' = 'standard'
   ): EnhancedShippingRate | null {
-    if (rates.length === 0) return null;
+    if (rates.length === 0) {
+      return null;
+    }
 
     switch (urgency) {
       case 'economy':
         // Cheapest option
-        return rates.reduce((cheapest, current) => 
+        return rates.reduce((cheapest, current) =>
           current.price < cheapest.price ? current : cheapest
         );
-      
+
       case 'express':
         // Fastest option
-        return rates.reduce((fastest, current) => 
+        return rates.reduce((fastest, current) =>
           current.estimatedDays < fastest.estimatedDays ? current : fastest
         );
-      
+
       case 'standard':
       default:
         // Best value: balance of price and speed
@@ -256,13 +272,19 @@ export class ShippingCalculator {
         errors.push(`Item ${index + 1}: Weight must be greater than 0`);
       }
       if (item.weight > 70) {
-        errors.push(`Item ${index + 1}: Weight exceeds EasyParcel limit of 70kg`);
+        errors.push(
+          `Item ${index + 1}: Weight exceeds EasyParcel limit of 70kg`
+        );
       }
       if (!item.name || item.name.length > 100) {
-        errors.push(`Item ${index + 1}: Name is required and must be max 100 characters`);
+        errors.push(
+          `Item ${index + 1}: Name is required and must be max 100 characters`
+        );
       }
       if (item.shippingClass === 'HAZARDOUS') {
-        warnings.push(`Item ${index + 1}: Hazardous items may have shipping restrictions`);
+        warnings.push(
+          `Item ${index + 1}: Hazardous items may have shipping restrictions`
+        );
       }
     });
 
@@ -274,7 +296,12 @@ export class ShippingCalculator {
     }
 
     // Malaysian specific validations
-    if (!easyParcelService.validatePostcodeForState(deliveryAddress.postalCode, deliveryAddress.state)) {
+    if (
+      !easyParcelService.validatePostcodeForState(
+        deliveryAddress.postalCode,
+        deliveryAddress.state
+      )
+    ) {
       warnings.push('Postcode may not match the selected state');
     }
 
@@ -288,16 +315,18 @@ export class ShippingCalculator {
   /**
    * Get available service types for a destination
    */
-  async getAvailableServiceTypes(deliveryState: MalaysianState): Promise<string[]> {
+  async getAvailableServiceTypes(
+    deliveryState: MalaysianState
+  ): Promise<string[]> {
     const isWestMalaysia = this.isWestMalaysianState(deliveryState);
-    
+
     // Base services available everywhere
     const availableServices = ['STANDARD'];
-    
+
     // Express services typically available for West Malaysia
     if (isWestMalaysia) {
       availableServices.push('EXPRESS');
-      
+
       // Major cities may have overnight service
       const overnightStates: MalaysianState[] = ['KUL', 'SEL', 'PNG', 'JOH'];
       if (overnightStates.includes(deliveryState)) {
@@ -311,8 +340,14 @@ export class ShippingCalculator {
   // ===== Private Helper Methods =====
 
   private calculateTotals(items: ShippingCalculationItem[]) {
-    const totalWeight = items.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
-    const totalValue = items.reduce((sum, item) => sum + (item.value * item.quantity), 0);
+    const totalWeight = items.reduce(
+      (sum, item) => sum + item.weight * item.quantity,
+      0
+    );
+    const totalValue = items.reduce(
+      (sum, item) => sum + item.value * item.quantity,
+      0
+    );
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return { totalWeight, totalValue, itemCount };
@@ -323,7 +358,8 @@ export class ShippingCalculator {
       name: process.env.BUSINESS_NAME || 'JRM E-commerce',
       phone: process.env.BUSINESS_PHONE || '+60123456789',
       email: process.env.BUSINESS_EMAIL || 'noreply@jrmecommerce.com',
-      address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Example',
+      address_line_1:
+        process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Example',
       address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || '',
       city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
       state: (process.env.BUSINESS_STATE || 'KUL') as MalaysianState,
@@ -357,7 +393,10 @@ export class ShippingCalculator {
     // Prepare parcel details
     const parcelDetails: ParcelDetails = {
       weight: totalWeight,
-      content: items.map(item => item.name).join(', ').substring(0, 100),
+      content: items
+        .map(item => item.name)
+        .join(', ')
+        .substring(0, 100),
       value: totalValue,
       quantity: items.reduce((sum, item) => sum + item.quantity, 0),
     };
@@ -388,11 +427,15 @@ export class ShippingCalculator {
   ): EnhancedShippingRate[] {
     return rates.map(rate => {
       const finalPrice = freeShippingEligible ? 0 : rate.price;
-      
+
       // Calculate additional service pricing
-      const insurancePrice = options?.includeInsurance ? 
-        Math.min(totalValue * this.defaultInsuranceRate, this.maxInsuranceAmount) : 0;
-      
+      const insurancePrice = options?.includeInsurance
+        ? Math.min(
+            totalValue * this.defaultInsuranceRate,
+            this.maxInsuranceAmount
+          )
+        : 0;
+
       const codPrice = options?.includeCOD ? 3 : 0; // RM3 COD fee
       const signaturePrice = 2; // RM2 signature required fee
 
@@ -409,11 +452,16 @@ export class ShippingCalculator {
         features: {
           insuranceAvailable: rate.features.insurance_available,
           codAvailable: rate.features.cod_available,
-          signatureRequiredAvailable: rate.features.signature_required_available,
+          signatureRequiredAvailable:
+            rate.features.signature_required_available,
         },
-        insurancePrice: rate.features.insurance_available ? insurancePrice : undefined,
+        insurancePrice: rate.features.insurance_available
+          ? insurancePrice
+          : undefined,
         codPrice: rate.features.cod_available ? codPrice : undefined,
-        signaturePrice: rate.features.signature_required_available ? signaturePrice : undefined,
+        signaturePrice: rate.features.signature_required_available
+          ? signaturePrice
+          : undefined,
       };
     });
   }
@@ -426,20 +474,24 @@ export class ShippingCalculator {
     freeShippingEligible: boolean,
     freeShippingThreshold: number
   ) {
-    const cheapestRate = rates.length > 0 ? 
-      Math.min(...rates.map(r => r.price)) : undefined;
-    
-    const fastestService = rates.length > 0 ? 
-      rates.reduce((fastest, current) => 
-        current.estimatedDays < fastest.estimatedDays ? current : fastest
-      ).serviceName : undefined;
+    const cheapestRate =
+      rates.length > 0 ? Math.min(...rates.map(r => r.price)) : undefined;
 
-    const recommendedCourier = rates.length > 0 ? 
-      rates.reduce((best, current) => {
-        const currentScore = this.calculateValueScore(current);
-        const bestScore = this.calculateValueScore(best);
-        return currentScore > bestScore ? current : best;
-      }).courierName : undefined;
+    const fastestService =
+      rates.length > 0
+        ? rates.reduce((fastest, current) =>
+            current.estimatedDays < fastest.estimatedDays ? current : fastest
+          ).serviceName
+        : undefined;
+
+    const recommendedCourier =
+      rates.length > 0
+        ? rates.reduce((best, current) => {
+            const currentScore = this.calculateValueScore(current);
+            const bestScore = this.calculateValueScore(best);
+            return currentScore > bestScore ? current : best;
+          }).courierName
+        : undefined;
 
     return {
       totalWeight,
@@ -456,7 +508,7 @@ export class ShippingCalculator {
   private calculateValueScore(rate: EnhancedShippingRate): number {
     // Simple scoring: lower price and faster delivery = higher score
     const priceScore = 100 - (rate.price / 50) * 100; // Normalize price
-    const speedScore = Math.max(100 - (rate.estimatedDays * 20), 0); // Faster = higher score
+    const speedScore = Math.max(100 - rate.estimatedDays * 20, 0); // Faster = higher score
     return (priceScore + speedScore) / 2;
   }
 
@@ -464,23 +516,27 @@ export class ShippingCalculator {
     if (!address.firstName || !address.lastName) {
       throw new Error('First name and last name are required');
     }
-    
+
     if (!address.phone || !this.validateMalaysianPhone(address.phone)) {
-      throw new Error('Valid Malaysian phone number (+60XXXXXXXXX) is required');
+      throw new Error(
+        'Valid Malaysian phone number (+60XXXXXXXXX) is required'
+      );
     }
-    
+
     if (!address.addressLine1 || address.addressLine1.length > 100) {
-      throw new Error('Address line 1 is required and must be max 100 characters');
+      throw new Error(
+        'Address line 1 is required and must be max 100 characters'
+      );
     }
-    
+
     if (!address.city || address.city.length > 50) {
       throw new Error('City is required and must be max 50 characters');
     }
-    
+
     if (!address.state) {
       throw new Error('State is required');
     }
-    
+
     if (!address.postalCode || !/^\d{5}$/.test(address.postalCode)) {
       throw new Error('Valid 5-digit postal code is required');
     }
@@ -506,13 +562,14 @@ export class ShippingCalculator {
     orderValue: number
   ): Promise<ShippingCalculationResult> {
     const { totalWeight, totalValue, itemCount } = this.calculateTotals(items);
-    
+
     // Get free shipping threshold from business configuration
     const businessProfile = await businessShippingConfig.getBusinessProfile();
-    const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+    const freeShippingThreshold =
+      businessProfile?.shippingPolicies.freeShippingThreshold || 150;
     const freeShippingEligible = orderValue >= freeShippingThreshold;
     const deliveryZone = this.getDeliveryZone(deliveryAddress.state);
-    
+
     const baseRate = deliveryZone === 'west' ? 8 : 15;
     const weightMultiplier = Math.ceil(totalWeight);
 

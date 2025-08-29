@@ -203,8 +203,8 @@ export function getBestPrice(
     const promotionalPrice = Number(product.promotionalPrice);
     const memberPrice = Number(product.memberPrice);
     const lowestPrice = Math.min(promotionalPrice, memberPrice);
-    const priceType = lowestPrice === promotionalPrice ? 'promotional' : 'member';
-
+    const priceType =
+      lowestPrice === promotionalPrice ? 'promotional' : 'member';
 
     return {
       price: lowestPrice,

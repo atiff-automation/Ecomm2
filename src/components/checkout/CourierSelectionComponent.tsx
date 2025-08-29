@@ -111,12 +111,14 @@ interface CourierSelectionProps {
   cartItems: CartItem[];
   shippingAddress: ShippingAddress;
   orderValue: number;
-  onShippingRateSelect: (rate: ShippingRate & {
-    insurance: boolean;
-    cod: boolean;
-    signatureRequired: boolean;
-    specialInstructions?: string;
-  }) => void;
+  onShippingRateSelect: (
+    rate: ShippingRate & {
+      insurance: boolean;
+      cod: boolean;
+      signatureRequired: boolean;
+      specialInstructions?: string;
+    }
+  ) => void;
   selectedCourierId?: string;
   className?: string;
 }
@@ -129,17 +131,18 @@ export default function CourierSelectionComponent({
   selectedCourierId,
   className = '',
 }: CourierSelectionProps) {
-  const [shippingData, setShippingData] = useState<ShippingCalculationResult | null>(null);
+  const [shippingData, setShippingData] =
+    useState<ShippingCalculationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
-  
+
   // Additional service options
   const [insurance, setInsurance] = useState(false);
   const [cod, setCod] = useState(false);
   const [signatureRequired, setSignatureRequired] = useState(false);
   const [specialInstructions, setSpecialInstructions] = useState('');
-  
+
   // Auto-retry state
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 2;
@@ -185,15 +188,17 @@ export default function CourierSelectionComponent({
         weight: Number(item.product.weight) || 0.5, // Ensure number type, default 0.5kg if not specified
         quantity: item.quantity,
         value: Number(item.product.regularPrice), // Ensure number type
-        dimensions: item.product.dimensions ? {
-          length: Number(item.product.dimensions.length) || 10,
-          width: Number(item.product.dimensions.width) || 10,
-          height: Number(item.product.dimensions.height) || 5,
-        } : {
-          length: 10,
-          width: 10,
-          height: 5,
-        },
+        dimensions: item.product.dimensions
+          ? {
+              length: Number(item.product.dimensions.length) || 10,
+              width: Number(item.product.dimensions.width) || 10,
+              height: Number(item.product.dimensions.height) || 5,
+            }
+          : {
+              length: 10,
+              width: 10,
+              height: 5,
+            },
       }));
 
       const deliveryAddress = {
@@ -227,11 +232,13 @@ export default function CourierSelectionComponent({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
       const data: ShippingCalculationResult = await response.json();
-      
+
       console.log('✅ Shipping rates calculated:', {
         rateCount: data.rates.length,
         cheapestRate: data.summary.cheapestRate,
@@ -244,28 +251,37 @@ export default function CourierSelectionComponent({
 
       // Auto-select recommended rate if none selected
       if (!selectedRate && data.rates.length > 0) {
-        const recommended = data.rates.find(rate => 
-          rate.courierName === data.summary.recommendedCourier
-        ) || data.rates[0];
-        
+        const recommended =
+          data.rates.find(
+            rate => rate.courierName === data.summary.recommendedCourier
+          ) || data.rates[0];
+
         setSelectedRate(recommended);
         notifyRateSelection(recommended);
       }
-
     } catch (error) {
       console.error('❌ Shipping calculation error:', error);
-      
+
       // Auto-retry on failure (up to maxRetries)
       if (retryAttempt < maxRetries) {
-        console.log(`🔄 Retrying shipping calculation (${retryAttempt + 1}/${maxRetries})`);
+        console.log(
+          `🔄 Retrying shipping calculation (${retryAttempt + 1}/${maxRetries})`
+        );
         setRetryCount(retryAttempt + 1);
-        setTimeout(() => {
-          calculateShippingRates(retryAttempt + 1);
-        }, 2000 * (retryAttempt + 1)); // Exponential backoff
+        setTimeout(
+          () => {
+            calculateShippingRates(retryAttempt + 1);
+          },
+          2000 * (retryAttempt + 1)
+        ); // Exponential backoff
         return;
       }
 
-      setError(error instanceof Error ? error.message : 'Failed to calculate shipping rates');
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to calculate shipping rates'
+      );
       setShippingData(null);
     } finally {
       setLoading(false);
@@ -275,7 +291,7 @@ export default function CourierSelectionComponent({
   // Notify parent component of rate selection
   const notifyRateSelection = (rate: ShippingRate) => {
     const finalPrice = calculateFinalPrice(rate);
-    
+
     onShippingRateSelect({
       ...rate,
       price: finalPrice,
@@ -289,19 +305,19 @@ export default function CourierSelectionComponent({
   // Calculate final price with additional services
   const calculateFinalPrice = (rate: ShippingRate): number => {
     let finalPrice = rate.price;
-    
+
     if (insurance && rate.insurancePrice) {
       finalPrice += rate.insurancePrice;
     }
-    
+
     if (cod && rate.codPrice) {
       finalPrice += rate.codPrice;
     }
-    
+
     if (signatureRequired && rate.signaturePrice) {
       finalPrice += rate.signaturePrice;
     }
-    
+
     return finalPrice;
   };
 
@@ -324,7 +340,7 @@ export default function CourierSelectionComponent({
         setSignatureRequired(enabled);
         break;
     }
-    
+
     // Re-notify with updated pricing
     if (selectedRate) {
       setTimeout(() => notifyRateSelection(selectedRate), 0);
@@ -335,13 +351,29 @@ export default function CourierSelectionComponent({
   const getServiceTypeBadge = (serviceType: string) => {
     switch (serviceType) {
       case 'STANDARD':
-        return <Badge variant="secondary" className="text-xs">Standard</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs">
+            Standard
+          </Badge>
+        );
       case 'EXPRESS':
-        return <Badge variant="default" className="text-xs bg-blue-500">Express</Badge>;
+        return (
+          <Badge variant="default" className="text-xs bg-blue-500">
+            Express
+          </Badge>
+        );
       case 'OVERNIGHT':
-        return <Badge variant="default" className="text-xs bg-red-500">Overnight</Badge>;
+        return (
+          <Badge variant="default" className="text-xs bg-red-500">
+            Overnight
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="text-xs">{serviceType}</Badge>;
+        return (
+          <Badge variant="outline" className="text-xs">
+            {serviceType}
+          </Badge>
+        );
     }
   };
 
@@ -374,7 +406,7 @@ export default function CourierSelectionComponent({
             <RefreshCw className="w-4 h-4 animate-spin" />
             Calculating shipping rates...
           </div>
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="space-y-2">
               <Skeleton className="h-16 w-full" />
             </div>
@@ -428,7 +460,9 @@ export default function CourierSelectionComponent({
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Please complete your shipping address to view delivery options</p>
+            <p>
+              Please complete your shipping address to view delivery options
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -449,7 +483,8 @@ export default function CourierSelectionComponent({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              No shipping options available for your location. Please check your address or contact support.
+              No shipping options available for your location. Please check your
+              address or contact support.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -475,8 +510,10 @@ export default function CourierSelectionComponent({
         <div className="flex items-center gap-2 text-sm text-muted-foreground border-l-4 border-blue-500 pl-3">
           <MapPin className="w-4 h-4" />
           <span>
-            Delivering to {shippingData.deliveryAddress.city}, {shippingData.deliveryAddress.state} 
-            ({shippingData.deliveryAddress.zone === 'west' ? 'West' : 'East'} Malaysia)
+            Delivering to {shippingData.deliveryAddress.city},{' '}
+            {shippingData.deliveryAddress.state}(
+            {shippingData.deliveryAddress.zone === 'west' ? 'West' : 'East'}{' '}
+            Malaysia)
           </span>
         </div>
 
@@ -486,9 +523,13 @@ export default function CourierSelectionComponent({
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               <ul className="list-disc list-inside space-y-1">
-                {shippingData.validationResults.warnings.map((warning, index) => (
-                  <li key={index} className="text-sm">{warning}</li>
-                ))}
+                {shippingData.validationResults.warnings.map(
+                  (warning, index) => (
+                    <li key={index} className="text-sm">
+                      {warning}
+                    </li>
+                  )
+                )}
               </ul>
             </AlertDescription>
           </Alert>
@@ -497,13 +538,15 @@ export default function CourierSelectionComponent({
         {/* Shipping Rate Selection */}
         <RadioGroup
           value={selectedRate?.courierId || ''}
-          onValueChange={(value) => {
+          onValueChange={value => {
             const rate = shippingData.rates.find(r => r.courierId === value);
-            if (rate) handleRateSelection(rate);
+            if (rate) {
+              handleRateSelection(rate);
+            }
           }}
           className="space-y-3"
         >
-          {shippingData.rates.map((rate) => (
+          {shippingData.rates.map(rate => (
             <div key={rate.courierId} className="space-y-2">
               <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <RadioGroupItem value={rate.courierId} id={rate.courierId} />
@@ -515,8 +558,12 @@ export default function CourierSelectionComponent({
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{rate.courierName}</span>
                       {getServiceTypeBadge(rate.serviceType)}
-                      {rate.courierName === shippingData.summary.recommendedCourier && (
-                        <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                      {rate.courierName ===
+                        shippingData.summary.recommendedCourier && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-green-600 border-green-600"
+                        >
                           Recommended
                         </Badge>
                       )}
@@ -539,7 +586,8 @@ export default function CourierSelectionComponent({
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {rate.estimatedDays} {rate.estimatedDays === 1 ? 'day' : 'days'}
+                      {rate.estimatedDays}{' '}
+                      {rate.estimatedDays === 1 ? 'day' : 'days'}
                     </div>
                     <span>{rate.serviceName}</span>
                   </div>
@@ -570,9 +618,14 @@ export default function CourierSelectionComponent({
                     <Checkbox
                       id="insurance"
                       checked={insurance}
-                      onCheckedChange={(checked) => handleServiceChange('insurance', !!checked)}
+                      onCheckedChange={checked =>
+                        handleServiceChange('insurance', !!checked)
+                      }
                     />
-                    <Label htmlFor="insurance" className="flex items-center gap-2 cursor-pointer">
+                    <Label
+                      htmlFor="insurance"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <Shield className="w-4 h-4" />
                       <span>Package Insurance</span>
                     </Label>
@@ -590,9 +643,14 @@ export default function CourierSelectionComponent({
                     <Checkbox
                       id="cod"
                       checked={cod}
-                      onCheckedChange={(checked) => handleServiceChange('cod', !!checked)}
+                      onCheckedChange={checked =>
+                        handleServiceChange('cod', !!checked)
+                      }
                     />
-                    <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
+                    <Label
+                      htmlFor="cod"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <Package className="w-4 h-4" />
                       <span>Cash on Delivery</span>
                     </Label>
@@ -610,9 +668,14 @@ export default function CourierSelectionComponent({
                     <Checkbox
                       id="signature"
                       checked={signatureRequired}
-                      onCheckedChange={(checked) => handleServiceChange('signature', !!checked)}
+                      onCheckedChange={checked =>
+                        handleServiceChange('signature', !!checked)
+                      }
                     />
-                    <Label htmlFor="signature" className="flex items-center gap-2 cursor-pointer">
+                    <Label
+                      htmlFor="signature"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <Zap className="w-4 h-4" />
                       <span>Signature Required</span>
                     </Label>
@@ -626,12 +689,14 @@ export default function CourierSelectionComponent({
 
             {/* Special Instructions */}
             <div className="space-y-2">
-              <Label htmlFor="deliveryInstructions">Delivery Instructions (Optional)</Label>
+              <Label htmlFor="deliveryInstructions">
+                Delivery Instructions (Optional)
+              </Label>
               <Textarea
                 id="deliveryInstructions"
                 placeholder="e.g., Leave at front door, Ring doorbell, etc."
                 value={specialInstructions}
-                onChange={(e) => {
+                onChange={e => {
                   setSpecialInstructions(e.target.value);
                   if (selectedRate) {
                     setTimeout(() => notifyRateSelection(selectedRate), 0);
@@ -656,12 +721,17 @@ export default function CourierSelectionComponent({
         {/* Summary Info */}
         <div className="text-xs text-muted-foreground pt-2 border-t">
           <div className="flex justify-between">
-            <span>Total Weight: {shippingData.summary.totalWeight.toFixed(1)}kg</span>
+            <span>
+              Total Weight: {shippingData.summary.totalWeight.toFixed(1)}kg
+            </span>
             <span>Items: {shippingData.summary.itemCount}</span>
           </div>
           {!shippingData.summary.freeShippingEligible && (
             <div className="mt-1">
-              <span>Free shipping on orders over RM {shippingData.summary.freeShippingThreshold}</span>
+              <span>
+                Free shipping on orders over RM{' '}
+                {shippingData.summary.freeShippingThreshold}
+              </span>
             </div>
           )}
         </div>

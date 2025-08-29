@@ -11,7 +11,7 @@ export const typography = {
     lineHeight: '40px',
   },
   h2: {
-    fontSize: '24px', 
+    fontSize: '24px',
     fontWeight: 600,
     lineHeight: '32px',
   },
@@ -181,17 +181,17 @@ export const cssVariables = {
 export const utils = {
   // Convert spacing token to rem
   rem: (px: string): string => {
-    const numValue = parseInt(px.replace('px', ''));
+    const numValue = parseInt(px.replace('px', ''), 10);
     return `${numValue / 16}rem`;
   },
-  
+
   // Generate responsive CSS media queries
   mediaQuery: {
     mobile: `@media (max-width: ${breakpoints.mobile})`,
     tablet: `@media (min-width: ${breakpoints.mobile}) and (max-width: ${breakpoints.desktop})`,
     desktop: `@media (min-width: ${breakpoints.desktop})`,
   },
-  
+
   // Generate box shadow utilities
   shadow: {
     sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',

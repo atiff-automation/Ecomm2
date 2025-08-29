@@ -73,26 +73,36 @@ export function useCart(): UseCartReturn {
   // Monitor authentication state changes and transfer guest cart when user logs in
   useEffect(() => {
     const currentAuthState = status === 'authenticated' && !!session?.user;
-    
+
     // Only proceed if authentication status is not loading
-    if (status === 'loading') return;
+    if (status === 'loading') {
+      return;
+    }
 
     // CRITICAL FIX: Only transfer guest cart on actual login transition
     // Check if user just logged in (previous: false, current: true) AND there's actually a guest cart to transfer
-    if (!previousAuthState.current && currentAuthState && !transferAttempted.current) {
-      console.log('🔐 User authentication detected, checking for guest cart...');
-      
-      // Check if there's actually a guest cart in localStorage to transfer
-      const hasGuestCart = typeof window !== 'undefined' && (
-        localStorage.getItem('cart_items') || 
-        localStorage.getItem('guest_cart') || 
-        localStorage.getItem('shopping_cart')
+    if (
+      !previousAuthState.current &&
+      currentAuthState &&
+      !transferAttempted.current
+    ) {
+      console.log(
+        '🔐 User authentication detected, checking for guest cart...'
       );
-      
+
+      // Check if there's actually a guest cart in localStorage to transfer
+      const hasGuestCart =
+        typeof window !== 'undefined' &&
+        (localStorage.getItem('cart_items') ||
+          localStorage.getItem('guest_cart') ||
+          localStorage.getItem('shopping_cart'));
+
       if (hasGuestCart) {
-        console.log('📦 Guest cart found, transferring to authenticated user...');
+        console.log(
+          '📦 Guest cart found, transferring to authenticated user...'
+        );
         transferAttempted.current = true;
-        
+
         // Transfer guest cart to authenticated user cart
         const transferGuestCart = async () => {
           try {
@@ -170,7 +180,7 @@ export function useCart(): UseCartReturn {
         await cartService.addToCart(productId, quantity);
         console.log('🎉 cartService.addToCart completed successfully');
         toast.success(
-          `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`, 
+          `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`,
           {
             duration: config.ui.loading.animationDuration * 10,
             action: {
@@ -180,8 +190,8 @@ export function useCart(): UseCartReturn {
                 if (typeof window !== 'undefined') {
                   window.dispatchEvent(new CustomEvent('openCartSidebar'));
                 }
-              }
-            }
+              },
+            },
           }
         );
       } catch (err) {
@@ -201,7 +211,9 @@ export function useCart(): UseCartReturn {
       try {
         setError(null);
         await cartService.updateCartItem(itemId, quantity);
-        toast.success('Cart updated', { duration: config.ui.loading.animationDuration * 7.5 });
+        toast.success('Cart updated', {
+          duration: config.ui.loading.animationDuration * 7.5,
+        });
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to update cart';
@@ -217,7 +229,9 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.removeFromCart(itemId);
-      toast.success('Item removed from cart', { duration: config.ui.loading.animationDuration * 7.5 });
+      toast.success('Item removed from cart', {
+        duration: config.ui.loading.animationDuration * 7.5,
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to remove item';
@@ -231,7 +245,9 @@ export function useCart(): UseCartReturn {
     try {
       setError(null);
       await cartService.clearCart();
-      toast.success('Cart cleared', { duration: config.ui.loading.animationDuration * 7.5 });
+      toast.success('Cart cleared', {
+        duration: config.ui.loading.animationDuration * 7.5,
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to clear cart';
@@ -263,7 +279,8 @@ export function useCart(): UseCartReturn {
   // Membership qualification data from API (respects product rules)
   const qualifiesForMembership = cart?.qualifiesForMembership || false;
   const membershipProgress = cart?.membershipProgress || 0;
-  const membershipRemaining = cart?.membershipRemaining || config.business.membership.threshold;
+  const membershipRemaining =
+    cart?.membershipRemaining || config.business.membership.threshold;
 
   // Utility functions
   const isProductInCart = useCallback(

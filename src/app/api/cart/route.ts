@@ -24,7 +24,10 @@ import {
   getBestPrice,
   productQualifiesForMembership,
 } from '@/lib/promotions/promotion-utils';
-import { withApiProtection, protectionConfigs } from '@/lib/middleware/api-protection';
+import {
+  withApiProtection,
+  protectionConfigs,
+} from '@/lib/middleware/api-protection';
 import config from '@/lib/config/app-config';
 
 interface CartItemWithProduct {
@@ -92,14 +95,24 @@ async function handleGET() {
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
         memberDiscount: guestCartData.summary.potentialSavings,
-        promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
+        promotionalDiscount:
+          guestCartData.summary.subtotal -
+          guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
-        membershipThreshold: guestCartData.summary.membershipThreshold || config.business.membership.threshold,
-        qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+        membershipThreshold:
+          guestCartData.summary.membershipThreshold ||
+          config.business.membership.threshold,
+        qualifiesForMembership:
+          guestCartData.summary.isEligibleForMembership || false,
         membershipProgress: guestCartData.summary.membershipProgress || 0,
-        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || config.business.membership.threshold) - (guestCartData.summary.qualifyingTotal || 0)),
+        membershipRemaining: Math.max(
+          0,
+          (guestCartData.summary.membershipThreshold ||
+            config.business.membership.threshold) -
+            (guestCartData.summary.qualifyingTotal || 0)
+        ),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -109,33 +122,35 @@ async function handleGET() {
     console.log('🔍 GET /api/cart - User ID Debug:', {
       userId: session.user.id,
       userEmail: session.user.email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // CRITICAL FIX: Always read fresh membership status from database
     // Session can be stale after membership activation
     const userWithMembership = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         isMember: true,
-        memberSince: true 
-      }
+        memberSince: true,
+      },
     });
-    
+
     // Check if user has pending membership (membership not yet activated)
     const pendingMembership = await prisma.pendingMembership.findFirst({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
-    
+
     // Use fresh database status instead of potentially stale session
-    const effectiveMemberStatus = pendingMembership ? false : (userWithMembership?.isMember || false);
+    const effectiveMemberStatus = pendingMembership
+      ? false
+      : userWithMembership?.isMember || false;
     console.log('🛒 Cart API: User membership status check:', {
       sessionIsMember: session.user.isMember,
       databaseIsMember: userWithMembership?.isMember,
       hasPendingMembership: !!pendingMembership,
-      effectiveMemberStatus
+      effectiveMemberStatus,
     });
-    
+
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: session.user.id },
       include: {
@@ -199,7 +214,7 @@ async function handleGET() {
     // Calculate cart totals and membership eligibility
     const cartSummary = await calculateCartSummary(
       convertedCartItems,
-      effectiveMemberStatus  // Use effective status instead of session
+      effectiveMemberStatus // Use effective status instead of session
     );
 
     return NextResponse.json({
@@ -289,14 +304,21 @@ async function handlePOST(request: NextRequest) {
           totalItems: guestCartData.summary.itemCount,
           subtotal: guestCartData.summary.subtotal,
           memberDiscount: guestCartData.summary.potentialSavings,
-          promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
+          promotionalDiscount:
+            guestCartData.summary.subtotal -
+            guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
           total: guestCartData.summary.total,
           // Membership qualification data for guest cart
           qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
           membershipThreshold: guestCartData.summary.membershipThreshold || 80,
-          qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+          qualifiesForMembership:
+            guestCartData.summary.isEligibleForMembership || false,
           membershipProgress: guestCartData.summary.membershipProgress || 0,
-          membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || 80) - (guestCartData.summary.qualifyingTotal || 0)),
+          membershipRemaining: Math.max(
+            0,
+            (guestCartData.summary.membershipThreshold || 80) -
+              (guestCartData.summary.qualifyingTotal || 0)
+          ),
           updatedAt: new Date().toISOString(),
         },
         { status: 201 }
@@ -310,9 +332,9 @@ async function handlePOST(request: NextRequest) {
       userEmail: session.user.email,
       productId: productId,
       quantity: quantity,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     const cartItem = await prisma.cartItem.upsert({
       where: {
         userId_productId: {
@@ -427,30 +449,32 @@ async function handlePOST(request: NextRequest) {
     // Session can be stale after membership activation
     const userWithMembershipStatus = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         isMember: true,
-        memberSince: true 
-      }
+        memberSince: true,
+      },
     });
-    
+
     // Check if user has pending membership (membership not yet activated)
     const pendingMembershipCheck = await prisma.pendingMembership.findFirst({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
-    
+
     // Use fresh database status instead of potentially stale session
-    const effectiveMembershipStatus = pendingMembershipCheck ? false : (userWithMembershipStatus?.isMember || false);
+    const effectiveMembershipStatus = pendingMembershipCheck
+      ? false
+      : userWithMembershipStatus?.isMember || false;
     console.log('🛒 Cart API: User membership status check (POST/PUT):', {
       sessionIsMember: session.user.isMember,
       databaseIsMember: userWithMembershipStatus?.isMember,
       hasPendingMembership: !!pendingMembershipCheck,
-      effectiveMemberStatus: effectiveMembershipStatus
+      effectiveMemberStatus: effectiveMembershipStatus,
     });
 
     // Calculate cart totals and membership eligibility
     const cartSummary = await calculateCartSummary(
       convertedCartItems,
-      effectiveMembershipStatus  // Use effective status instead of session
+      effectiveMembershipStatus // Use effective status instead of session
     );
 
     return NextResponse.json(
@@ -542,7 +566,7 @@ async function handlePUT(request: NextRequest) {
 
       // Return full cart data like GET endpoint does
       const guestCartData = await getGuestCartWithProducts();
-      
+
       return NextResponse.json({
         id: 'guest_cart',
         items: guestCartData.items.map(item => ({
@@ -554,14 +578,24 @@ async function handlePUT(request: NextRequest) {
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
         memberDiscount: guestCartData.summary.potentialSavings,
-        promotionalDiscount: guestCartData.summary.subtotal - guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
+        promotionalDiscount:
+          guestCartData.summary.subtotal -
+          guestCartData.summary.applicableSubtotal, // Calculate actual promotional discount
         total: guestCartData.summary.total,
         // Membership qualification data for guest cart
         qualifyingTotal: guestCartData.summary.qualifyingTotal || 0,
-        membershipThreshold: guestCartData.summary.membershipThreshold || config.business.membership.threshold,
-        qualifiesForMembership: guestCartData.summary.isEligibleForMembership || false,
+        membershipThreshold:
+          guestCartData.summary.membershipThreshold ||
+          config.business.membership.threshold,
+        qualifiesForMembership:
+          guestCartData.summary.isEligibleForMembership || false,
         membershipProgress: guestCartData.summary.membershipProgress || 0,
-        membershipRemaining: Math.max(0, (guestCartData.summary.membershipThreshold || config.business.membership.threshold) - (guestCartData.summary.qualifyingTotal || 0)),
+        membershipRemaining: Math.max(
+          0,
+          (guestCartData.summary.membershipThreshold ||
+            config.business.membership.threshold) -
+            (guestCartData.summary.qualifyingTotal || 0)
+        ),
         updatedAt: new Date().toISOString(),
       });
     }
@@ -678,30 +712,32 @@ async function handlePUT(request: NextRequest) {
     // Session can be stale after membership activation
     const userWithMembershipStatusPUT = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         isMember: true,
-        memberSince: true 
-      }
+        memberSince: true,
+      },
     });
-    
+
     // Check if user has pending membership (membership not yet activated)
     const pendingMembershipCheck = await prisma.pendingMembership.findFirst({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
-    
+
     // Use fresh database status instead of potentially stale session
-    const effectiveMembershipStatus = pendingMembershipCheck ? false : (userWithMembershipStatusPUT?.isMember || false);
+    const effectiveMembershipStatus = pendingMembershipCheck
+      ? false
+      : userWithMembershipStatusPUT?.isMember || false;
     console.log('🛒 Cart API: User membership status check (PUT):', {
       sessionIsMember: session.user.isMember,
       databaseIsMember: userWithMembershipStatusPUT?.isMember,
       hasPendingMembership: !!pendingMembershipCheck,
-      effectiveMemberStatus: effectiveMembershipStatus
+      effectiveMemberStatus: effectiveMembershipStatus,
     });
 
     // Calculate cart totals and membership eligibility
     const cartSummary = await calculateCartSummary(
       convertedCartItems,
-      effectiveMembershipStatus  // Use effective status instead of session
+      effectiveMembershipStatus // Use effective status instead of session
     );
 
     return NextResponse.json({
@@ -791,7 +827,8 @@ async function calculateCartSummary(
       key: 'membership_threshold',
     },
   });
-  const membershipThreshold = Number(thresholdConfig?.value) || config.business.membership.threshold;
+  const membershipThreshold =
+    Number(thresholdConfig?.value) || config.business.membership.threshold;
 
   let totalItems = 0;
   let subtotal = 0;
@@ -853,12 +890,12 @@ async function calculateCartSummary(
   // Calculate promotional and member discounts based on actual price types being used
   let promotionalDiscount = 0;
   let memberDiscount = 0;
-  
+
   // Track what price types are actually being used for proper discount categorization
-  let totalRegularAmount = 0;
+  const totalRegularAmount = 0;
   let totalMemberAmount = 0;
   let totalPromotionalAmount = 0;
-  
+
   for (const cartItem of cartItems) {
     const { product, quantity } = cartItem;
     const priceInfo = getBestPrice(
@@ -875,18 +912,18 @@ async function calculateCartSummary(
       },
       isMember
     );
-    
+
     if (priceInfo.priceType === 'promotional') {
       totalPromotionalAmount += priceInfo.savings * quantity;
     } else if (priceInfo.priceType === 'member') {
       totalMemberAmount += priceInfo.savings * quantity;
     }
   }
-  
+
   // Assign discounts based on actual price types being used
   promotionalDiscount = totalPromotionalAmount;
   memberDiscount = totalMemberAmount;
-  
+
   const potentialSavings = memberDiscount;
   const membershipProgress = Math.min(
     (qualifyingTotal / membershipThreshold) * 100,
@@ -930,7 +967,7 @@ async function calculateCartSummary(
     calculatedPromotionalDiscount: promotionalDiscount,
     calculatedMemberDiscount: memberDiscount,
     total: result.total,
-    itemCount: totalItems
+    itemCount: totalItems,
   });
 
   return result;
@@ -940,4 +977,7 @@ async function calculateCartSummary(
 export const GET = withApiProtection(handleGET, protectionConfigs.standard);
 export const POST = withApiProtection(handlePOST, protectionConfigs.standard);
 export const PUT = withApiProtection(handlePUT, protectionConfigs.standard);
-export const DELETE = withApiProtection(handleDELETE, protectionConfigs.standard);
+export const DELETE = withApiProtection(
+  handleDELETE,
+  protectionConfigs.standard
+);

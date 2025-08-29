@@ -12,8 +12,11 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
       totalRevenue,
       todayPickupsCount,
       pendingLabelsCount,
-      deliveryTimes
+      deliveryTimes,
     ] = await Promise.all([
       // Total shipments
       prisma.shipment.count(),
@@ -47,45 +50,42 @@ export async function GET(request: NextRequest) {
       prisma.order.count({
         where: {
           status: 'PAID',
-          OR: [
-            { shipment: null },
-            { shipment: { status: 'DRAFT' } }
-          ]
-        }
+          OR: [{ shipment: null }, { shipment: { status: 'DRAFT' } }],
+        },
       }),
 
       // Awaiting pickup
       prisma.shipment.count({
         where: {
           status: {
-            in: ['BOOKED', 'LABEL_GENERATED', 'PICKUP_SCHEDULED']
-          }
-        }
+            in: ['BOOKED', 'LABEL_GENERATED', 'PICKUP_SCHEDULED'],
+          },
+        },
       }),
 
       // In transit
       prisma.shipment.count({
         where: {
           status: {
-            in: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY']
-          }
-        }
+            in: ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'],
+          },
+        },
       }),
 
       // Delivered
       prisma.shipment.count({
         where: {
-          status: 'DELIVERED'
-        }
+          status: 'DELIVERED',
+        },
       }),
 
       // Failed/Cancelled
       prisma.shipment.count({
         where: {
           status: {
-            in: ['FAILED', 'CANCELLED']
-          }
-        }
+            in: ['FAILED', 'CANCELLED'],
+          },
+        },
       }),
 
       // Total revenue from shipped orders (last 30 days)
@@ -93,12 +93,12 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'SHIPPED',
           shippedAt: {
-            gte: thirtyDaysAgo
-          }
+            gte: thirtyDaysAgo,
+          },
         },
         _sum: {
-          total: true
-        }
+          total: true,
+        },
       }),
 
       // Today's pickups
@@ -106,20 +106,20 @@ export async function GET(request: NextRequest) {
         where: {
           pickupDate: {
             gte: todayStart,
-            lte: todayEnd
+            lte: todayEnd,
           },
           status: {
-            in: ['PICKUP_SCHEDULED', 'PICKED_UP']
-          }
-        }
+            in: ['PICKUP_SCHEDULED', 'PICKED_UP'],
+          },
+        },
       }),
 
       // Pending labels (booked but no label generated)
       prisma.shipment.count({
         where: {
           status: 'BOOKED',
-          labelGenerated: false
-        }
+          labelGenerated: false,
+        },
       }),
 
       // Delivery times for average calculation
@@ -127,14 +127,14 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'DELIVERED',
           actualDelivery: { not: null },
-          createdAt: { gte: thirtyDaysAgo }
+          createdAt: { gte: thirtyDaysAgo },
         },
         select: {
           createdAt: true,
-          actualDelivery: true
+          actualDelivery: true,
         },
-        take: 100 // Limit for performance
-      })
+        take: 100, // Limit for performance
+      }),
     ]);
 
     // Calculate average delivery time
@@ -142,21 +142,23 @@ export async function GET(request: NextRequest) {
     if (deliveryTimes.length > 0) {
       const totalDays = deliveryTimes.reduce((sum, shipment) => {
         if (shipment.actualDelivery) {
-          const diffMs = shipment.actualDelivery.getTime() - shipment.createdAt.getTime();
+          const diffMs =
+            shipment.actualDelivery.getTime() - shipment.createdAt.getTime();
           const days = diffMs / (1000 * 60 * 60 * 24);
           return sum + days;
         }
         return sum;
       }, 0);
-      averageDeliveryTime = Math.round(totalDays / deliveryTimes.length * 10) / 10; // Round to 1 decimal
+      averageDeliveryTime =
+        Math.round((totalDays / deliveryTimes.length) * 10) / 10; // Round to 1 decimal
     }
 
     // Get status breakdown for additional insights
     const statusBreakdown = await prisma.shipment.groupBy({
       by: ['status'],
       _count: {
-        status: true
-      }
+        status: true,
+      },
     });
 
     const stats = {
@@ -172,13 +174,15 @@ export async function GET(request: NextRequest) {
       pendingLabels: pendingLabelsCount,
       statusBreakdown: statusBreakdown.map(item => ({
         status: item.status,
-        count: item._count.status
+        count: item._count.status,
       })),
       // Additional metrics
-      deliverySuccessRate: totalShipments > 0 ? 
-        Math.round((deliveredCount / totalShipments) * 100 * 10) / 10 : 0,
+      deliverySuccessRate:
+        totalShipments > 0
+          ? Math.round((deliveredCount / totalShipments) * 100 * 10) / 10
+          : 0,
       activeShipments: awaitingPickupCount + inTransitCount,
-      completedShipments: deliveredCount + failedCount
+      completedShipments: deliveredCount + failedCount,
     };
 
     return NextResponse.json({
@@ -187,10 +191,9 @@ export async function GET(request: NextRequest) {
       calculatedAt: new Date().toISOString(),
       period: {
         from: thirtyDaysAgo.toISOString(),
-        to: now.toISOString()
-      }
+        to: now.toISOString(),
+      },
     });
-
   } catch (error) {
     console.error('Error fetching shipping statistics:', error);
     return NextResponse.json(

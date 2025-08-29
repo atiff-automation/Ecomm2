@@ -5,7 +5,10 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import type { AddressStructure, MalaysianState } from '@/lib/shipping/easyparcel-service';
+import type {
+  AddressStructure,
+  MalaysianState,
+} from '@/lib/shipping/easyparcel-service';
 
 export interface BusinessProfile {
   // Business Information (PDF Section 2.1)
@@ -14,10 +17,10 @@ export interface BusinessProfile {
   contactPerson: string;
   contactPhone: string;
   contactEmail: string;
-  
+
   // Pickup Address (PDF Section 3.1 - Address Requirements)
   pickupAddress: AddressStructure;
-  
+
   // Business Preferences
   operatingHours: {
     monday: { open: string; close: string; available: boolean };
@@ -28,7 +31,7 @@ export interface BusinessProfile {
     saturday: { open: string; close: string; available: boolean };
     sunday: { open: string; close: string; available: boolean };
   };
-  
+
   // Courier Preferences (PDF Section 4.2 - Service Selection)
   courierPreferences: {
     preferredCouriers: string[]; // List of preferred courier IDs
@@ -37,20 +40,20 @@ export interface BusinessProfile {
     showCustomerChoice: boolean; // Allow customer to choose courier
     defaultServiceType: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT';
   };
-  
+
   // Shipping Policies
   shippingPolicies: {
     freeShippingThreshold: number; // RM amount for free shipping
     maxWeight: number; // Maximum weight per parcel (kg)
     maxDimensions: {
       length: number; // cm
-      width: number; // cm  
+      width: number; // cm
       height: number; // cm
     };
     restrictedItems: string[]; // List of restricted items
     processingDays: number; // Days before pickup/shipping
   };
-  
+
   // Insurance & COD Settings
   serviceSettings: {
     insuranceRequired: boolean;
@@ -88,7 +91,7 @@ export class BusinessShippingConfig {
   async getBusinessProfile(): Promise<BusinessProfile | null> {
     try {
       const config = await prisma.systemConfig.findUnique({
-        where: { key: 'business_shipping_profile' }
+        where: { key: 'business_shipping_profile' },
       });
 
       if (!config) {
@@ -114,13 +117,13 @@ export class BusinessShippingConfig {
         where: { key: 'business_shipping_profile' },
         update: {
           value: JSON.stringify(profile),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'business_shipping_profile',
           value: JSON.stringify(profile),
-          type: 'JSON'
-        }
+          type: 'JSON',
+        },
       });
 
       console.log('✅ Business profile updated successfully');
@@ -136,7 +139,7 @@ export class BusinessShippingConfig {
   async getCourierPreferences(): Promise<CourierPreference[]> {
     try {
       const config = await prisma.systemConfig.findUnique({
-        where: { key: 'courier_preferences' }
+        where: { key: 'courier_preferences' },
       });
 
       if (!config) {
@@ -153,19 +156,21 @@ export class BusinessShippingConfig {
   /**
    * Update courier preferences
    */
-  async updateCourierPreferences(preferences: CourierPreference[]): Promise<void> {
+  async updateCourierPreferences(
+    preferences: CourierPreference[]
+  ): Promise<void> {
     try {
       await prisma.systemConfig.upsert({
         where: { key: 'courier_preferences' },
         update: {
           value: JSON.stringify(preferences),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'courier_preferences',
           value: JSON.stringify(preferences),
-          type: 'JSON'
-        }
+          type: 'JSON',
+        },
       });
 
       console.log('✅ Courier preferences updated successfully');
@@ -181,67 +186,94 @@ export class BusinessShippingConfig {
   async filterRatesForBusiness(rates: any[]): Promise<any[]> {
     const profile = await this.getBusinessProfile();
     const courierPrefs = await this.getCourierPreferences();
-    
+
     console.log('🎯 Filtering rates with preferences:', {
       totalRates: rates.length,
       totalCourierPrefs: courierPrefs.length,
       enabledCourierPrefs: courierPrefs.filter(p => p.enabled).length,
-      courierPrefIds: courierPrefs.filter(p => p.enabled).map(p => p.courierId)
+      courierPrefIds: courierPrefs.filter(p => p.enabled).map(p => p.courierId),
     });
 
-    if (!profile || courierPrefs.length === 0) return rates;
+    if (!profile || courierPrefs.length === 0) {
+      return rates;
+    }
 
     // Get enabled courier preferences only
     const enabledCourierPrefs = courierPrefs.filter(pref => pref.enabled);
-    
+
     if (enabledCourierPrefs.length === 0) {
-      console.log('⚠️ No enabled courier preferences found, returning all rates');
+      console.log(
+        '⚠️ No enabled courier preferences found, returning all rates'
+      );
       return rates;
     }
 
     // Filter rates to only include couriers from enabled preferences
-    let filteredRates = rates.filter(rate => {
+    const filteredRates = rates.filter(rate => {
       const rateCourierId = rate.courier_id || rate.courierId;
-      const isEnabled = enabledCourierPrefs.some(pref => pref.courierId === rateCourierId);
-      
+      const isEnabled = enabledCourierPrefs.some(
+        pref => pref.courierId === rateCourierId
+      );
+
       if (!isEnabled) {
-        console.log(`🚫 Filtering out courier: ${rate.courier_name} (${rateCourierId})`);
+        console.log(
+          `🚫 Filtering out courier: ${rate.courier_name} (${rateCourierId})`
+        );
       } else {
-        console.log(`✅ Including courier: ${rate.courier_name} (${rateCourierId})`);
+        console.log(
+          `✅ Including courier: ${rate.courier_name} (${rateCourierId})`
+        );
       }
-      
+
       return isEnabled;
     });
 
     // Sort by preference priority (1 = highest priority)
     filteredRates.sort((a, b) => {
-      const aPref = enabledCourierPrefs.find(p => p.courierId === (a.courier_id || a.courierId));
-      const bPref = enabledCourierPrefs.find(p => p.courierId === (b.courier_id || b.courierId));
-      
+      const aPref = enabledCourierPrefs.find(
+        p => p.courierId === (a.courier_id || a.courierId)
+      );
+      const bPref = enabledCourierPrefs.find(
+        p => p.courierId === (b.courier_id || b.courierId)
+      );
+
       const aPriority = aPref?.priority || 999;
       const bPriority = bPref?.priority || 999;
-      
+
       if (aPriority !== bPriority) {
         return aPriority - bPriority; // Lower number = higher priority
       }
-      
+
       // If same priority, sort by price (cheapest first)
       return (a.price || 0) - (b.price || 0);
     });
 
     console.log('🏆 Final filtered and sorted rates:', {
       count: filteredRates.length,
-      topCouriers: filteredRates.slice(0, 3).map(r => `${r.courier_name} (Priority: ${
-        enabledCourierPrefs.find(p => p.courierId === (r.courier_id || r.courierId))?.priority || 'N/A'
-      })`)
+      topCouriers: filteredRates
+        .slice(0, 3)
+        .map(
+          r =>
+            `${r.courier_name} (Priority: ${
+              enabledCourierPrefs.find(
+                p => p.courierId === (r.courier_id || r.courierId)
+              )?.priority || 'N/A'
+            })`
+        ),
     });
 
     // If business wants to auto-select cheapest and not show customer choice
-    if (profile.courierPreferences.autoSelectCheapest && !profile.courierPreferences.showCustomerChoice) {
+    if (
+      profile.courierPreferences.autoSelectCheapest &&
+      !profile.courierPreferences.showCustomerChoice
+    ) {
       // Return only the highest priority option (or cheapest if same priority)
       const bestOption = filteredRates[0];
       if (bestOption) {
-        console.log('🎯 Auto-selecting single option:', bestOption.courier_name);
+        console.log(
+          '🎯 Auto-selecting single option:',
+          bestOption.courier_name
+        );
         return [bestOption];
       }
     }
@@ -254,7 +286,7 @@ export class BusinessShippingConfig {
    */
   async getPickupAddress(): Promise<AddressStructure> {
     const profile = await this.getBusinessProfile();
-    
+
     if (profile?.pickupAddress) {
       return profile.pickupAddress;
     }
@@ -263,12 +295,13 @@ export class BusinessShippingConfig {
     return {
       name: process.env.BUSINESS_NAME || 'EcomJRM Store',
       phone: process.env.BUSINESS_PHONE || '+60123456789',
-      address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
+      address_line_1:
+        process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
       address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || '',
       city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
       state: (process.env.BUSINESS_STATE as MalaysianState) || 'KUL',
       postcode: process.env.BUSINESS_POSTAL_CODE || '50000',
-      country: 'MY'
+      country: 'MY',
     };
   }
 
@@ -277,7 +310,7 @@ export class BusinessShippingConfig {
    */
   async isBusinessConfigured(): Promise<boolean> {
     const profile = await this.getBusinessProfile();
-    
+
     return !!(
       profile &&
       profile.businessName &&
@@ -296,15 +329,24 @@ export class BusinessShippingConfig {
    */
   private validateBusinessProfile(profile: BusinessProfile): void {
     if (!profile.businessName || profile.businessName.length > 100) {
-      throw new Error('Business name is required and must be max 100 characters');
+      throw new Error(
+        'Business name is required and must be max 100 characters'
+      );
     }
 
     if (!profile.contactPerson || profile.contactPerson.length > 100) {
-      throw new Error('Contact person is required and must be max 100 characters');
+      throw new Error(
+        'Contact person is required and must be max 100 characters'
+      );
     }
 
-    if (!profile.contactPhone || !this.validateMalaysianPhone(profile.contactPhone)) {
-      throw new Error('Valid Malaysian phone number is required (+60XXXXXXXXX)');
+    if (
+      !profile.contactPhone ||
+      !this.validateMalaysianPhone(profile.contactPhone)
+    ) {
+      throw new Error(
+        'Valid Malaysian phone number is required (+60XXXXXXXXX)'
+      );
     }
 
     if (!profile.contactEmail || !this.validateEmail(profile.contactEmail)) {
@@ -312,19 +354,32 @@ export class BusinessShippingConfig {
     }
 
     // Validate pickup address
-    if (!profile.pickupAddress.name || profile.pickupAddress.name.length > 100) {
-      throw new Error('Pickup address name is required and must be max 100 characters');
+    if (
+      !profile.pickupAddress.name ||
+      profile.pickupAddress.name.length > 100
+    ) {
+      throw new Error(
+        'Pickup address name is required and must be max 100 characters'
+      );
     }
 
-    if (!profile.pickupAddress.address_line_1 || profile.pickupAddress.address_line_1.length > 100) {
-      throw new Error('Pickup address line 1 is required and must be max 100 characters');
+    if (
+      !profile.pickupAddress.address_line_1 ||
+      profile.pickupAddress.address_line_1.length > 100
+    ) {
+      throw new Error(
+        'Pickup address line 1 is required and must be max 100 characters'
+      );
     }
 
     if (!profile.pickupAddress.city || profile.pickupAddress.city.length > 50) {
       throw new Error('Pickup city is required and must be max 50 characters');
     }
 
-    if (!profile.pickupAddress.postcode || !this.validateMalaysianPostcode(profile.pickupAddress.postcode)) {
+    if (
+      !profile.pickupAddress.postcode ||
+      !this.validateMalaysianPostcode(profile.pickupAddress.postcode)
+    ) {
       throw new Error('Valid 5-digit Malaysian postcode is required');
     }
   }
@@ -338,18 +393,20 @@ export class BusinessShippingConfig {
       contactPerson: 'Store Manager',
       contactPhone: '+60123456789',
       contactEmail: 'store@ecomjrm.com',
-      
+
       pickupAddress: {
         name: process.env.BUSINESS_NAME || 'EcomJRM Store',
         phone: process.env.BUSINESS_PHONE || '+60123456789',
-        address_line_1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
-        address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || 'Level 5, Tech Plaza',
+        address_line_1:
+          process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
+        address_line_2:
+          process.env.BUSINESS_ADDRESS_LINE2 || 'Level 5, Tech Plaza',
         city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
         state: (process.env.BUSINESS_STATE as MalaysianState) || 'KUL',
         postcode: process.env.BUSINESS_POSTAL_CODE || '50000',
-        country: 'MY'
+        country: 'MY',
       },
-      
+
       operatingHours: {
         monday: { open: '09:00', close: '18:00', available: true },
         tuesday: { open: '09:00', close: '18:00', available: true },
@@ -357,36 +414,38 @@ export class BusinessShippingConfig {
         thursday: { open: '09:00', close: '18:00', available: true },
         friday: { open: '09:00', close: '18:00', available: true },
         saturday: { open: '09:00', close: '13:00', available: true },
-        sunday: { open: '09:00', close: '13:00', available: false }
+        sunday: { open: '09:00', close: '13:00', available: false },
       },
-      
+
       courierPreferences: {
         preferredCouriers: ['citylink', 'poslaju', 'gdex'], // Admin's preferred couriers in priority order
         blockedCouriers: [], // Block specific couriers if needed
         autoSelectCheapest: true, // Admin controls courier selection automatically
         showCustomerChoice: false, // Hide courier choice from customers
-        defaultServiceType: 'STANDARD'
+        defaultServiceType: 'STANDARD',
       },
-      
+
       shippingPolicies: {
-        freeShippingThreshold: parseFloat(process.env.FREE_SHIPPING_THRESHOLD || '150'), // RM150 free shipping
+        freeShippingThreshold: parseFloat(
+          process.env.FREE_SHIPPING_THRESHOLD || '150'
+        ), // RM150 free shipping
         maxWeight: 30, // 30kg max per parcel
         maxDimensions: {
           length: 100, // 100cm
-          width: 100,  // 100cm
-          height: 100  // 100cm
+          width: 100, // 100cm
+          height: 100, // 100cm
         },
         restrictedItems: ['hazardous', 'liquids', 'fragile_items'],
-        processingDays: 1 // 1 day processing time
+        processingDays: 1, // 1 day processing time
       },
-      
+
       serviceSettings: {
         insuranceRequired: false, // Optional insurance
         maxInsuranceValue: 5000, // RM5000 max insurance
         codEnabled: true, // Allow COD
         maxCodAmount: 1000, // RM1000 max COD
-        signatureRequired: false // Optional signature
-      }
+        signatureRequired: false, // Optional signature
+      },
     };
   }
 
@@ -402,7 +461,7 @@ export class BusinessShippingConfig {
         enabled: true,
         serviceTypes: ['STANDARD', 'EXPRESS'],
         maxWeight: 30,
-        notes: 'Reliable for West Malaysia'
+        notes: 'Reliable for West Malaysia',
       },
       {
         courierId: 'poslaju',
@@ -411,7 +470,7 @@ export class BusinessShippingConfig {
         enabled: true,
         serviceTypes: ['STANDARD', 'EXPRESS', 'OVERNIGHT'],
         maxWeight: 20,
-        notes: 'Good nationwide coverage'
+        notes: 'Good nationwide coverage',
       },
       {
         courierId: 'gdex',
@@ -420,8 +479,8 @@ export class BusinessShippingConfig {
         enabled: true,
         serviceTypes: ['STANDARD'],
         maxWeight: 25,
-        notes: 'Cost-effective option'
-      }
+        notes: 'Cost-effective option',
+      },
     ];
   }
 

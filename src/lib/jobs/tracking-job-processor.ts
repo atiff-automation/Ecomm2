@@ -26,7 +26,7 @@ import {
   getRetryDelay,
   isDebugMode,
 } from '../config/tracking-refactor';
-import { trackShipment } from '../shipping/easyparcel-service';
+import { easyParcelService } from '../shipping/easyparcel-service';
 
 class TrackingJobProcessor {
   private isProcessing: boolean = false;
@@ -43,7 +43,7 @@ class TrackingJobProcessor {
 
     this.isProcessing = true;
     this.startTime = new Date();
-    
+
     try {
       const result = await this.processBatch();
       return result;
@@ -58,7 +58,8 @@ class TrackingJobProcessor {
   private async processBatch(): Promise<JobBatchResult> {
     const batchStartTime = Date.now();
     const batchSize = TRACKING_REFACTOR_CONFIG.JOB_PROCESSING.BATCH_SIZE;
-    const maxConcurrent = TRACKING_REFACTOR_CONFIG.JOB_PROCESSING.MAX_CONCURRENT;
+    const maxConcurrent =
+      TRACKING_REFACTOR_CONFIG.JOB_PROCESSING.MAX_CONCURRENT;
 
     let totalJobs = 0;
     let successfulJobs = 0;
@@ -90,8 +91,8 @@ class TrackingJobProcessor {
       // Process jobs in batches to respect concurrency limits
       for (let i = 0; i < pendingJobs.length; i += maxConcurrent) {
         const batch = pendingJobs.slice(i, i + maxConcurrent);
-        
-        const batchPromises = batch.map(async (job) => {
+
+        const batchPromises = batch.map(async job => {
           try {
             const context: JobProcessingContext = {
               jobId: job.id,
@@ -113,7 +114,10 @@ class TrackingJobProcessor {
               await updateJobStatus(job.id, 'COMPLETED');
               successfulJobs++;
             } else {
-              if (result.shouldRetry && context.attemptNumber < context.maxAttempts) {
+              if (
+                result.shouldRetry &&
+                context.attemptNumber < context.maxAttempts
+              ) {
                 // Schedule retry
                 await this.scheduleRetry(job.id, result.nextRetryAt);
                 skippedJobs++;
@@ -138,7 +142,6 @@ class TrackingJobProcessor {
               startedAt: context.startedAt,
               completedAt: new Date(),
             });
-
           } catch (error) {
             console.error(`❌ Job processing error for job ${job.id}:`, error);
             await updateJobStatus(job.id, 'FAILED', error.message);
@@ -155,7 +158,9 @@ class TrackingJobProcessor {
       }
 
       const processingTimeMs = Date.now() - batchStartTime;
-      console.log(`✅ Batch processing complete: ${successfulJobs}/${totalJobs} successful (${processingTimeMs}ms)`);
+      console.log(
+        `✅ Batch processing complete: ${successfulJobs}/${totalJobs} successful (${processingTimeMs}ms)`
+      );
 
       return {
         totalJobs,
@@ -165,7 +170,6 @@ class TrackingJobProcessor {
         processingTimeMs,
         errors,
       };
-
     } catch (error) {
       console.error('❌ Batch processing failed:', error);
       throw new JobProcessingError(`Batch processing failed: ${error.message}`);
@@ -183,37 +187,41 @@ class TrackingJobProcessor {
 
     try {
       if (isDebugMode()) {
-        console.log(`🔄 Processing job ${context.jobId} (${context.jobType}) for order ${trackingCache.order.orderNumber}`);
+        console.log(
+          `🔄 Processing job ${context.jobId} (${context.jobType}) for order ${trackingCache.order.orderNumber}`
+        );
       }
 
       switch (context.jobType) {
         case 'UPDATE':
         case 'RETRY':
           return await this.processUpdateJob(context, trackingCache);
-        
+
         case 'MANUAL':
           return await this.processManualJob(context, trackingCache);
-        
+
         case 'CLEANUP':
           return await this.processCleanupJob(context, trackingCache);
-        
+
         default:
           throw new JobProcessingError(`Unknown job type: ${context.jobType}`);
       }
-
     } catch (error) {
       console.error(`❌ Job ${context.jobId} failed:`, error);
-      
+
       return {
         success: false,
         statusChanged: false,
         eventsAdded: 0,
         apiResponseTimeMs: Date.now() - startTime,
         errorMessage: error.message,
-        shouldRetry: error instanceof ApiIntegrationError && context.attemptNumber < context.maxAttempts,
-        nextRetryAt: error instanceof ApiIntegrationError 
-          ? new Date(Date.now() + getRetryDelay(context.attemptNumber))
-          : undefined,
+        shouldRetry:
+          error instanceof ApiIntegrationError &&
+          context.attemptNumber < context.maxAttempts,
+        nextRetryAt:
+          error instanceof ApiIntegrationError
+            ? new Date(Date.now() + getRetryDelay(context.attemptNumber))
+            : undefined,
       };
     }
   }
@@ -229,25 +237,32 @@ class TrackingJobProcessor {
 
     try {
       // Call EasyParcel API
-      const trackingResult = await trackShipment(trackingCache.courierTrackingNumber);
+      const trackingResult = await easyParcelService.trackShipment(
+        trackingCache.courierTrackingNumber
+      );
       const apiResponse: EasyParcelTrackingResponse = {
         success: trackingResult?.success || false,
-        data: trackingResult?.success ? {
-          trackingNumber: trackingCache.courierTrackingNumber,
-          status: trackingResult.status || 'UNKNOWN',
-          statusDescription: trackingResult.statusDescription,
-          estimatedDelivery: trackingResult.estimatedDelivery,
-          actualDelivery: trackingResult.actualDelivery,
-          events: trackingResult.events || [],
-          courierDetails: {
-            service: trackingCache.courierService,
-            name: trackingResult.courierName || trackingCache.courierService,
-          },
-        } : undefined,
-        error: !trackingResult?.success ? {
-          code: 'API_ERROR',
-          message: trackingResult?.error || 'API call failed'
-        } : undefined
+        data: trackingResult?.success
+          ? {
+              trackingNumber: trackingCache.courierTrackingNumber,
+              status: trackingResult.status || 'UNKNOWN',
+              statusDescription: trackingResult.statusDescription,
+              estimatedDelivery: trackingResult.estimatedDelivery,
+              actualDelivery: trackingResult.actualDelivery,
+              events: trackingResult.events || [],
+              courierDetails: {
+                service: trackingCache.courierService,
+                name:
+                  trackingResult.courierName || trackingCache.courierService,
+              },
+            }
+          : undefined,
+        error: !trackingResult?.success
+          ? {
+              code: 'API_ERROR',
+              message: trackingResult?.error || 'API call failed',
+            }
+          : undefined,
       };
 
       const apiResponseTime = Date.now() - apiStartTime;
@@ -255,7 +270,7 @@ class TrackingJobProcessor {
       if (!apiResponse.success || !apiResponse.data) {
         // API call failed
         const shouldRetry = context.attemptNumber < context.maxAttempts;
-        const nextRetryAt = shouldRetry 
+        const nextRetryAt = shouldRetry
           ? new Date(Date.now() + getRetryDelay(context.attemptNumber))
           : undefined;
 
@@ -295,12 +310,14 @@ class TrackingJobProcessor {
       }));
 
       // Check for new events
-      const existingEvents = Array.isArray(trackingCache.trackingEvents) 
-        ? trackingCache.trackingEvents 
+      const existingEvents = Array.isArray(trackingCache.trackingEvents)
+        ? trackingCache.trackingEvents
         : [];
-      const existingEventIds = new Set(existingEvents.map((e: any) => `${e.timestamp}-${e.eventName}`));
-      const eventsToAdd = newEvents.filter(event => 
-        !existingEventIds.has(`${event.timestamp}-${event.eventName}`)
+      const existingEventIds = new Set(
+        existingEvents.map((e: any) => `${e.timestamp}-${e.eventName}`)
+      );
+      const eventsToAdd = newEvents.filter(
+        event => !existingEventIds.has(`${event.timestamp}-${event.eventName}`)
       );
 
       // Merge events
@@ -311,7 +328,9 @@ class TrackingJobProcessor {
         newStatus,
         new Date(),
         0, // Reset failure count on success
-        apiResponse.data.estimatedDelivery ? new Date(apiResponse.data.estimatedDelivery) : trackingCache.estimatedDelivery
+        apiResponse.data.estimatedDelivery
+          ? new Date(apiResponse.data.estimatedDelivery)
+          : trackingCache.estimatedDelivery
       );
 
       // Update tracking cache
@@ -319,11 +338,11 @@ class TrackingJobProcessor {
         currentStatus: newStatus,
         lastStatusUpdate: new Date(),
         trackingEvents: allEvents,
-        estimatedDelivery: apiResponse.data.estimatedDelivery 
-          ? new Date(apiResponse.data.estimatedDelivery) 
+        estimatedDelivery: apiResponse.data.estimatedDelivery
+          ? new Date(apiResponse.data.estimatedDelivery)
           : trackingCache.estimatedDelivery,
-        actualDelivery: apiResponse.data.actualDelivery 
-          ? new Date(apiResponse.data.actualDelivery) 
+        actualDelivery: apiResponse.data.actualDelivery
+          ? new Date(apiResponse.data.actualDelivery)
           : trackingCache.actualDelivery,
         lastApiUpdate: new Date(),
         nextUpdateDue,
@@ -333,7 +352,9 @@ class TrackingJobProcessor {
       });
 
       if (isDebugMode()) {
-        console.log(`✅ Job ${context.jobId} completed: ${statusChanged ? 'status changed' : 'no changes'}, ${eventsToAdd.length} new events`);
+        console.log(
+          `✅ Job ${context.jobId} completed: ${statusChanged ? 'status changed' : 'no changes'}, ${eventsToAdd.length} new events`
+        );
       }
 
       return {
@@ -345,10 +366,12 @@ class TrackingJobProcessor {
         apiResponseTimeMs: apiResponseTime,
         shouldRetry: false,
       };
-
     } catch (error) {
-      console.error(`❌ Update job failed for cache ${context.trackingCacheId}:`, error);
-      
+      console.error(
+        `❌ Update job failed for cache ${context.trackingCacheId}:`,
+        error
+      );
+
       // Increment failure count
       await updateTrackingCache(context.trackingCacheId, {
         consecutiveFailures: trackingCache.consecutiveFailures + 1,
@@ -413,12 +436,12 @@ class TrackingJobProcessor {
       events: apiData.events?.map((e: any) => `${e.timestamp}-${e.eventName}`),
       estimatedDelivery: apiData.estimatedDelivery,
     });
-    
+
     // Simple hash function
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(36);
@@ -438,7 +461,6 @@ class TrackingJobProcessor {
 }
 
 // ==================== UTILITY FUNCTIONS ====================
-
 
 // ==================== EXPORTS ====================
 

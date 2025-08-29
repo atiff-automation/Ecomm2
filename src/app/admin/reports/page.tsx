@@ -265,10 +265,7 @@ export default function AdminReports() {
           <SelectItem value="365">Last year</SelectItem>
         </SelectContent>
       </Select>
-      <Button
-        onClick={() => handleExportReport('overview')}
-        variant="outline"
-      >
+      <Button onClick={() => handleExportReport('overview')} variant="outline">
         <Download className="h-4 w-4 mr-2" />
         Export All
       </Button>
@@ -283,935 +280,927 @@ export default function AdminReports() {
       tabs={tabs}
       loading={loading}
     >
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="sales">Sales Analytics</TabsTrigger>
+          <TabsTrigger value="membership">Membership</TabsTrigger>
+          <TabsTrigger value="products">Product Performance</TabsTrigger>
+          <TabsTrigger value="operations">Operations</TabsTrigger>
+        </TabsList>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="sales">Sales Analytics</TabsTrigger>
-            <TabsTrigger value="membership">Membership</TabsTrigger>
-            <TabsTrigger value="products">Product Performance</TabsTrigger>
-            <TabsTrigger value="operations">Operations</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Key Metrics Overview */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Key Performance Metrics
-              </h2>
-              <Button
-                onClick={() => handleExportReport('overview')}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Overview
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-l-4 border-l-blue-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Revenue
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(reportData.salesReport.totalRevenue)}
-                  </div>
-                  <div className="flex items-center text-xs">
-                    {reportData.salesReport.revenueGrowth >= 0 ? (
-                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                    )}
-                    <span
-                      className={
-                        reportData.salesReport.revenueGrowth >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }
-                    >
-                      {formatPercentage(reportData.salesReport.revenueGrowth)}
-                    </span>
-                    <span className="text-muted-foreground ml-1">
-                      vs previous period
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Orders
-                  </CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData.salesReport.totalOrders}
-                  </div>
-                  <div className="flex items-center text-xs">
-                    {reportData.salesReport.ordersGrowth >= 0 ? (
-                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                    )}
-                    <span
-                      className={
-                        reportData.salesReport.ordersGrowth >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }
-                    >
-                      {formatPercentage(reportData.salesReport.ordersGrowth)}
-                    </span>
-                    <span className="text-muted-foreground ml-1">
-                      vs previous period
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Avg. Order Value
-                  </CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(reportData.salesReport.averageOrderValue)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Revenue per order
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Active Customers
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData.customerReport.activeCustomers}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Customers with orders this period
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Revenue Trend Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Revenue Trend
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.revenueTrend ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={analyticsData.revenueTrend}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={value =>
-                            new Date(value).toLocaleDateString('en-MY', {
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          }
-                        />
-                        <YAxis
-                          tickFormatter={value => formatCurrencyCompact(value)}
-                          width={60}
-                        />
-                        <Tooltip
-                          labelFormatter={value =>
-                            new Date(value).toLocaleDateString('en-MY')
-                          }
-                          formatter={(value: number, name: string) => [
-                            name === 'revenue' ? formatCurrency(value) : value,
-                            name === 'revenue' ? 'Revenue' : 'Orders',
-                          ]}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#3B82F6"
-                          fill="#3B82F6"
-                          fillOpacity={0.1}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Key Metrics Overview */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Key Performance Metrics
+            </h2>
+            <Button
+              onClick={() => handleExportReport('overview')}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Overview
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-blue-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(reportData.salesReport.totalRevenue)}
+                </div>
+                <div className="flex items-center text-xs">
+                  {reportData.salesReport.revenueGrowth >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
                   ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No data available
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  )}
+                  <span
+                    className={
+                      reportData.salesReport.revenueGrowth >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }
+                  >
+                    {formatPercentage(reportData.salesReport.revenueGrowth)}
+                  </span>
+                  <span className="text-muted-foreground ml-1">
+                    vs previous period
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Orders
+                </CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData.salesReport.totalOrders}
+                </div>
+                <div className="flex items-center text-xs">
+                  {reportData.salesReport.ordersGrowth >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  )}
+                  <span
+                    className={
+                      reportData.salesReport.ordersGrowth >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }
+                  >
+                    {formatPercentage(reportData.salesReport.ordersGrowth)}
+                  </span>
+                  <span className="text-muted-foreground ml-1">
+                    vs previous period
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Avg. Order Value
+                </CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(reportData.salesReport.averageOrderValue)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Revenue per order
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Customers
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData.customerReport.activeCustomers}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Customers with orders this period
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue Trend Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Revenue Trend
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.revenueTrend ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={analyticsData.revenueTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={value =>
+                          new Date(value).toLocaleDateString('en-MY', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        }
+                      />
+                      <YAxis
+                        tickFormatter={value => formatCurrencyCompact(value)}
+                        width={60}
+                      />
+                      <Tooltip
+                        labelFormatter={value =>
+                          new Date(value).toLocaleDateString('en-MY')
+                        }
+                        formatter={(value: number, name: string) => [
+                          name === 'revenue' ? formatCurrency(value) : value,
+                          name === 'revenue' ? 'Revenue' : 'Orders',
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#3B82F6"
+                        fill="#3B82F6"
+                        fillOpacity={0.1}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Order Status Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Order Status Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.orderStatusData ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RechartsPieChart>
+                      <Tooltip formatter={(value, name) => [value, name]} />
+                      <Pie
+                        data={analyticsData.orderStatusData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="count"
+                        label={({ status, percentage }) =>
+                          `${status} (${percentage}%)`
+                        }
+                      >
+                        {analyticsData.orderStatusData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Sales Analytics
+            </h2>
+            <Button
+              onClick={() => handleExportReport('sales')}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Sales
+            </Button>
+          </div>
+
+          {/* Sales Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-green-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(reportData?.salesReport.totalRevenue || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {formatPercentage(
+                      reportData?.salesReport.revenueGrowth || 0
+                    )}
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-blue-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Orders
+                </CardTitle>
+                <ShoppingCart className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData?.salesReport.totalOrders || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-blue-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {formatPercentage(
+                      reportData?.salesReport.ordersGrowth || 0
+                    )}
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Avg Order Value
+                </CardTitle>
+                <BarChart3 className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(
+                    reportData?.salesReport.averageOrderValue || 0
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Revenue per order
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Customers
+                </CardTitle>
+                <Users className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData?.customerReport.activeCustomers || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">This period</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Detailed Sales Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Daily Sales Trend */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Daily Sales Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reportData?.salesReport.dailySales ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={reportData.salesReport.dailySales}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={value =>
+                          new Date(value).toLocaleDateString('en-MY', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        }
+                      />
+                      <YAxis
+                        yAxisId="revenue"
+                        orientation="left"
+                        tickFormatter={value => formatCurrencyCompact(value)}
+                        width={60}
+                      />
+                      <YAxis yAxisId="orders" orientation="right" />
+                      <Tooltip
+                        labelFormatter={value =>
+                          new Date(value).toLocaleDateString('en-MY')
+                        }
+                        formatter={(value: number, name: string) => [
+                          name === 'revenue' ? formatCurrency(value) : value,
+                          name === 'revenue' ? 'Revenue' : 'Orders',
+                        ]}
+                      />
+                      <Line
+                        yAxisId="revenue"
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#3B82F6"
+                        strokeWidth={3}
+                      />
+                      <Line
+                        yAxisId="orders"
+                        type="monotone"
+                        dataKey="orders"
+                        stroke="#10B981"
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No sales data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="membership" className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Crown className="h-5 w-5" />
+              Membership Analytics
+            </h2>
+            <Button
+              onClick={() => handleExportReport('membership')}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Membership
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-yellow-600">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Members
+                </CardTitle>
+                <Crown className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {reportData.membershipReport.totalMembers}
+                </div>
+                <div className="flex items-center text-xs">
+                  {reportData.membershipReport.memberGrowth >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  )}
+                  <span
+                    className={
+                      reportData.membershipReport.memberGrowth >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }
+                  >
+                    {formatPercentage(reportData.membershipReport.memberGrowth)}
+                  </span>
+                  <span className="text-muted-foreground ml-1">growth</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  New Members
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData.membershipReport.newMembersThisMonth}
+                </div>
+                <p className="text-xs text-muted-foreground">This period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Conversion Rate
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData.membershipReport.memberConversionRate.toFixed(1)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Eligible customers becoming members
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Member Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(reportData.membershipReport.memberRevenue)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  vs{' '}
+                  {formatCurrency(reportData.membershipReport.nonMemberRevenue)}{' '}
+                  non-member
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Membership Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Member vs Non-Member Sales */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Member vs Non-Member Sales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.membershipComparison ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.membershipComparison}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="customerType" />
+                      <YAxis
+                        tickFormatter={value => formatCurrencyCompact(value)}
+                        width={60}
+                      />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          name === 'revenue' || name === 'avgOrderValue'
+                            ? formatCurrency(Number(value))
+                            : value,
+                          name === 'revenue'
+                            ? 'Revenue'
+                            : name === 'avgOrderValue'
+                              ? 'Avg Order Value'
+                              : 'Orders',
+                        ]}
+                      />
+                      <Bar dataKey="revenue" fill="#8B5CF6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No membership comparison data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Category Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Category Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.categoryPerformance ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={analyticsData.categoryPerformance.slice(0, 6)}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" />
+                      <YAxis
+                        tickFormatter={value => formatCurrencyCompact(value)}
+                        width={60}
+                      />
+                      <Tooltip
+                        formatter={value => formatCurrency(Number(value))}
+                      />
+                      <Bar dataKey="revenue" fill="#10B981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No category data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Product Performance
+            </h2>
+            <Button
+              onClick={() => handleExportReport('inventory')}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Products
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Inventory Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Products</span>
+                  <span className="font-medium">
+                    {reportData.productReport.totalProducts}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-yellow-600">Low Stock</span>
+                  <Badge variant="outline" className="text-yellow-600">
+                    {reportData.productReport.lowStockProducts}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-red-600">Out of Stock</span>
+                  <Badge variant="outline" className="text-red-600">
+                    {reportData.productReport.outOfStockProducts}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Top Selling Products
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {reportData.productReport.topSellingProducts.map(
+                    (product, index) => (
+                      <div
+                        key={product.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">{product.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {formatCurrency(product.revenue)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {product.sold} sold
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Product Performance Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            {/* Top Products Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Selling Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reportData?.productReport.topSellingProducts ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={reportData.productReport.topSellingProducts.slice(
+                        0,
+                        5
+                      )}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        tickFormatter={value =>
+                          value.length > 12
+                            ? value.substring(0, 12) + '...'
+                            : value
+                        }
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          value,
+                          name === 'sold' ? 'Units Sold' : 'Revenue',
+                        ]}
+                      />
+                      <Bar dataKey="sold" fill="#3B82F6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No product data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Inventory Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">
+                        {reportData?.productReport.totalProducts || 0}
+                      </div>
+                      <div className="text-sm text-green-700">
+                        Total Products
+                      </div>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {reportData?.productReport.lowStockProducts || 0}
+                      </div>
+                      <div className="text-sm text-yellow-700">Low Stock</div>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">
+                        {reportData?.productReport.outOfStockProducts || 0}
+                      </div>
+                      <div className="text-sm text-red-700">Out of Stock</div>
+                    </div>
+                  </div>
+
+                  {reportData?.productReport.topSellingProducts && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">
+                        Revenue Leaders
+                      </h4>
+                      {reportData.productReport.topSellingProducts
+                        .slice(0, 3)
+                        .map((product, index) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                                {index + 1}
+                              </div>
+                              <span className="font-medium text-sm">
+                                {product.name}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium text-sm">
+                                {formatCurrency(product.revenue)}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {product.sold} sold
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-              {/* Order Status Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="h-5 w-5" />
-                    Order Status Distribution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.orderStatusData ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <RechartsPieChart>
-                        <Tooltip formatter={(value, name) => [value, name]} />
-                        <Pie
-                          data={analyticsData.orderStatusData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="count"
-                          label={({ status, percentage }) =>
-                            `${status} (${percentage}%)`
-                          }
-                        >
-                          {analyticsData.orderStatusData.map((entry, index) => (
+        <TabsContent value="operations" className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Operational Analytics
+            </h2>
+            <Button
+              onClick={() => handleExportReport('operations')}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Operations
+            </Button>
+          </div>
+
+          {/* Operations Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Hourly Order Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Peak Hours Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.hourlyOrderData ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.hourlyOrderData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="hour"
+                        tickFormatter={value => `${value}:00`}
+                      />
+                      <YAxis />
+                      <Tooltip
+                        labelFormatter={value =>
+                          `${value}:00 - ${value + 1}:00`
+                        }
+                      />
+                      <Bar dataKey="orders" fill="#3B82F6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No hourly data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Payment Methods */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Payment Methods
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : analyticsData?.paymentMethodDistribution ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RechartsPieChart>
+                      <Tooltip formatter={(value, name) => [value, name]} />
+                      <Pie
+                        data={analyticsData.paymentMethodDistribution}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="count"
+                        label={({ method, percentage }) =>
+                          `${method} (${percentage}%)`
+                        }
+                      >
+                        {analyticsData.paymentMethodDistribution.map(
+                          (entry, index) => (
                             <Cell
                               key={`cell-${index}`}
                               fill={COLORS[index % COLORS.length]}
                             />
-                          ))}
-                        </Pie>
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="sales" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Sales Analytics
-              </h2>
-              <Button
-                onClick={() => handleExportReport('sales')}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Sales
-              </Button>
-            </div>
-
-            {/* Sales Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-l-4 border-l-green-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Revenue
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(reportData?.salesReport.totalRevenue || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    <span className="text-green-600 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {formatPercentage(
-                        reportData?.salesReport.revenueGrowth || 0
-                      )}
-                    </span>
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-blue-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Orders
-                  </CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData?.salesReport.totalOrders || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    <span className="text-blue-600 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {formatPercentage(
-                        reportData?.salesReport.ordersGrowth || 0
-                      )}
-                    </span>
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-purple-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Avg Order Value
-                  </CardTitle>
-                  <BarChart3 className="h-4 w-4 text-purple-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(
-                      reportData?.salesReport.averageOrderValue || 0
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Revenue per order
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-orange-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Active Customers
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData?.customerReport.activeCustomers || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">This period</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Detailed Sales Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Daily Sales Trend */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Daily Sales Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {reportData?.salesReport.dailySales ? (
-                    <ResponsiveContainer width="100%" height={400}>
-                      <LineChart data={reportData.salesReport.dailySales}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={value =>
-                            new Date(value).toLocaleDateString('en-MY', {
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          }
-                        />
-                        <YAxis
-                          yAxisId="revenue"
-                          orientation="left"
-                          tickFormatter={value => formatCurrencyCompact(value)}
-                          width={60}
-                        />
-                        <YAxis yAxisId="orders" orientation="right" />
-                        <Tooltip
-                          labelFormatter={value =>
-                            new Date(value).toLocaleDateString('en-MY')
-                          }
-                          formatter={(value: number, name: string) => [
-                            name === 'revenue' ? formatCurrency(value) : value,
-                            name === 'revenue' ? 'Revenue' : 'Orders',
-                          ]}
-                        />
-                        <Line
-                          yAxisId="revenue"
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#3B82F6"
-                          strokeWidth={3}
-                        />
-                        <Line
-                          yAxisId="orders"
-                          type="monotone"
-                          dataKey="orders"
-                          stroke="#10B981"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No sales data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="membership" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Crown className="h-5 w-5" />
-                Membership Analytics
-              </h2>
-              <Button
-                onClick={() => handleExportReport('membership')}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Membership
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-l-4 border-l-yellow-600">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Members
-                  </CardTitle>
-                  <Crown className="h-4 w-4 text-yellow-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {reportData.membershipReport.totalMembers}
-                  </div>
-                  <div className="flex items-center text-xs">
-                    {reportData.membershipReport.memberGrowth >= 0 ? (
-                      <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                    )}
-                    <span
-                      className={
-                        reportData.membershipReport.memberGrowth >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }
-                    >
-                      {formatPercentage(
-                        reportData.membershipReport.memberGrowth
-                      )}
-                    </span>
-                    <span className="text-muted-foreground ml-1">growth</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    New Members
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData.membershipReport.newMembersThisMonth}
-                  </div>
-                  <p className="text-xs text-muted-foreground">This period</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Conversion Rate
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportData.membershipReport.memberConversionRate.toFixed(
-                      1
-                    )}
-                    %
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Eligible customers becoming members
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Member Revenue
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(reportData.membershipReport.memberRevenue)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    vs{' '}
-                    {formatCurrency(
-                      reportData.membershipReport.nonMemberRevenue
-                    )}{' '}
-                    non-member
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Membership Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Member vs Non-Member Sales */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Member vs Non-Member Sales
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.membershipComparison ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={analyticsData.membershipComparison}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="customerType" />
-                        <YAxis
-                          tickFormatter={value => formatCurrencyCompact(value)}
-                          width={60}
-                        />
-                        <Tooltip
-                          formatter={(value, name) => [
-                            name === 'revenue' || name === 'avgOrderValue'
-                              ? formatCurrency(Number(value))
-                              : value,
-                            name === 'revenue'
-                              ? 'Revenue'
-                              : name === 'avgOrderValue'
-                                ? 'Avg Order Value'
-                                : 'Orders',
-                          ]}
-                        />
-                        <Bar dataKey="revenue" fill="#8B5CF6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No membership comparison data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Category Performance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Category Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.categoryPerformance ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={analyticsData.categoryPerformance.slice(0, 6)}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis
-                          tickFormatter={value => formatCurrencyCompact(value)}
-                          width={60}
-                        />
-                        <Tooltip
-                          formatter={value => formatCurrency(Number(value))}
-                        />
-                        <Bar dataKey="revenue" fill="#10B981" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No category data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="products" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Product Performance
-              </h2>
-              <Button
-                onClick={() => handleExportReport('inventory')}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Products
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Inventory Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Total Products</span>
-                    <span className="font-medium">
-                      {reportData.productReport.totalProducts}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-yellow-600">Low Stock</span>
-                    <Badge variant="outline" className="text-yellow-600">
-                      {reportData.productReport.lowStockProducts}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-red-600">Out of Stock</span>
-                    <Badge variant="outline" className="text-red-600">
-                      {reportData.productReport.outOfStockProducts}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Top Selling Products
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {reportData.productReport.topSellingProducts.map(
-                      (product, index) => (
-                        <div
-                          key={product.id}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
-                              {index + 1}
-                            </div>
-                            <span className="font-medium">{product.name}</span>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium">
-                              {formatCurrency(product.revenue)}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {product.sold} sold
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Product Performance Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Top Products Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Selling Products</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {reportData?.productReport.topSellingProducts ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={reportData.productReport.topSellingProducts.slice(
-                          0,
-                          5
+                          )
                         )}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="name"
-                          tickFormatter={value =>
-                            value.length > 12
-                              ? value.substring(0, 12) + '...'
-                              : value
-                          }
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value, name) => [
-                            value,
-                            name === 'sold' ? 'Units Sold' : 'Revenue',
-                          ]}
-                        />
-                        <Bar dataKey="sold" fill="#3B82F6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No product data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Inventory Status */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inventory Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">
-                          {reportData?.productReport.totalProducts || 0}
-                        </div>
-                        <div className="text-sm text-green-700">
-                          Total Products
-                        </div>
-                      </div>
-                      <div className="bg-yellow-50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-yellow-600">
-                          {reportData?.productReport.lowStockProducts || 0}
-                        </div>
-                        <div className="text-sm text-yellow-700">Low Stock</div>
-                      </div>
-                      <div className="bg-red-50 p-4 rounded-lg">
-                        <div className="text-2xl font-bold text-red-600">
-                          {reportData?.productReport.outOfStockProducts || 0}
-                        </div>
-                        <div className="text-sm text-red-700">Out of Stock</div>
-                      </div>
-                    </div>
-
-                    {reportData?.productReport.topSellingProducts && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-gray-900">
-                          Revenue Leaders
-                        </h4>
-                        {reportData.productReport.topSellingProducts
-                          .slice(0, 3)
-                          .map((product, index) => (
-                            <div
-                              key={product.id}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
-                                  {index + 1}
-                                </div>
-                                <span className="font-medium text-sm">
-                                  {product.name}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium text-sm">
-                                  {formatCurrency(product.revenue)}
-                                </div>
-                                <div className="text-xs text-gray-600">
-                                  {product.sold} sold
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-gray-500">
+                    No payment method data available
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="operations" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Operational Analytics
-              </h2>
-              <Button
-                onClick={() => handleExportReport('operations')}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Operations
-              </Button>
-            </div>
-
-            {/* Operations Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Hourly Order Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Peak Hours Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.hourlyOrderData ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={analyticsData.hourlyOrderData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="hour"
-                          tickFormatter={value => `${value}:00`}
-                        />
-                        <YAxis />
-                        <Tooltip
-                          labelFormatter={value =>
-                            `${value}:00 - ${value + 1}:00`
-                          }
-                        />
-                        <Bar dataKey="orders" fill="#3B82F6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No hourly data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Payment Methods */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Payment Methods
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {analyticsLoading ? (
-                    <div className="h-80 flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : analyticsData?.paymentMethodDistribution ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <RechartsPieChart>
-                        <Tooltip formatter={(value, name) => [value, name]} />
-                        <Pie
-                          data={analyticsData.paymentMethodDistribution}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="count"
-                          label={({ method, percentage }) =>
-                            `${method} (${percentage}%)`
-                          }
-                        >
-                          {analyticsData.paymentMethodDistribution.map(
-                            (entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            )
-                          )}
-                        </Pie>
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-80 flex items-center justify-center text-gray-500">
-                      No payment method data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Report Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button
-                    onClick={() => handleExportReport('daily-sales')}
-                    variant="outline"
-                    className="justify-start"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Daily Sales
-                  </Button>
-                  <Button
-                    onClick={() => handleExportReport('customer-list')}
-                    variant="outline"
-                    className="justify-start"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Customer List
-                  </Button>
-                  <Button
-                    onClick={() => handleExportReport('product-performance')}
-                    variant="outline"
-                    className="justify-start"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Product Performance
-                  </Button>
-                  <Button
-                    onClick={() => handleExportReport('tax-report')}
-                    variant="outline"
-                    className="justify-start"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Tax Report
-                  </Button>
-                </div>
+                )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Report Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  onClick={() => handleExportReport('daily-sales')}
+                  variant="outline"
+                  className="justify-start"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Daily Sales
+                </Button>
+                <Button
+                  onClick={() => handleExportReport('customer-list')}
+                  variant="outline"
+                  className="justify-start"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Customer List
+                </Button>
+                <Button
+                  onClick={() => handleExportReport('product-performance')}
+                  variant="outline"
+                  className="justify-start"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Product Performance
+                </Button>
+                <Button
+                  onClick={() => handleExportReport('tax-report')}
+                  variant="outline"
+                  className="justify-start"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Tax Report
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </AdminPageLayout>
   );
 }

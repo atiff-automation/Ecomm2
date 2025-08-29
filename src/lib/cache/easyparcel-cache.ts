@@ -7,9 +7,9 @@
 import { Redis } from 'ioredis';
 
 interface CacheConfig {
-  rateCacheTTL: number;        // 30 minutes for rates
-  validationCacheTTL: number;  // 24 hours for validation
-  serviceCacheTTL: number;     // 4 hours for service lists
+  rateCacheTTL: number; // 30 minutes for rates
+  validationCacheTTL: number; // 24 hours for validation
+  serviceCacheTTL: number; // 4 hours for service lists
   maxRetries: number;
   retryDelay: number;
 }
@@ -47,7 +47,7 @@ export class EasyParcelCache {
       serviceCacheTTL: 4 * 60 * 60, // 4 hours
       maxRetries: 3,
       retryDelay: 1000,
-      ...config
+      ...config,
     };
 
     this.initializeRedis();
@@ -62,11 +62,14 @@ export class EasyParcelCache {
         this.redis = new Redis(process.env.REDIS_URL, {
           retryDelayOnFailover: this.config.retryDelay,
           maxRetriesPerRequest: this.config.maxRetries,
-          lazyConnect: true
+          lazyConnect: true,
         });
 
-        this.redis.on('error', (error) => {
-          console.warn('[EasyParcel Cache] Redis connection error, falling back to memory cache:', error.message);
+        this.redis.on('error', error => {
+          console.warn(
+            '[EasyParcel Cache] Redis connection error, falling back to memory cache:',
+            error.message
+          );
           this.redis = null;
         });
 
@@ -75,7 +78,10 @@ export class EasyParcelCache {
         });
       }
     } catch (error) {
-      console.warn('[EasyParcel Cache] Redis initialization failed, using memory cache only:', error);
+      console.warn(
+        '[EasyParcel Cache] Redis initialization failed, using memory cache only:',
+        error
+      );
       this.redis = null;
     }
   }
@@ -89,17 +95,19 @@ export class EasyParcelCache {
       const cachedData: CachedRate = {
         rates,
         timestamp: Date.now(),
-        expiresAt: Date.now() + (this.config.rateCacheTTL * 1000),
-        requestHash: this.hashRequest(rateRequest)
+        expiresAt: Date.now() + this.config.rateCacheTTL * 1000,
+        requestHash: this.hashRequest(rateRequest),
       };
 
       await this.setCache(cacheKey, cachedData, this.config.rateCacheTTL);
-      
+
       // Also cache by simplified key for quick lookup
       const simplifiedKey = this.generateSimplifiedRateKey(rateRequest);
       await this.setCache(simplifiedKey, cachedData, this.config.rateCacheTTL);
 
-      console.log(`[EasyParcel Cache] Cached ${rates.length} rates for key: ${cacheKey}`);
+      console.log(
+        `[EasyParcel Cache] Cached ${rates.length} rates for key: ${cacheKey}`
+      );
     } catch (error) {
       console.error('[EasyParcel Cache] Error caching rates:', error);
     }
@@ -117,9 +125,11 @@ export class EasyParcelCache {
         // Try simplified key
         const simplifiedKey = this.generateSimplifiedRateKey(rateRequest);
         const simplifiedData = await this.getCache<CachedRate>(simplifiedKey);
-        
+
         if (simplifiedData && this.isValidCache(simplifiedData.expiresAt)) {
-          console.log(`[EasyParcel Cache] Cache hit (simplified) for: ${simplifiedKey}`);
+          console.log(
+            `[EasyParcel Cache] Cache hit (simplified) for: ${simplifiedKey}`
+          );
           return simplifiedData.rates;
         }
         return null;
@@ -133,7 +143,9 @@ export class EasyParcelCache {
       // Verify request similarity for exact matches
       const currentHash = this.hashRequest(rateRequest);
       if (cachedData.requestHash !== currentHash) {
-        console.log('[EasyParcel Cache] Request hash mismatch, invalidating cache');
+        console.log(
+          '[EasyParcel Cache] Request hash mismatch, invalidating cache'
+        );
         return null;
       }
 
@@ -148,14 +160,17 @@ export class EasyParcelCache {
   /**
    * Cache address/postcode validation results
    */
-  async cacheValidation(identifier: string, validationResult: any): Promise<void> {
+  async cacheValidation(
+    identifier: string,
+    validationResult: any
+  ): Promise<void> {
     try {
       const cacheKey = `validation:${identifier}`;
       const cachedData: CachedValidation = {
         isValid: validationResult.isValid,
         details: validationResult.details,
         timestamp: Date.now(),
-        expiresAt: Date.now() + (this.config.validationCacheTTL * 1000)
+        expiresAt: Date.now() + this.config.validationCacheTTL * 1000,
       };
 
       await this.setCache(cacheKey, cachedData, this.config.validationCacheTTL);
@@ -183,10 +198,13 @@ export class EasyParcelCache {
       console.log(`[EasyParcel Cache] Validation cache hit for: ${identifier}`);
       return {
         isValid: cachedData.isValid,
-        details: cachedData.details
+        details: cachedData.details,
       };
     } catch (error) {
-      console.error('[EasyParcel Cache] Error retrieving cached validation:', error);
+      console.error(
+        '[EasyParcel Cache] Error retrieving cached validation:',
+        error
+      );
       return null;
     }
   }
@@ -201,11 +219,13 @@ export class EasyParcelCache {
         services,
         region,
         timestamp: Date.now(),
-        expiresAt: Date.now() + (this.config.serviceCacheTTL * 1000)
+        expiresAt: Date.now() + this.config.serviceCacheTTL * 1000,
       };
 
       await this.setCache(cacheKey, cachedData, this.config.serviceCacheTTL);
-      console.log(`[EasyParcel Cache] Cached ${services.length} services for region: ${region}`);
+      console.log(
+        `[EasyParcel Cache] Cached ${services.length} services for region: ${region}`
+      );
     } catch (error) {
       console.error('[EasyParcel Cache] Error caching service list:', error);
     }
@@ -226,10 +246,15 @@ export class EasyParcelCache {
         return null;
       }
 
-      console.log(`[EasyParcel Cache] Service list cache hit for region: ${region}`);
+      console.log(
+        `[EasyParcel Cache] Service list cache hit for region: ${region}`
+      );
       return cachedData.services;
     } catch (error) {
-      console.error('[EasyParcel Cache] Error retrieving cached service list:', error);
+      console.error(
+        '[EasyParcel Cache] Error retrieving cached service list:',
+        error
+      );
       return null;
     }
   }
@@ -258,7 +283,9 @@ export class EasyParcelCache {
         deletedCount = keysToDelete.length;
       }
 
-      console.log(`[EasyParcel Cache] Invalidated ${deletedCount} cache entries matching: ${pattern}`);
+      console.log(
+        `[EasyParcel Cache] Invalidated ${deletedCount} cache entries matching: ${pattern}`
+      );
       return deletedCount;
     } catch (error) {
       console.error('[EasyParcel Cache] Error invalidating cache:', error);
@@ -309,12 +336,14 @@ export class EasyParcelCache {
           totalKeys: allKeys.length,
           rateKeys: rateKeys.length,
           validationKeys: validationKeys.length,
-          serviceKeys: serviceKeys.length
+          serviceKeys: serviceKeys.length,
         };
       } else {
         const allKeys = Array.from(this.memoryCache.keys());
         const rateKeys = allKeys.filter(key => key.includes('rate:'));
-        const validationKeys = allKeys.filter(key => key.includes('validation:'));
+        const validationKeys = allKeys.filter(key =>
+          key.includes('validation:')
+        );
         const serviceKeys = allKeys.filter(key => key.includes('services:'));
 
         return {
@@ -323,7 +352,7 @@ export class EasyParcelCache {
           rateKeys: rateKeys.length,
           validationKeys: validationKeys.length,
           serviceKeys: serviceKeys.length,
-          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
+          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         };
       }
     } catch (error) {
@@ -333,7 +362,7 @@ export class EasyParcelCache {
         totalKeys: 0,
         rateKeys: 0,
         validationKeys: 0,
-        serviceKeys: 0
+        serviceKeys: 0,
       };
     }
   }
@@ -348,7 +377,7 @@ export class EasyParcelCache {
       parcel,
       service_types = [],
       insurance = false,
-      cod = false
+      cod = false,
     } = rateRequest;
 
     const keyParts = [
@@ -364,7 +393,7 @@ export class EasyParcelCache {
       parcel.value,
       service_types.sort().join(','),
       insurance ? 'ins' : '',
-      cod ? 'cod' : ''
+      cod ? 'cod' : '',
     ];
 
     return keyParts.filter(Boolean).join(':');
@@ -374,17 +403,13 @@ export class EasyParcelCache {
    * Generate simplified cache key (for broader matching)
    */
   private generateSimplifiedRateKey(rateRequest: any): string {
-    const {
-      pickup_address,
-      delivery_address,
-      parcel
-    } = rateRequest;
+    const { pickup_address, delivery_address, parcel } = rateRequest;
 
     return [
       'rate_simple',
       pickup_address.postcode,
       delivery_address.postcode,
-      Math.ceil(parcel.weight) // Round up weight for broader matching
+      Math.ceil(parcel.weight), // Round up weight for broader matching
     ].join(':');
   }
 
@@ -396,7 +421,7 @@ export class EasyParcelCache {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -462,7 +487,9 @@ export class EasyParcelCache {
    * Cleanup expired memory cache entries
    */
   cleanupMemoryCache(): void {
-    if (this.redis) return; // Redis handles TTL automatically
+    if (this.redis) {
+      return;
+    } // Redis handles TTL automatically
 
     let cleanedCount = 0;
     for (const [key, data] of this.memoryCache.entries()) {
@@ -473,7 +500,9 @@ export class EasyParcelCache {
     }
 
     if (cleanedCount > 0) {
-      console.log(`[EasyParcel Cache] Cleaned up ${cleanedCount} expired memory cache entries`);
+      console.log(
+        `[EasyParcel Cache] Cleaned up ${cleanedCount} expired memory cache entries`
+      );
     }
   }
 
@@ -494,11 +523,14 @@ let cacheInstance: EasyParcelCache | null = null;
 export function getEasyParcelCache(): EasyParcelCache {
   if (!cacheInstance) {
     cacheInstance = new EasyParcelCache();
-    
+
     // Setup cleanup interval for memory cache
-    setInterval(() => {
-      cacheInstance?.cleanupMemoryCache();
-    }, 5 * 60 * 1000); // Every 5 minutes
+    setInterval(
+      () => {
+        cacheInstance?.cleanupMemoryCache();
+      },
+      5 * 60 * 1000
+    ); // Every 5 minutes
   }
   return cacheInstance;
 }

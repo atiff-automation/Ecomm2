@@ -50,7 +50,12 @@ import {
   Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  TabConfig,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface Category {
   id: string;
@@ -257,20 +262,20 @@ export default function AdminCategoriesPage() {
       : category.name;
   };
 
-  const breadcrumbItems = [
-    {
-      label: 'Categories',
-      href: '/admin/categories',
-      icon: FolderTree as React.ComponentType<{ className?: string }>,
-    },
-  ];
-
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Products
   const tabs: TabConfig[] = [
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
-    { id: 'inventory', label: 'Inventory Management', href: '/admin/products/inventory' },
-    { id: 'import-export', label: 'Import/Export', href: '/admin/products/import' },
+    {
+      id: 'inventory',
+      label: 'Inventory Management',
+      href: '/admin/products/inventory',
+    },
+    {
+      id: 'import-export',
+      label: 'Import/Export',
+      href: '/admin/products/import',
+    },
   ];
 
   // Define breadcrumbs to show user location and provide navigation back
@@ -348,9 +353,7 @@ export default function AdminCategoriesPage() {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={e =>
-                handleFormChange('description', e.target.value)
-              }
+              onChange={e => handleFormChange('description', e.target.value)}
               placeholder="Category description (optional)"
               rows={3}
             />
@@ -367,11 +370,7 @@ export default function AdminCategoriesPage() {
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving
-                ? 'Saving...'
-                : editingCategory
-                  ? 'Update'
-                  : 'Create'}
+              {saving ? 'Saving...' : editingCategory ? 'Update' : 'Create'}
             </Button>
           </div>
         </div>

@@ -60,7 +60,7 @@ export async function PUT(
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Update the address
       const updatedAddress = await tx.address.update({
         where: { id: addressId },
@@ -140,16 +140,13 @@ export async function DELETE(
     // Check if address is used in any orders
     const ordersUsingAddress = await prisma.order.findFirst({
       where: {
-        OR: [
-          { shippingAddressId: addressId },
-          { billingAddressId: addressId },
-        ],
+        OR: [{ shippingAddressId: addressId }, { billingAddressId: addressId }],
       },
     });
 
     if (ordersUsingAddress) {
       return NextResponse.json(
-        { 
+        {
           message: 'Cannot delete address that is used in existing orders',
           canDelete: false,
         },
@@ -157,7 +154,7 @@ export async function DELETE(
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Delete the address
       await tx.address.delete({
         where: { id: addressId },
@@ -231,7 +228,7 @@ export async function PATCH(
       );
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       // Remove default from all other addresses
       await tx.address.updateMany({
         where: {

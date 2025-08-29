@@ -12,17 +12,25 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Search, 
-  Mail, 
-  Phone, 
-  Package, 
+import {
+  Search,
+  Mail,
+  Phone,
+  Package,
   AlertCircle,
   Loader2,
-  Info
+  Info,
 } from 'lucide-react';
-import { TRACKING_CONFIG, validateOrderNumber, formatOrderNumber } from '@/lib/config/tracking';
-import { GuestTrackingRequest, GuestTrackingFormProps, FormValidationErrors } from '@/lib/types/tracking';
+import {
+  TRACKING_CONFIG,
+  validateOrderNumber,
+  formatOrderNumber,
+} from '@/lib/config/tracking';
+import {
+  GuestTrackingRequest,
+  GuestTrackingFormProps,
+  FormValidationErrors,
+} from '@/lib/types/tracking';
 
 interface GuestTrackingRequest {
   orderNumber: string;
@@ -41,15 +49,19 @@ export default function GuestTrackingForm({
   onSubmit,
   loading = false,
   error,
-  className = ''
+  className = '',
 }: GuestTrackingFormProps) {
   const [formData, setFormData] = useState<GuestTrackingRequest>({
     orderNumber: '',
     email: '',
-    phone: ''
+    phone: '',
   });
-  const [verificationMethod, setVerificationMethod] = useState<'email' | 'phone'>('email');
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [verificationMethod, setVerificationMethod] = useState<
+    'email' | 'phone'
+  >('email');
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   /**
    * Validate form inputs
@@ -61,7 +73,8 @@ export default function GuestTrackingForm({
     if (!formData.orderNumber) {
       errors.orderNumber = 'Order number is required';
     } else if (!/^ORD-\d{8}-\w{4}$/i.test(formData.orderNumber)) {
-      errors.orderNumber = 'Invalid order number format (e.g., ORD-20250821-A1B2)';
+      errors.orderNumber =
+        'Invalid order number format (e.g., ORD-20250821-A1B2)';
     }
 
     // Validate verification method
@@ -74,7 +87,11 @@ export default function GuestTrackingForm({
     } else {
       if (!formData.phone) {
         errors.phone = 'Phone number is required';
-      } else if (!/^(\+?6?0?1[0-9]-?[0-9]{7,8}|[\d\s\-\+\(\)]{8,15})$/.test(formData.phone.replace(/\s/g, ''))) {
+      } else if (
+        !/^(\+?6?0?1[0-9]-?[0-9]{7,8}|[\d\s\-\+\(\)]{8,15})$/.test(
+          formData.phone.replace(/\s/g, '')
+        )
+      ) {
         errors.phone = 'Please enter a valid phone number';
       }
     }
@@ -88,7 +105,7 @@ export default function GuestTrackingForm({
    */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -110,9 +127,12 @@ export default function GuestTrackingForm({
   /**
    * Handle input changes
    */
-  const handleInputChange = (field: keyof GuestTrackingRequest, value: string) => {
+  const handleInputChange = (
+    field: keyof GuestTrackingRequest,
+    value: string
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors(prev => {
@@ -128,7 +148,7 @@ export default function GuestTrackingForm({
   const formatOrderNumber = (value: string) => {
     const cleaned = value.replace(/[^a-zA-Z0-9]/g, '');
     const upperCased = cleaned.toUpperCase();
-    
+
     // Auto-format to ORD-YYYYMMDD-XXXX pattern
     if (upperCased.startsWith('ORD')) {
       let formatted = upperCased;
@@ -155,7 +175,7 @@ export default function GuestTrackingForm({
           Enter your order details to track your shipment
         </p>
       </CardHeader>
-      
+
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Order Number Input */}
@@ -166,12 +186,19 @@ export default function GuestTrackingForm({
               type="text"
               placeholder="ORD-20250821-A1B2"
               value={formData.orderNumber}
-              onChange={(e) => handleInputChange('orderNumber', formatOrderNumber(e.target.value))}
+              onChange={e =>
+                handleInputChange(
+                  'orderNumber',
+                  formatOrderNumber(e.target.value)
+                )
+              }
               className={validationErrors.orderNumber ? 'border-red-500' : ''}
               disabled={loading}
             />
             {validationErrors.orderNumber && (
-              <p className="text-sm text-red-600">{validationErrors.orderNumber}</p>
+              <p className="text-sm text-red-600">
+                {validationErrors.orderNumber}
+              </p>
             )}
             <p className="text-xs text-muted-foreground">
               You can find this in your order confirmation email
@@ -214,7 +241,7 @@ export default function GuestTrackingForm({
                 type="email"
                 placeholder="john@example.com"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={e => handleInputChange('email', e.target.value)}
                 className={validationErrors.email ? 'border-red-500' : ''}
                 disabled={loading}
               />
@@ -236,7 +263,7 @@ export default function GuestTrackingForm({
                 type="tel"
                 placeholder="+60123456789"
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                onChange={e => handleInputChange('phone', e.target.value)}
                 className={validationErrors.phone ? 'border-red-500' : ''}
                 disabled={loading}
               />
@@ -261,17 +288,14 @@ export default function GuestTrackingForm({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Privacy Notice:</strong> We only use this information to verify your order ownership. 
-              Your details are not stored or shared.
+              <strong>Privacy Notice:</strong> We only use this information to
+              verify your order ownership. Your details are not stored or
+              shared.
             </AlertDescription>
           </Alert>
 
           {/* Submit Button */}
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -304,7 +328,11 @@ export default function GuestTrackingForm({
  * GuestTrackingFormSkeleton Component
  * Loading skeleton for the form
  */
-export function GuestTrackingFormSkeleton({ className = '' }: { className?: string }) {
+export function GuestTrackingFormSkeleton({
+  className = '',
+}: {
+  className?: string;
+}) {
   return (
     <Card className={`guest-tracking-form-skeleton ${className}`}>
       <CardHeader>
@@ -314,7 +342,7 @@ export function GuestTrackingFormSkeleton({ className = '' }: { className?: stri
         </div>
         <div className="w-48 h-4 bg-gray-200 rounded animate-pulse" />
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Order Number Skeleton */}
         <div className="space-y-2">

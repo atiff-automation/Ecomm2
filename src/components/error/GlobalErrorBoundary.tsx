@@ -12,7 +12,11 @@ import { AlertTriangle, RefreshCw, Home, Bug, Copy } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
-  fallback?: (error: Error, errorInfo: ErrorInfo, resetError: () => void) => ReactNode;
+  fallback?: (
+    error: Error,
+    errorInfo: ErrorInfo,
+    resetError: () => void
+  ) => ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   isolate?: boolean;
 }
@@ -42,7 +46,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Generate unique error ID for tracking
     const errorId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     return {
       hasError: true,
       error,
@@ -52,7 +56,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError } = this.props;
-    
+
     // Update state with error info
     this.setState({ errorInfo });
 
@@ -79,7 +83,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+      userAgent:
+        typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
       retryCount: this.state.retryCount,
     };
@@ -100,7 +105,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
         componentStack: errorInfo.componentStack,
         timestamp: new Date().toISOString(),
         url: typeof window !== 'undefined' ? window.location.href : 'SSR',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SSR',
+        userAgent:
+          typeof navigator !== 'undefined' ? navigator.userAgent : 'SSR',
         retryCount: this.state.retryCount,
         environment: process.env.NODE_ENV,
         buildId: process.env.NEXT_PUBLIC_BUILD_ID || 'unknown',
@@ -117,7 +123,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
           custom_map: {
             errorId: this.state.errorId,
             componentStack: errorInfo.componentStack,
-          }
+          },
         });
       }
 
@@ -131,13 +137,14 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       }).catch(reportError => {
         console.error('Failed to report error to monitoring:', reportError);
       });
-
     } catch (reportError) {
       console.error('Error reporting failed:', reportError);
     }
   }
 
-  private categorizeErrorSeverity(error: Error): 'low' | 'medium' | 'high' | 'critical' {
+  private categorizeErrorSeverity(
+    error: Error
+  ): 'low' | 'medium' | 'high' | 'critical' {
     const message = error.message.toLowerCase();
     const stack = error.stack?.toLowerCase() || '';
 
@@ -174,19 +181,24 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 
   private getBreadcrumbs(): string[] {
-    if (typeof window === 'undefined') return [];
-    
+    if (typeof window === 'undefined') {
+      return [];
+    }
+
     // Simple breadcrumb from URL path
     const path = window.location.pathname;
     return path.split('/').filter(Boolean);
   }
 
   private getUserContext() {
-    if (typeof window === 'undefined') return null;
-    
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
     // Get user context from session storage or local storage
     try {
-      const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+      const userStr =
+        sessionStorage.getItem('user') || localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         return {
@@ -198,7 +210,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     } catch {
       // Ignore JSON parse errors
     }
-    
+
     return null;
   }
 
@@ -220,7 +232,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       timestamp: new Date().toISOString(),
     };
 
-    navigator.clipboard.writeText(JSON.stringify(errorDetails, null, 2))
+    navigator.clipboard
+      .writeText(JSON.stringify(errorDetails, null, 2))
       .then(() => {
         // Could show a toast notification here
         console.log('Error details copied to clipboard');
@@ -254,11 +267,15 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 Oops! Something went wrong
               </CardTitle>
               <p className="text-gray-600 mt-2">
-                We encountered an unexpected error. Don't worry, our team has been notified.
+                We encountered an unexpected error. Don't worry, our team has
+                been notified.
               </p>
               {errorId && (
                 <p className="text-sm text-gray-500 mt-2">
-                  Error ID: <code className="bg-gray-100 px-2 py-1 rounded">{errorId}</code>
+                  Error ID:{' '}
+                  <code className="bg-gray-100 px-2 py-1 rounded">
+                    {errorId}
+                  </code>
                 </p>
               )}
             </CardHeader>
@@ -269,21 +286,22 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 {canRetry && (
                   <Button onClick={this.resetError} className="gap-2">
                     <RefreshCw className="h-4 w-4" />
-                    Try Again {retryCount > 0 && `(${retryCount}/${this.maxRetries})`}
+                    Try Again{' '}
+                    {retryCount > 0 && `(${retryCount}/${this.maxRetries})`}
                   </Button>
                 )}
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.href = '/'}
+
+                <Button
+                  variant="outline"
+                  onClick={() => (window.location.href = '/')}
                   className="gap-2"
                 >
                   <Home className="h-4 w-4" />
                   Go Home
                 </Button>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   onClick={() => window.location.reload()}
                   className="gap-2"
                 >
@@ -301,7 +319,9 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                   </summary>
                   <div className="mt-4 p-4 bg-red-50 rounded-lg border">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-red-800">Error Details</h4>
+                      <h4 className="font-medium text-red-800">
+                        Error Details
+                      </h4>
                       <Button
                         size="sm"
                         variant="outline"
@@ -312,7 +332,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         Copy
                       </Button>
                     </div>
-                    
+
                     <div className="space-y-3 text-sm">
                       <div>
                         <strong className="text-red-800">Message:</strong>
@@ -320,7 +340,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                           {error.message}
                         </pre>
                       </div>
-                      
+
                       {error.stack && (
                         <div>
                           <strong className="text-red-800">Stack Trace:</strong>
@@ -329,10 +349,12 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                           </pre>
                         </div>
                       )}
-                      
+
                       {errorInfo?.componentStack && (
                         <div>
-                          <strong className="text-red-800">Component Stack:</strong>
+                          <strong className="text-red-800">
+                            Component Stack:
+                          </strong>
                           <pre className="mt-1 bg-white p-2 rounded text-gray-600 text-xs overflow-x-auto">
                             {errorInfo.componentStack}
                           </pre>
@@ -345,7 +367,9 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
               {/* User Help */}
               <div className="mt-6 p-4 bg-blue-50 rounded-lg border">
-                <h4 className="font-medium text-blue-800 mb-2">What can you do?</h4>
+                <h4 className="font-medium text-blue-800 mb-2">
+                  What can you do?
+                </h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Try refreshing the page or clicking "Try Again"</li>
                   <li>• Check your internet connection</li>
@@ -357,7 +381,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
               {!canRetry && (
                 <div className="mt-4 p-4 bg-yellow-50 rounded-lg border">
                   <p className="text-yellow-800 text-sm">
-                    <strong>Multiple attempts failed.</strong> Please refresh the page or contact support if the issue continues.
+                    <strong>Multiple attempts failed.</strong> Please refresh
+                    the page or contact support if the issue continues.
                   </p>
                 </div>
               )}
@@ -395,7 +420,7 @@ export function withErrorBoundary<P extends object>(
 export function useErrorReporter() {
   const reportError = (error: Error, context?: Record<string, any>) => {
     console.error('Manual error report:', error, context);
-    
+
     // Create synthetic error info
     const errorInfo: ErrorInfo = {
       componentStack: context?.componentStack || 'Unknown component stack',

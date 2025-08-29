@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
     const errorReport: ErrorReport = await request.json();
 
     // Validate required fields
-    if (!errorReport.errorId || !errorReport.message || !errorReport.timestamp) {
+    if (
+      !errorReport.errorId ||
+      !errorReport.message ||
+      !errorReport.timestamp
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields: errorId, message, timestamp' },
         { status: 400 }
@@ -65,7 +69,7 @@ export async function POST(request: NextRequest) {
     const headersList = headers();
     const userAgent = headersList.get('user-agent');
     const referer = headersList.get('referer');
-    
+
     // Basic security checks
     if (userAgent && userAgent.includes('bot')) {
       return NextResponse.json(
@@ -82,14 +86,13 @@ export async function POST(request: NextRequest) {
       errorId: errorReport.errorId,
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Error processing error report:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -124,7 +127,6 @@ async function processErrorReport(errorReport: ErrorReport) {
 
     // Update error statistics
     await updateErrorStats(errorReport);
-
   } catch (error) {
     console.error('Failed to process error report:', error);
     throw error;
@@ -175,7 +177,6 @@ Build ID: ${errorReport.buildId}
     // Here you would integrate with your notification system
     // Example: await slackNotifier.send(alertMessage);
     // Example: await emailService.sendAlert(alertMessage);
-
   } catch (error) {
     console.error('Failed to send critical error alert:', error);
   }
@@ -187,9 +188,9 @@ Build ID: ${errorReport.buildId}
 async function updateErrorStats(errorReport: ErrorReport) {
   // Update error counters, rates, and trends
   // This could be stored in Redis or a time-series database
-  
+
   const statsKey = `error_stats:${new Date().toISOString().split('T')[0]}`;
-  
+
   try {
     // Increment error counts by severity
     // In a real implementation, this might use Redis INCR commands
@@ -198,7 +199,6 @@ async function updateErrorStats(errorReport: ErrorReport) {
       errorType: errorReport.context?.type || 'unknown',
       url: errorReport.url,
     });
-
   } catch (error) {
     console.error('Failed to update error stats:', error);
   }

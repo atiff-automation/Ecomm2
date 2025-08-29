@@ -31,7 +31,7 @@ export default function CheckoutSuccessPage() {
           billCode,
           orderNumber,
           msg,
-          transactionId
+          transactionId,
         });
 
         if (!statusId || !billCode || !orderNumber) {
@@ -41,50 +41,60 @@ export default function CheckoutSuccessPage() {
         // Check payment status
         if (statusId === '1' && msg === 'ok') {
           console.log('✅ Payment successful, updating order status');
-          
+
           try {
             // Update order status since webhook can't reach localhost
             // Extract actual order number from external reference
-            const actualOrderNumber = orderNumber.match(/JRM_(ORD-[^_]+)_/)?.[1];
-            
+            const actualOrderNumber =
+              orderNumber.match(/JRM_(ORD-[^_]+)_/)?.[1];
+
             if (actualOrderNumber) {
               console.log(`🔄 Updating order status for: ${actualOrderNumber}`);
-              
+
               // Find order by order number and update status
-              const updateResponse = await fetch('/api/admin/orders/update-by-number', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  orderNumber: actualOrderNumber,
-                  status: 'CONFIRMED',
-                  paymentStatus: 'PAID',
-                  triggeredBy: 'toyyibpay-return-url',
-                  metadata: {
-                    billCode,
-                    transactionId,
-                    paymentStatusId: statusId,
-                    returnMessage: msg
-                  }
-                })
-              });
-              
+              const updateResponse = await fetch(
+                '/api/admin/orders/update-by-number',
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    orderNumber: actualOrderNumber,
+                    status: 'CONFIRMED',
+                    paymentStatus: 'PAID',
+                    triggeredBy: 'toyyibpay-return-url',
+                    metadata: {
+                      billCode,
+                      transactionId,
+                      paymentStatusId: statusId,
+                      returnMessage: msg,
+                    },
+                  }),
+                }
+              );
+
               if (updateResponse.ok) {
                 console.log('✅ Order status updated successfully');
               } else {
-                console.warn('⚠️ Order status update failed, but payment was successful');
+                console.warn(
+                  '⚠️ Order status update failed, but payment was successful'
+                );
               }
             }
           } catch (updateError) {
             console.error('❌ Failed to update order status:', updateError);
             // Don't fail the redirect if status update fails
           }
-          
+
           // Redirect to thank-you page with order reference
           const orderRef = orderNumber;
-          router.replace(`/thank-you?orderRef=${encodeURIComponent(orderRef)}&paymentMethod=toyyibpay&transactionId=${encodeURIComponent(transactionId || '')}`);
+          router.replace(
+            `/thank-you?orderRef=${encodeURIComponent(orderRef)}&paymentMethod=toyyibpay&transactionId=${encodeURIComponent(transactionId || '')}`
+          );
         } else if (statusId === '2') {
           console.log('⏳ Payment pending');
-          setError('Payment is still pending. Please check back later or contact support.');
+          setError(
+            'Payment is still pending. Please check back later or contact support.'
+          );
         } else if (statusId === '3') {
           console.log('❌ Payment failed');
           setError('Payment failed. Please try again or contact support.');
@@ -93,7 +103,11 @@ export default function CheckoutSuccessPage() {
         }
       } catch (error) {
         console.error('Error processing payment callback:', error);
-        setError(error instanceof Error ? error.message : 'Failed to process payment callback');
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to process payment callback'
+        );
       } finally {
         setProcessing(false);
       }

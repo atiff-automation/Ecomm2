@@ -64,10 +64,9 @@ class TrackingCronManager {
       }
 
       console.log('✅ Tracking cron jobs started successfully');
-      
+
       // Run initial health check
       await this.performHealthCheck();
-
     } catch (error) {
       console.error('❌ Failed to start tracking cron jobs:', error);
       this.stop();
@@ -80,24 +79,28 @@ class TrackingCronManager {
    */
   stop(): void {
     console.log('🛑 Stopping tracking cron jobs...');
-    
+
     this.intervals.forEach((interval, name) => {
       clearInterval(interval);
       if (isDebugMode()) {
         console.log(`Stopped ${name} interval`);
       }
     });
-    
+
     this.intervals.clear();
     this.isRunning = false;
-    
+
     console.log('✅ Tracking cron jobs stopped');
   }
 
   /**
    * Schedule an interval with error handling
    */
-  private scheduleInterval(name: string, intervalMs: number, callback: () => Promise<void> | void): void {
+  private scheduleInterval(
+    name: string,
+    intervalMs: number,
+    callback: () => Promise<void> | void
+  ): void {
     const interval = setInterval(async () => {
       try {
         if (isDebugMode()) {
@@ -110,9 +113,11 @@ class TrackingCronManager {
     }, intervalMs);
 
     this.intervals.set(name, interval);
-    
+
     if (isDebugMode()) {
-      console.log(`📅 Scheduled ${name} to run every ${intervalMs / 1000} seconds`);
+      console.log(
+        `📅 Scheduled ${name} to run every ${intervalMs / 1000} seconds`
+      );
     }
   }
 
@@ -122,10 +127,12 @@ class TrackingCronManager {
   private async processUrgentJobs(): Promise<void> {
     try {
       const result = await trackingJobProcessor.processJobs();
-      
+
       if (result.totalJobs > 0) {
-        console.log(`🔥 Urgent jobs processed: ${result.successfulJobs}/${result.totalJobs} successful`);
-        
+        console.log(
+          `🔥 Urgent jobs processed: ${result.successfulJobs}/${result.totalJobs} successful`
+        );
+
         if (result.failedJobs > 0) {
           console.warn(`⚠️ ${result.failedJobs} urgent jobs failed`);
         }
@@ -152,7 +159,9 @@ class TrackingCronManager {
         return;
       }
 
-      console.log(`🔄 Creating update jobs for ${cachesToUpdate.length} tracking caches...`);
+      console.log(
+        `🔄 Creating update jobs for ${cachesToUpdate.length} tracking caches...`
+      );
 
       // Create jobs for each cache that needs updating
       let jobsCreated = 0;
@@ -174,8 +183,9 @@ class TrackingCronManager {
 
       // Process the jobs
       const result = await trackingJobProcessor.processJobs();
-      console.log(`📊 Regular updates processed: ${result.successfulJobs}/${result.totalJobs} successful`);
-
+      console.log(
+        `📊 Regular updates processed: ${result.successfulJobs}/${result.totalJobs} successful`
+      );
     } catch (error) {
       console.error('❌ Failed to process regular updates:', error);
     }
@@ -189,7 +199,8 @@ class TrackingCronManager {
       console.log('🧹 Starting cleanup tasks...');
 
       // Clean up old completed jobs
-      const cleanupDays = TRACKING_REFACTOR_CONFIG.ARCHIVE.ARCHIVE_AFTER_DAYS || 7;
+      const cleanupDays =
+        TRACKING_REFACTOR_CONFIG.ARCHIVE.ARCHIVE_AFTER_DAYS || 7;
       const deletedJobs = await cleanupCompletedJobs(cleanupDays);
 
       if (deletedJobs > 0) {
@@ -211,11 +222,12 @@ class TrackingCronManager {
       }
 
       if (stats.caches.requiresAttention > 5) {
-        console.warn(`⚠️ ${stats.caches.requiresAttention} caches require attention`);
+        console.warn(
+          `⚠️ ${stats.caches.requiresAttention} caches require attention`
+        );
       }
 
       console.log('✅ Cleanup tasks completed');
-
     } catch (error) {
       console.error('❌ Failed to perform cleanup tasks:', error);
     }
@@ -230,11 +242,15 @@ class TrackingCronManager {
 
       // Validate cache consistency
       const consistencyIssues = await validateCacheConsistency();
-      
+
       if (consistencyIssues.length > 0) {
-        console.warn(`⚠️ Found ${consistencyIssues.length} cache consistency issues:`);
+        console.warn(
+          `⚠️ Found ${consistencyIssues.length} cache consistency issues:`
+        );
         consistencyIssues.forEach(issue => {
-          console.warn(`  - Order ${issue.orderId}: ${issue.issues.join(', ')}`);
+          console.warn(
+            `  - Order ${issue.orderId}: ${issue.issues.join(', ')}`
+          );
         });
       } else {
         console.log('✅ Cache consistency validation passed');
@@ -242,7 +258,7 @@ class TrackingCronManager {
 
       // Get detailed statistics
       const stats = await getCacheStatistics();
-      
+
       // Daily report
       console.log('📊 Daily Tracking Report:', {
         date: new Date().toISOString().split('T')[0],
@@ -260,7 +276,6 @@ class TrackingCronManager {
       });
 
       console.log('✅ Daily maintenance completed');
-
     } catch (error) {
       console.error('❌ Failed to perform daily maintenance:', error);
     }
@@ -300,7 +315,10 @@ class TrackingCronManager {
         health.status = 'DEGRADED';
       }
 
-      if (processorStatus.isProcessing && processorStatus.uptime > 5 * 60 * 1000) {
+      if (
+        processorStatus.isProcessing &&
+        processorStatus.uptime > 5 * 60 * 1000
+      ) {
         warnings.push('Processor has been running for a long time');
       }
 
@@ -311,7 +329,6 @@ class TrackingCronManager {
       if (isDebugMode()) {
         console.log('🏥 Health check:', health);
       }
-
     } catch (error) {
       console.error('❌ Health check failed:', error);
     }
@@ -336,10 +353,12 @@ class TrackingCronManager {
  */
 export const triggerUrgentJobs = async (): Promise<void> => {
   console.log('🔥 Manually triggering urgent job processing...');
-  
+
   try {
     const result = await trackingJobProcessor.processJobs();
-    console.log(`✅ Manual urgent jobs completed: ${result.successfulJobs}/${result.totalJobs} successful`);
+    console.log(
+      `✅ Manual urgent jobs completed: ${result.successfulJobs}/${result.totalJobs} successful`
+    );
     return result;
   } catch (error) {
     console.error('❌ Manual urgent job processing failed:', error);
@@ -353,17 +372,23 @@ export const triggerUrgentJobs = async (): Promise<void> => {
 /**
  * Manually trigger tracking updates for specific orders
  */
-export const triggerManualUpdate = async (orderIds: string[]): Promise<void> => {
-  console.log(`🔧 Manually triggering updates for ${orderIds.length} orders...`);
-  
+export const triggerManualUpdate = async (
+  orderIds: string[]
+): Promise<void> => {
+  console.log(
+    `🔧 Manually triggering updates for ${orderIds.length} orders...`
+  );
+
   try {
     let jobsCreated = 0;
-    
+
     for (const orderId of orderIds) {
       // Get tracking cache for order
-      const { getTrackingCacheByOrderId } = await import('../services/tracking-cache');
+      const { getTrackingCacheByOrderId } = await import(
+        '../services/tracking-cache'
+      );
       const cache = await getTrackingCacheByOrderId(orderId);
-      
+
       if (!cache) {
         console.warn(`⚠️ No tracking cache found for order ${orderId}`);
         continue;
@@ -376,7 +401,7 @@ export const triggerManualUpdate = async (orderIds: string[]): Promise<void> => 
         priority: getJobPriority('MANUAL'),
         scheduledFor: new Date(),
       });
-      
+
       jobsCreated++;
     }
 
@@ -384,8 +409,9 @@ export const triggerManualUpdate = async (orderIds: string[]): Promise<void> => 
 
     // Process the jobs immediately
     const result = await trackingJobProcessor.processJobs();
-    console.log(`📊 Manual updates processed: ${result.successfulJobs}/${result.totalJobs} successful`);
-
+    console.log(
+      `📊 Manual updates processed: ${result.successfulJobs}/${result.totalJobs} successful`
+    );
   } catch (error) {
     console.error('❌ Manual update trigger failed:', error);
     throw new TrackingRefactorError(
@@ -400,7 +426,7 @@ export const triggerManualUpdate = async (orderIds: string[]): Promise<void> => 
  */
 export const triggerCleanup = async (): Promise<void> => {
   console.log('🧹 Manually triggering cleanup...');
-  
+
   try {
     const cronManager = new TrackingCronManager();
     await cronManager.performCleanupTasks();

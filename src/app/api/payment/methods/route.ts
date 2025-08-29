@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     console.log('📋 Available payment methods:', {
       total: availableMethods.length,
       active: activeMethods.length,
-      default: defaultMethod
+      default: defaultMethod,
     });
 
     return NextResponse.json({
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       activeMethods: activeMethods,
       defaultMethod: defaultMethod,
       availability: gatewayAvailability,
-      hasAvailableGateways: activeMethods.length > 0
+      hasAvailableGateways: activeMethods.length > 0,
     });
   } catch (error) {
     console.error('Error getting payment methods:', error);
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: 'Failed to get payment methods',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

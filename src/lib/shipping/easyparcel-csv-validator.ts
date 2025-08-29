@@ -3,7 +3,10 @@
  * Validates CSV exports against EasyParcel requirements
  */
 
-import { easyParcelCSVExporter, type OrderForExport } from './easyparcel-csv-exporter';
+import {
+  easyParcelCSVExporter,
+  type OrderForExport,
+} from './easyparcel-csv-exporter';
 
 export interface ValidationResult {
   valid: boolean;
@@ -27,7 +30,6 @@ export interface CSVValidationOptions {
 }
 
 export class EasyParcelCSVValidator {
-  
   /**
    * Validate CSV export against EasyParcel requirements
    */
@@ -41,7 +43,7 @@ export class EasyParcelCSVValidator {
       validatePhoneFormat: true,
       validatePostalCodes: true,
       maxErrors: 50,
-      ...options
+      ...options,
     };
 
     const errors: string[] = [];
@@ -54,7 +56,9 @@ export class EasyParcelCSVValidator {
       try {
         const businessProfile = await easyParcelCSVExporter['businessProfile'];
         if (!businessProfile) {
-          errors.push('Business profile not configured - required for sender information');
+          errors.push(
+            'Business profile not configured - required for sender information'
+          );
         }
       } catch (error) {
         errors.push('Failed to load business profile configuration');
@@ -62,13 +66,19 @@ export class EasyParcelCSVValidator {
     }
 
     // Validate each order
-    for (let i = 0; i < orders.length && errors.length < config.maxErrors; i++) {
+    for (
+      let i = 0;
+      i < orders.length && errors.length < config.maxErrors;
+      i++
+    ) {
       const order = orders[i];
       const orderErrors = this.validateSingleOrder(order, config);
-      
+
       if (orderErrors.length > 0) {
         invalidRows++;
-        errors.push(...orderErrors.map(err => `Order ${order.orderNumber}: ${err}`));
+        errors.push(
+          ...orderErrors.map(err => `Order ${order.orderNumber}: ${err}`)
+        );
       } else {
         validRows++;
       }
@@ -76,15 +86,20 @@ export class EasyParcelCSVValidator {
 
     // Generate warnings
     if (!config.strictMode && invalidRows > 0) {
-      warnings.push(`${invalidRows} orders have validation issues but may still be processable`);
+      warnings.push(
+        `${invalidRows} orders have validation issues but may still be processable`
+      );
     }
 
     if (orders.length > 500) {
-      warnings.push('Large export - consider splitting into smaller batches for better processing');
+      warnings.push(
+        'Large export - consider splitting into smaller batches for better processing'
+      );
     }
 
     const totalRows = orders.length;
-    const estimatedSuccessRate = totalRows > 0 ? (validRows / totalRows) * 100 : 0;
+    const estimatedSuccessRate =
+      totalRows > 0 ? (validRows / totalRows) * 100 : 0;
     const requiredFieldsComplete = invalidRows === 0;
 
     return {
@@ -96,15 +111,18 @@ export class EasyParcelCSVValidator {
         validRows,
         invalidRows,
         requiredFieldsComplete,
-        estimatedSuccessRate
-      }
+        estimatedSuccessRate,
+      },
     };
   }
 
   /**
    * Validate a single order for CSV export
    */
-  private static validateSingleOrder(order: OrderForExport, config: CSVValidationOptions): string[] {
+  private static validateSingleOrder(
+    order: OrderForExport,
+    config: CSVValidationOptions
+  ): string[] {
     const errors: string[] = [];
 
     // Check required order fields
@@ -124,16 +142,22 @@ export class EasyParcelCSVValidator {
     if (!order.shippingAddress) {
       errors.push('Shipping address is required');
     } else {
-      const addressErrors = this.validateAddress(order.shippingAddress, 'delivery', config);
+      const addressErrors = this.validateAddress(
+        order.shippingAddress,
+        'delivery',
+        config
+      );
       errors.push(...addressErrors);
     }
 
     // Check customer information
-    const customerName = order.user?.name || 
-                        (order.user?.firstName && order.user?.lastName ? 
-                         `${order.user.firstName} ${order.user.lastName}` : '') ||
-                        order.shippingAddress?.name;
-    
+    const customerName =
+      order.user?.name ||
+      (order.user?.firstName && order.user?.lastName
+        ? `${order.user.firstName} ${order.user.lastName}`
+        : '') ||
+      order.shippingAddress?.name;
+
     if (!customerName) {
       errors.push('Customer name is required');
     }
@@ -174,7 +198,9 @@ export class EasyParcelCSVValidator {
       }
 
       if (totalWeight > 70) {
-        errors.push(`Total weight ${totalWeight}kg exceeds EasyParcel limit of 70kg`);
+        errors.push(
+          `Total weight ${totalWeight}kg exceeds EasyParcel limit of 70kg`
+        );
       }
 
       if (totalWeight <= 0) {
@@ -189,8 +215,8 @@ export class EasyParcelCSVValidator {
    * Validate address information
    */
   private static validateAddress(
-    address: OrderForExport['shippingAddress'], 
-    type: string, 
+    address: OrderForExport['shippingAddress'],
+    type: string,
     config: CSVValidationOptions
   ): string[] {
     const errors: string[] = [];
@@ -222,16 +248,44 @@ export class EasyParcelCSVValidator {
     // Validate Malaysian states
     if (address.state) {
       const validStates = [
-        'Johor', 'JOH', 'Kedah', 'KDH', 'Kelantan', 'KTN',
-        'Melaka', 'Malacca', 'MLK', 'Negeri Sembilan', 'NSN',
-        'Pahang', 'PHG', 'Perak', 'PRK', 'Perlis', 'PLS',
-        'Pulau Pinang', 'Penang', 'PNG', 'Kuala Lumpur', 'KUL',
-        'Terengganu', 'TRG', 'Selangor', 'SEL', 'Sabah', 'SBH',
-        'Sarawak', 'SWK', 'Labuan', 'LBN'
+        'Johor',
+        'JOH',
+        'Kedah',
+        'KDH',
+        'Kelantan',
+        'KTN',
+        'Melaka',
+        'Malacca',
+        'MLK',
+        'Negeri Sembilan',
+        'NSN',
+        'Pahang',
+        'PHG',
+        'Perak',
+        'PRK',
+        'Perlis',
+        'PLS',
+        'Pulau Pinang',
+        'Penang',
+        'PNG',
+        'Kuala Lumpur',
+        'KUL',
+        'Terengganu',
+        'TRG',
+        'Selangor',
+        'SEL',
+        'Sabah',
+        'SBH',
+        'Sarawak',
+        'SWK',
+        'Labuan',
+        'LBN',
       ];
 
       if (!validStates.includes(address.state)) {
-        errors.push(`${type} state "${address.state}" is not a valid Malaysian state`);
+        errors.push(
+          `${type} state "${address.state}" is not a valid Malaysian state`
+        );
       }
     }
 
@@ -243,7 +297,7 @@ export class EasyParcelCSVValidator {
    */
   private static validatePhoneNumber(phone: string): string[] {
     const errors: string[] = [];
-    
+
     if (!phone) {
       errors.push('Phone number is required');
       return errors;
@@ -251,7 +305,7 @@ export class EasyParcelCSVValidator {
 
     // Remove spaces and dashes for validation
     const cleanPhone = phone.replace(/[\s-]/g, '');
-    
+
     // Malaysian phone number patterns
     const validPatterns = [
       /^(\+60|60)[0-9]{8,10}$/, // +60 or 60 prefix
@@ -259,9 +313,11 @@ export class EasyParcelCSVValidator {
     ];
 
     const isValid = validPatterns.some(pattern => pattern.test(cleanPhone));
-    
+
     if (!isValid) {
-      errors.push('Invalid Malaysian phone number format (should be +60XXXXXXXXX or 0XXXXXXXXX)');
+      errors.push(
+        'Invalid Malaysian phone number format (should be +60XXXXXXXXX or 0XXXXXXXXX)'
+      );
     }
 
     return errors;
@@ -272,7 +328,7 @@ export class EasyParcelCSVValidator {
    */
   private static validatePostalCode(postcode: string): string[] {
     const errors: string[] = [];
-    
+
     if (!postcode) {
       errors.push('postal code is required');
       return errors;
@@ -280,7 +336,7 @@ export class EasyParcelCSVValidator {
 
     // Malaysian postal code should be 5 digits
     const postcodeRegex = /^\d{5}$/;
-    
+
     if (!postcodeRegex.test(postcode)) {
       errors.push('postal code must be exactly 5 digits');
     }
@@ -293,13 +349,15 @@ export class EasyParcelCSVValidator {
    */
   static generateValidationReport(result: ValidationResult): string {
     const lines: string[] = [];
-    
+
     lines.push('=== EasyParcel CSV Validation Report ===');
     lines.push('');
     lines.push(`Total Orders: ${result.summary.totalRows}`);
     lines.push(`Valid Orders: ${result.summary.validRows}`);
     lines.push(`Invalid Orders: ${result.summary.invalidRows}`);
-    lines.push(`Success Rate: ${result.summary.estimatedSuccessRate.toFixed(1)}%`);
+    lines.push(
+      `Success Rate: ${result.summary.estimatedSuccessRate.toFixed(1)}%`
+    );
     lines.push(`Overall Status: ${result.valid ? 'PASS' : 'FAIL'}`);
     lines.push('');
 
@@ -323,7 +381,9 @@ export class EasyParcelCSVValidator {
       lines.push('✅ CSV export is ready for EasyParcel bulk upload');
     } else {
       lines.push('❌ CSV export has issues that must be resolved');
-      lines.push('   Please fix the errors above before uploading to EasyParcel');
+      lines.push(
+        '   Please fix the errors above before uploading to EasyParcel'
+      );
     }
 
     return lines.join('\n');
@@ -340,7 +400,7 @@ export class EasyParcelCSVValidator {
   }> {
     const result = await this.validateCSVExport(orders, {
       strictMode: false,
-      maxErrors: 10
+      maxErrors: 10,
     });
 
     const criticalIssues = result.errors.length;
@@ -362,7 +422,7 @@ export class EasyParcelCSVValidator {
       canExport,
       criticalIssues,
       warnings,
-      message
+      message,
     };
   }
 }

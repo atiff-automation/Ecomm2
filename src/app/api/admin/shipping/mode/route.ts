@@ -21,25 +21,32 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get current mode configuration
     const modeConfig = await prisma.systemConfig.findUnique({
-      where: { key: 'shipping_mode' }
+      where: { key: 'shipping_mode' },
     });
 
-    const currentMode = modeConfig?.value ? JSON.parse(modeConfig.value) : {
-      mode: 'api',
-      reason: null,
-      updatedAt: null,
-      updatedBy: null
-    };
+    const currentMode = modeConfig?.value
+      ? JSON.parse(modeConfig.value)
+      : {
+          mode: 'api',
+          reason: null,
+          updatedAt: null,
+          updatedBy: null,
+        };
 
     // Get EasyParcel API status
     const easyParcelStatus = {
-      configured: !!(process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET),
+      configured: !!(
+        process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
+      ),
       sandbox: process.env.EASYPARCEL_SANDBOX === 'true',
       hasApiKey: !!process.env.EASYPARCEL_API_KEY,
       hasApiSecret: !!process.env.EASYPARCEL_API_SECRET,
@@ -53,12 +60,11 @@ export async function GET(request: NextRequest) {
       recommendations: {
         useAPI: easyParcelStatus.configured && easyParcelStatus.hasApiKey,
         useCSV: !easyParcelStatus.configured || currentMode.mode === 'csv',
-        note: easyParcelStatus.configured 
+        note: easyParcelStatus.configured
           ? 'EasyParcel API is configured and available'
-          : 'EasyParcel API not configured - CSV mode recommended'
-      }
+          : 'EasyParcel API not configured - CSV mode recommended',
+      },
     });
-
   } catch (error) {
     console.error('Error getting shipping mode:', error);
     return NextResponse.json(
@@ -75,17 +81,23 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
     const { mode, reason } = modeConfigSchema.parse(body);
 
-    console.log(`[Shipping Mode] Mode change to "${mode}" requested by ${session.user.email}`, {
-      previousMode: 'unknown',
-      reason
-    });
+    console.log(
+      `[Shipping Mode] Mode change to "${mode}" requested by ${session.user.email}`,
+      {
+        previousMode: 'unknown',
+        reason,
+      }
+    );
 
     // Update system configuration
     const configuration = {
@@ -93,32 +105,33 @@ export async function POST(request: NextRequest) {
       reason: reason || null,
       updatedAt: new Date().toISOString(),
       updatedBy: session.user.email,
-      updatedById: session.user.id
+      updatedById: session.user.id,
     };
 
     await prisma.systemConfig.upsert({
       where: { key: 'shipping_mode' },
       update: {
         value: JSON.stringify(configuration),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       create: {
         key: 'shipping_mode',
         value: JSON.stringify(configuration),
-        type: 'JSON'
-      }
+        type: 'JSON',
+      },
     });
 
     // Log the mode change
-    console.log(`[Shipping Mode] Successfully changed to "${mode}" by ${session.user.email}`);
+    console.log(
+      `[Shipping Mode] Successfully changed to "${mode}" by ${session.user.email}`
+    );
 
     return NextResponse.json({
       success: true,
       message: `Shipping mode changed to ${mode.toUpperCase()}`,
       configuration,
-      effectiveImmediately: true
+      effectiveImmediately: true,
     });
-
   } catch (error) {
     console.error('Error updating shipping mode:', error);
 
@@ -150,12 +163,17 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Determine automatic mode based on API availability
-    const easyParcelConfigured = !!(process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET);
+    const easyParcelConfigured = !!(
+      process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
+    );
     const automaticMode = easyParcelConfigured ? 'api' : 'csv';
 
     const configuration = {
@@ -164,31 +182,32 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date().toISOString(),
       updatedBy: session.user.email,
       updatedById: session.user.id,
-      automatic: true
+      automatic: true,
     };
 
     await prisma.systemConfig.upsert({
       where: { key: 'shipping_mode' },
       update: {
         value: JSON.stringify(configuration),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       create: {
         key: 'shipping_mode',
         value: JSON.stringify(configuration),
-        type: 'JSON'
-      }
+        type: 'JSON',
+      },
     });
 
-    console.log(`[Shipping Mode] Auto-detected mode: ${automaticMode} by ${session.user.email}`);
+    console.log(
+      `[Shipping Mode] Auto-detected mode: ${automaticMode} by ${session.user.email}`
+    );
 
     return NextResponse.json({
       success: true,
       message: `Shipping mode automatically set to ${automaticMode.toUpperCase()}`,
       configuration,
-      autoDetected: true
+      autoDetected: true,
     });
-
   } catch (error) {
     console.error('Error auto-detecting shipping mode:', error);
     return NextResponse.json(

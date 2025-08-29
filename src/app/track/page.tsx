@@ -309,8 +309,15 @@ export default function TrackingPage() {
             trackingNumber={trackingData.tracking.trackingNumber}
             currentStatus={trackingData.tracking.status}
             statusDescription={trackingData.tracking.statusDescription}
-            estimatedDelivery={trackingData.tracking.estimatedDelivery || trackingData.shipment?.estimatedDelivery}
-            actualDelivery={trackingData.tracking.actualDelivery || trackingData.tracking.deliveredAt || trackingData.shipment?.actualDelivery}
+            estimatedDelivery={
+              trackingData.tracking.estimatedDelivery ||
+              trackingData.shipment?.estimatedDelivery
+            }
+            actualDelivery={
+              trackingData.tracking.actualDelivery ||
+              trackingData.tracking.deliveredAt ||
+              trackingData.shipment?.actualDelivery
+            }
             trackingEvents={trackingData.tracking.events.map(event => ({
               ...event,
               eventCode: event.eventCode || event.status,
@@ -318,29 +325,56 @@ export default function TrackingPage() {
               eventTime: event.eventTime || event.timestamp,
               source: event.source || 'EASYPARCEL',
             }))}
-            courierName={trackingData.tracking.courierName || trackingData.shipment?.courierName}
-            serviceName={trackingData.tracking.serviceName || trackingData.shipment?.serviceName}
-            progress={trackingData.tracking.progress || trackingData.shipment?.progress}
-            isDelivered={trackingData.tracking.isDelivered || trackingData.shipment?.isDelivered || trackingData.tracking.status === 'DELIVERED'}
-            inTransit={trackingData.tracking.inTransit || ['IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(trackingData.tracking.status)}
+            courierName={
+              trackingData.tracking.courierName ||
+              trackingData.shipment?.courierName
+            }
+            serviceName={
+              trackingData.tracking.serviceName ||
+              trackingData.shipment?.serviceName
+            }
+            progress={
+              trackingData.tracking.progress || trackingData.shipment?.progress
+            }
+            isDelivered={
+              trackingData.tracking.isDelivered ||
+              trackingData.shipment?.isDelivered ||
+              trackingData.tracking.status === 'DELIVERED'
+            }
+            inTransit={
+              trackingData.tracking.inTransit ||
+              ['IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(
+                trackingData.tracking.status
+              )
+            }
           />
 
           {/* Delivery Notifications */}
           <DeliveryNotifications
             trackingNumber={trackingData.tracking.trackingNumber}
             currentStatus={trackingData.tracking.status}
-            customerEmail={trackingData.order?.customerName ? `${trackingData.order.customerName.toLowerCase().replace(' ', '.')}@example.com` : undefined}
+            customerEmail={
+              trackingData.order?.customerName
+                ? `${trackingData.order.customerName.toLowerCase().replace(' ', '.')}@example.com`
+                : undefined
+            }
           />
 
           {/* Proof of Delivery */}
-          {(trackingData.tracking.isDelivered || trackingData.shipment?.isDelivered || trackingData.tracking.status === 'DELIVERED') && (
+          {(trackingData.tracking.isDelivered ||
+            trackingData.shipment?.isDelivered ||
+            trackingData.tracking.status === 'DELIVERED') && (
             <ProofOfDelivery
               trackingNumber={trackingData.tracking.trackingNumber}
-              deliveryProof={trackingData.tracking.deliveryProof || trackingData.shipment?.deliveryProof}
+              deliveryProof={
+                trackingData.tracking.deliveryProof ||
+                trackingData.shipment?.deliveryProof
+              }
               customerName={trackingData.order?.customerName}
-              deliveryAddress={trackingData.order?.deliveryAddress ? 
-                `${trackingData.order.deliveryAddress.addressLine1}, ${trackingData.order.deliveryAddress.city}, ${trackingData.order.deliveryAddress.state} ${trackingData.order.deliveryAddress.postalCode}` : 
-                undefined
+              deliveryAddress={
+                trackingData.order?.deliveryAddress
+                  ? `${trackingData.order.deliveryAddress.addressLine1}, ${trackingData.order.deliveryAddress.city}, ${trackingData.order.deliveryAddress.state} ${trackingData.order.deliveryAddress.postalCode}`
+                  : undefined
               }
             />
           )}
@@ -393,27 +427,34 @@ export default function TrackingPage() {
 
               {/* Simple Event List */}
               {trackingData.tracking.events &&
-              trackingData.tracking.events.length > 0 && (
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-700">Recent Events:</p>
-                  {trackingData.tracking.events
-                    .sort(
-                      (a, b) =>
-                        new Date(b.timestamp).getTime() -
-                        new Date(a.timestamp).getTime()
-                    )
-                    .slice(0, 3)
-                    .map((event, index) => (
-                      <div key={index} className="text-sm text-gray-600 border-l-2 border-gray-200 pl-2">
-                        <span className="font-medium">{event.description}</span>
-                        {event.location && <span className="ml-2">- {event.location}</span>}
-                        <div className="text-xs text-gray-400">
-                          {formatDate(event.timestamp, true)}
+                trackingData.tracking.events.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="font-medium text-gray-700">Recent Events:</p>
+                    {trackingData.tracking.events
+                      .sort(
+                        (a, b) =>
+                          new Date(b.timestamp).getTime() -
+                          new Date(a.timestamp).getTime()
+                      )
+                      .slice(0, 3)
+                      .map((event, index) => (
+                        <div
+                          key={index}
+                          className="text-sm text-gray-600 border-l-2 border-gray-200 pl-2"
+                        >
+                          <span className="font-medium">
+                            {event.description}
+                          </span>
+                          {event.location && (
+                            <span className="ml-2">- {event.location}</span>
+                          )}
+                          <div className="text-xs text-gray-400">
+                            {formatDate(event.timestamp, true)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                      ))}
+                  </div>
+                )}
             </CardContent>
           </Card>
 

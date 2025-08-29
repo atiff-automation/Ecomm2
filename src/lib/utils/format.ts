@@ -11,7 +11,7 @@ import config from '@/lib/config/app-config';
 export function formatPhoneNumber(phone: string): string {
   // Remove all non-digit characters
   const digits = phone.replace(/\D/g, '');
-  
+
   // Handle Malaysian phone numbers
   if (digits.startsWith('60')) {
     // International format (+60)
@@ -25,7 +25,7 @@ export function formatPhoneNumber(phone: string): string {
       return `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}`;
     }
   }
-  
+
   // Return original if unable to format
   return phone;
 }
@@ -42,12 +42,14 @@ export function formatPostalCode(postalCode: string): string {
  * Format file size in human readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -109,7 +111,7 @@ export function truncateText(
   if (text.length <= maxLength) {
     return text;
   }
-  
+
   return text.slice(0, maxLength - suffix.length) + suffix;
 }
 
@@ -179,10 +181,7 @@ export function formatNRIC(nric: string): string {
  * Format search query for display
  */
 export function formatSearchQuery(query: string): string {
-  return query
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, 100); // Limit search query length
+  return query.trim().replace(/\s+/g, ' ').slice(0, 100); // Limit search query length
 }
 
 /**
@@ -196,13 +195,13 @@ export function formatRating(
   } = {}
 ): string {
   const { showDecimals = true, maxRating = 5 } = options;
-  
+
   const clampedRating = Math.max(0, Math.min(rating, maxRating));
-  
+
   if (showDecimals) {
     return clampedRating.toFixed(1);
   }
-  
+
   return Math.round(clampedRating).toString();
 }
 
@@ -217,15 +216,19 @@ export function formatList(
   } = {}
 ): string {
   const { conjunction = 'and', locale = 'en-MY' } = options;
-  
-  if (items.length === 0) return '';
-  if (items.length === 1) return items[0];
-  
+
+  if (items.length === 0) {
+    return '';
+  }
+  if (items.length === 1) {
+    return items[0];
+  }
+
   const formatter = new Intl.ListFormat(locale, {
     style: 'long',
     type: conjunction === 'and' ? 'conjunction' : 'disjunction',
   });
-  
+
   return formatter.format(items);
 }
 
@@ -255,17 +258,17 @@ export function formatErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   if (typeof error === 'object' && error !== null) {
     if ('message' in error && typeof error.message === 'string') {
       return error.message;
     }
   }
-  
+
   return 'An unexpected error occurred';
 }
 
@@ -281,11 +284,11 @@ export function formatUnit(
   } = {}
 ): string {
   const { showUnit = true, plural } = options;
-  
+
   if (!showUnit) {
     return formatNumber(value);
   }
-  
-  const displayUnit = value === 1 ? unit : (plural || `${unit}s`);
+
+  const displayUnit = value === 1 ? unit : plural || `${unit}s`;
   return `${formatNumber(value)} ${displayUnit}`;
 }

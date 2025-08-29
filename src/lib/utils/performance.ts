@@ -24,11 +24,11 @@ export class PerformanceTimer {
   stop(): number {
     this.endTime = performance.now();
     const elapsed = this.endTime - this.startTime;
-    
+
     if (config.development.debug.showPerformance) {
       console.log(`⏱️ ${this.label}: ${elapsed.toFixed(2)}ms`);
     }
-    
+
     return elapsed;
   }
 
@@ -49,7 +49,7 @@ export async function measureAsync<T>(
   label?: string
 ): Promise<{ result: T; duration: number }> {
   const timer = new PerformanceTimer(label);
-  
+
   try {
     const result = await fn();
     const duration = timer.stop();
@@ -68,7 +68,7 @@ export function measureSync<T>(
   label?: string
 ): { result: T; duration: number } {
   const timer = new PerformanceTimer(label);
-  
+
   try {
     const result = fn();
     const duration = timer.stop();
@@ -87,7 +87,7 @@ export function debounce<T extends (...args: any[]) => any>(
   delay: number = config.ui.loading.debounceMs
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
-  
+
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
@@ -102,10 +102,10 @@ export function throttle<T extends (...args: any[]) => any>(
   delay: number
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
-  
+
   return (...args: Parameters<T>) => {
     const now = Date.now();
-    
+
     if (now - lastCall >= delay) {
       lastCall = now;
       func(...args);
@@ -121,17 +121,17 @@ export function memoize<T extends (...args: any[]) => any>(
   keyGenerator?: (...args: Parameters<T>) => string
 ): T {
   const cache = new Map<string, ReturnType<T>>();
-  
+
   return ((...args: Parameters<T>): ReturnType<T> => {
     const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
-    
+
     if (cache.has(key)) {
       return cache.get(key)!;
     }
-    
+
     const result = fn(...args);
     cache.set(key, result);
-    
+
     return result;
   }) as T;
 }
@@ -149,13 +149,13 @@ export class LRUCache<K, V> {
 
   get(key: K): V | undefined {
     const value = this.cache.get(key);
-    
+
     if (value !== undefined) {
       // Move to end (most recently used)
       this.cache.delete(key);
       this.cache.set(key, value);
     }
-    
+
     return value;
   }
 
@@ -170,7 +170,7 @@ export class LRUCache<K, V> {
         this.cache.delete(firstKey);
       }
     }
-    
+
     this.cache.set(key, value);
   }
 
@@ -197,7 +197,7 @@ export class LRUCache<K, V> {
 export function lazy<T>(factory: () => T): () => T {
   let cached: T;
   let initialized = false;
-  
+
   return () => {
     if (!initialized) {
       cached = factory();
@@ -252,14 +252,16 @@ export class BatchProcessor<T, R> {
       this.timeout = null;
     }
 
-    if (this.batch.length === 0) return;
+    if (this.batch.length === 0) {
+      return;
+    }
 
     const currentBatch = this.batch.splice(0);
     const currentPromises = this.pendingPromises.splice(0);
 
     try {
       const results = await this.processor(currentBatch);
-      
+
       results.forEach((result, index) => {
         currentPromises[index]?.resolve(result);
       });
@@ -281,18 +283,20 @@ export interface WebVitals {
 }
 
 export function measureWebVitals(): Promise<WebVitals> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const vitals: WebVitals = {};
-    
+
     // This would be implemented with real web vitals measurement
     // For now, we'll use Performance API
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    
+    const navigation = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming;
+
     if (navigation) {
       vitals.TTFB = navigation.responseStart - navigation.requestStart;
       vitals.FCP = navigation.loadEventEnd - navigation.fetchStart;
     }
-    
+
     resolve(vitals);
   });
 }
@@ -362,9 +366,11 @@ export function getMemoryUsage(): {
     return {
       used: memory.usedJSHeapSize,
       total: memory.totalJSHeapSize,
-      percentage: Math.round((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100),
+      percentage: Math.round(
+        (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
+      ),
     };
   }
-  
+
   return null;
 }

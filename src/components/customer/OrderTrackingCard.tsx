@@ -9,18 +9,21 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Package, 
-  Truck, 
-  Clock, 
-  Copy, 
-  ExternalLink, 
+import {
+  Package,
+  Truck,
+  Clock,
+  Copy,
+  ExternalLink,
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyTrackingNumber } from '@/lib/utils/clipboard';
-import { generateTrackingUrl, getCourierInfo } from '@/lib/utils/tracking-links';
+import {
+  generateTrackingUrl,
+  getCourierInfo,
+} from '@/lib/utils/tracking-links';
 
 interface TrackingInfo {
   trackingNumber?: string;
@@ -48,77 +51,87 @@ const getTrackingStatusInfo = (status?: string) => {
       return {
         color: 'bg-green-100 text-green-800 border-green-200',
         icon: CheckCircle,
-        text: 'Delivered'
+        text: 'Delivered',
       };
     case 'out_for_delivery':
       return {
         color: 'bg-blue-100 text-blue-800 border-blue-200',
         icon: Truck,
-        text: 'Out for Delivery'
+        text: 'Out for Delivery',
       };
     case 'in_transit':
       return {
         color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
         icon: Truck,
-        text: 'In Transit'
+        text: 'In Transit',
       };
     case 'picked_up':
       return {
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
         icon: Package,
-        text: 'Picked Up'
+        text: 'Picked Up',
       };
     case 'pending':
     case 'created':
       return {
         color: 'bg-gray-100 text-gray-800 border-gray-200',
         icon: Clock,
-        text: 'Processing'
+        text: 'Processing',
       };
     case 'exception':
     case 'failed':
       return {
         color: 'bg-red-100 text-red-800 border-red-200',
         icon: AlertCircle,
-        text: 'Exception'
+        text: 'Exception',
       };
     default:
       return {
         color: 'bg-gray-100 text-gray-800 border-gray-200',
         icon: Package,
-        text: status || 'Unknown'
+        text: status || 'Unknown',
       };
   }
 };
 
-
-
-export default function OrderTrackingCard({ order, className = '' }: OrderTrackingCardProps) {
+export default function OrderTrackingCard({
+  order,
+  className = '',
+}: OrderTrackingCardProps) {
   const [copying, setCopying] = useState(false);
-  
+
   const { shipment } = order;
   const hasTracking = shipment?.trackingNumber;
   const statusInfo = getTrackingStatusInfo(shipment?.status);
   const StatusIcon = statusInfo.icon;
 
   const handleCopyTracking = async () => {
-    if (!shipment?.trackingNumber) return;
-    
+    if (!shipment?.trackingNumber) {
+      return;
+    }
+
     setCopying(true);
     await copyTrackingNumber(shipment.trackingNumber);
     setCopying(false);
   };
 
   const handleExternalTracking = () => {
-    if (!shipment?.trackingNumber || !shipment?.courierName) return;
-    
-    const url = generateTrackingUrl(shipment.courierName, shipment.trackingNumber);
+    if (!shipment?.trackingNumber || !shipment?.courierName) {
+      return;
+    }
+
+    const url = generateTrackingUrl(
+      shipment.courierName,
+      shipment.trackingNumber
+    );
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    
+    if (!dateString) {
+      return '';
+    }
+
     return new Date(dateString).toLocaleDateString('en-MY', {
       month: 'short',
       day: 'numeric',
@@ -158,7 +171,7 @@ export default function OrderTrackingCard({ order, className = '' }: OrderTracki
         <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
           {shipment.trackingNumber}
         </code>
-        
+
         {/* Action Buttons */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <Button
@@ -171,7 +184,7 @@ export default function OrderTrackingCard({ order, className = '' }: OrderTracki
           >
             <Copy className="h-3 w-3" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"

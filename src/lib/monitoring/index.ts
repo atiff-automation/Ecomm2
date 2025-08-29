@@ -5,13 +5,17 @@
 
 // Core monitoring
 export { errorMonitor, useErrorMonitor } from './error-monitor';
-export { GlobalErrorBoundary, withErrorBoundary, useErrorReporter } from '@/components/error/GlobalErrorBoundary';
+export {
+  GlobalErrorBoundary,
+  withErrorBoundary,
+  useErrorReporter,
+} from '@/components/error/GlobalErrorBoundary';
 
 // Types
-export type { 
-  ErrorReport, 
-  PerformanceMetrics, 
-  MonitoringConfig 
+export type {
+  ErrorReport,
+  PerformanceMetrics,
+  MonitoringConfig,
 } from './error-monitor';
 
 // Integration helpers

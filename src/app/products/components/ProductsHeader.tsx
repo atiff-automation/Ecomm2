@@ -30,9 +30,10 @@ export function ProductsHeader({
     title = categoryName;
     description = `${totalCount} product${totalCount !== 1 ? 's' : ''} in this category`;
   } else {
-    description = totalCount > 0 
-      ? `${totalCount} products available` 
-      : 'No products available';
+    description =
+      totalCount > 0
+        ? `${totalCount} products available`
+        : 'No products available';
   }
 
   return (
@@ -40,7 +41,7 @@ export function ProductsHeader({
       <div>
         <h1 className="text-3xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{description}</p>
-        
+
         {/* Structured data for search engines */}
         {searchTerm && (
           <script
@@ -49,10 +50,10 @@ export function ProductsHeader({
               __html: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'SearchResultsPage',
-                'mainEntity': {
+                mainEntity: {
                   '@type': 'ItemList',
-                  'numberOfItems': totalCount,
-                  'name': `Search results for "${searchTerm}"`,
+                  numberOfItems: totalCount,
+                  name: `Search results for "${searchTerm}"`,
                 },
               }),
             }}

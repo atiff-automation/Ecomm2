@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // Check admin permissions
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -40,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (action === 'status') {
       // Get webhook statistics
       const stats = await getWebhookStatistics();
-      
+
       return NextResponse.json({
         webhook: {
           configured: !!process.env.EASYPARCEL_WEBHOOK_SECRET,
@@ -50,8 +53,13 @@ export async function GET(request: NextRequest) {
         statistics: stats,
         configuration: {
           supportedEvents: [
-            'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 
-            'DELIVERED', 'DELIVERY_ATTEMPTED', 'CANCELLED', 'FAILED'
+            'PICKED_UP',
+            'IN_TRANSIT',
+            'OUT_FOR_DELIVERY',
+            'DELIVERED',
+            'DELIVERY_ATTEMPTED',
+            'CANCELLED',
+            'FAILED',
           ],
           currentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/easyparcel-tracking`,
         },
@@ -105,10 +113,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: 'Invalid action. Use ?action=status, ?action=logs, or ?action=test' },
+      {
+        message:
+          'Invalid action. Use ?action=status, ?action=logs, or ?action=test',
+      },
       { status: 400 }
     );
-
   } catch (error) {
     console.error('❌ Webhook management error:', error);
     return NextResponse.json(
@@ -126,7 +136,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // Check admin permissions
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -182,7 +195,6 @@ export async function POST(request: NextRequest) {
           },
           easyParcelResponse: webhookResult,
         });
-
       } catch (error) {
         console.error('❌ EasyParcel webhook configuration failed:', error);
         return NextResponse.json(
@@ -206,14 +218,17 @@ export async function POST(request: NextRequest) {
       };
 
       try {
-        const testResult = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/easyparcel-tracking`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'EasyParcel-Test-Webhook',
-          },
-          body: JSON.stringify(testPayload),
-        });
+        const testResult = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/easyparcel-tracking`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'EasyParcel-Test-Webhook',
+            },
+            body: JSON.stringify(testPayload),
+          }
+        );
 
         const testResponse = await testResult.json();
 
@@ -236,14 +251,15 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: testResult.ok,
-          message: testResult.ok ? 'Webhook test successful' : 'Webhook test failed',
+          message: testResult.ok
+            ? 'Webhook test successful'
+            : 'Webhook test failed',
           testResult: {
             httpStatus: testResult.status,
             response: testResponse,
             payload: testPayload,
           },
         });
-
       } catch (error) {
         console.error('❌ Webhook test failed:', error);
         return NextResponse.json(
@@ -257,7 +273,6 @@ export async function POST(request: NextRequest) {
       { message: 'Invalid action. Use "configure" or "test"' },
       { status: 400 }
     );
-
   } catch (error) {
     console.error('❌ Webhook configuration error:', error);
 
@@ -289,7 +304,10 @@ export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // Check admin permissions
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -325,7 +343,6 @@ export async function DELETE(request: NextRequest) {
         message: 'Webhook disabled successfully',
         disableResult,
       });
-
     } catch (error) {
       console.error('❌ EasyParcel webhook disable failed:', error);
       return NextResponse.json(
@@ -333,7 +350,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
   } catch (error) {
     console.error('❌ Webhook disable error:', error);
     return NextResponse.json(
@@ -353,57 +369,52 @@ async function getWebhookStatistics() {
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const [
-    total24h,
-    total7days,
-    totalAllTime,
-    recentEvents,
-    statusBreakdown
-  ] = await Promise.all([
-    // Webhooks in last 24 hours
-    prisma.auditLog.count({
-      where: {
-        action: 'WEBHOOK_RECEIVED',
-        createdAt: { gte: last24Hours },
-      },
-    }),
+  const [total24h, total7days, totalAllTime, recentEvents, statusBreakdown] =
+    await Promise.all([
+      // Webhooks in last 24 hours
+      prisma.auditLog.count({
+        where: {
+          action: 'WEBHOOK_RECEIVED',
+          createdAt: { gte: last24Hours },
+        },
+      }),
 
-    // Webhooks in last 7 days
-    prisma.auditLog.count({
-      where: {
-        action: 'WEBHOOK_RECEIVED',
-        createdAt: { gte: last7Days },
-      },
-    }),
+      // Webhooks in last 7 days
+      prisma.auditLog.count({
+        where: {
+          action: 'WEBHOOK_RECEIVED',
+          createdAt: { gte: last7Days },
+        },
+      }),
 
-    // Total webhooks all time
-    prisma.auditLog.count({
-      where: { action: 'WEBHOOK_RECEIVED' },
-    }),
+      // Total webhooks all time
+      prisma.auditLog.count({
+        where: { action: 'WEBHOOK_RECEIVED' },
+      }),
 
-    // Recent webhook events
-    prisma.auditLog.findMany({
-      where: { action: 'WEBHOOK_RECEIVED' },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      select: {
-        createdAt: true,
-        details: true,
-      },
-    }),
+      // Recent webhook events
+      prisma.auditLog.findMany({
+        where: { action: 'WEBHOOK_RECEIVED' },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          createdAt: true,
+          details: true,
+        },
+      }),
 
-    // Status breakdown
-    prisma.shipmentTracking.groupBy({
-      by: ['eventCode'],
-      where: {
-        createdAt: { gte: last7Days },
-        source: 'EASYPARCEL',
-      },
-      _count: { eventCode: true },
-      orderBy: { _count: { eventCode: 'desc' } },
-      take: 10,
-    }),
-  ]);
+      // Status breakdown
+      prisma.shipmentTracking.groupBy({
+        by: ['eventCode'],
+        where: {
+          createdAt: { gte: last7Days },
+          source: 'EASYPARCEL',
+        },
+        _count: { eventCode: true },
+        orderBy: { _count: { eventCode: 'desc' } },
+        take: 10,
+      }),
+    ]);
 
   return {
     counts: {
@@ -435,7 +446,7 @@ async function getWebhookStatistics() {
 async function testWebhookEndpoint() {
   try {
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/easyparcel-tracking`;
-    
+
     // Test GET endpoint for verification
     const response = await fetch(webhookUrl, {
       method: 'GET',
@@ -451,7 +462,6 @@ async function testWebhookEndpoint() {
       response: responseData,
       timestamp: new Date().toISOString(),
     };
-
   } catch (error) {
     return {
       success: false,

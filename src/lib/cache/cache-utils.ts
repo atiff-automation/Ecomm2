@@ -1,13 +1,19 @@
 /**
  * Cache Utilities - Production-Grade Cache Management System
  * Centralized utilities for Next.js 14 App Router cache operations
- * 
+ *
  * This module provides systematic, reusable cache management functions
  * following DRY principles and centralized architecture approach.
  */
 
 import { revalidateTag, revalidatePath } from 'next/cache';
-import { CACHE_TAGS, CacheInvalidationStrategies, CacheTTLConfig, CacheTagUtils, CacheTagGenerators } from './tag-strategy';
+import {
+  CACHE_TAGS,
+  CacheInvalidationStrategies,
+  CacheTTLConfig,
+  CacheTagUtils,
+  CacheTagGenerators,
+} from './tag-strategy';
 
 /**
  * Cache Operation Results
@@ -48,7 +54,7 @@ export async function cacheFetch<T = unknown>(
 
   // Validate tags
   const validatedTags = tags.filter(tag => CacheTagUtils.isValidTag(tag));
-  
+
   // Setup Next.js cache configuration
   const nextConfig = {
     revalidate: revalidate ?? ttl ?? CacheTTLConfig.PRODUCTS,
@@ -57,7 +63,10 @@ export async function cacheFetch<T = unknown>(
   };
 
   // Convert relative URLs to absolute URLs for fetch
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:3000';
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.API_URL ||
+    'http://localhost:3000';
   const fullUrl = url.startsWith('/') ? `${baseUrl}${url}` : url;
 
   try {
@@ -140,10 +149,7 @@ export async function fetchProducts(
 export async function fetchCategories(
   options: Omit<CacheFetchOptions, 'tags'> = {}
 ): Promise<unknown> {
-  const tags: string[] = [
-    CACHE_TAGS.CATEGORIES,
-    CACHE_TAGS.API_CATEGORIES,
-  ];
+  const tags: string[] = [CACHE_TAGS.CATEGORIES, CACHE_TAGS.API_CATEGORIES];
 
   return cacheFetch('/api/categories', {
     ...options,
@@ -175,7 +181,9 @@ export async function invalidateCacheTags(
       revalidateTag(tag);
     }
 
-    console.log(`✅ Cache invalidated successfully: ${validatedTags.length} tags`);
+    console.log(
+      `✅ Cache invalidated successfully: ${validatedTags.length} tags`
+    );
 
     return {
       success: true,
@@ -184,8 +192,12 @@ export async function invalidateCacheTags(
       timestamp,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`❌ Cache invalidation failed [${context || 'Unknown'}]:`, error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error(
+      `❌ Cache invalidation failed [${context || 'Unknown'}]:`,
+      error
+    );
 
     return {
       success: false,
@@ -226,8 +238,12 @@ export async function invalidateCachePaths(
       timestamp,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`❌ Path invalidation failed [${context || 'Unknown'}]:`, error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error(
+      `❌ Path invalidation failed [${context || 'Unknown'}]:`,
+      error
+    );
 
     return {
       success: false,
@@ -251,12 +267,28 @@ export async function invalidateCache(
 
   try {
     const [tagResult, pathResult] = await Promise.all([
-      tags.length > 0 ? invalidateCacheTags(tags, context) : Promise.resolve({ success: true, tagsInvalidated: [], pathsInvalidated: [], timestamp, error: undefined } as CacheOperationResult),
-      paths.length > 0 ? invalidateCachePaths(paths, context) : Promise.resolve({ success: true, tagsInvalidated: [], pathsInvalidated: [], timestamp, error: undefined } as CacheOperationResult),
+      tags.length > 0
+        ? invalidateCacheTags(tags, context)
+        : Promise.resolve({
+            success: true,
+            tagsInvalidated: [],
+            pathsInvalidated: [],
+            timestamp,
+            error: undefined,
+          } as CacheOperationResult),
+      paths.length > 0
+        ? invalidateCachePaths(paths, context)
+        : Promise.resolve({
+            success: true,
+            tagsInvalidated: [],
+            pathsInvalidated: [],
+            timestamp,
+            error: undefined,
+          } as CacheOperationResult),
     ]);
 
     const success = tagResult.success && pathResult.success;
-    const error = !success ? (tagResult.error || pathResult.error) : undefined;
+    const error = !success ? tagResult.error || pathResult.error : undefined;
 
     return {
       success,
@@ -266,8 +298,12 @@ export async function invalidateCache(
       timestamp,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`❌ Combined cache invalidation failed [${context || 'Unknown'}]:`, error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error(
+      `❌ Combined cache invalidation failed [${context || 'Unknown'}]:`,
+      error
+    );
 
     return {
       success: false,
@@ -292,8 +328,15 @@ export const CacheInvalidation = {
     return invalidateCache(tags, paths, context);
   },
 
-  async onProductUpdate(productId: string, categoryIds: string[], context = 'Product Update') {
-    const tags = CacheInvalidationStrategies.onProductUpdate(productId, categoryIds);
+  async onProductUpdate(
+    productId: string,
+    categoryIds: string[],
+    context = 'Product Update'
+  ) {
+    const tags = CacheInvalidationStrategies.onProductUpdate(
+      productId,
+      categoryIds
+    );
     const paths = [
       '/products',
       `/products/${productId}`,
@@ -303,8 +346,15 @@ export const CacheInvalidation = {
     return invalidateCache(tags, paths, context);
   },
 
-  async onProductDelete(productId: string, categoryIds: string[], context = 'Product Delete') {
-    const tags = CacheInvalidationStrategies.onProductDelete(productId, categoryIds);
+  async onProductDelete(
+    productId: string,
+    categoryIds: string[],
+    context = 'Product Delete'
+  ) {
+    const tags = CacheInvalidationStrategies.onProductDelete(
+      productId,
+      categoryIds
+    );
     const paths = [
       '/products',
       `/products/${productId}`,
@@ -314,7 +364,10 @@ export const CacheInvalidation = {
     return invalidateCache(tags, paths, context);
   },
 
-  async onProductImageUpdate(productId: string, context = 'Product Image Update') {
+  async onProductImageUpdate(
+    productId: string,
+    context = 'Product Image Update'
+  ) {
     const tags = CacheInvalidationStrategies.onProductImageUpdate(productId);
     const paths = ['/products', `/products/${productId}`];
     return invalidateCache(tags, paths, context);
@@ -331,13 +384,23 @@ export const CacheInvalidation = {
 
   async onCategoryUpdate(categoryId: string, context = 'Category Update') {
     const tags = CacheInvalidationStrategies.onCategoryUpdate(categoryId);
-    const paths = ['/products', '/categories', `/categories/${categoryId}`, '/admin/categories'];
+    const paths = [
+      '/products',
+      '/categories',
+      `/categories/${categoryId}`,
+      '/admin/categories',
+    ];
     return invalidateCache(tags, paths, context);
   },
 
   async onCategoryDelete(categoryId: string, context = 'Category Delete') {
     const tags = CacheInvalidationStrategies.onCategoryDelete(categoryId);
-    const paths = ['/products', '/categories', `/categories/${categoryId}`, '/admin/categories'];
+    const paths = [
+      '/products',
+      '/categories',
+      `/categories/${categoryId}`,
+      '/admin/categories',
+    ];
     return invalidateCache(tags, paths, context);
   },
 
@@ -350,14 +413,28 @@ export const CacheInvalidation = {
     return invalidateCache(tags, paths, context);
   },
 
-  async onReviewUpdate(productId: string, reviewId: string, context = 'Review Update') {
-    const tags = CacheInvalidationStrategies.onReviewUpdate(productId, reviewId);
+  async onReviewUpdate(
+    productId: string,
+    reviewId: string,
+    context = 'Review Update'
+  ) {
+    const tags = CacheInvalidationStrategies.onReviewUpdate(
+      productId,
+      reviewId
+    );
     const paths = [`/products/${productId}`, '/admin/reviews'];
     return invalidateCache(tags, paths, context);
   },
 
-  async onReviewDelete(productId: string, reviewId: string, context = 'Review Delete') {
-    const tags = CacheInvalidationStrategies.onReviewDelete(productId, reviewId);
+  async onReviewDelete(
+    productId: string,
+    reviewId: string,
+    context = 'Review Delete'
+  ) {
+    const tags = CacheInvalidationStrategies.onReviewDelete(
+      productId,
+      reviewId
+    );
     const paths = [`/products/${productId}`, '/admin/reviews'];
     return invalidateCache(tags, paths, context);
   },
@@ -365,13 +442,21 @@ export const CacheInvalidation = {
   /**
    * Order operations
    */
-  async onOrderCreate(userId: string, productIds: string[], context = 'Order Create') {
+  async onOrderCreate(
+    userId: string,
+    productIds: string[],
+    context = 'Order Create'
+  ) {
     const tags = CacheInvalidationStrategies.onOrderCreate(userId, productIds);
     const paths = ['/admin/orders', `/profile/orders`];
     return invalidateCache(tags, paths, context);
   },
 
-  async onOrderUpdate(orderId: string, userId: string, context = 'Order Update') {
+  async onOrderUpdate(
+    orderId: string,
+    userId: string,
+    context = 'Order Update'
+  ) {
     const tags = CacheInvalidationStrategies.onOrderUpdate(orderId, userId);
     const paths = ['/admin/orders', `/profile/orders`, `/orders/${orderId}`];
     return invalidateCache(tags, paths, context);
@@ -389,8 +474,15 @@ export const CacheInvalidation = {
   /**
    * Bulk operations
    */
-  async onBulkProductUpdate(productIds: string[], categoryIds: string[], context = 'Bulk Product Update') {
-    const tags = CacheInvalidationStrategies.onBulkProductUpdate(productIds, categoryIds);
+  async onBulkProductUpdate(
+    productIds: string[],
+    categoryIds: string[],
+    context = 'Bulk Product Update'
+  ) {
+    const tags = CacheInvalidationStrategies.onBulkProductUpdate(
+      productIds,
+      categoryIds
+    );
     const paths = [
       '/products',
       '/admin/products',
@@ -406,7 +498,10 @@ export const CacheInvalidation = {
   async onSystemCacheClear(context = 'System Cache Clear') {
     const tags = CacheInvalidationStrategies.onSystemCacheClear();
     const paths = ['/', '/products', '/categories', '/admin'];
-    console.warn('🚨 SYSTEM-WIDE CACHE CLEAR INITIATED', { context, timestamp: new Date().toISOString() });
+    console.warn('🚨 SYSTEM-WIDE CACHE CLEAR INITIATED', {
+      context,
+      timestamp: new Date().toISOString(),
+    });
     return invalidateCache(tags, paths, context);
   },
 };
@@ -449,7 +544,7 @@ export const CacheMonitoring = {
       ttlConfig: CacheTTLConfig,
       systemStatus: 'operational',
     };
-    
+
     console.log('📋 Cache Health Report:', report);
     return report;
   },
@@ -482,7 +577,7 @@ export const CacheDebug = {
    */
   validateCacheSetup() {
     const errors: string[] = [];
-    
+
     // Check if required environment variables exist
     if (!process.env.NEXT_PUBLIC_API_URL && !process.env.API_URL) {
       errors.push('Missing API URL configuration');

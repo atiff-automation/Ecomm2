@@ -12,7 +12,12 @@ import { TaxInclusiveShippingCalculator } from '@/lib/shipping/tax-inclusive-shi
 import { z } from 'zod';
 
 const benchmarkRequestSchema = z.object({
-  testType: z.enum(['rate_calculation', 'tax_calculation', 'concurrent_requests', 'load_test']),
+  testType: z.enum([
+    'rate_calculation',
+    'tax_calculation',
+    'concurrent_requests',
+    'load_test',
+  ]),
   iterations: z.number().min(1).max(100).optional().default(10),
   concurrency: z.number().min(1).max(20).optional().default(5),
   includeDetailedMetrics: z.boolean().optional().default(false),
@@ -35,35 +40,54 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { testType, iterations, concurrency, includeDetailedMetrics } = benchmarkRequestSchema.parse(body);
+    const { testType, iterations, concurrency, includeDetailedMetrics } =
+      benchmarkRequestSchema.parse(body);
 
-    console.log(`[EasyParcel Benchmark] Starting ${testType} with ${iterations} iterations...`);
+    console.log(
+      `[EasyParcel Benchmark] Starting ${testType} with ${iterations} iterations...`
+    );
     const startTime = Date.now();
 
     let benchmarkResult: BenchmarkResult;
 
     switch (testType) {
       case 'rate_calculation':
-        benchmarkResult = await benchmarkRateCalculation(iterations, includeDetailedMetrics);
+        benchmarkResult = await benchmarkRateCalculation(
+          iterations,
+          includeDetailedMetrics
+        );
         break;
-      
+
       case 'tax_calculation':
-        benchmarkResult = await benchmarkTaxCalculation(iterations, includeDetailedMetrics);
+        benchmarkResult = await benchmarkTaxCalculation(
+          iterations,
+          includeDetailedMetrics
+        );
         break;
-      
+
       case 'concurrent_requests':
-        benchmarkResult = await benchmarkConcurrentRequests(concurrency, includeDetailedMetrics);
+        benchmarkResult = await benchmarkConcurrentRequests(
+          concurrency,
+          includeDetailedMetrics
+        );
         break;
-      
+
       case 'load_test':
-        benchmarkResult = await benchmarkLoadTest(iterations, concurrency, includeDetailedMetrics);
+        benchmarkResult = await benchmarkLoadTest(
+          iterations,
+          concurrency,
+          includeDetailedMetrics
+        );
         break;
-      
+
       default:
         return NextResponse.json(
           { error: 'Invalid test type specified' },
@@ -72,24 +96,30 @@ export async function POST(request: NextRequest) {
     }
 
     const totalExecutionTime = Date.now() - startTime;
-    console.log(`[EasyParcel Benchmark] ${testType} completed in ${totalExecutionTime}ms`);
+    console.log(
+      `[EasyParcel Benchmark] ${testType} completed in ${totalExecutionTime}ms`
+    );
 
     // Performance analysis
     const analysis = {
       performance: 'good' as 'excellent' | 'good' | 'fair' | 'poor',
       bottlenecks: [] as string[],
-      recommendations: [] as string[]
+      recommendations: [] as string[],
     };
 
     // Analyze performance
     if (benchmarkResult.averageDuration > 5000) {
       analysis.performance = 'poor';
       analysis.bottlenecks.push('High average response time');
-      analysis.recommendations.push('Check network connectivity and API endpoint performance');
+      analysis.recommendations.push(
+        'Check network connectivity and API endpoint performance'
+      );
     } else if (benchmarkResult.averageDuration > 2000) {
       analysis.performance = 'fair';
       analysis.bottlenecks.push('Moderate response times');
-      analysis.recommendations.push('Consider implementing caching for frequently accessed data');
+      analysis.recommendations.push(
+        'Consider implementing caching for frequently accessed data'
+      );
     } else if (benchmarkResult.averageDuration < 500) {
       analysis.performance = 'excellent';
     }
@@ -101,7 +131,9 @@ export async function POST(request: NextRequest) {
 
     if (benchmarkResult.requestsPerSecond < 1) {
       analysis.bottlenecks.push('Low throughput');
-      analysis.recommendations.push('Optimize request handling and consider connection pooling');
+      analysis.recommendations.push(
+        'Optimize request handling and consider connection pooling'
+      );
     }
 
     // System metrics
@@ -111,10 +143,10 @@ export async function POST(request: NextRequest) {
       memory: {
         used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-        rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
       },
       uptime: Math.round(process.uptime()),
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
     };
 
     return NextResponse.json({
@@ -128,28 +160,27 @@ export async function POST(request: NextRequest) {
         totalExecutionTime,
         environment: {
           sandbox: process.env.EASYPARCEL_SANDBOX === 'true',
-          hasApiKey: !!process.env.EASYPARCEL_API_KEY
-        }
-      }
+          hasApiKey: !!process.env.EASYPARCEL_API_KEY,
+        },
+      },
     });
-
   } catch (error) {
     console.error('Error running EasyParcel benchmark:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          error: 'Invalid benchmark parameters', 
-          details: error.errors 
+        {
+          error: 'Invalid benchmark parameters',
+          details: error.errors,
         },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to run benchmark test',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -160,7 +191,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -168,32 +202,34 @@ export async function GET(request: NextRequest) {
       {
         testType: 'rate_calculation',
         name: 'Rate Calculation Performance',
-        description: 'Benchmark shipping rate calculation speed and reliability',
+        description:
+          'Benchmark shipping rate calculation speed and reliability',
         estimatedDuration: '30-120 seconds',
-        defaultIterations: 10
+        defaultIterations: 10,
       },
       {
         testType: 'tax_calculation',
         name: 'Tax Calculation Performance',
         description: 'Benchmark Malaysian tax calculation performance',
         estimatedDuration: '15-60 seconds',
-        defaultIterations: 20
+        defaultIterations: 20,
       },
       {
         testType: 'concurrent_requests',
         name: 'Concurrent Request Handling',
         description: 'Test API performance under concurrent load',
         estimatedDuration: '60-180 seconds',
-        defaultConcurrency: 5
+        defaultConcurrency: 5,
       },
       {
         testType: 'load_test',
         name: 'Load Testing',
-        description: 'Comprehensive load test with multiple concurrent requests',
+        description:
+          'Comprehensive load test with multiple concurrent requests',
         estimatedDuration: '120-300 seconds',
         defaultIterations: 50,
-        defaultConcurrency: 10
-      }
+        defaultConcurrency: 10,
+      },
     ];
 
     return NextResponse.json({
@@ -203,10 +239,9 @@ export async function GET(request: NextRequest) {
         nodeVersion: process.version,
         platform: process.platform,
         environment: process.env.NODE_ENV,
-        sandboxMode: process.env.EASYPARCEL_SANDBOX === 'true'
-      }
+        sandboxMode: process.env.EASYPARCEL_SANDBOX === 'true',
+      },
     });
-
   } catch (error) {
     console.error('Error getting benchmark info:', error);
     return NextResponse.json(
@@ -219,7 +254,10 @@ export async function GET(request: NextRequest) {
 /**
  * Benchmark rate calculation performance
  */
-async function benchmarkRateCalculation(iterations: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
+async function benchmarkRateCalculation(
+  iterations: number,
+  includeDetailedMetrics: boolean
+): Promise<BenchmarkResult> {
   const durations: number[] = [];
   const errors: string[] = [];
   const detailedMetrics: any[] = [];
@@ -229,20 +267,20 @@ async function benchmarkRateCalculation(iterations: number, includeDetailedMetri
       postcode: '50000',
       state: 'KUL',
       city: 'Kuala Lumpur',
-      country: 'MY'
+      country: 'MY',
     },
     delivery_address: {
       postcode: '40000',
       state: 'SEL',
       city: 'Shah Alam',
-      country: 'MY'
+      country: 'MY',
     },
     parcel: {
       weight: 1.0,
       content: 'Test package',
       value: 100,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   };
 
   for (let i = 0; i < iterations; i++) {
@@ -257,13 +295,15 @@ async function benchmarkRateCalculation(iterations: number, includeDetailedMetri
           iteration: i + 1,
           duration,
           rateCount: result.rates?.length || 0,
-          success: true
+          success: true,
         });
       }
     } catch (error) {
       const duration = Date.now() - startTime;
       durations.push(duration);
-      errors.push(`Iteration ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      errors.push(
+        `Iteration ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
 
       if (includeDetailedMetrics) {
         detailedMetrics.push({
@@ -271,19 +311,28 @@ async function benchmarkRateCalculation(iterations: number, includeDetailedMetri
           duration,
           rateCount: 0,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
   }
 
-  return calculateBenchmarkStats('rate_calculation', iterations, durations, errors, detailedMetrics);
+  return calculateBenchmarkStats(
+    'rate_calculation',
+    iterations,
+    durations,
+    errors,
+    detailedMetrics
+  );
 }
 
 /**
  * Benchmark tax calculation performance
  */
-async function benchmarkTaxCalculation(iterations: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
+async function benchmarkTaxCalculation(
+  iterations: number,
+  includeDetailedMetrics: boolean
+): Promise<BenchmarkResult> {
   const taxCalculator = new TaxInclusiveShippingCalculator();
   const durations: number[] = [];
   const errors: string[] = [];
@@ -293,24 +342,25 @@ async function benchmarkTaxCalculation(iterations: number, includeDetailedMetric
     pickupAddress: {
       postcode: '50000',
       state: 'KUL',
-      city: 'Kuala Lumpur'
+      city: 'Kuala Lumpur',
     },
     deliveryAddress: {
       postcode: '40000',
       state: 'SEL',
-      city: 'Shah Alam'
+      city: 'Shah Alam',
     },
     parcel: {
       weight: 1.0,
-      value: 100
+      value: 100,
     },
-    displayTaxInclusive: true
+    displayTaxInclusive: true,
   };
 
   for (let i = 0; i < iterations; i++) {
     const startTime = Date.now();
     try {
-      const result = await taxCalculator.calculateTaxInclusiveRates(testRequest);
+      const result =
+        await taxCalculator.calculateTaxInclusiveRates(testRequest);
       const duration = Date.now() - startTime;
       durations.push(duration);
 
@@ -319,13 +369,15 @@ async function benchmarkTaxCalculation(iterations: number, includeDetailedMetric
           iteration: i + 1,
           duration,
           rateCount: result.length,
-          success: true
+          success: true,
         });
       }
     } catch (error) {
       const duration = Date.now() - startTime;
       durations.push(duration);
-      errors.push(`Iteration ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      errors.push(
+        `Iteration ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
 
       if (includeDetailedMetrics) {
         detailedMetrics.push({
@@ -333,19 +385,28 @@ async function benchmarkTaxCalculation(iterations: number, includeDetailedMetric
           duration,
           rateCount: 0,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
   }
 
-  return calculateBenchmarkStats('tax_calculation', iterations, durations, errors, detailedMetrics);
+  return calculateBenchmarkStats(
+    'tax_calculation',
+    iterations,
+    durations,
+    errors,
+    detailedMetrics
+  );
 }
 
 /**
  * Benchmark concurrent request handling
  */
-async function benchmarkConcurrentRequests(concurrency: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
+async function benchmarkConcurrentRequests(
+  concurrency: number,
+  includeDetailedMetrics: boolean
+): Promise<BenchmarkResult> {
   const durations: number[] = [];
   const errors: string[] = [];
   const detailedMetrics: any[] = [];
@@ -355,63 +416,77 @@ async function benchmarkConcurrentRequests(concurrency: number, includeDetailedM
       postcode: '50000',
       state: 'KUL',
       city: 'Kuala Lumpur',
-      country: 'MY'
+      country: 'MY',
     },
     delivery_address: {
       postcode: '40000',
       state: 'SEL',
       city: 'Shah Alam',
-      country: 'MY'
+      country: 'MY',
     },
     parcel: {
       weight: 1.0,
       content: 'Test package',
       value: 100,
-      quantity: 1
-    }
+      quantity: 1,
+    },
   };
 
-  const promises = Array(concurrency).fill(null).map(async (_, index) => {
-    const startTime = Date.now();
-    try {
-      const result = await easyParcelService.calculateRates(testRequest);
-      const duration = Date.now() - startTime;
-      durations.push(duration);
+  const promises = Array(concurrency)
+    .fill(null)
+    .map(async (_, index) => {
+      const startTime = Date.now();
+      try {
+        const result = await easyParcelService.calculateRates(testRequest);
+        const duration = Date.now() - startTime;
+        durations.push(duration);
 
-      if (includeDetailedMetrics) {
-        detailedMetrics.push({
-          requestId: index + 1,
-          duration,
-          rateCount: result.rates?.length || 0,
-          success: true
-        });
-      }
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      durations.push(duration);
-      errors.push(`Request ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        if (includeDetailedMetrics) {
+          detailedMetrics.push({
+            requestId: index + 1,
+            duration,
+            rateCount: result.rates?.length || 0,
+            success: true,
+          });
+        }
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        durations.push(duration);
+        errors.push(
+          `Request ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
 
-      if (includeDetailedMetrics) {
-        detailedMetrics.push({
-          requestId: index + 1,
-          duration,
-          rateCount: 0,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
+        if (includeDetailedMetrics) {
+          detailedMetrics.push({
+            requestId: index + 1,
+            duration,
+            rateCount: 0,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
       }
-    }
-  });
+    });
 
   await Promise.all(promises);
 
-  return calculateBenchmarkStats('concurrent_requests', concurrency, durations, errors, detailedMetrics);
+  return calculateBenchmarkStats(
+    'concurrent_requests',
+    concurrency,
+    durations,
+    errors,
+    detailedMetrics
+  );
 }
 
 /**
  * Benchmark load testing
  */
-async function benchmarkLoadTest(iterations: number, concurrency: number, includeDetailedMetrics: boolean): Promise<BenchmarkResult> {
+async function benchmarkLoadTest(
+  iterations: number,
+  concurrency: number,
+  includeDetailedMetrics: boolean
+): Promise<BenchmarkResult> {
   const durations: number[] = [];
   const errors: string[] = [];
   const detailedMetrics: any[] = [];
@@ -419,22 +494,35 @@ async function benchmarkLoadTest(iterations: number, concurrency: number, includ
   const batches = Math.ceil(iterations / concurrency);
 
   for (let batch = 0; batch < batches; batch++) {
-    const batchSize = Math.min(concurrency, iterations - (batch * concurrency));
-    const batchResult = await benchmarkConcurrentRequests(batchSize, includeDetailedMetrics);
-    
-    durations.push(...batchResult.detailedMetrics?.map(m => m.duration) || []);
+    const batchSize = Math.min(concurrency, iterations - batch * concurrency);
+    const batchResult = await benchmarkConcurrentRequests(
+      batchSize,
+      includeDetailedMetrics
+    );
+
+    durations.push(
+      ...(batchResult.detailedMetrics?.map(m => m.duration) || [])
+    );
     errors.push(...batchResult.errors);
-    
+
     if (includeDetailedMetrics && batchResult.detailedMetrics) {
-      detailedMetrics.push(...batchResult.detailedMetrics.map(m => ({
-        ...m,
-        batch: batch + 1,
-        requestId: `${batch + 1}-${m.requestId}`
-      })));
+      detailedMetrics.push(
+        ...batchResult.detailedMetrics.map(m => ({
+          ...m,
+          batch: batch + 1,
+          requestId: `${batch + 1}-${m.requestId}`,
+        }))
+      );
     }
   }
 
-  return calculateBenchmarkStats('load_test', iterations, durations, errors, detailedMetrics);
+  return calculateBenchmarkStats(
+    'load_test',
+    iterations,
+    durations,
+    errors,
+    detailedMetrics
+  );
 }
 
 /**
@@ -449,11 +537,14 @@ function calculateBenchmarkStats(
 ): BenchmarkResult {
   const successfulRequests = durations.length - errors.length;
   const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
-  const averageDuration = durations.length > 0 ? totalDuration / durations.length : 0;
+  const averageDuration =
+    durations.length > 0 ? totalDuration / durations.length : 0;
   const minDuration = durations.length > 0 ? Math.min(...durations) : 0;
   const maxDuration = durations.length > 0 ? Math.max(...durations) : 0;
-  const successRate = iterations > 0 ? (successfulRequests / iterations) * 100 : 0;
-  const requestsPerSecond = totalDuration > 0 ? (successfulRequests / (totalDuration / 1000)) : 0;
+  const successRate =
+    iterations > 0 ? (successfulRequests / iterations) * 100 : 0;
+  const requestsPerSecond =
+    totalDuration > 0 ? successfulRequests / (totalDuration / 1000) : 0;
 
   return {
     testType,
@@ -465,6 +556,6 @@ function calculateBenchmarkStats(
     successRate,
     requestsPerSecond,
     errors,
-    detailedMetrics: detailedMetrics.length > 0 ? detailedMetrics : undefined
+    detailedMetrics: detailedMetrics.length > 0 ? detailedMetrics : undefined,
   };
 }

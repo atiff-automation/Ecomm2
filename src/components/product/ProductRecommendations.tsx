@@ -143,7 +143,6 @@ export function ProductRecommendations({
     fetchRecommendations();
   }, [fetchRecommendations]);
 
-
   const getHeaderIcon = () => {
     switch (type) {
       case 'trending':
@@ -251,7 +250,7 @@ export function ProductRecommendations({
           />
         ))}
       </div>
-      
+
       <AlertDialog />
     </div>
   );

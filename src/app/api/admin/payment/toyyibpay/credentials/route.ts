@@ -14,16 +14,16 @@ import { z } from 'zod';
 const storeCredentialsSchema = z.object({
   userSecretKey: z.string().min(1, 'User Secret Key is required'),
   environment: z.enum(['sandbox', 'production']),
-  categoryCode: z.string().optional()
+  categoryCode: z.string().optional(),
 });
 
 const switchEnvironmentSchema = z.object({
-  environment: z.enum(['sandbox', 'production'])
+  environment: z.enum(['sandbox', 'production']),
 });
 
 const testCredentialsSchema = z.object({
   userSecretKey: z.string().min(1, 'User Secret Key is required'),
-  environment: z.enum(['sandbox', 'production'])
+  environment: z.enum(['sandbox', 'production']),
 });
 
 /**
@@ -47,15 +47,15 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      status: status
+      status: status,
     });
   } catch (error) {
     console.error('Error getting toyyibPay credential status:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to get credential status',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -77,16 +77,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('🔍 Admin storing toyyibPay credentials for environment:', body.environment);
+    console.log(
+      '🔍 Admin storing toyyibPay credentials for environment:',
+      body.environment
+    );
 
     // Validate request body
     const validationResult = storeCredentialsSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'Invalid request data',
-          details: validationResult.error.errors
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
           error: 'Invalid credentials - could not connect to toyyibPay API',
           details: testResult.error,
           responseTime: testResult.responseTime,
-          endpoint: testResult.endpoint
+          endpoint: testResult.endpoint,
         },
         { status: 400 }
       );
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
       {
         userSecretKey,
         environment,
-        categoryCode
+        categoryCode,
       },
       session.user.id
     );
@@ -134,14 +137,15 @@ export async function POST(request: NextRequest) {
       {
         environment,
         hasCategory: !!categoryCode,
-        validationResponseTime: testResult.responseTime
+        validationResponseTime: testResult.responseTime,
       }
     );
 
     console.log('✅ toyyibPay credentials stored successfully');
 
     // Get updated status
-    const updatedStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const updatedStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
 
     return NextResponse.json({
       success: true,
@@ -149,8 +153,8 @@ export async function POST(request: NextRequest) {
       status: updatedStatus,
       validation: {
         responseTime: testResult.responseTime,
-        endpoint: testResult.endpoint
-      }
+        endpoint: testResult.endpoint,
+      },
     });
   } catch (error) {
     console.error('Error storing toyyibPay credentials:', error);
@@ -158,7 +162,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Failed to store credentials',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -180,7 +184,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('🔍 Admin switching toyyibPay environment to:', body.environment);
+    console.log(
+      '🔍 Admin switching toyyibPay environment to:',
+      body.environment
+    );
 
     // Validate request body
     const validationResult = switchEnvironmentSchema.safeParse(body);
@@ -189,7 +196,7 @@ export async function PUT(request: NextRequest) {
         {
           success: false,
           error: 'Invalid request data',
-          details: validationResult.error.errors
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -198,27 +205,32 @@ export async function PUT(request: NextRequest) {
     const { environment } = validationResult.data;
 
     // Switch environment
-    await toyyibPayCredentialsService.switchEnvironment(environment, session.user.id);
+    await toyyibPayCredentialsService.switchEnvironment(
+      environment,
+      session.user.id
+    );
 
     // Log the operation
     await toyyibPayCredentialsService.logCredentialOperation(
       'SWITCH_ENVIRONMENT',
       session.user.id,
-      { 
+      {
         newEnvironment: environment,
-        previousEnvironment: environment === 'sandbox' ? 'production' : 'sandbox'
+        previousEnvironment:
+          environment === 'sandbox' ? 'production' : 'sandbox',
       }
     );
 
     console.log(`✅ toyyibPay environment switched to: ${environment}`);
 
     // Get updated status
-    const updatedStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const updatedStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
 
     return NextResponse.json({
       success: true,
       message: `Environment switched to ${environment}`,
-      status: updatedStatus
+      status: updatedStatus,
     });
   } catch (error) {
     console.error('Error switching toyyibPay environment:', error);
@@ -226,7 +238,7 @@ export async function PUT(request: NextRequest) {
       {
         success: false,
         error: 'Failed to switch environment',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -262,12 +274,13 @@ export async function DELETE() {
     console.log('✅ toyyibPay credentials cleared successfully');
 
     // Get updated status
-    const updatedStatus = await toyyibPayCredentialsService.getCredentialStatus();
+    const updatedStatus =
+      await toyyibPayCredentialsService.getCredentialStatus();
 
     return NextResponse.json({
       success: true,
       message: 'Credentials cleared successfully',
-      status: updatedStatus
+      status: updatedStatus,
     });
   } catch (error) {
     console.error('Error clearing toyyibPay credentials:', error);
@@ -275,7 +288,7 @@ export async function DELETE() {
       {
         success: false,
         error: 'Failed to clear credentials',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

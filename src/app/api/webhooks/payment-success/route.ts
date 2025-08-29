@@ -55,28 +55,28 @@ export async function POST(request: NextRequest) {
       where: { orderNumber: orderReference },
       include: {
         user: {
-          select: { id: true, firstName: true, lastName: true }
+          select: { id: true, firstName: true, lastName: true },
         },
         orderItems: {
-          select: { 
+          select: {
             id: true,
-            productName: true, 
-            quantity: true, 
-            appliedPrice: true 
-          }
+            productName: true,
+            quantity: true,
+            appliedPrice: true,
+          },
         },
       },
     });
 
     if (!order) {
       console.log('❌ Order not found for orderReference:', orderReference);
-      
+
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           message: 'Order not found',
           orderReference,
-          note: 'Order should be created via /api/orders before payment processing'
+          note: 'Order should be created via /api/orders before payment processing',
         },
         { status: 404 }
       );
@@ -98,14 +98,15 @@ export async function POST(request: NextRequest) {
     let membershipActivated = false;
     if (order.userId) {
       console.log('🎯 Processing business logic for paid order:', order.id);
-      const membershipResult = await MembershipService.processOrderForMembership(order.id);
+      const membershipResult =
+        await MembershipService.processOrderForMembership(order.id);
       membershipActivated = membershipResult.membershipActivated;
-      
+
       console.log('📊 Membership processing result:', {
         orderNumber: order.orderNumber,
         membershipActivated: membershipResult.membershipActivated,
         reason: membershipResult.reason,
-        qualifyingTotal: membershipResult.qualifyingTotal
+        qualifyingTotal: membershipResult.qualifyingTotal,
       });
     }
 

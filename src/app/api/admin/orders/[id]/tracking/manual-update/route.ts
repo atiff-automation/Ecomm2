@@ -14,15 +14,18 @@ export async function POST(
     }
 
     const { status, description, location, timestamp } = await request.json();
-    
+
     if (!status || !description) {
-      return NextResponse.json({ error: 'Status and description are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Status and description are required' },
+        { status: 400 }
+      );
     }
 
     // Find the order and its shipment
     const order = await prisma.order.findUnique({
       where: { id: params.id },
-      include: { shipment: true }
+      include: { shipment: true },
     });
 
     if (!order) {
@@ -30,7 +33,10 @@ export async function POST(
     }
 
     if (!order.shipment) {
-      return NextResponse.json({ error: 'No shipment found for this order' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No shipment found for this order' },
+        { status: 404 }
+      );
     }
 
     // Update shipment status
@@ -39,7 +45,7 @@ export async function POST(
       data: {
         status: status,
         statusDescription: description,
-      }
+      },
     });
 
     // Add manual tracking event
@@ -51,8 +57,8 @@ export async function POST(
         description: description,
         location: location || null,
         eventTime: timestamp ? new Date(timestamp) : new Date(),
-        source: 'MANUAL'
-      }
+        source: 'MANUAL',
+      },
     });
 
     // Log manual update
@@ -67,23 +73,23 @@ export async function POST(
           status: status,
           description: description,
           location: location,
-          timestamp: timestamp
-        }
-      }
+          timestamp: timestamp,
+        },
+      },
     });
 
     // Fetch updated order data
     const updatedOrder = await prisma.order.findUnique({
       where: { id: params.id },
-      include: { 
+      include: {
         shipment: {
           include: {
             trackingEvents: {
-              orderBy: { eventTime: 'desc' }
-            }
-          }
-        }
-      }
+              orderBy: { eventTime: 'desc' },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json({
@@ -101,14 +107,17 @@ export async function POST(
           timestamp: event.eventTime.toISOString(),
           status: event.eventName,
           location: event.location,
-          description: event.description
+          description: event.description,
         })),
         lastTrackedAt: updatedOrder!.shipment!.updatedAt,
-        updatedAt: updatedOrder!.shipment!.updatedAt
-      }
+        updatedAt: updatedOrder!.shipment!.updatedAt,
+      },
     });
   } catch (error) {
     console.error('Error updating tracking manually:', error);
-    return NextResponse.json({ error: 'Failed to update tracking status' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update tracking status' },
+      { status: 500 }
+    );
   }
 }

@@ -13,7 +13,12 @@ import {
   PaginationMeta,
 } from '@/lib/types/api';
 import { cacheManager } from '@/lib/cache/cache-manager';
-import { Cached, InvalidateCache, createCacheKey, CacheWarmer } from '@/lib/cache/cache-decorators';
+import {
+  Cached,
+  InvalidateCache,
+  createCacheKey,
+  CacheWarmer,
+} from '@/lib/cache/cache-decorators';
 
 export interface ProductListResponse {
   products: ProductResponse[];
@@ -48,7 +53,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 1800, // 30 minutes
-    keyGenerator: (params: ProductListParams = {}) => 
+    keyGenerator: (params: ProductListParams = {}) =>
       createCacheKey('products', 'list', params),
     tags: ['products', 'catalog'],
   })
@@ -58,7 +63,7 @@ export class EnhancedProductService {
     try {
       const queryParams = this.buildProductQueryParams(params);
       const endpoint = `/api/products?${queryParams.toString()}`;
-      
+
       const response = await apiClient.get<ProductListResponse>(endpoint, {
         cache: true,
         cacheTTL: 30 * 60 * 1000, // 30 minutes for API client cache
@@ -81,7 +86,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 3600, // 1 hour for individual products
-    keyGenerator: (slugOrId: string) => 
+    keyGenerator: (slugOrId: string) =>
       createCacheKey('products', 'single', { slugOrId }),
     tags: ['products', 'product-details'],
   })
@@ -112,16 +117,16 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 7200, // 2 hours for featured products
-    keyGenerator: (limit?: number) => 
+    keyGenerator: (limit?: number) =>
       createCacheKey('products', 'featured', { limit }),
     tags: ['products', 'featured'],
   })
   async getFeaturedProducts(limit = 10): Promise<ProductResponse[]> {
-    return this.getProducts({ 
-      featured: true, 
+    return this.getProducts({
+      featured: true,
       limit,
       sortBy: 'featured',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
     }).then(response => response.products);
   }
 
@@ -131,7 +136,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'search',
     ttl: 900, // 15 minutes for search results
-    keyGenerator: (query: string, options: ProductSearchOptions = {}) => 
+    keyGenerator: (query: string, options: ProductSearchOptions = {}) =>
       createCacheKey('search', 'products', { query, ...options }),
     tags: ['search', 'products'],
     condition: (query: string) => query.length >= 3, // Only cache searches with 3+ chars
@@ -154,7 +159,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 2700, // 45 minutes
-    keyGenerator: (categoryId: string, params: ProductListParams = {}) => 
+    keyGenerator: (categoryId: string, params: ProductListParams = {}) =>
       createCacheKey('products', 'category', { categoryId, ...params }),
     tags: ['products', 'categories'],
   })
@@ -174,7 +179,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 5400, // 90 minutes
-    keyGenerator: (productId: string, limit?: number) => 
+    keyGenerator: (productId: string, limit?: number) =>
       createCacheKey('products', 'related', { productId, limit }),
     tags: ['products', 'recommendations'],
   })
@@ -208,7 +213,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 1800, // 30 minutes
-    keyGenerator: (productId: string, page = 1, limit = 10) => 
+    keyGenerator: (productId: string, page = 1, limit = 10) =>
       createCacheKey('reviews', 'product', { productId, page, limit }),
     tags: ['reviews', 'products'],
   })
@@ -221,18 +226,34 @@ export class EnhancedProductService {
       const response = await apiClient.get<{
         reviews: ReviewResponse[];
         pagination: PaginationMeta;
-      }>(
-        `/api/products/${productId}/reviews?page=${page}&limit=${limit}`
-      );
+      }>(`/api/products/${productId}/reviews?page=${page}&limit=${limit}`);
 
       if (response.success && response.data) {
         return response.data;
       }
 
-      return { reviews: [], pagination: { currentPage: 1, totalPages: 0, totalCount: 0, hasNext: false, hasPrev: false } };
+      return {
+        reviews: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalCount: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
     } catch (error) {
       console.error('EnhancedProductService.getProductReviews error:', error);
-      return { reviews: [], pagination: { currentPage: 1, totalPages: 0, totalCount: 0, hasNext: false, hasPrev: false } };
+      return {
+        reviews: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalCount: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
     }
   }
 
@@ -270,7 +291,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'api', // Memory cache for fast access
     ttl: 300, // 5 minutes - frequent updates for stock
-    keyGenerator: (productId: string) => 
+    keyGenerator: (productId: string) =>
       createCacheKey('products', 'availability', { productId }),
     tags: ['inventory', 'products'],
   })
@@ -292,7 +313,10 @@ export class EnhancedProductService {
 
       return { inStock: false, stockQuantity: 0, lowStockAlert: false };
     } catch (error) {
-      console.error('EnhancedProductService.getProductAvailability error:', error);
+      console.error(
+        'EnhancedProductService.getProductAvailability error:',
+        error
+      );
       return { inStock: false, stockQuantity: 0, lowStockAlert: false };
     }
   }
@@ -303,14 +327,21 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 21600, // 6 hours
-    keyGenerator: (productId: string, days = 30) => 
+    keyGenerator: (productId: string, days = 30) =>
       createCacheKey('products', 'price-history', { productId, days }),
     tags: ['products', 'pricing'],
   })
   async getProductPriceHistory(
     productId: string,
     days = 30
-  ): Promise<Array<{ date: string; regularPrice: number; memberPrice: number; promotionalPrice?: number }>> {
+  ): Promise<
+    Array<{
+      date: string;
+      regularPrice: number;
+      memberPrice: number;
+      promotionalPrice?: number;
+    }>
+  > {
     try {
       const response = await apiClient.get<{
         priceHistory: Array<{
@@ -327,7 +358,10 @@ export class EnhancedProductService {
 
       return [];
     } catch (error) {
-      console.error('EnhancedProductService.getProductPriceHistory error:', error);
+      console.error(
+        'EnhancedProductService.getProductPriceHistory error:',
+        error
+      );
       return [];
     }
   }
@@ -335,9 +369,12 @@ export class EnhancedProductService {
   /**
    * Get recently viewed products for user
    */
-  async getRecentlyViewedProducts(userId: string, limit = 10): Promise<ProductResponse[]> {
+  async getRecentlyViewedProducts(
+    userId: string,
+    limit = 10
+  ): Promise<ProductResponse[]> {
     const cacheKey = createCacheKey('products', 'recent', { userId, limit });
-    
+
     return cacheManager.getOrSet(
       cacheKey,
       async () => {
@@ -346,9 +383,14 @@ export class EnhancedProductService {
             `/api/users/${userId}/recently-viewed?limit=${limit}`
           );
 
-          return response.success && response.data ? response.data.products : [];
+          return response.success && response.data
+            ? response.data.products
+            : [];
         } catch (error) {
-          console.error('EnhancedProductService.getRecentlyViewedProducts error:', error);
+          console.error(
+            'EnhancedProductService.getRecentlyViewedProducts error:',
+            error
+          );
           return [];
         }
       },
@@ -386,7 +428,7 @@ export class EnhancedProductService {
   @Cached({
     strategy: 'products',
     ttl: 86400, // 24 hours
-    keyGenerator: (period = '7d', limit = 20) => 
+    keyGenerator: (period = '7d', limit = 20) =>
       createCacheKey('products', 'top-selling', { period, limit }),
     tags: ['products', 'analytics'],
   })
@@ -405,7 +447,10 @@ export class EnhancedProductService {
 
       return [];
     } catch (error) {
-      console.error('EnhancedProductService.getTopSellingProducts error:', error);
+      console.error(
+        'EnhancedProductService.getTopSellingProducts error:',
+        error
+      );
       return [];
     }
   }
@@ -417,22 +462,42 @@ export class EnhancedProductService {
     const queryParams = new URLSearchParams();
 
     // Add pagination
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.page) {
+      queryParams.append('page', params.page.toString());
+    }
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
 
     // Add search and filters
-    if (params.search) queryParams.append('search', params.search);
-    if (params.category) queryParams.append('category', params.category);
-    if (params.featured !== undefined) queryParams.append('featured', params.featured.toString());
-    if (params.inStock !== undefined) queryParams.append('inStock', params.inStock.toString());
+    if (params.search) {
+      queryParams.append('search', params.search);
+    }
+    if (params.category) {
+      queryParams.append('category', params.category);
+    }
+    if (params.featured !== undefined) {
+      queryParams.append('featured', params.featured.toString());
+    }
+    if (params.inStock !== undefined) {
+      queryParams.append('inStock', params.inStock.toString());
+    }
 
     // Add sorting
-    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    if (params.sortBy) {
+      queryParams.append('sortBy', params.sortBy);
+    }
+    if (params.sortOrder) {
+      queryParams.append('sortOrder', params.sortOrder);
+    }
 
     // Add price range
-    if (params.priceMin !== undefined) queryParams.append('priceMin', params.priceMin.toString());
-    if (params.priceMax !== undefined) queryParams.append('priceMax', params.priceMax.toString());
+    if (params.priceMin !== undefined) {
+      queryParams.append('priceMin', params.priceMin.toString());
+    }
+    if (params.priceMax !== undefined) {
+      queryParams.append('priceMax', params.priceMax.toString());
+    }
 
     return queryParams;
   }
@@ -451,13 +516,13 @@ export class EnhancedProductService {
     CacheWarmer.register('product-categories', async () => {
       // This would typically fetch main categories and their popular products
       const mainCategories = ['electronics', 'fashion', 'home', 'books'];
-      
+
       await Promise.all(
-        mainCategories.map(async (categoryId) => {
+        mainCategories.map(async categoryId => {
           await this.getProductsByCategory(categoryId, { limit: 10 });
         })
       );
-      
+
       console.log('✅ Product categories cache warmed');
     });
 

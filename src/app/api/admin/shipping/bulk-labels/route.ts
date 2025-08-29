@@ -21,8 +21,11 @@ const bulkLabelSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -53,17 +56,17 @@ export async function POST(request: NextRequest) {
             order: {
               select: {
                 orderNumber: true,
-                id: true
-              }
-            }
-          }
+                id: true,
+              },
+            },
+          },
         });
 
         if (!shipment) {
           results.push({
             shipmentId,
             success: false,
-            error: 'Shipment not found'
+            error: 'Shipment not found',
           });
           errorCount++;
           continue;
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
           results.push({
             shipmentId,
             success: false,
-            error: 'Shipment not booked with EasyParcel yet'
+            error: 'Shipment not booked with EasyParcel yet',
           });
           errorCount++;
           continue;
@@ -87,7 +90,10 @@ export async function POST(request: NextRequest) {
         if (shipment.labelUrl && shipment.labelGenerated) {
           try {
             // Try to read existing label
-            const existingLabelPath = path.join(labelsDir, path.basename(shipment.labelUrl));
+            const existingLabelPath = path.join(
+              labelsDir,
+              path.basename(shipment.labelUrl)
+            );
             labelBuffer = await fs.readFile(existingLabelPath);
             labelGenerated = true;
           } catch {
@@ -98,8 +104,10 @@ export async function POST(request: NextRequest) {
 
         if (!labelGenerated) {
           // Generate new label from EasyParcel
-          labelBuffer = await easyParcelService.generateLabel(shipment.easyParcelShipmentId);
-          
+          labelBuffer = await easyParcelService.generateLabel(
+            shipment.easyParcelShipmentId
+          );
+
           // Save label to file system
           const labelFilename = `${shipment.order.orderNumber}-${shipment.easyParcelShipmentId}.pdf`;
           const labelPath = path.join(labelsDir, labelFilename);
@@ -111,9 +119,12 @@ export async function POST(request: NextRequest) {
             data: {
               labelUrl: `/shipping-labels/${labelFilename}`,
               labelGenerated: true,
-              status: shipment.status === 'BOOKED' ? 'LABEL_GENERATED' : shipment.status,
-              updatedAt: new Date()
-            }
+              status:
+                shipment.status === 'BOOKED'
+                  ? 'LABEL_GENERATED'
+                  : shipment.status,
+              updatedAt: new Date(),
+            },
           });
         }
 
@@ -121,7 +132,7 @@ export async function POST(request: NextRequest) {
         const labelFilename = `${shipment.order.orderNumber}-${shipment.easyParcelShipmentId}.pdf`;
         labelFiles.push({
           filename: labelFilename,
-          buffer: labelBuffer
+          buffer: labelBuffer,
         });
 
         results.push({
@@ -129,16 +140,18 @@ export async function POST(request: NextRequest) {
           success: true,
           orderNumber: shipment.order.orderNumber,
           trackingNumber: shipment.trackingNumber,
-          labelFilename
+          labelFilename,
         });
         successCount++;
-
       } catch (error) {
-        console.error(`Error generating label for shipment ${shipmentId}:`, error);
+        console.error(
+          `Error generating label for shipment ${shipmentId}:`,
+          error
+        );
         results.push({
           shipmentId,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         errorCount++;
       }
@@ -154,7 +167,7 @@ export async function POST(request: NextRequest) {
 
         // Create ZIP archive
         const archive = archiver('zip', {
-          zlib: { level: 9 } // Maximum compression
+          zlib: { level: 9 }, // Maximum compression
         });
 
         const output = require('fs').createWriteStream(zipPath);
@@ -182,7 +195,7 @@ export async function POST(request: NextRequest) {
           .map(file => ({
             name: file,
             path: path.join(labelsDir, file),
-            stat: require('fs').statSync(path.join(labelsDir, file))
+            stat: require('fs').statSync(path.join(labelsDir, file)),
           }))
           .sort((a, b) => b.stat.mtime.getTime() - a.stat.mtime.getTime());
 
@@ -192,11 +205,14 @@ export async function POST(request: NextRequest) {
             try {
               await fs.unlink(oldZip.path);
             } catch (error) {
-              console.warn('Failed to delete old ZIP file:', oldZip.name, error);
+              console.warn(
+                'Failed to delete old ZIP file:',
+                oldZip.name,
+                error
+              );
             }
           }
         }
-
       } catch (zipError) {
         console.error('Error creating ZIP file:', zipError);
         // Continue without ZIP - individual labels were still generated
@@ -213,10 +229,9 @@ export async function POST(request: NextRequest) {
         errorCount,
         successRate: `${Math.round((successCount / shipmentIds.length) * 100)}%`,
         labelsGenerated: labelFiles.length,
-        zipCreated: !!zipDownloadUrl
-      }
+        zipCreated: !!zipDownloadUrl,
+      },
     });
-
   } catch (error) {
     console.error('Error in bulk label generation:', error);
     return NextResponse.json(

@@ -23,7 +23,12 @@ import {
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
-import { AdminPageLayout, TabConfig, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  TabConfig,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface PaymentGateway {
   id: string;
@@ -59,15 +64,15 @@ export default function AdminPaymentsPage() {
       // const response = await fetch('/api/admin/payments/stats');
       // const data = await response.json();
       // setStats(data.stats);
-      
+
       // Mock data for now
       setTimeout(() => {
         setStats({
           totalTransactions: 1247,
-          totalRevenue: 125670.50,
+          totalRevenue: 125670.5,
           successRate: 96.8,
           failedTransactions: 42,
-          refundedAmount: 2340.00,
+          refundedAmount: 2340.0,
         });
         setLoading(false);
       }, 1000);
@@ -83,10 +88,16 @@ export default function AdminPaymentsPage() {
       name: 'toyyibPay',
       type: 'toyyibpay',
       status: 'active',
-      description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+      description:
+        'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
       icon: Smartphone,
       configPath: '/admin/payments/toyyibpay',
-      features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+      features: [
+        'FPX Online Banking',
+        'Credit/Debit Cards',
+        'E-wallets',
+        'QR Code',
+      ],
     },
     {
       id: 'stripe',
@@ -96,7 +107,12 @@ export default function AdminPaymentsPage() {
       description: 'International payment processing with global card support',
       icon: CreditCard,
       configPath: '/admin/payments/stripe',
-      features: ['Global Cards', 'Digital Wallets', 'Bank Transfers', 'Buy Now Pay Later'],
+      features: [
+        'Global Cards',
+        'Digital Wallets',
+        'Bank Transfers',
+        'Buy Now Pay Later',
+      ],
     },
     {
       id: 'paypal',
@@ -106,7 +122,12 @@ export default function AdminPaymentsPage() {
       description: 'Popular digital wallet and payment platform',
       icon: Wallet,
       configPath: '/admin/payments/paypal',
-      features: ['PayPal Wallet', 'PayPal Credit', 'Express Checkout', 'Subscriptions'],
+      features: [
+        'PayPal Wallet',
+        'PayPal Credit',
+        'Express Checkout',
+        'Subscriptions',
+      ],
     },
   ];
 
@@ -149,7 +170,11 @@ export default function AdminPaymentsPage() {
   // Define contextual tabs for Payments section
   const tabs: TabConfig[] = [
     { id: 'overview', label: 'Payment Overview', href: '/admin/payments' },
-    { id: 'transactions', label: 'Transactions', href: '/admin/payments/transactions' },
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      href: '/admin/payments/transactions',
+    },
     { id: 'refunds', label: 'Refunds', href: '/admin/payments/refunds' },
     { id: 'analytics', label: 'Analytics', href: '/admin/payments/analytics' },
   ];
@@ -262,7 +287,7 @@ export default function AdminPaymentsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {paymentGateways.map((gateway) => {
+            {paymentGateways.map(gateway => {
               const IconComponent = gateway.icon;
               return (
                 <div
@@ -278,7 +303,9 @@ export default function AdminPaymentsPage() {
                         <h3 className="font-semibold">{gateway.name}</h3>
                         <Badge className={getStatusColor(gateway.status)}>
                           {getStatusIcon(gateway.status)}
-                          <span className="ml-1 capitalize">{gateway.status}</span>
+                          <span className="ml-1 capitalize">
+                            {gateway.status}
+                          </span>
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
@@ -286,7 +313,11 @@ export default function AdminPaymentsPage() {
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {gateway.features.map((feature, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {feature}
                           </Badge>
                         ))}
@@ -322,9 +353,7 @@ export default function AdminPaymentsPage() {
               View and manage recent payment transactions
             </p>
             <Button asChild className="w-full">
-              <Link href="/admin/payments/transactions">
-                View Transactions
-              </Link>
+              <Link href="/admin/payments/transactions">View Transactions</Link>
             </Button>
           </CardContent>
         </Card>
@@ -341,9 +370,7 @@ export default function AdminPaymentsPage() {
               Process customer refund requests
             </p>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/payments/refunds">
-                Manage Refunds
-              </Link>
+              <Link href="/admin/payments/refunds">Manage Refunds</Link>
             </Button>
           </CardContent>
         </Card>
@@ -360,9 +387,7 @@ export default function AdminPaymentsPage() {
               Detailed payment performance and trends
             </p>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/payments/analytics">
-                View Analytics
-              </Link>
+              <Link href="/admin/payments/analytics">View Analytics</Link>
             </Button>
           </CardContent>
         </Card>

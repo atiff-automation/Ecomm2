@@ -10,7 +10,7 @@ import { toast } from 'sonner';
  * Copy text to clipboard with fallback for older browsers
  */
 export const copyToClipboard = async (
-  text: string, 
+  text: string,
   label: string = 'Text',
   showToast: boolean = true
 ): Promise<boolean> => {
@@ -23,7 +23,7 @@ export const copyToClipboard = async (
       }
       return true;
     }
-    
+
     // Fallback for older browsers or non-secure contexts
     const textArea = document.createElement('textarea');
     textArea.value = text;
@@ -33,16 +33,16 @@ export const copyToClipboard = async (
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     const successful = document.execCommand('copy');
     document.body.removeChild(textArea);
-    
+
     if (successful && showToast) {
       toast.success(`${label} copied to clipboard`);
     } else if (!successful && showToast) {
       toast.error(`Failed to copy ${label.toLowerCase()}`);
     }
-    
+
     return successful;
   } catch (error) {
     console.error('Failed to copy to clipboard:', error);
@@ -56,14 +56,18 @@ export const copyToClipboard = async (
 /**
  * Copy tracking number with formatted output
  */
-export const copyTrackingNumber = async (trackingNumber: string): Promise<boolean> => {
+export const copyTrackingNumber = async (
+  trackingNumber: string
+): Promise<boolean> => {
   return copyToClipboard(trackingNumber, 'Tracking number');
 };
 
 /**
  * Copy order number with formatted output
  */
-export const copyOrderNumber = async (orderNumber: string): Promise<boolean> => {
+export const copyOrderNumber = async (
+  orderNumber: string
+): Promise<boolean> => {
   return copyToClipboard(orderNumber, 'Order number');
 };
 
@@ -78,15 +82,15 @@ export const copyOrderSummary = async (order: {
 }): Promise<boolean> => {
   let summary = `Order: ${order.orderNumber}`;
   summary += `\nStatus: ${order.status}`;
-  
+
   if (order.trackingNumber) {
     summary += `\nTracking: ${order.trackingNumber}`;
   }
-  
+
   if (order.courierName) {
     summary += `\nCourier: ${order.courierName}`;
   }
-  
+
   return copyToClipboard(summary, 'Order summary');
 };
 

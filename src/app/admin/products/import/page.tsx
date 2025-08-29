@@ -143,7 +143,9 @@ export default function ProductImportPage() {
   };
 
   const handleImport = async () => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     setImporting(true);
     setProgress({
@@ -217,27 +219,27 @@ export default function ProductImportPage() {
   const tabs: TabConfig[] = [
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
-    { id: 'inventory', label: 'Inventory Management', href: '/admin/products/inventory' },
-    { id: 'import-export', label: 'Import/Export', href: '/admin/products/import' },
+    {
+      id: 'inventory',
+      label: 'Inventory Management',
+      href: '/admin/products/inventory',
+    },
+    {
+      id: 'import-export',
+      label: 'Import/Export',
+      href: '/admin/products/import',
+    },
   ];
 
   // Extract page actions
   const pageActions = (
     <div className="flex gap-2">
-      <Button 
-        onClick={downloadTemplate}
-        variant="outline" 
-        size="sm"
-      >
+      <Button onClick={downloadTemplate} variant="outline" size="sm">
         <Download className="w-4 h-4 mr-2" />
         Download Template
       </Button>
       {result && (
-        <Button 
-          onClick={resetImport} 
-          variant="outline" 
-          size="sm"
-        >
+        <Button onClick={resetImport} variant="outline" size="sm">
           Start New Import
         </Button>
       )}
@@ -353,8 +355,10 @@ export default function ProductImportPage() {
                     {progress.stage === 'error' && (
                       <AlertCircle className="w-5 h-5 text-red-500" />
                     )}
-                    <Badge 
-                      variant={progress.stage === 'error' ? 'destructive' : 'default'}
+                    <Badge
+                      variant={
+                        progress.stage === 'error' ? 'destructive' : 'default'
+                      }
                     >
                       {progress.stage.replace('_', ' ').toUpperCase()}
                     </Badge>
@@ -401,17 +405,21 @@ export default function ProductImportPage() {
 
                   {result.errorDetails.length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2 text-red-600">Errors Found:</h4>
+                      <h4 className="font-medium mb-2 text-red-600">
+                        Errors Found:
+                      </h4>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {result.errorDetails.slice(0, 10).map((error, index) => (
-                          <Alert key={index} variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                              Row {error.row}: {error.field} - {error.message}
-                              {error.value && ` (Value: "${error.value}")`}
-                            </AlertDescription>
-                          </Alert>
-                        ))}
+                        {result.errorDetails
+                          .slice(0, 10)
+                          .map((error, index) => (
+                            <Alert key={index} variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription>
+                                Row {error.row}: {error.field} - {error.message}
+                                {error.value && ` (Value: "${error.value}")`}
+                              </AlertDescription>
+                            </Alert>
+                          ))}
                         {result.errorDetails.length > 10 && (
                           <p className="text-sm text-gray-500">
                             And {result.errorDetails.length - 10} more errors...
@@ -459,20 +467,33 @@ export default function ProductImportPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {result.successfulProducts.slice(0, 5).map((product, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <div className="font-medium text-sm">{product.name}</div>
-                        <div className="text-xs text-gray-500">{product.sku}</div>
-                      </div>
-                      <Badge 
-                        variant={product.action === 'created' ? 'default' : 'secondary'}
-                        className="text-xs"
+                  {result.successfulProducts
+                    .slice(0, 5)
+                    .map((product, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded"
                       >
-                        {product.action}
-                      </Badge>
-                    </div>
-                  ))}
+                        <div>
+                          <div className="font-medium text-sm">
+                            {product.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {product.sku}
+                          </div>
+                        </div>
+                        <Badge
+                          variant={
+                            product.action === 'created'
+                              ? 'default'
+                              : 'secondary'
+                          }
+                          className="text-xs"
+                        >
+                          {product.action}
+                        </Badge>
+                      </div>
+                    ))}
                   {result.successfulProducts.length > 5 && (
                     <p className="text-xs text-center text-gray-500">
                       +{result.successfulProducts.length - 5} more products

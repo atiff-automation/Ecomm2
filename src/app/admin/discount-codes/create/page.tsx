@@ -550,7 +550,7 @@ export default function CreateDiscountCodePage() {
                           handleInputChange(
                             'usageLimit',
                             e.target.value
-                              ? parseInt(e.target.value)
+                              ? parseInt(e.target.value, 10)
                               : undefined
                           )
                         }

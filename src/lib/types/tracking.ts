@@ -148,7 +148,14 @@ export type StatusMapping = {
   isTerminal: boolean;
 };
 
-export type StatusKey = 'DELIVERED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'PROCESSING' | 'PENDING' | 'EXCEPTION' | 'UNKNOWN';
+export type StatusKey =
+  | 'DELIVERED'
+  | 'IN_TRANSIT'
+  | 'OUT_FOR_DELIVERY'
+  | 'PROCESSING'
+  | 'PENDING'
+  | 'EXCEPTION'
+  | 'UNKNOWN';
 
 // Validation types
 export interface ValidationResult {

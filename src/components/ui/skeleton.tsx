@@ -75,16 +75,16 @@ export function ProductCardSkeleton({
   showRating = true,
 }: ProductCardSkeletonProps) {
   const prefersReducedMotion = useReducedMotion();
-  
+
   return (
-    <Card 
+    <Card
       className={cn('overflow-hidden', className)}
       role="status"
       aria-label="Loading product information"
       aria-busy="true"
     >
       {/* Product image */}
-      <div 
+      <div
         className={`aspect-square bg-muted ${prefersReducedMotion ? '' : 'animate-pulse'}`}
         aria-label="Loading product image"
       />

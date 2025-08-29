@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const addressData = addressSchema.parse(body);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Check for duplicate address (best practice: prevent duplicates)
       const existingAddress = await tx.address.findFirst({
         where: {
@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
+      {
         message: 'Address saved successfully',
-        address: result 
+        address: result,
       },
       { status: 201 }
     );

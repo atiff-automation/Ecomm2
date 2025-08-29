@@ -6,15 +6,15 @@
 
 import { toyyibPayCredentialsService } from '@/lib/services/toyyibpay-credentials';
 import { toyyibPayCategoryService } from '@/lib/services/toyyibpay-category';
-import { 
-  toyyibPayConfig, 
-  getToyyibPayUrl, 
+import {
+  toyyibPayConfig,
+  getToyyibPayUrl,
   getToyyibPayTimeout,
   sanitizeBillName,
   sanitizeBillDescription,
   convertRinggitToCents,
   generateExternalReference,
-  getWebhookUrls
+  getWebhookUrls,
 } from '@/lib/config/toyyibpay-config';
 
 export interface ToyyibPayBillRequest {
@@ -104,23 +104,26 @@ export class ToyyibPayService {
    */
   private async ensureCredentials(): Promise<void> {
     try {
-      this.credentials = await toyyibPayCredentialsService.getCredentialsForService();
-      
+      this.credentials =
+        await toyyibPayCredentialsService.getCredentialsForService();
+
       if (this.credentials) {
         this.isConfigured = true;
         this.isSandbox = this.credentials.isSandbox;
         this.baseURL = getToyyibPayUrl(this.isSandbox);
         this.categoryCode = this.credentials.categoryCode || null;
-        
+
         console.log(`🔍 toyyibPay service initialized:`, {
           configured: this.isConfigured,
           environment: this.credentials.environment,
           baseURL: this.baseURL,
-          hasCategoryCode: !!this.categoryCode
+          hasCategoryCode: !!this.categoryCode,
         });
       } else {
         this.isConfigured = false;
-        console.log('❌ toyyibPay service not configured - no credentials available');
+        console.log(
+          '❌ toyyibPay service not configured - no credentials available'
+        );
       }
     } catch (error) {
       console.error('Error ensuring toyyibPay credentials:', error);
@@ -137,13 +140,16 @@ export class ToyyibPayService {
     }
 
     try {
-      const categoryResult = await toyyibPayCategoryService.getOrCreateDefaultCategory();
-      
+      const categoryResult =
+        await toyyibPayCategoryService.getOrCreateDefaultCategory();
+
       if (categoryResult.success && categoryResult.categoryCode) {
         this.categoryCode = categoryResult.categoryCode;
         return this.categoryCode;
       } else {
-        throw new Error(categoryResult.error || 'Failed to get or create category');
+        throw new Error(
+          categoryResult.error || 'Failed to get or create category'
+        );
       }
     } catch (error) {
       console.error('Error ensuring category code:', error);
@@ -165,14 +171,17 @@ export class ToyyibPayService {
     paymentChannel?: '0' | '1' | '2';
   }): Promise<PaymentResult> {
     try {
-      console.log(`🔄 Creating toyyibPay bill for amount: RM ${billData.billAmount}`);
+      console.log(
+        `🔄 Creating toyyibPay bill for amount: RM ${billData.billAmount}`
+      );
 
       // Ensure service is configured
       await this.ensureCredentials();
       if (!this.isConfigured || !this.credentials) {
         return {
           success: false,
-          error: 'toyyibPay service not configured. Please configure credentials first.'
+          error:
+            'toyyibPay service not configured. Please configure credentials first.',
         };
       }
 
@@ -197,7 +206,9 @@ export class ToyyibPayService {
         billTo: billData.billTo,
         billEmail: billData.billEmail,
         billPhone: billData.billPhone || '',
-        billPaymentChannel: billData.paymentChannel || toyyibPayConfig.billSettings.defaultPaymentChannel
+        billPaymentChannel:
+          billData.paymentChannel ||
+          toyyibPayConfig.billSettings.defaultPaymentChannel,
       };
 
       console.log(`🔍 Bill request data:`, {
@@ -206,7 +217,7 @@ export class ToyyibPayService {
         billAmount: `${billRequest.billAmount} cents (RM ${billData.billAmount})`,
         categoryCode: billRequest.categoryCode,
         externalReference: billRequest.billExternalReferenceNo,
-        paymentChannel: billRequest.billPaymentChannel
+        paymentChannel: billRequest.billPaymentChannel,
       });
 
       // Use FormData (matching the working credential validation)
@@ -235,7 +246,7 @@ export class ToyyibPayService {
       } catch (e) {
         return {
           success: false,
-          error: 'Invalid JSON response from toyyibPay API'
+          error: 'Invalid JSON response from toyyibPay API',
         };
       }
 
@@ -245,34 +256,35 @@ export class ToyyibPayService {
 
         if (result.BillCode) {
           console.log(`✅ Bill created successfully: ${result.BillCode}`);
-          
+
           // Construct payment URL manually: https://toyyibpay.com/{BillCode} or https://dev.toyyibpay.com/{BillCode}
           const paymentUrl = `${this.baseURL}/${result.BillCode}`;
-          
+
           return {
             success: true,
             billCode: result.BillCode,
             paymentUrl: paymentUrl,
-            externalReference: billRequest.billExternalReferenceNo
+            externalReference: billRequest.billExternalReferenceNo,
           };
         } else if (result.msg) {
           console.log(`❌ Bill creation failed: ${result.msg}`);
           return {
             success: false,
-            error: result.msg
+            error: result.msg,
           };
         }
       }
 
       return {
         success: false,
-        error: 'Unexpected response format from toyyibPay API'
+        error: 'Unexpected response format from toyyibPay API',
       };
     } catch (error) {
       console.error('Error creating toyyibPay bill:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
@@ -289,7 +301,7 @@ export class ToyyibPayService {
       if (!this.isConfigured || !this.credentials) {
         return {
           success: false,
-          error: 'toyyibPay service not configured'
+          error: 'toyyibPay service not configured',
         };
       }
 
@@ -299,10 +311,13 @@ export class ToyyibPayService {
       formData.append('billCode', billCode);
 
       // Make API call
-      const response = await fetch(`${this.baseURL}/index.php/api/getBillTransactions`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        `${this.baseURL}/index.php/api/getBillTransactions`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -318,7 +333,7 @@ export class ToyyibPayService {
       } catch (e) {
         return {
           success: false,
-          error: 'Invalid JSON response from toyyibPay API'
+          error: 'Invalid JSON response from toyyibPay API',
         };
       }
 
@@ -327,35 +342,41 @@ export class ToyyibPayService {
         const result = responseData[0];
 
         if (result.billpaymentStatus) {
-          const status = result.billpaymentStatus === '1' ? 'success' 
-                       : result.billpaymentStatus === '2' ? 'pending' 
-                       : 'failed';
+          const status =
+            result.billpaymentStatus === '1'
+              ? 'success'
+              : result.billpaymentStatus === '2'
+                ? 'pending'
+                : 'failed';
 
           return {
             success: true,
             status: status,
-            amount: result.billpaymentAmount ? parseFloat(result.billpaymentAmount) / 100 : undefined,
+            amount: result.billpaymentAmount
+              ? parseFloat(result.billpaymentAmount) / 100
+              : undefined,
             invoiceNo: result.billpaymentInvoiceNo,
             paymentDate: result.billpaymentDate,
-            externalReference: result.billExternalReferenceNo
+            externalReference: result.billExternalReferenceNo,
           };
         } else if (result.msg) {
           return {
             success: false,
-            error: result.msg
+            error: result.msg,
           };
         }
       }
 
       return {
         success: false,
-        error: 'No transaction data found for this bill'
+        error: 'No transaction data found for this bill',
       };
     } catch (error) {
       console.error('Error getting toyyibPay bill transactions:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
@@ -363,7 +384,9 @@ export class ToyyibPayService {
   /**
    * Inactivate a bill (cancel unpaid bill)
    */
-  async inactiveBill(billCode: string): Promise<{ success: boolean; error?: string }> {
+  async inactiveBill(
+    billCode: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log(`🔄 Inactivating toyyibPay bill: ${billCode}`);
 
@@ -372,7 +395,7 @@ export class ToyyibPayService {
       if (!this.isConfigured || !this.credentials) {
         return {
           success: false,
-          error: 'toyyibPay service not configured'
+          error: 'toyyibPay service not configured',
         };
       }
 
@@ -382,10 +405,13 @@ export class ToyyibPayService {
       formData.append('billCode', billCode);
 
       // Make API call
-      const response = await fetch(`${this.baseURL}/index.php/api/inactiveBill`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        `${this.baseURL}/index.php/api/inactiveBill`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -401,7 +427,7 @@ export class ToyyibPayService {
       } catch (e) {
         return {
           success: false,
-          error: 'Invalid JSON response from toyyibPay API'
+          error: 'Invalid JSON response from toyyibPay API',
         };
       }
 
@@ -415,20 +441,21 @@ export class ToyyibPayService {
         } else if (result.msg) {
           return {
             success: false,
-            error: result.msg
+            error: result.msg,
           };
         }
       }
 
       return {
         success: false,
-        error: 'Unexpected response from toyyibPay API'
+        error: 'Unexpected response from toyyibPay API',
       };
     } catch (error) {
       console.error('Error inactivating toyyibPay bill:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
@@ -453,12 +480,12 @@ export class ToyyibPayService {
   }> {
     try {
       await this.ensureCredentials();
-      
+
       if (!this.isConfigured) {
         return {
           isConfigured: false,
           hasCategoryCode: false,
-          error: 'No credentials configured'
+          error: 'No credentials configured',
         };
       }
 
@@ -466,13 +493,13 @@ export class ToyyibPayService {
         isConfigured: true,
         environment: this.credentials?.environment,
         baseURL: this.baseURL,
-        hasCategoryCode: !!this.categoryCode
+        hasCategoryCode: !!this.categoryCode,
       };
     } catch (error) {
       return {
         isConfigured: false,
         hasCategoryCode: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }

@@ -17,19 +17,27 @@ export async function GET(
     // Find the shipment
     const shipment = await prisma.shipment.findUnique({
       where: { easyParcelShipmentId: params.shipmentId },
-      include: { order: true }
+      include: { order: true },
     });
 
     if (!shipment) {
-      return NextResponse.json({ error: 'Shipment not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Shipment not found' },
+        { status: 404 }
+      );
     }
 
     try {
       // Get label from EasyParcel
-      const labelData = await easyParcelService.downloadLabel(params.shipmentId);
-      
+      const labelData = await easyParcelService.downloadLabel(
+        params.shipmentId
+      );
+
       if (!labelData) {
-        return NextResponse.json({ error: 'Label not available' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Label not available' },
+          { status: 404 }
+        );
       }
 
       // Log label download
@@ -42,9 +50,9 @@ export async function GET(
           details: {
             shipmentId: params.shipmentId,
             trackingNumber: shipment.trackingNumber,
-            orderNumber: shipment.order.orderNumber
-          }
-        }
+            orderNumber: shipment.order.orderNumber,
+          },
+        },
       });
 
       // Return PDF label
@@ -57,10 +65,16 @@ export async function GET(
       });
     } catch (error) {
       console.error('Error downloading label:', error);
-      return NextResponse.json({ error: 'Failed to download label from courier' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to download label from courier' },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error('Error in label download:', error);
-    return NextResponse.json({ error: 'Failed to process label request' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to process label request' },
+      { status: 500 }
+    );
   }
 }

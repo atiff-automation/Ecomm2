@@ -28,9 +28,10 @@ export function ContextualTabs({ tabs, className = '' }: ContextualTabsProps) {
     <div className={cn('bg-white border-b border-gray-200', className)}>
       <div className="px-6">
         <nav className="flex space-x-8 h-12" role="tablist">
-          {tabs.map((tab) => {
-            const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
-            
+          {tabs.map(tab => {
+            const isActive =
+              pathname === tab.href || pathname.startsWith(tab.href + '/');
+
             return (
               <Link
                 key={tab.id}
@@ -47,8 +48,8 @@ export function ContextualTabs({ tabs, className = '' }: ContextualTabsProps) {
               >
                 <span>{tab.label}</span>
                 {tab.badge && tab.badge > 0 && (
-                  <Badge 
-                    variant={isActive ? "default" : "secondary"} 
+                  <Badge
+                    variant={isActive ? 'default' : 'secondary'}
                     className="ml-2 h-5 min-w-[20px] text-xs"
                   >
                     {tab.badge}

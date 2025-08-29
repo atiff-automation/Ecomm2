@@ -38,27 +38,57 @@ const createOrderSchema = z.object({
   cartItems: z.array(orderItemSchema).optional(), // Optional for authenticated users (use cart)
   shippingAddress: addressSchema,
   billingAddress: addressSchema,
-  paymentMethod: z.enum(['stripe', 'billplz', 'toyyibpay', 'BILLPLZ', 'TOYYIBPAY']),
+  paymentMethod: z.enum([
+    'stripe',
+    'billplz',
+    'toyyibpay',
+    'BILLPLZ',
+    'TOYYIBPAY',
+  ]),
   orderNotes: z.string().optional(),
   membershipActivated: z.boolean().optional(),
   isGuest: z.boolean().optional(), // To indicate guest checkout
   guestEmail: z.string().email().optional(), // Guest email for order tracking
-  shippingRate: z.object({
-    courierName: z.string(),
-    serviceName: z.string(),
-    price: z.number(),
-    insurance: z.any().optional().transform(val => {
-      if (val === null || val === undefined || val === '' || val === 'null' || val === false) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    }),
-    cod: z.boolean().optional(),
-    codAmount: z.any().optional().transform(val => {
-      if (val === null || val === undefined || val === '' || val === 'null' || val === false) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
+  shippingRate: z
+    .object({
+      courierName: z.string(),
+      serviceName: z.string(),
+      price: z.number(),
+      insurance: z
+        .any()
+        .optional()
+        .transform(val => {
+          if (
+            val === null ||
+            val === undefined ||
+            val === '' ||
+            val === 'null' ||
+            val === false
+          ) {
+            return null;
+          }
+          const num = Number(val);
+          return isNaN(num) ? null : num;
+        }),
+      cod: z.boolean().optional(),
+      codAmount: z
+        .any()
+        .optional()
+        .transform(val => {
+          if (
+            val === null ||
+            val === undefined ||
+            val === '' ||
+            val === 'null' ||
+            val === false
+          ) {
+            return null;
+          }
+          const num = Number(val);
+          return isNaN(num) ? null : num;
+        }),
     })
-  }).optional(), // Selected shipping rate from admin-controlled shipping
+    .optional(), // Selected shipping rate from admin-controlled shipping
 });
 
 /**
@@ -201,15 +231,20 @@ export async function POST(request: NextRequest) {
       const memberPrice = Number(product.memberPrice);
 
       // Use getBestPrice to get correct pricing including promotional discounts
-      const bestPriceResult = getBestPrice({
-        regularPrice: regularPrice,
-        memberPrice: memberPrice,
-        isPromotional: product.isPromotional || false,
-        promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
-        promotionStartDate: product.promotionStartDate,
-        promotionEndDate: product.promotionEndDate,
-        isQualifyingForMembership: product.isQualifyingForMembership,
-      }, isMember);
+      const bestPriceResult = getBestPrice(
+        {
+          regularPrice: regularPrice,
+          memberPrice: memberPrice,
+          isPromotional: product.isPromotional || false,
+          promotionalPrice: product.promotionalPrice
+            ? Number(product.promotionalPrice)
+            : null,
+          promotionStartDate: product.promotionStartDate,
+          promotionEndDate: product.promotionEndDate,
+          isQualifyingForMembership: product.isQualifyingForMembership,
+        },
+        isMember
+      );
 
       const appliedPrice = bestPriceResult.price;
       const itemTotal = appliedPrice * cartItem.quantity;
@@ -232,10 +267,12 @@ export async function POST(request: NextRequest) {
       // Calculate discounts based on price type
       if (bestPriceResult.priceType === 'promotional') {
         const basePrice = isMember ? memberPrice : regularPrice;
-        const promotionalDiscount = (basePrice - appliedPrice) * cartItem.quantity;
+        const promotionalDiscount =
+          (basePrice - appliedPrice) * cartItem.quantity;
         totalPromotionalDiscount += promotionalDiscount;
       } else if (bestPriceResult.priceType === 'member') {
-        const memberDiscount = (regularPrice - appliedPrice) * cartItem.quantity;
+        const memberDiscount =
+          (regularPrice - appliedPrice) * cartItem.quantity;
         totalMemberDiscount += memberDiscount;
       }
 
@@ -260,25 +297,31 @@ export async function POST(request: NextRequest) {
     let shippingCost = 0;
     if (orderData.shippingRate && orderData.shippingRate.price) {
       shippingCost = orderData.shippingRate.price;
-      console.log(`🚚 Using selected shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`);
+      console.log(
+        `🚚 Using selected shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`
+      );
     } else {
       // Fallback to business configuration
       const businessProfile = await businessShippingConfig.getBusinessProfile();
-      const freeShippingThreshold = businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+      const freeShippingThreshold =
+        businessProfile?.shippingPolicies.freeShippingThreshold || 150;
       shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
       console.log(`🚚 Using fallback shipping calculation: RM${shippingCost}`);
     }
-    
+
     // No tax calculation for now - tax system not configured
     const taxAmount = 0;
-    
+
     // Always use regular pricing for order creation (before membership activation)
     const totalAmount = subtotal + shippingCost + taxAmount;
 
     // Create order in database transaction
     const result = await prisma.$transaction(async tx => {
       // Helper function to find or create address (best practice: address deduplication)
-      const findOrCreateAddress = async (addressData: any, type: 'SHIPPING' | 'BILLING') => {
+      const findOrCreateAddress = async (
+        addressData: any,
+        type: 'SHIPPING' | 'BILLING'
+      ) => {
         // For authenticated users, try to find existing identical address
         if (!isGuest && session?.user?.id) {
           const existingAddress = await tx.address.findFirst({
@@ -297,17 +340,20 @@ export async function POST(request: NextRequest) {
           });
 
           if (existingAddress) {
-            console.log(`♻️ Reusing existing ${type.toLowerCase()} address for user:`, session.user.id);
-            
+            console.log(
+              `♻️ Reusing existing ${type.toLowerCase()} address for user:`,
+              session.user.id
+            );
+
             // Update phone if it's different (phone can change while address stays same)
             if (existingAddress.phone !== addressData.phone) {
               await tx.address.update({
                 where: { id: existingAddress.id },
-                data: { phone: addressData.phone }
+                data: { phone: addressData.phone },
               });
               console.log(`📞 Updated phone number for existing address`);
             }
-            
+
             return existingAddress;
           }
         }
@@ -332,8 +378,14 @@ export async function POST(request: NextRequest) {
       };
 
       // Find or create addresses using best practice deduplication
-      const shippingAddr = await findOrCreateAddress(orderData.shippingAddress, 'SHIPPING');
-      const billingAddr = await findOrCreateAddress(orderData.billingAddress, 'BILLING');
+      const shippingAddr = await findOrCreateAddress(
+        orderData.shippingAddress,
+        'SHIPPING'
+      );
+      const billingAddr = await findOrCreateAddress(
+        orderData.billingAddress,
+        'BILLING'
+      );
 
       // Set default address if user doesn't have one (best practice: auto-set default)
       if (!isGuest && session?.user?.id) {
@@ -351,7 +403,10 @@ export async function POST(request: NextRequest) {
             where: { id: shippingAddr.id },
             data: { isDefault: true },
           });
-          console.log(`✅ Set shipping address as default for user:`, session.user.id);
+          console.log(
+            `✅ Set shipping address as default for user:`,
+            session.user.id
+          );
         }
       }
 
@@ -509,7 +564,7 @@ export async function POST(request: NextRequest) {
     // Create payment URL based on payment method
     let paymentUrl = null;
     const paymentMethod = orderData.paymentMethod.toLowerCase();
-    
+
     if (paymentMethod === 'stripe') {
       // Create Stripe session
       paymentUrl = `/payment/stripe/${result.id}`;

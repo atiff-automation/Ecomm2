@@ -33,18 +33,18 @@ async function getTestDeliveryAddress() {
       state: 'KUL',
       postcode: '50450',
       country: 'MY',
-      scenario: 'Urban commercial area - high volume destination'
+      scenario: 'Urban commercial area - high volume destination',
     },
     {
-      name: 'Suburban Residential Test', 
+      name: 'Suburban Residential Test',
       phone: '+60378906000',
       address_line_1: 'Petaling Jaya City Council',
       address_line_2: '46, Jalan Yong Shook Lin',
       city: 'Petaling Jaya',
-      state: 'SEL', 
+      state: 'SEL',
       postcode: '46675',
       country: 'MY',
-      scenario: 'Suburban residential - typical customer location'
+      scenario: 'Suburban residential - typical customer location',
     },
     {
       name: 'Shopping Mall Test',
@@ -55,14 +55,15 @@ async function getTestDeliveryAddress() {
       state: 'KUL',
       postcode: '59200',
       country: 'MY',
-      scenario: 'Shopping mall pickup point - last mile delivery'
-    }
+      scenario: 'Shopping mall pickup point - last mile delivery',
+    },
   ];
 
   // Use configurable test scenario or default to first
   const selectedIndex = parseInt(process.env.TEST_SCENARIO_INDEX || '0');
-  const selectedAddress = businessTestAddresses[selectedIndex] || businessTestAddresses[0];
-  
+  const selectedAddress =
+    businessTestAddresses[selectedIndex] || businessTestAddresses[0];
+
   // Remove scenario description from actual API request
   const { scenario, ...addressData } = selectedAddress;
   return addressData;
@@ -70,12 +71,14 @@ async function getTestDeliveryAddress() {
 
 async function getValidatedPickupAddress(businessProfile: any) {
   // First priority: Business profile from database
-  if (businessProfile?.pickupAddress?.name && 
-      businessProfile?.pickupAddress?.phone &&
-      businessProfile?.pickupAddress?.address_line_1 &&
-      businessProfile?.pickupAddress?.city &&
-      businessProfile?.pickupAddress?.state &&
-      businessProfile?.pickupAddress?.postcode) {
+  if (
+    businessProfile?.pickupAddress?.name &&
+    businessProfile?.pickupAddress?.phone &&
+    businessProfile?.pickupAddress?.address_line_1 &&
+    businessProfile?.pickupAddress?.city &&
+    businessProfile?.pickupAddress?.state &&
+    businessProfile?.pickupAddress?.postcode
+  ) {
     return {
       name: businessProfile.pickupAddress.name,
       phone: businessProfile.pickupAddress.phone,
@@ -84,7 +87,7 @@ async function getValidatedPickupAddress(businessProfile: any) {
       city: businessProfile.pickupAddress.city,
       state: businessProfile.pickupAddress.state,
       postcode: businessProfile.pickupAddress.postcode,
-      country: 'MY'
+      country: 'MY',
     };
   }
 
@@ -95,7 +98,7 @@ async function getValidatedPickupAddress(businessProfile: any) {
     address_line_1: process.env.BUSINESS_ADDRESS_LINE1,
     city: process.env.BUSINESS_CITY,
     state: process.env.BUSINESS_STATE,
-    postcode: process.env.BUSINESS_POSTAL_CODE
+    postcode: process.env.BUSINESS_POSTAL_CODE,
   };
 
   const missingEnvFields = Object.entries(envRequiredFields)
@@ -111,12 +114,14 @@ async function getValidatedPickupAddress(businessProfile: any) {
       city: envRequiredFields.city!,
       state: envRequiredFields.state!,
       postcode: envRequiredFields.postcode!,
-      country: 'MY'
+      country: 'MY',
     };
   }
 
   // No valid configuration found
-  throw new Error(`Business pickup address not configured. Missing: ${missingEnvFields.join(', ')}. Please configure business profile or environment variables.`);
+  throw new Error(
+    `Business pickup address not configured. Missing: ${missingEnvFields.join(', ')}. Please configure business profile or environment variables.`
+  );
 }
 
 async function getValidatedTestParcel() {
@@ -129,7 +134,7 @@ async function getValidatedTestParcel() {
     height: parseInt(process.env.TEST_PARCEL_HEIGHT || '10'),
     content: 'API Connection Test Package', // Descriptive test content
     value: parseFloat(process.env.TEST_PARCEL_VALUE || '100'),
-    quantity: parseInt(process.env.TEST_PARCEL_QUANTITY || '1')
+    quantity: parseInt(process.env.TEST_PARCEL_QUANTITY || '1'),
   };
 }
 
@@ -138,11 +143,13 @@ function getTestServiceTypes() {
   const types = serviceTypes.split(',').map(type => type.trim());
   const validTypes = ['STANDARD', 'EXPRESS', 'OVERNIGHT'];
   const invalidTypes = types.filter(type => !validTypes.includes(type));
-  
+
   if (invalidTypes.length > 0) {
-    throw new Error(`Invalid service types: ${invalidTypes.join(', ')}. Valid types: ${validTypes.join(', ')}`);
+    throw new Error(
+      `Invalid service types: ${invalidTypes.join(', ')}. Valid types: ${validTypes.join(', ')}`
+    );
   }
-  
+
   return types;
 }
 
@@ -150,50 +157,55 @@ async function validateMalaysianPostalCode(postalCode: string, state?: string) {
   // Use business shipping config service for proper validation
   try {
     const malaysianStates = {
-      'JOH': [/^[78][0-9]{4}$/],
-      'KDH': [/^0[5-9][0-9]{3}$/, /^[1-3][0-9]{4}$/],
-      'KTN': [/^1[5-8][0-9]{3}$/],
-      'MLK': [/^7[5-8][0-9]{3}$/],
-      'NSN': [/^7[0-3][0-9]{3}$/],
-      'PHG': [/^2[5-8][0-9]{3}$/],
-      'PNG': [/^1[0-4][0-9]{3}$/],
-      'PRK': [/^3[0-6][0-9]{3}$/],
-      'PLS': [/^0[1-2][0-9]{3}$/],
-      'SBH': [/^8[8-9][0-9]{3}$/, /^9[0-1][0-9]{3}$/],
-      'SEL': [/^4[0-8][0-9]{3}$/, /^6[3-8][0-9]{3}$/],
-      'SWK': [/^9[3-8][0-9]{3}$/],
-      'TRG': [/^2[0-4][0-9]{3}$/],
-      'KUL': [/^5[0-6][0-9]{3}$/],
-      'LBN': [/^8[7][0-9]{3}$/]
+      JOH: [/^[78][0-9]{4}$/],
+      KDH: [/^0[5-9][0-9]{3}$/, /^[1-3][0-9]{4}$/],
+      KTN: [/^1[5-8][0-9]{3}$/],
+      MLK: [/^7[5-8][0-9]{3}$/],
+      NSN: [/^7[0-3][0-9]{3}$/],
+      PHG: [/^2[5-8][0-9]{3}$/],
+      PNG: [/^1[0-4][0-9]{3}$/],
+      PRK: [/^3[0-6][0-9]{3}$/],
+      PLS: [/^0[1-2][0-9]{3}$/],
+      SBH: [/^8[8-9][0-9]{3}$/, /^9[0-1][0-9]{3}$/],
+      SEL: [/^4[0-8][0-9]{3}$/, /^6[3-8][0-9]{3}$/],
+      SWK: [/^9[3-8][0-9]{3}$/],
+      TRG: [/^2[0-4][0-9]{3}$/],
+      KUL: [/^5[0-6][0-9]{3}$/],
+      LBN: [/^8[7][0-9]{3}$/],
     };
 
     const isValidFormat = /^[0-9]{5}$/.test(postalCode);
-    
+
     if (!isValidFormat) {
       return {
         isValid: false,
-        details: 'Postal code must be 5 digits'
+        details: 'Postal code must be 5 digits',
       };
     }
 
     if (state && malaysianStates[state as keyof typeof malaysianStates]) {
-      const statePatterns = malaysianStates[state as keyof typeof malaysianStates];
-      const isValidForState = statePatterns.some(pattern => pattern.test(postalCode));
-      
+      const statePatterns =
+        malaysianStates[state as keyof typeof malaysianStates];
+      const isValidForState = statePatterns.some(pattern =>
+        pattern.test(postalCode)
+      );
+
       return {
         isValid: isValidForState,
-        details: isValidForState ? 'Valid postal code for state' : `Invalid postal code for ${state}`
+        details: isValidForState
+          ? 'Valid postal code for state'
+          : `Invalid postal code for ${state}`,
       };
     }
 
     return {
       isValid: true,
-      details: 'Valid format (state validation skipped)'
+      details: 'Valid format (state validation skipped)',
     };
   } catch (error) {
     return {
       isValid: false,
-      details: 'Validation error occurred'
+      details: 'Validation error occurred',
     };
   }
 }
@@ -222,7 +234,9 @@ const shippingConfigSchema = z.object({
       blockedCouriers: z.array(z.string()).optional(),
       autoSelectCheapest: z.boolean().optional(),
       showCustomerChoice: z.boolean().optional(),
-      defaultServiceType: z.enum(['STANDARD', 'EXPRESS', 'OVERNIGHT']).optional(),
+      defaultServiceType: z
+        .enum(['STANDARD', 'EXPRESS', 'OVERNIGHT'])
+        .optional(),
     })
     .optional(),
   shippingPolicies: z
@@ -272,15 +286,18 @@ export async function GET() {
     const courierPrefs = await businessShippingConfig.getCourierPreferences();
 
     // Check if EasyParcel API is properly configured (database-first with env fallback)
-    const credentialStatus = await easyParcelCredentialsService.getCredentialStatus();
+    const credentialStatus =
+      await easyParcelCredentialsService.getCredentialStatus();
     const hasApiKey = credentialStatus.hasCredentials;
     const hasApiSecret = credentialStatus.hasCredentials;
     const apiConfigured = credentialStatus.hasCredentials;
 
     // Get shipping statistics - configurable time range
     const statsTimeRange = parseInt(process.env.SHIPPING_STATS_DAYS || '30');
-    const statsStartDate = new Date(Date.now() - statsTimeRange * 24 * 60 * 60 * 1000);
-    
+    const statsStartDate = new Date(
+      Date.now() - statsTimeRange * 24 * 60 * 60 * 1000
+    );
+
     const shippingStats = await prisma.order.groupBy({
       by: ['status'],
       where: {
@@ -331,7 +348,9 @@ export async function GET() {
         hasApiSecret,
         apiConfigured,
         environment: credentialStatus.environment,
-        source: credentialStatus.isUsingEnvFallback ? 'environment' : 'database',
+        source: credentialStatus.isUsingEnvFallback
+          ? 'environment'
+          : 'database',
         isBusinessConfigured: isConfigured,
       },
     });
@@ -362,7 +381,7 @@ export async function PUT(request: NextRequest) {
 
     // Build complete business profile from validated data
     const currentProfile = await businessShippingConfig.getBusinessProfile();
-    
+
     // Merge new data with existing profile
     const updatedProfile = {
       ...currentProfile,
@@ -389,7 +408,8 @@ export async function PUT(request: NextRequest) {
         ...validatedData.serviceSettings,
       },
       // Keep existing fields that aren't part of the update schema
-      operatingHours: currentProfile?.operatingHours || await getDefaultOperatingHours()
+      operatingHours:
+        currentProfile?.operatingHours || (await getDefaultOperatingHours()),
     };
 
     // Save to database using the business configuration service
@@ -497,29 +517,31 @@ export async function POST(request: NextRequest) {
       case 'test_connection':
         try {
           // Test with business pickup address and configurable test delivery
-          const businessProfile = await businessShippingConfig.getBusinessProfile();
-          const pickupAddress = await getValidatedPickupAddress(businessProfile);
+          const businessProfile =
+            await businessShippingConfig.getBusinessProfile();
+          const pickupAddress =
+            await getValidatedPickupAddress(businessProfile);
           const testParcel = await getValidatedTestParcel();
-          
+
           const testRatesResponse = await easyParcelService.calculateRates({
             pickup_address: pickupAddress,
             delivery_address: await getTestDeliveryAddress(),
             parcel: testParcel,
             service_types: getTestServiceTypes(),
             insurance: process.env.TEST_INSURANCE === 'true',
-            cod: process.env.TEST_COD === 'true'
+            cod: process.env.TEST_COD === 'true',
           });
 
           const testRates = testRatesResponse.rates || [];
 
           const startTime = Date.now();
           const responseTime = Date.now() - startTime;
-          
+
           return NextResponse.json({
             message: 'EasyParcel connection test successful',
             ratesReturned: testRates.length,
             responseTime: responseTime,
-            success: true
+            success: true,
           });
         } catch (error) {
           console.error('EasyParcel connection test failed:', error);
@@ -527,7 +549,7 @@ export async function POST(request: NextRequest) {
             {
               message: 'EasyParcel connection test failed',
               error: error instanceof Error ? error.message : 'Unknown error',
-              success: false
+              success: false,
             },
             { status: 500 }
           );
@@ -535,7 +557,10 @@ export async function POST(request: NextRequest) {
 
       case 'validate_postal_code': {
         const { postalCode, state } = body;
-        const validationResult = await validateMalaysianPostalCode(postalCode, state);
+        const validationResult = await validateMalaysianPostalCode(
+          postalCode,
+          state
+        );
 
         return NextResponse.json({
           postalCode,

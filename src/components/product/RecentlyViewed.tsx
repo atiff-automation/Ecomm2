@@ -109,7 +109,8 @@ export function RecentlyViewed({
 
     showConfirmation({
       title: 'Clear Recently Viewed',
-      description: 'Are you sure you want to clear all recently viewed products? This action cannot be undone.',
+      description:
+        'Are you sure you want to clear all recently viewed products? This action cannot be undone.',
       confirmText: 'Clear All',
       cancelText: 'Keep History',
       variant: 'destructive',
@@ -143,7 +144,6 @@ export function RecentlyViewed({
   useEffect(() => {
     fetchRecentlyViewed();
   }, [isLoggedIn, limit, fetchRecentlyViewed]);
-
 
   const formatViewedTime = (dateString: string) => {
     const now = new Date();
@@ -208,11 +208,13 @@ export function RecentlyViewed({
           const productCardData = {
             ...item.product,
             images: item.product.primaryImage
-              ? [{
-                  url: item.product.primaryImage.url,
-                  altText: item.product.primaryImage.altText,
-                  isPrimary: true,
-                }]
+              ? [
+                  {
+                    url: item.product.primaryImage.url,
+                    altText: item.product.primaryImage.altText,
+                    isPrimary: true,
+                  },
+                ]
               : [],
           };
 
@@ -225,7 +227,7 @@ export function RecentlyViewed({
                   {formatViewedTime(item.viewedAt)}
                 </Badge>
               </div>
-              
+
               <ProductCard
                 product={productCardData}
                 onAddToCart={handleAddToCart}
@@ -237,7 +239,7 @@ export function RecentlyViewed({
           );
         })}
       </div>
-      
+
       <ConfirmationDialog />
       <AlertDialog />
     </div>

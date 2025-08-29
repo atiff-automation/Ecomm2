@@ -8,11 +8,17 @@ export const TRACKING_CONFIG = {
   // Rate Limiting
   RATE_LIMITS: {
     GUEST: {
-      REQUESTS_PER_HOUR: parseInt(process.env.GUEST_TRACKING_RATE_LIMIT || '10', 10),
+      REQUESTS_PER_HOUR: parseInt(
+        process.env.GUEST_TRACKING_RATE_LIMIT || '10',
+        10
+      ),
       WINDOW_MS: 60 * 60 * 1000, // 1 hour
     },
     CUSTOMER: {
-      REQUESTS_PER_MINUTE: parseInt(process.env.CUSTOMER_TRACKING_RATE_LIMIT || '10', 10),
+      REQUESTS_PER_MINUTE: parseInt(
+        process.env.CUSTOMER_TRACKING_RATE_LIMIT || '10',
+        10
+      ),
       WINDOW_MS: 60 * 1000, // 1 minute
     },
   },
@@ -89,23 +95,47 @@ export const TRACKING_CONFIG = {
 
   // Security Settings
   SECURITY: {
-    MAX_LOGIN_ATTEMPTS: parseInt(process.env.MAX_TRACKING_LOGIN_ATTEMPTS || '5', 10),
-    LOCKOUT_DURATION_MS: parseInt(process.env.TRACKING_LOCKOUT_DURATION || '300000', 10), // 5 minutes
-    SESSION_TIMEOUT_MS: parseInt(process.env.TRACKING_SESSION_TIMEOUT || '1800000', 10), // 30 minutes
+    MAX_LOGIN_ATTEMPTS: parseInt(
+      process.env.MAX_TRACKING_LOGIN_ATTEMPTS || '5',
+      10
+    ),
+    LOCKOUT_DURATION_MS: parseInt(
+      process.env.TRACKING_LOCKOUT_DURATION || '300000',
+      10
+    ), // 5 minutes
+    SESSION_TIMEOUT_MS: parseInt(
+      process.env.TRACKING_SESSION_TIMEOUT || '1800000',
+      10
+    ), // 30 minutes
   },
 
   // Data Privacy
   PRIVACY: {
-    GUEST_DATA_RETENTION_HOURS: parseInt(process.env.GUEST_TRACKING_RETENTION || '0', 10), // Don't store
-    LOG_RETENTION_DAYS: parseInt(process.env.TRACKING_LOG_RETENTION || '30', 10),
-    SENSITIVE_FIELDS: ['address', 'phone', 'email', 'name', 'location'] as const,
+    GUEST_DATA_RETENTION_HOURS: parseInt(
+      process.env.GUEST_TRACKING_RETENTION || '0',
+      10
+    ), // Don't store
+    LOG_RETENTION_DAYS: parseInt(
+      process.env.TRACKING_LOG_RETENTION || '30',
+      10
+    ),
+    SENSITIVE_FIELDS: [
+      'address',
+      'phone',
+      'email',
+      'name',
+      'location',
+    ] as const,
   },
 
   // UI Configuration
   UI: {
     REFRESH_INTERVALS: {
       AUTOMATIC_MS: parseInt(process.env.TRACKING_AUTO_REFRESH || '300000', 10), // 5 minutes
-      MANUAL_COOLDOWN_MS: parseInt(process.env.TRACKING_MANUAL_COOLDOWN || '10000', 10), // 10 seconds
+      MANUAL_COOLDOWN_MS: parseInt(
+        process.env.TRACKING_MANUAL_COOLDOWN || '10000',
+        10
+      ), // 10 seconds
     },
     TIMELINE: {
       MAX_EVENTS: parseInt(process.env.MAX_TIMELINE_EVENTS || '50', 10),
@@ -131,7 +161,10 @@ export const TRACKING_CONFIG = {
   // Performance Optimization
   PERFORMANCE: {
     CACHE_TTL_MS: parseInt(process.env.TRACKING_CACHE_TTL || '300000', 10), // 5 minutes
-    REQUEST_TIMEOUT_MS: parseInt(process.env.TRACKING_REQUEST_TIMEOUT || '10000', 10), // 10 seconds
+    REQUEST_TIMEOUT_MS: parseInt(
+      process.env.TRACKING_REQUEST_TIMEOUT || '10000',
+      10
+    ), // 10 seconds
     BATCH_SIZE: parseInt(process.env.TRACKING_BATCH_SIZE || '20', 10),
   },
 } as const;
@@ -140,17 +173,19 @@ export const TRACKING_CONFIG = {
  * Get tracking status info by status string
  */
 export const getTrackingStatusInfo = (status?: string) => {
-  if (!status) return TRACKING_CONFIG.STATUS_MAPPING.UNKNOWN;
+  if (!status) {
+    return TRACKING_CONFIG.STATUS_MAPPING.UNKNOWN;
+  }
 
   const normalizedStatus = status.toLowerCase();
-  
+
   // Find matching status by keywords
   for (const [key, config] of Object.entries(TRACKING_CONFIG.STATUS_MAPPING)) {
     if (config.keywords.some(keyword => normalizedStatus.includes(keyword))) {
       return { ...config, key };
     }
   }
-  
+
   return TRACKING_CONFIG.STATUS_MAPPING.UNKNOWN;
 };
 
@@ -166,7 +201,7 @@ export const validateOrderNumber = (orderNumber: string): boolean => {
  */
 export const formatOrderNumber = (value: string): string => {
   const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  
+
   // Auto-format to ORD-YYYYMMDD-XXXX pattern
   if (cleaned.startsWith('ORD')) {
     let formatted = cleaned;

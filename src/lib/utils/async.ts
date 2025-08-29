@@ -91,8 +91,8 @@ export async function parallel<T>(
 
     if (executing.length >= concurrency) {
       await Promise.race(executing);
-      const index = executing.findIndex(p => 
-        (p as any)._resolved || (p as any)._rejected
+      const index = executing.findIndex(
+        p => (p as any)._resolved || (p as any)._rejected
       );
       if (index !== -1) {
         executing.splice(index, 1);
@@ -107,35 +107,32 @@ export async function parallel<T>(
 /**
  * Run promises sequentially
  */
-export async function sequence<T>(
-  tasks: (() => Promise<T>)[]
-): Promise<T[]> {
+export async function sequence<T>(tasks: (() => Promise<T>)[]): Promise<T[]> {
   const results: T[] = [];
-  
+
   for (const task of tasks) {
     results.push(await task());
   }
-  
+
   return results;
 }
 
 /**
  * All settled with typed results
  */
-export async function allSettled<T>(
-  promises: Promise<T>[]
-): Promise<Array<{
-  status: 'fulfilled' | 'rejected';
-  value?: T;
-  reason?: any;
-}>> {
+export async function allSettled<T>(promises: Promise<T>[]): Promise<
+  Array<{
+    status: 'fulfilled' | 'rejected';
+    value?: T;
+    reason?: any;
+  }>
+> {
   return Promise.allSettled(promises).then(results =>
     results.map(result => ({
       status: result.status,
-      ...(result.status === 'fulfilled' 
+      ...(result.status === 'fulfilled'
         ? { value: result.value }
-        : { reason: result.reason }
-      ),
+        : { reason: result.reason }),
     }))
   );
 }
@@ -222,11 +219,14 @@ export function cacheAsync<T extends (...args: any[]) => Promise<any>>(
     keyGenerator = (...args) => JSON.stringify(args),
   } = options;
 
-  const cache = new Map<string, {
-    value: Awaited<ReturnType<T>>;
-    timestamp: number;
-    promise?: Promise<Awaited<ReturnType<T>>>;
-  }>();
+  const cache = new Map<
+    string,
+    {
+      value: Awaited<ReturnType<T>>;
+      timestamp: number;
+      promise?: Promise<Awaited<ReturnType<T>>>;
+    }
+  >();
 
   return ((...args: Parameters<T>) => {
     const key = keyGenerator(...args);
@@ -243,26 +243,28 @@ export function cacheAsync<T extends (...args: any[]) => Promise<any>>(
     }
 
     // Create new promise
-    const promise = fn(...args).then(result => {
-      // Clean up old entries if cache is full
-      if (cache.size >= maxSize) {
-        const oldestKey = cache.keys().next().value;
-        if (oldestKey !== undefined) {
-          cache.delete(oldestKey);
+    const promise = fn(...args)
+      .then(result => {
+        // Clean up old entries if cache is full
+        if (cache.size >= maxSize) {
+          const oldestKey = cache.keys().next().value;
+          if (oldestKey !== undefined) {
+            cache.delete(oldestKey);
+          }
         }
-      }
 
-      cache.set(key, {
-        value: result,
-        timestamp: Date.now(),
+        cache.set(key, {
+          value: result,
+          timestamp: Date.now(),
+        });
+
+        return result;
+      })
+      .catch(error => {
+        // Remove failed promise from cache
+        cache.delete(key);
+        throw error;
       });
-
-      return result;
-    }).catch(error => {
-      // Remove failed promise from cache
-      cache.delete(key);
-      throw error;
-    });
 
     // Store promise temporarily
     cache.set(key, {
@@ -310,11 +312,11 @@ export class CircuitBreaker<T extends (...args: any[]) => Promise<any>> {
 
     try {
       const result = await timeout(this.fn(...args), this.options.timeout!);
-      
+
       if (this.state === 'half-open') {
         this.reset();
       }
-      
+
       return result;
     } catch (error) {
       this.recordFailure();
@@ -394,16 +396,25 @@ export class AsyncQueue {
  * Async event emitter
  */
 export class AsyncEventEmitter<T extends Record<string, any[]>> {
-  private listeners = new Map<keyof T, Set<(...args: any[]) => Promise<void> | void>>();
+  private listeners = new Map<
+    keyof T,
+    Set<(...args: any[]) => Promise<void> | void>
+  >();
 
-  on<K extends keyof T>(event: K, listener: (...args: T[K]) => Promise<void> | void): void {
+  on<K extends keyof T>(
+    event: K,
+    listener: (...args: T[K]) => Promise<void> | void
+  ): void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
     this.listeners.get(event)!.add(listener);
   }
 
-  off<K extends keyof T>(event: K, listener: (...args: T[K]) => Promise<void> | void): void {
+  off<K extends keyof T>(
+    event: K,
+    listener: (...args: T[K]) => Promise<void> | void
+  ): void {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       eventListeners.delete(listener);
@@ -412,9 +423,11 @@ export class AsyncEventEmitter<T extends Record<string, any[]>> {
 
   async emit<K extends keyof T>(event: K, ...args: T[K]): Promise<void> {
     const eventListeners = this.listeners.get(event);
-    if (!eventListeners) return;
+    if (!eventListeners) {
+      return;
+    }
 
-    const promises = Array.from(eventListeners).map(listener => 
+    const promises = Array.from(eventListeners).map(listener =>
       Promise.resolve(listener(...args))
     );
 
@@ -433,9 +446,7 @@ export class AsyncEventEmitter<T extends Record<string, any[]>> {
 /**
  * Create a cancelable promise
  */
-export function cancelable<T>(
-  promise: Promise<T>
-): {
+export function cancelable<T>(promise: Promise<T>): {
   promise: Promise<T>;
   cancel: () => void;
   isCanceled: () => boolean;
@@ -445,16 +456,22 @@ export function cancelable<T>(
   const cancelablePromise = new Promise<T>((resolve, reject) => {
     promise
       .then(value => {
-        if (!canceled) resolve(value);
+        if (!canceled) {
+          resolve(value);
+        }
       })
       .catch(error => {
-        if (!canceled) reject(error);
+        if (!canceled) {
+          reject(error);
+        }
       });
   });
 
   return {
     promise: cancelablePromise,
-    cancel: () => { canceled = true; },
+    cancel: () => {
+      canceled = true;
+    },
     isCanceled: () => canceled,
   };
 }

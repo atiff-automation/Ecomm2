@@ -9,30 +9,30 @@ import { prisma } from '@/lib/db/prisma';
 
 // Malaysian tax types
 export enum TaxType {
-  GST = 'GST',    // Goods and Services Tax (replaced by SST in 2018)
-  SST = 'SST',    // Sales and Service Tax (current)
-  EXEMPT = 'EXEMPT'
+  GST = 'GST', // Goods and Services Tax (replaced by SST in 2018)
+  SST = 'SST', // Sales and Service Tax (current)
+  EXEMPT = 'EXEMPT',
 }
 
 // Service tax categories for shipping
 export enum ServiceTaxCategory {
-  LOGISTICS = 'LOGISTICS',          // 6% SST
-  COURIER = 'COURIER',              // 6% SST  
-  FREIGHT = 'FREIGHT',              // 6% SST
-  WAREHOUSING = 'WAREHOUSING',      // 6% SST
-  INSURANCE = 'INSURANCE',          // 6% SST
-  EXEMPT = 'EXEMPT'                 // 0% SST
+  LOGISTICS = 'LOGISTICS', // 6% SST
+  COURIER = 'COURIER', // 6% SST
+  FREIGHT = 'FREIGHT', // 6% SST
+  WAREHOUSING = 'WAREHOUSING', // 6% SST
+  INSURANCE = 'INSURANCE', // 6% SST
+  EXEMPT = 'EXEMPT', // 0% SST
 }
 
 // Product tax categories
 export enum ProductTaxCategory {
-  STANDARD = 'STANDARD',            // 10% Sales Tax (most products)
-  LUXURY = 'LUXURY',                // 10% Sales Tax
-  ESSENTIAL = 'ESSENTIAL',          // 0% (basic necessities)
-  MEDICAL = 'MEDICAL',              // 0% (medical equipment/medicines)
-  FOOD = 'FOOD',                    // 0% (basic food items)
-  BOOKS = 'BOOKS',                  // 0% (educational materials)
-  EXEMPT = 'EXEMPT'                 // 0%
+  STANDARD = 'STANDARD', // 10% Sales Tax (most products)
+  LUXURY = 'LUXURY', // 10% Sales Tax
+  ESSENTIAL = 'ESSENTIAL', // 0% (basic necessities)
+  MEDICAL = 'MEDICAL', // 0% (medical equipment/medicines)
+  FOOD = 'FOOD', // 0% (basic food items)
+  BOOKS = 'BOOKS', // 0% (educational materials)
+  EXEMPT = 'EXEMPT', // 0%
 }
 
 interface TaxBreakdown {
@@ -57,9 +57,9 @@ interface TaxBreakdown {
 }
 
 interface TaxConfiguration {
-  salesTaxRate: number;      // Current: 10%
-  serviceTaxRate: number;    // Current: 6%
-  threshold: number;         // Registration threshold: RM500,000
+  salesTaxRate: number; // Current: 10%
+  serviceTaxRate: number; // Current: 6%
+  threshold: number; // Registration threshold: RM500,000
   isActive: boolean;
   effectiveDate: Date;
 }
@@ -87,7 +87,7 @@ export class MalaysianTaxService {
 
     try {
       const config = await prisma.systemConfig.findFirst({
-        where: { key: 'malaysian_tax_config' }
+        where: { key: 'malaysian_tax_config' },
       });
 
       if (config?.value) {
@@ -95,11 +95,11 @@ export class MalaysianTaxService {
       } else {
         // Default Malaysian SST rates
         this.taxConfig = {
-          salesTaxRate: 0.10,      // 10% Sales Tax
-          serviceTaxRate: 0.06,    // 6% Service Tax
-          threshold: 500000,       // RM500,000 registration threshold
+          salesTaxRate: 0.1, // 10% Sales Tax
+          serviceTaxRate: 0.06, // 6% Service Tax
+          threshold: 500000, // RM500,000 registration threshold
           isActive: true,
-          effectiveDate: new Date('2018-09-01') // SST reintroduction date
+          effectiveDate: new Date('2018-09-01'), // SST reintroduction date
         };
       }
 
@@ -108,11 +108,11 @@ export class MalaysianTaxService {
       console.error('Error loading tax configuration:', error);
       // Return default configuration
       return {
-        salesTaxRate: 0.10,
+        salesTaxRate: 0.1,
         serviceTaxRate: 0.06,
         threshold: 500000,
         isActive: true,
-        effectiveDate: new Date('2018-09-01')
+        effectiveDate: new Date('2018-09-01'),
       };
     }
   }
@@ -128,12 +128,12 @@ export class MalaysianTaxService {
     taxInclusive?: boolean;
   }): Promise<TaxBreakdown> {
     const config = await this.getTaxConfiguration();
-    const { 
-      productSubtotal, 
-      shippingCost, 
+    const {
+      productSubtotal,
+      shippingCost,
       productTaxCategory = ProductTaxCategory.STANDARD,
       shippingTaxCategory = ServiceTaxCategory.LOGISTICS,
-      taxInclusive = false 
+      taxInclusive = false,
     } = params;
 
     if (!config.isActive) {
@@ -145,15 +145,26 @@ export class MalaysianTaxService {
         total: productSubtotal + shippingCost,
         taxInclusive,
         breakdown: {
-          productTax: { taxableAmount: productSubtotal, taxRate: 0, taxAmount: 0 },
-          shippingTax: { taxableAmount: shippingCost, taxRate: 0, taxAmount: 0 }
-        }
+          productTax: {
+            taxableAmount: productSubtotal,
+            taxRate: 0,
+            taxAmount: 0,
+          },
+          shippingTax: {
+            taxableAmount: shippingCost,
+            taxRate: 0,
+            taxAmount: 0,
+          },
+        },
       };
     }
 
     // Determine tax rates based on categories
     const productTaxRate = this.getProductTaxRate(productTaxCategory, config);
-    const shippingTaxRate = this.getShippingTaxRate(shippingTaxCategory, config);
+    const shippingTaxRate = this.getShippingTaxRate(
+      shippingTaxCategory,
+      config
+    );
 
     let productTaxAmount = 0;
     let shippingTaxAmount = 0;
@@ -164,7 +175,7 @@ export class MalaysianTaxService {
       // Tax is already included in the prices
       taxableProductAmount = productSubtotal / (1 + productTaxRate);
       productTaxAmount = productSubtotal - taxableProductAmount;
-      
+
       taxableShippingAmount = shippingCost / (1 + shippingTaxRate);
       shippingTaxAmount = shippingCost - taxableShippingAmount;
     } else {
@@ -188,21 +199,24 @@ export class MalaysianTaxService {
         productTax: {
           taxableAmount: taxableProductAmount,
           taxRate: productTaxRate,
-          taxAmount: productTaxAmount
+          taxAmount: productTaxAmount,
         },
         shippingTax: {
           taxableAmount: taxableShippingAmount,
           taxRate: shippingTaxRate,
-          taxAmount: shippingTaxAmount
-        }
-      }
+          taxAmount: shippingTaxAmount,
+        },
+      },
     };
   }
 
   /**
    * Get product tax rate based on category
    */
-  private getProductTaxRate(category: ProductTaxCategory, config: TaxConfiguration): number {
+  private getProductTaxRate(
+    category: ProductTaxCategory,
+    config: TaxConfiguration
+  ): number {
     switch (category) {
       case ProductTaxCategory.STANDARD:
       case ProductTaxCategory.LUXURY:
@@ -221,7 +235,10 @@ export class MalaysianTaxService {
   /**
    * Get shipping service tax rate based on category
    */
-  private getShippingTaxRate(category: ServiceTaxCategory, config: TaxConfiguration): number {
+  private getShippingTaxRate(
+    category: ServiceTaxCategory,
+    config: TaxConfiguration
+  ): number {
     switch (category) {
       case ServiceTaxCategory.LOGISTICS:
       case ServiceTaxCategory.COURIER:
@@ -239,7 +256,10 @@ export class MalaysianTaxService {
   /**
    * Calculate shipping tax for EasyParcel rates
    */
-  async calculateShippingTax(shippingCost: number, inclusive: boolean = false): Promise<{
+  async calculateShippingTax(
+    shippingCost: number,
+    inclusive: boolean = false
+  ): Promise<{
     taxExclusiveAmount: number;
     taxAmount: number;
     taxInclusiveAmount: number;
@@ -253,7 +273,7 @@ export class MalaysianTaxService {
         taxExclusiveAmount: shippingCost,
         taxAmount: 0,
         taxInclusiveAmount: shippingCost,
-        taxRate: 0
+        taxRate: 0,
       };
     }
 
@@ -261,22 +281,22 @@ export class MalaysianTaxService {
       // Tax is already included in shipping cost
       const taxExclusiveAmount = shippingCost / (1 + taxRate);
       const taxAmount = shippingCost - taxExclusiveAmount;
-      
+
       return {
         taxExclusiveAmount,
         taxAmount,
         taxInclusiveAmount: shippingCost,
-        taxRate
+        taxRate,
       };
     } else {
       // Tax needs to be added
       const taxAmount = shippingCost * taxRate;
-      
+
       return {
         taxExclusiveAmount: shippingCost,
         taxAmount,
         taxInclusiveAmount: shippingCost + taxAmount,
-        taxRate
+        taxRate,
       };
     }
   }
@@ -304,7 +324,7 @@ export class MalaysianTaxService {
         description: 'Products (Sales Tax)',
         amount: breakdown.breakdown.productTax.taxableAmount,
         taxRate: breakdown.breakdown.productTax.taxRate,
-        taxAmount: breakdown.breakdown.productTax.taxAmount
+        taxAmount: breakdown.breakdown.productTax.taxAmount,
       });
     }
 
@@ -313,7 +333,7 @@ export class MalaysianTaxService {
         description: 'Shipping (Service Tax)',
         amount: breakdown.breakdown.shippingTax.taxableAmount,
         taxRate: breakdown.breakdown.shippingTax.taxRate,
-        taxAmount: breakdown.breakdown.shippingTax.taxAmount
+        taxAmount: breakdown.breakdown.shippingTax.taxAmount,
       });
     }
 
@@ -339,18 +359,20 @@ export class MalaysianTaxService {
     website: string;
   } {
     return {
-      salesTaxThreshold: 500000,      // RM500,000 for sales tax
-      serviceTaxThreshold: 500000,    // RM500,000 for service tax
+      salesTaxThreshold: 500000, // RM500,000 for sales tax
+      serviceTaxThreshold: 500000, // RM500,000 for service tax
       registrationRequired: true,
       authority: 'Royal Malaysian Customs Department',
-      website: 'https://gst.customs.gov.my/'
+      website: 'https://gst.customs.gov.my/',
     };
   }
 
   /**
    * Update tax configuration
    */
-  async updateTaxConfiguration(config: Partial<TaxConfiguration>): Promise<void> {
+  async updateTaxConfiguration(
+    config: Partial<TaxConfiguration>
+  ): Promise<void> {
     const currentConfig = await this.getTaxConfiguration();
     const updatedConfig = { ...currentConfig, ...config };
 
@@ -360,8 +382,8 @@ export class MalaysianTaxService {
       create: {
         key: 'malaysian_tax_config',
         value: JSON.stringify(updatedConfig),
-        type: 'JSON'
-      }
+        type: 'JSON',
+      },
     });
 
     // Clear cache

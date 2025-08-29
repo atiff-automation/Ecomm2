@@ -33,9 +33,9 @@ import Link from 'next/link';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 // Define tracking status type
-type TrackingStatus = 
+type TrackingStatus =
   | 'pending'
-  | 'booked' 
+  | 'booked'
   | 'picked_up'
   | 'in_transit'
   | 'out_for_delivery'
@@ -53,7 +53,7 @@ interface Order {
   paymentStatus: string;
   createdAt: string;
   itemCount: number;
-  
+
   // NEW: Tracking fields
   shipment?: {
     trackingNumber?: string;
@@ -231,19 +231,31 @@ export default function AdminOrders() {
   };
 
   const formatTrackingStatus = (status?: TrackingStatus): string => {
-    if (!status) return 'No Status';
+    if (!status) {
+      return 'No Status';
+    }
     return status.replace(/_/g, ' ').toUpperCase();
   };
 
   const formatRelativeTime = (dateString?: string): string => {
-    if (!dateString) return '';
+    if (!dateString) {
+      return '';
+    }
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
+    if (diffInMinutes < 1) {
+      return 'just now';
+    }
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)}h ago`;
+    }
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
@@ -258,9 +270,21 @@ export default function AdminOrders() {
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md
   const tabs: TabConfig[] = [
     { id: 'all-orders', label: 'All Orders', href: '/admin/orders' },
-    { id: 'shipping', label: 'Shipping Management', href: '/admin/orders/shipping' },
-    { id: 'fulfillment', label: 'Fulfillment Queue', href: '/admin/orders/fulfillment' },
-    { id: 'analytics', label: 'Order Analytics', href: '/admin/orders/analytics' },
+    {
+      id: 'shipping',
+      label: 'Shipping Management',
+      href: '/admin/orders/shipping',
+    },
+    {
+      id: 'fulfillment',
+      label: 'Fulfillment Queue',
+      href: '/admin/orders/fulfillment',
+    },
+    {
+      id: 'analytics',
+      label: 'Order Analytics',
+      href: '/admin/orders/analytics',
+    },
   ];
 
   // Primary action buttons for page header
@@ -363,273 +387,289 @@ export default function AdminOrders() {
       filters={filtersComponent}
       loading={loading}
     >
-        {/* Bulk Actions */}
-        {selectedOrders.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
-                  {selectedOrders.length} order(s) selected
-                </span>
-                <Select onValueChange={handleBulkStatusUpdate}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Update Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PROCESSING">
-                      Mark as Processing
-                    </SelectItem>
-                    <SelectItem value="SHIPPED">Mark as Shipped</SelectItem>
-                    <SelectItem value="DELIVERED">Mark as Delivered</SelectItem>
-                    <SelectItem value="CANCELLED">Mark as Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {/* Bulk Actions */}
+      {selectedOrders.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                {selectedOrders.length} order(s) selected
+              </span>
+              <Select onValueChange={handleBulkStatusUpdate}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Update Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PROCESSING">Mark as Processing</SelectItem>
+                  <SelectItem value="SHIPPED">Mark as Shipped</SelectItem>
+                  <SelectItem value="DELIVERED">Mark as Delivered</SelectItem>
+                  <SelectItem value="CANCELLED">Mark as Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Orders Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders ({pagination.total})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {[...Array(10)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-gray-200 rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 w-12">
-                          <Checkbox
-                            checked={
-                              selectedOrders.length === orders.length &&
-                              orders.length > 0
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Orders ({pagination.total})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(10)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 bg-gray-200 rounded animate-pulse"
+                ></div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 w-12">
+                        <Checkbox
+                          checked={
+                            selectedOrders.length === orders.length &&
+                            orders.length > 0
+                          }
+                          onCheckedChange={checked => {
+                            if (checked) {
+                              setSelectedOrders(orders.map(o => o.id));
+                            } else {
+                              setSelectedOrders([]);
                             }
+                          }}
+                        />
+                      </th>
+                      <th className="text-left py-3">Order #</th>
+                      <th className="text-left py-3">Customer</th>
+                      <th className="text-left py-3">Items</th>
+                      <th className="text-left py-3">Total</th>
+                      <th className="text-left py-3">Status</th>
+                      <th className="text-left py-3">Payment</th>
+                      <th className="text-left py-3">Tracking</th>
+                      <th className="text-left py-3">Date</th>
+                      <th className="text-left py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map(order => (
+                      <tr key={order.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3">
+                          <Checkbox
+                            checked={selectedOrders.includes(order.id)}
                             onCheckedChange={checked => {
                               if (checked) {
-                                setSelectedOrders(orders.map(o => o.id));
+                                setSelectedOrders(prev => [...prev, order.id]);
                               } else {
-                                setSelectedOrders([]);
+                                setSelectedOrders(prev =>
+                                  prev.filter(id => id !== order.id)
+                                );
                               }
                             }}
                           />
-                        </th>
-                        <th className="text-left py-3">Order #</th>
-                        <th className="text-left py-3">Customer</th>
-                        <th className="text-left py-3">Items</th>
-                        <th className="text-left py-3">Total</th>
-                        <th className="text-left py-3">Status</th>
-                        <th className="text-left py-3">Payment</th>
-                        <th className="text-left py-3">Tracking</th>
-                        <th className="text-left py-3">Date</th>
-                        <th className="text-left py-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.map(order => (
-                        <tr
-                          key={order.id}
-                          className="border-b hover:bg-gray-50"
-                        >
-                          <td className="py-3">
-                            <Checkbox
-                              checked={selectedOrders.includes(order.id)}
-                              onCheckedChange={checked => {
-                                if (checked) {
-                                  setSelectedOrders(prev => [
-                                    ...prev,
-                                    order.id,
-                                  ]);
-                                } else {
-                                  setSelectedOrders(prev =>
-                                    prev.filter(id => id !== order.id)
-                                  );
-                                }
-                              }}
-                            />
-                          </td>
-                          <td className="py-3 font-mono text-sm">
-                            {order.orderNumber}
-                          </td>
-                          <td className="py-3">
-                            <div>
-                              <div className="font-medium">
-                                {order.customerName}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {order.customerEmail}
-                              </div>
+                        </td>
+                        <td className="py-3 font-mono text-sm">
+                          {order.orderNumber}
+                        </td>
+                        <td className="py-3">
+                          <div>
+                            <div className="font-medium">
+                              {order.customerName}
                             </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-1">
-                              <Package className="h-4 w-4 text-gray-400" />
-                              <span>{order.itemCount}</span>
+                            <div className="text-sm text-gray-500">
+                              {order.customerEmail}
                             </div>
-                          </td>
-                          <td className="py-3 font-medium">
-                            {formatCurrency(order.total)}
-                          </td>
-                          <td className="py-3">
-                            <Badge className={getStatusColor(order.status)}>
-                              {order.status}
-                            </Badge>
-                          </td>
-                          <td className="py-3">
-                            <Badge
-                              className={getPaymentStatusColor(
-                                order.paymentStatus
-                              )}
-                            >
-                              {order.paymentStatus}
-                            </Badge>
-                          </td>
-                          {/* NEW: Tracking column */}
-                          <td className="py-3">
-                            {order.shipment?.trackingNumber ? (
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span 
-                                    className="font-mono text-xs text-blue-600 hover:text-blue-800 cursor-pointer" 
-                                    title="Click to copy tracking number"
-                                    onClick={() => copyToClipboard(order.shipment!.trackingNumber!)}
-                                  >
-                                    {order.shipment.trackingNumber}
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-1">
+                            <Package className="h-4 w-4 text-gray-400" />
+                            <span>{order.itemCount}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 font-medium">
+                          {formatCurrency(order.total)}
+                        </td>
+                        <td className="py-3">
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3">
+                          <Badge
+                            className={getPaymentStatusColor(
+                              order.paymentStatus
+                            )}
+                          >
+                            {order.paymentStatus}
+                          </Badge>
+                        </td>
+                        {/* NEW: Tracking column */}
+                        <td className="py-3">
+                          {order.shipment?.trackingNumber ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="font-mono text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+                                  title="Click to copy tracking number"
+                                  onClick={() =>
+                                    copyToClipboard(
+                                      order.shipment!.trackingNumber!
+                                    )
+                                  }
+                                >
+                                  {order.shipment.trackingNumber}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() =>
+                                    copyToClipboard(
+                                      order.shipment!.trackingNumber!
+                                    )
+                                  }
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  className={`${getTrackingStatusColor(order.shipment.status)} border text-xs`}
+                                >
+                                  {formatTrackingStatus(order.shipment.status)}
+                                </Badge>
+                                {order.shipment.courierName && (
+                                  <span className="text-xs text-gray-500">
+                                    {order.shipment.courierName}
                                   </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-4 w-4 p-0"
-                                    onClick={() => copyToClipboard(order.shipment!.trackingNumber!)}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
+                                )}
+                              </div>
+                              {order.shipment.estimatedDelivery && (
+                                <div className="text-xs text-gray-500">
+                                  Est:{' '}
+                                  {new Date(
+                                    order.shipment.estimatedDelivery
+                                  ).toLocaleDateString('en-MY')}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={`${getTrackingStatusColor(order.shipment.status)} border text-xs`}>
-                                    {formatTrackingStatus(order.shipment.status)}
-                                  </Badge>
-                                  {order.shipment.courierName && (
-                                    <span className="text-xs text-gray-500">{order.shipment.courierName}</span>
+                              )}
+                              {order.shipment.lastTrackedAt && (
+                                <div className="text-xs text-gray-400">
+                                  {formatRelativeTime(
+                                    order.shipment.lastTrackedAt
                                   )}
                                 </div>
-                                {order.shipment.estimatedDelivery && (
-                                  <div className="text-xs text-gray-500">
-                                    Est: {new Date(order.shipment.estimatedDelivery).toLocaleDateString('en-MY')}
-                                  </div>
-                                )}
-                                {order.shipment.lastTrackedAt && (
-                                  <div className="text-xs text-gray-400">
-                                    {formatRelativeTime(order.shipment.lastTrackedAt)}
-                                  </div>
-                                )}
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <span className="text-gray-400 text-sm">—</span>
+                              <div className="text-xs text-gray-400">
+                                No tracking
                               </div>
-                            ) : (
-                              <div className="text-center">
-                                <span className="text-gray-400 text-sm">—</span>
-                                <div className="text-xs text-gray-400">No tracking</div>
-                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(order.createdAt).toLocaleDateString(
+                              'en-MY'
                             )}
-                          </td>
-                          <td className="py-3 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(order.createdAt).toLocaleDateString(
-                                'en-MY'
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="outline" asChild>
-                                <Link href={`/admin/orders/${order.id}`}>
-                                  <Eye className="h-4 w-4" />
-                                </Link>
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" asChild>
+                              <Link href={`/admin/orders/${order.id}`}>
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+
+                            {order.shipment?.trackingNumber && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  window.open(
+                                    `https://track.easyparcel.my/${order.shipment!.trackingNumber}`,
+                                    '_blank'
+                                  )
+                                }
+                                title="Track on EasyParcel"
+                              >
+                                <Truck className="h-4 w-4" />
                               </Button>
-                              
-                              {order.shipment?.trackingNumber && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => window.open(`https://track.easyparcel.my/${order.shipment!.trackingNumber}`, '_blank')}
-                                  title="Track on EasyParcel"
-                                >
-                                  <Truck className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {orders.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No orders found matching your criteria
                 </div>
+              )}
 
-                {orders.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No orders found matching your criteria
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )}{' '}
+                    of {pagination.total} orders
                   </div>
-                )}
-
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-muted-foreground">
-                      Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                      {Math.min(
-                        pagination.page * pagination.limit,
-                        pagination.total
-                      )}{' '}
-                      of {pagination.total} orders
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setPagination(prev => ({
-                            ...prev,
-                            page: prev.page - 1,
-                          }))
-                        }
-                        disabled={pagination.page <= 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-sm">
-                        Page {pagination.page} of {pagination.totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setPagination(prev => ({
-                            ...prev,
-                            page: prev.page + 1,
-                          }))
-                        }
-                        disabled={pagination.page >= pagination.totalPages}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setPagination(prev => ({
+                          ...prev,
+                          page: prev.page - 1,
+                        }))
+                      }
+                      disabled={pagination.page <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm">
+                      Page {pagination.page} of {pagination.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setPagination(prev => ({
+                          ...prev,
+                          page: prev.page + 1,
+                        }))
+                      }
+                      disabled={pagination.page >= pagination.totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </AdminPageLayout>
   );
 }

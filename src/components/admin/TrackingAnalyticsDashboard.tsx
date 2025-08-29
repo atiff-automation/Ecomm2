@@ -43,8 +43,8 @@ interface TrackingAnalyticsDashboardProps {
   className?: string;
 }
 
-export default function TrackingAnalyticsDashboard({ 
-  className = '' 
+export default function TrackingAnalyticsDashboard({
+  className = '',
 }: TrackingAnalyticsDashboardProps) {
   const [stats, setStats] = useState<TrackingStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,8 +55,10 @@ export default function TrackingAnalyticsDashboard({
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/tracking/analytics?days=${dateRange}`);
-      
+      const response = await fetch(
+        `/api/admin/tracking/analytics?days=${dateRange}`
+      );
+
       if (response.ok) {
         const data = await response.json();
         setStats(data.stats);
@@ -76,9 +78,9 @@ export default function TrackingAnalyticsDashboard({
     setRefreshing(true);
     try {
       const response = await fetch('/api/admin/orders/batch-tracking-refresh', {
-        method: 'POST'
+        method: 'POST',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         // Show success message or update UI
@@ -93,8 +95,10 @@ export default function TrackingAnalyticsDashboard({
 
   const exportTrackingReport = async () => {
     try {
-      const response = await fetch(`/api/admin/tracking/export?days=${dateRange}`);
-      
+      const response = await fetch(
+        `/api/admin/tracking/export?days=${dateRange}`
+      );
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -151,9 +155,11 @@ export default function TrackingAnalyticsDashboard({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Tracking Analytics</h2>
-          <p className="text-gray-600">Monitor shipping performance and courier metrics</p>
+          <p className="text-gray-600">
+            Monitor shipping performance and courier metrics
+          </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-48">
@@ -166,9 +172,9 @@ export default function TrackingAnalyticsDashboard({
               <SelectItem value="365">Last year</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             onClick={handleBatchRefresh}
             disabled={refreshing}
           >
@@ -179,7 +185,7 @@ export default function TrackingAnalyticsDashboard({
             )}
             Refresh All
           </Button>
-          
+
           <Button variant="outline" onClick={exportTrackingReport}>
             <Download className="w-4 h-4 mr-2" />
             Export Report
@@ -191,11 +197,15 @@ export default function TrackingAnalyticsDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Shipments</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Shipments
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalShipments.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalShipments.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               Last {dateRange} days
             </p>
@@ -208,9 +218,14 @@ export default function TrackingAnalyticsDashboard({
             <Truck className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.inTransit.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.inTransit.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats.totalShipments > 0 ? ((stats.inTransit / stats.totalShipments) * 100).toFixed(1) : 0}% of total
+              {stats.totalShipments > 0
+                ? ((stats.inTransit / stats.totalShipments) * 100).toFixed(1)
+                : 0}
+              % of total
             </p>
           </CardContent>
         </Card>
@@ -221,9 +236,14 @@ export default function TrackingAnalyticsDashboard({
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.delivered.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.delivered.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats.totalShipments > 0 ? ((stats.delivered / stats.totalShipments) * 100).toFixed(1) : 0}% delivery rate
+              {stats.totalShipments > 0
+                ? ((stats.delivered / stats.totalShipments) * 100).toFixed(1)
+                : 0}
+              % delivery rate
             </p>
           </CardContent>
         </Card>
@@ -234,9 +254,14 @@ export default function TrackingAnalyticsDashboard({
             <AlertCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.exceptions.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.exceptions.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats.totalShipments > 0 ? ((stats.exceptions / stats.totalShipments) * 100).toFixed(1) : 0}% exception rate
+              {stats.totalShipments > 0
+                ? ((stats.exceptions / stats.totalShipments) * 100).toFixed(1)
+                : 0}
+              % exception rate
             </p>
           </CardContent>
         </Card>
@@ -258,13 +283,17 @@ export default function TrackingAnalyticsDashboard({
                 {stats.averageDeliveryTime.toFixed(1)} days
               </Badge>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">On-Time Delivery Rate</span>
-              <Badge 
-                className={stats.onTimeDeliveryRate >= 90 ? 'bg-green-100 text-green-800' : 
-                          stats.onTimeDeliveryRate >= 80 ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'}
+              <Badge
+                className={
+                  stats.onTimeDeliveryRate >= 90
+                    ? 'bg-green-100 text-green-800'
+                    : stats.onTimeDeliveryRate >= 80
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                }
               >
                 {stats.onTimeDeliveryRate.toFixed(1)}%
               </Badge>
@@ -279,9 +308,14 @@ export default function TrackingAnalyticsDashboard({
           <CardContent>
             <div className="space-y-3">
               {stats.courierPerformance.map((courier, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                >
                   <div>
-                    <div className="font-medium text-sm">{courier.courierName}</div>
+                    <div className="font-medium text-sm">
+                      {courier.courierName}
+                    </div>
                     <div className="text-xs text-gray-500">
                       {courier.shipmentCount} shipments
                     </div>
@@ -296,7 +330,7 @@ export default function TrackingAnalyticsDashboard({
                   </div>
                 </div>
               ))}
-              
+
               {stats.courierPerformance.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -315,10 +349,7 @@ export default function TrackingAnalyticsDashboard({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Button 
-              onClick={handleBatchRefresh} 
-              disabled={refreshing}
-            >
+            <Button onClick={handleBatchRefresh} disabled={refreshing}>
               {refreshing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -331,12 +362,12 @@ export default function TrackingAnalyticsDashboard({
                 </>
               )}
             </Button>
-            
+
             <Button variant="outline" onClick={exportTrackingReport}>
               <Download className="w-4 h-4 mr-2" />
               Export Detailed Report
             </Button>
-            
+
             <Button variant="outline">
               <Clock className="w-4 h-4 mr-2" />
               Schedule Auto-Refresh

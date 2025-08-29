@@ -10,7 +10,10 @@ import { errorMonitor, useErrorMonitor } from './error-monitor';
 
 interface MonitoringContextType {
   reportError: (error: Error, context?: Record<string, any>) => void;
-  addBreadcrumb: (message: string, level?: 'info' | 'warn' | 'error' | 'user' | 'navigation') => void;
+  addBreadcrumb: (
+    message: string,
+    level?: 'info' | 'warn' | 'error' | 'user' | 'navigation'
+  ) => void;
   trackUserAction: (action: string, properties?: Record<string, any>) => void;
   getStats: () => any;
 }
@@ -27,9 +30,9 @@ interface MonitoringProviderProps {
   };
 }
 
-export function MonitoringProvider({ 
-  children, 
-  config = {} 
+export function MonitoringProvider({
+  children,
+  config = {},
 }: MonitoringProviderProps) {
   const { reportError, addBreadcrumb, getStats } = useErrorMonitor();
 
@@ -53,10 +56,13 @@ export function MonitoringProvider({
     };
   }, [addBreadcrumb, config]);
 
-  const trackUserAction = async (action: string, properties?: Record<string, any>) => {
+  const trackUserAction = async (
+    action: string,
+    properties?: Record<string, any>
+  ) => {
     try {
       const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const eventData = {
         eventId,
         eventType: 'custom' as const,
@@ -84,7 +90,6 @@ export function MonitoringProvider({
 
       // Add breadcrumb
       addBreadcrumb(`User action: ${action}`, 'user');
-
     } catch (error) {
       console.error('Error tracking user action:', error);
     }
@@ -109,11 +114,11 @@ export function MonitoringProvider({
  */
 export function useMonitoring(): MonitoringContextType {
   const context = useContext(MonitoringContext);
-  
+
   if (!context) {
     throw new Error('useMonitoring must be used within a MonitoringProvider');
   }
-  
+
   return context;
 }
 
@@ -122,12 +127,12 @@ export function useMonitoring(): MonitoringContextType {
  */
 function getSessionId(): string {
   let sessionId = sessionStorage.getItem('monitoring_session_id');
-  
+
   if (!sessionId) {
     sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     sessionStorage.setItem('monitoring_session_id', sessionId);
   }
-  
+
   return sessionId;
 }
 
@@ -136,7 +141,8 @@ function getSessionId(): string {
  */
 function getUserId(): string | null {
   try {
-    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+    const userStr =
+      sessionStorage.getItem('user') || localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
       return user.id || null;
@@ -144,6 +150,6 @@ function getUserId(): string | null {
   } catch {
     // Ignore errors
   }
-  
+
   return null;
 }

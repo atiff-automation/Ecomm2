@@ -14,16 +14,20 @@ export function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
   const clientIP = request.headers.get('x-client-ip');
-  
+
   // Handle X-Forwarded-For which can contain multiple IPs
   if (forwarded) {
     const ips = forwarded.split(',').map(ip => ip.trim());
     return ips[0]; // First IP is usually the original client
   }
-  
-  if (realIP) return realIP;
-  if (clientIP) return clientIP;
-  
+
+  if (realIP) {
+    return realIP;
+  }
+  if (clientIP) {
+    return clientIP;
+  }
+
   // Fallback to connection remote address
   return request.ip || '127.0.0.1';
 }
@@ -38,10 +42,15 @@ export function generateSecureToken(length: number = 32): string {
 /**
  * Hash sensitive data with salt
  */
-export function hashWithSalt(data: string, salt?: string): { hash: string; salt: string } {
+export function hashWithSalt(
+  data: string,
+  salt?: string
+): { hash: string; salt: string } {
   const actualSalt = salt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(data, actualSalt, 10000, 64, 'sha512').toString('hex');
-  
+  const hash = crypto
+    .pbkdf2Sync(data, actualSalt, 10000, 64, 'sha512')
+    .toString('hex');
+
   return { hash, salt: actualSalt };
 }
 
@@ -49,26 +58,35 @@ export function hashWithSalt(data: string, salt?: string): { hash: string; salt:
  * Verify hashed data
  */
 export function verifyHash(data: string, hash: string, salt: string): boolean {
-  const verifyHash = crypto.pbkdf2Sync(data, salt, 10000, 64, 'sha512').toString('hex');
+  const verifyHash = crypto
+    .pbkdf2Sync(data, salt, 10000, 64, 'sha512')
+    .toString('hex');
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(verifyHash));
 }
 
 /**
  * Encrypt sensitive data using AES-256-GCM
  */
-export function encryptData(data: string, key?: string): { encrypted: string; key: string; iv: string; tag: string } {
+export function encryptData(
+  data: string,
+  key?: string
+): { encrypted: string; key: string; iv: string; tag: string } {
   const actualKey = key || crypto.randomBytes(32).toString('hex');
   const iv = crypto.randomBytes(16);
-  
+
   try {
     // Use AES-256-GCM for authenticated encryption
-    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(actualKey, 'hex'), iv);
-    
+    const cipher = crypto.createCipheriv(
+      'aes-256-gcm',
+      Buffer.from(actualKey, 'hex'),
+      iv
+    );
+
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const tag = cipher.getAuthTag();
-    
+
     return {
       encrypted,
       key: actualKey,
@@ -84,25 +102,43 @@ export function encryptData(data: string, key?: string): { encrypted: string; ke
 /**
  * Decrypt data using AES-256-GCM (Production Security)
  */
-export function decryptData(encrypted: string, key: string, iv: string, tag: string): string {
+export function decryptData(
+  encrypted: string,
+  key: string,
+  iv: string,
+  tag: string
+): string {
   // Reject legacy data - force re-entry with proper encryption
   if (!tag || tag === '') {
-    console.error('🔒 Legacy insecure data detected - credentials must be re-entered');
-    throw new Error('Legacy credentials detected - please re-configure credentials in admin panel for security');
+    console.error(
+      '🔒 Legacy insecure data detected - credentials must be re-entered'
+    );
+    throw new Error(
+      'Legacy credentials detected - please re-configure credentials in admin panel for security'
+    );
   }
 
   try {
     // Use AES-256-GCM for authenticated decryption
-    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      Buffer.from(key, 'hex'),
+      Buffer.from(iv, 'hex')
+    );
     decipher.setAuthTag(Buffer.from(tag, 'hex'));
-    
+
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   } catch (error) {
-    console.error('🔒 AES-256-GCM decryption failed - invalid credentials or corrupted data:', error);
-    throw new Error('Failed to decrypt credentials - please re-configure in admin panel');
+    console.error(
+      '🔒 AES-256-GCM decryption failed - invalid credentials or corrupted data:',
+      error
+    );
+    throw new Error(
+      'Failed to decrypt credentials - please re-configure in admin panel'
+    );
   }
 }
 
@@ -117,39 +153,38 @@ export function generateCSRFToken(): string {
  * Verify CSRF token
  */
 export function verifyCSRFToken(token: string, sessionToken: string): boolean {
-  return crypto.timingSafeEqual(
-    Buffer.from(token),
-    Buffer.from(sessionToken)
-  );
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(sessionToken));
 }
 
 /**
  * Check if request is from a trusted origin
  */
-export function isTrustedOrigin(request: NextRequest, allowedOrigins: string[]): boolean {
+export function isTrustedOrigin(
+  request: NextRequest,
+  allowedOrigins: string[]
+): boolean {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
   const host = request.headers.get('host');
-  
+
   // For same-origin requests (no origin header), check if it's from the same host
   if (!origin && !referer) {
     // Allow same-origin requests (common for API calls from the same domain)
     if (host) {
-      const sameOriginUrls = [
-        `http://${host}`,
-        `https://${host}`,
-      ];
-      return allowedOrigins.some(allowed => 
-        sameOriginUrls.includes(allowed) || allowed === '*'
+      const sameOriginUrls = [`http://${host}`, `https://${host}`];
+      return allowedOrigins.some(
+        allowed => sameOriginUrls.includes(allowed) || allowed === '*'
       );
     }
     return false; // No origin information and no host
   }
-  
+
   const requestOrigin = origin || (referer ? new URL(referer).origin : '');
-  
+
   return allowedOrigins.some(allowed => {
-    if (allowed === '*') return true;
+    if (allowed === '*') {
+      return true;
+    }
     if (allowed.startsWith('*.')) {
       const domain = allowed.slice(2);
       return requestOrigin.endsWith(domain);
@@ -161,14 +196,18 @@ export function isTrustedOrigin(request: NextRequest, allowedOrigins: string[]):
 /**
  * Verify webhook signature using HMAC-SHA256
  */
-export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+export function verifyWebhookSignature(
+  payload: string,
+  signature: string,
+  secret: string
+): boolean {
   try {
     // Create expected signature
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(payload, 'utf8')
       .digest('hex');
-    
+
     // Use timing-safe comparison to prevent timing attacks
     return crypto.timingSafeEqual(
       Buffer.from(signature, 'hex'),
@@ -183,7 +222,10 @@ export function verifyWebhookSignature(payload: string, signature: string, secre
 /**
  * Generate webhook signature for outgoing requests
  */
-export function generateWebhookSignature(payload: string, secret: string): string {
+export function generateWebhookSignature(
+  payload: string,
+  secret: string
+): string {
   return crypto
     .createHmac('sha256', secret)
     .update(payload, 'utf8')
@@ -206,7 +248,7 @@ export function isSuspiciousUserAgent(userAgent: string): boolean {
     /java/i,
     /^$/,
   ];
-  
+
   return suspiciousPatterns.some(pattern => pattern.test(userAgent));
 }
 
@@ -224,29 +266,36 @@ export function generateOrderNumber(): string {
  */
 export function maskSensitiveData(data: any): any {
   const sensitiveFields = [
-    'password', 'email', 'phone', 'address', 'creditCard', 
-    'bankAccount', 'socialSecurity', 'nric', 'ic'
+    'password',
+    'email',
+    'phone',
+    'address',
+    'creditCard',
+    'bankAccount',
+    'socialSecurity',
+    'nric',
+    'ic',
   ];
-  
+
   if (typeof data === 'string') {
     // Mask email addresses
     if (data.includes('@')) {
       const [local, domain] = data.split('@');
       return `${local.slice(0, 2)}***@${domain}`;
     }
-    
+
     // Mask phone numbers
     if (/^\+?[\d\s-()]{8,}$/.test(data)) {
       return data.slice(0, 3) + '***' + data.slice(-2);
     }
-    
+
     return data;
   }
-  
+
   if (Array.isArray(data)) {
     return data.map(maskSensitiveData);
   }
-  
+
   if (typeof data === 'object' && data !== null) {
     const masked: any = {};
     for (const [key, value] of Object.entries(data)) {
@@ -258,7 +307,7 @@ export function maskSensitiveData(data: any): any {
     }
     return masked;
   }
-  
+
   return data;
 }
 
@@ -271,8 +320,8 @@ export const SECURITY_HEADERS = {
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Cache-Control': 'private, no-cache, no-store, must-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0',
+  Pragma: 'no-cache',
+  Expires: '0',
 } as const;
 
 /**
@@ -285,13 +334,14 @@ export function getCORSHeaders(origin?: string): Record<string, string> {
     process.env.NEXTAUTH_URL,
     process.env.NEXT_PUBLIC_APP_URL,
   ].filter(Boolean);
-  
+
   const isAllowed = !origin || allowedOrigins.includes(origin);
-  
+
   return {
-    'Access-Control-Allow-Origin': isAllowed ? (origin || '*') : 'null',
+    'Access-Control-Allow-Origin': isAllowed ? origin || '*' : 'null',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Headers':
+      'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400', // 24 hours
   };
@@ -314,17 +364,19 @@ export interface SecurityAuditLog {
 /**
  * Log security event (in production, this would go to a security monitoring system)
  */
-export function logSecurityEvent(event: Omit<SecurityAuditLog, 'timestamp'>): void {
+export function logSecurityEvent(
+  event: Omit<SecurityAuditLog, 'timestamp'>
+): void {
   const logEntry: SecurityAuditLog = {
     ...event,
     timestamp: new Date().toISOString(),
   };
-  
+
   // In development, log to console
   if (process.env.NODE_ENV === 'development') {
     console.log('🔒 Security Event:', logEntry);
   }
-  
+
   // In production, you would send this to your security monitoring system
   // Example: sendToSecurityMonitoring(logEntry);
 }

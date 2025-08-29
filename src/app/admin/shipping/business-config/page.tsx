@@ -7,7 +7,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,18 +21,24 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Building2, 
-  MapPin, 
-  Truck, 
-  Settings, 
-  CheckCircle, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Building2,
+  MapPin,
+  Truck,
+  Settings,
+  CheckCircle,
   AlertCircle,
   Info,
   Clock,
   Shield,
-  CreditCard
+  CreditCard,
 } from 'lucide-react';
 
 interface BusinessProfile {
@@ -89,14 +101,17 @@ const MALAYSIAN_STATES = [
   { code: 'SEL', name: 'Selangor' },
   { code: 'SBH', name: 'Sabah' },
   { code: 'SWK', name: 'Sarawak' },
-  { code: 'LBN', name: 'Labuan' }
+  { code: 'LBN', name: 'Labuan' },
 ];
 
 export default function BusinessConfigPage() {
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState('business');
 
   useEffect(() => {
@@ -105,9 +120,11 @@ export default function BusinessConfigPage() {
 
   const loadBusinessProfile = async () => {
     try {
-      const response = await fetch('/api/admin/shipping/business-config?component=profile');
+      const response = await fetch(
+        '/api/admin/shipping/business-config?component=profile'
+      );
       const data = await response.json();
-      
+
       if (data.success) {
         setProfile(data.profile);
       } else {
@@ -121,7 +138,9 @@ export default function BusinessConfigPage() {
   };
 
   const saveProfile = async () => {
-    if (!profile) return;
+    if (!profile) {
+      return;
+    }
 
     setSaving(true);
     setMessage(null);
@@ -132,16 +151,22 @@ export default function BusinessConfigPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'update_profile',
-          data: profile
-        })
+          data: profile,
+        }),
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        setMessage({ type: 'success', text: 'Business profile updated successfully!' });
+        setMessage({
+          type: 'success',
+          text: 'Business profile updated successfully!',
+        });
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to update profile' });
+        setMessage({
+          type: 'error',
+          text: data.error || 'Failed to update profile',
+        });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Error updating business profile' });
@@ -151,21 +176,25 @@ export default function BusinessConfigPage() {
   };
 
   const updateProfile = (updates: Partial<BusinessProfile>) => {
-    if (!profile) return;
+    if (!profile) {
+      return;
+    }
     setProfile({ ...profile, ...updates });
   };
 
   const updateNestedField = (path: string[], value: any) => {
-    if (!profile) return;
-    
+    if (!profile) {
+      return;
+    }
+
     const newProfile = { ...profile };
     let current: any = newProfile;
-    
+
     for (let i = 0; i < path.length - 1; i++) {
       current[path[i]] = { ...current[path[i]] };
       current = current[path[i]];
     }
-    
+
     current[path[path.length - 1]] = value;
     setProfile(newProfile);
   };
@@ -186,7 +215,8 @@ export default function BusinessConfigPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load business configuration. Please try refreshing the page.
+            Failed to load business configuration. Please try refreshing the
+            page.
           </AlertDescription>
         </Alert>
       </div>
@@ -196,16 +226,25 @@ export default function BusinessConfigPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Business Shipping Configuration</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Business Shipping Configuration
+        </h1>
         <p className="text-gray-600">
-          Configure your business profile, pickup address, and courier preferences for EasyParcel integration.
+          Configure your business profile, pickup address, and courier
+          preferences for EasyParcel integration.
         </p>
       </div>
 
       {message && (
-        <Alert className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+        <Alert
+          className={`mb-6 ${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+        >
           <Info className="h-4 w-4" />
-          <AlertDescription className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+          <AlertDescription
+            className={
+              message.type === 'success' ? 'text-green-800' : 'text-red-800'
+            }
+          >
             {message.text}
           </AlertDescription>
         </Alert>
@@ -246,17 +285,23 @@ export default function BusinessConfigPage() {
                   <Input
                     id="businessName"
                     value={profile.businessName}
-                    onChange={(e) => updateProfile({ businessName: e.target.value })}
+                    onChange={e =>
+                      updateProfile({ businessName: e.target.value })
+                    }
                     placeholder="Your business name"
                     maxLength={100}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="businessRegistration">Business Registration</Label>
+                  <Label htmlFor="businessRegistration">
+                    Business Registration
+                  </Label>
                   <Input
                     id="businessRegistration"
                     value={profile.businessRegistration || ''}
-                    onChange={(e) => updateProfile({ businessRegistration: e.target.value })}
+                    onChange={e =>
+                      updateProfile({ businessRegistration: e.target.value })
+                    }
                     placeholder="Registration number (optional)"
                   />
                 </div>
@@ -268,7 +313,9 @@ export default function BusinessConfigPage() {
                   <Input
                     id="contactPerson"
                     value={profile.contactPerson}
-                    onChange={(e) => updateProfile({ contactPerson: e.target.value })}
+                    onChange={e =>
+                      updateProfile({ contactPerson: e.target.value })
+                    }
                     placeholder="Primary contact person"
                     maxLength={100}
                   />
@@ -278,7 +325,9 @@ export default function BusinessConfigPage() {
                   <Input
                     id="contactPhone"
                     value={profile.contactPhone}
-                    onChange={(e) => updateProfile({ contactPhone: e.target.value })}
+                    onChange={e =>
+                      updateProfile({ contactPhone: e.target.value })
+                    }
                     placeholder="+60123456789"
                   />
                 </div>
@@ -290,7 +339,9 @@ export default function BusinessConfigPage() {
                   id="contactEmail"
                   type="email"
                   value={profile.contactEmail}
-                  onChange={(e) => updateProfile({ contactEmail: e.target.value })}
+                  onChange={e =>
+                    updateProfile({ contactEmail: e.target.value })
+                  }
                   placeholder="business@example.com"
                 />
               </div>
@@ -313,7 +364,12 @@ export default function BusinessConfigPage() {
                   <Input
                     id="pickupName"
                     value={profile.pickupAddress.name}
-                    onChange={(e) => updateNestedField(['pickupAddress', 'name'], e.target.value)}
+                    onChange={e =>
+                      updateNestedField(
+                        ['pickupAddress', 'name'],
+                        e.target.value
+                      )
+                    }
                     placeholder="Store/warehouse name"
                     maxLength={100}
                   />
@@ -323,7 +379,12 @@ export default function BusinessConfigPage() {
                   <Input
                     id="pickupPhone"
                     value={profile.pickupAddress.phone}
-                    onChange={(e) => updateNestedField(['pickupAddress', 'phone'], e.target.value)}
+                    onChange={e =>
+                      updateNestedField(
+                        ['pickupAddress', 'phone'],
+                        e.target.value
+                      )
+                    }
                     placeholder="+60123456789"
                   />
                 </div>
@@ -334,7 +395,12 @@ export default function BusinessConfigPage() {
                 <Input
                   id="addressLine1"
                   value={profile.pickupAddress.address_line_1}
-                  onChange={(e) => updateNestedField(['pickupAddress', 'address_line_1'], e.target.value)}
+                  onChange={e =>
+                    updateNestedField(
+                      ['pickupAddress', 'address_line_1'],
+                      e.target.value
+                    )
+                  }
                   placeholder="Street address"
                   maxLength={100}
                 />
@@ -345,7 +411,12 @@ export default function BusinessConfigPage() {
                 <Input
                   id="addressLine2"
                   value={profile.pickupAddress.address_line_2 || ''}
-                  onChange={(e) => updateNestedField(['pickupAddress', 'address_line_2'], e.target.value)}
+                  onChange={e =>
+                    updateNestedField(
+                      ['pickupAddress', 'address_line_2'],
+                      e.target.value
+                    )
+                  }
                   placeholder="Unit, suite, etc. (optional)"
                   maxLength={100}
                 />
@@ -357,7 +428,12 @@ export default function BusinessConfigPage() {
                   <Input
                     id="city"
                     value={profile.pickupAddress.city}
-                    onChange={(e) => updateNestedField(['pickupAddress', 'city'], e.target.value)}
+                    onChange={e =>
+                      updateNestedField(
+                        ['pickupAddress', 'city'],
+                        e.target.value
+                      )
+                    }
                     placeholder="City"
                     maxLength={50}
                   />
@@ -366,13 +442,15 @@ export default function BusinessConfigPage() {
                   <Label htmlFor="state">State *</Label>
                   <Select
                     value={profile.pickupAddress.state}
-                    onValueChange={(value) => updateNestedField(['pickupAddress', 'state'], value)}
+                    onValueChange={value =>
+                      updateNestedField(['pickupAddress', 'state'], value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      {MALAYSIAN_STATES.map((state) => (
+                      {MALAYSIAN_STATES.map(state => (
                         <SelectItem key={state.code} value={state.code}>
                           {state.name} ({state.code})
                         </SelectItem>
@@ -385,7 +463,12 @@ export default function BusinessConfigPage() {
                   <Input
                     id="postcode"
                     value={profile.pickupAddress.postcode}
-                    onChange={(e) => updateNestedField(['pickupAddress', 'postcode'], e.target.value)}
+                    onChange={e =>
+                      updateNestedField(
+                        ['pickupAddress', 'postcode'],
+                        e.target.value
+                      )
+                    }
                     placeholder="12345"
                     maxLength={5}
                   />
@@ -407,22 +490,37 @@ export default function BusinessConfigPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Customer Choice</Label>
-                  <p className="text-sm text-gray-500">Allow customers to choose their preferred courier</p>
+                  <p className="text-sm text-gray-500">
+                    Allow customers to choose their preferred courier
+                  </p>
                 </div>
                 <Switch
                   checked={profile.courierPreferences.showCustomerChoice}
-                  onCheckedChange={(checked) => updateNestedField(['courierPreferences', 'showCustomerChoice'], checked)}
+                  onCheckedChange={checked =>
+                    updateNestedField(
+                      ['courierPreferences', 'showCustomerChoice'],
+                      checked
+                    )
+                  }
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Auto-Select Cheapest</Label>
-                  <p className="text-sm text-gray-500">Automatically select the cheapest option when customer choice is disabled</p>
+                  <p className="text-sm text-gray-500">
+                    Automatically select the cheapest option when customer
+                    choice is disabled
+                  </p>
                 </div>
                 <Switch
                   checked={profile.courierPreferences.autoSelectCheapest}
-                  onCheckedChange={(checked) => updateNestedField(['courierPreferences', 'autoSelectCheapest'], checked)}
+                  onCheckedChange={checked =>
+                    updateNestedField(
+                      ['courierPreferences', 'autoSelectCheapest'],
+                      checked
+                    )
+                  }
                 />
               </div>
 
@@ -430,7 +528,12 @@ export default function BusinessConfigPage() {
                 <Label>Default Service Type</Label>
                 <Select
                   value={profile.courierPreferences.defaultServiceType}
-                  onValueChange={(value) => updateNestedField(['courierPreferences', 'defaultServiceType'], value)}
+                  onValueChange={value =>
+                    updateNestedField(
+                      ['courierPreferences', 'defaultServiceType'],
+                      value
+                    )
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -438,7 +541,9 @@ export default function BusinessConfigPage() {
                   <SelectContent>
                     <SelectItem value="STANDARD">Standard Delivery</SelectItem>
                     <SelectItem value="EXPRESS">Express Delivery</SelectItem>
-                    <SelectItem value="OVERNIGHT">Overnight Delivery</SelectItem>
+                    <SelectItem value="OVERNIGHT">
+                      Overnight Delivery
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -446,10 +551,9 @@ export default function BusinessConfigPage() {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  {profile.courierPreferences.showCustomerChoice 
-                    ? "Customers will see all available courier options and can choose their preference."
-                    : "Only business-approved couriers will be shown to customers, or automatically selected if auto-select is enabled."
-                  }
+                  {profile.courierPreferences.showCustomerChoice
+                    ? 'Customers will see all available courier options and can choose their preference.'
+                    : 'Only business-approved couriers will be shown to customers, or automatically selected if auto-select is enabled.'}
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -467,15 +571,24 @@ export default function BusinessConfigPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="freeShippingThreshold">Free Shipping Threshold (RM)</Label>
+                  <Label htmlFor="freeShippingThreshold">
+                    Free Shipping Threshold (RM)
+                  </Label>
                   <Input
                     id="freeShippingThreshold"
                     type="number"
                     min="0"
                     value={profile.shippingPolicies.freeShippingThreshold}
-                    onChange={(e) => updateNestedField(['shippingPolicies', 'freeShippingThreshold'], Number(e.target.value))}
+                    onChange={e =>
+                      updateNestedField(
+                        ['shippingPolicies', 'freeShippingThreshold'],
+                        Number(e.target.value)
+                      )
+                    }
                   />
-                  <p className="text-sm text-gray-500 mt-1">Orders above this amount get free shipping</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Orders above this amount get free shipping
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="processingDays">Processing Days</Label>
@@ -485,14 +598,23 @@ export default function BusinessConfigPage() {
                     min="0"
                     max="14"
                     value={profile.shippingPolicies.processingDays}
-                    onChange={(e) => updateNestedField(['shippingPolicies', 'processingDays'], Number(e.target.value))}
+                    onChange={e =>
+                      updateNestedField(
+                        ['shippingPolicies', 'processingDays'],
+                        Number(e.target.value)
+                      )
+                    }
                   />
-                  <p className="text-sm text-gray-500 mt-1">Days before pickup/shipping</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Days before pickup/shipping
+                  </p>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="maxWeight">Maximum Weight per Parcel (kg)</Label>
+                <Label htmlFor="maxWeight">
+                  Maximum Weight per Parcel (kg)
+                </Label>
                 <Input
                   id="maxWeight"
                   type="number"
@@ -500,9 +622,16 @@ export default function BusinessConfigPage() {
                   max="70"
                   step="0.1"
                   value={profile.shippingPolicies.maxWeight}
-                  onChange={(e) => updateNestedField(['shippingPolicies', 'maxWeight'], Number(e.target.value))}
+                  onChange={e =>
+                    updateNestedField(
+                      ['shippingPolicies', 'maxWeight'],
+                      Number(e.target.value)
+                    )
+                  }
                 />
-                <p className="text-sm text-gray-500 mt-1">Maximum weight per parcel (EasyParcel limit: 70kg)</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Maximum weight per parcel (EasyParcel limit: 70kg)
+                </p>
               </div>
 
               <div>
@@ -515,7 +644,12 @@ export default function BusinessConfigPage() {
                       max="200"
                       placeholder="Length"
                       value={profile.shippingPolicies.maxDimensions.length}
-                      onChange={(e) => updateNestedField(['shippingPolicies', 'maxDimensions', 'length'], Number(e.target.value))}
+                      onChange={e =>
+                        updateNestedField(
+                          ['shippingPolicies', 'maxDimensions', 'length'],
+                          Number(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div>
@@ -525,7 +659,12 @@ export default function BusinessConfigPage() {
                       max="200"
                       placeholder="Width"
                       value={profile.shippingPolicies.maxDimensions.width}
-                      onChange={(e) => updateNestedField(['shippingPolicies', 'maxDimensions', 'width'], Number(e.target.value))}
+                      onChange={e =>
+                        updateNestedField(
+                          ['shippingPolicies', 'maxDimensions', 'width'],
+                          Number(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div>
@@ -535,11 +674,18 @@ export default function BusinessConfigPage() {
                       max="200"
                       placeholder="Height"
                       value={profile.shippingPolicies.maxDimensions.height}
-                      onChange={(e) => updateNestedField(['shippingPolicies', 'maxDimensions', 'height'], Number(e.target.value))}
+                      onChange={e =>
+                        updateNestedField(
+                          ['shippingPolicies', 'maxDimensions', 'height'],
+                          Number(e.target.value)
+                        )
+                      }
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Maximum dimensions per parcel (EasyParcel limit: 200cm each)</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Maximum dimensions per parcel (EasyParcel limit: 200cm each)
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -557,22 +703,36 @@ export default function BusinessConfigPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Insurance Required</Label>
-                      <p className="text-sm text-gray-500">Require insurance for all shipments</p>
+                      <p className="text-sm text-gray-500">
+                        Require insurance for all shipments
+                      </p>
                     </div>
                     <Switch
                       checked={profile.serviceSettings.insuranceRequired}
-                      onCheckedChange={(checked) => updateNestedField(['serviceSettings', 'insuranceRequired'], checked)}
+                      onCheckedChange={checked =>
+                        updateNestedField(
+                          ['serviceSettings', 'insuranceRequired'],
+                          checked
+                        )
+                      }
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="maxInsuranceValue">Max Insurance Value (RM)</Label>
+                    <Label htmlFor="maxInsuranceValue">
+                      Max Insurance Value (RM)
+                    </Label>
                     <Input
                       id="maxInsuranceValue"
                       type="number"
                       min="0"
                       value={profile.serviceSettings.maxInsuranceValue}
-                      onChange={(e) => updateNestedField(['serviceSettings', 'maxInsuranceValue'], Number(e.target.value))}
+                      onChange={e =>
+                        updateNestedField(
+                          ['serviceSettings', 'maxInsuranceValue'],
+                          Number(e.target.value)
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -581,11 +741,18 @@ export default function BusinessConfigPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>COD Enabled</Label>
-                      <p className="text-sm text-gray-500">Allow Cash on Delivery</p>
+                      <p className="text-sm text-gray-500">
+                        Allow Cash on Delivery
+                      </p>
                     </div>
                     <Switch
                       checked={profile.serviceSettings.codEnabled}
-                      onCheckedChange={(checked) => updateNestedField(['serviceSettings', 'codEnabled'], checked)}
+                      onCheckedChange={checked =>
+                        updateNestedField(
+                          ['serviceSettings', 'codEnabled'],
+                          checked
+                        )
+                      }
                     />
                   </div>
 
@@ -596,7 +763,12 @@ export default function BusinessConfigPage() {
                       type="number"
                       min="0"
                       value={profile.serviceSettings.maxCodAmount}
-                      onChange={(e) => updateNestedField(['serviceSettings', 'maxCodAmount'], Number(e.target.value))}
+                      onChange={e =>
+                        updateNestedField(
+                          ['serviceSettings', 'maxCodAmount'],
+                          Number(e.target.value)
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -605,11 +777,18 @@ export default function BusinessConfigPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Signature Required</Label>
-                  <p className="text-sm text-gray-500">Require signature on delivery</p>
+                  <p className="text-sm text-gray-500">
+                    Require signature on delivery
+                  </p>
                 </div>
                 <Switch
                   checked={profile.serviceSettings.signatureRequired}
-                  onCheckedChange={(checked) => updateNestedField(['serviceSettings', 'signatureRequired'], checked)}
+                  onCheckedChange={checked =>
+                    updateNestedField(
+                      ['serviceSettings', 'signatureRequired'],
+                      checked
+                    )
+                  }
                 />
               </div>
             </CardContent>

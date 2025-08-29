@@ -50,25 +50,30 @@ export function ProductsErrorBoundary({
         <Card className="max-w-lg w-full">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-6" />
-            <h2 className="text-xl font-bold mb-4">Oops! Something went wrong</h2>
+            <h2 className="text-xl font-bold mb-4">
+              Oops! Something went wrong
+            </h2>
             <p className="text-muted-foreground mb-6">
-              We encountered an error while loading the products page. This has been logged and we're looking into it.
+              We encountered an error while loading the products page. This has
+              been logged and we're looking into it.
             </p>
             <div className="flex gap-4 justify-center">
               <Button onClick={reset} className="gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Try Again
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/'}
+              <Button
+                variant="outline"
+                onClick={() => (window.location.href = '/')}
               >
                 Go Home
               </Button>
             </div>
             {process.env.NODE_ENV === 'development' && (
               <details className="mt-6 text-left">
-                <summary className="cursor-pointer font-medium">Error Details</summary>
+                <summary className="cursor-pointer font-medium">
+                  Error Details
+                </summary>
                 <pre className="mt-2 text-xs bg-gray-100 p-4 rounded overflow-auto">
                   {error.message}
                   {error.stack && '\n\n' + error.stack}

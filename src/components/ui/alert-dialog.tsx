@@ -79,8 +79,8 @@ export function AlertDialog({
               <IconComponent className={`w-5 h-5 ${iconColor}`} />
             )}
             {badgeText && (
-              <Badge 
-                variant={variant === 'error' ? 'destructive' : 'secondary'} 
+              <Badge
+                variant={variant === 'error' ? 'destructive' : 'secondary'}
                 className="text-xs"
               >
                 {badgeText}
@@ -140,12 +140,7 @@ export function useAlertDialog() {
   }, []);
 
   const AlertDialogComponent = React.useCallback(
-    () => (
-      <AlertDialog
-        {...dialogState}
-        onOpenChange={hideAlert}
-      />
-    ),
+    () => <AlertDialog {...dialogState} onOpenChange={hideAlert} />,
     [dialogState, hideAlert]
   );
 

@@ -21,12 +21,16 @@ export class SafeLocalStorage {
   }
 
   static getItem<T>(key: string, defaultValue?: T): T | null {
-    if (!this.isAvailable()) return defaultValue || null;
+    if (!this.isAvailable()) {
+      return defaultValue || null;
+    }
 
     try {
       const item = localStorage.getItem(key);
-      if (item === null) return defaultValue || null;
-      
+      if (item === null) {
+        return defaultValue || null;
+      }
+
       return JSON.parse(item);
     } catch {
       return defaultValue || null;
@@ -34,7 +38,9 @@ export class SafeLocalStorage {
   }
 
   static setItem<T>(key: string, value: T): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -45,7 +51,9 @@ export class SafeLocalStorage {
   }
 
   static removeItem(key: string): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       localStorage.removeItem(key);
@@ -56,7 +64,9 @@ export class SafeLocalStorage {
   }
 
   static clear(): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       localStorage.clear();
@@ -67,7 +77,9 @@ export class SafeLocalStorage {
   }
 
   static getAllKeys(): string[] {
-    if (!this.isAvailable()) return [];
+    if (!this.isAvailable()) {
+      return [];
+    }
 
     try {
       return Object.keys(localStorage);
@@ -77,7 +89,9 @@ export class SafeLocalStorage {
   }
 
   static getSize(): number {
-    if (!this.isAvailable()) return 0;
+    if (!this.isAvailable()) {
+      return 0;
+    }
 
     try {
       return new Blob(Object.values(localStorage)).size;
@@ -103,12 +117,16 @@ export class SafeSessionStorage {
   }
 
   static getItem<T>(key: string, defaultValue?: T): T | null {
-    if (!this.isAvailable()) return defaultValue || null;
+    if (!this.isAvailable()) {
+      return defaultValue || null;
+    }
 
     try {
       const item = sessionStorage.getItem(key);
-      if (item === null) return defaultValue || null;
-      
+      if (item === null) {
+        return defaultValue || null;
+      }
+
       return JSON.parse(item);
     } catch {
       return defaultValue || null;
@@ -116,7 +134,9 @@ export class SafeSessionStorage {
   }
 
   static setItem<T>(key: string, value: T): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       sessionStorage.setItem(key, JSON.stringify(value));
@@ -127,7 +147,9 @@ export class SafeSessionStorage {
   }
 
   static removeItem(key: string): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       sessionStorage.removeItem(key);
@@ -138,7 +160,9 @@ export class SafeSessionStorage {
   }
 
   static clear(): boolean {
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable()) {
+      return false;
+    }
 
     try {
       sessionStorage.clear();
@@ -225,7 +249,7 @@ export class CookieManager {
 
   static getAll(): Record<string, string> {
     const cookies: Record<string, string> = {};
-    
+
     document.cookie.split(';').forEach(cookie => {
       const [name, value] = cookie.trim().split('=');
       if (name && value) {
@@ -259,11 +283,13 @@ export class ExpiringStorage {
 
   getItem<T>(key: string): T | null {
     const itemStr = this.storage.getItem(key);
-    if (!itemStr) return null;
+    if (!itemStr) {
+      return null;
+    }
 
     try {
       const item = JSON.parse(itemStr);
-      
+
       if (Date.now() > item.expiration) {
         this.storage.removeItem(key);
         return null;
@@ -286,10 +312,12 @@ export class ExpiringStorage {
 
   cleanExpired(): void {
     const keys = Object.keys(this.storage);
-    
+
     keys.forEach(key => {
       const itemStr = this.storage.getItem(key);
-      if (!itemStr) return;
+      if (!itemStr) {
+        return;
+      }
 
       try {
         const item = JSON.parse(itemStr);
@@ -317,7 +345,7 @@ export class CompressedStorage {
   async setItem<T>(key: string, value: T): Promise<void> {
     try {
       const jsonString = JSON.stringify(value);
-      
+
       // Simple compression: just store as-is for now
       // In a real implementation, you might use compression algorithms
       this.storage.setItem(key, jsonString);
@@ -330,7 +358,9 @@ export class CompressedStorage {
   async getItem<T>(key: string): Promise<T | null> {
     try {
       const item = this.storage.getItem(key);
-      if (!item) return null;
+      if (!item) {
+        return null;
+      }
 
       return JSON.parse(item);
     } catch (error) {
@@ -378,7 +408,9 @@ export class StorageQuotaManager {
   }
 
   static getLocalStorageSize(): number {
-    if (!SafeLocalStorage.isAvailable()) return 0;
+    if (!SafeLocalStorage.isAvailable()) {
+      return 0;
+    }
 
     let total = 0;
     for (const key in localStorage) {
@@ -392,17 +424,19 @@ export class StorageQuotaManager {
 
   static cleanupStorage(maxSizeBytes: number): void {
     const currentSize = this.getLocalStorageSize();
-    
-    if (currentSize <= maxSizeBytes) return;
+
+    if (currentSize <= maxSizeBytes) {
+      return;
+    }
 
     // Get all items with timestamps (if available)
     const items: Array<{ key: string; timestamp: number; size: number }> = [];
-    
+
     for (const key in localStorage) {
       if (localStorage.hasOwnProperty(key)) {
         const value = localStorage[key];
         const size = value.length + key.length;
-        
+
         // Try to extract timestamp from stored data
         let timestamp = 0;
         try {
@@ -411,7 +445,7 @@ export class StorageQuotaManager {
         } catch {
           // If not JSON or no timestamp, use 0 (will be removed first)
         }
-        
+
         items.push({ key, timestamp, size });
       }
     }
@@ -422,8 +456,10 @@ export class StorageQuotaManager {
     // Remove items until we're under the limit
     let totalSize = currentSize;
     for (const item of items) {
-      if (totalSize <= maxSizeBytes) break;
-      
+      if (totalSize <= maxSizeBytes) {
+        break;
+      }
+
       localStorage.removeItem(item.key);
       totalSize -= item.size;
     }
@@ -443,10 +479,14 @@ export class CrossTabStorage {
   }
 
   private handleStorageChange(event: StorageEvent): void {
-    if (!event.key || !event.newValue) return;
+    if (!event.key || !event.newValue) {
+      return;
+    }
 
     const listeners = this.listeners.get(event.key);
-    if (!listeners) return;
+    if (!listeners) {
+      return;
+    }
 
     try {
       const value = JSON.parse(event.newValue);

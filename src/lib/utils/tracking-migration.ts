@@ -14,7 +14,6 @@ import {
   calculateNextUpdate,
   getJobPriority,
   isTerminalStatus,
-  TRACKING_REFACTOR_CONFIG,
 } from '../config/tracking-refactor';
 import {
   TrackingRefactorError,
@@ -46,7 +45,9 @@ interface MigrationOptions {
 /**
  * Migrate existing shipment data to tracking cache
  */
-export async function migrateTrackingData(options: MigrationOptions = {}): Promise<MigrationStats> {
+export async function migrateTrackingData(
+  options: MigrationOptions = {}
+): Promise<MigrationStats> {
   const startTime = Date.now();
   const {
     batchSize = 50,
@@ -56,7 +57,10 @@ export async function migrateTrackingData(options: MigrationOptions = {}): Promi
     orderIds,
   } = options;
 
-  console.log(`🚀 Starting tracking data migration${dryRun ? ' (DRY RUN)' : ''}...`);
+  // eslint-disable-next-line no-console
+  console.log(
+    `🚀 Starting tracking data migration${dryRun ? ' (DRY RUN)' : ''}...`
+  );
 
   const stats: MigrationStats = {
     totalOrders: 0,
@@ -69,7 +73,7 @@ export async function migrateTrackingData(options: MigrationOptions = {}): Promi
 
   try {
     // Build query for orders with shipments but no tracking cache
-    const whereClause: any = {
+    const whereClause: Record<string, any> = {
       shipment: {
         isNot: null,
       },
@@ -110,13 +114,17 @@ export async function migrateTrackingData(options: MigrationOptions = {}): Promi
       }
 
       stats.totalOrders += orders.length;
-      console.log(`📦 Processing batch ${Math.floor(offset / batchSize) + 1}: ${orders.length} orders`);
+      // eslint-disable-next-line no-console
+      console.log(
+        `📦 Processing batch ${Math.floor(offset / batchSize) + 1}: ${orders.length} orders`
+      );
 
       // Process each order in the batch
       for (const order of orders) {
         try {
           await migrateOrderTrackingData(order, stats, dryRun, createJobs);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(`❌ Failed to migrate order ${order.id}:`, error);
           stats.errors.push({
             orderId: order.id,
@@ -126,30 +134,38 @@ export async function migrateTrackingData(options: MigrationOptions = {}): Promi
       }
 
       offset += batchSize;
-      
+
       // Add small delay between batches to avoid overwhelming the database
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     stats.processingTimeMs = Date.now() - startTime;
 
+    // eslint-disable-next-line no-console
     console.log(`✅ Migration completed in ${stats.processingTimeMs}ms:`);
+    // eslint-disable-next-line no-console
     console.log(`  - Total orders processed: ${stats.totalOrders}`);
+    // eslint-disable-next-line no-console
     console.log(`  - Successfully migrated: ${stats.migratedOrders}`);
+    // eslint-disable-next-line no-console
     console.log(`  - Skipped: ${stats.skippedOrders}`);
+    // eslint-disable-next-line no-console
     console.log(`  - Errors: ${stats.errors.length}`);
+    // eslint-disable-next-line no-console
     console.log(`  - Jobs created: ${stats.jobsCreated}`);
 
     if (stats.errors.length > 0) {
+      // eslint-disable-next-line no-console
       console.log('❌ Migration errors:');
       stats.errors.forEach(error => {
+        // eslint-disable-next-line no-console
         console.log(`  - Order ${error.orderId}: ${error.error}`);
       });
     }
 
     return stats;
-
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('❌ Migration failed:', error);
     throw new TrackingRefactorError(
       `Migration failed: ${error.message}`,
@@ -165,7 +181,7 @@ export async function migrateTrackingData(options: MigrationOptions = {}): Promi
  * Migrate tracking data for a single order
  */
 async function migrateOrderTrackingData(
-  order: any,
+  order: Record<string, any>,
   stats: MigrationStats,
   dryRun: boolean,
   createJobsAfterMigration: boolean
@@ -173,34 +189,39 @@ async function migrateOrderTrackingData(
   try {
     // Skip if tracking cache already exists
     if (order.trackingCache) {
-      console.log(`⏭️ Skipping order ${order.orderNumber} (tracking cache already exists)`);
+      // eslint-disable-next-line no-console
+      console.log(
+        `⏭️ Skipping order ${order.orderNumber} (tracking cache already exists)`
+      );
       stats.skippedOrders++;
       return;
     }
 
     // Skip if no shipment
     if (!order.shipment) {
+      // eslint-disable-next-line no-console
       console.log(`⏭️ Skipping order ${order.orderNumber} (no shipment)`);
       stats.skippedOrders++;
       return;
     }
 
     const shipment = order.shipment;
-    
+
     // Convert shipment tracking events to new format
-    const trackingEvents = shipment.trackingEvents?.map((event: any) => ({
-      eventCode: event.eventCode || 'UNKNOWN',
-      eventName: event.eventName,
-      description: event.description,
-      location: event.location,
-      timestamp: event.eventTime.toISOString(),
-      timezone: event.timezone || 'Asia/Kuala_Lumpur',
-      source: event.source || 'EASYPARCEL',
-    })) || [];
+    const trackingEvents =
+      shipment.trackingEvents?.map((event: Record<string, any>) => ({
+        eventCode: event.eventCode || 'UNKNOWN',
+        eventName: event.eventName,
+        description: event.description,
+        location: event.location,
+        timestamp: event.eventTime.toISOString(),
+        timezone: event.timezone || 'Asia/Kuala_Lumpur',
+        source: event.source || 'EASYPARCEL',
+      })) || [];
 
     // Determine current status from shipment
     const currentStatus = mapShipmentStatusToTrackingStatus(shipment.status);
-    
+
     // Calculate next update time
     const now = new Date();
     const nextUpdateDue = calculateNextUpdate(
@@ -223,6 +244,7 @@ async function migrateOrderTrackingData(
     };
 
     if (dryRun) {
+      // eslint-disable-next-line no-console
       console.log(`🔍 DRY RUN - Would migrate order ${order.orderNumber}:`, {
         currentStatus,
         eventsCount: trackingEvents.length,
@@ -234,6 +256,7 @@ async function migrateOrderTrackingData(
 
     // Create tracking cache entry
     const trackingCache = await createTrackingCache(trackingCacheData);
+    // eslint-disable-next-line no-console
     console.log(`✅ Migrated order ${order.orderNumber} to tracking cache`);
 
     // Create initial log entry
@@ -253,7 +276,7 @@ async function migrateOrderTrackingData(
     // Create initial job if tracking is still active
     if (createJobsAfterMigration && !isTerminalStatus(currentStatus)) {
       try {
-        const jobId = await createJob({
+        await createJob({
           trackingCacheId: trackingCache.id,
           jobType: 'UPDATE',
           priority: getJobPriority('UPDATE'),
@@ -263,10 +286,12 @@ async function migrateOrderTrackingData(
         console.log(`📅 Created initial job for order ${order.orderNumber}`);
         stats.jobsCreated++;
       } catch (jobError) {
-        console.warn(`⚠️ Failed to create job for order ${order.orderNumber}:`, jobError.message);
+        console.warn(
+          `⚠️ Failed to create job for order ${order.orderNumber}:`,
+          jobError.message
+        );
       }
     }
-
   } catch (error) {
     throw new TrackingRefactorError(
       `Failed to migrate order ${order.id}: ${error.message}`,
@@ -283,17 +308,17 @@ async function migrateOrderTrackingData(
  */
 function mapShipmentStatusToTrackingStatus(shipmentStatus: string): string {
   const statusMap: Record<string, string> = {
-    'DRAFT': 'PENDING',
-    'RATE_CALCULATED': 'PENDING',
-    'BOOKED': 'CONFIRMED',
-    'LABEL_GENERATED': 'PROCESSING',
-    'PICKUP_SCHEDULED': 'PROCESSING',
-    'PICKED_UP': 'SHIPPED',
-    'IN_TRANSIT': 'SHIPPED',
-    'OUT_FOR_DELIVERY': 'OUT_FOR_DELIVERY',
-    'DELIVERED': 'DELIVERED',
-    'FAILED': 'FAILED',
-    'CANCELLED': 'CANCELLED',
+    DRAFT: 'PENDING',
+    RATE_CALCULATED: 'PENDING',
+    BOOKED: 'CONFIRMED',
+    LABEL_GENERATED: 'PROCESSING',
+    PICKUP_SCHEDULED: 'PROCESSING',
+    PICKED_UP: 'SHIPPED',
+    IN_TRANSIT: 'SHIPPED',
+    OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+    DELIVERED: 'DELIVERED',
+    FAILED: 'FAILED',
+    CANCELLED: 'CANCELLED',
   };
 
   return statusMap[shipmentStatus] || 'UNKNOWN';
@@ -308,7 +333,8 @@ export async function validateMigration(): Promise<{
 }> {
   console.log('🔍 Validating migration results...');
 
-  const issues: Array<{ type: string; count: number; description: string }> = [];
+  const issues: Array<{ type: string; count: number; description: string }> =
+    [];
 
   try {
     // Check for orders with shipments but no tracking cache
@@ -364,10 +390,7 @@ export async function validateMigration(): Promise<{
     // Check for missing tracking numbers
     const missingTrackingNumbers = await prisma.trackingCache.count({
       where: {
-        OR: [
-          { courierTrackingNumber: '' },
-          { courierTrackingNumber: null },
-        ],
+        OR: [{ courierTrackingNumber: '' }, { courierTrackingNumber: null }],
       },
     });
 
@@ -381,14 +404,18 @@ export async function validateMigration(): Promise<{
 
     const isValid = issues.length === 0;
 
-    console.log(`✅ Migration validation ${isValid ? 'passed' : 'found issues'}:`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `✅ Migration validation ${isValid ? 'passed' : 'found issues'}:`
+    );
     issues.forEach(issue => {
+      // eslint-disable-next-line no-console
       console.log(`  - ${issue.type}: ${issue.count} (${issue.description})`);
     });
 
     return { isValid, issues };
-
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('❌ Migration validation failed:', error);
     throw new CacheConsistencyError(
       `Migration validation failed: ${error.message}`,
@@ -432,11 +459,12 @@ export async function cleanupMigration(): Promise<{
       fixed++;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`✅ Migration cleanup completed: ${fixed} issues fixed`);
 
     return { fixed, issues };
-
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('❌ Migration cleanup failed:', error);
     throw new TrackingRefactorError(
       `Migration cleanup failed: ${error.message}`,
@@ -457,24 +485,26 @@ export async function rollbackMigration(orderIds?: string[]): Promise<{
   console.log('🔄 Rolling back tracking migration...');
 
   try {
-    const whereClause = orderIds && orderIds.length > 0 
-      ? { orderId: { in: orderIds } }
-      : {};
+    const whereClause =
+      orderIds && orderIds.length > 0 ? { orderId: { in: orderIds } } : {};
 
     // Delete tracking caches (this will cascade to jobs and logs)
     const deletedCaches = await prisma.trackingCache.deleteMany({
       where: whereClause,
     });
 
-    console.log(`✅ Rollback completed: ${deletedCaches.count} tracking caches deleted`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `✅ Rollback completed: ${deletedCaches.count} tracking caches deleted`
+    );
 
     return {
       deletedCaches: deletedCaches.count,
       deletedJobs: 0, // Cascaded
       deletedLogs: 0, // Cascaded
     };
-
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('❌ Migration rollback failed:', error);
     throw new TrackingRefactorError(
       `Migration rollback failed: ${error.message}`,

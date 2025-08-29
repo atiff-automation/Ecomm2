@@ -51,7 +51,13 @@ export default function MembershipPage() {
     };
 
     fetchFreshData();
-  }, [session?.user?.id, session?.user?.isMember, update, freshUserData]);
+  }, [
+    session?.user?.id,
+    session?.user?.isMember,
+    session.user,
+    update,
+    freshUserData,
+  ]);
 
   if (!session?.user) {
     return (

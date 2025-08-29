@@ -88,7 +88,7 @@ export class EasyParcelProductionConfig {
     return {
       ready,
       checks,
-      overallStatus
+      overallStatus,
     };
   }
 
@@ -108,7 +108,7 @@ export class EasyParcelProductionConfig {
         baseUrl: process.env.EASYPARCEL_BASE_URL,
         sandbox: process.env.EASYPARCEL_SANDBOX,
         webhookUrl: process.env.EASYPARCEL_WEBHOOK_URL,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       // Store backup in database
@@ -116,14 +116,17 @@ export class EasyParcelProductionConfig {
         data: {
           key: `easyparcel_backup_${Date.now()}`,
           value: JSON.stringify(currentConfig),
-          type: 'JSON'
-        }
+          type: 'JSON',
+        },
       });
 
       // Validate production credentials before migration
-      const validationResult = await this.validateProductionCredentials(credentials);
+      const validationResult =
+        await this.validateProductionCredentials(credentials);
       if (!validationResult.valid) {
-        throw new Error(`Production credentials validation failed: ${validationResult.error}`);
+        throw new Error(
+          `Production credentials validation failed: ${validationResult.error}`
+        );
       }
 
       // Store production configuration
@@ -134,14 +137,13 @@ export class EasyParcelProductionConfig {
       return {
         success: true,
         message: 'Successfully migrated to production credentials',
-        backupCreated: backup.id
+        backupCreated: backup.id,
       };
-
     } catch (error) {
       console.error('[EasyParcel] Production migration failed:', error);
       return {
         success: false,
-        message: `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -149,7 +151,9 @@ export class EasyParcelProductionConfig {
   /**
    * Test production credentials
    */
-  async validateProductionCredentials(credentials: ProductionCredentials): Promise<{
+  async validateProductionCredentials(
+    credentials: ProductionCredentials
+  ): Promise<{
     valid: boolean;
     error?: string;
     testResults?: any;
@@ -159,22 +163,25 @@ export class EasyParcelProductionConfig {
       if (!credentials.apiKey || !credentials.apiSecret) {
         return {
           valid: false,
-          error: 'API key and secret are required'
+          error: 'API key and secret are required',
         };
       }
 
       if (!credentials.baseUrl || !credentials.baseUrl.includes('easyparcel')) {
         return {
           valid: false,
-          error: 'Invalid base URL'
+          error: 'Invalid base URL',
         };
       }
 
       // Ensure production URL (not sandbox)
-      if (credentials.baseUrl.includes('sandbox') || credentials.baseUrl.includes('test')) {
+      if (
+        credentials.baseUrl.includes('sandbox') ||
+        credentials.baseUrl.includes('test')
+      ) {
         return {
           valid: false,
-          error: 'Base URL appears to be sandbox/test environment'
+          error: 'Base URL appears to be sandbox/test environment',
         };
       }
 
@@ -184,13 +191,12 @@ export class EasyParcelProductionConfig {
       return {
         valid: testResult.success,
         error: testResult.success ? undefined : testResult.error,
-        testResults: testResult
+        testResults: testResult,
       };
-
     } catch (error) {
       return {
         valid: false,
-        error: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -198,7 +204,9 @@ export class EasyParcelProductionConfig {
   /**
    * Store production configuration securely
    */
-  private async storeProductionConfig(credentials: ProductionCredentials): Promise<void> {
+  private async storeProductionConfig(
+    credentials: ProductionCredentials
+  ): Promise<void> {
     try {
       // Store encrypted production credentials using AES-256-GCM
       const config = {
@@ -208,7 +216,7 @@ export class EasyParcelProductionConfig {
         webhookUrl: credentials.webhookUrl,
         webhookSecret: credentials.webhookSecret,
         environment: 'production',
-        migratedAt: new Date().toISOString()
+        migratedAt: new Date().toISOString(),
       };
 
       // Encrypt the configuration data
@@ -221,9 +229,9 @@ export class EasyParcelProductionConfig {
             encrypted: encryptedConfig.encrypted,
             key: encryptedConfig.key,
             iv: encryptedConfig.iv,
-            tag: encryptedConfig.tag
+            tag: encryptedConfig.tag,
           }),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           key: 'easyparcel_production_config',
@@ -231,16 +239,19 @@ export class EasyParcelProductionConfig {
             encrypted: encryptedConfig.encrypted,
             key: encryptedConfig.key,
             iv: encryptedConfig.iv,
-            tag: encryptedConfig.tag
+            tag: encryptedConfig.tag,
           }),
-          type: 'ENCRYPTED_JSON'
-        }
+          type: 'ENCRYPTED_JSON',
+        },
       });
 
-      console.log('[EasyParcel] Production configuration stored securely with AES-256-GCM encryption');
-
+      console.log(
+        '[EasyParcel] Production configuration stored securely with AES-256-GCM encryption'
+      );
     } catch (error) {
-      throw new Error(`Failed to store production config: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to store production config: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -262,8 +273,8 @@ export class EasyParcelProductionConfig {
           'Content-Type': 'application/json',
           'X-API-KEY': credentials.apiKey,
           'X-API-SECRET': credentials.apiSecret,
-          'Accept': 'application/json'
-        }
+          Accept: 'application/json',
+        },
       });
 
       const responseTime = Date.now() - startTime;
@@ -271,22 +282,21 @@ export class EasyParcelProductionConfig {
       if (response.ok) {
         return {
           success: true,
-          responseTime
+          responseTime,
         };
       } else {
         const errorText = await response.text();
         return {
           success: false,
           error: `API test failed: ${response.status} ${errorText}`,
-          responseTime
+          responseTime,
         };
       }
-
     } catch (error) {
       return {
         success: false,
         error: `API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
       };
     }
   }
@@ -305,7 +315,7 @@ export class EasyParcelProductionConfig {
           component: 'API Credentials',
           status: 'failed',
           message: 'Missing API credentials',
-          details: { hasApiKey, hasApiSecret }
+          details: { hasApiKey, hasApiSecret },
         };
       }
 
@@ -314,22 +324,23 @@ export class EasyParcelProductionConfig {
           component: 'API Credentials',
           status: 'warning',
           message: 'Still in sandbox mode',
-          details: { sandboxMode: true }
+          details: { sandboxMode: true },
         };
       }
 
       return {
         component: 'API Credentials',
         status: 'ready',
-        message: 'Production credentials configured'
+        message: 'Production credentials configured',
       };
-
     } catch (error) {
       return {
         component: 'API Credentials',
         status: 'failed',
         message: 'Error validating credentials',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -342,7 +353,7 @@ export class EasyParcelProductionConfig {
       'EASYPARCEL_API_KEY',
       'EASYPARCEL_API_SECRET',
       'EASYPARCEL_BASE_URL',
-      'NEXT_PUBLIC_APP_URL'
+      'NEXT_PUBLIC_APP_URL',
     ];
 
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
@@ -352,7 +363,7 @@ export class EasyParcelProductionConfig {
         component: 'Environment Configuration',
         status: 'failed',
         message: `Missing environment variables: ${missingVars.join(', ')}`,
-        details: { missingVars }
+        details: { missingVars },
       };
     }
 
@@ -364,7 +375,7 @@ export class EasyParcelProductionConfig {
         component: 'Environment Configuration',
         status: 'warning',
         message: 'Not in production environment',
-        details: { environment: process.env.NODE_ENV }
+        details: { environment: process.env.NODE_ENV },
       };
     }
 
@@ -373,14 +384,14 @@ export class EasyParcelProductionConfig {
         component: 'Environment Configuration',
         status: 'warning',
         message: 'App URL should use HTTPS in production',
-        details: { appUrl: process.env.NEXT_PUBLIC_APP_URL }
+        details: { appUrl: process.env.NEXT_PUBLIC_APP_URL },
       };
     }
 
     return {
       component: 'Environment Configuration',
       status: 'ready',
-      message: 'Environment properly configured'
+      message: 'Environment properly configured',
     };
   }
 
@@ -389,7 +400,8 @@ export class EasyParcelProductionConfig {
    */
   private async validateWebhookConfig(): Promise<ProductionConfigCheck> {
     try {
-      const webhookUrl = process.env.NEXT_PUBLIC_APP_URL + '/api/webhooks/easyparcel-tracking';
+      const webhookUrl =
+        process.env.NEXT_PUBLIC_APP_URL + '/api/webhooks/easyparcel-tracking';
       const isHTTPS = webhookUrl.startsWith('https://');
 
       if (!isHTTPS) {
@@ -397,7 +409,7 @@ export class EasyParcelProductionConfig {
           component: 'Webhook Configuration',
           status: 'failed',
           message: 'Webhook URL must use HTTPS in production',
-          details: { webhookUrl }
+          details: { webhookUrl },
         };
       }
 
@@ -406,7 +418,7 @@ export class EasyParcelProductionConfig {
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ test: true })
+          body: JSON.stringify({ test: true }),
         });
 
         if (response.status === 405) {
@@ -415,7 +427,7 @@ export class EasyParcelProductionConfig {
             component: 'Webhook Configuration',
             status: 'ready',
             message: 'Webhook endpoint accessible',
-            details: { webhookUrl }
+            details: { webhookUrl },
           };
         }
       } catch (error) {
@@ -423,7 +435,10 @@ export class EasyParcelProductionConfig {
           component: 'Webhook Configuration',
           status: 'warning',
           message: 'Webhook endpoint may not be accessible',
-          details: { webhookUrl, error: error instanceof Error ? error.message : 'Unknown error' }
+          details: {
+            webhookUrl,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
         };
       }
 
@@ -431,15 +446,16 @@ export class EasyParcelProductionConfig {
         component: 'Webhook Configuration',
         status: 'ready',
         message: 'Webhook properly configured',
-        details: { webhookUrl }
+        details: { webhookUrl },
       };
-
     } catch (error) {
       return {
         component: 'Webhook Configuration',
         status: 'failed',
         message: 'Error validating webhook configuration',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -456,35 +472,39 @@ export class EasyParcelProductionConfig {
           component: 'SSL Certificate',
           status: 'failed',
           message: 'HTTPS not configured',
-          details: { appUrl }
+          details: { appUrl },
         };
       }
 
       // Simple SSL validation - try to fetch the app URL
       try {
         const response = await fetch(appUrl, { method: 'HEAD' });
-        
+
         return {
           component: 'SSL Certificate',
           status: 'ready',
           message: 'SSL certificate valid',
-          details: { appUrl, status: response.status }
+          details: { appUrl, status: response.status },
         };
       } catch (error) {
         return {
           component: 'SSL Certificate',
           status: 'warning',
           message: 'Unable to verify SSL certificate',
-          details: { appUrl, error: error instanceof Error ? error.message : 'Unknown error' }
+          details: {
+            appUrl,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
         };
       }
-
     } catch (error) {
       return {
         component: 'SSL Certificate',
         status: 'failed',
         message: 'Error validating SSL certificate',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -500,15 +520,16 @@ export class EasyParcelProductionConfig {
       return {
         component: 'Database Connection',
         status: 'ready',
-        message: 'Database connection successful'
+        message: 'Database connection successful',
       };
-
     } catch (error) {
       return {
         component: 'Database Connection',
         status: 'failed',
         message: 'Database connection failed',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -525,14 +546,14 @@ export class EasyParcelProductionConfig {
         component: 'Rate Limiting',
         status: 'warning',
         message: 'Rate limiting not configured',
-        details: { recommendation: 'Implement rate limiting for production' }
+        details: { recommendation: 'Implement rate limiting for production' },
       };
     }
 
     return {
       component: 'Rate Limiting',
       status: 'ready',
-      message: 'Rate limiting configured'
+      message: 'Rate limiting configured',
     };
   }
 
@@ -549,14 +570,14 @@ export class EasyParcelProductionConfig {
         component: 'Error Monitoring',
         status: 'warning',
         message: 'Error monitoring not configured',
-        details: { recommendation: 'Configure error monitoring and logging' }
+        details: { recommendation: 'Configure error monitoring and logging' },
       };
     }
 
     return {
       component: 'Error Monitoring',
       status: hasSentry ? 'ready' : 'warning',
-      message: hasSentry ? 'Error monitoring configured' : 'Basic logging only'
+      message: hasSentry ? 'Error monitoring configured' : 'Basic logging only',
     };
   }
 
@@ -576,10 +597,16 @@ export class EasyParcelProductionConfig {
     return {
       environment: process.env.NODE_ENV || 'development',
       apiEndpoint: process.env.EASYPARCEL_BASE_URL || 'Not configured',
-      webhookUrl: (process.env.NEXT_PUBLIC_APP_URL || '') + '/api/webhooks/easyparcel-tracking',
-      sslEnabled: (process.env.NEXT_PUBLIC_APP_URL || '').startsWith('https://'),
-      credentialsConfigured: !!(process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET),
-      lastMigration: config?.migratedAt
+      webhookUrl:
+        (process.env.NEXT_PUBLIC_APP_URL || '') +
+        '/api/webhooks/easyparcel-tracking',
+      sslEnabled: (process.env.NEXT_PUBLIC_APP_URL || '').startsWith(
+        'https://'
+      ),
+      credentialsConfigured: !!(
+        process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
+      ),
+      lastMigration: config?.migratedAt,
     };
   }
 
@@ -589,7 +616,7 @@ export class EasyParcelProductionConfig {
   private async getStoredProductionConfig(): Promise<any> {
     try {
       const config = await prisma.systemConfig.findUnique({
-        where: { key: 'easyparcel_production_config' }
+        where: { key: 'easyparcel_production_config' },
       });
 
       if (!config) {
@@ -598,9 +625,14 @@ export class EasyParcelProductionConfig {
 
       // Parse the stored encrypted data
       const encryptedData = JSON.parse(config.value);
-      
+
       // Check if this is encrypted data or legacy plain JSON
-      if (encryptedData.encrypted && encryptedData.key && encryptedData.iv && encryptedData.tag) {
+      if (
+        encryptedData.encrypted &&
+        encryptedData.key &&
+        encryptedData.iv &&
+        encryptedData.tag
+      ) {
         // Decrypt using AES-256-GCM
         const decryptedJson = decryptData(
           encryptedData.encrypted,
@@ -611,7 +643,9 @@ export class EasyParcelProductionConfig {
         return JSON.parse(decryptedJson);
       } else {
         // Legacy unencrypted data - log warning and return
-        console.warn('[EasyParcel] Production config stored in legacy unencrypted format - recommend re-storing with encryption');
+        console.warn(
+          '[EasyParcel] Production config stored in legacy unencrypted format - recommend re-storing with encryption'
+        );
         return encryptedData;
       }
     } catch (error) {

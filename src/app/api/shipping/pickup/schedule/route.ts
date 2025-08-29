@@ -8,16 +8,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
-import { easyParcelService, type PickupRequest } from '@/lib/shipping/easyparcel-service';
+import {
+  easyParcelService,
+  type PickupRequest,
+} from '@/lib/shipping/easyparcel-service';
 import { z } from 'zod';
 
 // Validation schema for pickup scheduling
 const pickupScheduleSchema = z.object({
-  shipmentIds: z.array(z.string().cuid()).min(1, 'At least one shipment is required'),
-  pickupDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  shipmentIds: z
+    .array(z.string().cuid())
+    .min(1, 'At least one shipment is required'),
+  pickupDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   pickupTime: z.enum(['morning', 'afternoon', 'evening']),
   contactPerson: z.string().min(1, 'Contact person is required'),
-  contactPhone: z.string().regex(/^\+60[0-9]{8,10}$/, 'Valid Malaysian phone number required'),
+  contactPhone: z
+    .string()
+    .regex(/^\+60[0-9]{8,10}$/, 'Valid Malaysian phone number required'),
   specialInstructions: z.string().max(500).optional(),
 });
 
@@ -27,9 +36,12 @@ const pickupScheduleSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin permissions (only admins can schedule pickups)
-    if (!session?.user || !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required for pickup scheduling' },
         { status: 403 }
@@ -50,7 +62,7 @@ export async function POST(request: NextRequest) {
     const pickupDate = new Date(validatedData.pickupDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (pickupDate < today) {
       return NextResponse.json(
         { message: 'Pickup date must be in the future' },
@@ -67,10 +79,10 @@ export async function POST(request: NextRequest) {
       },
       include: {
         order: {
-          select: { 
+          select: {
             orderNumber: true,
             paymentStatus: true,
-          }
+          },
         },
       },
     });
@@ -86,7 +98,7 @@ export async function POST(request: NextRequest) {
     const invalidShipments = shipments.filter(s => !s.easyParcelShipmentId);
     if (invalidShipments.length > 0) {
       return NextResponse.json(
-        { 
+        {
           message: 'Some shipments are missing EasyParcel shipment IDs',
           invalidShipments: invalidShipments.map(s => s.order.orderNumber),
         },
@@ -111,7 +123,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Schedule pickup with EasyParcel
-    const pickupResponse = await easyParcelService.schedulePickup(pickupRequest);
+    const pickupResponse =
+      await easyParcelService.schedulePickup(pickupRequest);
 
     console.log('✅ Pickup scheduled with EasyParcel:', {
       pickupId: pickupResponse.pickup_id,
@@ -119,7 +132,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update shipments in database transaction
-    const updatedShipments = await prisma.$transaction(async (tx) => {
+    const updatedShipments = await prisma.$transaction(async tx => {
       const updates = [];
 
       for (const shipment of shipments) {
@@ -199,7 +212,6 @@ export async function POST(request: NextRequest) {
         status: shipment.status,
       })),
     });
-
   } catch (error) {
     console.error('❌ Pickup scheduling error:', error);
 
@@ -236,9 +248,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin permissions
-    if (!session?.user || !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -263,9 +278,9 @@ export async function GET(request: NextRequest) {
               createdAt: true,
               total: true,
               user: {
-                select: { firstName: true, lastName: true }
-              }
-            }
+                select: { firstName: true, lastName: true },
+              },
+            },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -274,11 +289,17 @@ export async function GET(request: NextRequest) {
 
       const summary = {
         totalEligible: eligibleShipments.length,
-        totalValue: eligibleShipments.reduce((sum, s) => sum + Number(s.originalPrice), 0),
-        courierBreakdown: eligibleShipments.reduce((acc, s) => {
-          acc[s.courierName] = (acc[s.courierName] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
+        totalValue: eligibleShipments.reduce(
+          (sum, s) => sum + Number(s.originalPrice),
+          0
+        ),
+        courierBreakdown: eligibleShipments.reduce(
+          (acc, s) => {
+            acc[s.courierName] = (acc[s.courierName] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       };
 
       return NextResponse.json({
@@ -290,9 +311,9 @@ export async function GET(request: NextRequest) {
           serviceName: shipment.serviceName,
           status: shipment.status,
           createdAt: shipment.createdAt,
-          customerName: shipment.order.user ? 
-            `${shipment.order.user.firstName} ${shipment.order.user.lastName}` : 
-            'Guest Customer',
+          customerName: shipment.order.user
+            ? `${shipment.order.user.firstName} ${shipment.order.user.lastName}`
+            : 'Guest Customer',
           orderTotal: shipment.order.total,
         })),
         summary,
@@ -314,33 +335,37 @@ export async function GET(request: NextRequest) {
             select: {
               orderNumber: true,
               user: {
-                select: { firstName: true, lastName: true }
-              }
-            }
+                select: { firstName: true, lastName: true },
+              },
+            },
           },
         },
         orderBy: { pickupDate: 'asc' },
       });
 
       // Group by pickup date
-      const groupedPickups = scheduledPickups.reduce((acc, shipment) => {
-        const dateKey = shipment.pickupDate?.toISOString().split('T')[0] || 'unknown';
-        if (!acc[dateKey]) {
-          acc[dateKey] = [];
-        }
-        acc[dateKey].push({
-          id: shipment.id,
-          trackingNumber: shipment.trackingNumber,
-          orderNumber: shipment.order.orderNumber,
-          courierName: shipment.courierName,
-          pickupTimeSlot: shipment.pickupTimeSlot,
-          status: shipment.status,
-          customerName: shipment.order.user ? 
-            `${shipment.order.user.firstName} ${shipment.order.user.lastName}` : 
-            'Guest Customer',
-        });
-        return acc;
-      }, {} as Record<string, any[]>);
+      const groupedPickups = scheduledPickups.reduce(
+        (acc, shipment) => {
+          const dateKey =
+            shipment.pickupDate?.toISOString().split('T')[0] || 'unknown';
+          if (!acc[dateKey]) {
+            acc[dateKey] = [];
+          }
+          acc[dateKey].push({
+            id: shipment.id,
+            trackingNumber: shipment.trackingNumber,
+            orderNumber: shipment.order.orderNumber,
+            courierName: shipment.courierName,
+            pickupTimeSlot: shipment.pickupTimeSlot,
+            status: shipment.status,
+            customerName: shipment.order.user
+              ? `${shipment.order.user.firstName} ${shipment.order.user.lastName}`
+              : 'Guest Customer',
+          });
+          return acc;
+        },
+        {} as Record<string, any[]>
+      );
 
       return NextResponse.json({
         scheduledPickups: groupedPickups,
@@ -355,7 +380,6 @@ export async function GET(request: NextRequest) {
       { message: 'Invalid action. Use ?action=eligible or ?action=scheduled' },
       { status: 400 }
     );
-
   } catch (error) {
     console.error('❌ Get pickup schedules error:', error);
     return NextResponse.json(

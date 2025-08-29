@@ -70,7 +70,6 @@ export class WebhookProcessor {
       });
 
       console.log('✅ Webhook queued successfully');
-
     } catch (error) {
       console.error('❌ Failed to queue webhook:', error);
       throw error;
@@ -109,11 +108,10 @@ export class WebhookProcessor {
 
       for (const webhook of pendingWebhooks) {
         await this.processWebhookItem(webhook);
-        
+
         // Add small delay between processing
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-
     } catch (error) {
       console.error('❌ Queue processing error:', error);
     } finally {
@@ -137,7 +135,7 @@ export class WebhookProcessor {
         where: { trackingNumber: webhook.trackingNumber },
         include: {
           order: {
-            select: { id: true, orderNumber: true, userId: true }
+            select: { id: true, orderNumber: true, userId: true },
           },
         },
       });
@@ -152,7 +150,7 @@ export class WebhookProcessor {
       const statusChanged = newStatus && newStatus !== shipment.status;
 
       // Process webhook in transaction
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async tx => {
         // Create tracking event
         await tx.shipmentTracking.create({
           data: {
@@ -201,7 +199,6 @@ export class WebhookProcessor {
       });
 
       console.log('✅ Webhook processed successfully:', webhook.id);
-
     } catch (error) {
       console.error('❌ Webhook processing failed:', error);
       await this.retryWebhook(webhook.id, error.message);
@@ -230,7 +227,10 @@ export class WebhookProcessor {
       }
 
       // Calculate next retry time with exponential backoff
-      const delay = this.retryDelays[Math.min(newRetryCount - 1, this.retryDelays.length - 1)];
+      const delay =
+        this.retryDelays[
+          Math.min(newRetryCount - 1, this.retryDelays.length - 1)
+        ];
       const nextRetryAt = new Date(Date.now() + delay);
 
       await prisma.webhookQueue.update({
@@ -244,12 +244,14 @@ export class WebhookProcessor {
         },
       });
 
-      console.log(`🔄 Webhook queued for retry (${newRetryCount}/${this.maxRetries}):`, {
-        webhookId,
-        nextRetryAt,
-        error: error.substring(0, 100),
-      });
-
+      console.log(
+        `🔄 Webhook queued for retry (${newRetryCount}/${this.maxRetries}):`,
+        {
+          webhookId,
+          nextRetryAt,
+          error: error.substring(0, 100),
+        }
+      );
     } catch (retryError) {
       console.error('❌ Failed to schedule webhook retry:', retryError);
     }
@@ -258,7 +260,10 @@ export class WebhookProcessor {
   /**
    * Mark webhook as permanently failed
    */
-  private async markWebhookFailed(webhookId: string, error: string): Promise<void> {
+  private async markWebhookFailed(
+    webhookId: string,
+    error: string
+  ): Promise<void> {
     try {
       await prisma.webhookQueue.update({
         where: { id: webhookId },
@@ -275,7 +280,6 @@ export class WebhookProcessor {
       });
 
       // TODO: Send alert to admins about failed webhook
-
     } catch (updateError) {
       console.error('❌ Failed to mark webhook as failed:', updateError);
     }
@@ -286,20 +290,20 @@ export class WebhookProcessor {
    */
   private mapEventCodeToStatus(eventCode: string): string | null {
     const statusMapping: Record<string, string> = {
-      'BOOKED': 'BOOKED',
-      'LABEL_GENERATED': 'LABEL_GENERATED',
-      'PICKUP_SCHEDULED': 'PICKUP_SCHEDULED',
-      'PICKED_UP': 'PICKED_UP',
-      'IN_TRANSIT': 'IN_TRANSIT',
-      'ARRIVED_AT_HUB': 'IN_TRANSIT',
-      'DEPARTED_FROM_HUB': 'IN_TRANSIT',
-      'OUT_FOR_DELIVERY': 'OUT_FOR_DELIVERY',
-      'DELIVERY_ATTEMPTED': 'OUT_FOR_DELIVERY',
-      'DELIVERED': 'DELIVERED',
-      'COMPLETED': 'DELIVERED',
-      'CANCELLED': 'CANCELLED',
-      'FAILED': 'FAILED',
-      'RETURNED': 'FAILED',
+      BOOKED: 'BOOKED',
+      LABEL_GENERATED: 'LABEL_GENERATED',
+      PICKUP_SCHEDULED: 'PICKUP_SCHEDULED',
+      PICKED_UP: 'PICKED_UP',
+      IN_TRANSIT: 'IN_TRANSIT',
+      ARRIVED_AT_HUB: 'IN_TRANSIT',
+      DEPARTED_FROM_HUB: 'IN_TRANSIT',
+      OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+      DELIVERY_ATTEMPTED: 'OUT_FOR_DELIVERY',
+      DELIVERED: 'DELIVERED',
+      COMPLETED: 'DELIVERED',
+      CANCELLED: 'CANCELLED',
+      FAILED: 'FAILED',
+      RETURNED: 'FAILED',
     };
 
     return statusMapping[eventCode] || null;
@@ -336,17 +340,18 @@ export class WebhookProcessor {
     processed: number;
     oldestPending?: Date;
   }> {
-    const [pending, processing, failed, processed, oldestPending] = await Promise.all([
-      prisma.webhookQueue.count({ where: { status: 'PENDING' } }),
-      prisma.webhookQueue.count({ where: { status: 'RETRY' } }),
-      prisma.webhookQueue.count({ where: { status: 'FAILED' } }),
-      prisma.webhookQueue.count({ where: { status: 'PROCESSED' } }),
-      prisma.webhookQueue.findFirst({
-        where: { status: { in: ['PENDING', 'RETRY'] } },
-        orderBy: { createdAt: 'asc' },
-        select: { createdAt: true },
-      }),
-    ]);
+    const [pending, processing, failed, processed, oldestPending] =
+      await Promise.all([
+        prisma.webhookQueue.count({ where: { status: 'PENDING' } }),
+        prisma.webhookQueue.count({ where: { status: 'RETRY' } }),
+        prisma.webhookQueue.count({ where: { status: 'FAILED' } }),
+        prisma.webhookQueue.count({ where: { status: 'PROCESSED' } }),
+        prisma.webhookQueue.findFirst({
+          where: { status: { in: ['PENDING', 'RETRY'] } },
+          orderBy: { createdAt: 'asc' },
+          select: { createdAt: true },
+        }),
+      ]);
 
     return {
       pending,
@@ -361,7 +366,9 @@ export class WebhookProcessor {
    * Cleanup old processed webhooks
    */
   async cleanupOldWebhooks(olderThanDays: number = 30): Promise<number> {
-    const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date(
+      Date.now() - olderThanDays * 24 * 60 * 60 * 1000
+    );
 
     const result = await prisma.webhookQueue.deleteMany({
       where: {

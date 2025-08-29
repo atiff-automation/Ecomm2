@@ -225,7 +225,9 @@ export async function getGuestCartWithProducts() {
           shortDescription: product.shortDescription,
           regularPrice: Number(product.regularPrice),
           memberPrice: Number(product.memberPrice),
-          promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
+          promotionalPrice: product.promotionalPrice
+            ? Number(product.promotionalPrice)
+            : null,
           promotionStartDate: product.promotionStartDate,
           promotionEndDate: product.promotionEndDate,
           stockQuantity: product.stockQuantity,
@@ -311,7 +313,8 @@ export async function getGuestCartWithProducts() {
 
     // CRITICAL: If using promotional price, don't count towards membership qualification
     const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
-    const finalQualification = qualifiesForMembership && !isUsingPromotionalPrice;
+    const finalQualification =
+      qualifiesForMembership && !isUsingPromotionalPrice;
 
     if (finalQualification) {
       qualifyingTotal += effectivePrice;

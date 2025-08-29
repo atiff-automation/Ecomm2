@@ -111,7 +111,8 @@ interface CourierSelectionData {
 export default function AdminOrderShippingPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [courierSelection, setCourierSelection] = useState<CourierSelectionData | null>(null);
+  const [courierSelection, setCourierSelection] =
+    useState<CourierSelectionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingRates, setLoadingRates] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -144,7 +145,10 @@ export default function AdminOrderShippingPage() {
       setSelectedOrder(order);
 
       // Calculate total weight from order items
-      const totalWeight = order.items.reduce((sum, item) => sum + (item.weight * item.quantity), 0);
+      const totalWeight = order.items.reduce(
+        (sum, item) => sum + item.weight * item.quantity,
+        0
+      );
       const orderValue = order.total;
 
       const response = await fetch('/api/admin/shipping/rates', {
@@ -195,7 +199,7 @@ export default function AdminOrderShippingPage() {
 
     try {
       setSaving(true);
-      
+
       const response = await fetch('/api/admin/shipping/assign-couriers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -214,36 +218,49 @@ export default function AdminOrderShippingPage() {
         setSelectedOrder(null);
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save courier selection');
+        throw new Error(
+          errorData.message || 'Failed to save courier selection'
+        );
       }
     } catch (error) {
       console.error('Failed to save courier selection:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save courier selection');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save courier selection'
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    const matchesSearch =
+      order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const formatPrice = (price: number | string | null | undefined) => {
-    if (price === null || price === undefined) return 'RM 0.00';
+    if (price === null || price === undefined) {
+      return 'RM 0.00';
+    }
     const numPrice = typeof price === 'number' ? price : Number(price);
     return `RM ${numPrice.toFixed(2)}`;
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      'PENDING': 'outline',
-      'CONFIRMED': 'secondary',
-      'SHIPPED': 'default',
-      'DELIVERED': 'default',
-      'CANCELLED': 'destructive',
+    const variants: Record<
+      string,
+      'default' | 'secondary' | 'destructive' | 'outline'
+    > = {
+      PENDING: 'outline',
+      CONFIRMED: 'secondary',
+      SHIPPED: 'default',
+      DELIVERED: 'default',
+      CANCELLED: 'destructive',
     };
     return <Badge variant={variants[status] || 'outline'}>{status}</Badge>;
   };
@@ -255,7 +272,11 @@ export default function AdminOrderShippingPage() {
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Shipping
   const tabs: TabConfig[] = [
     { id: 'orders', label: 'Shipping Orders', href: '/admin/shipping/orders' },
-    { id: 'configuration', label: 'Configuration', href: '/admin/shipping/config' },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/shipping/config',
+    },
     { id: 'couriers', label: 'Couriers', href: '/admin/shipping' },
     { id: 'tracking', label: 'Tracking', href: '/admin/shipping/fulfillment' },
   ];
@@ -287,7 +308,7 @@ export default function AdminOrderShippingPage() {
                   id="search"
                   placeholder="Search by order number or customer name"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -329,7 +350,7 @@ export default function AdminOrderShippingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => (
+              {filteredOrders.map(order => (
                 <TableRow key={order.id}>
                   <TableCell>
                     <div>
@@ -342,12 +363,15 @@ export default function AdminOrderShippingPage() {
                   <TableCell>
                     <div>
                       <div className="font-medium">{order.customerName}</div>
-                      <div className="text-sm text-gray-500">{order.customerEmail}</div>
+                      <div className="text-sm text-gray-500">
+                        {order.customerEmail}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {order.shippingAddress.city}, {order.shippingAddress.state}
+                      {order.shippingAddress.city},{' '}
+                      {order.shippingAddress.state}
                       <br />
                       {order.shippingAddress.postcode}
                     </div>
@@ -357,8 +381,12 @@ export default function AdminOrderShippingPage() {
                   <TableCell>
                     {order.shipping ? (
                       <div className="text-sm">
-                        <div className="font-medium">{order.shipping.courierName}</div>
-                        <div className="text-gray-500">{formatPrice(order.shipping.price || 0)}</div>
+                        <div className="font-medium">
+                          {order.shipping.courierName}
+                        </div>
+                        <div className="text-gray-500">
+                          {formatPrice(order.shipping.price || 0)}
+                        </div>
                       </div>
                     ) : (
                       <Badge variant="outline">Not Assigned</Badge>
@@ -367,8 +395,8 @@ export default function AdminOrderShippingPage() {
                   <TableCell>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => loadCourierRates(order)}
                           disabled={loadingRates}
                         >
@@ -378,9 +406,12 @@ export default function AdminOrderShippingPage() {
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>Select Couriers for Order {order.orderNumber}</DialogTitle>
+                          <DialogTitle>
+                            Select Couriers for Order {order.orderNumber}
+                          </DialogTitle>
                           <DialogDescription>
-                            Choose main and alternative courier options for this shipment
+                            Choose main and alternative courier options for this
+                            shipment
                           </DialogDescription>
                         </DialogHeader>
 
@@ -389,13 +420,15 @@ export default function AdminOrderShippingPage() {
                             <RefreshCw className="h-6 w-6 animate-spin mr-2" />
                             Loading courier rates...
                           </div>
-                        ) : courierSelection && (
-                          <CourierSelectionForm
-                            selection={courierSelection}
-                            onSelectionChange={setCourierSelection}
-                            onSave={saveCourierSelection}
-                            saving={saving}
-                          />
+                        ) : (
+                          courierSelection && (
+                            <CourierSelectionForm
+                              selection={courierSelection}
+                              onSelectionChange={setCourierSelection}
+                              onSave={saveCourierSelection}
+                              saving={saving}
+                            />
+                          )
                         )}
                       </DialogContent>
                     </Dialog>
@@ -418,7 +451,9 @@ const CourierSelectionForm: React.FC<{
   saving: boolean;
 }> = ({ selection, onSelectionChange, onSave, saving }) => {
   const formatPrice = (price: number | string | null | undefined) => {
-    if (price === null || price === undefined) return 'RM 0.00';
+    if (price === null || price === undefined) {
+      return 'RM 0.00';
+    }
     const numPrice = typeof price === 'number' ? price : Number(price);
     return `RM ${numPrice.toFixed(2)}`;
   };
@@ -443,15 +478,17 @@ const CourierSelectionForm: React.FC<{
       <Alert>
         <Package className="h-4 w-4" />
         <AlertDescription>
-          Found {selection.availableRates.length} courier options. 
-          Select one main courier and optionally one alternative courier for fallback.
+          Found {selection.availableRates.length} courier options. Select one
+          main courier and optionally one alternative courier for fallback.
         </AlertDescription>
       </Alert>
 
       <Tabs defaultValue="main" className="w-full">
         <TabsList>
           <TabsTrigger value="main">Main Courier Selection</TabsTrigger>
-          <TabsTrigger value="alternative">Alternative Courier (Optional)</TabsTrigger>
+          <TabsTrigger value="alternative">
+            Alternative Courier (Optional)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="space-y-4">
@@ -459,27 +496,44 @@ const CourierSelectionForm: React.FC<{
             <Star className="h-4 w-4 text-yellow-500" />
             Select Main Courier
           </h3>
-          
-          <RadioGroup 
-            value={selection.mainCourier?.courier_id || ''} 
-            onValueChange={(value) => {
-              const selectedRate = selection.availableRates.find(rate => rate.courier_id === value);
+
+          <RadioGroup
+            value={selection.mainCourier?.courier_id || ''}
+            onValueChange={value => {
+              const selectedRate = selection.availableRates.find(
+                rate => rate.courier_id === value
+              );
               if (selectedRate) {
                 handleMainCourierChange(selectedRate);
               }
             }}
           >
             <div className="grid gap-3">
-              {selection.availableRates.map((rate) => (
-                <div key={`main-${rate.courier_id}-${rate.service_name}`} className="flex items-center space-x-2">
-                  <RadioGroupItem value={rate.courier_id} id={`main-${rate.courier_id}`} />
-                  <label htmlFor={`main-${rate.courier_id}`} className="flex-1 cursor-pointer">
-                    <Card className={`transition-colors ${selection.mainCourier?.courier_id === rate.courier_id ? 'ring-2 ring-blue-500' : ''}`}>
+              {selection.availableRates.map(rate => (
+                <div
+                  key={`main-${rate.courier_id}-${rate.service_name}`}
+                  className="flex items-center space-x-2"
+                >
+                  <RadioGroupItem
+                    value={rate.courier_id}
+                    id={`main-${rate.courier_id}`}
+                  />
+                  <label
+                    htmlFor={`main-${rate.courier_id}`}
+                    className="flex-1 cursor-pointer"
+                  >
+                    <Card
+                      className={`transition-colors ${selection.mainCourier?.courier_id === rate.courier_id ? 'ring-2 ring-blue-500' : ''}`}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className="font-semibold">{rate.courier_name}</h4>
-                            <p className="text-sm text-gray-600">{rate.service_name}</p>
+                            <h4 className="font-semibold">
+                              {rate.courier_name}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {rate.service_name}
+                            </p>
                             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
@@ -492,7 +546,9 @@ const CourierSelectionForm: React.FC<{
                                 </span>
                               )}
                               {rate.features.cod_available && (
-                                <Badge variant="outline" className="text-xs">COD Available</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  COD Available
+                                </Badge>
                               )}
                             </div>
                           </div>
@@ -521,8 +577,8 @@ const CourierSelectionForm: React.FC<{
               Select Alternative Courier (Fallback)
             </h3>
             {selection.alternativeCourier && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => handleAlternativeCourierChange(null as any)}
               >
@@ -530,19 +586,24 @@ const CourierSelectionForm: React.FC<{
               </Button>
             )}
           </div>
-          
+
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Alternative courier will be used if the main courier fails during booking or becomes unavailable.
+              Alternative courier will be used if the main courier fails during
+              booking or becomes unavailable.
             </AlertDescription>
           </Alert>
 
-          <RadioGroup 
-            value={selection.alternativeCourier?.courier_id || ''} 
-            onValueChange={(value) => {
-              if (!value) return;
-              const selectedRate = selection.availableRates.find(rate => rate.courier_id === value);
+          <RadioGroup
+            value={selection.alternativeCourier?.courier_id || ''}
+            onValueChange={value => {
+              if (!value) {
+                return;
+              }
+              const selectedRate = selection.availableRates.find(
+                rate => rate.courier_id === value
+              );
               if (selectedRate) {
                 handleAlternativeCourierChange(selectedRate);
               }
@@ -550,44 +611,61 @@ const CourierSelectionForm: React.FC<{
           >
             <div className="grid gap-3">
               {selection.availableRates
-                .filter(rate => rate.courier_id !== selection.mainCourier?.courier_id)
-                .map((rate) => (
-                <div key={`alt-${rate.courier_id}-${rate.service_name}`} className="flex items-center space-x-2">
-                  <RadioGroupItem value={rate.courier_id} id={`alt-${rate.courier_id}`} />
-                  <label htmlFor={`alt-${rate.courier_id}`} className="flex-1 cursor-pointer">
-                    <Card className={`transition-colors ${selection.alternativeCourier?.courier_id === rate.courier_id ? 'ring-2 ring-blue-500' : ''}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{rate.courier_name}</h4>
-                            <p className="text-sm text-gray-600">{rate.service_name}</p>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {rate.estimated_delivery}
-                              </span>
-                              {rate.features.insurance_available && (
+                .filter(
+                  rate => rate.courier_id !== selection.mainCourier?.courier_id
+                )
+                .map(rate => (
+                  <div
+                    key={`alt-${rate.courier_id}-${rate.service_name}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <RadioGroupItem
+                      value={rate.courier_id}
+                      id={`alt-${rate.courier_id}`}
+                    />
+                    <label
+                      htmlFor={`alt-${rate.courier_id}`}
+                      className="flex-1 cursor-pointer"
+                    >
+                      <Card
+                        className={`transition-colors ${selection.alternativeCourier?.courier_id === rate.courier_id ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold">
+                                {rate.courier_name}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {rate.service_name}
+                              </p>
+                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
-                                  <Shield className="h-3 w-3" />
-                                  Insurance
+                                  <Clock className="h-3 w-3" />
+                                  {rate.estimated_delivery}
                                 </span>
-                              )}
+                                {rate.features.insurance_available && (
+                                  <span className="flex items-center gap-1">
+                                    <Shield className="h-3 w-3" />
+                                    Insurance
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-600">
+                                {formatPrice(rate.price)}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {rate.service_type}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-blue-600">
-                              {formatPrice(rate.price)}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {rate.service_type}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </label>
-                </div>
-              ))}
+                        </CardContent>
+                      </Card>
+                    </label>
+                  </div>
+                ))}
             </div>
           </RadioGroup>
         </TabsContent>
@@ -606,8 +684,12 @@ const CourierSelectionForm: React.FC<{
                 <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded">
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="font-medium">{selection.mainCourier.courier_name}</span>
-                      <span className="text-sm text-gray-600 ml-2">({selection.mainCourier.service_name})</span>
+                      <span className="font-medium">
+                        {selection.mainCourier.courier_name}
+                      </span>
+                      <span className="text-sm text-gray-600 ml-2">
+                        ({selection.mainCourier.service_name})
+                      </span>
                     </div>
                     <span className="font-bold text-green-600">
                       {formatPrice(selection.mainCourier.price)}
@@ -627,8 +709,12 @@ const CourierSelectionForm: React.FC<{
                 <div className="mt-1 p-3 bg-blue-50 border border-blue-200 rounded">
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="font-medium">{selection.alternativeCourier.courier_name}</span>
-                      <span className="text-sm text-gray-600 ml-2">({selection.alternativeCourier.service_name})</span>
+                      <span className="font-medium">
+                        {selection.alternativeCourier.courier_name}
+                      </span>
+                      <span className="text-sm text-gray-600 ml-2">
+                        ({selection.alternativeCourier.service_name})
+                      </span>
                     </div>
                     <span className="font-bold text-blue-600">
                       {formatPrice(selection.alternativeCourier.price)}
@@ -658,4 +744,4 @@ const CourierSelectionForm: React.FC<{
       </div>
     </div>
   );
-}
+};

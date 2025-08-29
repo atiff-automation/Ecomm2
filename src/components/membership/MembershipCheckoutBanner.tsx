@@ -66,7 +66,7 @@ export default function MembershipCheckoutBanner({
       // Check if registration flag is older than 5 minutes (300000 ms) - reduced time
       const now = Date.now();
       const registrationTime = registrationTimestamp
-        ? parseInt(registrationTimestamp)
+        ? parseInt(registrationTimestamp, 10)
         : 0;
       const timeElapsed = now - registrationTime;
 
@@ -218,8 +218,9 @@ export default function MembershipCheckoutBanner({
                 <Sparkles className="h-4 w-4 text-green-600" />
               </div>
               <p className="text-green-700 text-sm">
-                Your membership will be activated after completing this purchase.
-                You'll enjoy member benefits starting immediately after payment!
+                Your membership will be activated after completing this
+                purchase. You'll enjoy member benefits starting immediately
+                after payment!
               </p>
             </div>
           </div>
@@ -242,10 +243,13 @@ export default function MembershipCheckoutBanner({
                 </h3>
               </div>
               <p className="text-yellow-700 text-sm mb-2">
-                Your account has been created, but your cart no longer meets the {formatCurrency(eligibility?.threshold || 80)} threshold for membership activation.
+                Your account has been created, but your cart no longer meets the{' '}
+                {formatCurrency(eligibility?.threshold || 80)} threshold for
+                membership activation.
               </p>
               <p className="text-yellow-700 text-sm">
-                Add {formatCurrency(eligibility?.remaining || 0)} more in qualifying products to activate membership with this purchase.
+                Add {formatCurrency(eligibility?.remaining || 0)} more in
+                qualifying products to activate membership with this purchase.
               </p>
             </div>
           </div>

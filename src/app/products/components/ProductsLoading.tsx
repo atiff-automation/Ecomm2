@@ -37,19 +37,19 @@ export function ProductsLoading({ compact = false }: ProductsLoadingProps) {
           <Card>
             <CardContent className="p-6 space-y-6">
               <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
-              
+
               {/* Search skeleton */}
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
                 <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
               </div>
-              
+
               {/* Category skeleton */}
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
                 <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
               </div>
-              
+
               {/* Sort skeleton */}
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>

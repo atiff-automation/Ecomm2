@@ -29,8 +29,8 @@ export class ImageOptimizer {
   }
 
   static createOptimizedImageUrl(
-    originalUrl: string, 
-    width: number, 
+    originalUrl: string,
+    width: number,
     quality: number = 75
   ): string {
     if (originalUrl.startsWith('/')) {
@@ -56,12 +56,15 @@ export class ImageOptimizer {
 export class ScriptOptimizer {
   private static loadedScripts = new Set<string>();
 
-  static async loadScript(src: string, options: {
-    async?: boolean;
-    defer?: boolean;
-    integrity?: string;
-    crossOrigin?: string;
-  } = {}): Promise<void> {
+  static async loadScript(
+    src: string,
+    options: {
+      async?: boolean;
+      defer?: boolean;
+      integrity?: string;
+      crossOrigin?: string;
+    } = {}
+  ): Promise<void> {
     if (this.loadedScripts.has(src)) {
       return Promise.resolve();
     }
@@ -71,11 +74,11 @@ export class ScriptOptimizer {
       script.src = src;
       script.async = options.async || false;
       script.defer = options.defer || false;
-      
+
       if (options.integrity) {
         script.integrity = options.integrity;
       }
-      
+
       if (options.crossOrigin) {
         script.crossOrigin = options.crossOrigin;
       }
@@ -84,7 +87,7 @@ export class ScriptOptimizer {
         this.loadedScripts.add(src);
         resolve();
       };
-      
+
       script.onerror = () => {
         reject(new Error(`Failed to load script: ${src}`));
       };
@@ -192,7 +195,9 @@ export class MemoryOptimizer {
       return {
         used: memory.usedJSHeapSize,
         total: memory.totalJSHeapSize,
-        percentage: Math.round((memory.usedJSHeapSize / memory.totalJSHeapSize) * 100),
+        percentage: Math.round(
+          (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
+        ),
       };
     }
 
@@ -230,7 +235,8 @@ export class NetworkOptimizer {
 
   static createServiceWorkerCache(): void {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker
+        .register('/sw.js')
         .then(registration => {
           console.log('✅ Service Worker registered:', registration);
         })
@@ -266,7 +272,10 @@ export class NetworkOptimizer {
  * Database query optimization
  */
 export class QueryOptimizer {
-  private static queryCache = new Map<string, { data: any; timestamp: number }>();
+  private static queryCache = new Map<
+    string,
+    { data: any; timestamp: number }
+  >();
   private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   static async cacheQuery<T>(
@@ -277,7 +286,7 @@ export class QueryOptimizer {
     const cached = this.queryCache.get(key);
     const now = Date.now();
 
-    if (cached && (now - cached.timestamp) < ttl) {
+    if (cached && now - cached.timestamp < ttl) {
       return cached.data;
     }
 
@@ -305,7 +314,9 @@ export class QueryOptimizer {
     memoryUsage: string;
   } {
     const entries = Array.from(this.queryCache.keys());
-    const memoryUsage = JSON.stringify(Array.from(this.queryCache.values())).length;
+    const memoryUsage = JSON.stringify(
+      Array.from(this.queryCache.values())
+    ).length;
 
     return {
       size: this.queryCache.size,
@@ -386,13 +397,17 @@ export class PerformanceOptimizer {
     const queryCache = QueryOptimizer.getQueryCacheStats();
 
     const suggestions: string[] = [];
-    
+
     if (memory.percentage > 70) {
-      suggestions.push('High memory usage detected - consider implementing lazy loading');
+      suggestions.push(
+        'High memory usage detected - consider implementing lazy loading'
+      );
     }
-    
+
     if (queryCache.size > 100) {
-      suggestions.push('Large query cache - consider implementing cache cleanup');
+      suggestions.push(
+        'Large query cache - consider implementing cache cleanup'
+      );
     }
 
     return {

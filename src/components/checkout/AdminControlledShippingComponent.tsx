@@ -69,12 +69,14 @@ interface ShippingOption {
 interface AdminControlledShippingProps {
   shippingAddress: ShippingAddress;
   cartItems: CartItem[];
-  onShippingChange: (option: ShippingOption & { 
-    insurance?: boolean; 
-    cod?: boolean; 
-    codAmount?: number;
-    specialInstructions?: string;
-  }) => void;
+  onShippingChange: (
+    option: ShippingOption & {
+      insurance?: boolean;
+      cod?: boolean;
+      codAmount?: number;
+      specialInstructions?: string;
+    }
+  ) => void;
   initialOption?: ShippingOption;
 }
 
@@ -82,13 +84,15 @@ export default function AdminControlledShippingComponent({
   shippingAddress,
   cartItems,
   onShippingChange,
-  initialOption
+  initialOption,
 }: AdminControlledShippingProps) {
-  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(initialOption || null);
+  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(
+    initialOption || null
+  );
   const [loading, setLoading] = useState(!initialOption);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  
+
   // Service add-ons
   const [insurance, setInsurance] = useState(false);
   const [cod, setCod] = useState(false);
@@ -117,7 +121,7 @@ export default function AdminControlledShippingComponent({
 
     try {
       console.log('🚚 Fetching admin-controlled shipping rate...');
-      
+
       // Create an AbortController for timeout handling
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15 second timeout
@@ -142,7 +146,7 @@ export default function AdminControlledShippingComponent({
           },
           adminControlled: true,
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -155,55 +159,64 @@ export default function AdminControlledShippingComponent({
 
       if (data.success && data.selectedOption) {
         const apiShippingOption: ShippingOption = {
-          courierName: data.selectedOption.courierName || 'Auto-Selected Courier',
+          courierName:
+            data.selectedOption.courierName || 'Auto-Selected Courier',
           serviceName: data.selectedOption.serviceName || 'Standard Delivery',
-          price: cartValue >= 150 ? 0 : (data.selectedOption.price || 10), // Apply free shipping
-          estimatedDelivery: data.selectedOption.estimatedDelivery || '2-3 business days',
-          deliveryNote: data.selectedOption.deliveryNote || 'Automatically selected based on your location and our shipping policies',
+          price: cartValue >= 150 ? 0 : data.selectedOption.price || 10, // Apply free shipping
+          estimatedDelivery:
+            data.selectedOption.estimatedDelivery || '2-3 business days',
+          deliveryNote:
+            data.selectedOption.deliveryNote ||
+            'Automatically selected based on your location and our shipping policies',
           insuranceAvailable: data.selectedOption.insuranceAvailable !== false,
           codAvailable: data.selectedOption.codAvailable !== false,
         };
-        
+
         setShippingOption(apiShippingOption);
         setError(null);
         setRetryCount(0);
-        console.log('✅ Admin-controlled shipping rate loaded:', apiShippingOption);
+        console.log(
+          '✅ Admin-controlled shipping rate loaded:',
+          apiShippingOption
+        );
       } else {
         throw new Error(data.message || 'No shipping options available');
       }
     } catch (error) {
       console.error('❌ Shipping rate fetch error:', error);
-      
+
       // Improved fallback handling
       let errorMessage = 'Shipping service temporarily unavailable';
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           errorMessage = 'Shipping calculation timed out';
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Shipping service is taking too long to respond';
         } else if (error.message.includes('No shipping rates available')) {
-          errorMessage = 'No shipping rates available from our courier partners';
+          errorMessage =
+            'No shipping rates available from our courier partners';
         } else {
           errorMessage = `Shipping service error: ${error.message}`;
         }
       }
-      
+
       // Always provide fallback shipping option so checkout can continue
       const fallbackShippingOption: ShippingOption = {
         courierName: 'Standard Courier',
         serviceName: 'Standard Delivery',
         price: cartValue >= 150 ? 0 : 10, // Free shipping over RM150
         estimatedDelivery: '2-3 business days',
-        deliveryNote: 'Standard shipping rate applied due to service unavailability',
+        deliveryNote:
+          'Standard shipping rate applied due to service unavailability',
         insuranceAvailable: true,
         codAvailable: true,
       };
-      
+
       setShippingOption(fallbackShippingOption);
       setError(errorMessage);
       setRetryCount(prev => prev + 1);
-      
+
       console.log('🔄 Using fallback shipping option:', fallbackShippingOption);
     } finally {
       setLoading(false);
@@ -233,8 +246,10 @@ export default function AdminControlledShippingComponent({
   };
 
   const getTotalShippingPrice = () => {
-    if (!shippingOption) return 0;
-    
+    if (!shippingOption) {
+      return 0;
+    }
+
     let total = shippingOption.price;
     if (insurance) {
       total += calculateInsurancePrice(cartValue);
@@ -332,16 +347,19 @@ export default function AdminControlledShippingComponent({
                   <h3 className="font-semibold text-lg">
                     {shippingOption.courierName}
                   </h3>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800"
+                  >
                     <Star className="h-3 w-3 mr-1" />
                     Recommended
                   </Badge>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 mb-2">
                   {shippingOption.serviceName}
                 </p>
-                
+
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
@@ -352,12 +370,12 @@ export default function AdminControlledShippingComponent({
                     To {shippingAddress.city}, {shippingAddress.state}
                   </div>
                 </div>
-                
+
                 <p className="text-sm text-green-700 font-medium">
                   {shippingOption.deliveryNote}
                 </p>
               </div>
-              
+
               <div className="text-right">
                 <div className="text-2xl font-bold text-green-600">
                   {formatPrice(getTotalShippingPrice())}
@@ -372,12 +390,13 @@ export default function AdminControlledShippingComponent({
               </div>
             </div>
           </div>
-          
+
           <Alert className="mt-4">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              This shipping option has been automatically selected based on your location, 
-              parcel size, and our shipping policies for the best value and reliability.
+              This shipping option has been automatically selected based on your
+              location, parcel size, and our shipping policies for the best
+              value and reliability.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -398,7 +417,7 @@ export default function AdminControlledShippingComponent({
               <Checkbox
                 id="insurance"
                 checked={insurance}
-                onCheckedChange={(checked) => setInsurance(!!checked)}
+                onCheckedChange={checked => setInsurance(!!checked)}
                 className="mt-1"
               />
               <div className="flex-1">
@@ -406,8 +425,8 @@ export default function AdminControlledShippingComponent({
                   Parcel Insurance
                 </Label>
                 <p className="text-sm text-gray-600 mt-1">
-                  Protect your parcel up to RM{cartValue.toFixed(2)} 
-                  ({formatPrice(calculateInsurancePrice(cartValue))})
+                  Protect your parcel up to RM{cartValue.toFixed(2)}(
+                  {formatPrice(calculateInsurancePrice(cartValue))})
                 </p>
               </div>
             </div>
@@ -419,7 +438,7 @@ export default function AdminControlledShippingComponent({
               <Checkbox
                 id="cod"
                 checked={cod}
-                onCheckedChange={(checked) => {
+                onCheckedChange={checked => {
                   setCod(!!checked);
                   if (checked) {
                     setCodAmount(cartValue);
@@ -438,7 +457,7 @@ export default function AdminControlledShippingComponent({
                   <Alert className="mt-2">
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      COD amount will be {formatPrice(cartValue)} (order total). 
+                      COD amount will be {formatPrice(cartValue)} (order total).
                       Payment must be made in cash to the courier upon delivery.
                     </AlertDescription>
                   </Alert>
@@ -456,7 +475,7 @@ export default function AdminControlledShippingComponent({
               id="instructions"
               placeholder="e.g., Please call before delivery, Leave at reception, etc."
               value={specialInstructions}
-              onChange={(e) => setSpecialInstructions(e.target.value)}
+              onChange={e => setSpecialInstructions(e.target.value)}
               className="resize-none"
               rows={3}
               maxLength={200}
@@ -488,7 +507,9 @@ export default function AdminControlledShippingComponent({
             </div>
             <div className="flex justify-between">
               <span>Estimated Delivery:</span>
-              <span className="font-medium">{shippingOption.estimatedDelivery}</span>
+              <span className="font-medium">
+                {shippingOption.estimatedDelivery}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Parcel Weight:</span>
@@ -508,7 +529,9 @@ export default function AdminControlledShippingComponent({
             )}
             <div className="border-t pt-2 flex justify-between font-semibold text-lg">
               <span>Total Shipping:</span>
-              <span className="text-green-600">{formatPrice(getTotalShippingPrice())}</span>
+              <span className="text-green-600">
+                {formatPrice(getTotalShippingPrice())}
+              </span>
             </div>
           </div>
         </CardContent>

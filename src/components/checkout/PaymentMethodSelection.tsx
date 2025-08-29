@@ -12,7 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import {
+  Loader2,
+  CreditCard,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+} from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -52,14 +58,16 @@ interface PaymentMethodSelectionProps {
 export default function PaymentMethodSelection({
   selectedMethod,
   onMethodChange,
-  onMethodsLoaded
+  onMethodsLoaded,
 }: PaymentMethodSelectionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [activeMethods, setActiveMethods] = useState<PaymentMethod[]>([]);
   const [hasAvailableGateways, setHasAvailableGateways] = useState(false);
-  const [availability, setAvailability] = useState<PaymentMethodsResponse['availability'] | null>(null);
+  const [availability, setAvailability] = useState<
+    PaymentMethodsResponse['availability'] | null
+  >(null);
 
   // Fetch available payment methods
   useEffect(() => {
@@ -69,7 +77,7 @@ export default function PaymentMethodSelection({
         setError('');
 
         const response = await fetch('/api/payment/methods');
-        
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
@@ -84,7 +92,7 @@ export default function PaymentMethodSelection({
           total: data.methods.length,
           active: data.activeMethods.length,
           hasGateways: data.hasAvailableGateways,
-          default: data.defaultMethod
+          default: data.defaultMethod,
         });
 
         setPaymentMethods(data.methods);
@@ -101,12 +109,13 @@ export default function PaymentMethodSelection({
         if (onMethodsLoaded) {
           onMethodsLoaded(data.hasAvailableGateways);
         }
-
       } catch (err) {
         console.error('Error fetching payment methods:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load payment methods');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load payment methods'
+        );
         setHasAvailableGateways(false);
-        
+
         if (onMethodsLoaded) {
           onMethodsLoaded(false);
         }
@@ -153,7 +162,9 @@ export default function PaymentMethodSelection({
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            <span className="text-muted-foreground">Loading payment methods...</span>
+            <span className="text-muted-foreground">
+              Loading payment methods...
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -192,7 +203,8 @@ export default function PaymentMethodSelection({
           <Alert className="mt-2 border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
-              <strong>No payment gateways available.</strong> Please contact support or try again later.
+              <strong>No payment gateways available.</strong> Please contact
+              support or try again later.
             </AlertDescription>
           </Alert>
         )}
@@ -200,7 +212,7 @@ export default function PaymentMethodSelection({
       <CardContent>
         {hasAvailableGateways ? (
           <RadioGroup value={selectedMethod} onValueChange={onMethodChange}>
-            {paymentMethods.map((method) => (
+            {paymentMethods.map(method => (
               <div
                 key={method.id}
                 className={`border rounded-lg p-4 transition-colors ${
@@ -224,7 +236,9 @@ export default function PaymentMethodSelection({
                           !method.available ? 'text-muted-foreground' : ''
                         }`}
                       >
-                        <span className="text-lg">{getMethodIcon(method.id)}</span>
+                        <span className="text-lg">
+                          {getMethodIcon(method.id)}
+                        </span>
                         {method.name}
                         {getStatusIcon(method.available)}
                       </Label>
@@ -235,7 +249,7 @@ export default function PaymentMethodSelection({
                         {method.available ? 'Available' : 'Coming Soon'}
                       </Badge>
                     </div>
-                    
+
                     <p className="text-sm text-muted-foreground">
                       {method.description}
                     </p>
@@ -253,7 +267,7 @@ export default function PaymentMethodSelection({
                             </Badge>
                           ))}
                         </div>
-                        
+
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>Processing: {method.processingTime}</span>
                         </div>
@@ -262,12 +276,14 @@ export default function PaymentMethodSelection({
 
                     {!method.available && availability && (
                       <div className="text-xs text-muted-foreground">
-                        {method.id === 'TOYYIBPAY' && availability.toyyibpay.error && (
-                          <span>Status: {availability.toyyibpay.error}</span>
-                        )}
-                        {method.id === 'BILLPLZ' && availability.billplz.error && (
-                          <span>Status: {availability.billplz.error}</span>
-                        )}
+                        {method.id === 'TOYYIBPAY' &&
+                          availability.toyyibpay.error && (
+                            <span>Status: {availability.toyyibpay.error}</span>
+                          )}
+                        {method.id === 'BILLPLZ' &&
+                          availability.billplz.error && (
+                            <span>Status: {availability.billplz.error}</span>
+                          )}
                       </div>
                     )}
                   </div>
@@ -282,7 +298,8 @@ export default function PaymentMethodSelection({
               No payment methods available at the moment.
             </p>
             <p className="text-xs mt-2">
-              Payment gateways are currently being configured. Please try again later.
+              Payment gateways are currently being configured. Please try again
+              later.
             </p>
           </div>
         )}

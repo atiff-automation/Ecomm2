@@ -32,14 +32,17 @@ export function groupBy<T>(
   array: T[],
   keyFn: (item: T) => string | number
 ): Record<string | number, T[]> {
-  return array.reduce((groups, item) => {
-    const key = keyFn(item);
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(item);
-    return groups;
-  }, {} as Record<string | number, T[]>);
+  return array.reduce(
+    (groups, item) => {
+      const key = keyFn(item);
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(item);
+      return groups;
+    },
+    {} as Record<string | number, T[]>
+  );
 }
 
 /**
@@ -53,9 +56,13 @@ export function sortBy<T>(
   return [...array].sort((a, b) => {
     const aVal = keyFn(a);
     const bVal = keyFn(b);
-    
-    if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-    if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+
+    if (aVal < bVal) {
+      return direction === 'asc' ? -1 : 1;
+    }
+    if (aVal > bVal) {
+      return direction === 'asc' ? 1 : -1;
+    }
     return 0;
   });
 }
@@ -102,9 +109,11 @@ export function shuffle<T>(array: T[]): T[] {
  * Find intersection of arrays
  */
 export function intersection<T>(...arrays: T[][]): T[] {
-  if (arrays.length === 0) return [];
-  
-  return arrays.reduce((acc, current) => 
+  if (arrays.length === 0) {
+    return [];
+  }
+
+  return arrays.reduce((acc, current) =>
     acc.filter(item => current.includes(item))
   );
 }
@@ -120,8 +129,10 @@ export function difference<T>(array1: T[], array2: T[]): T[] {
  * Flatten nested arrays
  */
 export function flatten<T>(array: (T | T[])[]): T[] {
-  return array.reduce<T[]>((acc, val) => 
-    Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []
+  return array.reduce<T[]>(
+    (acc, val) =>
+      Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val),
+    []
   );
 }
 
@@ -148,7 +159,7 @@ export function partition<T>(
 ): [T[], T[]] {
   const truthy: T[] = [];
   const falsy: T[] = [];
-  
+
   array.forEach(item => {
     if (predicate(item)) {
       truthy.push(item);
@@ -156,7 +167,7 @@ export function partition<T>(
       falsy.push(item);
     }
   });
-  
+
   return [truthy, falsy];
 }
 
@@ -174,21 +185,17 @@ export function findBy<T>(
 /**
  * Calculate sum of numeric property
  */
-export function sumBy<T>(
-  array: T[],
-  keyFn: (item: T) => number
-): number {
+export function sumBy<T>(array: T[], keyFn: (item: T) => number): number {
   return array.reduce((sum, item) => sum + keyFn(item), 0);
 }
 
 /**
  * Calculate average of numeric property
  */
-export function averageBy<T>(
-  array: T[],
-  keyFn: (item: T) => number
-): number {
-  if (array.length === 0) return 0;
+export function averageBy<T>(array: T[], keyFn: (item: T) => number): number {
+  if (array.length === 0) {
+    return 0;
+  }
   return sumBy(array, keyFn) / array.length;
 }
 
@@ -199,11 +206,11 @@ export function minBy<T>(
   array: T[],
   keyFn: (item: T) => number
 ): T | undefined {
-  if (array.length === 0) return undefined;
-  
-  return array.reduce((min, item) => 
-    keyFn(item) < keyFn(min) ? item : min
-  );
+  if (array.length === 0) {
+    return undefined;
+  }
+
+  return array.reduce((min, item) => (keyFn(item) < keyFn(min) ? item : min));
 }
 
 /**
@@ -213,11 +220,11 @@ export function maxBy<T>(
   array: T[],
   keyFn: (item: T) => number
 ): T | undefined {
-  if (array.length === 0) return undefined;
-  
-  return array.reduce((max, item) => 
-    keyFn(item) > keyFn(max) ? item : max
-  );
+  if (array.length === 0) {
+    return undefined;
+  }
+
+  return array.reduce((max, item) => (keyFn(item) > keyFn(max) ? item : max));
 }
 
 /**
@@ -227,21 +234,20 @@ export function countBy<T>(
   array: T[],
   keyFn: (item: T) => string | number
 ): Record<string | number, number> {
-  return array.reduce((counts, item) => {
-    const key = keyFn(item);
-    counts[key] = (counts[key] || 0) + 1;
-    return counts;
-  }, {} as Record<string | number, number>);
+  return array.reduce(
+    (counts, item) => {
+      const key = keyFn(item);
+      counts[key] = (counts[key] || 0) + 1;
+      return counts;
+    },
+    {} as Record<string | number, number>
+  );
 }
 
 /**
  * Create array of numbers in range
  */
-export function range(
-  start: number,
-  end: number,
-  step: number = 1
-): number[] {
+export function range(start: number, end: number, step: number = 1): number[] {
   const result: number[] = [];
   for (let i = start; i < end; i += step) {
     result.push(i);
@@ -269,7 +275,7 @@ export function paginate<T>(
   const currentPage = Math.max(1, Math.min(page, totalPages));
   const startIndex = (currentPage - 1) * pageSize;
   const items = array.slice(startIndex, startIndex + pageSize);
-  
+
   return {
     items,
     totalPages,
@@ -290,7 +296,9 @@ export function isEmpty<T>(array: T[]): boolean {
 /**
  * Compact array (remove falsy values)
  */
-export function compact<T>(array: (T | null | undefined | false | 0 | '')[]): T[] {
+export function compact<T>(
+  array: (T | null | undefined | false | 0 | '')[]
+): T[] {
   return array.filter(Boolean) as T[];
 }
 
@@ -299,11 +307,11 @@ export function compact<T>(array: (T | null | undefined | false | 0 | '')[]): T[
  */
 export function frequency<T>(array: T[]): Map<T, number> {
   const map = new Map<T, number>();
-  
+
   array.forEach(item => {
     map.set(item, (map.get(item) || 0) + 1);
   });
-  
+
   return map;
 }
 
@@ -317,13 +325,13 @@ export function binarySearch<T>(
 ): number {
   let left = 0;
   let right = array.length - 1;
-  
-  const compare = compareFn || ((a, b) => a < b ? -1 : a > b ? 1 : 0);
-  
+
+  const compare = compareFn || ((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
     const comparison = compare(array[mid], target);
-    
+
     if (comparison === 0) {
       return mid;
     } else if (comparison < 0) {
@@ -332,6 +340,6 @@ export function binarySearch<T>(
       right = mid - 1;
     }
   }
-  
+
   return -1; // Not found
 }

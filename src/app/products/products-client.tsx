@@ -1,7 +1,7 @@
 /**
  * Products Client Component - Malaysian E-commerce Platform
  * Client-side interactive components for products page
- * 
+ *
  * This component handles:
  * - Interactive filtering and search
  * - Client-side state management
@@ -11,7 +11,13 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useTransition,
+  useMemo,
+} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,48 +99,59 @@ export function ProductsClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToCart } = useCart();
-  
+
   // Client state
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories] = useState<Category[]>(initialCategories);
   const [pagination, setPagination] = useState<Pagination>(initialPagination);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Use React 18 useTransition for better UX during navigation
   const [isPending, startTransition] = useTransition();
 
   // Current filter values from URL
-  const currentParams = useMemo(() => ({
-    search: searchParams.get('search') || '',
-    category: searchParams.get('category') || 'all',
-    sortBy: searchParams.get('sortBy') || 'created-desc',
-    page: parseInt(searchParams.get('page') || '1', 10),
-  }), [searchParams]);
+  const currentParams = useMemo(
+    () => ({
+      search: searchParams.get('search') || '',
+      category: searchParams.get('category') || 'all',
+      sortBy: searchParams.get('sortBy') || 'created-desc',
+      page: parseInt(searchParams.get('page') || '1', 10),
+    }),
+    [searchParams]
+  );
 
   // Update URL parameters without causing full page reload
-  const updateURL = useCallback((updates: Partial<typeof currentParams>) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 'all' && value !== 1) {
-        newParams.set(key, value.toString());
-      } else {
-        newParams.delete(key);
+  const updateURL = useCallback(
+    (updates: Partial<typeof currentParams>) => {
+      const newParams = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value && value !== '' && value !== 'all' && value !== 1) {
+          newParams.set(key, value.toString());
+        } else {
+          newParams.delete(key);
+        }
+      });
+
+      // Reset to page 1 when filters change (except when page itself is changing)
+      if (
+        !updates.page &&
+        (updates.search !== undefined ||
+          updates.category !== undefined ||
+          updates.sortBy !== undefined)
+      ) {
+        newParams.delete('page');
       }
-    });
 
-    // Reset to page 1 when filters change (except when page itself is changing)
-    if (!updates.page && (updates.search !== undefined || updates.category !== undefined || updates.sortBy !== undefined)) {
-      newParams.delete('page');
-    }
+      const newURL = `${window.location.pathname}?${newParams.toString()}`;
 
-    const newURL = `${window.location.pathname}?${newParams.toString()}`;
-    
-    startTransition(() => {
-      router.push(newURL);
-    });
-  }, [router, searchParams]);
+      startTransition(() => {
+        router.push(newURL);
+      });
+    },
+    [router, searchParams]
+  );
 
   // Fetch products client-side (for filter changes)
   const fetchProducts = useCallback(async (params: typeof currentParams) => {
@@ -153,11 +170,12 @@ export function ProductsClient({
       };
 
       const result = await productService.getProducts(apiParams);
-      
+
       setProducts(result.products);
       setPagination(result.pagination);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load products';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -168,7 +186,7 @@ export function ProductsClient({
   // Sync with URL changes (when user navigates back/forward or direct URL change)
   useEffect(() => {
     // Only fetch if parameters actually changed from initial state
-    const paramsChanged = 
+    const paramsChanged =
       currentParams.search !== (initialParams.search || '') ||
       currentParams.category !== (initialParams.category || 'all') ||
       currentParams.sortBy !== (initialParams.sortBy || 'created-desc') ||
@@ -180,21 +198,33 @@ export function ProductsClient({
   }, [currentParams, fetchProducts, initialParams]);
 
   // Handle filter changes
-  const handleSearchChange = useCallback((search: string) => {
-    updateURL({ search });
-  }, [updateURL]);
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      updateURL({ search });
+    },
+    [updateURL]
+  );
 
-  const handleCategoryChange = useCallback((category: string) => {
-    updateURL({ category });
-  }, [updateURL]);
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      updateURL({ category });
+    },
+    [updateURL]
+  );
 
-  const handleSortChange = useCallback((sortBy: string) => {
-    updateURL({ sortBy });
-  }, [updateURL]);
+  const handleSortChange = useCallback(
+    (sortBy: string) => {
+      updateURL({ sortBy });
+    },
+    [updateURL]
+  );
 
-  const handlePageChange = useCallback((page: number) => {
-    updateURL({ page });
-  }, [updateURL]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateURL({ page });
+    },
+    [updateURL]
+  );
 
   const handleClearFilters = useCallback(() => {
     updateURL({
@@ -206,13 +236,16 @@ export function ProductsClient({
   }, [updateURL]);
 
   // Handle add to cart
-  const handleAddToCart = useCallback(async (productId: string) => {
-    try {
-      await addToCart(productId, 1);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-    }
-  }, [addToCart]);
+  const handleAddToCart = useCallback(
+    async (productId: string) => {
+      try {
+        await addToCart(productId, 1);
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
+    },
+    [addToCart]
+  );
 
   // Loading state includes both local loading and navigation pending
   const isLoading = loading || isPending;
@@ -237,22 +270,22 @@ export function ProductsClient({
       {/* Products Grid */}
       <div className="flex-1">
         {error ? (
-          <ProductsError 
-            message={error} 
-            onRetry={() => fetchProducts(currentParams)} 
+          <ProductsError
+            message={error}
+            onRetry={() => fetchProducts(currentParams)}
           />
         ) : (
           <>
             {/* Products Grid with loading overlay */}
-            <div className={`relative ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+            <div
+              className={`relative ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}
+            >
               {products.length === 0 && !isLoading ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">
                     No products found matching your criteria.
                   </p>
-                  <Button onClick={handleClearFilters}>
-                    Clear Filters
-                  </Button>
+                  <Button onClick={handleClearFilters}>Clear Filters</Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -21,16 +21,19 @@ class RateLimit {
 
   constructor() {
     // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   /**
    * Check rate limit for identifier
    */
   async limit(
-    identifier: string, 
+    identifier: string,
     options: RateLimitOptions
   ): Promise<RateLimitResult> {
     const key = this.generateKey(identifier, options);
@@ -40,11 +43,11 @@ class RateLimit {
 
     // Get current count
     const current = this.store.get(key);
-    
+
     if (!current || current.resetTime <= now) {
       // First request or window expired - reset counter
       this.store.set(key, { count: 1, resetTime });
-      
+
       return {
         success: true,
         remaining: options.limit - 1,
@@ -86,22 +89,24 @@ class RateLimit {
   private parseWindow(window: string): number {
     const match = window.match(/^(\d+)([smhd])$/);
     if (!match) {
-      throw new Error(`Invalid window format: ${window}. Use format like '1m', '1h', '1d'`);
+      throw new Error(
+        `Invalid window format: ${window}. Use format like '1m', '1h', '1d'`
+      );
     }
 
     const [, value, unit] = match;
     const multiplier = {
-      's': 1000,
-      'm': 60 * 1000,
-      'h': 60 * 60 * 1000,
-      'd': 24 * 60 * 60 * 1000,
+      s: 1000,
+      m: 60 * 1000,
+      h: 60 * 60 * 1000,
+      d: 24 * 60 * 60 * 1000,
     }[unit];
 
     if (!multiplier) {
       throw new Error(`Invalid time unit: ${unit}`);
     }
 
-    return parseInt(value) * multiplier;
+    return parseInt(value, 10) * multiplier;
   }
 
   /**
@@ -134,7 +139,10 @@ class RateLimit {
   /**
    * Get current usage for identifier
    */
-  async getUsage(identifier: string, options: RateLimitOptions): Promise<{
+  async getUsage(
+    identifier: string,
+    options: RateLimitOptions
+  ): Promise<{
     count: number;
     remaining: number;
     resetTime: number;
@@ -195,11 +203,11 @@ export function withRateLimit(options: RateLimitOptions) {
   return async (request: Request, identifier?: string) => {
     const id = identifier || getClientIdentifier(request);
     const result = await rateLimit.limit(id, options);
-    
+
     if (!result.success) {
       throw new Error('Rate limit exceeded');
     }
-    
+
     return result;
   };
 }
@@ -212,9 +220,9 @@ function getClientIdentifier(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
-  
+
   const ip = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
-  
+
   return ip.trim();
 }
 
@@ -225,17 +233,21 @@ export const RATE_LIMIT_CONFIGS = {
   // API endpoints
   api: { limit: 100, window: '1h', key: 'api' },
   apiStrict: { limit: 50, window: '1h', key: 'api-strict' },
-  
+
   // Authentication
   login: { limit: 5, window: '15m', key: 'auth-login' },
   signup: { limit: 3, window: '1h', key: 'auth-signup' },
   passwordReset: { limit: 3, window: '1h', key: 'auth-reset' },
-  
+
   // Monitoring
   errorReporting: { limit: 100, window: '1h', key: 'error-reporting' },
-  performanceMonitoring: { limit: 200, window: '1h', key: 'performance-monitoring' },
+  performanceMonitoring: {
+    limit: 200,
+    window: '1h',
+    key: 'performance-monitoring',
+  },
   eventTracking: { limit: 500, window: '1h', key: 'event-tracking' },
-  
+
   // General purpose
   general: { limit: 1000, window: '1h', key: 'general' },
   strict: { limit: 50, window: '1h', key: 'strict' },

@@ -9,12 +9,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Package, 
-  Shield, 
+import {
+  Package,
+  Shield,
   Clock,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import GuestTrackingForm from '@/components/customer/GuestTrackingForm';
 import GuestTrackingResults from '@/components/customer/GuestTrackingResults';
@@ -40,7 +40,9 @@ interface GuestTrackingData {
 }
 
 export default function TrackOrderPage() {
-  const [trackingData, setTrackingData] = useState<GuestTrackingData | null>(null);
+  const [trackingData, setTrackingData] = useState<GuestTrackingData | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rateLimitInfo, setRateLimitInfo] = useState<{
@@ -75,15 +77,20 @@ export default function TrackOrderPage() {
         if (data.retryAfter) {
           setRateLimitInfo({
             retryAfter: data.retryAfter,
-            message: `Please wait ${Math.ceil(data.retryAfter / 60)} minutes before trying again.`
+            message: `Please wait ${Math.ceil(data.retryAfter / 60)} minutes before trying again.`,
           });
         }
       } else {
-        setError(data.error || 'Failed to find order. Please check your details and try again.');
+        setError(
+          data.error ||
+            'Failed to find order. Please check your details and try again.'
+        );
       }
     } catch (err) {
       console.error('Tracking lookup error:', err);
-      setError('Unable to connect to tracking service. Please try again later.');
+      setError(
+        'Unable to connect to tracking service. Please try again later.'
+      );
     } finally {
       setLoading(false);
     }
@@ -93,11 +100,15 @@ export default function TrackOrderPage() {
    * Handle refresh tracking data
    */
   const handleRefresh = async () => {
-    if (!trackingData) return;
-    
+    if (!trackingData) {
+      return;
+    }
+
     // For guest users, refresh means re-submitting the form
     // Since we don't store the original form data, we'll just show a message
-    setError('Please use the "New Search" button to look up your order again for the latest information.');
+    setError(
+      'Please use the "New Search" button to look up your order again for the latest information.'
+    );
   };
 
   /**
@@ -127,8 +138,9 @@ export default function TrackOrderPage() {
         <Alert className="mb-6">
           <Shield className="h-4 w-4" />
           <AlertDescription>
-            <strong>Secure Tracking:</strong> We protect your privacy by only showing basic tracking information 
-            and not storing any personal details during lookup.
+            <strong>Secure Tracking:</strong> We protect your privacy by only
+            showing basic tracking information and not storing any personal
+            details during lookup.
           </AlertDescription>
         </Alert>
 
@@ -194,10 +206,13 @@ export default function TrackOrderPage() {
                 <div className="flex items-start gap-2">
                   <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-blue-900 mb-1">Usage Limits</h4>
+                    <h4 className="font-medium text-blue-900 mb-1">
+                      Usage Limits
+                    </h4>
                     <p className="text-sm text-blue-700">
-                      To prevent abuse, guest tracking is limited to 10 lookups per hour per device. 
-                      For unlimited tracking, consider creating a free account.
+                      To prevent abuse, guest tracking is limited to 10 lookups
+                      per hour per device. For unlimited tracking, consider
+                      creating a free account.
                     </p>
                   </div>
                 </div>
@@ -220,22 +235,22 @@ export default function TrackOrderPage() {
             Having trouble tracking your order?
           </p>
           <div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
-            <a 
-              href="/contact" 
+            <a
+              href="/contact"
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
               Contact Support
             </a>
             <span className="text-gray-300">•</span>
-            <a 
-              href="/faq" 
+            <a
+              href="/faq"
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
               FAQ
             </a>
             <span className="text-gray-300">•</span>
-            <a 
-              href="/auth/signin" 
+            <a
+              href="/auth/signin"
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
               Create Account

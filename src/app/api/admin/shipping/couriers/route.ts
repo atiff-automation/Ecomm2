@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -50,7 +53,6 @@ export async function GET(request: NextRequest) {
       success: true,
       preferences,
     });
-
   } catch (error) {
     console.error('Error retrieving courier data:', error);
     return NextResponse.json(
@@ -67,7 +69,9 @@ async function getAvailableCouriers() {
   try {
     console.log('🚚 Fetching available couriers for admin configuration...');
 
-    const { easyParcelService } = await import('@/lib/shipping/easyparcel-service');
+    const { easyParcelService } = await import(
+      '@/lib/shipping/easyparcel-service'
+    );
     const pickupAddress = await businessShippingConfig.getPickupAddress();
 
     // Test API call to get available couriers for the admin's pickup location
@@ -80,7 +84,7 @@ async function getAvailableCouriers() {
         city: pickupAddress.city,
         state: pickupAddress.state,
         postcode: pickupAddress.postcode,
-        country: 'MY'
+        country: 'MY',
       },
       delivery_address: {
         name: 'Test Customer',
@@ -89,7 +93,7 @@ async function getAvailableCouriers() {
         city: 'Kuala Lumpur',
         state: 'KUL',
         postcode: '50000',
-        country: 'MY'
+        country: 'MY',
       },
       parcel: {
         weight: 1.0,
@@ -97,11 +101,11 @@ async function getAvailableCouriers() {
         width: 15,
         height: 10,
         content: 'Test package',
-        value: 100
+        value: 100,
       },
       service_types: ['STANDARD', 'EXPRESS', 'OVERNIGHT'],
       insurance: false,
-      cod: false
+      cod: false,
     };
 
     let availableCouriers: any[] = [];
@@ -109,14 +113,15 @@ async function getAvailableCouriers() {
 
     try {
       console.log('📞 Testing EasyParcel API connectivity...');
-      const easyParcelResponse = await easyParcelService.calculateRates(testRequest);
-      
+      const easyParcelResponse =
+        await easyParcelService.calculateRates(testRequest);
+
       if (easyParcelResponse.rates && easyParcelResponse.rates.length > 0) {
         apiConnected = true;
-        
+
         // Extract unique couriers from the rates response
         const courierMap = new Map();
-        
+
         easyParcelResponse.rates.forEach((rate: any) => {
           if (!courierMap.has(rate.courier_id)) {
             courierMap.set(rate.courier_id, {
@@ -125,8 +130,9 @@ async function getAvailableCouriers() {
               serviceTypes: [],
               coverage: {
                 westMalaysia: true,
-                eastMalaysia: rate.courier_name.toLowerCase().includes('pos') || 
-                            rate.courier_name.toLowerCase().includes('gdex'),
+                eastMalaysia:
+                  rate.courier_name.toLowerCase().includes('pos') ||
+                  rate.courier_name.toLowerCase().includes('gdex'),
               },
               features: {
                 standardService: false,
@@ -134,49 +140,69 @@ async function getAvailableCouriers() {
                 overnightService: false,
                 insuranceAvailable: rate.features?.insurance_available || false,
                 codAvailable: rate.features?.cod_available || false,
-                signatureRequired: rate.features?.signature_required_available || false,
+                signatureRequired:
+                  rate.features?.signature_required_available || false,
               },
               estimatedDeliveryDays: rate.estimated_delivery_days,
               notes: `Available from ${pickupAddress.city}, ${pickupAddress.state}`,
               priceRange: {
                 min: parseFloat(rate.price_before_gst || rate.price || '0'),
                 max: parseFloat(rate.price_before_gst || rate.price || '0'),
-                currency: 'MYR'
-              }
+                currency: 'MYR',
+              },
             });
           }
-          
+
           const courier = courierMap.get(rate.courier_id);
-          
+
           if (!courier.serviceTypes.includes(rate.service_type)) {
             courier.serviceTypes.push(rate.service_type);
           }
-          
+
           // Update price range with this rate
-          const ratePrice = parseFloat(rate.price_before_gst || rate.price || '0');
+          const ratePrice = parseFloat(
+            rate.price_before_gst || rate.price || '0'
+          );
           if (ratePrice > 0) {
-            courier.priceRange.min = Math.min(courier.priceRange.min, ratePrice);
-            courier.priceRange.max = Math.max(courier.priceRange.max, ratePrice);
+            courier.priceRange.min = Math.min(
+              courier.priceRange.min,
+              ratePrice
+            );
+            courier.priceRange.max = Math.max(
+              courier.priceRange.max,
+              ratePrice
+            );
           }
-          
-          if (rate.service_type === 'STANDARD') courier.features.standardService = true;
-          if (rate.service_type === 'EXPRESS') courier.features.expressService = true;
-          if (rate.service_type === 'OVERNIGHT') courier.features.overnightService = true;
+
+          if (rate.service_type === 'STANDARD') {
+            courier.features.standardService = true;
+          }
+          if (rate.service_type === 'EXPRESS') {
+            courier.features.expressService = true;
+          }
+          if (rate.service_type === 'OVERNIGHT') {
+            courier.features.overnightService = true;
+          }
         });
-        
+
         availableCouriers = Array.from(courierMap.values());
-        
+
         // Sort by cheapest price first for priority assignment
         availableCouriers.sort((a, b) => {
           const aPrice = a.priceRange?.min || 999;
           const bPrice = b.priceRange?.min || 999;
           return aPrice - bPrice; // Cheapest first
         });
-        
-        console.log(`✅ Found ${availableCouriers.length} available couriers from EasyParcel API, sorted by price`);
+
+        console.log(
+          `✅ Found ${availableCouriers.length} available couriers from EasyParcel API, sorted by price`
+        );
       }
     } catch (apiError) {
-      console.warn('⚠️ EasyParcel API not accessible, using fallback courier list:', apiError);
+      console.warn(
+        '⚠️ EasyParcel API not accessible, using fallback courier list:',
+        apiError
+      );
       apiConnected = false;
     }
 
@@ -197,7 +223,7 @@ async function getAvailableCouriers() {
             signatureRequired: true,
           },
           estimatedDeliveryDays: 2,
-          notes: 'Reliable for West Malaysia, limited East Malaysia coverage'
+          notes: 'Reliable for West Malaysia, limited East Malaysia coverage',
         },
         {
           courierId: 'poslaju',
@@ -213,7 +239,7 @@ async function getAvailableCouriers() {
             signatureRequired: true,
           },
           estimatedDeliveryDays: 1,
-          notes: 'Nationwide coverage including Sabah & Sarawak'
+          notes: 'Nationwide coverage including Sabah & Sarawak',
         },
         {
           courierId: 'gdex',
@@ -229,7 +255,7 @@ async function getAvailableCouriers() {
             signatureRequired: false,
           },
           estimatedDeliveryDays: 3,
-          notes: 'Cost-effective nationwide delivery'
+          notes: 'Cost-effective nationwide delivery',
         },
         {
           courierId: 'jnt',
@@ -245,19 +271,24 @@ async function getAvailableCouriers() {
             signatureRequired: false,
           },
           estimatedDeliveryDays: 2,
-          notes: 'Fast growing courier with competitive rates'
-        }
+          notes: 'Fast growing courier with competitive rates',
+        },
       ];
-      console.log('🔄 Using fallback courier list with common Malaysian couriers');
+      console.log(
+        '🔄 Using fallback courier list with common Malaysian couriers'
+      );
     }
 
     // Get current admin courier preferences
-    const currentPreferences = await businessShippingConfig.getCourierPreferences();
-    
+    const currentPreferences =
+      await businessShippingConfig.getCourierPreferences();
+
     // Merge available couriers with current preferences and assign priorities based on price ranking
     const mergedCouriers = availableCouriers.map((courier, index) => {
-      const existingPref = currentPreferences.find(pref => pref.courierId === courier.courierId);
-      
+      const existingPref = currentPreferences.find(
+        pref => pref.courierId === courier.courierId
+      );
+
       return {
         ...courier,
         currentlySelected: !!existingPref,
@@ -277,27 +308,33 @@ async function getAvailableCouriers() {
       businessLocation: {
         city: pickupAddress.city,
         state: pickupAddress.state,
-        coverage: ['KUL', 'SEL', 'JOH', 'MLK', 'NSN'].includes(pickupAddress.state) ? 'central' : 
-                 ['PNG', 'KDH', 'PRK', 'PLS'].includes(pickupAddress.state) ? 'north' :
-                 ['PHG', 'TRG', 'KTN'].includes(pickupAddress.state) ? 'east_coast' :
-                 ['SBH', 'SWK', 'LBN'].includes(pickupAddress.state) ? 'east_malaysia' : 'other'
+        coverage: ['KUL', 'SEL', 'JOH', 'MLK', 'NSN'].includes(
+          pickupAddress.state
+        )
+          ? 'central'
+          : ['PNG', 'KDH', 'PRK', 'PLS'].includes(pickupAddress.state)
+            ? 'north'
+            : ['PHG', 'TRG', 'KTN'].includes(pickupAddress.state)
+              ? 'east_coast'
+              : ['SBH', 'SWK', 'LBN'].includes(pickupAddress.state)
+                ? 'east_malaysia'
+                : 'other',
       },
       metadata: {
         lastChecked: new Date().toISOString(),
         source: apiConnected ? 'easyparcel_api' : 'fallback_list',
         totalCouriers: mergedCouriers.length,
-        enabledCouriers: mergedCouriers.filter(c => c.enabled).length
-      }
+        enabledCouriers: mergedCouriers.filter(c => c.enabled).length,
+      },
     });
-
   } catch (error) {
     console.error('❌ Error fetching available couriers:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         success: false,
         message: 'Failed to fetch available couriers',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -311,23 +348,27 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role as string)
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    
+
     // Validate preferences data
     const validatedData = courierPreferencesSchema.parse(body);
 
     // Update courier preferences
-    await businessShippingConfig.updateCourierPreferences(validatedData.preferences);
+    await businessShippingConfig.updateCourierPreferences(
+      validatedData.preferences
+    );
 
     return NextResponse.json({
       success: true,
       message: 'Courier preferences updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating courier preferences:', error);
 

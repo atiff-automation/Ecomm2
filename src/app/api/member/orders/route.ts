@@ -101,12 +101,14 @@ export async function GET(request: NextRequest) {
       memberSavings: Number(order.memberDiscount || 0),
       itemCount: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
       trackingNumber: order.trackingNumber,
-      shipment: order.shipment ? {
-        trackingNumber: order.shipment.trackingNumber,
-        status: order.shipment.status,
-        courierName: order.shipment.courierName,
-        estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
-      } : null,
+      shipment: order.shipment
+        ? {
+            trackingNumber: order.shipment.trackingNumber,
+            status: order.shipment.status,
+            courierName: order.shipment.courierName,
+            estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
+          }
+        : null,
       items: order.orderItems.map(item => ({
         id: item.id,
         productName: item.productName,
