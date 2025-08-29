@@ -1213,5 +1213,39 @@ model TrackingJobQueue {
   @@index([jobType])
 }
 
+// ==================== MALAYSIAN POSTCODE SYSTEM ====================
+
+model MalaysianState {
+  id        String   @id @db.VarChar(3) // State Code: "PLS", "JHR", etc.
+  name      String   @db.VarChar(100)   // "Perlis", "Johor", etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationship
+  postcodes MalaysianPostcode[]
+  
+  @@map("malaysian_states")
+}
+
+model MalaysianPostcode {
+  id          String   @id @default(cuid())
+  postcode    String   @db.VarChar(5)     // "01000"
+  district    String   @db.VarChar(100)   // "Kangar"
+  stateCode   String   @db.VarChar(3)     // "PLS"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationship
+  state MalaysianState @relation(fields: [stateCode], references: [id])
+  
+  // Indexes for performance (simplified structure)
+  @@unique([postcode, district]) // Unique postcode-district combination
+  @@index([postcode])           // Primary lookup index
+  @@index([district])           // District-based searches
+  @@index([stateCode])          // State-based queries
+  
+  @@map("malaysian_postcodes")
+}
+
 // Add the missing relation for ImportExportJob and ComplianceReport to User model
 // This requires updating the User model to include these relationships

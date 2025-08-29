@@ -25,7 +25,10 @@
     "optimize:images": "npx next-optimized-images",
     "check:deps": "npx depcheck",
     "check:unused": "npx unimported",
-    "stats": "npm run build -- --profile --json > bundle-stats.json"
+    "stats": "npm run build -- --profile --json > bundle-stats.json",
+    "postcode:import": "npx tsx scripts/import-postcodes.ts",
+    "postcode:migrate": "npx prisma migrate dev --name add_malaysian_postcode_system",
+    "postcode:validate": "npx tsx scripts/import-postcodes.ts --validate-only"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

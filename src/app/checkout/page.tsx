@@ -45,7 +45,7 @@ import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
 import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
 import PaymentMethodSelection from '@/components/checkout/PaymentMethodSelection';
-import { malaysianPostcodeService } from '@/lib/shipping/malaysian-postcode-service';
+// API endpoints for postcode validation (client-safe)
 
 interface CheckoutItem {
   id: string;
@@ -195,14 +195,8 @@ export default function CheckoutPage() {
     );
   }, [cart?.items]);
 
-  // Malaysian states from centralized service
-  const malaysianStates = useMemo(() => {
-    return malaysianPostcodeService.getAllStates().map(state => ({
-      code: state.code,
-      name: state.name,
-      zone: state.zone,
-    }));
-  }, []);
+  // Malaysian states from enhanced database service
+  const [malaysianStates, setMalaysianStates] = useState<Array<{code: string; name: string; zone: 'west' | 'east'}>>([]);
 
   // Initialize checkout data using cart service
   const initializeCheckoutData = useCallback(async () => {
@@ -249,6 +243,31 @@ export default function CheckoutPage() {
         );
       } else if (totalItems > 0) {
         console.log('✅ Cart has items, proceeding with checkout');
+      }
+
+      // Load Malaysian states from API (client-safe)
+      try {
+        const response = await fetch('/api/postcode/states');
+        if (response.ok) {
+          const states = await response.json();
+          setMalaysianStates(states.map((state: any) => ({
+            code: state.code,
+            name: state.name,
+            zone: state.zone
+          })));
+        } else {
+          throw new Error('Failed to fetch states');
+        }
+      } catch (error) {
+        console.error('Error loading Malaysian states:', error);
+        // Fallback to basic states if API fails
+        setMalaysianStates([
+          { code: 'KUL', name: 'Wilayah Persekutuan Kuala Lumpur', zone: 'west' },
+          { code: 'SGR', name: 'Selangor', zone: 'west' },
+          { code: 'JHR', name: 'Johor', zone: 'west' },
+          { code: 'PNG', name: 'Pulau Pinang', zone: 'west' },
+          { code: 'PRK', name: 'Perak', zone: 'west' }
+        ]);
       }
 
       // Pre-fill user info and default address if available
@@ -370,45 +389,63 @@ export default function CheckoutPage() {
       [addressType]: { valid: true, loading: true },
     }));
 
-    // Debounce the validation and auto-fill
-    setTimeout(() => {
-      const validation = malaysianPostcodeService.validatePostcode(postcode);
+    // Debounce the validation and auto-fill with API call
+    setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/postcode/validate?postcode=${encodeURIComponent(postcode)}`);
+        
+        if (response.ok) {
+          const validation = await response.json();
 
-      if (validation.valid && validation.location) {
-        // Auto-fill state and city
-        addressSetter(prev => ({
-          ...prev,
-          postcode: validation.formatted || postcode,
-          state: validation.location!.stateName,
-          city: validation.location!.city,
-        }));
+          if (validation.valid && validation.location) {
+            // Auto-fill state and city using database data
+            addressSetter(prev => ({
+              ...prev,
+              postcode: validation.formatted || postcode,
+              state: validation.location.stateName,
+              city: validation.location.city,
+            }));
 
-        setPostcodeValidation(prev => ({
-          ...prev,
-          [addressType]: { valid: true, loading: false },
-        }));
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: { valid: true, loading: false },
+            }));
 
-        console.log(`✅ Auto-filled ${addressType} address:`, {
-          postcode: validation.formatted,
-          state: validation.location.stateName,
-          city: validation.location.city,
-          zone: validation.location.zone,
-        });
-      } else if (postcode.length === 5) {
-        // Invalid postcode
+            console.log(`✅ Auto-filled ${addressType} address from database:`, {
+              postcode: validation.formatted,
+              state: validation.location.stateName,
+              city: validation.location.city,
+              zone: validation.location.zone,
+            });
+          } else if (postcode.length === 5) {
+            // Invalid postcode from database
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: {
+                valid: false,
+                error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
+                loading: false,
+              },
+            }));
+          } else {
+            // Still typing
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: { valid: true, loading: false },
+            }));
+          }
+        } else {
+          throw new Error('API request failed');
+        }
+      } catch (error) {
+        console.error(`Error validating postcode ${postcode}:`, error);
         setPostcodeValidation(prev => ({
           ...prev,
           [addressType]: {
             valid: false,
-            error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
+            error: 'Postcode validation service temporarily unavailable',
             loading: false,
           },
-        }));
-      } else {
-        // Still typing
-        setPostcodeValidation(prev => ({
-          ...prev,
-          [addressType]: { valid: true, loading: false },
         }));
       }
     }, 500); // 500ms debounce
