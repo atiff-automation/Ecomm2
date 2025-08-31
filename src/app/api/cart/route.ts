@@ -335,6 +335,27 @@ async function handlePOST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
+    // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      console.error('🚨 Cart API: User not found in database', {
+        sessionUserId: session.user.id,
+        sessionEmail: session.user.email,
+        timestamp: new Date().toISOString(),
+      });
+      return NextResponse.json(
+        { 
+          message: 'User session invalid. Please log in again.',
+          code: 'USER_NOT_FOUND'
+        },
+        { status: 401 }
+      );
+    }
+
     const cartItem = await prisma.cartItem.upsert({
       where: {
         userId_productId: {
@@ -601,6 +622,27 @@ async function handlePUT(request: NextRequest) {
     }
 
     // Handle authenticated user cart
+    // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      console.error('🚨 Cart API PUT: User not found in database', {
+        sessionUserId: session.user.id,
+        sessionEmail: session.user.email,
+        timestamp: new Date().toISOString(),
+      });
+      return NextResponse.json(
+        { 
+          message: 'User session invalid. Please log in again.',
+          code: 'USER_NOT_FOUND'
+        },
+        { status: 401 }
+      );
+    }
+
     // If quantity is 0, remove the item
     if (quantity === 0) {
       await prisma.cartItem.deleteMany({
@@ -798,6 +840,27 @@ async function handleDELETE() {
     }
 
     // Handle authenticated user cart
+    // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      console.error('🚨 Cart API DELETE: User not found in database', {
+        sessionUserId: session.user.id,
+        sessionEmail: session.user.email,
+        timestamp: new Date().toISOString(),
+      });
+      return NextResponse.json(
+        { 
+          message: 'User session invalid. Please log in again.',
+          code: 'USER_NOT_FOUND'
+        },
+        { status: 401 }
+      );
+    }
+
     await prisma.cartItem.deleteMany({
       where: { userId: session.user.id },
     });
