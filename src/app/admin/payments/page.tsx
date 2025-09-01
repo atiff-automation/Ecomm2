@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  CreditCard,
   Settings,
   Activity,
   DollarSign,
@@ -19,8 +18,6 @@ import {
   CheckCircle,
   ExternalLink,
   Smartphone,
-  Building,
-  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -33,7 +30,7 @@ import {
 interface PaymentGateway {
   id: string;
   name: string;
-  type: 'toyyibpay' | 'stripe' | 'paypal';
+  type: 'toyyibpay';
   status: 'active' | 'inactive' | 'configured' | 'pending';
   description: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -47,89 +44,71 @@ interface PaymentStats {
   successRate: number;
   failedTransactions: number;
   refundedAmount: number;
+  pendingTransactions: number;
+  partiallyRefundedAmount: number;
+  averageOrderValue: number;
 }
 
 export default function AdminPaymentsPage() {
   const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPaymentStats();
+    fetchPaymentData();
   }, []);
 
-  const fetchPaymentStats = async () => {
+  const fetchPaymentData = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/admin/payments/stats');
-      // const data = await response.json();
-      // setStats(data.stats);
-
-      // Mock data for now
-      setTimeout(() => {
-        setStats({
-          totalTransactions: 1247,
-          totalRevenue: 125670.5,
-          successRate: 96.8,
-          failedTransactions: 42,
-          refundedAmount: 2340.0,
-        });
-        setLoading(false);
-      }, 1000);
+      
+      // Fetch both stats and gateways in parallel
+      const [statsResponse, gatewaysResponse] = await Promise.all([
+        fetch('/api/admin/payments/stats?includeMethodBreakdown=false'),
+        fetch('/api/admin/payments/gateways?includeStats=false'),
+      ]);
+      
+      // Handle stats response
+      if (statsResponse.ok) {
+        const { success, data, error } = await statsResponse.json();
+        if (success) {
+          setStats(data.metrics);
+        } else {
+          throw new Error(error || 'Failed to fetch payment statistics');
+        }
+      }
+      
+      // Handle gateways response
+      if (gatewaysResponse.ok) {
+        const { success, data, error } = await gatewaysResponse.json();
+        if (success) {
+          setGateways(data.gateways);
+        } else {
+          console.error('Failed to fetch gateways:', error);
+          setGateways([]); // Use empty array as fallback
+        }
+      }
+      
     } catch (error) {
-      console.error('Failed to fetch payment stats:', error);
+      console.error('Failed to fetch payment data:', error);
+      // Provide fallback data for errors
+      setStats({
+        totalTransactions: 0,
+        totalRevenue: 0,
+        successRate: 0,
+        failedTransactions: 0,
+        refundedAmount: 0,
+        pendingTransactions: 0,
+        partiallyRefundedAmount: 0,
+        averageOrderValue: 0,
+      });
+      setGateways([]);
+    } finally {
       setLoading(false);
     }
   };
 
-  const paymentGateways: PaymentGateway[] = [
-    {
-      id: 'toyyibpay',
-      name: 'toyyibPay',
-      type: 'toyyibpay',
-      status: 'active',
-      description:
-        'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
-      icon: Smartphone,
-      configPath: '/admin/payments/toyyibpay',
-      features: [
-        'FPX Online Banking',
-        'Credit/Debit Cards',
-        'E-wallets',
-        'QR Code',
-      ],
-    },
-    {
-      id: 'stripe',
-      name: 'Stripe',
-      type: 'stripe',
-      status: 'inactive',
-      description: 'International payment processing with global card support',
-      icon: CreditCard,
-      configPath: '/admin/payments/stripe',
-      features: [
-        'Global Cards',
-        'Digital Wallets',
-        'Bank Transfers',
-        'Buy Now Pay Later',
-      ],
-    },
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      type: 'paypal',
-      status: 'pending',
-      description: 'Popular digital wallet and payment platform',
-      icon: Wallet,
-      configPath: '/admin/payments/paypal',
-      features: [
-        'PayPal Wallet',
-        'PayPal Credit',
-        'Express Checkout',
-        'Subscriptions',
-      ],
-    },
-  ];
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -181,13 +160,13 @@ export default function AdminPaymentsPage() {
 
   // Define breadcrumbs
   const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Payments', href: '/admin/payments', icon: CreditCard },
+    { label: 'Payments', href: '/admin/payments', icon: Smartphone },
   ];
 
   // Page actions
   const pageActions = (
     <div className="flex gap-2">
-      <Button variant="outline" onClick={fetchPaymentStats}>
+      <Button variant="outline" onClick={fetchPaymentData}>
         <Activity className="h-4 w-4 mr-2" />
         Refresh
       </Button>
@@ -210,7 +189,7 @@ export default function AdminPaymentsPage() {
       loading={loading}
     >
       {/* Payment Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -265,6 +244,19 @@ export default function AdminPaymentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats?.pendingTransactions || '---'}
+            </div>
+            <p className="text-xs text-muted-foreground">Pending payments</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Refunded</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -287,8 +279,15 @@ export default function AdminPaymentsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {paymentGateways.map(gateway => {
-              const IconComponent = gateway.icon;
+            {gateways.map(gateway => {
+              // Handle icon mapping since functions can't be serialized in API responses
+              const getIcon = (type: string) => {
+                switch (type) {
+                  case 'toyyibpay': return Smartphone;
+                  default: return Smartphone;
+                }
+              };
+              const IconComponent = getIcon(gateway.type);
               return (
                 <div
                   key={gateway.id}

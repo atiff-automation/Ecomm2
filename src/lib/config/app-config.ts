@@ -224,19 +224,10 @@ export const appConfig = {
       },
     },
 
-    // Payment services (server-only secrets, client-safe keys)
+    // Payment services - ToyyibPay configuration handled via database
     payment: {
-      stripe: {
-        publishableKey: getEnvVar('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', ''),
-        secretKey: getServerEnvVar('STRIPE_SECRET_KEY', ''),
-        webhookSecret: getServerEnvVar('STRIPE_WEBHOOK_SECRET', ''),
-        currency: 'myr',
-      },
-      paypal: {
-        clientId: getEnvVar('NEXT_PUBLIC_PAYPAL_CLIENT_ID', ''),
-        clientSecret: getServerEnvVar('PAYPAL_CLIENT_SECRET', ''),
-        environment: getEnvVar('PAYPAL_ENVIRONMENT', 'sandbox'),
-      },
+      // ToyyibPay configuration is managed through admin panel and stored in database
+      // No static configuration needed here
     },
 
     // Telegram service (server-only)

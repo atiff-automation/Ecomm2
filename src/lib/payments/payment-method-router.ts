@@ -23,21 +23,12 @@ export interface PaymentMethodConfig {
 
 export const PAYMENT_METHODS: Record<string, PaymentMethodConfig> = {
   // Tier 1: Automated Webhooks (Best UX)
-  billplz: {
+  toyyibpay: {
     type: PaymentMethodType.WEBHOOK_AUTOMATED,
-    displayName: 'Billplz',
-    description: 'Instant confirmation via webhook',
+    displayName: 'toyyibPay',
+    description: 'Instant confirmation via toyyibPay webhook',
     autoConfirm: true,
     maxProcessingTime: 0.5, // 30 minutes max
-    requiresVerification: false,
-  },
-
-  stripe: {
-    type: PaymentMethodType.WEBHOOK_AUTOMATED,
-    displayName: 'Credit/Debit Card',
-    description: 'Instant confirmation via Stripe',
-    autoConfirm: true,
-    maxProcessingTime: 0.5,
     requiresVerification: false,
   },
 
