@@ -1,9 +1,12 @@
 /**
  * Monitoring Utilities - Malaysian E-commerce Platform
  * Helper functions for monitoring and analytics
+ * Refactored to use centralized monitoring service - Phase 3 DRY Implementation
  */
 
 import { errorMonitor } from './error-monitor';
+import { monitoringService, MonitoringType } from './monitoring-service';
+import { isFeatureEnabled } from './monitoring-config';
 
 /**
  * Create performance observer for monitoring
@@ -32,46 +35,27 @@ export function createPerformanceObserver(
 
 /**
  * Track user action with automatic error handling
+ * DRY: Refactored to use centralized monitoring service
  */
 export async function trackUserAction(
   action: string,
   properties: Record<string, any> = {}
 ): Promise<void> {
   try {
-    const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Early exit if feature disabled
+    if (!isFeatureEnabled('userTracking')) {
+      return;
+    }
 
-    const eventData = {
-      eventId,
-      eventType: 'custom' as const,
-      timestamp: new Date().toISOString(),
-      url: typeof window !== 'undefined' ? window.location.href : 'ssr',
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'ssr',
-      sessionId: getSessionId(),
-      userId: getUserId(),
-      properties: {
-        action,
-        ...properties,
-      },
-    };
-
-    // Add breadcrumb
+    // Add breadcrumb for legacy compatibility
     errorMonitor.addBreadcrumb(`User action: ${action}`, 'user');
 
-    // Send to events API (fire and forget)
-    if (typeof window !== 'undefined') {
-      fetch('/api/monitoring/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(eventData),
-      }).catch(error => {
-        console.warn('Failed to track user action:', error);
-      });
-    }
+    // Use centralized monitoring service - eliminates duplicate API call logic
+    await monitoringService.trackUserAction(action, properties);
   } catch (error) {
     console.error('Error tracking user action:', error);
-    errorMonitor.reportError(
+    // Report error through centralized service
+    await monitoringService.trackError(
       error instanceof Error ? error : new Error('User action tracking failed'),
       { action, properties }
     );
@@ -121,9 +105,10 @@ export function measure(
 
 /**
  * Track page load performance
+ * DRY: Refactored to use centralized monitoring service
  */
 export function trackPageLoadPerformance(): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !isFeatureEnabled('performance')) {
     return;
   }
 
@@ -156,19 +141,8 @@ export function trackPageLoadPerformance(): void {
           }
         });
 
-        // Send performance data
-        fetch('/api/monitoring/performance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: 'page-performance',
-            timestamp: new Date().toISOString(),
-            url: window.location.href,
-            metrics,
-          }),
-        }).catch(error => {
+        // Use centralized monitoring service - eliminates duplicate API call logic
+        monitoringService.trackPerformance(metrics).catch(error => {
           console.warn('Failed to send performance data:', error);
         });
       }
@@ -178,9 +152,10 @@ export function trackPageLoadPerformance(): void {
 
 /**
  * Track Core Web Vitals
+ * DRY: Refactored to use centralized monitoring service
  */
 export function trackCoreWebVitals(): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !isFeatureEnabled('performance')) {
     return;
   }
 
@@ -198,16 +173,11 @@ export function trackCoreWebVitals(): void {
         );
       }
 
-      fetch('/api/monitoring/performance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'lcp',
-          metric: 'lcp',
-          value: lastEntry.startTime,
-          timestamp: new Date().toISOString(),
-          url: window.location.href,
-        }),
+      // Use centralized monitoring service - eliminates duplicate API call logic
+      monitoringService.track(MonitoringType.PERFORMANCE, {
+        type: 'lcp',
+        metric: 'lcp',
+        value: lastEntry.startTime,
       }).catch(() => {});
     });
 
@@ -227,16 +197,11 @@ export function trackCoreWebVitals(): void {
         errorMonitor.addBreadcrumb(`Poor FID detected: ${fid}ms`, 'warn');
       }
 
-      fetch('/api/monitoring/performance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'fid',
-          metric: 'fid',
-          value: fid,
-          timestamp: new Date().toISOString(),
-          url: window.location.href,
-        }),
+      // Use centralized monitoring service - eliminates duplicate API call logic
+      monitoringService.track(MonitoringType.PERFORMANCE, {
+        type: 'fid',
+        metric: 'fid',
+        value: fid,
       }).catch(() => {});
     });
 
@@ -261,16 +226,11 @@ export function trackCoreWebVitals(): void {
         errorMonitor.addBreadcrumb(`Poor CLS detected: ${clsValue}`, 'warn');
       }
 
-      fetch('/api/monitoring/performance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'cls',
-          metric: 'cls',
-          value: clsValue,
-          timestamp: new Date().toISOString(),
-          url: window.location.href,
-        }),
+      // Use centralized monitoring service - eliminates duplicate API call logic
+      monitoringService.track(MonitoringType.PERFORMANCE, {
+        type: 'cls',
+        metric: 'cls',
+        value: clsValue,
       }).catch(() => {});
     });
 
@@ -300,7 +260,7 @@ export function trackClickEvents(): void {
       const text = target.textContent?.trim().slice(0, 50) || 'Unknown';
       const id = target.id || target.className || 'unknown';
 
-      trackUserAction('click', {
+          trackUserAction('click', {
         element: target.tagName.toLowerCase(),
         text,
         id,

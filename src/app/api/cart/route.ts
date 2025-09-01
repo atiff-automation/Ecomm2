@@ -125,6 +125,27 @@ async function handleGET() {
       timestamp: new Date().toISOString(),
     });
 
+    // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      console.error('🚨 Cart API GET: User not found in database', {
+        sessionUserId: session.user.id,
+        sessionEmail: session.user.email,
+        timestamp: new Date().toISOString(),
+      });
+      return NextResponse.json(
+        { 
+          message: 'User session invalid. Please log in again.',
+          code: 'USER_NOT_FOUND'
+        },
+        { status: 401 }
+      );
+    }
+
     // CRITICAL FIX: Always read fresh membership status from database
     // Session can be stale after membership activation
     const userWithMembership = await prisma.user.findUnique({

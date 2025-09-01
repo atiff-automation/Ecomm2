@@ -105,14 +105,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Update order with payment details
-    const updateData: any = {
-      paymentId: paymentResult.billId,
-    };
+    const updateData: any = {};
 
-    // Handle toyyibPay specific fields
+    // Handle different payment methods
     if (paymentResult.paymentMethod === 'TOYYIBPAY') {
+      updateData.paymentId = paymentResult.billCode; // Use billCode as paymentId for ToyyibPay
       updateData.toyyibpayBillCode = paymentResult.billCode;
       updateData.toyyibpayPaymentUrl = paymentResult.paymentUrl;
+    } else {
+      updateData.paymentId = paymentResult.billId; // Use billId for other methods like Billplz
     }
 
     await prisma.order.update({

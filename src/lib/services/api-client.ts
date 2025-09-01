@@ -164,7 +164,9 @@ export class APIClient {
             : JSON.stringify(config.body);
       }
 
-      const response = await fetch(url, fetchConfig);
+      // Resolve URL for server-side execution
+      const resolvedUrl = APIClient.resolveUrl(url);
+      const response = await fetch(resolvedUrl, fetchConfig);
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -286,6 +288,30 @@ export class APIClient {
       path: url,
       method,
     };
+  }
+
+  /**
+   * Resolve URL for server-side and client-side execution
+   */
+  private static resolveUrl(url: string): string {
+    // If URL is already absolute, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // For server-side execution (no window object), convert relative URLs to absolute
+    if (typeof window === 'undefined') {
+      // In server-side context, construct absolute URL
+      const protocol = process.env.NODE_ENV === 'production' ? 'https:' : 'http:';
+      const host = process.env.VERCEL_URL 
+        ? `${protocol}//${process.env.VERCEL_URL}`
+        : `${protocol}//localhost:${process.env.PORT || 3000}`;
+      
+      return `${host}${url}`;
+    }
+
+    // For client-side execution, relative URLs work fine
+    return url;
   }
 
   /**

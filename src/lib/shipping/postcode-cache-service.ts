@@ -1,288 +1,250 @@
 /**
- * Malaysian Postcode Cache Service
+ * Malaysian Postcode Cache Service - Enhanced Production Version
  * Following CLAUDE.md: NO hardcoding, systematic caching approach, centralized
  * 
- * Provides Redis-based caching for frequently accessed postcodes
- * Implements cache warming, TTL management, and invalidation strategies
+ * Extends BaseCacheService for DRY principle and single source of truth
+ * Specialized for Malaysian postcode caching with warming and validation
  */
 
-// Redis import - server-side only
-let Redis: any;
-if (typeof window === 'undefined') {
-  Redis = require('ioredis');
-}
+import { BaseCacheService, type CacheConfig, type CacheStats, type HealthCheckResult } from '../cache/base-cache-service';
 import type { LocationData } from './malaysian-postcode-service-enhanced';
 
-export interface CacheStats {
-  hits: number;
-  misses: number;
-  hitRate: string;
-  totalKeys: number;
-  memoryUsage: string;
+export interface PostcodeCacheConfig extends CacheConfig {
+  warmupPostcodes: string[]; // Dynamic postcodes from data analysis (not hardcoded)
+  enableGeographicCaching?: boolean; // Enable state/zone based caching
+  maxWarmupPostcodes?: number; // Maximum postcodes to warm (default: 50)
 }
 
-export interface CacheConfig {
-  ttl: number;           // Time to live in seconds
-  maxKeys: number;       // Maximum keys to store
-  warmupPostcodes: string[]; // Common postcodes to pre-cache
+export interface PostcodeCacheStats extends CacheStats {
+  warmupStatus: 'pending' | 'in_progress' | 'completed' | 'failed';
+  geographicHitRate?: string;
 }
 
 /**
- * Postcode Cache Service using Redis
- * Following CLAUDE.md: Centralized caching, no hardcoding of cache keys
+ * Enhanced Postcode Cache Service - Production Ready
+ * Following CLAUDE.md: Extends BaseCacheService for centralized architecture
+ * Eliminates code duplication, implements DRY principle, single source of truth
  */
-export class PostcodeCacheService {
-  private redis: Redis;
-  private readonly config: CacheConfig;
+export class PostcodeCacheService extends BaseCacheService {
+  private warmupStatus: 'pending' | 'in_progress' | 'completed' | 'failed' = 'pending';
   
-  // Cache key prefixes (systematic approach, no hardcoding)
-  private readonly CACHE_PREFIX = 'postcode:';
-  private readonly STATS_PREFIX = 'postcode_stats:';
-  
-  // Default configuration (following plan specifications)
-  private readonly DEFAULT_CONFIG: CacheConfig = {
-    ttl: 3600,        // 1 hour as specified in plan
-    maxKeys: 1000,    // Top 1000 frequently accessed postcodes
-    warmupPostcodes: [
-      // Major city postcodes for cache warming (no hardcoding violation - data-driven)
-      '50000', '50100', '50200', // KL
-      '40000', '40100', '40200', // Shah Alam
-      '46000', '46100', '46200', // PJ
-      '10000', '10100', '10200', // Penang
-      '30000', '30100', '30200', // Ipoh
-    ]
+  // Default configuration following @CLAUDE.md: NO hardcoding, systematic approach
+  private readonly DEFAULT_POSTCODE_CONFIG: Partial<PostcodeCacheConfig> = {
+    ttl: 3600,          // 1 hour as specified in plan
+    maxKeys: 1000,      // Top 1000 frequently accessed postcodes
+    keyPrefix: 'postcode', // Systematic key prefix (no hardcoding)
+    enableCompression: false, // Postcodes are small, compression not needed
+    enableGeographicCaching: true, // Enable zone-based optimizations
+    warmupPostcodes: [],    // REMOVED: No hardcoded postcodes - use data-driven approach
   };
 
-  private fallbackCache: Map<string, { data: LocationData; expires: number }> = new Map();
-  private isRedisAvailable: boolean = false;
-
-  constructor(config?: Partial<CacheConfig>) {
-    this.config = { ...this.DEFAULT_CONFIG, ...config };
-
-    // Only initialize Redis on server-side
-    if (typeof window === 'undefined' && Redis) {
-      // Try Redis connection with graceful fallback
-      try {
-        this.redis = new Redis({
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD,
-          retryDelayOnFailover: 100,
-          enableReadyCheck: false,
-          maxRetriesPerRequest: 1, // Reduced for faster fallback
-          lazyConnect: true,
-          connectTimeout: 2000, // 2 second timeout
-        });
-
-        // Handle Redis connection events
-        this.redis.on('error', (error) => {
-          this.isRedisAvailable = false;
-          if (!error.message.includes('ECONNREFUSED')) {
-            console.error('Redis connection error:', error.message);
-          }
-        });
-
-        this.redis.on('connect', () => {
-          this.isRedisAvailable = true;
-          console.log('✅ Redis cache connected successfully');
-        });
-
-        this.redis.on('close', () => {
-          this.isRedisAvailable = false;
-          console.log('⚠️ Redis connection closed, using in-memory fallback cache');
-        });
-
-        // Test connection immediately
-        this.testRedisConnection();
-      } catch (error) {
-        this.isRedisAvailable = false;
-        console.log('⚠️ Redis not available, using in-memory fallback cache');
-      }
-    } else {
-      // Browser environment - use only in-memory cache
-      this.isRedisAvailable = false;
-    }
+  constructor(config?: Partial<PostcodeCacheConfig>) {
+    // Merge configurations following single source of truth principle
+    const finalConfig = { ...config?.DEFAULT_POSTCODE_CONFIG, ...config };
+    super(finalConfig);
   }
 
-  private async testRedisConnection(): Promise<void> {
-    if (!this.redis) {
-      this.isRedisAvailable = false;
-      return;
-    }
-    try {
-      await this.redis.ping();
-      this.isRedisAvailable = true;
-    } catch (error) {
-      this.isRedisAvailable = false;
-      console.log('⚠️ Redis not available, using in-memory fallback cache');
-    }
-  }
 
   /**
    * Get cached postcode location
-   * Returns null if not in cache (cache miss)
-   * Uses Redis if available, falls back to in-memory cache
+   * Uses BaseCacheService foundation - eliminates code duplication
    */
   async getCachedPostcode(postcode: string): Promise<LocationData | null> {
-    try {
-      if (this.isRedisAvailable) {
-        const key = this.buildCacheKey(postcode);
-        const cached = await this.redis.get(key);
-        
-        if (cached) {
-          await this.recordCacheHit();
-          return JSON.parse(cached) as LocationData;
-        }
-      } else {
-        // Use fallback in-memory cache
-        const cached = this.fallbackCache.get(postcode);
-        if (cached && cached.expires > Date.now()) {
-          await this.recordCacheHit();
-          return cached.data;
-        } else if (cached) {
-          // Remove expired entry
-          this.fallbackCache.delete(postcode);
-        }
-      }
-      
-      await this.recordCacheMiss();
-      return null;
-    } catch (error) {
-      await this.recordCacheMiss();
-      return null;
-    }
+    return await this.getCacheValue<LocationData>(postcode);
   }
 
   /**
    * Set postcode location in cache
-   * Implements TTL and memory management with fallback
+   * Uses BaseCacheService foundation - centralized implementation
    */
-  async setCachedPostcode(postcode: string, data: LocationData): Promise<void> {
-    try {
-      if (this.isRedisAvailable) {
-        const key = this.buildCacheKey(postcode);
-        const serialized = JSON.stringify(data);
-        
-        await this.redis.setex(key, this.config.ttl, serialized);
-        
-        // Implement cache size management
-        await this.manageCacheSize();
-      } else {
-        // Use fallback in-memory cache
-        const expires = Date.now() + (this.config.ttl * 1000);
-        this.fallbackCache.set(postcode, { data, expires });
-        
-        // Manage in-memory cache size
-        this.manageFallbackCacheSize();
-      }
-    } catch (error) {
-      console.error('Cache set error, falling back to in-memory:', error);
-      // Fallback to in-memory cache on Redis error
-      const expires = Date.now() + (this.config.ttl * 1000);
-      this.fallbackCache.set(postcode, { data, expires });
-      this.manageFallbackCacheSize();
-    }
+  async setCachedPostcode(postcode: string, data: LocationData, ttl?: number): Promise<void> {
+    await this.setCacheValue(postcode, data, ttl);
   }
 
   /**
    * Batch cache multiple postcodes
-   * Efficient for bulk operations with fallback
+   * Uses BaseCacheService batch operations - eliminates duplication
    */
-  async setCachedPostcodes(postcodeData: Array<{ postcode: string; data: LocationData }>): Promise<void> {
-    try {
-      if (this.isRedisAvailable) {
-        const pipeline = this.redis.pipeline();
-        
-        postcodeData.forEach(({ postcode, data }) => {
-          const key = this.buildCacheKey(postcode);
-          const serialized = JSON.stringify(data);
-          pipeline.setex(key, this.config.ttl, serialized);
-        });
-        
-        await pipeline.exec();
-        await this.manageCacheSize();
-      } else {
-        // Use fallback in-memory cache for batch operations
-        const expires = Date.now() + (this.config.ttl * 1000);
-        postcodeData.forEach(({ postcode, data }) => {
-          this.fallbackCache.set(postcode, { data, expires });
-        });
-        this.manageFallbackCacheSize();
-      }
-    } catch (error) {
-      console.error('Batch cache set error, falling back to in-memory:', error);
-      // Fallback to in-memory cache on Redis error
-      const expires = Date.now() + (this.config.ttl * 1000);
-      postcodeData.forEach(({ postcode, data }) => {
-        this.fallbackCache.set(postcode, { data, expires });
-      });
-      this.manageFallbackCacheSize();
-    }
+  async setCachedPostcodes(postcodeData: Array<{ postcode: string; data: LocationData; ttl?: number }>): Promise<void> {
+    const batchItems = postcodeData.map(({ postcode, data, ttl }) => ({
+      key: postcode,
+      value: data,
+      ttl
+    }));
+    
+    await this.setBatchValues(batchItems);
   }
 
   /**
-   * Cache warming - preload frequently accessed postcodes
-   * Following plan: cache top 1000 frequently accessed postcodes
+   * Data-driven cache warming - Following @CLAUDE.md systematic approach
+   * NO hardcoding: Uses actual business data to determine popular postcodes
+   * Single source of truth: Database analytics drive warmup strategy
    */
   async warmupCache(postcodeProvider: (postcode: string) => Promise<LocationData | null>): Promise<void> {
-    console.log('🔥 Starting cache warmup...');
+    if (this.warmupStatus === 'in_progress') {
+      console.log('⚠️ Cache warmup already in progress');
+      return;
+    }
+
+    console.log('🔥 Starting data-driven cache warmup...');
+    this.warmupStatus = 'in_progress';
     
     try {
-      const warmupPromises = this.config.warmupPostcodes.map(async (postcode) => {
-        // Check if already cached
-        const existing = await this.getCachedPostcode(postcode);
-        if (existing) return;
+      // Get popular postcodes from actual usage data (systematic approach)
+      const popularPostcodes = await this.getPopularPostcodesFromData();
+      
+      if (popularPostcodes.length === 0) {
+        console.log('📊 No usage data available, warming with state capitals only');
+        const stateCapitals = await this.getStateCapitalPostcodes();
+        await this.warmupPostcodes(stateCapitals, postcodeProvider);
+        return;
+      }
 
-        // Fetch from provider and cache
-        const data = await postcodeProvider(postcode);
-        if (data) {
-          await this.setCachedPostcode(postcode, data);
-        }
-      });
-
-      await Promise.all(warmupPromises);
-      console.log(`✅ Cache warmed up with ${this.config.warmupPostcodes.length} postcodes`);
+      console.log(`📊 Found ${popularPostcodes.length} popular postcodes from usage data`);
+      await this.warmupPostcodes(popularPostcodes, postcodeProvider);
+      
     } catch (error) {
+      this.warmupStatus = 'failed';
       console.error('Cache warmup error:', error);
+      throw error;
     }
   }
 
   /**
-   * Invalidate specific postcode cache with fallback support
+   * Get popular postcodes from actual business data
+   * Following @CLAUDE.md: Single source of truth, no hardcoding
+   */
+  private async getPopularPostcodesFromData(): Promise<string[]> {
+    try {
+      // Import prisma at runtime to avoid client-side issues
+      const { prisma } = await import('@/lib/db/prisma');
+      
+      // Query most accessed postcodes from database
+      // This represents actual business usage patterns
+      const popularPostcodes = await prisma.$queryRaw<Array<{ postcode: string; usage_count: number }>>/*sql*/`
+        SELECT p.postcode, COUNT(*) as usage_count
+        FROM malaysian_postcodes p
+        LEFT JOIN orders o ON o.delivery_postcode = p.postcode
+        LEFT JOIN users u ON u.postcode = p.postcode
+        WHERE p.postcode IS NOT NULL
+        GROUP BY p.postcode
+        ORDER BY usage_count DESC, p.postcode ASC
+        LIMIT 50
+      `;
+
+      return popularPostcodes.map(p => p.postcode);
+      
+    } catch (error) {
+      console.warn('Could not fetch usage data, falling back to geographic approach:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get state capital postcodes as systematic fallback
+   * Following @CLAUDE.md: Systematic approach, centralized data
+   */
+  private async getStateCapitalPostcodes(): Promise<string[]> {
+    try {
+      const { prisma } = await import('@/lib/db/prisma');
+      
+      // Get one representative postcode per state (systematic approach)
+      const stateRepresentatives = await prisma.$queryRaw<Array<{ postcode: string; state_name: string }>>/*sql*/`
+        SELECT DISTINCT ON (ms.id) p.postcode, ms.name as state_name
+        FROM malaysian_states ms
+        JOIN malaysian_postcodes p ON p."stateCode" = ms.id
+        WHERE p.postcode IS NOT NULL
+        ORDER BY ms.id, p.postcode ASC
+      `;
+
+      console.log(`🏛️ Using ${stateRepresentatives.length} state representatives for warmup`);
+      return stateRepresentatives.map(s => s.postcode);
+      
+    } catch (error) {
+      console.error('Could not fetch state capitals:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Warmup specific postcodes with batching and error handling
+   * Following @CLAUDE.md: Systematic batch processing
+   */
+  private async warmupPostcodes(
+    postcodes: string[], 
+    postcodeProvider: (postcode: string) => Promise<LocationData | null>
+  ): Promise<void> {
+    const batchSize = 10;
+    let warmedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
+    // Process in batches for efficiency
+    for (let i = 0; i < postcodes.length; i += batchSize) {
+      const batch = postcodes.slice(i, i + batchSize);
+      
+      const batchPromises = batch.map(async (postcode) => {
+        try {
+          // Check if already cached
+          const existing = await this.getCachedPostcode(postcode);
+          if (existing) {
+            skippedCount++;
+            return { status: 'skipped', postcode };
+          }
+
+          // Fetch from provider and cache
+          const data = await postcodeProvider(postcode);
+          if (data) {
+            await this.setCachedPostcode(postcode, data);
+            warmedCount++;
+            return { status: 'cached', postcode, data };
+          }
+          
+          return { status: 'no_data', postcode };
+        } catch (error) {
+          errorCount++;
+          console.warn(`Cache warmup failed for ${postcode}:`, error);
+          return { status: 'error', postcode, error };
+        }
+      });
+
+      await Promise.allSettled(batchPromises);
+      
+      // Progress logging
+      const progress = warmedCount + skippedCount + errorCount;
+      console.log(`🔥 Cache warmup progress: ${progress}/${postcodes.length} (${warmedCount} cached, ${skippedCount} existing, ${errorCount} errors)`);
+    }
+
+    this.warmupStatus = 'completed';
+    console.log(`✅ Data-driven warmup completed: ${warmedCount} new, ${skippedCount} existing, ${errorCount} errors`);
+  }
+
+  /**
+   * Enhanced postcode cache invalidation
+   * Uses BaseCacheService systematic invalidation with specialized patterns
    */
   async invalidatePostcodeCache(postcode?: string): Promise<void> {
-    try {
-      if (postcode) {
-        // Invalidate specific postcode
-        if (this.isRedisAvailable) {
-          const key = this.buildCacheKey(postcode);
-          await this.redis.del(key);
-        }
-        // Also clear from fallback cache
-        this.fallbackCache.delete(postcode);
-        console.log(`🗑️ Invalidated cache for postcode: ${postcode}`);
-      } else {
-        // Invalidate all postcode caches
-        if (this.isRedisAvailable) {
-          const keys = await this.redis.keys(`${this.CACHE_PREFIX}*`);
-          if (keys.length > 0) {
-            await this.redis.del(...keys);
-            console.log(`🗑️ Invalidated ${keys.length} cached postcodes from Redis`);
-          }
-        }
-        // Also clear fallback cache
-        this.fallbackCache.clear();
-        console.log('🗑️ Invalidated in-memory cache');
-      }
-    } catch (error) {
-      console.error('Cache invalidation error:', error);
-      // Always try to clear fallback cache
-      if (postcode) {
-        this.fallbackCache.delete(postcode);
-      } else {
-        this.fallbackCache.clear();
-      }
+    if (postcode) {
+      // Invalidate specific postcode
+      await this.invalidateCache(postcode);
+    } else {
+      // Invalidate all postcode caches using BaseCacheService
+      await this.invalidateCache('*');
+      // Reset warmup status when clearing all
+      this.warmupStatus = 'pending';
     }
+  }
+
+  /**
+   * Invalidate by geographic pattern (state/zone optimization)
+   * Following CLAUDE.md: Systematic pattern-based invalidation
+   */
+  async invalidateByPattern(pattern: 'state' | 'zone', identifier: string): Promise<void> {
+    console.log(`🗑️ Invalidating ${pattern}-based cache for: ${identifier}`);
+    
+    // Pattern-based invalidation using zone logic
+    const searchPattern = pattern === 'state' ? `*${identifier}*` : pattern === 'zone' ? `*` : identifier;
+    await this.invalidateCache(searchPattern);
   }
 
   /**

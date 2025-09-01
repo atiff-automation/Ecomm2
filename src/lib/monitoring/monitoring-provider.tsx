@@ -1,12 +1,15 @@
 /**
  * Monitoring Provider - Malaysian E-commerce Platform
  * React context provider for monitoring functionality
+ * Refactored to use centralized monitoring service - Phase 3 DRY Implementation
  */
 
 'use client';
 
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { errorMonitor, useErrorMonitor } from './error-monitor';
+import { monitoringService, MonitoringType } from './monitoring-service';
+import { isFeatureEnabled } from './monitoring-config';
 
 interface MonitoringContextType {
   reportError: (error: Error, context?: Record<string, any>) => void;
@@ -37,7 +40,10 @@ export function MonitoringProvider({
   const { reportError, addBreadcrumb, getStats } = useErrorMonitor();
 
   useEffect(() => {
-    // Update monitoring configuration if provided
+    // Initialize centralized monitoring service - DRY approach
+    monitoringService.initialize();
+    
+    // Update legacy monitoring configuration if provided
     if (Object.keys(config).length > 0) {
       errorMonitor.updateConfig(config);
     }
@@ -45,11 +51,13 @@ export function MonitoringProvider({
     // Add breadcrumb for provider initialization
     addBreadcrumb('Monitoring provider initialized', 'info');
 
-    // Track page load
-    trackUserAction('page_load', {
-      url: window.location.href,
-      timestamp: new Date().toISOString(),
-    });
+    // Track page load using centralized service
+    if (isFeatureEnabled('userTracking')) {
+      trackUserAction('page_load', {
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     return () => {
       addBreadcrumb('Monitoring provider cleanup', 'info');
@@ -61,37 +69,17 @@ export function MonitoringProvider({
     properties?: Record<string, any>
   ) => {
     try {
-      const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const eventData = {
-        eventId,
-        eventType: 'custom' as const,
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        sessionId: getSessionId(),
-        userId: getUserId(),
-        properties: {
-          action,
-          ...properties,
-        },
-      };
-
-      // Send to events API
-      await fetch('/api/monitoring/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(eventData),
-      }).catch(error => {
-        console.warn('Failed to track user action:', error);
-      });
-
-      // Add breadcrumb
-      addBreadcrumb(`User action: ${action}`, 'user');
+      // DRY: Use centralized monitoring service instead of duplicate API calls
+      if (isFeatureEnabled('userTracking')) {
+        await monitoringService.trackUserAction(action, properties);
+        
+        // Add breadcrumb for legacy compatibility
+        addBreadcrumb(`User action: ${action}`, 'user');
+      }
     } catch (error) {
       console.error('Error tracking user action:', error);
+      // Report error through centralized service
+      reportError(error instanceof Error ? error : new Error('User action tracking failed'));
     }
   };
 

@@ -39,13 +39,13 @@ export async function register() {
         );
       }
 
-      // Initialize monitoring system
-      console.log('📊 Initializing monitoring system...');
+      // Initialize monitoring system - Systematic configuration via environment variables
+      console.log('📊 Initializing monitoring system with environment controls...');
       const monitoringResult = await initializeMonitoring({
-        enableErrorReporting: process.env.NODE_ENV === 'production',
-        enablePerformanceMonitoring: true,
-        enableUserTracking: true,
-        sampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+        enableErrorReporting: process.env.ENABLE_ERROR_MONITORING === 'true',
+        enablePerformanceMonitoring: process.env.ENABLE_PERFORMANCE_MONITORING === 'true',
+        enableUserTracking: process.env.ENABLE_USER_TRACKING === 'true',
+        sampleRate: process.env.MONITORING_EMERGENCY_DISABLE === 'true' ? 0 : (process.env.NODE_ENV === 'production' ? 0.1 : 1.0),
       });
 
       if (monitoringResult.success) {

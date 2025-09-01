@@ -68,16 +68,11 @@ export class ServerPostcodeService {
   private initRedis() {
     if (Redis) {
       try {
-        this.redis = new Redis({
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD,
-          retryDelayOnFailover: 100,
-          enableReadyCheck: false,
-          maxRetriesPerRequest: 1,
-          lazyConnect: true,
-          connectTimeout: 2000,
-        });
+        // Use centralized Redis configuration following @CLAUDE.md
+        const { getRedisConfig } = require('../config/redis.config');
+        const redisConfig = getRedisConfig();
+        
+        this.redis = new Redis(redisConfig);
 
         this.redis.on('error', () => {
           this.isRedisAvailable = false;

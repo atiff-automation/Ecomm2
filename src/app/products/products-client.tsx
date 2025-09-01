@@ -185,12 +185,21 @@ export function ProductsClient({
 
   // Sync with URL changes (when user navigates back/forward or direct URL change)
   useEffect(() => {
+    // CRITICAL FIX: Normalize initial params to match current params format
+    // This prevents unnecessary refetch on initial load due to parameter format mismatch
+    const normalizedInitialParams = {
+      search: initialParams.search || '',
+      category: initialParams.category || 'all',
+      sortBy: initialParams.sortBy || 'created-desc', 
+      page: parseInt(initialParams.page || '1', 10),
+    };
+
     // Only fetch if parameters actually changed from initial state
     const paramsChanged =
-      currentParams.search !== (initialParams.search || '') ||
-      currentParams.category !== (initialParams.category || 'all') ||
-      currentParams.sortBy !== (initialParams.sortBy || 'created-desc') ||
-      currentParams.page !== parseInt(initialParams.page || '1', 10);
+      currentParams.search !== normalizedInitialParams.search ||
+      currentParams.category !== normalizedInitialParams.category ||
+      currentParams.sortBy !== normalizedInitialParams.sortBy ||
+      currentParams.page !== normalizedInitialParams.page;
 
     if (paramsChanged) {
       fetchProducts(currentParams);

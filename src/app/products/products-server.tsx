@@ -50,13 +50,142 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
       sortOrder: sortOrder as 'asc' | 'desc',
     };
 
-    // Parallel data fetching for optimal performance
-    const [productsResult, categories] = await Promise.all([
-      productService.getProducts(params),
-      categoryService.getCategories({ includeProductCount: true }),
-    ]);
+    // CRITICAL FIX: Use direct database calls in server component instead of HTTP API calls
+    // Server components should not make HTTP requests to their own API
+    
+    try {
+      // Import Prisma at runtime to avoid issues
+      const { prisma } = await import('@/lib/db/prisma');
+      
+      // Build where conditions for direct database query
+      const where: any = {
+        status: 'ACTIVE',
+      };
 
-    const { products, pagination } = productsResult;
+      if (params.search) {
+        where.OR = [
+          { name: { contains: params.search, mode: 'insensitive' } },
+          { description: { contains: params.search, mode: 'insensitive' } },
+          { shortDescription: { contains: params.search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (params.category) {
+        where.categories = {
+          some: {
+            categoryId: params.category,
+          },
+        };
+      }
+
+      // Get total count for pagination
+      const totalCount = await prisma.product.count({ where });
+      
+      // Calculate pagination
+      const skip = (params.page - 1) * params.limit;
+      const totalPages = Math.ceil(totalCount / params.limit);
+      
+      // Build orderBy
+      const orderBy: any = {};
+      switch (params.sortBy) {
+        case 'name':
+          orderBy.name = params.sortOrder;
+          break;
+        case 'price':
+          orderBy.regularPrice = params.sortOrder;
+          break;
+        case 'rating':
+          orderBy.averageRating = params.sortOrder;
+          break;
+        default:
+          orderBy.createdAt = params.sortOrder;
+      }
+
+      // Fetch products with relations
+      const products = await prisma.product.findMany({
+        where,
+        include: {
+          categories: {
+            include: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+        },
+        orderBy,
+        take: params.limit,
+        skip,
+      });
+
+      // Get categories (simplified for server component)
+      const categories = await prisma.category.findMany({
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          _count: {
+            select: { products: true },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      // Transform data to match expected format
+      const transformedProducts = products.map(product => ({
+        ...product,
+        regularPrice: Number(product.regularPrice),
+        memberPrice: Number(product.memberPrice),
+        costPrice: Number(product.costPrice || 0),
+        promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
+        averageRating: 0, // Calculate if needed
+        reviewCount: product.reviews.length,
+        categories: product.categories.map(pc => ({
+          category: pc.category,
+        })),
+      }));
+
+      const transformedCategories = categories.map(cat => ({
+        ...cat,
+        productCount: cat._count.products,
+      }));
+
+      const productsResult = {
+        products: transformedProducts,
+        pagination: {
+          page: params.page,
+          limit: params.limit,
+          totalCount,
+          totalPages,
+          hasNext: params.page < totalPages,
+          hasPrev: params.page > 1,
+        },
+      };
+
+      // Database query completed successfully
+
+      // Use the transformed data
+      var products = transformedProducts;
+      var pagination = productsResult.pagination;
+      var categories = transformedCategories;
+      
+    } catch (dbError) {
+      console.error('🚨 ProductsServer: Database error:', dbError);
+      throw dbError;
+    }
 
     // Validate pagination
     if (page > pagination.totalPages && pagination.totalPages > 0) {

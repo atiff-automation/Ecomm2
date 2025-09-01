@@ -26,6 +26,7 @@ function SignInForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,23 +42,31 @@ function SignInForm() {
 
       if (result?.error) {
         setError('Invalid email or password');
+        setIsLoading(false); // Only reset loading on error
       } else {
         // Refresh session to get updated user data
         const session = await getSession();
+        
+        setIsRedirecting(true);
+        console.log('✅ Sign in successful, redirecting...', { role: session?.user?.role });
 
         // Role-based redirect logic
-        if (session?.user?.role === 'ADMIN') {
+        if (session?.user?.role === 'SUPERADMIN') {
+          router.push('/admin/dashboard');
+        } else if (session?.user?.role === 'ADMIN') {
           router.push('/admin/dashboard');
         } else if (session?.user?.role === 'STAFF') {
           router.push('/admin/dashboard');
         } else {
           router.push(callbackUrl);
         }
+        
+        // Don't reset loading on successful signin - let the redirect happen
       }
-    } catch {
+    } catch (error) {
+      console.error('Sign in error:', error);
       setError('An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only reset loading on error
     }
   };
 
@@ -122,8 +131,8 @@ function SignInForm() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <Button type="submit" className="w-full" disabled={isLoading || isRedirecting}>
+                {isRedirecting ? 'Redirecting...' : isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 

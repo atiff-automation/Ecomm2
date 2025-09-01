@@ -384,8 +384,13 @@ model Order {
   billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
   
   // Payment & Shipping
-  paymentMethod   String?    // BILLPLZ, BANK_TRANSFER, etc.
+  paymentMethod   String?    // BILLPLZ, TOYYIBPAY, BANK_TRANSFER, etc.
   paymentId       String?    // External payment ID
+  
+  // ToyyibPay specific fields
+  toyyibpayBillCode    String?    // ToyyibPay bill code
+  toyyibpayPaymentUrl  String?    // ToyyibPay payment URL
+  
   trackingNumber  String?
   shippedAt       DateTime?
   deliveredAt     DateTime?

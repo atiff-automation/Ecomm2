@@ -36,7 +36,7 @@ const navigationItems = [
     label: 'Dashboard',
     href: '/admin/dashboard',
     icon: LayoutDashboard,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Overview & Alerts',
   },
 
@@ -45,7 +45,7 @@ const navigationItems = [
     label: 'Orders',
     href: '/admin/orders',
     icon: ShoppingCart,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'All Orders, Shipping, Fulfillment, Analytics',
   },
 
@@ -54,7 +54,7 @@ const navigationItems = [
     label: 'Products',
     href: '/admin/products',
     icon: Package,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Catalog, Categories, Inventory',
   },
 
@@ -63,7 +63,7 @@ const navigationItems = [
     label: 'Customers',
     href: '/admin/customers',
     icon: Users,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Directory, Membership, Referrals',
   },
 
@@ -72,7 +72,7 @@ const navigationItems = [
     label: 'Payments',
     href: '/admin/payments',
     icon: CreditCard,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Gateways, Transactions, Refunds',
   },
 
@@ -81,7 +81,7 @@ const navigationItems = [
     label: 'Shipping',
     href: '/admin/shipping',
     icon: Truck,
-    roles: [UserRole.ADMIN, UserRole.STAFF],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Configuration, Couriers, Tracking',
   },
 
@@ -90,7 +90,7 @@ const navigationItems = [
     label: 'System',
     href: '/admin/system',
     icon: Monitor,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'Telegram, Monitoring, Logs, Security',
   },
 
@@ -99,52 +99,106 @@ const navigationItems = [
     label: 'Site Customization',
     href: '/admin/site-customization',
     icon: Palette,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'Themes, Branding, Content',
   },
   {
     label: 'Notifications',
     href: '/admin/notifications',
     icon: MessageCircle,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'System Notifications',
   },
   {
     label: 'Settings',
     href: '/admin/settings',
     icon: Settings,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'General Configuration',
   },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Removed expandedMenus state - no longer needed for flat structure
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Redirect if not authenticated or not admin/staff
+  // Handle redirects in useEffect to avoid setState during render
+  React.useEffect(() => {
+    if (status === 'loading') {
+      return; // Still loading, wait
+    }
+
+    if (status === 'unauthenticated' || !session?.user) {
+      console.log('❌ Admin access denied: No valid session', { status, hasUser: !!session?.user });
+      router.push('/auth/signin?callbackUrl=' + encodeURIComponent('/admin/dashboard'));
+      return;
+    }
+
+    const userRole = (session.user as any)?.role;
+    const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
+    const hasValidRole = allowedRoles.includes(userRole);
+    
+    console.log('🔐 Admin access check:', { 
+      userRole, 
+      isSuperAdmin: userRole === UserRole.SUPERADMIN,
+      isAdmin: userRole === UserRole.ADMIN,
+      isStaff: userRole === UserRole.STAFF,
+      allowedRoles,
+      hasValidRole
+    });
+
+    if (!hasValidRole) {
+      console.log('❌ Admin access denied: Insufficient role', { userRole, required: allowedRoles });
+      router.push('/?error=access_denied');
+      return;
+    }
+
+    console.log('✅ Admin access granted:', { userRole, user: session.user.name });
+  }, [status, session, router]);
+
+  // Show loading state
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Loading admin panel...</p>
+        </div>
       </div>
     );
   }
 
+  // Show loading until auth check completes
   if (status === 'unauthenticated' || !session?.user) {
-    router.push('/auth/signin');
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (
-    session.user.role !== UserRole.ADMIN &&
-    session.user.role !== UserRole.STAFF
-  ) {
-    router.push('/');
-    return null;
+  // Check role access
+  const userRole = (session.user as any)?.role;
+  const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
+  const hasValidRole = allowedRoles.includes(userRole);
+  
+  if (!hasValidRole) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don't have permission to access the admin panel.</p>
+          <p className="text-sm text-gray-500 mb-4">Current role: {userRole}</p>
+          <p className="text-sm text-gray-500 mb-4">Required roles: SUPERADMIN, ADMIN, or STAFF</p>
+          <Button onClick={() => router.push('/')}>Return Home</Button>
+        </div>
+      </div>
+    );
   }
 
   const handleSignOut = () => {

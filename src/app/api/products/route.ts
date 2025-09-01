@@ -50,12 +50,12 @@ const createProductSchema = z.object({
 const searchProductsSchema = z.object({
   page: z
     .string()
-    .transform(Number)
-    .default(() => 1),
+    .default('1')
+    .transform(Number),
   limit: z
     .string()
-    .transform(Number)
-    .default(() => 20),
+    .default('20')
+    .transform(Number),
   search: z.string().optional(),
   category: z.string().optional(),
   minPrice: z.string().transform(Number).optional(),

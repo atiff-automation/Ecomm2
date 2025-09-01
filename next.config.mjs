@@ -10,15 +10,17 @@ const nextConfig = {
     serverComponentsExternalPackages: ['ioredis', '@prisma/client'],
     // Optimize CSS imports - disabled due to CSS 404 issues
     // optimizeCss: true,
-    // Enable experimental features
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
+    // Disable turbo in development to improve compilation performance
+    ...(process.env.NODE_ENV === 'production' && {
+      turbo: {
+        rules: {
+          '*.svg': {
+            loaders: ['@svgr/webpack'],
+            as: '*.js',
+          },
         },
       },
-    },
+    }),
   },
   
   // Bundle size optimization
@@ -54,11 +56,25 @@ const nextConfig = {
       );
     }
 
-    // Optimize chunks
+    // Optimize chunks (simplified for development performance)
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
-        cacheGroups: {
+        cacheGroups: dev ? {
+          // Simplified chunking for development
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+        } : {
+          // Full chunking for production
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
