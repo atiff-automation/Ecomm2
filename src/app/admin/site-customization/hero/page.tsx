@@ -17,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import ContextualNavigation from '@/components/admin/ContextualNavigation';
 import {
   Monitor,
   Upload,
@@ -32,6 +31,9 @@ import {
   AlertCircle,
   Camera,
   Play,
+  Star,
+  Globe,
+  Settings,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -77,6 +79,27 @@ interface MediaUpload {
   createdAt: string;
 }
 
+interface SiteTheme {
+  id: string;
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  logoUrl?: string;
+  logoWidth?: number;
+  logoHeight?: number;
+  faviconUrl?: string;
+  isActive: boolean;
+  creator?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function HeroSectionManagement() {
   const [heroSection, setHeroSection] = useState<HeroSection | null>(null);
   const [mediaUploads, setMediaUploads] = useState<MediaUpload[]>([]);
@@ -92,11 +115,43 @@ export default function HeroSectionManagement() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showTitle, setShowTitle] = useState(true);
   const [showCTA, setShowCTA] = useState(true);
+  
+  // Branding state  
+  const [activeTheme, setActiveTheme] = useState<SiteTheme | null>({
+    id: 'default',
+    name: 'Default Theme',
+    primaryColor: '#3B82F6',
+    secondaryColor: '#FDE047', 
+    backgroundColor: '#F8FAFC',
+    textColor: '#1E293B',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  const [logoWidth, setLogoWidth] = useState<number>(120);
+  const [logoHeight, setLogoHeight] = useState<number>(40);
+  const [logoSizePercentage, setLogoSizePercentage] = useState<number>(50); // 50% = standard size
+  const [logoScale, setLogoScale] = useState<number>(1); // Scale multiplier for natural sizing
 
   useEffect(() => {
     fetchHeroSection();
     fetchMediaUploads();
   }, []);
+
+  // Sync slider percentage when logo dimensions change (from API or theme loading)
+  useEffect(() => {
+    // Calculate scale from stored width (logoWidth represents scale * 120)
+    const scale = logoWidth / 120;
+    setLogoScale(scale);
+    
+    // Calculate percentage from scale (0.5x-2.5x maps to 0%-100%)
+    const minScale = 0.5;
+    const maxScale = 2.5;
+    const percentage = ((scale - minScale) / (maxScale - minScale)) * 100;
+    const clampedPercentage = Math.max(0, Math.min(100, percentage));
+    
+    setLogoSizePercentage(clampedPercentage);
+  }, [logoWidth, logoHeight]);
 
   const fetchHeroSection = async () => {
     try {
@@ -145,13 +200,13 @@ export default function HeroSectionManagement() {
     }
   };
 
+
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
 
     try {
-      // Only send the fields required by the API schema
-      // Conditionally include fields based on toggle states
+      // Save hero section data
       const submitData = {
         title: showTitle ? formData.title || '' : '',
         subtitle: showTitle ? formData.subtitle || '' : '',
@@ -189,9 +244,15 @@ export default function HeroSectionManagement() {
 
       if (response.ok) {
         setHeroSection(data.heroSection);
+        
+        // Also save logo size changes if there's a logo
+        if (activeTheme?.logoUrl) {
+          await handleApplyLogoSize();
+        }
+        
         setMessage({
           type: 'success',
-          text: 'Hero section updated successfully!',
+          text: 'Changes saved successfully!',
         });
       } else {
         throw new Error(data.message || 'Failed to update hero section');
@@ -366,6 +427,163 @@ export default function HeroSectionManagement() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const handleBrandingFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'logo' | 'favicon'
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const maxSize = type === 'logo' ? 5 * 1024 * 1024 : 1 * 1024 * 1024; // 5MB for logos, 1MB for favicons
+    if (file.size > maxSize) {
+      setMessage({
+        type: 'error',
+        text: `File size too large. Maximum size is ${maxSize / 1024 / 1024}MB for ${type}s.`,
+      });
+      return;
+    }
+
+    setUploading(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+      if (type === 'logo') {
+        formData.append('width', logoWidth.toString());
+        formData.append('height', logoHeight.toString());
+      }
+
+      const response = await fetch('/api/admin/site-customization/branding', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update local state with database response
+        setMessage({ type: 'success', text: data.message });
+        // Update activeTheme state with uploaded file info
+        if (data.theme) {
+          setActiveTheme(data.theme);
+          if (type === 'logo' && data.theme.logoWidth) {
+            setLogoWidth(data.theme.logoWidth);
+          }
+          if (type === 'logo' && data.theme.logoHeight) {
+            setLogoHeight(data.theme.logoHeight);
+          }
+        }
+      } else {
+        throw new Error(data.message || `Failed to upload ${type}`);
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : `Upload failed`,
+      });
+    } finally {
+      setUploading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveAsset = async (type: 'logo' | 'favicon') => {
+    if (!confirm(`Are you sure you want to remove the ${type}?`)) {
+      return;
+    }
+
+    setUploading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/site-customization/branding?type=${type}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update local state with database response
+        setMessage({ type: 'success', text: data.message });
+        // Update activeTheme state to remove logo/favicon
+        if (data.theme) {
+          setActiveTheme(data.theme);
+        }
+      } else {
+        throw new Error(data.message || `Failed to remove ${type}`);
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : `Removal failed`,
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Handle proportional logo size change
+  const handleSizeChange = (percentage: number) => {
+    setLogoSizePercentage(percentage);
+    
+    // Calculate scale based on percentage (0.5x to 2.5x scaling)
+    // 0% = 0.5x, 50% = 1.5x, 100% = 2.5x
+    const minScale = 0.5;
+    const maxScale = 2.5;
+    const scale = minScale + ((maxScale - minScale) * percentage / 100);
+    
+    setLogoScale(scale);
+    
+    // Update width/height for API purposes (these are for storage, not display)
+    const baseWidth = 120; // Base reference width
+    const baseHeight = 40;  // Base reference height
+    
+    setLogoWidth(Math.round(baseWidth * scale));
+    setLogoHeight(Math.round(baseHeight * scale));
+  };
+
+  const handleApplyLogoSize = async () => {
+    if (!activeTheme?.logoUrl) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/site-customization/branding', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'logo',
+          width: logoWidth,
+          height: logoHeight,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setActiveTheme(data);
+        
+        // Trigger branding refresh globally by dispatching a custom event
+        window.dispatchEvent(new CustomEvent('brandingUpdated'));
+      } else {
+        throw new Error(data.message || 'Failed to update logo size');
+      }
+    } catch (error) {
+      console.error('Failed to update logo size:', error);
+      throw error; // Re-throw so handleSave can catch it
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -377,33 +595,19 @@ export default function HeroSectionManagement() {
     );
   }
 
-  const breadcrumbItems = [
-    {
-      label: 'Site Customization',
-      href: '/admin/site-customization',
-      icon: Monitor,
-    },
-    {
-      label: 'Hero Section',
-      href: '/admin/site-customization/hero',
-      icon: Camera,
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ContextualNavigation items={breadcrumbItems} />
+    <>
+      <div className="min-h-screen bg-gray-50">
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Camera className="h-8 w-8 text-blue-600" />
-            Hero Section Management
+            <Settings className="h-8 w-8 text-blue-600" />
+            Site Customization
           </h1>
           <p className="text-gray-600 mt-1">
-            Customize your homepage hero section with images, videos, and
-            content
+            Customize your homepage hero section, branding, and site appearance
           </p>
         </div>
 
@@ -433,7 +637,7 @@ export default function HeroSectionManagement() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Hero Section Configuration</span>
+                  <span>Site Customization</span>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -531,6 +735,7 @@ export default function HeroSectionManagement() {
                       <TabsTrigger value="content">Content</TabsTrigger>
                       <TabsTrigger value="media">Background Media</TabsTrigger>
                       <TabsTrigger value="layout">Layout & Style</TabsTrigger>
+                      <TabsTrigger value="branding">Branding</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="content" className="space-y-4">
@@ -818,6 +1023,172 @@ export default function HeroSectionManagement() {
                         </Select>
                       </div>
                     </TabsContent>
+
+                    <TabsContent value="branding" className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Logo Upload */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <ImageIcon className="w-5 h-5 text-blue-600" />
+                              Business Logo
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {/* Logo Preview and Size Controls */}
+                            {activeTheme?.logoUrl ? (
+                              <div className="space-y-4">
+                                <div>
+                                  <Label className="text-sm font-medium text-gray-900">Logo Preview & Size</Label>
+                                  <p className="text-xs text-gray-500 mt-1">Adjust your logo size and preview changes</p>
+                                </div>
+                                
+                                {/* Logo Preview with Size Control */}
+                                <div className="bg-gray-50 border rounded-lg p-4 text-center">
+                                  <Image
+                                    src={activeTheme.logoUrl}
+                                    alt="Logo Preview"
+                                    width={120}
+                                    height={40}
+                                    className="max-w-full h-auto mx-auto transition-all duration-200"
+                                    style={{ 
+                                      transform: `scale(${logoScale})`,
+                                      transformOrigin: 'center'
+                                    }}
+                                  />
+                                  <p className="text-xs text-gray-600 mt-2">{logoScale.toFixed(1)}x size</p>
+                                </div>
+                                
+                                {/* Simple Slider */}
+                                <div className="space-y-3">
+                                  <div className="flex justify-between text-xs text-gray-500">
+                                    <span>Small</span>
+                                    <span>Large</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={logoSizePercentage}
+                                    onChange={(e) => {
+                                      const percentage = parseInt(e.target.value);
+                                      handleSizeChange(percentage);
+                                    }}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                    disabled={isUploading}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">No logo uploaded</p>
+                              </div>
+                            )}
+
+                            {/* Upload Controls */}
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-sm font-medium">Upload Logo</Label>
+                                <input
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                                  onChange={e => handleBrandingFileUpload(e, 'logo')}
+                                  disabled={isUploading}
+                                  className="mt-2 w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  PNG, JPEG, SVG, WebP • Max 5MB
+                                </p>
+                              </div>
+
+                              {activeTheme?.logoUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRemoveAsset('logo')}
+                                  disabled={isUploading}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Favicon Upload */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Star className="w-5 h-5 text-purple-600" />
+                              Favicon
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {/* Current Favicon Preview */}
+                            {activeTheme?.faviconUrl ? (
+                              <div className="bg-gray-50 border rounded-lg p-4 text-center">
+                                <Image
+                                  src={activeTheme.faviconUrl}
+                                  alt="Current Favicon"
+                                  width={32}
+                                  height={32}
+                                  className="mx-auto border"
+                                />
+                                <p className="text-xs text-gray-500 mt-2">Browser tab icon</p>
+                              </div>
+                            ) : (
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                                <Star className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">No favicon uploaded</p>
+                              </div>
+                            )}
+
+                            {/* Upload Controls */}
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-sm font-medium">Upload Favicon</Label>
+                                <input
+                                  type="file"
+                                  accept="image/png,image/x-icon,image/vnd.microsoft.icon"
+                                  onChange={e => handleBrandingFileUpload(e, 'favicon')}
+                                  disabled={isUploading}
+                                  className="mt-2 w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 disabled:opacity-50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  PNG, ICO • Max 1MB • 32×32px recommended
+                                </p>
+                              </div>
+
+                              {activeTheme?.faviconUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRemoveAsset('favicon')}
+                                  disabled={isUploading}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Quick Tips */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-medium text-blue-900 mb-2">Quick Tips</h4>
+                        <div className="text-sm text-blue-800 space-y-1">
+                          <p>• Use PNG or SVG for logos, PNG/ICO for favicons</p>
+                          <p>• Keep logos simple for better scaling</p>
+                          <p>• Test visibility on different backgrounds</p>
+                        </div>
+                      </div>
+                    </TabsContent>
                   </Tabs>
                 )}
               </CardContent>
@@ -1002,5 +1373,6 @@ export default function HeroSectionManagement() {
         </div>
       </div>
     </div>
+    </>
   );
 }

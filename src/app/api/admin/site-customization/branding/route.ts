@@ -6,10 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { prisma } from '@/lib/db/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/db/prisma';
 
 /**
  * POST /api/admin/site-customization/branding - Upload logo or favicon
@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
     // Generate public URL
     const fileUrl = `/uploads/branding/${filename}`;
 
-    // Get or create active theme to update
+    // Get or create active theme in database
     let activeTheme = await prisma.siteTheme.findFirst({
-      where: { isActive: true },
+      where: { isActive: true }
     });
 
     if (!activeTheme) {
@@ -111,87 +111,27 @@ export async function POST(request: NextRequest) {
       activeTheme = await prisma.siteTheme.create({
         data: {
           name: 'Default Theme',
-          primaryColor: '#3B82F6',
-          secondaryColor: '#FDE047',
-          backgroundColor: '#F8FAFC',
-          textColor: '#1E293B',
           isActive: true,
-          createdBy: null,
+          createdBy: session.user.id,
         },
       });
     }
 
-    // Update theme with new logo/favicon
+    // Update theme with uploaded file
     const updateData: any = {};
     if (type === 'logo') {
       updateData.logoUrl = fileUrl;
-      if (width) {
-        updateData.logoWidth = width;
-      }
-      if (height) {
-        updateData.logoHeight = height;
-      }
+      if (width) updateData.logoWidth = width;
+      if (height) updateData.logoHeight = height;
     } else {
       updateData.faviconUrl = fileUrl;
     }
 
+    // Update the theme in database
     const updatedTheme = await prisma.siteTheme.update({
       where: { id: activeTheme.id },
       data: updateData,
-      include: {
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
     });
-
-    // Create media upload record (optional, skip on error)
-    try {
-      await prisma.mediaUpload.create({
-        data: {
-          filename,
-          originalName: file.name,
-          mimeType: file.type,
-          size: file.size,
-          url: fileUrl,
-          mediaType: 'IMAGE',
-          usage: type === 'logo' ? 'site_logo' : 'site_favicon',
-          uploadedBy: session.user.id,
-        },
-      });
-    } catch (error) {
-      console.log(
-        'Media upload record creation failed, but file upload succeeded'
-      );
-    }
-
-    // Create audit log (optional, skip on error)
-    try {
-      await prisma.auditLog.create({
-        data: {
-          userId: session.user.id,
-          action: type === 'logo' ? 'LOGO_UPLOADED' : 'FAVICON_UPLOADED',
-          resource: 'SITE_CUSTOMIZATION',
-          details: {
-            filename,
-            originalName: file.name,
-            fileUrl,
-            themeId: updatedTheme.id,
-            ...(type === 'logo' && { dimensions: { width, height } }),
-            performedBy: session.user.email,
-          },
-          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown',
-        },
-      });
-    } catch (error) {
-      console.log('Audit log creation failed, but file upload succeeded');
-    }
 
     return NextResponse.json({
       message: `${type === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully!`,
@@ -231,9 +171,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get active theme
+    // Get active theme from database
     const activeTheme = await prisma.siteTheme.findFirst({
-      where: { isActive: true },
+      where: { isActive: true }
     });
 
     if (!activeTheme) {
@@ -247,8 +187,8 @@ export async function DELETE(request: NextRequest) {
     const updateData: any = {};
     if (type === 'logo') {
       updateData.logoUrl = null;
-      updateData.logoWidth = null;
-      updateData.logoHeight = null;
+      updateData.logoWidth = 120; // Reset to default
+      updateData.logoHeight = 40; // Reset to default
     } else {
       updateData.faviconUrl = null;
     }
@@ -256,21 +196,6 @@ export async function DELETE(request: NextRequest) {
     const updatedTheme = await prisma.siteTheme.update({
       where: { id: activeTheme.id },
       data: updateData,
-    });
-
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: type === 'logo' ? 'LOGO_REMOVED' : 'FAVICON_REMOVED',
-        resource: 'SITE_CUSTOMIZATION',
-        details: {
-          themeId: updatedTheme.id,
-          performedBy: session.user.email,
-        },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
     });
 
     return NextResponse.json({
@@ -281,6 +206,70 @@ export async function DELETE(request: NextRequest) {
     console.error('Error removing branding asset:', error);
     return NextResponse.json(
       { message: 'Failed to remove asset' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/admin/site-customization/branding - Update logo dimensions
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { type, width, height } = body;
+
+    if (!type || type !== 'logo') {
+      return NextResponse.json(
+        { message: 'Invalid type. Currently only "logo" is supported for dimension updates' },
+        { status: 400 }
+      );
+    }
+
+    if (!width || !height || width < 20 || height < 20 || width > 400 || height > 200) {
+      return NextResponse.json(
+        { 
+          message: 'Invalid dimensions. Width must be 20-400px, height must be 20-200px' 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get active theme from database
+    const activeTheme = await prisma.siteTheme.findFirst({
+      where: { isActive: true }
+    });
+
+    if (!activeTheme || !activeTheme.logoUrl) {
+      return NextResponse.json(
+        { message: 'No logo found to resize' },
+        { status: 404 }
+      );
+    }
+
+    // Update logo dimensions in database
+    const updatedTheme = await prisma.siteTheme.update({
+      where: { id: activeTheme.id },
+      data: {
+        logoWidth: width,
+        logoHeight: height,
+      },
+    });
+
+    return NextResponse.json(updatedTheme);
+  } catch (error) {
+    console.error('Error updating logo dimensions:', error);
+    return NextResponse.json(
+      { message: 'Failed to update logo dimensions' },
       { status: 500 }
     );
   }

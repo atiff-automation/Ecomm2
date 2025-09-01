@@ -74,6 +74,7 @@ model User {
   // Site customization relationships
   heroSectionsCreated HeroSection[] @relation("HeroCreator")
   mediaUploads      MediaUpload[] @relation("MediaUploader")
+  themesCreated     SiteTheme[] @relation("ThemeCreator")
   
   // Timestamps
   createdAt DateTime @default(now())
@@ -999,6 +1000,26 @@ enum MediaType {
   VIDEO
 }
 
+model SiteTheme {
+  id              String    @id @default(cuid())
+  name            String    @default("Default Theme")
+  primaryColor    String    @default("#3B82F6")
+  secondaryColor  String    @default("#FDE047") 
+  backgroundColor String    @default("#F8FAFC")
+  textColor       String    @default("#1E293B")
+  logoUrl         String?   // URL to uploaded logo
+  logoWidth       Int       @default(120)
+  logoHeight      Int       @default(40)
+  faviconUrl      String?   // URL to uploaded favicon
+  isActive        Boolean   @default(false) // Only one theme can be active
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       String?
+  creator         User?     @relation("ThemeCreator", fields: [createdBy], references: [id])
+
+  @@map("site_themes")
+  @@index([isActive])
+}
 
 model HeroSection {
   id                String    @id @default(cuid())
