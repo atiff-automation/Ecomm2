@@ -97,6 +97,11 @@ export default function EditProductPage() {
             url: img.url,
             altText: img.altText || product.name,
             isPrimary: index === 0,
+            // Add missing properties for existing images
+            filename: img.url?.split('/').pop() || 'unknown',
+            size: 0, // Unknown size for existing images
+            width: 0, // Unknown dimensions for existing images
+            height: 0,
           })) || [],
         };
 

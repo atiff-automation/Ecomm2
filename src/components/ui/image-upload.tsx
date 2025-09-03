@@ -363,9 +363,17 @@ export default function ImageUpload({
               {/* Image Info */}
               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
                 <p className="truncate">
-                  {image.width} × {image.height}
+                  {image.width && image.height 
+                    ? `${image.width} × ${image.height}` 
+                    : 'Unknown dimensions'
+                  }
                 </p>
-                <p>{formatFileSize(image.size)}</p>
+                <p>
+                  {image.size > 0 
+                    ? formatFileSize(image.size) 
+                    : 'Existing image'
+                  }
+                </p>
               </div>
 
               {/* Remove Button */}
@@ -399,7 +407,7 @@ export default function ImageUpload({
           </span>
           <span>
             Total:{' '}
-            {formatFileSize(images.reduce((acc, img) => acc + img.size, 0))}
+            {formatFileSize(images.reduce((acc, img) => acc + (img.size || 0), 0))}
           </span>
         </div>
       )}
