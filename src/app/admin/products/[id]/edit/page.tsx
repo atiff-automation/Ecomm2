@@ -56,9 +56,12 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
+      console.log('🔍 Fetching product:', productId);
       const response = await fetch(`/api/admin/products/${productId}`);
+      console.log('📡 Product API response:', response.status, response.statusText);
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 Product data received:', data);
         const product = data.product;
 
         // Transform the product data to match our form structure
@@ -69,7 +72,10 @@ export default function EditProductPage() {
           shortDescription: product.shortDescription || '',
           sku: product.sku || '',
           barcode: product.barcode || '',
-          categoryIds: product.categories?.map((cat: any) => cat.id) || [],
+          categoryIds: product.categories?.map((cat: any) => {
+            console.log('🏷️ Processing category:', cat);
+            return cat.category.id;
+          }) || [],
           regularPrice: product.regularPrice || '',
           memberPrice: product.memberPrice || '',
           stockQuantity: product.stockQuantity || 0,
@@ -94,6 +100,8 @@ export default function EditProductPage() {
           })) || [],
         };
 
+        console.log('🎯 Final productData for form:', productData);
+        console.log('📂 CategoryIds specifically:', productData.categoryIds);
         setInitialData(productData);
       } else {
         toast.error('Product not found');
@@ -110,16 +118,21 @@ export default function EditProductPage() {
 
   const handleSubmit = async (formData: ProductFormData) => {
     // Process form data to match API expectations
+    const filteredCategoryIds = formData.categoryIds?.filter(id => id && id.trim() !== '') || [];
+    
     const processedFormData = {
       ...formData,
+      // Only include categoryIds if there are valid categories, otherwise exclude the field
+      ...(filteredCategoryIds.length > 0 && { categoryIds: filteredCategoryIds }),
       regularPrice: parseFloat(formData.regularPrice.toString()) || 0,
       memberPrice: formData.memberPrice ? parseFloat(formData.memberPrice.toString()) : null,
       weight: formData.weight ? parseFloat(formData.weight.toString()) : null,
-      dimensions: {
+      // Convert dimensions object to JSON string as expected by API
+      dimensions: JSON.stringify({
         length: formData.length ? parseFloat(formData.length.toString()) : null,
         width: formData.width ? parseFloat(formData.width.toString()) : null,
         height: formData.height ? parseFloat(formData.height.toString()) : null,
-      },
+      }),
       images: formData.images.map((img, index) => ({
         url: img.url,
         altText: img.altText || formData.name,

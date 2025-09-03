@@ -164,10 +164,17 @@ export function ProductForm({
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({
-        ...prev,
-        ...initialData,
-      }));
+      console.log('🔄 ProductForm received initialData:', initialData);
+      console.log('🏷️ CategoryIds from initialData:', initialData.categoryIds);
+      setFormData(prev => {
+        const newData = {
+          ...prev,
+          ...initialData,
+        };
+        console.log('🆕 New formData after merge:', newData);
+        console.log('🔖 Final categoryIds in formData:', newData.categoryIds);
+        return newData;
+      });
     }
   }, [initialData]);
 
@@ -176,6 +183,10 @@ export function ProductForm({
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
+        console.log('📁 Categories loaded:', data);
+        if (data.categories) {
+          console.log('📁 Categories array:', data.categories.map((c: any) => ({ id: c.id, name: c.name })));
+        }
         setCategories(data);
       }
     } catch (error) {
@@ -398,43 +409,22 @@ export function ProductForm({
         </div>
       </div>
 
-      {/* Progress Stepper */}
-      <div className="mb-8">
-        <Stepper
-          steps={stepsWithStatus}
-          currentStep={currentStep}
-          onStepClick={handleStepNavigation}
-          className="mb-4"
-        />
-      </div>
-
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Card>
               <CardContent className="p-6">
+                {/* Progress Stepper */}
+                <div className="mb-6">
+                  <Stepper
+                    steps={stepsWithStatus}
+                    currentStep={currentStep}
+                    onStepClick={handleStepNavigation}
+                    className="mb-4"
+                  />
+                </div>
                 <Tabs value={currentStep} onValueChange={goToStep}>
-                  <TabsList className="grid grid-cols-5 w-full mb-6">
-                    {PRODUCT_FORM_STEPS.map(step => {
-                      const status = getStepperStatus(step.id);
-                      return (
-                        <TabsTrigger
-                          key={step.id}
-                          value={step.id}
-                          className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-                          disabled={!canNavigateToStep(step.id, currentStep, formData, errors)}
-                        >
-                          <step.icon className="w-4 h-4" />
-                          <span className="hidden sm:inline">{step.label}</span>
-                          <TabStatusIcon 
-                            status={status === 'completed' ? 'complete' : 
-                                   status === 'error' ? 'error' : 'incomplete'} 
-                          />
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
 
                   {/* Basic Info Tab */}
                   <TabsContent value="basic" className="space-y-6">
@@ -508,14 +498,20 @@ export function ProductForm({
                         Categories <span className="text-red-500">*</span>
                       </Label>
                       <Select
-                        value={formData.categoryIds[0] || ''}
+                        value={(() => {
+                          const selectedValue = formData.categoryIds[0] || '';
+                          console.log('🎯 Select component - Current value:', selectedValue);
+                          console.log('🎯 Select component - Available categories:', categories);
+                          console.log('🎯 Select component - formData.categoryIds:', formData.categoryIds);
+                          return selectedValue;
+                        })()}
                         onValueChange={(value) => handleInputChange('categoryIds', [value])}
                       >
                         <SelectTrigger className={errors.categoryIds ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.isArray(categories) && categories.map(category => (
+                          {Array.isArray(categories?.categories) && categories.categories.map(category => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
                             </SelectItem>
