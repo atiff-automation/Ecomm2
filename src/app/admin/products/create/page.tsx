@@ -44,6 +44,7 @@ import {
   CheckCircle2,
   Sparkles,
   Calendar,
+  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -1184,6 +1185,22 @@ export default function CreateProductPage() {
                       </>
                     )}
                   </Button>
+
+                  {formData.slug && (
+                    <Link 
+                      href={`/products/${formData.slug}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <Button 
+                        variant="outline" 
+                        className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Live View Product
+                      </Button>
+                    </Link>
+                  )}
 
                   <Button
                     type="button"
