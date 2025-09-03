@@ -24,6 +24,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
+import { Stepper, useStepperState, type StepperStep } from '@/components/ui/stepper';
+import {
+  PRODUCT_FORM_STEPS,
+  getStepStatus,
+  getErrorTab,
+  calculateCompletionPercentage,
+  canNavigateToStep,
+} from '@/lib/product-tabs-config';
 import {
   ArrowLeft,
   Save,
@@ -86,7 +94,24 @@ export default function CreateProductPage() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState('basic');
+  
+  // Initialize stepper with product form steps
+  const stepperSteps = PRODUCT_FORM_STEPS.map(step => ({
+    id: step.id,
+    label: step.label,
+    icon: React.createElement(step.icon, { className: 'h-4 w-4' })
+  }));
+  
+  const { 
+    steps, 
+    currentStep, 
+    goToStep, 
+    nextStep, 
+    prevStep,
+    currentIndex,
+    isFirstStep,
+    isLastStep
+  } = useStepperState(stepperSteps);
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     slug: '',
@@ -287,35 +312,10 @@ export default function CreateProductPage() {
     e.preventDefault();
 
     if (!validateForm()) {
-      // Switch to the tab with the first error
-      const errorFields = Object.keys(errors);
-      if (errorFields.length > 0) {
-        const firstError = errorFields[0];
-        if (
-          [
-            'name',
-            'slug',
-            'description',
-            'shortDescription',
-            'sku',
-            'barcode',
-            'categoryIds',
-          ].includes(firstError)
-        ) {
-          setActiveTab('basic');
-        } else if (
-          [
-            'regularPrice',
-            'memberPrice',
-            'promotionalPrice',
-            'promotionStartDate',
-            'promotionEndDate',
-          ].includes(firstError)
-        ) {
-          setActiveTab('pricing');
-        } else if (['stockQuantity', 'lowStockAlert'].includes(firstError)) {
-          setActiveTab('inventory');
-        }
+      // Switch to the step with the first error using centralized configuration
+      const errorTab = getErrorTab(errors);
+      if (errorTab) {
+        goToStep(errorTab);
       }
       return;
     }
@@ -381,79 +381,16 @@ export default function CreateProductPage() {
     }
   };
 
-  // Calculate completion percentage
+  // Calculate completion percentage using centralized configuration
   const getCompletionPercentage = () => {
-    const requiredFields = [
-      formData.name,
-      formData.sku,
-      formData.categoryId,
-      parseFloat(formData.regularPrice as string) > 0,
-      true, // Member price is optional
-    ];
-
-    const completedRequired = requiredFields.filter(Boolean).length;
-    const totalRequired = requiredFields.length;
-
-    const optionalFields = [
-      formData.description,
-      formData.shortDescription,
-      formData.images.length > 0,
-      formData.barcode,
-      formData.weight,
-      formData.dimensions,
-    ];
-
-    const completedOptional = optionalFields.filter(Boolean).length;
-    const totalOptional = optionalFields.length;
-
-    return Math.round(
-      ((completedRequired + completedOptional * 0.5) /
-        (totalRequired + totalOptional * 0.5)) *
-        100
-    );
+    return calculateCompletionPercentage(formData, errors);
   };
 
-  const getTabStatus = (tab: string) => {
-    const tabErrors = {
-      basic: ['name', 'slug', 'sku', 'categoryIds'],
-      pricing: [
-        'regularPrice',
-        'memberPrice',
-        'promotionalPrice',
-        'promotionStartDate',
-        'promotionEndDate',
-      ],
-      inventory: ['stockQuantity', 'lowStockAlert'],
-      media: ['images'],
-    };
-
-    const hasErrors = tabErrors[tab as keyof typeof tabErrors]?.some(
-      field => errors[field]
-    );
-
-    if (hasErrors) {
-      return 'error';
-    }
-
-    // Check completion
-    if (tab === 'basic') {
-      return formData.name && formData.sku && formData.categoryIds.length > 0
-        ? 'complete'
-        : 'incomplete';
-    } else if (tab === 'pricing') {
-      return parseFloat(formData.regularPrice as string) > 0 &&
-        true && // Member price is optional
-        true
-        ? 'complete'
-        : 'incomplete';
-    } else if (tab === 'inventory') {
-      return formData.stockQuantity >= 0 ? 'complete' : 'incomplete';
-    } else if (tab === 'media') {
-      return formData.images.length > 0 ? 'complete' : 'incomplete';
-    }
-
-    return 'incomplete';
-  };
+  // Update stepper steps with current status
+  const updatedStepperSteps = steps.map(step => ({
+    ...step,
+    status: getStepStatus(step.id, formData, errors)
+  }));
 
   const TabStatusIcon = ({ status }: { status: string }) => {
     if (status === 'complete') {
@@ -487,55 +424,35 @@ export default function CreateProductPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Form Content */}
           <div className="lg:col-span-3">
+            {/* Stepper Navigation */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <Stepper
+                  steps={updatedStepperSteps}
+                  currentStep={currentStep}
+                  onStepClick={(stepId) => {
+                    if (canNavigateToStep(stepId, currentStep, formData, errors)) {
+                      goToStep(stepId);
+                    }
+                  }}
+                  className="mb-4"
+                  showArrows={true}
+                  allowClickNavigation={true}
+                />
+              </CardContent>
+            </Card>
+
             <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
+              value={currentStep}
+              onValueChange={goToStep}
               className="space-y-6"
             >
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic" className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  Basic
-                  <TabStatusIcon status={getTabStatus('basic')} />
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pricing"
-                  className="flex items-center gap-2"
-                >
-                  <DollarSign className="h-4 w-4" />
-                  Pricing
-                  <TabStatusIcon status={getTabStatus('pricing')} />
-                </TabsTrigger>
-                <TabsTrigger
-                  value="inventory"
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  Inventory
-                  <TabStatusIcon status={getTabStatus('inventory')} />
-                </TabsTrigger>
-                <TabsTrigger value="media" className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Images
-                  <TabStatusIcon status={getTabStatus('media')} />
-                </TabsTrigger>
-                <TabsTrigger
-                  value="advanced"
-                  className="flex items-center gap-2"
-                >
-                  <Zap className="h-4 w-4" />
-                  Advanced
-                </TabsTrigger>
-              </TabsList>
 
               {/* Basic Information Tab */}
               <TabsContent value="basic" className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Basic Information</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Essential product details and descriptions
-                    </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {errors.general && (
@@ -985,9 +902,6 @@ export default function CreateProductPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Stock Management</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Manage inventory levels and stock alerts
-                    </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1080,9 +994,6 @@ export default function CreateProductPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Product Images</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Upload high-quality images to showcase your product
-                    </p>
                   </CardHeader>
                   <CardContent>
                     <ImageUpload
@@ -1112,10 +1023,6 @@ export default function CreateProductPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Member Early Access</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Configure member-only access periods and early promotional
-                      access
-                    </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
@@ -1184,6 +1091,38 @@ export default function CreateProductPage() {
                 </Card>
               </TabsContent>
             </Tabs>
+
+            {/* Step Navigation - Moved to bottom of form */}
+            <Card className="mt-6">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={isFirstStep}
+                    className="flex items-center"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Previous
+                  </Button>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    Step {currentIndex + 1} of {steps.length}
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={isLastStep}
+                    className="flex items-center"
+                  >
+                    Next
+                    <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sticky Sidebar */}
@@ -1211,22 +1150,18 @@ export default function CreateProductPage() {
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span>Basic Info</span>
-                      <TabStatusIcon status={getTabStatus('basic')} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Pricing</span>
-                      <TabStatusIcon status={getTabStatus('pricing')} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Inventory</span>
-                      <TabStatusIcon status={getTabStatus('inventory')} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Images</span>
-                      <TabStatusIcon status={getTabStatus('media')} />
-                    </div>
+                    {PRODUCT_FORM_STEPS.map(step => {
+                      const status = getStepStatus(step.id, formData, errors);
+                      return (
+                        <div key={step.id} className="flex items-center justify-between">
+                          <span>{step.label}</span>
+                          <TabStatusIcon 
+                            status={status === 'completed' ? 'complete' : 
+                                   status === 'error' ? 'error' : 'incomplete'} 
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
