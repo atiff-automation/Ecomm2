@@ -28,6 +28,17 @@ export interface PaymentGateway {
 }
 
 /**
+ * Payment Gateway Status Hierarchy (Priority Order):
+ * 
+ * 1. 'active' - All required credentials present AND enabled=true
+ * 2. 'configured' - All required credentials present BUT enabled=false/unset
+ * 3. 'inactive' - Some credentials present but missing required ones
+ * 4. 'pending' - No credentials configured at all
+ * 
+ * This ensures proper status determination without hardcoded fallbacks.
+ */
+
+/**
  * Payment Gateway Service - Single source of truth for gateway configuration
  */
 export class PaymentGatewayService {
@@ -73,30 +84,40 @@ export class PaymentGatewayService {
 
   /**
    * Get configuration status for a specific payment gateway
+   * Priority: credentials -> enabled status -> config existence
    */
   static async getGatewayStatus(gatewayId: string): Promise<PaymentGateway['status']> {
     try {
+      // First, check if gateway has required credentials (most important)
+      const hasCredentials = await this.validateGatewayCredentials(gatewayId);
+      const credentials = await this.getGatewayCredentials(gatewayId);
+      
+      // If no credentials at all, status is pending
+      if (!hasCredentials) {
+        // Check if there are partial credentials (inactive) vs no credentials at all (pending)
+        const hasAnyCredential = this.hasPartialCredentials(credentials, gatewayId);
+        return hasAnyCredential ? 'inactive' : 'pending';
+      }
+
+      // If we have all required credentials, check configuration and enabled status
       const config = await this.getGatewayConfig(gatewayId);
       
-      if (!config) {
-        return 'pending';
-      }
-
-      // Check if gateway has required credentials
-      const hasCredentials = await this.validateGatewayCredentials(gatewayId);
-      
-      if (!hasCredentials) {
-        return 'inactive';
-      }
-
-      // Check if gateway is enabled
-      const isEnabled = config.enabled === true || config.enabled === 'true';
+      // Default to configured if no explicit config found but credentials exist
+      const isEnabled = config?.enabled === true || config?.enabled === 'true';
       
       return isEnabled ? 'active' : 'configured';
       
     } catch (error) {
       console.error(`Error checking gateway status for ${gatewayId}:`, error);
-      return 'pending';
+      
+      // On error, try to determine status based on credentials only
+      try {
+        const hasCredentials = await this.validateGatewayCredentials(gatewayId);
+        return hasCredentials ? 'configured' : 'pending';
+      } catch (credentialError) {
+        console.error(`Error checking credentials for ${gatewayId}:`, credentialError);
+        return 'inactive'; // Conservative fallback - indicates needs attention
+      }
     }
   }
 
@@ -106,17 +127,22 @@ export class PaymentGatewayService {
   private static async getGatewayCredentials(gatewayId: string): Promise<PaymentGateway['credentials']> {
     try {
       if (gatewayId === 'toyyibpay') {
-        const [userKey, secretKey, categoryCode] = await Promise.all([
-          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_user_key' } }),
-          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_secret_key' } }),
+        const [userSecretKey, categoryCode, enabled] = await Promise.all([
+          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_user_secret_key_encrypted' } }),
           prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_category_code' } }),
+          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_credentials_enabled' } }),
         ]);
+
+        // Check if credentials are enabled and exist
+        const isEnabled = enabled?.value === 'true';
+        const hasUserSecretKey = !!(userSecretKey?.value && isEnabled);
+        const hasCategoryCode = !!(categoryCode?.value && categoryCode.value.trim());
 
         return {
           hasApiKey: false, // ToyyibPay doesn't use API key
-          hasSecretKey: !!secretKey?.value,
-          hasUserKey: !!userKey?.value,
-          hasCategoryCode: !!categoryCode?.value,
+          hasSecretKey: hasUserSecretKey, // Using userSecretKey for consistency with ToyyibPay API
+          hasUserKey: hasUserSecretKey,
+          hasCategoryCode: hasCategoryCode,
         };
       }
 
@@ -156,6 +182,23 @@ export class PaymentGatewayService {
         return !!(credentials?.hasSecretKey && credentials?.hasUserKey && credentials?.hasCategoryCode);
       default:
         return false;
+    }
+  }
+
+  /**
+   * Check if gateway has any partial credentials (not all required but some exist)
+   */
+  private static hasPartialCredentials(credentials: PaymentGateway['credentials'], gatewayId: string): boolean {
+    if (!credentials) return false;
+
+    switch (gatewayId) {
+      case 'toyyibpay':
+        // Has some credentials but not all required ones
+        const hasAnyToyyibCredential = !!(credentials.hasSecretKey || credentials.hasUserKey || credentials.hasCategoryCode);
+        const hasAllToyyibCredentials = !!(credentials.hasSecretKey && credentials.hasUserKey && credentials.hasCategoryCode);
+        return hasAnyToyyibCredential && !hasAllToyyibCredentials;
+      default:
+        return !!(credentials.hasApiKey || credentials.hasSecretKey);
     }
   }
 

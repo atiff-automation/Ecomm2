@@ -57,10 +57,9 @@ export class ToyyibPayCategoryService {
     try {
       console.log(`🔄 Creating toyyibPay category: ${categoryName}`);
 
-      // Get credentials
-      const credentials =
-        await toyyibPayCredentialsService.getCredentialsForService();
-      if (!credentials) {
+      // Get credentials using the same method as validateCredentials
+      const credentialsRaw = await toyyibPayCredentialsService.getCredentialsForService();
+      if (!credentialsRaw) {
         return {
           success: false,
           error: 'toyyibPay credentials not configured',
@@ -68,39 +67,53 @@ export class ToyyibPayCategoryService {
       }
 
       console.log(`🔍 Category service credentials check:`, {
-        hasCredentials: !!credentials,
-        hasUserSecretKey: !!credentials.userSecretKey,
-        userSecretKeyLength: credentials.userSecretKey?.length || 0,
-        environment: credentials.environment,
+        hasCredentials: !!credentialsRaw,
+        hasUserSecretKey: !!credentialsRaw.userSecretKey,
+        userSecretKeyLength: credentialsRaw.userSecretKey?.length || 0,
+        environment: credentialsRaw.environment,
       });
 
-      if (!credentials.userSecretKey) {
+      if (!credentialsRaw.userSecretKey) {
         return {
           success: false,
           error: 'toyyibPay userSecretKey not available in credentials',
         };
       }
 
-      const baseUrl = this.getBaseUrl(credentials.isSandbox);
+      const baseUrl = this.getBaseUrl(credentialsRaw.isSandbox);
 
-      // Use FormData instead of URLSearchParams (matching the working credential validation)
+      // Use FormData exactly matching the working validateCredentials implementation
       const formData = new FormData();
-      formData.append('userSecretKey', credentials.userSecretKey);
+      formData.append('userSecretKey', credentialsRaw.userSecretKey);
       formData.append('catname', categoryName);
       formData.append('catdescription', categoryDescription);
 
       console.log(`🔍 Form data being sent to toyyibPay:`, {
-        userSecretKey: credentials.userSecretKey
-          ? `${credentials.userSecretKey.substring(0, 8)}...`
+        userSecretKey: credentialsRaw.userSecretKey
+          ? `${credentialsRaw.userSecretKey.substring(0, 8)}...`
           : 'EMPTY',
+        userSecretKeyLength: credentialsRaw.userSecretKey?.length || 0,
+        userSecretKeyType: typeof credentialsRaw.userSecretKey,
+        userSecretKeyFull: credentialsRaw.userSecretKey, // Temporarily log full key for debugging
         catname: categoryName,
         catdescription: categoryDescription,
       });
 
-      // Make API call (using FormData, not URL-encoded)
+      // Debug: Check FormData contents  
+      console.log('🔍 FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 10) + '...' : value}`);
+        if (key === 'userSecretKey' && typeof value === 'string') {
+          console.log(`    Full userSecretKey: '${value}'`);
+          console.log(`    Length: ${value.length}`);
+        }
+      }
+
+      // Make API call using FormData - exactly matching validateCredentials approach
       const response = await fetch(`${baseUrl}/index.php/api/createCategory`, {
         method: 'POST',
         body: formData,
+        timeout: 15000, // 15 second timeout - matching validateCredentials
       });
 
       if (!response.ok) {

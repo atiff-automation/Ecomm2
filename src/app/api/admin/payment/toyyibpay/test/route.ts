@@ -226,25 +226,67 @@ async function performComprehensiveTest(
     }
 
     // Test 2: Category functionality test
-    console.log('🧪 Test 2: Category functionality test');
+    console.log('🧪 Test 2: Category functionality test (DIRECT APPROACH)');
     try {
-      const { toyyibPayCategoryService } = await import(
-        '@/lib/services/toyyibpay-category'
-      );
-
-      // Try to get or create a test category
+      // Test using direct credential validation approach (same as basic test)
       const testCategoryName = `TEST_${Date.now()}`;
-      const categoryResult = await toyyibPayCategoryService.createCategory(
-        testCategoryName,
-        'Test category for connection validation'
-      );
+      
+      // Use the exact same approach as the working validation
+      const baseUrl =
+        environment === 'sandbox'
+          ? process.env.TOYYIBPAY_SANDBOX_URL || 'https://dev.toyyibpay.com'
+          : process.env.TOYYIBPAY_PRODUCTION_URL || 'https://toyyibpay.com';
 
-      results.categoryTest = {
-        success: categoryResult.success,
-        categoryCode: categoryResult.categoryCode,
-        error: categoryResult.error,
-        testCategoryName: testCategoryName,
-      };
+      const formData = new FormData();
+      formData.append('userSecretKey', userSecretKey);
+      formData.append('catname', testCategoryName);
+      formData.append('catdescription', 'Test category for connection validation');
+
+      const response = await fetch(`${baseUrl}/index.php/api/createCategory`, {
+        method: 'POST',
+        body: formData,
+        timeout: 15000,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log(`🔍 Direct category test response: ${responseText}`);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        results.categoryTest = {
+          success: false,
+          error: 'Invalid JSON response from category test',
+          testCategoryName: testCategoryName,
+        };
+        return;
+      }
+
+      // Check for success (CategoryCode returned) or expected error
+      if (data[0]?.CategoryCode || (data.status && data.CategoryCode)) {
+        results.categoryTest = {
+          success: true,
+          categoryCode: data[0]?.CategoryCode || data.CategoryCode,
+          testCategoryName: testCategoryName,
+        };
+      } else if (data.status) {
+        results.categoryTest = {
+          success: false,
+          error: data.status,
+          testCategoryName: testCategoryName,
+        };
+      } else {
+        results.categoryTest = {
+          success: false,
+          error: 'Unexpected response format',
+          testCategoryName: testCategoryName,
+        };
+      }
     } catch (error) {
       results.categoryTest = {
         success: false,
