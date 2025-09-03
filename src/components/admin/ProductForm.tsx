@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MultiSelect, type Option } from '@/components/ui/multi-select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -497,27 +498,29 @@ export function ProductForm({
                       <Label htmlFor="categories">
                         Categories <span className="text-red-500">*</span>
                       </Label>
-                      <Select
-                        value={(() => {
-                          const selectedValue = formData.categoryIds[0] || '';
-                          console.log('🎯 Select component - Current value:', selectedValue);
-                          console.log('🎯 Select component - Available categories:', categories);
-                          console.log('🎯 Select component - formData.categoryIds:', formData.categoryIds);
-                          return selectedValue;
+                      <MultiSelect
+                        options={(() => {
+                          const categoryOptions: Option[] = Array.isArray(categories?.categories) 
+                            ? categories.categories.map(category => ({
+                                label: category.name,
+                                value: category.id
+                              }))
+                            : [];
+                          console.log('🎯 MultiSelect - Category options:', categoryOptions);
+                          return categoryOptions;
                         })()}
-                        onValueChange={(value) => handleInputChange('categoryIds', [value])}
-                      >
-                        <SelectTrigger className={errors.categoryIds ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.isArray(categories?.categories) && categories.categories.map(category => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        selected={(() => {
+                          console.log('🎯 MultiSelect - Selected categoryIds:', formData.categoryIds);
+                          return formData.categoryIds || [];
+                        })()}
+                        onChange={(values) => {
+                          console.log('🎯 MultiSelect - onChange called with:', values);
+                          handleInputChange('categoryIds', values);
+                        }}
+                        placeholder="Select categories"
+                        className={errors.categoryIds ? 'border-red-500' : ''}
+                        searchPlaceholder="Search categories..."
+                      />
                       {errors.categoryIds && (
                         <p className="text-sm text-red-600">{errors.categoryIds}</p>
                       )}
