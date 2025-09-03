@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from './button';
 import { Progress } from './progress';
@@ -22,40 +22,80 @@ import { cn } from '@/lib/utils';
 
 export interface UploadedImage {
   url: string;
-  filename: string;
-  width: number;
-  height: number;
-  size: number;
+  altText?: string;
+  filename?: string;
+  width?: number;
+  height?: number;
+  size?: number;
 }
 
 interface ImageUploadProps {
+  // Legacy props
   onUpload?: (images: UploadedImage[]) => void;
   onRemove?: (index: number) => void;
-  maxFiles?: number;
-  maxSize?: number; // in MB
-  acceptedTypes?: string[];
   initialImages?: UploadedImage[];
+  acceptedTypes?: string[];
+  
+  // New props to match ProductForm interface
+  value?: UploadedImage[];
+  onChange?: (images: UploadedImage[]) => void;
+  accept?: string;
+  uploadPath?: string;
+  
+  maxFiles?: number;
+  maxSize?: number; // in bytes
   className?: string;
   disabled?: boolean;
 }
 
 export default function ImageUpload({
+  // Legacy props
   onUpload,
   onRemove,
-  maxFiles = 5,
-  maxSize = 10,
-  acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'],
   initialImages = [],
+  acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'],
+  
+  // New props
+  value,
+  onChange,
+  accept,
+  uploadPath,
+  
+  maxFiles = 5,
+  maxSize = 10 * 1024 * 1024, // Default 10MB in bytes
   className,
   disabled = false,
 }: ImageUploadProps) {
-  const [images, setImages] = useState<UploadedImage[]>(initialImages);
+  // Support both interfaces - prefer new props over legacy
+  const currentImages = value || initialImages;
+  const currentOnChange = onChange || onUpload;
+  
+  // Parse accept prop if provided
+  const currentAcceptedTypes = accept 
+    ? accept.split(',').map(type => type.trim())
+    : acceptedTypes;
+  
+  const [images, setImages] = useState<UploadedImage[]>(currentImages);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync images state when value prop changes (for controlled component)
+  useEffect(() => {
+    if (value && JSON.stringify(value) !== JSON.stringify(images)) {
+      setImages(value);
+    }
+  }, [value]);
+
+  // Update parent when images change
+  useEffect(() => {
+    if (currentOnChange && JSON.stringify(images) !== JSON.stringify(currentImages)) {
+      currentOnChange(images);
+    }
+  }, [images, currentOnChange]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) {
@@ -75,16 +115,17 @@ export default function ImageUpload({
 
     for (const file of files) {
       // Check file type
-      if (!acceptedTypes.includes(file.type)) {
+      if (!currentAcceptedTypes.includes(file.type)) {
         newErrors.push(
           `${file.name}: Invalid file type. Only JPEG, PNG, and WebP are allowed.`
         );
         continue;
       }
 
-      // Check file size
-      if (file.size > maxSize * 1024 * 1024) {
-        newErrors.push(`${file.name}: File size exceeds ${maxSize}MB limit.`);
+      // Check file size (maxSize is now in bytes)
+      if (file.size > maxSize) {
+        const maxSizeMB = Math.round(maxSize / (1024 * 1024));
+        newErrors.push(`${file.name}: File size exceeds ${maxSizeMB}MB limit.`);
         continue;
       }
 
@@ -110,7 +151,7 @@ export default function ImageUpload({
       formData.append('format', 'webp');
       formData.append('thumbnail', 'true');
 
-      const response = await fetch('/api/upload/image', {
+      const response = await fetch(uploadPath || '/api/upload/image', {
         method: 'POST',
         body: formData,
       });
@@ -164,14 +205,14 @@ export default function ImageUpload({
       if (uploaded.length > 0) {
         const newImages = [...images, ...uploaded];
         setImages(newImages);
-        onUpload?.(newImages);
+        currentOnChange?.(newImages);
       }
 
       setUploading(false);
       setUploadProgress(0);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [images, disabled, maxFiles, maxSize, acceptedTypes, onUpload]
+    [images, disabled, maxFiles, maxSize, currentAcceptedTypes, currentOnChange]
   );
 
   const handleDrop = useCallback(
@@ -203,19 +244,21 @@ export default function ImageUpload({
   const removeImage = async (index: number) => {
     const image = images[index];
 
-    try {
-      // Delete from server
-      await fetch(`/api/upload/image?filename=${image.filename}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      console.error('Failed to delete image:', error);
+    // Only try to delete from server if image has filename (was uploaded)
+    if (image.filename) {
+      try {
+        await fetch(`/api/upload/image?filename=${image.filename}`, {
+          method: 'DELETE',
+        });
+      } catch (error) {
+        console.error('Failed to delete image:', error);
+      }
     }
 
     const newImages = images.filter((_, i) => i !== index);
     setImages(newImages);
     onRemove?.(index);
-    onUpload?.(newImages);
+    currentOnChange?.(newImages);
   };
 
   const clearErrors = () => setErrors([]);
