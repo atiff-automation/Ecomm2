@@ -21,20 +21,78 @@ const createProductSchema = z.object({
   categoryIds: z
     .array(z.string().min(1, 'Category ID is required'))
     .min(1, 'At least one category is required'),
-  regularPrice: z.number().min(0, 'Regular price must be positive'),
+  regularPrice: z
+    .union([
+      z.number().min(0, 'Regular price must be positive'),
+      z
+        .string()
+        .transform(val => (val === '' ? 0 : parseFloat(val)))
+        .refine(
+          val => !isNaN(val) && val >= 0,
+          'Regular price must be a positive number'
+        ),
+    ]),
   memberPrice: z
-    .number()
-    .min(0, 'Member price must be positive')
+    .union([
+      z.number().min(0, 'Member price must be positive'),
+      z
+        .string()
+        .transform(val => (val === '' ? null : parseFloat(val)))
+        .refine(
+          val => val === null || (!isNaN(val) && val >= 0),
+          'Member price must be a positive number'
+        ),
+    ])
     .nullable()
     .optional(),
-  costPrice: z.number().min(0, 'Cost price must be positive').optional(),
-  stockQuantity: z.number().int().min(0, 'Stock quantity must be non-negative'),
+  costPrice: z
+    .union([
+      z.number().min(0, 'Cost price must be positive'),
+      z
+        .string()
+        .transform(val => (val === '' ? 0 : parseFloat(val)))
+        .refine(
+          val => !isNaN(val) && val >= 0,
+          'Cost price must be a positive number'
+        ),
+    ])
+    .optional(),
+  stockQuantity: z
+    .union([
+      z.number().int().min(0, 'Stock quantity must be non-negative'),
+      z
+        .string()
+        .transform(val => (val === '' ? 0 : parseInt(val)))
+        .refine(
+          val => !isNaN(val) && val >= 0 && Number.isInteger(val),
+          'Stock quantity must be a non-negative integer'
+        ),
+    ]),
   lowStockAlert: z
-    .number()
-    .int()
-    .min(0, 'Low stock alert must be non-negative')
+    .union([
+      z.number().int().min(0, 'Low stock alert must be non-negative'),
+      z
+        .string()
+        .transform(val => (val === '' ? 10 : parseInt(val)))
+        .refine(
+          val => !isNaN(val) && val >= 0 && Number.isInteger(val),
+          'Low stock alert must be a non-negative integer'
+        ),
+    ])
     .default(10),
-  weight: z.number().optional(),
+  weight: z
+    .union([
+      z.number().min(0, 'Weight must be positive'),
+      z
+        .string()
+        .transform(val => (val === '' ? null : parseFloat(val)))
+        .refine(
+          val => val === null || (!isNaN(val) && val >= 0),
+          'Weight must be a positive number'
+        ),
+    ])
+    .nullable()
+    .optional(),
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).default('DRAFT'),
   featured: z.boolean().default(false),
@@ -83,6 +141,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('🔍 Received request body:', JSON.stringify(body, null, 2));
     const productData = createProductSchema.parse(body);
 
     // Check if slug already exists
@@ -91,6 +150,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingSlug) {
+      console.log('🔍 Slug already exists:', productData.slug);
       return NextResponse.json(
         { message: 'Product slug already exists', field: 'slug' },
         { status: 400 }
@@ -103,6 +163,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingSku) {
+      console.log('🔍 SKU already exists:', productData.sku);
       return NextResponse.json(
         { message: 'SKU already exists', field: 'sku' },
         { status: 400 }
@@ -222,6 +283,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating product:', error);
 
     if (error instanceof z.ZodError) {
+      console.error('🔍 Zod validation errors:', JSON.stringify(error.issues, null, 2));
       return NextResponse.json(
         { message: 'Invalid product data', errors: error.issues },
         { status: 400 }

@@ -72,7 +72,13 @@ export default function ImageUpload({
   
   // Parse accept prop if provided
   const currentAcceptedTypes = accept 
-    ? accept.split(',').map(type => type.trim())
+    ? accept.split(',').map(type => type.trim()).flatMap(type => {
+        // Handle wildcard patterns like "image/*"
+        if (type === 'image/*') {
+          return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        }
+        return type;
+      })
     : acceptedTypes;
   
   const [images, setImages] = useState<UploadedImage[]>(currentImages);
@@ -296,7 +302,7 @@ export default function ImageUpload({
                 Drop images here or click to upload
               </p>
               <p className="text-xs text-gray-500">
-                Max {maxFiles} images, up to {maxSize}MB each
+                Max {maxFiles} images, up to {Math.round(maxSize / (1024 * 1024))}MB each
               </p>
               <p className="text-xs text-gray-500">JPEG, PNG, WebP supported</p>
             </>
@@ -308,7 +314,7 @@ export default function ImageUpload({
         ref={fileInputRef}
         type="file"
         multiple
-        accept={acceptedTypes.join(',')}
+        accept={currentAcceptedTypes.join(',')}
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled}
@@ -360,21 +366,17 @@ export default function ImageUpload({
                 />
               </div>
 
-              {/* Image Info */}
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
-                <p className="truncate">
-                  {image.width && image.height 
-                    ? `${image.width} × ${image.height}` 
-                    : 'Unknown dimensions'
-                  }
-                </p>
-                <p>
-                  {image.size > 0 
-                    ? formatFileSize(image.size) 
-                    : 'Existing image'
-                  }
-                </p>
-              </div>
+              {/* Image Info - Only show if we have meaningful data */}
+              {(image.size > 0 || (image.width && image.height)) && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
+                  {image.width && image.height && (
+                    <p className="truncate">{image.width} × {image.height}</p>
+                  )}
+                  {image.size > 0 && (
+                    <p>{formatFileSize(image.size)}</p>
+                  )}
+                </div>
+              )}
 
               {/* Remove Button */}
               <Button
@@ -405,10 +407,18 @@ export default function ImageUpload({
           <span>
             {images.length} of {maxFiles} images uploaded
           </span>
-          <span>
-            Total:{' '}
-            {formatFileSize(images.reduce((acc, img) => acc + (img.size || 0), 0))}
-          </span>
+          {(() => {
+            const totalSize = images.reduce((acc, img) => acc + (img.size || 0), 0);
+            const hasUnknownSizes = images.some(img => !img.size || img.size === 0);
+            
+            if (totalSize === 0 && hasUnknownSizes) {
+              return <span>Includes existing images</span>;
+            } else if (hasUnknownSizes && totalSize > 0) {
+              return <span>Total: {formatFileSize(totalSize)} + existing</span>;
+            } else {
+              return <span>Total: {formatFileSize(totalSize)}</span>;
+            }
+          })()}
         </div>
       )}
     </div>

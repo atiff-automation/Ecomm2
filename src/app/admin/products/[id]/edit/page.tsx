@@ -129,14 +129,14 @@ export default function EditProductPage() {
       ...formData,
       // Only include categoryIds if there are valid categories, otherwise exclude the field
       ...(filteredCategoryIds.length > 0 && { categoryIds: filteredCategoryIds }),
-      regularPrice: parseFloat(formData.regularPrice.toString()) || 0,
-      memberPrice: formData.memberPrice ? parseFloat(formData.memberPrice.toString()) : null,
-      weight: formData.weight ? parseFloat(formData.weight.toString()) : null,
+      regularPrice: formData.regularPrice && formData.regularPrice !== '' ? parseFloat(formData.regularPrice.toString()) : 0,
+      memberPrice: formData.memberPrice && formData.memberPrice !== '' ? parseFloat(formData.memberPrice.toString()) : null,
+      weight: formData.weight && formData.weight !== '' ? parseFloat(formData.weight.toString()) : null,
       // Convert dimensions object to JSON string as expected by API
       dimensions: JSON.stringify({
-        length: formData.length ? parseFloat(formData.length.toString()) : null,
-        width: formData.width ? parseFloat(formData.width.toString()) : null,
-        height: formData.height ? parseFloat(formData.height.toString()) : null,
+        length: formData.length && formData.length !== '' ? parseFloat(formData.length.toString()) : null,
+        width: formData.width && formData.width !== '' ? parseFloat(formData.width.toString()) : null,
+        height: formData.height && formData.height !== '' ? parseFloat(formData.height.toString()) : null,
       }),
       images: formData.images.map((img, index) => ({
         url: img.url,

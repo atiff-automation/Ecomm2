@@ -798,7 +798,7 @@ export function ProductForm({
                         maxFiles={5}
                         maxSize={5 * 1024 * 1024} // 5MB
                         accept="image/*"
-                        uploadPath="/api/upload"
+                        uploadPath="/api/upload/image"
                         className="border-2 border-dashed border-gray-300 rounded-lg p-8"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -950,13 +950,14 @@ export function ProductForm({
                     )}
                   </Button>
 
-                  {formData.slug && (
+                  {mode === 'edit' && formData.slug && (
                     <Link 
                       href={`/products/${formData.slug}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >
                       <Button 
+                        type="button"
                         variant="outline" 
                         className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
                       >
