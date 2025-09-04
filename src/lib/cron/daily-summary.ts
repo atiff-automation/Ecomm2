@@ -8,6 +8,7 @@ import { telegramService } from '@/lib/telegram/telegram-service';
 
 class DailySummaryCron {
   private isRunning: boolean = false;
+  private cronTask: any = null;
 
   /**
    * Start the daily summary cron job
@@ -19,6 +20,12 @@ class DailySummaryCron {
       return;
     }
 
+    // Destroy any existing cron task first (prevents multiple schedules)
+    if (this.cronTask) {
+      this.cronTask.destroy();
+      this.cronTask = null;
+    }
+
     // Cron pattern: "0 0 * * *" = At 00:00 every day
     // Since Malaysian time is UTC+8, we need to adjust for server timezone
     // If server is in UTC, we need to run at 16:00 UTC (00:00 UTC+8)
@@ -26,7 +33,7 @@ class DailySummaryCron {
 
     const timezone = 'Asia/Kuala_Lumpur';
 
-    cron.schedule(
+    this.cronTask = cron.schedule(
       '0 0 * * *',
       async () => {
         await this.runDailySummary();
@@ -45,6 +52,10 @@ class DailySummaryCron {
    * Stop the cron job
    */
   public stop(): void {
+    if (this.cronTask) {
+      this.cronTask.destroy();
+      this.cronTask = null;
+    }
     this.isRunning = false;
     console.log('📅 Daily summary cron job stopped');
   }

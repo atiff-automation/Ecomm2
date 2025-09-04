@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { headers } from 'next/headers';
-import { telegramService } from '@/lib/telegram/telegram-service';
+// import { telegramService } from '@/lib/telegram/telegram-service'; // Removed - using OrderStatusHandler instead
 import { MembershipService } from '@/lib/services/membership-service';
 
 // NOTE: Business logic moved to MembershipService for proper separation of concerns
@@ -82,6 +82,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get current order status for change tracking
+    const previousStatus = order.status;
+    const previousPaymentStatus = order.paymentStatus;
+
     // ✅ CORRECT: Payment webhook ONLY handles payment confirmation
     await prisma.order.update({
       where: { id: order.id },
@@ -110,31 +114,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Send Telegram notification for successful order
+    // ✅ CORRECT: Delegate notification to OrderStatusHandler to avoid duplicates
+    // This ensures notifications are sent through the centralized handler
     try {
-      const customerName = order.user
-        ? `${order.user.firstName} ${order.user.lastName}`
-        : 'Valued Customer';
-
-      await telegramService.sendNewOrderNotification({
-        orderNumber: order.orderNumber,
-        customerName,
-        total: Number(order.total),
-        items: order.orderItems.map(item => ({
-          name: item.productName || item.product.name,
-          quantity: item.quantity,
-          price: Number(item.appliedPrice),
-        })),
-        paymentMethod: 'PAYMENT_GATEWAY',
-        createdAt: new Date(),
+      // Import here to avoid circular dependencies
+      const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
+      
+      await OrderStatusHandler.handleOrderStatusChange({
+        orderId: order.id,
+        previousStatus,
+        newStatus: 'CONFIRMED',
+        previousPaymentStatus,
+        newPaymentStatus: 'PAID',
+        triggeredBy: 'webhook_payment_gateway',
+        metadata: {
+          transactionId,
+          webhookTimestamp: timestamp,
+        },
       });
+      
       console.log(
-        '✅ Telegram notification sent for order:',
+        '✅ Order status change handled for order:',
         order.orderNumber
       );
-    } catch (telegramError) {
-      console.error('Failed to send Telegram notification:', telegramError);
-      // Don't fail the webhook if Telegram fails
+    } catch (statusHandlerError) {
+      console.error('Failed to handle order status change:', statusHandlerError);
+      // Don't fail the webhook if status handler fails
     }
 
     console.log('✅ Payment webhook processed successfully');

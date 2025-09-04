@@ -5,15 +5,26 @@
 
 import { dailySummaryCron } from './daily-summary';
 
+// Declare global type to avoid TypeScript errors
+declare global {
+  var __cronJobsInitialized: boolean | undefined;
+}
+
 /**
- * Start all cron jobs
+ * Start all cron jobs (with persistent singleton protection across Next.js hot reloads)
  */
 export function initializeCronJobs(): void {
+  if (global.__cronJobsInitialized) {
+    console.log('📅 Cron jobs already initialized, skipping...');
+    return;
+  }
+
   console.log('🚀 Initializing cron jobs...');
 
   // Start daily summary cron job
   dailySummaryCron.start();
 
+  global.__cronJobsInitialized = true;
   console.log('✅ All cron jobs initialized');
 }
 
@@ -25,6 +36,9 @@ export function stopCronJobs(): void {
 
   // Stop daily summary cron job
   dailySummaryCron.stop();
+
+  // Reset global flag
+  global.__cronJobsInitialized = false;
 
   console.log('✅ All cron jobs stopped');
 }
