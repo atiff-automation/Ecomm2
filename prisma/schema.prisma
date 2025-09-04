@@ -77,6 +77,9 @@ model User {
   themesCreated     SiteTheme[] @relation("ThemeCreator")
   siteCustomizationsCreated SiteCustomization[] @relation("SiteCustomizationCreator")
   
+  // Telegram notification relationship
+  telegramConfig TelegramConfig?
+  
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -606,6 +609,45 @@ model SystemConfig {
   
   @@map("system_config")
   @@index([key])
+}
+
+// ==================== TELEGRAM CONFIGURATION ====================
+
+model TelegramConfig {
+  id        String @id @default(cuid())
+  userId    String @unique  // One config per user
+  
+  // Bot Configuration (Encrypted)
+  botToken        String?  // Encrypted bot token
+  botUsername     String?  // Bot username for display
+  
+  // Channel Settings  
+  ordersEnabled     Boolean @default(false)
+  ordersChatId      String?
+  inventoryEnabled  Boolean @default(false) 
+  inventoryChatId   String?
+  
+  // Notification Preferences
+  dailySummaryEnabled Boolean @default(false)
+  summaryTime         String? // "09:00" format
+  timezone           String  @default("Asia/Kuala_Lumpur")
+  
+  // Health & Security
+  verified           Boolean @default(false)
+  lastHealthCheck    DateTime?
+  healthStatus       String  @default("UNKNOWN")
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("telegram_configs")
+  @@index([userId])
+  @@index([verified])
+  @@index([healthStatus])
 }
 
 // ==================== AUDIT & LOGGING ====================

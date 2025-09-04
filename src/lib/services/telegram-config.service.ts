@@ -1,10 +1,12 @@
 /**
- * Telegram Configuration Service
+ * Multi-Tenant Telegram Configuration Service
  * Centralized configuration management with encryption and validation
  * Implements Single Source of Truth pattern for all Telegram settings
+ * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | CENTRALIZED APPROACH
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { TelegramConfig } from '@prisma/client';
 import {
   TelegramConfiguration,
   TelegramChannel,
@@ -718,6 +720,325 @@ export class TelegramConfigService implements ITelegramConfigService {
     // Placeholder implementation
     // In production, this would query audit log table
     return [];
+  }
+
+  // ==================== MULTI-TENANT METHODS ====================
+  // Following @CLAUDE.md: CENTRALIZED APPROACH | DRY | NO HARDCODE
+
+  /**
+   * Get user's Telegram configuration with fallback to global
+   * CENTRALIZED configuration loading with systematic fallback
+   */
+  async getUserConfig(userId: string): Promise<TelegramConfig | null> {
+    try {
+      // PRIMARY: User-specific configuration
+      const userConfig = await prisma.telegramConfig.findUnique({
+        where: { userId },
+        include: { user: true }
+      });
+      
+      if (userConfig?.botToken) {
+        // DECRYPT sensitive data before returning
+        if (userConfig.botToken) {
+          try {
+            const encryptedData = JSON.parse(userConfig.botToken);
+            if (isEncryptedData(encryptedData)) {
+              userConfig.botToken = decryptSensitiveData(encryptedData);
+            }
+          } catch {
+            // Handle legacy unencrypted values - keep as is
+          }
+        }
+        return userConfig;
+      }
+      
+      // FALLBACK: Check global configuration (SystemConfig or .env)
+      const globalConfig = await this.getGlobalConfiguration();
+      
+      // SYSTEMATIC: Convert global to user format if exists
+      if (globalConfig.botToken) {
+        return this.convertGlobalToUserConfig(globalConfig, userId);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to get user Telegram config:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update user's Telegram configuration
+   * CENTRALIZED update with validation and encryption
+   */
+  async updateUserConfig(
+    userId: string, 
+    config: Partial<Omit<TelegramConfig, 'id' | 'userId' | 'user'>>
+  ): Promise<TelegramConfig> {
+    // SYSTEMATIC validation
+    const validationResult = await this.validateUserConfig(config);
+    if (!validationResult.isValid) {
+      throw new Error(`Invalid configuration: ${validationResult.errors.join(', ')}`);
+    }
+    
+    // ENCRYPTION: Secure sensitive data
+    const processedConfig = await this.encryptSensitiveFields(config);
+    
+    // SINGLE SOURCE OF TRUTH: Upsert operation
+    const result = await prisma.telegramConfig.upsert({
+      where: { userId },
+      create: { 
+        userId, 
+        ...processedConfig,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      update: { 
+        ...processedConfig, 
+        updatedAt: new Date() 
+      },
+      include: { user: true }
+    });
+
+    // DECRYPT for return (service contract expects decrypted data)
+    if (result.botToken) {
+      try {
+        const encryptedData = JSON.parse(result.botToken);
+        if (isEncryptedData(encryptedData)) {
+          result.botToken = decryptSensitiveData(encryptedData);
+        }
+      } catch {
+        // Handle legacy unencrypted values
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Delete user's Telegram configuration
+   * SYSTEMATIC cleanup with cascade handling
+   */
+  async deleteUserConfig(userId: string): Promise<void> {
+    try {
+      await prisma.telegramConfig.delete({
+        where: { userId }
+      });
+    } catch (error) {
+      console.error('Failed to delete user Telegram config:', error);
+      throw new Error('Failed to delete user configuration');
+    }
+  }
+
+  /**
+   * Get all users with Telegram configurations (Admin use)
+   * CENTRALIZED user management
+   */
+  async getAllUserConfigs(): Promise<Array<TelegramConfig & { user: { id: string; email: string; name: string } }>> {
+    try {
+      const configs = await prisma.telegramConfig.findMany({
+        include: {
+          user: {
+            select: { 
+              id: true, 
+              email: true, 
+              firstName: true, 
+              lastName: true 
+            }
+          }
+        },
+        orderBy: { updatedAt: 'desc' }
+      });
+
+      // DECRYPT sensitive data for admin view
+      return configs.map(config => ({
+        ...config,
+        user: {
+          id: config.user.id,
+          email: config.user.email,
+          name: `${config.user.firstName} ${config.user.lastName}`.trim()
+        },
+        // Keep botToken encrypted for security in list view
+        botToken: config.botToken ? '***ENCRYPTED***' : null
+      }));
+    } catch (error) {
+      console.error('Failed to get all user configs:', error);
+      throw new Error('Failed to retrieve user configurations');
+    }
+  }
+
+  /**
+   * Validate user bot token and channels
+   * NO HARDCODED validation rules - all from centralized config
+   */
+  async validateUserBotToken(userId: string, botToken: string): Promise<ValidationResult> {
+    // SYSTEMATIC validation following existing patterns
+    return this.validateBotTokenWithTelegram(botToken);
+  }
+
+  /**
+   * Get global configuration for fallback
+   * CENTRALIZED global config access
+   */
+  private async getGlobalConfiguration(): Promise<any> {
+    try {
+      // Check environment variables first
+      const envConfig = {
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        ordersChatId: process.env.TELEGRAM_ORDERS_CHAT_ID,
+        inventoryChatId: process.env.TELEGRAM_INVENTORY_CHAT_ID
+      };
+
+      if (envConfig.botToken) {
+        return {
+          botToken: envConfig.botToken,
+          ordersEnabled: !!envConfig.ordersChatId,
+          ordersChatId: envConfig.ordersChatId,
+          inventoryEnabled: !!envConfig.inventoryChatId,
+          inventoryChatId: envConfig.inventoryChatId,
+          dailySummaryEnabled: true,
+          timezone: 'Asia/Kuala_Lumpur',
+          verified: false
+        };
+      }
+
+      // FALLBACK: Check SystemConfig
+      const globalConfigs = await prisma.systemConfig.findMany({
+        where: {
+          key: {
+            in: [
+              'TELEGRAM_BOT_TOKEN',
+              'TELEGRAM_ORDERS_CHAT_ID',
+              'TELEGRAM_INVENTORY_CHAT_ID',
+              'TELEGRAM_ORDERS_ENABLED',
+              'TELEGRAM_INVENTORY_ENABLED'
+            ]
+          }
+        }
+      });
+
+      if (globalConfigs.length > 0) {
+        return this.convertSystemConfigToStructured(globalConfigs);
+      }
+
+      return { botToken: null };
+    } catch (error) {
+      console.error('Failed to get global configuration:', error);
+      return { botToken: null };
+    }
+  }
+
+  /**
+   * Convert global configuration to user format
+   * SYSTEMATIC data transformation
+   */
+  private convertGlobalToUserConfig(globalConfig: any, userId: string): TelegramConfig {
+    return {
+      id: '', // Will be set by database
+      userId,
+      botToken: globalConfig.botToken,
+      botUsername: null,
+      ordersEnabled: globalConfig.ordersEnabled || false,
+      ordersChatId: globalConfig.ordersChatId || null,
+      inventoryEnabled: globalConfig.inventoryEnabled || false,
+      inventoryChatId: globalConfig.inventoryChatId || null,
+      dailySummaryEnabled: globalConfig.dailySummaryEnabled || false,
+      summaryTime: null,
+      timezone: globalConfig.timezone || 'Asia/Kuala_Lumpur',
+      verified: globalConfig.verified || false,
+      lastHealthCheck: null,
+      healthStatus: 'UNKNOWN',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  /**
+   * Convert SystemConfig array to structured format
+   * SYSTEMATIC data transformation
+   */
+  private convertSystemConfigToStructured(configs: any[]): any {
+    const configMap = configs.reduce((acc, config) => {
+      let value = config.value;
+      // Handle encrypted values
+      if (config.key === 'TELEGRAM_BOT_TOKEN' && config.value) {
+        try {
+          const encryptedData = JSON.parse(config.value);
+          if (isEncryptedData(encryptedData)) {
+            value = decryptSensitiveData(encryptedData);
+          }
+        } catch {
+          // Legacy unencrypted value
+        }
+      }
+      acc[config.key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      botToken: configMap.TELEGRAM_BOT_TOKEN || null,
+      ordersEnabled: configMap.TELEGRAM_ORDERS_ENABLED === 'true',
+      ordersChatId: configMap.TELEGRAM_ORDERS_CHAT_ID || null,
+      inventoryEnabled: configMap.TELEGRAM_INVENTORY_ENABLED === 'true',
+      inventoryChatId: configMap.TELEGRAM_INVENTORY_CHAT_ID || null,
+      dailySummaryEnabled: true,
+      timezone: 'Asia/Kuala_Lumpur',
+      verified: false
+    };
+  }
+
+  /**
+   * Validate user configuration data
+   * CENTRALIZED validation logic
+   */
+  private async validateUserConfig(config: any): Promise<ValidationResult> {
+    const errors: string[] = [];
+
+    // Bot token validation
+    if (config.botToken) {
+      if (!config.botToken.startsWith('bot') && !config.botToken.includes(':')) {
+        errors.push('Invalid bot token format');
+      }
+    }
+
+    // Chat ID validation
+    if (config.ordersChatId && !config.ordersChatId.startsWith('-')) {
+      errors.push('Orders chat ID must be a negative number (group/channel ID)');
+    }
+
+    if (config.inventoryChatId && !config.inventoryChatId.startsWith('-')) {
+      errors.push('Inventory chat ID must be a negative number (group/channel ID)');
+    }
+
+    // Timezone validation
+    if (config.timezone) {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: config.timezone });
+      } catch {
+        errors.push('Invalid timezone');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Encrypt sensitive fields in configuration
+   * SYSTEMATIC encryption handling
+   */
+  private async encryptSensitiveFields(config: any): Promise<any> {
+    const processed = { ...config };
+
+    // Encrypt bot token if provided
+    if (processed.botToken && processed.botToken !== '***ENCRYPTED***') {
+      const encryptedData = encryptSensitiveData(processed.botToken);
+      processed.botToken = JSON.stringify(encryptedData);
+    }
+
+    return processed;
   }
 }
 

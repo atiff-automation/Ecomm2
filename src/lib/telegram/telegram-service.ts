@@ -1,10 +1,13 @@
 /**
- * Telegram Notification Service - Malaysian E-commerce Platform
- * Sends notifications to Telegram groups for new orders and important events
+ * Multi-Tenant Telegram Service - Malaysian E-commerce Platform  
+ * USER-AWARE service with systematic fallback to global configuration
+ * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH
  */
 
 import { prisma } from '@/lib/db/prisma';
 import { telegramMonitoringService } from '@/lib/monitoring/telegram-monitoring';
+import { telegramConfigService } from '@/lib/services/telegram-config.service';
+import { TelegramConfig } from '@prisma/client';
 
 interface TelegramMessage {
   chat_id: string;
@@ -29,32 +32,58 @@ interface OrderNotificationData {
 }
 
 export class TelegramService {
+  // MULTI-TENANT: User context for scoped configuration
+  private userId: string | null = null;
+  
+  // CONFIGURATION: Loaded dynamically per user/global
   private botToken: string | null = null;
   private ordersChatId: string | null = null;
   private inventoryChatId: string | null = null;
   private apiUrl: string = '';
   private configLoaded: boolean = false;
+  
+  // HEALTH MONITORING: Per-service instance
   private lastHealthCheck: Date | null = null;
   private isHealthy: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
+  
+  // RELIABILITY: Message retry queue
   private retryQueue: Array<{
     message: TelegramMessage;
     retries: number;
     timestamp: Date;
   }> = [];
 
-  constructor() {
-    // Configuration will be loaded dynamically from database
-    this.loadConfiguration();
-    this.startHealthCheck();
+  constructor(userId?: string) {
+    // MULTI-TENANT: Set user context for scoped configuration
+    this.userId = userId || null;
+    
+    // SYSTEMATIC: Delayed initialization to allow proper configuration loading
+    // loadConfiguration() and startHealthCheck() will be called by initialize()
+  }
 
-    // Initialize cron jobs (only once)
-    this.initializeCronJobs();
+  /**
+   * Initialize service - CENTRALIZED initialization pattern
+   * SYSTEMATIC: Async initialization with proper error handling
+   */
+  async initialize(): Promise<void> {
+    try {
+      await this.loadConfiguration();
+      this.startHealthCheck();
 
-    // Ensure singleton behavior - prevent multiple instances
-    if (typeof window === 'undefined' && !global.__telegramServiceInitialized) {
-      global.__telegramServiceInitialized = true;
-      console.log('🤖 TelegramService singleton initialized');
+      // Initialize cron jobs (only for global service)
+      if (!this.userId) {
+        this.initializeCronJobs();
+      }
+
+      if (this.userId) {
+        console.log(`🤖 TelegramService initialized for user: ${this.userId}`);
+      } else {
+        console.log('🤖 TelegramService global instance initialized');
+      }
+    } catch (error) {
+      console.error('Failed to initialize TelegramService:', error);
+      throw error;
     }
   }
 
@@ -181,11 +210,32 @@ export class TelegramService {
   }
 
   /**
-   * Load Telegram configuration from database
+   * Load Telegram configuration - MULTI-TENANT with systematic fallback
+   * SINGLE SOURCE OF TRUTH: User config → Global config → .env fallback
    */
   private async loadConfiguration(): Promise<void> {
     try {
-      // First try environment variables (fallback)
+      let config: TelegramConfig | null = null;
+      
+      // PRIMARY: Load user-specific configuration
+      if (this.userId) {
+        config = await telegramConfigService.getUserConfig(this.userId);
+        if (config?.botToken) {
+          this.applyConfiguration(config);
+          this.configLoaded = true;
+          return;
+        }
+      }
+      
+      // SECONDARY: Load global configuration  
+      const globalConfig = await telegramConfigService.getGlobalConfiguration();
+      if (globalConfig.botToken) {
+        this.applyGlobalConfiguration(globalConfig);
+        this.configLoaded = true;
+        return;
+      }
+      
+      // FALLBACK: Environment variables (backward compatibility)
       const envToken = process.env.TELEGRAM_BOT_TOKEN;
       const envOrdersChatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
       const envInventoryChatId = process.env.TELEGRAM_INVENTORY_CHAT_ID;
@@ -198,43 +248,53 @@ export class TelegramService {
         this.configLoaded = true;
         return;
       }
-
-      // Try to load from database
-      const configs = await prisma.systemConfig.findMany({
-        where: {
-          key: {
-            in: [
-              'TELEGRAM_BOT_TOKEN',
-              'TELEGRAM_ORDERS_CHAT_ID',
-              'TELEGRAM_INVENTORY_CHAT_ID',
-              'TELEGRAM_ORDERS_ENABLED',
-              'TELEGRAM_INVENTORY_ENABLED',
-            ],
-          },
-        },
-      });
-
-      const configMap = configs.reduce(
-        (acc, config) => {
-          acc[config.key] = config.value;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-
-      this.botToken = configMap.TELEGRAM_BOT_TOKEN || null;
-      this.ordersChatId = configMap.TELEGRAM_ORDERS_CHAT_ID || null;
-      this.inventoryChatId = configMap.TELEGRAM_INVENTORY_CHAT_ID || null;
-
-      if (this.botToken) {
-        this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
-      }
-
+      
+      // NO CONFIGURATION: Clear state
+      this.clearConfiguration();
       this.configLoaded = true;
     } catch (error) {
       console.error('Failed to load Telegram configuration:', error);
+      this.clearConfiguration();
       this.configLoaded = true; // Don't block forever
     }
+  }
+  
+  /**
+   * Apply user/database configuration - CENTRALIZED configuration logic
+   * SYSTEMATIC: Single method for applying TelegramConfig
+   */
+  private applyConfiguration(config: TelegramConfig): void {
+    this.botToken = config.botToken;
+    this.ordersChatId = config.ordersEnabled ? config.ordersChatId : null;
+    this.inventoryChatId = config.inventoryEnabled ? config.inventoryChatId : null;
+    
+    if (this.botToken) {
+      this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
+    }
+  }
+  
+  /**
+   * Apply global configuration - BACKWARD COMPATIBILITY
+   * SYSTEMATIC: Handle global config format
+   */
+  private applyGlobalConfiguration(config: any): void {
+    this.botToken = config.botToken;
+    this.ordersChatId = config.ordersChatId;
+    this.inventoryChatId = config.inventoryChatId;
+    
+    if (this.botToken) {
+      this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
+    }
+  }
+  
+  /**
+   * Clear configuration state - SYSTEMATIC cleanup
+   */
+  private clearConfiguration(): void {
+    this.botToken = null;
+    this.ordersChatId = null;
+    this.inventoryChatId = null;
+    this.apiUrl = '';
   }
 
   /**
@@ -268,13 +328,28 @@ export class TelegramService {
   }
 
   /**
-   * Reload configuration from database (useful after updates)
+   * Reload configuration - SYSTEMATIC configuration refresh
+   * CENTRALIZED: Works for both user and global configurations
    */
   async reloadConfiguration(): Promise<void> {
     this.configLoaded = false;
     await this.loadConfiguration();
     // Trigger immediate health check after config reload
     await this.performHealthCheck();
+  }
+  
+  /**
+   * Get user context - MULTI-TENANT identification
+   */
+  public getUserId(): string | null {
+    return this.userId;
+  }
+  
+  /**
+   * Check if service is user-scoped - SYSTEMATIC context checking
+   */
+  public isUserScoped(): boolean {
+    return !!this.userId;
   }
 
   /**
@@ -664,5 +739,74 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   }
 }
 
-// Export singleton instance
-export const telegramService = new TelegramService();
+// BACKWARD COMPATIBILITY: Global singleton instance
+// SYSTEMATIC: Use factory for proper initialization
+let globalServiceInstance: TelegramService | null = null;
+
+export const telegramService = {
+  async getInstance(): Promise<TelegramService> {
+    if (!globalServiceInstance) {
+      globalServiceInstance = new TelegramService();
+      await globalServiceInstance.initialize();
+    }
+    return globalServiceInstance;
+  },
+  
+  // LEGACY SUPPORT: Direct method access (deprecated)
+  async sendNewOrderNotification(...args: Parameters<TelegramService['sendNewOrderNotification']>) {
+    const instance = await this.getInstance();
+    return instance.sendNewOrderNotification(...args);
+  },
+  
+  async sendPaymentStatusNotification(...args: Parameters<TelegramService['sendPaymentStatusNotification']>) {
+    const instance = await this.getInstance();
+    return instance.sendPaymentStatusNotification(...args);
+  },
+  
+  async sendDailySummary(...args: Parameters<TelegramService['sendDailySummary']>) {
+    const instance = await this.getInstance();
+    return instance.sendDailySummary(...args);
+  },
+  
+  async sendLowStockAlert(...args: Parameters<TelegramService['sendLowStockAlert']>) {
+    const instance = await this.getInstance();
+    return instance.sendLowStockAlert(...args);
+  },
+  
+  async sendGeneralNotification(...args: Parameters<TelegramService['sendGeneralNotification']>) {
+    const instance = await this.getInstance();
+    return instance.sendGeneralNotification(...args);
+  },
+  
+  async testConnection(...args: Parameters<TelegramService['testConnection']>) {
+    const instance = await this.getInstance();
+    return instance.testConnection(...args);
+  },
+  
+  async isConfigured(...args: Parameters<TelegramService['isConfigured']>) {
+    const instance = await this.getInstance();
+    return instance.isConfigured(...args);
+  },
+  
+  async isOrdersChannelConfigured(...args: Parameters<TelegramService['isOrdersChannelConfigured']>) {
+    const instance = await this.getInstance();
+    return instance.isOrdersChannelConfigured(...args);
+  },
+  
+  async isInventoryChannelConfigured(...args: Parameters<TelegramService['isInventoryChannelConfigured']>) {
+    const instance = await this.getInstance();
+    return instance.isInventoryChannelConfigured(...args);
+  },
+  
+  async reloadConfiguration(...args: Parameters<TelegramService['reloadConfiguration']>) {
+    const instance = await this.getInstance();
+    return instance.reloadConfiguration(...args);
+  },
+  
+  getHealthStatus() {
+    if (!globalServiceInstance) {
+      return { healthy: false, lastCheck: null, queuedMessages: 0 };
+    }
+    return globalServiceInstance.getHealthStatus();
+  }
+};
