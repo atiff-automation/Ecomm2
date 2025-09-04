@@ -75,6 +75,7 @@ model User {
   heroSectionsCreated HeroSection[] @relation("HeroCreator")
   mediaUploads      MediaUpload[] @relation("MediaUploader")
   themesCreated     SiteTheme[] @relation("ThemeCreator")
+  siteCustomizationsCreated SiteCustomization[] @relation("SiteCustomizationCreator")
   
   // Timestamps
   createdAt DateTime @default(now())
@@ -1060,6 +1061,26 @@ model MediaUpload {
   createdAt     DateTime  @default(now())
 
   @@map("media_uploads")
+}
+
+// ==================== UNIFIED SITE CUSTOMIZATION ====================
+// Single source of truth for all site customization data
+// Replaces separate HeroSection and SiteTheme with centralized configuration
+
+model SiteCustomization {
+  id        String   @id @default(cuid())
+  config    Json     // Complete site customization configuration as JSONB
+  version   Int      @default(1) // Version control for configuration changes
+  isActive  Boolean  @default(true) // Only one configuration can be active
+  createdBy String?
+  creator   User?    @relation("SiteCustomizationCreator", fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_customization")
+  @@index([isActive])
+  @@index([version])
+  @@index([createdAt])
 }
 
 // ==================== WEBHOOK PROCESSING QUEUE ====================

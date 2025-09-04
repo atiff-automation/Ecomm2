@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,13 +35,45 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { SearchBar } from '@/components/search/SearchBar';
 import { CartButton } from '@/components/cart/CartButton';
 
+interface SiteCustomization {
+  branding: {
+    logo?: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    favicon?: {
+      url: string;
+    };
+  } | null;
+}
+
 export function Header() {
   const { isLoggedIn, isMember, isLoading, signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [siteCustomization, setSiteCustomization] = useState<SiteCustomization | null>(null);
+
+  // Fetch site customization data
+  useEffect(() => {
+    const fetchSiteCustomization = async () => {
+      try {
+        const response = await fetch('/api/site-customization/current');
+        if (response.ok) {
+          const data = await response.json();
+          setSiteCustomization(data);
+        }
+      } catch (error) {
+        console.error('Error fetching site customization:', error);
+      }
+    };
+
+    fetchSiteCustomization();
+  }, []);
 
   const skipToContent = () => {
     const target = document.getElementById('main-content');
@@ -90,17 +122,30 @@ export function Header() {
                 className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"
                 aria-label="JRM E-commerce - Go to homepage"
               >
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span
-                    className="text-white font-bold text-sm"
-                    aria-hidden="true"
-                  >
-                    JRM
-                  </span>
-                </div>
-                <span className="hidden sm:inline-block font-bold text-xl">
-                  E-commerce
-                </span>
+                {siteCustomization?.branding?.logo ? (
+                  <Image
+                    src={siteCustomization.branding.logo.url}
+                    alt="JRM E-commerce Logo"
+                    width={siteCustomization.branding.logo.width}
+                    height={siteCustomization.branding.logo.height}
+                    className="max-h-10 w-auto"
+                    priority
+                  />
+                ) : (
+                  <>
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span
+                        className="text-white font-bold text-sm"
+                        aria-hidden="true"
+                      >
+                        JRM
+                      </span>
+                    </div>
+                    <span className="hidden sm:inline-block font-bold text-xl">
+                      E-commerce
+                    </span>
+                  </>
+                )}
               </Link>
 
               {/* Desktop Navigation */}

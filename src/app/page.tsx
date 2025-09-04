@@ -98,6 +98,8 @@ interface HeroSection {
   backgroundVideo?: string | null;
   overlayOpacity: number;
   textAlignment: 'left' | 'center' | 'right';
+  showTitle: boolean;
+  showCTA: boolean;
   isActive: boolean;
 }
 

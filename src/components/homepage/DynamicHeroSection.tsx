@@ -27,6 +27,8 @@ interface HeroSection {
   backgroundVideo?: string | null;
   overlayOpacity: number;
   textAlignment: 'left' | 'center' | 'right';
+  showTitle: boolean;
+  showCTA: boolean;
   isActive: boolean;
 }
 
@@ -63,6 +65,8 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
         backgroundVideo: null,
         overlayOpacity: 0.1,
         textAlignment: 'left' as const,
+        showTitle: true,
+        showCTA: true,
         isActive: true,
       };
 
@@ -141,7 +145,84 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
         style={{ opacity: hero.overlayOpacity }}
       />
 
-      {/* Empty content - hero section now only displays background image/video */}
+      {/* Hero Content */}
+      <div className="relative z-10 container mx-auto px-4">
+        <div
+          className={`max-w-4xl ${
+            hero.textAlignment === 'center'
+              ? 'mx-auto text-center'
+              : hero.textAlignment === 'right'
+              ? 'ml-auto text-right'
+              : ''
+          }`}
+        >
+          {/* Title Section - Only show if enabled */}
+          {hero.showTitle && (
+            <>
+              <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+                {hero.title}
+              </h1>
+
+              <p className="text-xl md:text-2xl mb-6 text-blue-100">
+                {hero.subtitle}
+              </p>
+
+              <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl">
+                {hero.description}
+              </p>
+            </>
+          )}
+
+          {/* CTA Buttons - Only show if enabled */}
+          {hero.showCTA && (
+            <div
+              className={`flex flex-col sm:flex-row gap-4 ${
+                hero.textAlignment === 'center'
+                  ? 'justify-center'
+                  : hero.textAlignment === 'right'
+                  ? 'justify-end'
+                  : ''
+              }`}
+            >
+              {hero.ctaPrimaryText && (
+                <a
+                  href={hero.ctaPrimaryLink}
+                  className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: theme.secondaryColor,
+                    color: theme.textColor,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (secondaryRgb) {
+                      e.currentTarget.style.backgroundColor = `rgb(${Math.max(
+                        secondaryRgb.r - 20,
+                        0
+                      )}, ${Math.max(secondaryRgb.g - 20, 0)}, ${Math.max(
+                        secondaryRgb.b - 20,
+                        0
+                      )})`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.secondaryColor;
+                  }}
+                >
+                  {hero.ctaPrimaryText}
+                </a>
+              )}
+
+              {hero.ctaSecondaryText && (
+                <a
+                  href={hero.ctaSecondaryLink}
+                  className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-blue-900 transition-colors"
+                >
+                  {hero.ctaSecondaryText}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 };

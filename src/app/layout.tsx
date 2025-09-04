@@ -7,6 +7,7 @@ import { TelegramHealthCheck } from '@/components/system/TelegramHealthCheck';
 import { Toaster } from 'sonner';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
+import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
 import './globals.css';
 
 const geistSans = localFont({
@@ -133,6 +134,7 @@ export default function RootLayout({
             }}
           >
             <AuthProvider>
+              <DynamicFavicon />
               <Suspense fallback={<PageLoading />}>
                 <MainLayout>{children}</MainLayout>
               </Suspense>
