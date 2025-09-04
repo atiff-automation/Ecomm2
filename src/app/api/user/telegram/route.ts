@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
+import { authOptions } from '@/lib/auth/config';
 import { telegramConfigService } from '@/lib/services/telegram-config.service';
 import { TelegramServiceFactory } from '@/lib/services/telegram-service-factory';
 import { z } from 'zod';
