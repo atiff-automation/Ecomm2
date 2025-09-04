@@ -251,9 +251,9 @@ export default function UserTelegramNotificationsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* PAGE HEADER */}
         <div>
-          <h1 className="text-3xl font-bold">Telegram Notifications</h1>
+          <h1 className="text-3xl font-bold">My Telegram Notifications</h1>
           <p className="text-muted-foreground">
-            Configure your personal Telegram notifications for order updates and inventory alerts.
+            Configure your <strong>personal Telegram notifications</strong> for your business. Each admin manages their own Telegram bot independently.
           </p>
         </div>
 

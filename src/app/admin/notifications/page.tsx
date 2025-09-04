@@ -220,6 +220,11 @@ export default function NotificationsPage() {
       href: '/admin/notifications',
     },
     {
+      id: 'my-telegram',
+      label: 'My Telegram',
+      href: '/user/notifications/telegram',
+    },
+    {
       id: 'configuration',
       label: 'Configuration',
       href: '/admin/notifications/configuration',
@@ -261,17 +266,39 @@ export default function NotificationsPage() {
       tabs={tabs}
       loading={loading}
     >
-      {/* Bot Status Alert */}
+      {/* Personal Telegram Setup Alert */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+        <div className="flex items-center gap-3">
+          <MessageCircle className="w-6 h-6 text-blue-600" />
+          <div>
+            <h3 className="font-medium text-blue-900">
+              Personal Telegram Notifications
+            </h3>
+            <p className="text-sm text-blue-800 mt-1">
+              Set up your <strong>personal Telegram notifications</strong> to receive order updates and alerts for your business.
+            </p>
+          </div>
+          <Button
+            onClick={() => router.push('/user/notifications/telegram')}
+            className="ml-auto bg-blue-600 hover:bg-blue-700"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Setup My Telegram
+          </Button>
+        </div>
+      </div>
+
+      {/* Bot Status Alert - Legacy Global Config */}
       {!botConfigured && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-amber-600" />
             <div>
               <h3 className="font-medium text-amber-900">
-                Bot Configuration Required
+                Legacy Global Configuration
               </h3>
               <p className="text-sm text-amber-800 mt-1">
-                Switch to the <strong>Configuration</strong> tab to set up your Telegram bot.
+                Global system configuration (for backward compatibility). Use <strong>My Telegram</strong> for personal setup.
               </p>
             </div>
             <Button
@@ -280,7 +307,7 @@ export default function NotificationsPage() {
               className="ml-auto border-amber-300 text-amber-700 hover:bg-amber-100"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Configure Now
+              Global Config
             </Button>
           </div>
         </div>
