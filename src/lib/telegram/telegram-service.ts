@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { telegramMonitoringService } from '@/lib/monitoring/telegram-monitoring';
 
 interface TelegramMessage {
   chat_id: string;
@@ -115,6 +116,9 @@ export class TelegramService {
 
       this.isHealthy = response.ok;
       this.lastHealthCheck = new Date();
+      
+      // Update monitoring service
+      telegramMonitoringService.updateHealthCheck();
 
       if (!this.isHealthy) {
         console.warn('⚠️ Telegram health check failed:', response.status);
@@ -126,6 +130,10 @@ export class TelegramService {
     } catch (error) {
       this.isHealthy = false;
       this.lastHealthCheck = new Date();
+      
+      // Update monitoring service even on error
+      telegramMonitoringService.updateHealthCheck();
+      
       console.error('❌ Telegram health check error:', error);
     }
   }
@@ -291,6 +299,8 @@ export class TelegramService {
       return false;
     }
 
+    const startTime = Date.now();
+    
     try {
       const response = await fetch(`${this.apiUrl}/sendMessage`, {
         method: 'POST',
@@ -301,6 +311,8 @@ export class TelegramService {
         // Add timeout to prevent hanging requests
         signal: AbortSignal.timeout(30000), // 30 second timeout
       });
+      
+      const responseTime = Date.now() - startTime;
 
       if (!response.ok) {
         const error = await response.text();
@@ -310,6 +322,9 @@ export class TelegramService {
           error
         );
 
+        // Record failed message in monitoring
+        telegramMonitoringService.recordMessageSent(false, responseTime);
+        
         // Queue for retry if it's a temporary failure and queueing is allowed
         if (allowQueue && this.shouldRetry(response.status)) {
           this.retryQueue.push({
@@ -324,10 +339,17 @@ export class TelegramService {
         return false;
       }
 
+      // Record successful message in monitoring
+      telegramMonitoringService.recordMessageSent(true, responseTime);
+      
       console.log('✅ Telegram notification sent successfully');
       return true;
     } catch (error) {
       console.error('Error sending Telegram message:', error);
+      
+      // Record failed message in monitoring (network errors, timeouts, etc.)
+      const responseTime = Date.now() - startTime;
+      telegramMonitoringService.recordMessageSent(false, responseTime);
 
       // Queue for retry if queueing is allowed (network errors, timeouts, etc.)
       if (allowQueue) {

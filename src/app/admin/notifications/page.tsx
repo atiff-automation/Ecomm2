@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,8 @@ import {
   Loader2,
   Package,
   ShoppingCart,
+  Zap,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
@@ -36,6 +39,7 @@ interface ChannelStatus {
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [health, setHealth] = useState<TelegramHealth | null>(null);
   const [loading, setLoading] = useState(false);
   const [testingChannels, setTestingChannels] = useState<
@@ -208,7 +212,7 @@ export default function NotificationsPage() {
     );
   }
 
-  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md - System section
+  // Define streamlined tabs for Telegram system
   const tabs: TabConfig[] = [
     {
       id: 'notifications',
@@ -216,12 +220,15 @@ export default function NotificationsPage() {
       href: '/admin/notifications',
     },
     {
-      id: 'monitoring',
-      label: 'System Monitoring',
-      href: '/admin/system/monitoring',
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/notifications/configuration',
     },
-    { id: 'logs', label: 'Activity Logs', href: '/admin/system/logs' },
-    { id: 'security', label: 'Security', href: '/admin/system/security' },
+    {
+      id: 'monitoring',
+      label: 'Monitoring',
+      href: '/admin/notifications/monitoring',
+    },
   ];
 
   // Extract page actions
@@ -256,21 +263,25 @@ export default function NotificationsPage() {
     >
       {/* Bot Status Alert */}
       {!botConfigured && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-6 h-6 text-red-600" />
+            <AlertTriangle className="w-6 h-6 text-amber-600" />
             <div>
-              <h3 className="font-medium text-red-900">
-                Telegram Bot Not Configured
+              <h3 className="font-medium text-amber-900">
+                Bot Configuration Required
               </h3>
-              <p className="text-sm text-red-800 mt-1">
-                Add{' '}
-                <code className="bg-red-100 px-1 rounded">
-                  TELEGRAM_BOT_TOKEN
-                </code>{' '}
-                to your .env file to enable notifications.
+              <p className="text-sm text-amber-800 mt-1">
+                Switch to the <strong>Configuration</strong> tab to set up your Telegram bot.
               </p>
             </div>
+            <Button
+              onClick={() => router.push('/admin/notifications/configuration')}
+              variant="outline"
+              className="ml-auto border-amber-300 text-amber-700 hover:bg-amber-100"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configure Now
+            </Button>
           </div>
         </div>
       )}
@@ -416,6 +427,7 @@ export default function NotificationsPage() {
         </Card>
       )}
 
+
       {/* Setup Instructions */}
       {(channels.some(c => !c.configured) || !botConfigured) && (
         <Card className="border-blue-200 mb-8">
@@ -426,10 +438,45 @@ export default function NotificationsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Setup Wizard Option */}
+            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 mb-2 text-lg">
+                    🚀 Easy Setup Wizard (Recommended)
+                  </h4>
+                  <p className="text-blue-800 text-sm mb-4 leading-relaxed">
+                    Configure your Telegram notifications in just 5 minutes with our guided setup wizard. 
+                    No manual .env editing required!
+                  </p>
+                  <Button
+                    onClick={() => router.push('/admin/notifications/setup')}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Start Setup Wizard
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Manual Setup Option */}
             <div className="p-6 bg-blue-50 border border-blue-200 rounded-xl">
-              <h4 className="font-semibold text-blue-900 mb-4 text-lg">
-                Complete Setup Guide:
-              </h4>
+              <div className="flex items-start gap-4 mb-4">
+                <Settings className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-semibold text-blue-900 mb-2 text-lg">
+                    Manual Setup (Advanced)
+                  </h4>
+                  <p className="text-blue-800 text-sm mb-4">
+                    Prefer to configure manually? Follow these steps:
+                  </p>
+                </div>
+              </div>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
