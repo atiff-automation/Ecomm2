@@ -15,7 +15,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, MessageSquare, Smartphone, Monitor } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Bell, 
+  Mail, 
+  MessageSquare, 
+  Smartphone, 
+  Monitor,
+  Settings,
+  Clock,
+  TestTube2,
+  Save,
+  Loader2,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { NotificationSettings } from '@/lib/notifications/notification-service';
 
@@ -52,9 +68,32 @@ export default function NotificationsPage() {
     },
   });
 
+  // TELEGRAM STATE: Configuration management
+  const [telegramConfig, setTelegramConfig] = useState({
+    botToken: '',
+    botUsername: '',
+    ordersEnabled: false,
+    ordersChatId: '',
+    inventoryEnabled: false,
+    inventoryChatId: '',
+    dailySummaryEnabled: false,
+    summaryTime: '09:00',
+    timezone: 'Asia/Kuala_Lumpur',
+    verified: false,
+    healthStatus: 'UNKNOWN',
+    lastHealthCheck: null,
+  });
+  
+  // TELEGRAM STATE: Status tracking
+  const [telegramStatus, setTelegramStatus] = useState<any>(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramTesting, setTelegramTesting] = useState(false);
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchNotificationPreferences();
+      loadTelegramConfiguration();
+      loadTelegramStatus();
     }
   }, [status]);
 
@@ -124,6 +163,108 @@ export default function NotificationsPage() {
         [field]: value,
       },
     }));
+  };
+
+  // TELEGRAM FUNCTIONS: Configuration management
+  const loadTelegramConfiguration = async () => {
+    try {
+      setTelegramLoading(true);
+      const response = await fetch('/api/user/telegram');
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Failed to load Telegram configuration:', data.error);
+        return;
+      }
+
+      if (data.configured && data.config) {
+        setTelegramConfig({
+          botToken: data.config.botToken !== '***masked***' ? data.config.botToken : telegramConfig.botToken,
+          botUsername: data.config.botUsername || '',
+          ordersEnabled: data.config.ordersEnabled,
+          ordersChatId: data.config.ordersChatId || '',
+          inventoryEnabled: data.config.inventoryEnabled,
+          inventoryChatId: data.config.inventoryChatId || '',
+          dailySummaryEnabled: data.config.dailySummaryEnabled,
+          summaryTime: data.config.summaryTime || '09:00',
+          timezone: data.config.timezone || 'Asia/Kuala_Lumpur',
+          verified: data.config.verified,
+          healthStatus: data.config.healthStatus,
+          lastHealthCheck: data.config.lastHealthCheck,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading Telegram configuration:', error);
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
+
+  const loadTelegramStatus = async () => {
+    try {
+      const response = await fetch('/api/user/telegram/status');
+      const data = await response.json();
+
+      if (response.ok) {
+        setTelegramStatus(data);
+      }
+    } catch (error) {
+      console.error('Error loading Telegram status:', error);
+    }
+  };
+
+  const saveTelegramConfiguration = async () => {
+    try {
+      setTelegramLoading(true);
+      const response = await fetch('/api/user/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(telegramConfig),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save Telegram configuration');
+      }
+
+      toast.success('Telegram configuration saved successfully!');
+      
+      // REFRESH: Reload status after saving
+      await loadTelegramStatus();
+    } catch (error) {
+      console.error('Error saving Telegram configuration:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save Telegram configuration');
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
+
+  const testTelegramConnection = async () => {
+    setTelegramTesting(true);
+    try {
+      const response = await fetch('/api/user/telegram/test', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+      
+      // REFRESH: Reload status after testing
+      await loadTelegramStatus();
+    } catch (error) {
+      console.error('Error testing Telegram connection:', error);
+      toast.error('Failed to test Telegram connection');
+    } finally {
+      setTelegramTesting(false);
+    }
   };
 
   if (loading) {
@@ -444,6 +585,233 @@ export default function NotificationsPage() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* TELEGRAM NOTIFICATIONS */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Telegram Notifications
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Configure your personal Telegram bot for business notifications
+          </p>
+          {telegramStatus && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant={telegramStatus.configured ? "default" : "secondary"}>
+                {telegramStatus.configured ? "Configured" : "Not Configured"}
+              </Badge>
+              <Badge variant={telegramStatus.health?.healthy ? "default" : "destructive"}>
+                {telegramStatus.health?.healthy ? "Healthy" : "Unhealthy"}
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={testTelegramConnection}
+                disabled={telegramTesting || !telegramStatus.configured}
+              >
+                {telegramTesting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <TestTube2 className="h-4 w-4 mr-2" />
+                    Test Connection
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Bot Configuration */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Bot Configuration</h4>
+            <div className="grid w-full items-center gap-2">
+              <Label htmlFor="botToken">Bot Token</Label>
+              <Input
+                id="botToken"
+                type="password"
+                placeholder="Enter your Telegram bot token"
+                value={telegramConfig.botToken || ''}
+                onChange={(e) => setTelegramConfig({ ...telegramConfig, botToken: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                Get your bot token from @BotFather on Telegram
+              </p>
+            </div>
+
+            <div className="grid w-full items-center gap-2">
+              <Label htmlFor="botUsername">Bot Username (Optional)</Label>
+              <Input
+                id="botUsername"
+                placeholder="@your_bot_username"
+                value={telegramConfig.botUsername || ''}
+                onChange={(e) => setTelegramConfig({ ...telegramConfig, botUsername: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Notification Channels */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Notification Channels</h4>
+            
+            {/* Orders Channel */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ordersEnabled" className="text-base font-medium">
+                  Order Notifications
+                </Label>
+                <Switch
+                  id="ordersEnabled"
+                  checked={telegramConfig.ordersEnabled}
+                  onCheckedChange={(checked) => 
+                    setTelegramConfig({ ...telegramConfig, ordersEnabled: checked })
+                  }
+                />
+              </div>
+              {telegramConfig.ordersEnabled && (
+                <div>
+                  <Label htmlFor="ordersChatId">Orders Chat ID</Label>
+                  <Input
+                    id="ordersChatId"
+                    placeholder="Enter chat ID (e.g., -1001234567890)"
+                    value={telegramConfig.ordersChatId || ''}
+                    onChange={(e) => setTelegramConfig({ ...telegramConfig, ordersChatId: e.target.value })}
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Chat ID where order notifications will be sent
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Inventory Channel */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="inventoryEnabled" className="text-base font-medium">
+                  Inventory Notifications
+                </Label>
+                <Switch
+                  id="inventoryEnabled"
+                  checked={telegramConfig.inventoryEnabled}
+                  onCheckedChange={(checked) => 
+                    setTelegramConfig({ ...telegramConfig, inventoryEnabled: checked })
+                  }
+                />
+              </div>
+              {telegramConfig.inventoryEnabled && (
+                <div>
+                  <Label htmlFor="inventoryChatId">Inventory Chat ID</Label>
+                  <Input
+                    id="inventoryChatId"
+                    placeholder="Enter chat ID (e.g., -1001234567890)"
+                    value={telegramConfig.inventoryChatId || ''}
+                    onChange={(e) => setTelegramConfig({ ...telegramConfig, inventoryChatId: e.target.value })}
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Chat ID where low stock alerts will be sent
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Daily Summary */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              <h4 className="font-medium">Daily Summary</h4>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="dailySummaryEnabled" className="text-base font-medium">
+                Enable Daily Summary
+              </Label>
+              <Switch
+                id="dailySummaryEnabled"
+                checked={telegramConfig.dailySummaryEnabled}
+                onCheckedChange={(checked) => 
+                  setTelegramConfig({ ...telegramConfig, dailySummaryEnabled: checked })
+                }
+              />
+            </div>
+
+            {telegramConfig.dailySummaryEnabled && (
+              <>
+                <div className="grid w-full items-center gap-2">
+                  <Label htmlFor="summaryTime">Summary Time</Label>
+                  <Input
+                    id="summaryTime"
+                    type="time"
+                    value={telegramConfig.summaryTime || '09:00'}
+                    onChange={(e) => setTelegramConfig({ ...telegramConfig, summaryTime: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid w-full items-center gap-2">
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select
+                    value={telegramConfig.timezone}
+                    onValueChange={(value) => setTelegramConfig({ ...telegramConfig, timezone: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur</SelectItem>
+                      <SelectItem value="Asia/Singapore">Asia/Singapore</SelectItem>
+                      <SelectItem value="Asia/Jakarta">Asia/Jakarta</SelectItem>
+                      <SelectItem value="Asia/Bangkok">Asia/Bangkok</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Save Telegram Configuration */}
+          <div className="flex justify-end">
+            <Button onClick={saveTelegramConfiguration} disabled={telegramLoading}>
+              {telegramLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Telegram Config
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Help Text */}
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Need help setting up?</strong> 
+              <br />
+              1. Create a bot using @BotFather on Telegram
+              <br />
+              2. Add your bot to the desired chat/channel
+              <br />
+              3. Get the chat ID using @RawDataBot or similar tools
+              <br />
+              4. Enter the bot token and chat IDs above
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
