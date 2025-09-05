@@ -5,7 +5,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { telegramService } from '@/lib/telegram/telegram-service';
+import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
 import { emailService } from '@/lib/email/email-service';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 
@@ -125,7 +125,7 @@ export class OrderStatusHandler {
         ? `${order.user.firstName} ${order.user.lastName}`
         : 'Valued Customer';
 
-      await telegramService.sendNewOrderNotification({
+      await simplifiedTelegramService.sendNewOrderNotification({
         orderNumber: order.orderNumber,
         customerName,
         total: Number(order.total),
@@ -204,7 +204,7 @@ export class OrderStatusHandler {
 
     // Send shipping notification
     try {
-      await telegramService.sendMessage({
+      await simplifiedTelegramService.sendMessage({
         message: `📦 ORDER SHIPPED\n\nOrder #${order.orderNumber} has been shipped!\n\nTracking: ${order.trackingNumber || 'N/A'}`,
         channel: 'orders',
       });
@@ -224,7 +224,7 @@ export class OrderStatusHandler {
 
     // Send delivery confirmation
     try {
-      await telegramService.sendMessage({
+      await simplifiedTelegramService.sendMessage({
         message: `✅ ORDER DELIVERED\n\nOrder #${order.orderNumber} has been successfully delivered!`,
         channel: 'orders',
       });
@@ -244,7 +244,7 @@ export class OrderStatusHandler {
 
     // Send cancellation notification
     try {
-      await telegramService.sendMessage({
+      await simplifiedTelegramService.sendMessage({
         message: `❌ ORDER CANCELLED\n\nOrder #${order.orderNumber} has been cancelled.`,
         channel: 'orders',
       });

@@ -2,26 +2,21 @@
 
 import React from 'react';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
-import { ConfigurationManager } from '@/components/telegram/ConfigurationManager';
+import { SimpleTelegramConfig } from '@/components/admin/telegram/SimpleTelegramConfig';
 import { Settings } from 'lucide-react';
 
 export default function NotificationsConfigurationPage() {
-  // Define streamlined tabs for Telegram system
+  // SIMPLIFIED: Admin-focused tabs following @CLAUDE.md CENTRALIZED approach
   const tabs: TabConfig[] = [
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: 'Dashboard',
       href: '/admin/notifications',
     },
     {
       id: 'configuration',
       label: 'Configuration',
       href: '/admin/notifications/configuration',
-    },
-    {
-      id: 'monitoring',
-      label: 'Monitoring',
-      href: '/admin/notifications/monitoring',
     },
   ];
 
@@ -31,7 +26,7 @@ export default function NotificationsConfigurationPage() {
       subtitle="Configure bot settings, channels, and manage your Telegram notification system"
       tabs={tabs}
     >
-      <ConfigurationManager />
+      <SimpleTelegramConfig />
     </AdminPageLayout>
   );
 }

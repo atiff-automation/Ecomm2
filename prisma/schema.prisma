@@ -1,6 +1,3 @@
-// JRM E-commerce Platform - Comprehensive Database Schema
-// Malaysian E-commerce with Membership System & Bulk Operations
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,911 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== USER MANAGEMENT & AUTHENTICATION ====================
+model User {
+  id                          String                   @id @default(cuid())
+  email                       String                   @unique
+  password                    String
+  firstName                   String
+  lastName                    String
+  phone                       String?
+  dateOfBirth                 DateTime?
+  role                        UserRole                 @default(CUSTOMER)
+  status                      UserStatus               @default(PENDING_VERIFICATION)
+  emailVerified               DateTime?
+  isMember                    Boolean                  @default(false)
+  memberSince                 DateTime?
+  membershipTotal             Decimal                  @default(0) @db.Decimal(10, 2)
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  lastLoginAt                 DateTime?
+  addresses                   Address[]
+  auditLogs                   AuditLog[]
+  cartItems                   CartItem[]
+  complianceReports           ComplianceReport[]
+  discountCodesCreated        DiscountCode[]
+  discountUsage               DiscountUsage[]
+  heroSectionsCreated         HeroSection[]            @relation("HeroCreator")
+  importExportJobs            ImportExportJob[]
+  mediaUploads                MediaUpload[]            @relation("MediaUploader")
+  referralsReceived           MemberReferral[]         @relation("ReferralsReceived")
+  referralsMade               MemberReferral[]         @relation("ReferralsMade")
+  notificationPreferences     NotificationPreference[]
+  orders                      Order[]
+  pendingMembership           PendingMembership?
+  recentlyViewed              RecentlyViewed[]
+  rewardsProcessed            ReferralReward[]         @relation("RewardsProcessed")
+  referralRewards             ReferralReward[]
+  referralSettings            ReferralSetting[]
+  reviews                     Review[]
+  siteCustomizationsCreated   SiteCustomization[]      @relation("SiteCustomizationCreator")
+  themesCreated               SiteTheme[]              @relation("ThemeCreator")
+  telegramConfig              TelegramConfig?
+  wishlistItems               WishlistItem[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([isMember])
+  @@map("users")
+}
+
+model PendingMembership {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  orderId          String   @unique
+  qualifyingAmount Decimal  @db.Decimal(10, 2)
+  registrationData Json?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([expiresAt])
+  @@map("pending_memberships")
+}
+
+model Address {
+  id             String   @id @default(cuid())
+  userId         String?
+  type           String
+  firstName      String
+  lastName       String
+  company        String?
+  addressLine1   String
+  addressLine2   String?
+  city           String
+  state          String
+  postalCode     String
+  country        String   @default("Malaysia")
+  phone          String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingOrders  Order[]  @relation("BillingAddress")
+  shippingOrders Order[]  @relation("ShippingAddress")
+
+  @@index([userId])
+  @@index([postalCode])
+  @@map("addresses")
+}
+
+model Category {
+  id              String            @id @default(cuid())
+  name            String
+  slug            String            @unique
+  description     String?
+  image           String?
+  parentId        String?
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  parent          Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children        Category[]        @relation("CategoryHierarchy")
+  products        ProductCategory[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  productId  String
+  categoryId String
+  createdAt  DateTime @default(now())
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([productId])
+  @@index([categoryId])
+  @@map("product_categories")
+}
+
+model Product {
+  id                        String            @id @default(cuid())
+  name                      String
+  slug                      String            @unique
+  description               String?
+  shortDescription          String?
+  sku                       String            @unique
+  barcode                   String?
+  status                    ProductStatus     @default(DRAFT)
+  regularPrice              Decimal           @db.Decimal(10, 2)
+  memberPrice               Decimal           @db.Decimal(10, 2)
+  costPrice                 Decimal           @db.Decimal(10, 2)
+  promotionalPrice          Decimal?          @db.Decimal(10, 2)
+  promotionStartDate        DateTime?
+  promotionEndDate          DateTime?
+  stockQuantity             Int               @default(0)
+  lowStockAlert             Int               @default(10)
+  weight                    Decimal?          @db.Decimal(8, 2)
+  metaTitle                 String?
+  metaDescription           String?
+  featured                  Boolean           @default(false)
+  isPromotional             Boolean           @default(false)
+  isQualifyingForMembership Boolean           @default(true)
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  earlyAccessStart          DateTime?
+  memberOnlyUntil           DateTime?
+  customsDescription        String?
+  hsCode                    String?
+  shippingClass             ShippingClass     @default(STANDARD)
+  dimensions                Json?
+  cartItems                 CartItem[]
+  orderItems                OrderItem[]
+  categories                ProductCategory[]
+  images                    ProductImage[]
+  variants                  ProductVariant[]
+  recentlyViewed            RecentlyViewed[]
+  reviews                   Review[]
+  wishlistItems             WishlistItem[]
+
+  @@index([slug])
+  @@index([sku])
+  @@index([status])
+  @@index([featured])
+  @@index([isPromotional])
+  @@index([regularPrice])
+  @@index([promotionStartDate])
+  @@index([promotionEndDate])
+  @@index([memberPrice])
+  @@index([memberOnlyUntil])
+  @@index([earlyAccessStart])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sortOrder])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  name          String
+  value         String
+  sku           String   @unique
+  regularPrice  Decimal  @db.Decimal(10, 2)
+  memberPrice   Decimal  @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sku])
+  @@map("product_variants")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+model Order {
+  id                       String             @id @default(cuid())
+  orderNumber              String             @unique
+  userId                   String?
+  guestEmail               String?
+  guestMembershipIntent    Json?
+  status                   OrderStatus        @default(PENDING)
+  paymentStatus            PaymentStatus      @default(PENDING)
+  subtotal                 Decimal            @db.Decimal(10, 2)
+  taxAmount                Decimal            @default(0) @db.Decimal(10, 2)
+  shippingCost             Decimal            @default(0) @db.Decimal(10, 2)
+  discountAmount           Decimal            @default(0) @db.Decimal(10, 2)
+  total                    Decimal            @db.Decimal(10, 2)
+  memberDiscount           Decimal            @default(0) @db.Decimal(10, 2)
+  wasEligibleForMembership Boolean            @default(false)
+  shippingAddressId        String?
+  billingAddressId         String?
+  paymentMethod            String?
+  paymentId                String?
+  trackingNumber           String?
+  shippedAt                DateTime?
+  deliveredAt              DateTime?
+  customerNotes            String?
+  adminNotes               String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  deliveryInstructions     String?
+  estimatedDeliveryDate    DateTime?
+  selectedCourierId        String?
+  shippingPreferences      Json?
+  toyyibpayBillCode        String?
+  toyyibpayPaymentUrl      String?
+  discountUsage            DiscountUsage[]
+  orderItems               OrderItem[]
+  billingAddress           Address?           @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress          Address?           @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  user                     User?              @relation(fields: [userId], references: [id])
+  pendingMembership        PendingMembership?
+  shipment                 Shipment?
+  trackingCache            TrackingCache?
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model Shipment {
+  id                   String             @id @default(cuid())
+  orderId              String             @unique
+  easyParcelShipmentId String?            @unique
+  trackingNumber       String?            @unique
+  courierId            String
+  courierName          String
+  serviceName          String
+  serviceType          String
+  pickupAddress        Json
+  deliveryAddress      Json
+  parcelDetails        Json
+  originalPrice        Decimal            @db.Decimal(10, 2)
+  finalPrice           Decimal            @db.Decimal(10, 2)
+  insuranceAmount      Decimal?           @db.Decimal(10, 2)
+  codAmount            Decimal?           @db.Decimal(10, 2)
+  status               ShipmentStatus     @default(DRAFT)
+  statusDescription    String?
+  estimatedDelivery    DateTime?
+  actualDelivery       DateTime?
+  labelUrl             String?
+  labelGenerated       Boolean            @default(false)
+  pickupScheduled      Boolean            @default(false)
+  pickupDate           DateTime?
+  pickupTimeSlot       String?
+  specialInstructions  String?
+  signatureRequired    Boolean            @default(false)
+  insuranceRequired    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  trackingEvents       ShipmentTracking[]
+  order                Order              @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([easyParcelShipmentId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@index([courierId])
+  @@map("shipments")
+}
+
+model ShipmentTracking {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  eventCode   String
+  eventName   String
+  description String
+  location    String?
+  eventTime   DateTime
+  timezone    String   @default("Asia/Kuala_Lumpur")
+  source      String   @default("EASYPARCEL")
+  createdAt   DateTime @default(now())
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId])
+  @@index([eventCode])
+  @@index([eventTime])
+  @@map("shipment_tracking")
+}
+
+model OrderItem {
+  id             String        @id @default(cuid())
+  orderId        String
+  productId      String
+  quantity       Int
+  regularPrice   Decimal       @db.Decimal(10, 2)
+  memberPrice    Decimal       @db.Decimal(10, 2)
+  appliedPrice   Decimal       @db.Decimal(10, 2)
+  totalPrice     Decimal       @db.Decimal(10, 2)
+  productName    String
+  productSku     String
+  discountCodeId String?
+  createdAt      DateTime      @default(now())
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Review {
+  id                 String   @id @default(cuid())
+  userId             String
+  productId          String
+  rating             Int
+  title              String?
+  comment            String?
+  isVerifiedPurchase Boolean  @default(false)
+  isApproved         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([rating])
+  @@index([isApproved])
+  @@map("reviews")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
+}
+
+model RecentlyViewed {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  viewedAt  DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([viewedAt])
+  @@map("recently_viewed")
+}
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  type      String   @default("string")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@map("system_config")
+}
+
+model TelegramConfig {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  botToken            String?
+  botUsername         String?
+  ordersEnabled       Boolean   @default(false)
+  ordersChatId        String?
+  inventoryEnabled    Boolean   @default(false)
+  inventoryChatId     String?
+  dailySummaryEnabled Boolean   @default(false)
+  summaryTime         String?
+  timezone            String    @default("Asia/Kuala_Lumpur")
+  verified            Boolean   @default(false)
+  lastHealthCheck     DateTime?
+  healthStatus        String    @default("UNKNOWN")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([verified])
+  @@index([healthStatus])
+  @@map("telegram_configs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ImportExportJob {
+  id                 String                @id @default(cuid())
+  jobNumber          String                @unique
+  type               ImportExportJobType
+  status             ImportExportJobStatus @default(PENDING)
+  progressPercentage Int                   @default(0)
+  totalRecords       Int                   @default(0)
+  processedRecords   Int                   @default(0)
+  errorCount         Int                   @default(0)
+  configuration      Json?
+  errorLog           Json?
+  resultFileUrl      String?
+  startedById        String
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  startedBy          User                  @relation(fields: [startedById], references: [id])
+
+  @@index([startedById])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("import_export_jobs")
+}
+
+model TaxRate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  rate        Decimal  @db.Decimal(5, 4)
+  isActive    Boolean  @default(true)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("tax_rates")
+}
+
+model ComplianceReport {
+  id            String   @id @default(cuid())
+  reportType    String
+  reportPeriod  String
+  reportData    Json
+  fileUrl       String?
+  generatedById String
+  createdAt     DateTime @default(now())
+  generatedBy   User     @relation(fields: [generatedById], references: [id])
+
+  @@index([reportType])
+  @@index([reportPeriod])
+  @@index([generatedById])
+  @@map("compliance_reports")
+}
+
+model DiscountCode {
+  id                     String          @id @default(cuid())
+  code                   String          @unique
+  name                   String
+  description            String?
+  discountType           DiscountType
+  discountValue          Decimal         @db.Decimal(10, 2)
+  minimumOrderValue      Decimal?        @db.Decimal(10, 2)
+  maximumDiscount        Decimal?        @db.Decimal(10, 2)
+  usageLimit             Int?
+  usageCount             Int             @default(0)
+  perUserLimit           Int?
+  memberOnly             Boolean         @default(false)
+  applicableToCategories String[]
+  applicableToProducts   String[]
+  excludeCategories      String[]
+  excludeProducts        String[]
+  startsAt               DateTime
+  expiresAt              DateTime?
+  status                 DiscountStatus  @default(ACTIVE)
+  isPublic               Boolean         @default(true)
+  createdById            String
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  createdBy              User            @relation(fields: [createdById], references: [id])
+  usageHistory           DiscountUsage[]
+  orderItems             OrderItem[]
+
+  @@index([code])
+  @@index([status])
+  @@index([memberOnly])
+  @@index([startsAt])
+  @@index([expiresAt])
+  @@index([createdById])
+  @@map("discount_codes")
+}
+
+model DiscountUsage {
+  id             String       @id @default(cuid())
+  discountCodeId String
+  userId         String
+  orderId        String
+  discountAmount Decimal      @db.Decimal(10, 2)
+  createdAt      DateTime     @default(now())
+  discountCode   DiscountCode @relation(fields: [discountCodeId], references: [id], onDelete: Cascade)
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([discountCodeId, orderId])
+  @@index([discountCodeId])
+  @@index([userId])
+  @@index([orderId])
+  @@map("discount_usage")
+}
+
+model NotificationPreference {
+  id               String                @id @default(cuid())
+  userId           String
+  notificationType NotificationType
+  emailEnabled     Boolean               @default(true)
+  smsEnabled       Boolean               @default(false)
+  pushEnabled      Boolean               @default(true)
+  inAppEnabled     Boolean               @default(true)
+  frequency        NotificationFrequency @default(IMMEDIATE)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType])
+  @@index([userId])
+  @@index([notificationType])
+  @@map("notification_preferences")
+}
+
+model MemberReferral {
+  id                   String              @id @default(cuid())
+  referrerId           String
+  referredId           String?
+  referralCode         String              @unique
+  referredEmail        String?
+  status               ReferralStatus      @default(PENDING)
+  referrerRewardType   ReferralRewardType?
+  referrerRewardAmount Decimal?            @db.Decimal(10, 2)
+  referrerRewardStatus RewardStatus        @default(PENDING)
+  refereeRewardType    ReferralRewardType?
+  referreeRewardAmount Decimal?            @db.Decimal(10, 2)
+  refereeRewardStatus  RewardStatus        @default(PENDING)
+  firstOrderDate       DateTime?
+  firstOrderAmount     Decimal?            @db.Decimal(10, 2)
+  totalOrderAmount     Decimal?            @default(0) @db.Decimal(15, 2)
+  totalOrders          Int                 @default(0)
+  referralDate         DateTime            @default(now())
+  registeredDate       DateTime?
+  rewardedDate         DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  referred             User?               @relation("ReferralsReceived", fields: [referredId], references: [id])
+  referrer             User                @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
+  rewards              ReferralReward[]
+
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([referralCode])
+  @@index([status])
+  @@index([referralDate])
+  @@map("member_referrals")
+}
+
+model ReferralReward {
+  id              String             @id @default(cuid())
+  userId          String
+  referralId      String
+  rewardType      ReferralRewardType
+  rewardAmount    Decimal            @db.Decimal(10, 2)
+  status          RewardStatus       @default(PENDING)
+  description     String?
+  processedBy     String?
+  processedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  processedByUser User?              @relation("RewardsProcessed", fields: [processedBy], references: [id])
+  referral        MemberReferral     @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([referralId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("referral_rewards")
+}
+
+model ReferralSetting {
+  id                    String             @id @default(cuid())
+  referrerRewardType    ReferralRewardType @default(DISCOUNT_CODE)
+  referrerRewardAmount  Decimal            @default(10) @db.Decimal(10, 2)
+  refereeRewardType     ReferralRewardType @default(DISCOUNT_CODE)
+  refereeRewardAmount   Decimal            @default(10) @db.Decimal(10, 2)
+  minimumOrderAmount    Decimal            @default(50) @db.Decimal(10, 2)
+  rewardExpiryDays      Int                @default(30)
+  maxReferralsPerMember Int?
+  isActive              Boolean            @default(true)
+  updatedBy             String
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  updatedByUser         User               @relation(fields: [updatedBy], references: [id])
+
+  @@map("referral_settings")
+}
+
+model SiteTheme {
+  id              String   @id @default(cuid())
+  name            String   @default("Default Theme")
+  primaryColor    String   @default("#3B82F6")
+  secondaryColor  String   @default("#FDE047")
+  backgroundColor String   @default("#F8FAFC")
+  textColor       String   @default("#1E293B")
+  logoUrl         String?
+  logoWidth       Int      @default(120)
+  logoHeight      Int      @default(40)
+  faviconUrl      String?
+  isActive        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  creator         User?    @relation("ThemeCreator", fields: [createdBy], references: [id])
+
+  @@index([isActive])
+  @@map("site_themes")
+}
+
+model HeroSection {
+  id               String    @id @default(cuid())
+  title            String    @default("Welcome to JRM E-commerce")
+  subtitle         String    @default("Malaysia's premier online marketplace")
+  description      String    @default("Intelligent membership benefits, dual pricing, and local payment integration.")
+  ctaPrimaryText   String    @default("Join as Member")
+  ctaPrimaryLink   String    @default("/auth/signup")
+  ctaSecondaryText String    @default("Browse Products")
+  ctaSecondaryLink String    @default("/products")
+  backgroundType   MediaType @default(IMAGE)
+  backgroundImage  String?
+  backgroundVideo  String?
+  overlayOpacity   Float     @default(0.1)
+  textAlignment    String    @default("left")
+  isActive         Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  createdBy        String?
+  showCTA          Boolean   @default(true)
+  showTitle        Boolean   @default(true)
+  creator          User?     @relation("HeroCreator", fields: [createdBy], references: [id])
+
+  @@map("hero_sections")
+}
+
+model MediaUpload {
+  id           String    @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  mediaType    MediaType
+  usage        String?
+  uploadedBy   String?
+  createdAt    DateTime  @default(now())
+  uploader     User?     @relation("MediaUploader", fields: [uploadedBy], references: [id])
+
+  @@map("media_uploads")
+}
+
+model SiteCustomization {
+  id        String   @id @default(cuid())
+  config    Json
+  version   Int      @default(1)
+  isActive  Boolean  @default(true)
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  creator   User?    @relation("SiteCustomizationCreator", fields: [createdBy], references: [id])
+
+  @@index([isActive])
+  @@index([version])
+  @@index([createdAt])
+  @@map("site_customization")
+}
+
+model WebhookQueue {
+  id             String        @id @default(cuid())
+  trackingNumber String
+  eventCode      String
+  eventName      String
+  eventTime      DateTime
+  location       String?
+  shipmentId     String
+  payload        Json
+  status         WebhookStatus @default(PENDING)
+  retryCount     Int           @default(0)
+  maxRetries     Int           @default(3)
+  nextRetryAt    DateTime      @default(now())
+  lastError      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  processedAt    DateTime?
+  failedAt       DateTime?
+
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+  @@index([eventCode])
+  @@map("webhook_queue")
+}
+
+model TrackingCache {
+  id                     String              @id @default(cuid())
+  orderId                String              @unique
+  courierTrackingNumber  String
+  courierService         String
+  currentStatus          String
+  lastStatusUpdate       DateTime
+  trackingEvents         Json                @default("[]")
+  estimatedDelivery      DateTime?
+  actualDelivery         DateTime?
+  deliveryLocation       String?
+  lastApiUpdate          DateTime
+  nextUpdateDue          DateTime
+  updateFrequencyMinutes Int                 @default(120)
+  consecutiveFailures    Int                 @default(0)
+  isDelivered            Boolean             @default(false)
+  isFailed               Boolean             @default(false)
+  isActive               Boolean             @default(true)
+  requiresAttention      Boolean             @default(false)
+  lastApiResponse        Json?
+  apiResponseHash        String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  order                  Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  jobQueue               TrackingJobQueue[]
+  updateLogs             TrackingUpdateLog[]
+
+  @@unique([orderId, courierTrackingNumber])
+  @@index([orderId])
+  @@index([courierTrackingNumber])
+  @@index([nextUpdateDue])
+  @@index([isActive, isDelivered])
+  @@index([currentStatus])
+  @@index([requiresAttention])
+  @@map("tracking_cache")
+}
+
+model TrackingUpdateLog {
+  id                String        @id @default(cuid())
+  trackingCacheId   String
+  updateType        String
+  triggeredBy       String?
+  apiCallSuccess    Boolean
+  apiResponseTimeMs Int?
+  apiStatusCode     Int?
+  apiErrorMessage   String?
+  statusChanged     Boolean       @default(false)
+  previousStatus    String?
+  newStatus         String?
+  eventsAdded       Int           @default(0)
+  startedAt         DateTime
+  completedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  trackingCache     TrackingCache @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
+
+  @@index([trackingCacheId])
+  @@index([startedAt])
+  @@index([apiCallSuccess])
+  @@index([updateType])
+  @@map("tracking_update_logs")
+}
+
+model TrackingJobQueue {
+  id              String            @id @default(cuid())
+  trackingCacheId String
+  jobType         TrackingJobType
+  priority        Int               @default(100)
+  scheduledFor    DateTime
+  attempts        Int               @default(0)
+  maxAttempts     Int               @default(3)
+  lastAttemptAt   DateTime?
+  lastError       String?
+  status          TrackingJobStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  trackingCache   TrackingCache     @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledFor, status])
+  @@index([trackingCacheId])
+  @@index([status])
+  @@index([priority])
+  @@index([jobType])
+  @@map("tracking_job_queue")
+}
+
+model MalaysianState {
+  id        String              @id @db.VarChar(3)
+  name      String              @db.VarChar(100)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  postcodes MalaysianPostcode[]
+
+  @@map("malaysian_states")
+}
+
+model MalaysianPostcode {
+  id        String         @id @default(cuid())
+  postcode  String         @db.VarChar(5)
+  district  String         @db.VarChar(100)
+  stateCode String         @db.VarChar(3)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  state     MalaysianState @relation(fields: [stateCode], references: [id])
+
+  @@unique([postcode, district])
+  @@index([postcode])
+  @@index([district])
+  @@index([stateCode])
+  @@map("malaysian_postcodes")
+}
+
+model AdminTelegramConfig {
+  id                  String   @id @default(cuid())
+  botToken            String
+  ordersChatId        String
+  inventoryChatId     String?
+  ordersEnabled       Boolean  @default(true)
+  inventoryEnabled    Boolean  @default(true)
+  dailySummaryEnabled Boolean  @default(true)
+  timezone            String   @default("Asia/Kuala_Lumpur")
+  isActive            Boolean  @unique(map: "unique_active_admin_telegram_config") @default(true)
+  createdBy           String?
+  updatedBy           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  // SIMPLIFIED: No user relationships for admin-only setup (following @CLAUDE.md NO HARDCODE)
+
+  @@index([isActive])
+  @@index([ordersEnabled])
+  @@index([inventoryEnabled])
+  @@map("admin_telegram_config")
+}
 
 enum UserRole {
   CUSTOMER
@@ -26,122 +927,6 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
-model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  password      String
-  firstName     String
-  lastName      String
-  phone         String?
-  dateOfBirth   DateTime?
-  role          UserRole   @default(CUSTOMER)
-  status        UserStatus @default(PENDING_VERIFICATION)
-  emailVerified DateTime?
-  
-  // Membership system
-  isMember        Boolean   @default(false)
-  memberSince     DateTime?
-  membershipTotal Decimal   @default(0) @db.Decimal(10, 2)
-  
-  // Address information
-  addresses Address[]
-  
-  // Relationships
-  orders         Order[]
-  reviews        Review[]
-  wishlistItems  WishlistItem[]
-  cartItems      CartItem[]
-  auditLogs      AuditLog[]
-  recentlyViewed RecentlyViewed[]
-  importExportJobs ImportExportJob[]
-  complianceReports ComplianceReport[]
-  pendingMembership PendingMembership?
-  
-  // Promotional relationships
-  discountCodesCreated DiscountCode[]
-  discountUsage        DiscountUsage[]
-  
-  // Notification preferences
-  notificationPreferences NotificationPreference[]
-  
-  // Referral system relationships
-  referralsMade     MemberReferral[] @relation("ReferralsMade")
-  referralsReceived MemberReferral[] @relation("ReferralsReceived")
-  referralRewards   ReferralReward[]
-  rewardsProcessed  ReferralReward[] @relation("RewardsProcessed")
-  referralSettings  ReferralSetting[]
-  
-  // Site customization relationships
-  heroSectionsCreated HeroSection[] @relation("HeroCreator")
-  mediaUploads      MediaUpload[] @relation("MediaUploader")
-  themesCreated     SiteTheme[] @relation("ThemeCreator")
-  siteCustomizationsCreated SiteCustomization[] @relation("SiteCustomizationCreator")
-  
-  // Telegram notification relationship
-  telegramConfig TelegramConfig?
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  lastLoginAt DateTime?
-  
-  @@map("users")
-  @@index([email])
-  @@index([role])
-  @@index([status])
-  @@index([isMember])
-}
-
-model PendingMembership {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  orderId           String   @unique // Link to the qualifying order
-  qualifyingAmount  Decimal  @db.Decimal(10, 2)
-  registrationData  Json?    // Store form data like acceptTerms, etc.
-  expiresAt         DateTime // Auto-expire if not confirmed within timeframe
-  
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("pending_memberships")
-  @@index([userId])
-  @@index([orderId])
-  @@index([expiresAt])
-}
-
-model Address {
-  id           String  @id @default(cuid())
-  userId       String?  // Nullable for guest addresses
-  type         String  // HOME, WORK, OTHER, SHIPPING, BILLING
-  firstName    String
-  lastName     String
-  company      String?
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String
-  postalCode   String
-  country      String  @default("Malaysia")
-  phone        String?
-  isDefault    Boolean @default(false)
-  
-  user              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingOrders    Order[] @relation("ShippingAddress")
-  billingOrders     Order[] @relation("BillingAddress")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("addresses")
-  @@index([userId])
-  @@index([postalCode])
-}
-
-// ==================== PRODUCT MANAGEMENT ====================
-
 enum ProductStatus {
   DRAFT
   ACTIVE
@@ -150,176 +935,10 @@ enum ProductStatus {
   DISCONTINUED
 }
 
-// EasyParcel Shipping Classes (PDF Section 3.3)
 enum ShippingClass {
-  STANDARD    // Normal handling
-  FRAGILE     // Fragile items requiring special care
-  HAZARDOUS   // Hazardous materials with restrictions
-}
-
-model Category {
-  id                   String    @id @default(cuid())
-  name                 String
-  slug                 String    @unique
-  description          String?
-  image                String?
-  parentId             String?
-  metaTitle            String?
-  metaDescription      String?
-  
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryHierarchy")
-  products ProductCategory[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("categories")
-  @@index([slug])
-  @@index([parentId])
-}
-
-// Junction table for many-to-many relationship between Products and Categories
-model ProductCategory {
-  id         String @id @default(cuid())
-  productId  String
-  categoryId String
-  
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([productId, categoryId])
-  @@map("product_categories")
-  @@index([productId])
-  @@index([categoryId])
-}
-
-model Product {
-  id              String        @id @default(cuid())
-  name            String
-  slug            String        @unique
-  description     String?
-  shortDescription String?
-  sku             String        @unique
-  barcode         String?
-  status          ProductStatus @default(DRAFT)
-  
-  // Pricing - Dual pricing system for members
-  regularPrice    Decimal @db.Decimal(10, 2)
-  memberPrice     Decimal @db.Decimal(10, 2)
-  costPrice       Decimal @db.Decimal(10, 2)
-  
-  // Promotional pricing system
-  promotionalPrice   Decimal?  @db.Decimal(10, 2) // Special promotion price
-  promotionStartDate DateTime? // When promotion becomes active
-  promotionEndDate   DateTime? // When promotion expires
-  
-  // Member early access system
-  memberOnlyUntil    DateTime? // Product visible only to members until this date
-  earlyAccessStart   DateTime? // Early access to promotions for members starts
-  
-  // Inventory
-  stockQuantity   Int     @default(0)
-  lowStockAlert   Int     @default(10)
-  weight          Decimal? @db.Decimal(8, 2) // Required for shipping calculations
-  dimensions      Json?    // {length: cm, width: cm, height: cm} - EasyParcel format
-  
-  // Shipping Configuration (EasyParcel v1.4.0 - PDF Section 3.2)
-  shippingClass       ShippingClass @default(STANDARD)
-  customsDescription  String?       // For international shipping
-  hsCode             String?       // Harmonized System code for customs
-  
-  // SEO & Marketing
-  metaTitle       String?
-  metaDescription String?
-  featured        Boolean @default(false)
-  isPromotional   Boolean @default(false) // Excluded from membership calculation
-  isQualifyingForMembership Boolean @default(true) // Product-level membership qualification control
-  
-  // Relationships - Multiple categories support
-  categories    ProductCategory[]
-  
-  images        ProductImage[]
-  variants      ProductVariant[]
-  reviews       Review[]
-  orderItems    OrderItem[]
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
-  recentlyViewed RecentlyViewed[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("products")
-  @@index([slug])
-  @@index([sku])
-  @@index([status])
-  @@index([featured])
-  @@index([isPromotional])
-  @@index([regularPrice])
-  @@index([promotionStartDate])
-  @@index([promotionEndDate])
-  @@index([memberPrice])
-  @@index([memberOnlyUntil])
-  @@index([earlyAccessStart])
-}
-
-model ProductImage {
-  id        String  @id @default(cuid())
-  productId String
-  url       String
-  altText   String?
-  sortOrder Int     @default(0)
-  isPrimary Boolean @default(false)
-  
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@map("product_images")
-  @@index([productId])
-  @@index([sortOrder])
-}
-
-model ProductVariant {
-  id           String  @id @default(cuid())
-  productId    String
-  name         String  // Size, Color, etc.
-  value        String  // Large, Red, etc.
-  sku          String  @unique
-  regularPrice Decimal @db.Decimal(10, 2)
-  memberPrice  Decimal @db.Decimal(10, 2)
-  stockQuantity Int    @default(0)
-  
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("product_variants")
-  @@index([productId])
-  @@index([sku])
-}
-
-// ==================== SHOPPING & ORDERS ====================
-
-model CartItem {
-  id        String @id @default(cuid())
-  userId    String
-  productId String
-  quantity  Int    @default(1)
-  
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("cart_items")
-  @@unique([userId, productId])
-  @@index([userId])
+  STANDARD
+  FRAGILE
+  HAZARDOUS
 }
 
 enum OrderStatus {
@@ -340,317 +959,19 @@ enum PaymentStatus {
   PARTIALLY_REFUNDED
 }
 
-// EasyParcel Shipment Status (PDF Section 6.1)
 enum ShipmentStatus {
-  DRAFT              // Shipment created but not booked
-  RATE_CALCULATED    // Shipping rates obtained
-  BOOKED             // Shipment booked with EasyParcel
-  LABEL_GENERATED    // Shipping label generated
-  PICKUP_SCHEDULED   // Pickup scheduled
-  PICKED_UP          // Package picked up by courier
-  IN_TRANSIT         // Package in transit
-  OUT_FOR_DELIVERY   // Package out for delivery
-  DELIVERED          // Package delivered
-  FAILED             // Delivery failed
-  CANCELLED          // Shipment cancelled
+  DRAFT
+  RATE_CALCULATED
+  BOOKED
+  LABEL_GENERATED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  CANCELLED
 }
-
-model Order {
-  id       String @id @default(cuid())
-  orderNumber String @unique // Format: ORD-YYYYMMDD-XXXX
-  
-  // Customer information (nullable for guest checkout)
-  userId  String?
-  user    User?   @relation(fields: [userId], references: [id])
-  
-  // Guest checkout fields
-  guestEmail String? // For guest orders
-  guestMembershipIntent Json? // Store guest membership registration intent
-  
-  // Order status
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-  
-  // Pricing
-  subtotal      Decimal @db.Decimal(10, 2)
-  taxAmount     Decimal @db.Decimal(10, 2) @default(0)
-  shippingCost  Decimal @db.Decimal(10, 2) @default(0)
-  discountAmount Decimal @db.Decimal(10, 2) @default(0)
-  total         Decimal @db.Decimal(10, 2)
-  
-  // Member benefits applied
-  memberDiscount Decimal @db.Decimal(10, 2) @default(0)
-  wasEligibleForMembership Boolean @default(false)
-  
-  // Addresses
-  shippingAddressId String?
-  billingAddressId  String?
-  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress    Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
-  
-  // Payment & Shipping
-  paymentMethod   String?    // BILLPLZ, TOYYIBPAY, BANK_TRANSFER, etc.
-  paymentId       String?    // External payment ID
-  
-  // ToyyibPay specific fields
-  toyyibpayBillCode    String?    // ToyyibPay bill code
-  toyyibpayPaymentUrl  String?    // ToyyibPay payment URL
-  
-  trackingNumber  String?
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  
-  // EasyParcel Integration (PDF Section 3.4 - Order Enhancements)
-  selectedCourierId      String?   // Selected courier for shipping
-  estimatedDeliveryDate  DateTime? // EasyParcel estimated delivery
-  shippingPreferences    Json?     // {insurance: boolean, signature_required: boolean, cod: object}
-  deliveryInstructions   String?   // Special delivery instructions
-  
-  // Relationships
-  orderItems OrderItem[]
-  discountUsage DiscountUsage[]
-  pendingMembership PendingMembership?
-  shipment Shipment? // One-to-one relationship with shipment
-  trackingCache TrackingCache? // One-to-one relationship with tracking cache
-  
-  // Special notes
-  customerNotes String?
-  adminNotes    String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("orders")
-  @@index([userId])
-  @@index([status])
-  @@index([paymentStatus])
-  @@index([orderNumber])
-  @@index([createdAt])
-}
-
-// EasyParcel Shipment Model (PDF Section 3.2.1 - Shipment Entity)
-model Shipment {
-  id                    String   @id @default(cuid())
-  orderId               String   @unique
-  easyParcelShipmentId  String?  @unique // EasyParcel shipment ID
-  trackingNumber        String?  @unique
-  
-  // Courier Information (PDF Section 4.1)
-  courierId             String
-  courierName           String
-  serviceName           String
-  serviceType           String   // STANDARD, EXPRESS, OVERNIGHT
-  
-  // Shipping Details (PDF Section 3.3)
-  pickupAddress         Json     // Structured address
-  deliveryAddress       Json     // Structured address
-  parcelDetails         Json     // Weight, dimensions, value
-  
-  // Pricing (PDF Section 5.2)
-  originalPrice         Decimal  @db.Decimal(10, 2)
-  finalPrice            Decimal  @db.Decimal(10, 2)
-  insuranceAmount       Decimal? @db.Decimal(10, 2)
-  codAmount            Decimal? @db.Decimal(10, 2)
-  
-  // Status Tracking (PDF Section 6.1)
-  status               ShipmentStatus @default(DRAFT)
-  statusDescription    String?
-  estimatedDelivery    DateTime?
-  actualDelivery       DateTime?
-  
-  // Label & Pickup (PDF Sections 7.1, 8.1)
-  labelUrl             String?
-  labelGenerated       Boolean  @default(false)
-  pickupScheduled      Boolean  @default(false)
-  pickupDate           DateTime?
-  pickupTimeSlot       String?
-  
-  // Special Instructions (PDF Section 3.4)
-  specialInstructions  String?
-  signatureRequired    Boolean  @default(false)
-  insuranceRequired    Boolean  @default(false)
-  
-  // Relationships
-  order                Order    @relation(fields: [orderId], references: [id])
-  trackingEvents       ShipmentTracking[]
-  
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
-  @@map("shipments")
-  @@index([orderId])
-  @@index([easyParcelShipmentId])
-  @@index([trackingNumber])
-  @@index([status])
-  @@index([courierId])
-}
-
-// EasyParcel Tracking Events (PDF Section 6.2 - Tracking Events)
-model ShipmentTracking {
-  id          String   @id @default(cuid())
-  shipmentId  String
-  
-  // Event Details (PDF Section 6.2.1)
-  eventCode   String   // As per EasyParcel event codes
-  eventName   String
-  description String
-  location    String?
-  
-  // Timing
-  eventTime   DateTime
-  timezone    String   @default("Asia/Kuala_Lumpur")
-  
-  // Source
-  source      String   @default("EASYPARCEL") // EASYPARCEL, COURIER, MANUAL
-  
-  shipment    Shipment @relation(fields: [shipmentId], references: [id])
-  createdAt   DateTime @default(now())
-  
-  @@map("shipment_tracking")
-  @@index([shipmentId])
-  @@index([eventCode])
-  @@index([eventTime])
-}
-
-model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  
-  quantity      Int
-  regularPrice  Decimal @db.Decimal(10, 2)
-  memberPrice   Decimal @db.Decimal(10, 2)
-  appliedPrice  Decimal @db.Decimal(10, 2) // Actual price paid
-  totalPrice    Decimal @db.Decimal(10, 2)
-  
-  // Product snapshot at time of purchase
-  productName   String
-  productSku    String
-  
-  // Discount applied to this item
-  discountCodeId String?
-  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
-  
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  
-  createdAt DateTime @default(now())
-  
-  @@map("order_items")
-  @@index([orderId])
-  @@index([productId])
-}
-
-// ==================== REVIEWS & ENGAGEMENT ====================
-
-model Review {
-  id        String  @id @default(cuid())
-  userId    String
-  productId String
-  rating    Int     // 1-5 stars
-  title     String?
-  comment   String?
-  isVerifiedPurchase Boolean @default(false)
-  isApproved Boolean @default(false)
-  
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("reviews")
-  @@unique([userId, productId])
-  @@index([productId])
-  @@index([rating])
-  @@index([isApproved])
-}
-
-model WishlistItem {
-  id        String @id @default(cuid())
-  userId    String
-  productId String
-  
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@map("wishlist_items")
-  @@unique([userId, productId])
-  @@index([userId])
-}
-
-model RecentlyViewed {
-  id        String @id @default(cuid())
-  userId    String
-  productId String
-  viewedAt  DateTime @default(now())
-  
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  @@map("recently_viewed")
-  @@unique([userId, productId])
-  @@index([userId])
-  @@index([viewedAt])
-}
-
-// ==================== SYSTEM CONFIGURATION ====================
-
-model SystemConfig {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
-  type  String @default("string") // string, number, boolean, json
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("system_config")
-  @@index([key])
-}
-
-// ==================== TELEGRAM CONFIGURATION ====================
-
-model TelegramConfig {
-  id        String @id @default(cuid())
-  userId    String @unique  // One config per user
-  
-  // Bot Configuration (Encrypted)
-  botToken        String?  // Encrypted bot token
-  botUsername     String?  // Bot username for display
-  
-  // Channel Settings  
-  ordersEnabled     Boolean @default(false)
-  ordersChatId      String?
-  inventoryEnabled  Boolean @default(false) 
-  inventoryChatId   String?
-  
-  // Notification Preferences
-  dailySummaryEnabled Boolean @default(false)
-  summaryTime         String? // "09:00" format
-  timezone           String  @default("Asia/Kuala_Lumpur")
-  
-  // Health & Security
-  verified           Boolean @default(false)
-  lastHealthCheck    DateTime?
-  healthStatus       String  @default("UNKNOWN")
-  
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("telegram_configs")
-  @@index([userId])
-  @@index([verified])
-  @@index([healthStatus])
-}
-
-// ==================== AUDIT & LOGGING ====================
 
 enum AuditAction {
   CREATE
@@ -669,29 +990,6 @@ enum AuditAction {
   MAINTENANCE_MODE_TOGGLE
   ERROR
 }
-
-model AuditLog {
-  id        String      @id @default(cuid())
-  userId    String?
-  action    String      // Changed from AuditAction enum to String for flexibility
-  resource  String      // table name or resource type
-  resourceId String?    // ID of the affected resource
-  details   Json?       // Combined old/new values and additional context
-  ipAddress String?
-  userAgent String?
-  
-  user User? @relation(fields: [userId], references: [id])
-  
-  createdAt DateTime @default(now())
-  
-  @@map("audit_logs")
-  @@index([userId])
-  @@index([action])
-  @@index([resource])
-  @@index([createdAt])
-}
-
-// ==================== BULK OPERATIONS & IMPORT/EXPORT ====================
 
 enum ImportExportJobType {
   PRODUCT_IMPORT
@@ -712,72 +1010,6 @@ enum ImportExportJobStatus {
   CANCELLED
 }
 
-model ImportExportJob {
-  id                 String                  @id @default(cuid())
-  jobNumber          String                  @unique // Format: JOB-YYYYMMDD-XXXX
-  type               ImportExportJobType
-  status             ImportExportJobStatus   @default(PENDING)
-  progressPercentage Int                     @default(0)  
-  totalRecords       Int                     @default(0)
-  processedRecords   Int                     @default(0)
-  errorCount         Int                     @default(0)
-  configuration      Json?                   // Job settings and parameters  
-  errorLog           Json?                   // Detailed error information
-  resultFileUrl      String?                 // Download URL for export results
-  
-  // User who started the job
-  startedById String
-  startedBy   User   @relation(fields: [startedById], references: [id])
-  
-  // Processing times
-  startedAt   DateTime?
-  completedAt DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("import_export_jobs")
-  @@index([startedById])
-  @@index([status])
-  @@index([type])
-  @@index([createdAt])
-}
-
-// ==================== MALAYSIAN COMPLIANCE & TAX ====================
-
-model TaxRate {
-  id          String  @id @default(cuid())
-  name        String  @unique // SST, GST, Service Tax
-  rate        Decimal @db.Decimal(5, 4) // 0.0600 for 6%
-  isActive    Boolean @default(true)
-  description String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("tax_rates")
-  @@index([isActive])
-}
-
-model ComplianceReport {
-  id           String    @id @default(cuid())
-  reportType   String    // GST_MONTHLY, SST_QUARTERLY, SALES_SUMMARY  
-  reportPeriod String    // YYYYMM or YYYYQQ
-  reportData   Json      // Generated report content
-  fileUrl      String?   // Download URL
-  generatedById String
-  generatedBy   User     @relation(fields: [generatedById], references: [id])
-  
-  createdAt DateTime @default(now())
-  
-  @@map("compliance_reports")
-  @@index([reportType])
-  @@index([reportPeriod])
-  @@index([generatedById])
-}
-
-// ==================== PROMOTIONAL & DISCOUNT SYSTEM ====================
-
 enum DiscountType {
   PERCENTAGE
   FIXED_AMOUNT
@@ -791,82 +1023,6 @@ enum DiscountStatus {
   EXPIRED
   USED_UP
 }
-
-model DiscountCode {
-  id               String         @id @default(cuid())
-  code             String         @unique
-  name             String
-  description      String?
-  
-  // Discount configuration
-  discountType     DiscountType
-  discountValue    Decimal        @db.Decimal(10, 2) // Percentage (0-100) or fixed amount
-  
-  // Usage restrictions
-  minimumOrderValue Decimal?      @db.Decimal(10, 2)
-  maximumDiscount   Decimal?      @db.Decimal(10, 2)
-  usageLimit        Int?          // Total usage limit
-  usageCount        Int           @default(0)
-  perUserLimit      Int?          // Per user limit
-  
-  // Member restrictions
-  memberOnly        Boolean       @default(false)
-  
-  // Product/Category restrictions
-  applicableToCategories String[] // Category IDs
-  applicableToProducts   String[] // Product IDs
-  excludeCategories      String[] // Excluded categories
-  excludeProducts        String[] // Excluded products
-  
-  // Time restrictions
-  startsAt         DateTime
-  expiresAt        DateTime?
-  
-  // Status and metadata
-  status           DiscountStatus @default(ACTIVE)
-  isPublic         Boolean        @default(true) // Public codes vs private/targeted
-  
-  // Relationships
-  createdById      String
-  createdBy        User           @relation(fields: [createdById], references: [id])
-  
-  // Usage tracking
-  usageHistory     DiscountUsage[]
-  orderItems       OrderItem[]
-  
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  
-  @@map("discount_codes")
-  @@index([code])
-  @@index([status])
-  @@index([memberOnly])
-  @@index([startsAt])
-  @@index([expiresAt])
-  @@index([createdById])
-}
-
-model DiscountUsage {
-  id             String      @id @default(cuid())
-  discountCodeId String
-  userId         String
-  orderId        String
-  discountAmount Decimal     @db.Decimal(10, 2)
-  
-  discountCode   DiscountCode @relation(fields: [discountCodeId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  createdAt      DateTime     @default(now())
-  
-  @@map("discount_usage")
-  @@index([discountCodeId])
-  @@index([userId])
-  @@index([orderId])
-  @@unique([discountCodeId, orderId]) // One discount per order
-}
-
-// ==================== NOTIFICATION PREFERENCES ====================
 
 enum NotificationType {
   ORDER_CONFIRMATION
@@ -890,369 +1046,40 @@ enum NotificationFrequency {
   MONTHLY
 }
 
-model NotificationPreference {
-  id               String              @id @default(cuid())
-  userId           String
-  notificationType NotificationType
-  emailEnabled     Boolean             @default(true)
-  smsEnabled       Boolean             @default(false)
-  pushEnabled      Boolean             @default(true)
-  inAppEnabled     Boolean             @default(true)
-  frequency        NotificationFrequency @default(IMMEDIATE)
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("notification_preferences")
-  @@index([userId])
-  @@index([notificationType])
-  @@unique([userId, notificationType])
-}
-
-// Member Referral Tracking System
-model MemberReferral {
-  id            String   @id @default(cuid())
-  referrerId    String   // Member who made the referral
-  referredId    String?  // User who was referred (null until they register)
-  referralCode  String   @unique // Unique referral code
-  referredEmail String?  // Email of referred person (for tracking before registration)
-  status        ReferralStatus @default(PENDING)
-  
-  // Rewards tracking
-  referrerRewardType   ReferralRewardType?
-  referrerRewardAmount Decimal? @db.Decimal(10,2)
-  referrerRewardStatus RewardStatus @default(PENDING)
-  refereeRewardType    ReferralRewardType?
-  referreeRewardAmount Decimal? @db.Decimal(10,2)
-  refereeRewardStatus  RewardStatus @default(PENDING)
-  
-  // Business metrics
-  firstOrderDate    DateTime?
-  firstOrderAmount  Decimal? @db.Decimal(10,2)
-  totalOrderAmount  Decimal? @default(0) @db.Decimal(15,2)
-  totalOrders       Int      @default(0)
-  
-  // Relationships
-  referrer User  @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
-  referred User? @relation("ReferralsReceived", fields: [referredId], references: [id], onDelete: SetNull)
-  rewards  ReferralReward[]
-  
-  // Timestamps
-  referralDate    DateTime @default(now())
-  registeredDate  DateTime?
-  rewardedDate    DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@map("member_referrals")
-  @@index([referrerId])
-  @@index([referredId])
-  @@index([referralCode])
-  @@index([status])
-  @@index([referralDate])
-}
-
-model ReferralReward {
-  id            String   @id @default(cuid())
-  userId        String   // User receiving the reward
-  referralId    String   // Associated referral
-  rewardType    ReferralRewardType
-  rewardAmount  Decimal  @db.Decimal(10,2)
-  status        RewardStatus @default(PENDING)
-  description   String?
-  
-  // Processing details
-  processedBy   String?
-  processedAt   DateTime?
-  expiresAt     DateTime?
-  
-  // Relationships
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  referral MemberReferral @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  processedByUser User?   @relation("RewardsProcessed", fields: [processedBy], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("referral_rewards")
-  @@index([userId])
-  @@index([referralId])
-  @@index([status])
-  @@index([expiresAt])
-}
-
-model ReferralSetting {
-  id                    String   @id @default(cuid())
-  
-  // Referrer rewards
-  referrerRewardType    ReferralRewardType @default(DISCOUNT_CODE)
-  referrerRewardAmount  Decimal @default(10) @db.Decimal(10,2)
-  
-  // Referee rewards  
-  refereeRewardType     ReferralRewardType @default(DISCOUNT_CODE)
-  refereeRewardAmount   Decimal @default(10) @db.Decimal(10,2)
-  
-  // Qualification criteria
-  minimumOrderAmount    Decimal @default(50) @db.Decimal(10,2)
-  rewardExpiryDays      Int     @default(30)
-  maxReferralsPerMember Int?    // null = unlimited
-  
-  // System settings
-  isActive              Boolean @default(true)
-  
-  updatedBy String
-  updatedByUser User @relation(fields: [updatedBy], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("referral_settings")
-}
-
-// Enums for Referral System
 enum ReferralStatus {
-  PENDING      // Referral sent, person not registered yet
-  REGISTERED   // Person registered but no order yet
-  COMPLETED    // Person made qualifying order
-  EXPIRED      // Referral expired
-  CANCELLED    // Referral cancelled
+  PENDING
+  REGISTERED
+  COMPLETED
+  EXPIRED
+  CANCELLED
 }
 
 enum ReferralRewardType {
-  DISCOUNT_CODE    // Percentage or fixed discount code
-  STORE_CREDIT     // Store credit amount
-  CASH_REWARD      // Direct cash reward
-  FREE_SHIPPING    // Free shipping voucher
-  PRODUCT_DISCOUNT // Specific product discount
+  DISCOUNT_CODE
+  STORE_CREDIT
+  CASH_REWARD
+  FREE_SHIPPING
+  PRODUCT_DISCOUNT
 }
 
 enum RewardStatus {
-  PENDING      // Reward earned but not yet issued
-  ISSUED       // Reward issued to user
-  USED         // Reward has been used
-  EXPIRED      // Reward expired unused
-  CANCELLED    // Reward cancelled
+  PENDING
+  ISSUED
+  USED
+  EXPIRED
+  CANCELLED
 }
-
-// ==================== SITE CUSTOMIZATION ====================
 
 enum MediaType {
   IMAGE
   VIDEO
 }
 
-model SiteTheme {
-  id              String    @id @default(cuid())
-  name            String    @default("Default Theme")
-  primaryColor    String    @default("#3B82F6")
-  secondaryColor  String    @default("#FDE047") 
-  backgroundColor String    @default("#F8FAFC")
-  textColor       String    @default("#1E293B")
-  logoUrl         String?   // URL to uploaded logo
-  logoWidth       Int       @default(120)
-  logoHeight      Int       @default(40)
-  faviconUrl      String?   // URL to uploaded favicon
-  isActive        Boolean   @default(false) // Only one theme can be active
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  createdBy       String?
-  creator         User?     @relation("ThemeCreator", fields: [createdBy], references: [id])
-
-  @@map("site_themes")
-  @@index([isActive])
-}
-
-model HeroSection {
-  id                String    @id @default(cuid())
-  title             String    @default("Welcome to JRM E-commerce")
-  subtitle          String    @default("Malaysia's premier online marketplace")
-  description       String    @default("Intelligent membership benefits, dual pricing, and local payment integration.")
-  ctaPrimaryText    String    @default("Join as Member")
-  ctaPrimaryLink    String    @default("/auth/signup")
-  ctaSecondaryText  String    @default("Browse Products")
-  ctaSecondaryLink  String    @default("/products")
-  backgroundType    MediaType @default(IMAGE)
-  backgroundImage   String?   // URL to background image
-  backgroundVideo   String?   // URL to background video
-  overlayOpacity    Float     @default(0.1) // Background overlay opacity (0-1)
-  textAlignment     String    @default("left") // left, center, right
-  showTitle         Boolean   @default(true) // Show title section toggle
-  showCTA           Boolean   @default(true) // Show CTA buttons toggle
-  isActive          Boolean   @default(false) // Only one hero section can be active
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  createdBy         String?
-  creator           User?     @relation("HeroCreator", fields: [createdBy], references: [id])
-
-  @@map("hero_sections")
-}
-
-model MediaUpload {
-  id            String    @id @default(cuid())
-  filename      String    // Original filename
-  originalName  String    // User's original filename
-  mimeType      String    // File MIME type
-  size          Int       // File size in bytes
-  url           String    // Storage URL
-  mediaType     MediaType // IMAGE or VIDEO
-  usage         String?   // Usage context (e.g., "hero_background", "theme_asset")
-  uploadedBy    String?
-  uploader      User?     @relation("MediaUploader", fields: [uploadedBy], references: [id])
-  createdAt     DateTime  @default(now())
-
-  @@map("media_uploads")
-}
-
-// ==================== UNIFIED SITE CUSTOMIZATION ====================
-// Single source of truth for all site customization data
-// Replaces separate HeroSection and SiteTheme with centralized configuration
-
-model SiteCustomization {
-  id        String   @id @default(cuid())
-  config    Json     // Complete site customization configuration as JSONB
-  version   Int      @default(1) // Version control for configuration changes
-  isActive  Boolean  @default(true) // Only one configuration can be active
-  createdBy String?
-  creator   User?    @relation("SiteCustomizationCreator", fields: [createdBy], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("site_customization")
-  @@index([isActive])
-  @@index([version])
-  @@index([createdAt])
-}
-
-// ==================== WEBHOOK PROCESSING QUEUE ====================
-
 enum WebhookStatus {
   PENDING
   RETRY
   PROCESSED
   FAILED
-}
-
-model WebhookQueue {
-  id             String        @id @default(cuid())
-  trackingNumber String        // Shipment tracking number
-  eventCode      String        // EasyParcel event code
-  eventName      String        // Event display name
-  eventTime      DateTime      // Event timestamp
-  location       String?       // Event location
-  shipmentId     String        // EasyParcel shipment ID
-  payload        Json          // Full webhook payload
-  
-  // Processing status
-  status         WebhookStatus @default(PENDING)
-  retryCount     Int          @default(0)
-  maxRetries     Int          @default(3)
-  nextRetryAt    DateTime     @default(now())
-  lastError      String?      // Last error message
-  
-  // Timestamps
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  processedAt    DateTime?    // When successfully processed
-  failedAt       DateTime?    // When permanently failed
-  
-  @@map("webhook_queue")
-  @@index([status])
-  @@index([trackingNumber])
-  @@index([nextRetryAt])
-  @@index([createdAt])
-  @@index([eventCode])
-}
-
-// ==================== TRACKING CACHE SYSTEM (REFACTORED ARCHITECTURE) ====================
-
-model TrackingCache {
-  id                        String   @id @default(cuid())
-  orderId                   String   @unique
-  courierTrackingNumber     String
-  courierService            String
-  
-  // Current Status
-  currentStatus             String
-  lastStatusUpdate          DateTime
-  
-  // Tracking Events (JSON)
-  trackingEvents            Json     @default("[]")
-  
-  // Delivery Information
-  estimatedDelivery         DateTime?
-  actualDelivery            DateTime?
-  deliveryLocation          String?
-  
-  // Update Management
-  lastApiUpdate             DateTime
-  nextUpdateDue             DateTime
-  updateFrequencyMinutes    Int      @default(120)
-  consecutiveFailures       Int      @default(0)
-  
-  // Status Flags
-  isDelivered               Boolean  @default(false)
-  isFailed                  Boolean  @default(false)
-  isActive                  Boolean  @default(true)
-  requiresAttention         Boolean  @default(false)
-  
-  // API Response Cache
-  lastApiResponse           Json?
-  apiResponseHash           String?
-  
-  // Relationships
-  order                     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  updateLogs                TrackingUpdateLog[]
-  jobQueue                  TrackingJobQueue[]
-  
-  // Timestamps
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  
-  @@map("tracking_cache")
-  @@index([orderId])
-  @@index([courierTrackingNumber])
-  @@index([nextUpdateDue])
-  @@index([isActive, isDelivered])
-  @@index([currentStatus])
-  @@index([requiresAttention])
-  @@unique([orderId, courierTrackingNumber])
-}
-
-model TrackingUpdateLog {
-  id                    String   @id @default(cuid())
-  trackingCacheId       String
-  
-  // Update Details
-  updateType            String   // 'scheduled', 'manual', 'webhook'
-  triggeredBy           String?  // 'system', 'admin_user_id', 'webhook'
-  
-  // API Call Details
-  apiCallSuccess        Boolean
-  apiResponseTimeMs     Int?
-  apiStatusCode         Int?
-  apiErrorMessage       String?
-  
-  // Data Changes
-  statusChanged         Boolean  @default(false)
-  previousStatus        String?
-  newStatus             String?
-  eventsAdded           Int      @default(0)
-  
-  // Relationships
-  trackingCache         TrackingCache @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  startedAt             DateTime
-  completedAt           DateTime?
-  createdAt             DateTime @default(now())
-  
-  @@map("tracking_update_logs")
-  @@index([trackingCacheId])
-  @@index([startedAt])
-  @@index([apiCallSuccess])
-  @@index([updateType])
 }
 
 enum TrackingJobStatus {
@@ -1268,73 +1095,3 @@ enum TrackingJobType {
   MANUAL
   CLEANUP
 }
-
-model TrackingJobQueue {
-  id                   String            @id @default(cuid())
-  trackingCacheId      String
-  
-  // Job Details
-  jobType              TrackingJobType
-  priority             Int               @default(100) // Lower = higher priority
-  scheduledFor         DateTime
-  
-  // Execution
-  attempts             Int               @default(0)
-  maxAttempts          Int               @default(3)
-  lastAttemptAt        DateTime?
-  lastError            String?
-  
-  // Status
-  status               TrackingJobStatus @default(PENDING)
-  
-  // Relationships
-  trackingCache        TrackingCache     @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  
-  @@map("tracking_job_queue")
-  @@index([scheduledFor, status])
-  @@index([trackingCacheId])
-  @@index([status])
-  @@index([priority])
-  @@index([jobType])
-}
-
-// ==================== MALAYSIAN POSTCODE SYSTEM ====================
-
-model MalaysianState {
-  id        String   @id @db.VarChar(3) // State Code: "PLS", "JHR", etc.
-  name      String   @db.VarChar(100)   // "Perlis", "Johor", etc.
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relationship
-  postcodes MalaysianPostcode[]
-  
-  @@map("malaysian_states")
-}
-
-model MalaysianPostcode {
-  id          String   @id @default(cuid())
-  postcode    String   @db.VarChar(5)     // "01000"
-  district    String   @db.VarChar(100)   // "Kangar"
-  stateCode   String   @db.VarChar(3)     // "PLS"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relationship
-  state MalaysianState @relation(fields: [stateCode], references: [id])
-  
-  // Indexes for performance (simplified structure)
-  @@unique([postcode, district]) // Unique postcode-district combination
-  @@index([postcode])           // Primary lookup index
-  @@index([district])           // District-based searches
-  @@index([stateCode])          // State-based queries
-  
-  @@map("malaysian_postcodes")
-}
-
-// Add the missing relation for ImportExportJob and ComplianceReport to User model
-// This requires updating the User model to include these relationships
