@@ -9,25 +9,25 @@ export async function register() {
     console.log('🚀 Server instrumentation starting...');
 
     try {
-      // Import and initialize Telegram service
-      const { telegramService } = await import(
-        '@/lib/telegram/telegram-service'
+      // Import and initialize simplified Telegram service
+      const { simplifiedTelegramService } = await import(
+        '@/lib/telegram/simplified-telegram-service'
       );
 
       // Force load configuration and start health checks
-      await telegramService.reloadConfiguration();
+      await simplifiedTelegramService.reloadConfiguration();
 
-      console.log('✅ Telegram service initialized');
+      console.log('✅ Simplified Telegram service initialized');
 
       // Register cleanup handlers for graceful shutdown
       process.on('SIGTERM', () => {
         console.log('🛑 SIGTERM received, cleaning up...');
-        telegramService.cleanup();
+        // No cleanup needed for simplified service
       });
 
       process.on('SIGINT', () => {
         console.log('🛑 SIGINT received, cleaning up...');
-        telegramService.cleanup();
+        // No cleanup needed for simplified service
       });
 
       console.log('✅ Server instrumentation completed');

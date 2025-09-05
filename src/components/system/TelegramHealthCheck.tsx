@@ -11,7 +11,7 @@ export function TelegramHealthCheck() {
     // Function to check and ensure Telegram service is running
     const checkTelegramHealth = async () => {
       try {
-        const response = await fetch('/api/health/telegram');
+        const response = await fetch('/api/admin/telegram/simple-health');
         const data = await response.json();
 
         if (data.telegram?.configured) {

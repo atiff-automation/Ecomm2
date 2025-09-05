@@ -41,7 +41,7 @@ interface ChannelStatus {
 export default function NotificationsPage() {
   const router = useRouter();
   const [health, setHealth] = useState<TelegramHealth | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [testingChannels, setTestingChannels] = useState<
     Record<string, boolean>
   >({});
@@ -49,8 +49,15 @@ export default function NotificationsPage() {
   const [botConfigured, setBotConfigured] = useState<boolean>(false);
 
   useEffect(() => {
-    loadChannelStatus();
-    checkHealth();
+    const initializeData = async () => {
+      await Promise.all([
+        loadChannelStatus(),
+        checkHealth()
+      ]);
+      setLoading(false); // Set loading to false after both calls complete
+    };
+
+    initializeData();
 
     // Check health every 30 seconds
     const healthInterval = setInterval(checkHealth, 30000);
@@ -60,7 +67,7 @@ export default function NotificationsPage() {
 
   const loadChannelStatus = async () => {
     try {
-      const response = await fetch('/api/admin/telegram/channels');
+      const response = await fetch('/api/admin/telegram/simple-channels');
       if (response.ok) {
         const data = await response.json();
         setChannels(data.channels || []);
@@ -73,7 +80,7 @@ export default function NotificationsPage() {
 
   const checkHealth = async () => {
     try {
-      const response = await fetch('/api/admin/telegram/health');
+      const response = await fetch('/api/admin/telegram/simple-health');
       if (response.ok) {
         const data = await response.json();
         setHealth(data);
@@ -87,9 +94,9 @@ export default function NotificationsPage() {
     setTestingChannels(prev => ({ ...prev, [channelId]: true }));
 
     try {
-      let endpoint = '/api/admin/telegram/test-order';
+      let endpoint = '/api/admin/telegram/simple-test-order';
       if (channelId === 'inventory') {
-        endpoint = '/api/admin/telegram/test-inventory';
+        endpoint = '/api/admin/telegram/simple-test-inventory';
       }
 
       const response = await fetch(endpoint, { method: 'POST' });
@@ -212,27 +219,17 @@ export default function NotificationsPage() {
     );
   }
 
-  // Define streamlined tabs for Telegram system
+  // SIMPLIFIED: Admin-only tabs following @CLAUDE.md CENTRALIZED approach
   const tabs: TabConfig[] = [
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: 'Dashboard',
       href: '/admin/notifications',
-    },
-    {
-      id: 'my-telegram',
-      label: 'My Telegram',
-      href: '/user/notifications/telegram',
     },
     {
       id: 'configuration',
       label: 'Configuration',
       href: '/admin/notifications/configuration',
-    },
-    {
-      id: 'monitoring',
-      label: 'Monitoring',
-      href: '/admin/notifications/monitoring',
     },
   ];
 
@@ -266,48 +263,25 @@ export default function NotificationsPage() {
       tabs={tabs}
       loading={loading}
     >
-      {/* Personal Telegram Setup Alert */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="w-6 h-6 text-blue-600" />
-          <div>
-            <h3 className="font-medium text-blue-900">
-              Personal Telegram Notifications
-            </h3>
-            <p className="text-sm text-blue-800 mt-1">
-              Set up your <strong>personal Telegram notifications</strong> to receive order updates and alerts for your business.
-            </p>
-          </div>
-          <Button
-            onClick={() => router.push('/user/notifications/telegram')}
-            className="ml-auto bg-blue-600 hover:bg-blue-700"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Setup My Telegram
-          </Button>
-        </div>
-      </div>
-
-      {/* Bot Status Alert - Legacy Global Config */}
-      {!botConfigured && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
+      {/* SIMPLIFIED: Admin Telegram Configuration (following @CLAUDE.md CENTRALIZED approach) */}
+      {health && !health.configured && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-6 h-6 text-amber-600" />
+            <MessageCircle className="w-6 h-6 text-blue-600" />
             <div>
-              <h3 className="font-medium text-amber-900">
-                Legacy Global Configuration
+              <h3 className="font-medium text-blue-900">
+                Admin Telegram Configuration
               </h3>
-              <p className="text-sm text-amber-800 mt-1">
-                Global system configuration (for backward compatibility). Use <strong>My Telegram</strong> for personal setup.
+              <p className="text-sm text-blue-800 mt-1">
+                Configure <strong>system-wide Telegram notifications</strong> for order updates and inventory alerts.
               </p>
             </div>
             <Button
               onClick={() => router.push('/admin/notifications/configuration')}
-              variant="outline"
-              className="ml-auto border-amber-300 text-amber-700 hover:bg-amber-100"
+              className="ml-auto bg-blue-600 hover:bg-blue-700"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Global Config
+              Configure Now
             </Button>
           </div>
         </div>
@@ -455,100 +429,6 @@ export default function NotificationsPage() {
       )}
 
 
-      {/* Setup Instructions */}
-      {(channels.some(c => !c.configured) || !botConfigured) && (
-        <Card className="border-blue-200 mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-blue-900 flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Setup Instructions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Setup Wizard Option */}
-            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-2 text-lg">
-                    🚀 Easy Setup Wizard (Recommended)
-                  </h4>
-                  <p className="text-blue-800 text-sm mb-4 leading-relaxed">
-                    Configure your Telegram notifications in just 5 minutes with our guided setup wizard. 
-                    No manual .env editing required!
-                  </p>
-                  <Button
-                    onClick={() => router.push('/admin/notifications/setup')}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Zap className="w-4 h-4 mr-2" />
-                    Start Setup Wizard
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Manual Setup Option */}
-            <div className="p-6 bg-blue-50 border border-blue-200 rounded-xl">
-              <div className="flex items-start gap-4 mb-4">
-                <Settings className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-semibold text-blue-900 mb-2 text-lg">
-                    Manual Setup (Advanced)
-                  </h4>
-                  <p className="text-blue-800 text-sm mb-4">
-                    Prefer to configure manually? Follow these steps:
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-600 font-bold text-sm">1</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-900">
-                      Create Telegram groups
-                    </p>
-                    <p className="text-blue-800 text-sm mt-1">
-                      Set up separate groups for orders and inventory alerts
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-600 font-bold text-sm">2</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-900">
-                      Add bot to groups
-                    </p>
-                    <p className="text-blue-800 text-sm mt-1">
-                      Invite your bot and make it an admin in both groups
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-600 font-bold text-sm">3</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-900">
-                      Configure environment
-                    </p>
-                    <p className="text-blue-800 text-sm mt-1">
-                      Add chat IDs to your .env file and restart server
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Daily Summary Automation */}
       {channels.find(c => c.id === 'orders' && c.configured) && (

@@ -14,16 +14,16 @@ export async function ensureServerInitialized() {
   try {
     console.log('🔧 Ensuring server services are initialized...');
 
-    // Import and ensure Telegram service is running
-    const { telegramService } = await import('@/lib/telegram/telegram-service');
+    // Import and ensure simplified Telegram service is running
+    const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
 
     // Check if configuration is loaded and service is healthy
-    const isConfigured = await telegramService.isConfigured();
+    const isConfigured = await simplifiedTelegramService.isConfigured();
     if (isConfigured) {
-      console.log('✅ Telegram service is configured and running');
+      console.log('✅ Simplified Telegram service is configured and running');
     } else {
       console.log(
-        '⚠️ Telegram service not configured (missing bot token or chat IDs)'
+        '⚠️ Simplified Telegram service not configured (missing bot token or chat IDs)'
       );
     }
 

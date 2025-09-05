@@ -4,7 +4,7 @@
  */
 
 import cron from 'node-cron';
-import { telegramService } from '@/lib/telegram/telegram-service';
+import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
 
 class DailySummaryCron {
   private isRunning: boolean = false;
@@ -71,7 +71,7 @@ class DailySummaryCron {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const success = await telegramService.sendDailySummary(yesterday);
+      const success = await simplifiedTelegramService.sendDailySummary(yesterday);
 
       if (success) {
         console.log(
@@ -97,7 +97,7 @@ class DailySummaryCron {
         `📊 Manually triggering daily summary for ${targetDate.toDateString()}...`
       );
 
-      const success = await telegramService.sendDailySummary(targetDate);
+      const success = await simplifiedTelegramService.sendDailySummary(targetDate);
 
       if (success) {
         console.log(`✅ Manual daily summary sent successfully`);

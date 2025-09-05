@@ -11,7 +11,6 @@ import { getMembershipConfig } from '@/lib/membership';
 // import { activateUserMembership } from '@/lib/membership'; // Not used in current flow
 import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
-import { telegramService } from '@/lib/telegram/telegram-service';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 // import { MalaysianTaxService, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service'; // Disabled - tax not configured yet
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
