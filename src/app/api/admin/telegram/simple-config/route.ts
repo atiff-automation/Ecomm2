@@ -161,8 +161,11 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { botToken, ordersChatId, inventoryChatId } = body;
 
+    // Check if configuration already exists to use saved bot token
+    const existingConfig = await adminTelegramConfigService.getActiveConfig();
+    
     // NO HARDCODE: Validate required fields
-    if (!botToken?.trim()) {
+    if (!botToken?.trim() && !existingConfig?.botToken) {
       return NextResponse.json(
         { success: false, message: 'Bot token is required' },
         { status: 400 }
@@ -178,7 +181,7 @@ export async function PUT(request: NextRequest) {
 
     // DRY: Use service test method
     const testResult = await adminTelegramConfigService.testConfig({
-      botToken: botToken.trim(),
+      botToken: botToken?.trim() || existingConfig?.botToken || '',
       ordersChatId: ordersChatId.trim(),
       inventoryChatId: inventoryChatId?.trim()
     });

@@ -112,13 +112,22 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
   };
 
   /**
-   * DRY: Test configuration before saving
+   * DRY: Test configuration - use saved config if available, otherwise validate form
    */
   const testConfiguration = async () => {
-    const validationError = validateForm();
-    if (validationError) {
-      toast.error(validationError);
-      return;
+    // If configuration is already saved and bot token is cleared from UI, test the saved config
+    if (isConfigured && !botToken.trim()) {
+      if (!config.ordersChatId.trim()) {
+        toast.error('Orders chat ID is required');
+        return;
+      }
+    } else {
+      // For new configurations, validate the form
+      const validationError = validateForm();
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
     }
 
     setIsTesting(true);
@@ -129,7 +138,8 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          botToken: botToken.trim(),
+          // Only send bot token if it's provided in UI, otherwise API will use saved token
+          ...(botToken.trim() && { botToken: botToken.trim() }),
           ordersChatId: config.ordersChatId.trim(),
           inventoryChatId: config.inventoryChatId?.trim()
         })
@@ -186,6 +196,9 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
         toast.success('🎉 Telegram configuration saved successfully!');
         setConfig(result.config);
         setIsConfigured(true);
+        // SECURITY: Clear bot token from UI after successful save
+        setBotToken('');
+        setShowBotToken(false);
         
         // Force service reload to refresh cached config
         try {
@@ -347,7 +360,7 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 type={showBotToken ? 'text' : 'password'}
                 value={botToken}
                 onChange={(e) => setBotToken(e.target.value)}
-                placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+                placeholder={isConfigured && !botToken ? "••••••••••••••••••••••••••••••••" : "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"}
                 className="pr-10"
               />
               <Button
@@ -357,11 +370,14 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 className="absolute right-0 top-0 h-full px-3"
                 onClick={() => setShowBotToken(!showBotToken)}
               >
-                {showBotToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showBotToken ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Get this from @BotFather on Telegram. Keep this secret!
+              {isConfigured && !botToken ? 
+                "🔒 Bot token is configured and hidden for security. Enter new token to update." : 
+                "Get this from @BotFather on Telegram. Keep this secret!"
+              }
             </p>
           </div>
         </CardContent>
@@ -424,7 +440,7 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                   value={config.inventoryChatId || ''}
                   onChange={(e) => setConfig(prev => ({ ...prev, inventoryChatId: e.target.value }))}
                   placeholder="-1001234567890 (optional)"
-                  className="mt-1"
+                  className="mt-1 border-orange-300 focus:border-white focus:ring-orange-200"
                 />
                 <p className="text-xs text-gray-600 mt-1">
                   Leave empty to disable inventory alerts, or use same as orders

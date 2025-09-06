@@ -368,16 +368,8 @@ export default function NotificationsPage() {
                       <p className="font-medium text-yellow-900 mb-2">
                         Setup Required
                       </p>
-                      <p className="text-sm text-yellow-800 mb-3">
-                        Add this to your .env file:
-                      </p>
-                      <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3">
-                        <code className="text-sm font-mono text-yellow-900">
-                          {channel.envVar}="your_chat_id"
-                        </code>
-                      </div>
-                      <p className="text-xs text-yellow-700 mt-3">
-                        Then restart your development server
+                      <p className="text-sm text-yellow-800">
+                        Configure your Telegram settings to enable notifications for this channel.
                       </p>
                     </div>
                   </div>

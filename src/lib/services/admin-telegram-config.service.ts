@@ -46,27 +46,44 @@ export class AdminTelegramConfigService {
     try {
       // SINGLE SOURCE OF TRUTH: Use transaction to safely update/create
       return await prisma.$transaction(async (tx) => {
-        // First, deactivate existing configs
-        await tx.adminTelegramConfig.updateMany({
-          where: { isActive: true },
-          data: { isActive: false }
+        // Check if active config exists
+        const existingConfig = await tx.adminTelegramConfig.findFirst({
+          where: { isActive: true }
         });
 
-        // Then create new active config (simplified admin setup - no user tracking)
-        return await tx.adminTelegramConfig.create({
-          data: {
-            botToken: data.botToken,
-            ordersChatId: data.ordersChatId,
-            inventoryChatId: data.inventoryChatId,
-            ordersEnabled: data.ordersEnabled ?? true,
-            inventoryEnabled: data.inventoryEnabled ?? true,
-            dailySummaryEnabled: data.dailySummaryEnabled ?? true,
-            timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
-            isActive: true,
-            createdBy: null,
-            updatedBy: null
-          }
-        });
+        if (existingConfig) {
+          // Update existing active config
+          return await tx.adminTelegramConfig.update({
+            where: { id: existingConfig.id },
+            data: {
+              botToken: data.botToken,
+              ordersChatId: data.ordersChatId,
+              inventoryChatId: data.inventoryChatId,
+              ordersEnabled: data.ordersEnabled ?? true,
+              inventoryEnabled: data.inventoryEnabled ?? true,
+              dailySummaryEnabled: data.dailySummaryEnabled ?? true,
+              timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
+              updatedBy: null,
+              updatedAt: new Date()
+            }
+          });
+        } else {
+          // Create new active config
+          return await tx.adminTelegramConfig.create({
+            data: {
+              botToken: data.botToken,
+              ordersChatId: data.ordersChatId,
+              inventoryChatId: data.inventoryChatId,
+              ordersEnabled: data.ordersEnabled ?? true,
+              inventoryEnabled: data.inventoryEnabled ?? true,
+              dailySummaryEnabled: data.dailySummaryEnabled ?? true,
+              timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
+              isActive: true,
+              createdBy: null,
+              updatedBy: null
+            }
+          });
+        }
       });
     } catch (error) {
       console.error('Failed to upsert admin telegram config:', error);

@@ -29,8 +29,7 @@ export function ContextualTabs({ tabs, className = '' }: ContextualTabsProps) {
       <div className="px-6">
         <nav className="flex space-x-8 h-12" role="tablist">
           {tabs.map(tab => {
-            const isActive =
-              pathname === tab.href || pathname.startsWith(tab.href + '/');
+            const isActive = pathname === tab.href;
 
             return (
               <Link
