@@ -243,12 +243,9 @@ export default function AdminReports() {
     );
   }
 
-  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for System/Reports
+  // Define contextual tabs for Reports section
   const tabs: TabConfig[] = [
     { id: 'analytics', label: 'Analytics', href: '/admin/reports' },
-    { id: 'logs', label: 'Logs', href: '/admin/system/logs' },
-    { id: 'monitoring', label: 'Monitoring', href: '/admin/system/monitoring' },
-    { id: 'security', label: 'Security', href: '/admin/system/security' },
   ];
 
   // Extract page actions

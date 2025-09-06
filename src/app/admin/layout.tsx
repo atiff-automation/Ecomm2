@@ -85,15 +85,6 @@ const navigationItems = [
     description: 'Configuration, Couriers, Tracking',
   },
 
-  // ⚙️ System Section - New section per standard
-  {
-    label: 'System',
-    href: '/admin/system',
-    icon: Monitor,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'Telegram, Monitoring, Logs, Security',
-  },
-
   // Additional sections that exist but don't fit main categories
   {
     label: 'Site Customization',
