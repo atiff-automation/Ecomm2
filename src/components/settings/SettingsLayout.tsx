@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { AdminPageLayout } from '@/components/admin/layout';
 
 interface SettingsLayoutProps {
   title: string;
@@ -11,6 +11,10 @@ interface SettingsLayoutProps {
   actions?: React.ReactNode;
 }
 
+/**
+ * Standardized Settings Layout using AdminPageLayout
+ * Following @CLAUDE.md principles: DRY, single source of truth, consistent UI patterns
+ */
 export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
   title,
   subtitle,
@@ -18,27 +22,14 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
   actions
 }) => {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          {subtitle && (
-            <p className="text-muted-foreground mt-2">{subtitle}</p>
-          )}
-        </div>
-        {actions && (
-          <div className="flex items-center space-x-2">
-            {actions}
-          </div>
-        )}
-      </div>
-      
-      <Separator />
-      
-      <div className="grid gap-6">
-        {children}
-      </div>
-    </div>
+    <AdminPageLayout
+      title={title}
+      subtitle={subtitle}
+      actions={actions}
+      className="space-y-6"
+    >
+      {children}
+    </AdminPageLayout>
   );
 };
 

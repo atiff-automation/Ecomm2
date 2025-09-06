@@ -17,7 +17,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { personalInfoSchema, passwordChangeSchema } from '@/lib/validation/settings';
 import type { PersonalInfoFormData, PasswordChangeFormData } from '@/lib/validation/settings';
-import { User, Shield, Mail, Phone, Calendar, AlertTriangle } from 'lucide-react';
+import { User, Shield, Mail, Phone, Calendar, AlertTriangle, MapPin } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AccountSettingsPage() {
   const { data: session, update } = useSession();
@@ -331,6 +332,30 @@ export default function AccountSettingsPage() {
             </Button>
           </SettingsFormActions>
         </form>
+      </SettingsCard>
+
+      {/* Quick Actions */}
+      <SettingsCard 
+        title="Quick Actions"
+        description="Frequently used account management tools"
+      >
+        <SettingsSection title="Address Management">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/settings/account/addresses">
+              <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Manage Addresses</h4>
+                    <p className="text-sm text-gray-500">Add, edit, or delete your shipping and billing addresses</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </SettingsSection>
       </SettingsCard>
 
       {/* Account Actions */}

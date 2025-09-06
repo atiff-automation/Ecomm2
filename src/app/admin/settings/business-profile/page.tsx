@@ -1,0 +1,914 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import {
+  SettingsLayout,
+  SettingsCard,
+  SettingsSection,
+  SettingsInput,
+  SettingsSelect,
+  SettingsFormActions
+} from '@/components/settings';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { businessProfileSchema, MALAYSIAN_STATES } from '@/lib/validation/settings';
+import type { BusinessProfileFormData } from '@/lib/validation/settings';
+import { 
+  Building2, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  CreditCard, 
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Shield,
+  FileText,
+  Loader2
+} from 'lucide-react';
+import Link from 'next/link';
+
+const businessTypes = [
+  { value: 'SDN_BHD', label: 'Sdn Bhd (Private Limited Company)' },
+  { value: 'ENTERPRISE', label: 'Enterprise' },
+  { value: 'SOLE_PROPRIETOR', label: 'Sole Proprietor' }
+];
+
+export default function BusinessProfilePage() {
+  const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  // Postcode validation state
+  const [postcodeValidation, setPostcodeValidation] = useState<{
+    registered: { valid: boolean; error?: string; loading?: boolean };
+    operational: { valid: boolean; error?: string; loading?: boolean };
+    shipping: { valid: boolean; error?: string; loading?: boolean };
+  }>({
+    registered: { valid: true },
+    operational: { valid: true },
+    shipping: { valid: true },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+    reset,
+    setValue,
+    watch
+  } = useForm<BusinessProfileFormData>({
+    resolver: zodResolver(businessProfileSchema),
+    defaultValues: {
+      legalName: '',
+      tradingName: '',
+      registrationNumber: '',
+      taxRegistrationNumber: '',
+      businessType: 'SDN_BHD',
+      primaryPhone: '',
+      secondaryPhone: '',
+      primaryEmail: '',
+      supportEmail: '',
+      website: '',
+      registeredAddress: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'Malaysia'
+      },
+      operationalAddress: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'Malaysia'
+      },
+      shippingAddress: {
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'Malaysia'
+      },
+      banking: {
+        bankName: '',
+        bankAccountNumber: '',
+        bankAccountHolder: ''
+      }
+    }
+  });
+
+  const watchedValues = watch();
+
+  useEffect(() => {
+    loadBusinessProfile();
+  }, []);
+
+  const loadBusinessProfile = async () => {
+    try {
+      const response = await fetch('/api/admin/settings/business-profile');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          const profileData = data.data;
+          setProfile(profileData);
+          
+          // Transform the data to match form structure
+          const formData = {
+            legalName: profileData.legalName || '',
+            tradingName: profileData.tradingName || '',
+            registrationNumber: profileData.registrationNumber || '',
+            taxRegistrationNumber: profileData.taxRegistrationNumber || '',
+            businessType: profileData.businessType || 'SDN_BHD',
+            establishedDate: profileData.establishedDate 
+              ? new Date(profileData.establishedDate).toISOString().split('T')[0]
+              : '',
+            primaryPhone: profileData.primaryPhone || '',
+            secondaryPhone: profileData.secondaryPhone || '',
+            primaryEmail: profileData.primaryEmail || '',
+            supportEmail: profileData.supportEmail || '',
+            website: profileData.website || '',
+            registeredAddress: {
+              addressLine1: profileData.registeredAddress?.addressLine1 || '',
+              addressLine2: profileData.registeredAddress?.addressLine2 || '',
+              city: profileData.registeredAddress?.city || '',
+              state: profileData.registeredAddress?.state || '',
+              postalCode: profileData.registeredAddress?.postalCode || '',
+              country: 'Malaysia'
+            },
+            operationalAddress: {
+              addressLine1: profileData.operationalAddress?.addressLine1 || '',
+              addressLine2: profileData.operationalAddress?.addressLine2 || '',
+              city: profileData.operationalAddress?.city || '',
+              state: profileData.operationalAddress?.state || '',
+              postalCode: profileData.operationalAddress?.postalCode || '',
+              country: 'Malaysia'
+            },
+            shippingAddress: {
+              addressLine1: profileData.shippingAddress?.addressLine1 || '',
+              addressLine2: profileData.shippingAddress?.addressLine2 || '',
+              city: profileData.shippingAddress?.city || '',
+              state: profileData.shippingAddress?.state || '',
+              postalCode: profileData.shippingAddress?.postalCode || '',
+              country: 'Malaysia'
+            },
+            banking: {
+              bankName: profileData.banking?.bankName || '',
+              bankAccountNumber: profileData.banking?.bankAccountNumber || '',
+              bankAccountHolder: profileData.banking?.bankAccountHolder || ''
+            }
+          };
+          
+          reset(formData);
+        }
+      } else {
+        console.error('Failed to load business profile');
+      }
+    } catch (error) {
+      console.error('Load business profile error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async (data: BusinessProfileFormData) => {
+    if (!session?.user?.id) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/admin/settings/business-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save business profile');
+      }
+
+      const result = await response.json();
+      toast.success('Business profile saved successfully');
+      
+      // Reload the profile to get updated data
+      await loadBusinessProfile();
+
+    } catch (error) {
+      console.error('Save business profile error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save business profile');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const copyOperationalToShipping = () => {
+    setValue('shippingAddress.addressLine1', watchedValues.operationalAddress?.addressLine1 || '');
+    setValue('shippingAddress.addressLine2', watchedValues.operationalAddress?.addressLine2 || '');
+    setValue('shippingAddress.city', watchedValues.operationalAddress?.city || '');
+    setValue('shippingAddress.state', watchedValues.operationalAddress?.state || '');
+    setValue('shippingAddress.postalCode', watchedValues.operationalAddress?.postalCode || '');
+    toast.success('Copied operational address to shipping address');
+  };
+
+  const copyRegisteredToOperational = () => {
+    setValue('operationalAddress.addressLine1', watchedValues.registeredAddress?.addressLine1 || '');
+    setValue('operationalAddress.addressLine2', watchedValues.registeredAddress?.addressLine2 || '');
+    setValue('operationalAddress.city', watchedValues.registeredAddress?.city || '');
+    setValue('operationalAddress.state', watchedValues.registeredAddress?.state || '');
+    setValue('operationalAddress.postalCode', watchedValues.registeredAddress?.postalCode || '');
+    toast.success('Copied registered address to operational address');
+  };
+
+  // Handle postcode change with auto-fill (same as checkout page)
+  const handlePostcodeChange = (
+    addressType: 'registered' | 'operational' | 'shipping',
+    postcode: string
+  ) => {
+    // Update the postcode value immediately
+    const fieldPath = `${addressType}Address.postalCode` as keyof BusinessProfileFormData;
+    setValue(fieldPath, postcode);
+
+    // Set loading state
+    setPostcodeValidation(prev => ({
+      ...prev,
+      [addressType]: { valid: true, loading: true },
+    }));
+
+    // Debounce the validation and auto-fill with API call
+    setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/postcode/validate?postcode=${encodeURIComponent(postcode)}`);
+        
+        if (response.ok) {
+          const validation = await response.json();
+
+          if (validation.valid && validation.location) {
+            // Auto-fill state and city using database data
+            setValue(`${addressType}Address.city` as keyof BusinessProfileFormData, validation.location.city);
+            setValue(`${addressType}Address.state` as keyof BusinessProfileFormData, validation.location.stateName);
+            setValue(fieldPath, validation.formatted || postcode);
+
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: { valid: true, loading: false },
+            }));
+
+            console.log(`✅ Auto-filled ${addressType} address from database:`, {
+              postcode: validation.formatted,
+              state: validation.location.stateName,
+              city: validation.location.city,
+              zone: validation.location.zone,
+            });
+          } else if (postcode.length === 5) {
+            // Invalid postcode from database
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: {
+                valid: false,
+                error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
+                loading: false,
+              },
+            }));
+          } else {
+            // Still typing
+            setPostcodeValidation(prev => ({
+              ...prev,
+              [addressType]: { valid: true, loading: false },
+            }));
+          }
+        } else {
+          throw new Error('API request failed');
+        }
+      } catch (error) {
+        console.error(`Error validating postcode ${postcode}:`, error);
+        setPostcodeValidation(prev => ({
+          ...prev,
+          [addressType]: {
+            valid: false,
+            error: 'Postcode validation service temporarily unavailable',
+            loading: false,
+          },
+        }));
+      }
+    }, 500); // 500ms debounce
+  };
+
+  if (isLoading) {
+    return (
+      <SettingsLayout
+        title="Business Profile"
+        subtitle="Loading business information..."
+      >
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </SettingsLayout>
+    );
+  }
+
+  const completeness = profile ? calculateCompleteness(profile) : 0;
+
+  return (
+    <SettingsLayout
+      title="Business Profile"
+      subtitle="Manage your company information, addresses, and banking details"
+    >
+      {/* Status Overview */}
+      <SettingsCard
+        title="Profile Status"
+        description="Current status of your business profile setup"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Profile Completeness</p>
+              <div className="flex items-center space-x-2">
+                <div className="text-lg font-semibold">{completeness}%</div>
+                {completeness === 100 ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+            <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+              <FileText className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Legal Status</p>
+              <Badge variant={profile?.registrationNumber ? "default" : "secondary"}>
+                {profile?.registrationNumber ? "Registered" : "Pending"}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+            <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Clock className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Last Updated</p>
+              <p className="text-sm text-gray-500">
+                {profile?.updatedAt 
+                  ? new Date(profile.updatedAt).toLocaleDateString()
+                  : 'Never'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
+
+      <form onSubmit={handleSubmit(handleSaveProfile)} className="space-y-6">
+        {/* Company Information */}
+        <SettingsCard
+          title="Company Information"
+          description="Basic company details and legal information"
+        >
+          <SettingsSection title="Legal Information">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SettingsInput
+                label="Legal Name"
+                type="text"
+                required
+                {...register('legalName')}
+                error={errors.legalName?.message}
+                placeholder="Enter your company's legal name"
+                helperText="As registered with SSM"
+              />
+              
+              <SettingsInput
+                label="Trading Name"
+                type="text"
+                {...register('tradingName')}
+                error={errors.tradingName?.message}
+                placeholder="Enter trading name (if different)"
+                helperText="Optional - only if different from legal name"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SettingsInput
+                label="SSM Registration Number"
+                type="text"
+                required
+                {...register('registrationNumber')}
+                error={errors.registrationNumber?.message}
+                placeholder="e.g., 123456-X"
+                helperText="Format: 123456-X (6-8 digits followed by letter)"
+              />
+              
+              <SettingsInput
+                label="GST Registration Number"
+                type="text"
+                {...register('taxRegistrationNumber')}
+                error={errors.taxRegistrationNumber?.message}
+                placeholder="e.g., C12345678901"
+                helperText="Optional - GST format: C12345678901"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SettingsSelect
+                label="Business Type"
+                options={businessTypes}
+                value={watchedValues.businessType}
+                onValueChange={(value) => setValue('businessType', value as any)}
+                placeholder="Select business type"
+                helperText="Choose your business entity type"
+              />
+              
+              <SettingsInput
+                label="Established Date"
+                type="date"
+                {...register('establishedDate')}
+                error={errors.establishedDate?.message}
+                helperText="When was your business established"
+              />
+            </div>
+          </SettingsSection>
+        </SettingsCard>
+
+        {/* Contact Information */}
+        <SettingsCard
+          title="Contact Information"
+          description="Primary communication channels"
+        >
+          <SettingsSection title="Phone & Email">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SettingsInput
+                label="Primary Phone"
+                type="tel"
+                required
+                {...register('primaryPhone')}
+                error={errors.primaryPhone?.message}
+                placeholder="012-3456789"
+                helperText="Malaysian mobile/landline number"
+              />
+              
+              <SettingsInput
+                label="Secondary Phone"
+                type="tel"
+                {...register('secondaryPhone')}
+                error={errors.secondaryPhone?.message}
+                placeholder="03-12345678"
+                helperText="Optional secondary contact"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SettingsInput
+                label="Primary Email"
+                type="email"
+                required
+                {...register('primaryEmail')}
+                error={errors.primaryEmail?.message}
+                placeholder="contact@company.com"
+                helperText="Main business email address"
+              />
+              
+              <SettingsInput
+                label="Support Email"
+                type="email"
+                {...register('supportEmail')}
+                error={errors.supportEmail?.message}
+                placeholder="support@company.com"
+                helperText="Optional customer support email"
+              />
+            </div>
+
+            <SettingsInput
+              label="Website"
+              type="url"
+              {...register('website')}
+              error={errors.website?.message}
+              placeholder="https://www.company.com"
+              helperText="Optional company website"
+            />
+          </SettingsSection>
+        </SettingsCard>
+
+        {/* Address Information */}
+        <SettingsCard
+          title="Address Information"
+          description="Business addresses for different purposes"
+        >
+          {/* Registered Address */}
+          <SettingsSection title="Registered Address">
+            <div className="space-y-4">
+              <SettingsInput
+                label="Address Line 1"
+                type="text"
+                required
+                {...register('registeredAddress.addressLine1')}
+                error={errors.registeredAddress?.addressLine1?.message}
+                placeholder="Street address, building name, unit number"
+              />
+              
+              <SettingsInput
+                label="Address Line 2"
+                type="text"
+                {...register('registeredAddress.addressLine2')}
+                error={errors.registeredAddress?.addressLine2?.message}
+                placeholder="Additional address details (optional)"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SettingsInput
+                  label="City"
+                  type="text"
+                  required
+                  {...register('registeredAddress.city')}
+                  error={errors.registeredAddress?.city?.message}
+                  placeholder="City"
+                />
+                
+                <SettingsSelect
+                  label="State"
+                  required
+                  options={MALAYSIAN_STATES}
+                  value={watchedValues.registeredAddress?.state || ''}
+                  onValueChange={(value) => setValue('registeredAddress.state', value)}
+                  placeholder="Select state"
+                />
+                
+                <div>
+                  <label className="text-sm font-medium">
+                    Postal Code *
+                    {postcodeValidation.registered.loading && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                      </span>
+                    )}
+                  </label>
+                  <SettingsInput
+                    type="text"
+                    required
+                    value={watchedValues.registeredAddress?.postalCode || ''}
+                    onChange={(e) => handlePostcodeChange('registered', e.target.value)}
+                    error={
+                      errors.registeredAddress?.postalCode?.message ||
+                      (!postcodeValidation.registered.valid ? postcodeValidation.registered.error : undefined)
+                    }
+                    placeholder="12345"
+                    className={
+                      !postcodeValidation.registered.valid
+                        ? 'border-red-300 focus:border-red-500'
+                        : postcodeValidation.registered.loading
+                          ? 'border-blue-300 focus:border-blue-500'
+                          : ''
+                    }
+                  />
+                  {postcodeValidation.registered.valid &&
+                    watchedValues.registeredAddress?.postalCode?.length === 5 && (
+                      <p className="mt-1 text-xs text-green-600">
+                        ✓ Valid Malaysian postcode
+                      </p>
+                    )}
+                </div>
+              </div>
+            </div>
+          </SettingsSection>
+
+          <Separator />
+
+          {/* Operational Address */}
+          <SettingsSection title="Operational Address">
+            <div className="mb-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={copyRegisteredToOperational}
+              >
+                Copy from Registered Address
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <SettingsInput
+                label="Address Line 1"
+                type="text"
+                {...register('operationalAddress.addressLine1')}
+                error={errors.operationalAddress?.addressLine1?.message}
+                placeholder="Street address, building name, unit number"
+              />
+              
+              <SettingsInput
+                label="Address Line 2"
+                type="text"
+                {...register('operationalAddress.addressLine2')}
+                error={errors.operationalAddress?.addressLine2?.message}
+                placeholder="Additional address details (optional)"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SettingsInput
+                  label="City"
+                  type="text"
+                  {...register('operationalAddress.city')}
+                  error={errors.operationalAddress?.city?.message}
+                  placeholder="City"
+                />
+                
+                <SettingsSelect
+                  label="State"
+                  options={MALAYSIAN_STATES}
+                  value={watchedValues.operationalAddress?.state || ''}
+                  onValueChange={(value) => setValue('operationalAddress.state', value)}
+                  placeholder="Select state"
+                />
+                
+                <div>
+                  <label className="text-sm font-medium">
+                    Postal Code *
+                    {postcodeValidation.operational.loading && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                      </span>
+                    )}
+                  </label>
+                  <SettingsInput
+                    type="text"
+                    value={watchedValues.operationalAddress?.postalCode || ''}
+                    onChange={(e) => handlePostcodeChange('operational', e.target.value)}
+                    error={
+                      errors.operationalAddress?.postalCode?.message ||
+                      (!postcodeValidation.operational.valid ? postcodeValidation.operational.error : undefined)
+                    }
+                    placeholder="12345"
+                    className={
+                      !postcodeValidation.operational.valid
+                        ? 'border-red-300 focus:border-red-500'
+                        : postcodeValidation.operational.loading
+                          ? 'border-blue-300 focus:border-blue-500'
+                          : ''
+                    }
+                  />
+                  {postcodeValidation.operational.valid &&
+                    watchedValues.operationalAddress?.postalCode?.length === 5 && (
+                      <p className="mt-1 text-xs text-green-600">
+                        ✓ Valid Malaysian postcode
+                      </p>
+                    )}
+                </div>
+              </div>
+            </div>
+          </SettingsSection>
+
+          <Separator />
+
+          {/* Shipping Address */}
+          <SettingsSection title="Default Shipping Address">
+            <div className="mb-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={copyOperationalToShipping}
+              >
+                Copy from Operational Address
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <SettingsInput
+                label="Address Line 1"
+                type="text"
+                {...register('shippingAddress.addressLine1')}
+                error={errors.shippingAddress?.addressLine1?.message}
+                placeholder="Street address, building name, unit number"
+              />
+              
+              <SettingsInput
+                label="Address Line 2"
+                type="text"
+                {...register('shippingAddress.addressLine2')}
+                error={errors.shippingAddress?.addressLine2?.message}
+                placeholder="Additional address details (optional)"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SettingsInput
+                  label="City"
+                  type="text"
+                  {...register('shippingAddress.city')}
+                  error={errors.shippingAddress?.city?.message}
+                  placeholder="City"
+                />
+                
+                <SettingsSelect
+                  label="State"
+                  options={MALAYSIAN_STATES}
+                  value={watchedValues.shippingAddress?.state || ''}
+                  onValueChange={(value) => setValue('shippingAddress.state', value)}
+                  placeholder="Select state"
+                />
+                
+                <div>
+                  <label className="text-sm font-medium">
+                    Postal Code *
+                    {postcodeValidation.shipping.loading && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                      </span>
+                    )}
+                  </label>
+                  <SettingsInput
+                    type="text"
+                    value={watchedValues.shippingAddress?.postalCode || ''}
+                    onChange={(e) => handlePostcodeChange('shipping', e.target.value)}
+                    error={
+                      errors.shippingAddress?.postalCode?.message ||
+                      (!postcodeValidation.shipping.valid ? postcodeValidation.shipping.error : undefined)
+                    }
+                    placeholder="12345"
+                    className={
+                      !postcodeValidation.shipping.valid
+                        ? 'border-red-300 focus:border-red-500'
+                        : postcodeValidation.shipping.loading
+                          ? 'border-blue-300 focus:border-blue-500'
+                          : ''
+                    }
+                  />
+                  {postcodeValidation.shipping.valid &&
+                    watchedValues.shippingAddress?.postalCode?.length === 5 && (
+                      <p className="mt-1 text-xs text-green-600">
+                        ✓ Valid Malaysian postcode
+                      </p>
+                    )}
+                </div>
+              </div>
+            </div>
+          </SettingsSection>
+        </SettingsCard>
+
+        {/* Banking Information */}
+        <SettingsCard
+          title="Banking Information"
+          description="Secure banking details for payments and refunds"
+        >
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-amber-800">Secure Storage</h4>
+                <p className="text-sm text-amber-700">
+                  Banking information is encrypted and stored securely. Only authorized personnel can access this data.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <SettingsSection title="Bank Account Details">
+            <div className="space-y-4">
+              <SettingsInput
+                label="Bank Name"
+                type="text"
+                {...register('banking.bankName')}
+                error={errors.banking?.bankName?.message}
+                placeholder="e.g., Maybank, CIMB Bank, Public Bank"
+                helperText="Full name of your bank"
+              />
+              
+              <SettingsInput
+                label="Account Number"
+                type="text"
+                {...register('banking.bankAccountNumber')}
+                error={errors.banking?.bankAccountNumber?.message}
+                placeholder="Bank account number"
+                helperText="Your business bank account number"
+              />
+              
+              <SettingsInput
+                label="Account Holder Name"
+                type="text"
+                {...register('banking.bankAccountHolder')}
+                error={errors.banking?.bankAccountHolder?.message}
+                placeholder="Account holder name"
+                helperText="Name as registered with the bank"
+              />
+            </div>
+          </SettingsSection>
+        </SettingsCard>
+
+        {/* Save Actions */}
+        <SettingsFormActions>
+          <Button 
+            type="button" 
+            variant="outline"
+            disabled={!isDirty || isSubmitting}
+            onClick={() => loadBusinessProfile()}
+          >
+            Reset Changes
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={!isDirty || isSubmitting}
+            loading={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Business Profile'}
+          </Button>
+        </SettingsFormActions>
+      </form>
+
+      {/* Quick Actions */}
+      <SettingsCard
+        title="Related Settings"
+        description="Related configuration areas"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/admin/settings/tax-configuration">
+            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <CreditCard className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Tax Configuration</h4>
+                  <p className="text-sm text-gray-500">Manage GST/SST settings</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/admin/settings">
+            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Settings Dashboard</h4>
+                  <p className="text-sm text-gray-500">Back to settings overview</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </SettingsCard>
+    </SettingsLayout>
+  );
+}
+
+/**
+ * Calculate business profile completeness percentage
+ */
+function calculateCompleteness(profile: any): number {
+  if (!profile) return 0;
+  
+  const requiredFields = [
+    'legalName',
+    'registrationNumber',
+    'primaryPhone',
+    'primaryEmail'
+  ];
+
+  const addressFields = [
+    'registeredAddress'
+  ];
+
+  let completedFields = 0;
+  let totalFields = requiredFields.length + addressFields.length;
+
+  // Check basic fields
+  requiredFields.forEach(field => {
+    if (profile[field] && profile[field].trim() !== '') {
+      completedFields++;
+    }
+  });
+
+  // Check address fields
+  if (profile.registeredAddress && profile.registeredAddress.addressLine1) {
+    completedFields++;
+  }
+
+  // Optional bonus points for additional info
+  if (profile.tradingName) totalFields += 0.5;
+  if (profile.taxRegistrationNumber) totalFields += 0.5;
+  if (profile.operationalAddress?.addressLine1) totalFields += 0.5;
+  if (profile.banking?.bankName) totalFields += 0.5;
+
+  if (profile.tradingName && profile.tradingName.trim() !== '') completedFields += 0.5;
+  if (profile.taxRegistrationNumber && profile.taxRegistrationNumber.trim() !== '') completedFields += 0.5;
+  if (profile.operationalAddress?.addressLine1) completedFields += 0.5;
+  if (profile.banking?.bankName) completedFields += 0.5;
+
+  return Math.round((completedFields / totalFields) * 100);
+}
