@@ -245,21 +245,19 @@ export default function DiscountCodesPage() {
 
   // Extract filters component
   const filtersComponent = (
-    <div className="flex flex-col md:flex-row gap-4">
-      <div className="flex-1">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search codes..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search codes..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-full md:w-48">
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
@@ -270,7 +268,7 @@ export default function DiscountCodesPage() {
       </Select>
 
       <Select value={typeFilter} onValueChange={setTypeFilter}>
-        <SelectTrigger className="w-full md:w-48">
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Filter by type" />
         </SelectTrigger>
         <SelectContent>

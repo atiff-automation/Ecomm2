@@ -301,17 +301,18 @@ export default function AdminOrders() {
     </div>
   );
 
-  // Filters component for layout (52px height following standard)
+  // Streamlined filters component - focusing on essential filters only
   const filtersComponent = (
-    <div className="flex items-center gap-4 flex-wrap">
-      <div className="flex-1 min-w-[200px]">
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder="Search orders..."
           value={filters.search || ''}
           onChange={e =>
             setFilters(prev => ({ ...prev, search: e.target.value }))
           }
-          className="w-full"
+          className="pl-10"
         />
       </div>
       <Select
@@ -323,11 +324,11 @@ export default function AdminOrders() {
           }))
         }
       >
-        <SelectTrigger className="w-[160px]">
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Order Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="all">All Orders</SelectItem>
           <SelectItem value="PENDING">Pending</SelectItem>
           <SelectItem value="PROCESSING">Processing</SelectItem>
           <SelectItem value="SHIPPED">Shipped</SelectItem>
@@ -335,46 +336,6 @@ export default function AdminOrders() {
           <SelectItem value="CANCELLED">Cancelled</SelectItem>
         </SelectContent>
       </Select>
-      <Select
-        value={filters.paymentStatus || ''}
-        onValueChange={value =>
-          setFilters(prev => ({
-            ...prev,
-            paymentStatus: value === 'all' ? '' : value,
-          }))
-        }
-      >
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Payment Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Payment Status</SelectItem>
-          <SelectItem value="PAID">Paid</SelectItem>
-          <SelectItem value="PENDING">Pending</SelectItem>
-          <SelectItem value="FAILED">Failed</SelectItem>
-        </SelectContent>
-      </Select>
-      <Input
-        type="date"
-        value={filters.dateFrom || ''}
-        onChange={e =>
-          setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
-        }
-        placeholder="From Date"
-        className="w-[140px]"
-      />
-      <Input
-        type="date"
-        value={filters.dateTo || ''}
-        onChange={e =>
-          setFilters(prev => ({ ...prev, dateTo: e.target.value }))
-        }
-        placeholder="To Date"
-        className="w-[140px]"
-      />
-      <Button onClick={fetchOrders} variant="outline" size="sm">
-        <Search className="h-4 w-4" />
-      </Button>
     </div>
   );
 

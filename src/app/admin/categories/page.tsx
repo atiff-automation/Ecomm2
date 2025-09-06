@@ -53,8 +53,6 @@ import { toast } from 'sonner';
 import {
   AdminPageLayout,
   TabConfig,
-  BreadcrumbItem,
-  BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
 
 interface Category {
@@ -278,11 +276,7 @@ export default function AdminCategoriesPage() {
     },
   ];
 
-  // Define breadcrumbs to show user location and provide navigation back
-  const breadcrumbs: BreadcrumbItem[] = [
-    BREADCRUMB_CONFIGS.products.main,
-    BREADCRUMB_CONFIGS.products.categories,
-  ];
+  // Remove breadcrumbs - using AdminPageLayout with contextual navigation
 
   // Extract page actions
   const pageActions = (
@@ -380,23 +374,23 @@ export default function AdminCategoriesPage() {
 
   // Extract filters component
   const filtersComponent = (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search categories..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
       </div>
-      <div className="text-center lg:text-right">
-        <div className="text-2xl font-bold text-gray-900">
-          {categories.length}
+      <div className="flex items-center justify-center sm:justify-end text-center sm:text-right bg-muted/50 rounded-lg px-4 py-2 min-w-[120px]">
+        <div>
+          <div className="text-2xl font-bold text-gray-900">
+            {categories.length}
+          </div>
+          <div className="text-sm text-gray-600">Total Categories</div>
         </div>
-        <div className="text-sm text-gray-600">Total Categories</div>
       </div>
     </div>
   );
@@ -408,7 +402,6 @@ export default function AdminCategoriesPage() {
       actions={pageActions}
       tabs={tabs}
       filters={filtersComponent}
-      breadcrumbs={breadcrumbs}
       parentSection={{ label: 'Products', href: '/admin/products' }}
       loading={loading}
     >

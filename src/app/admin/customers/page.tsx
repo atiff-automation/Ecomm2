@@ -162,8 +162,8 @@ export default function AdminCustomers() {
 
   // Extract filters component
   const filtersComponent = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="relative">
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder="Search customers..."
@@ -183,7 +183,7 @@ export default function AdminCustomers() {
           }))
         }
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Membership Status" />
         </SelectTrigger>
         <SelectContent>
@@ -201,7 +201,7 @@ export default function AdminCustomers() {
           }))
         }
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="Account Status" />
         </SelectTrigger>
         <SelectContent>
