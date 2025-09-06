@@ -913,6 +913,105 @@ model AdminTelegramConfig {
   @@map("admin_telegram_config")
 }
 
+model BusinessProfile {
+  id                    String   @id @default(cuid())
+  
+  // Company Information
+  legalName            String
+  tradingName          String?
+  registrationNumber   String   @unique // SSM Registration
+  taxRegistrationNumber String? // GST Registration
+  businessType         String   @default("SDN_BHD")
+  
+  // Addresses
+  registeredAddress    Json     // Full address object
+  operationalAddress   Json?    // Can be different from registered
+  shippingAddress      Json?    // Default shipping sender address
+  
+  // Contact Information
+  primaryPhone         String
+  secondaryPhone       String?
+  primaryEmail         String
+  supportEmail         String?
+  website              String?
+  
+  // Banking Information (Encrypted)
+  bankName             String?
+  bankAccountNumber    String?  // Encrypted field
+  bankAccountHolder    String?
+  
+  // Legal & Compliance
+  businessLicense      String?
+  industryCode         String?
+  establishedDate      DateTime?
+  
+  // System Fields
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  createdBy            String
+  updatedBy            String?
+  
+  // Relations
+  history              BusinessProfileHistory[]
+  
+  @@index([isActive])
+  @@index([registrationNumber])
+  @@index([taxRegistrationNumber])
+  @@map("business_profile")
+}
+
+model BusinessProfileHistory {
+  id                String   @id @default(cuid())
+  businessProfileId String
+  operation         String   // CREATE, UPDATE, DELETE
+  oldValues         Json?
+  newValues         Json
+  changedBy         String
+  changeReason      String?
+  createdAt         DateTime @default(now())
+  
+  // Relations
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  
+  @@index([businessProfileId, createdAt])
+  @@index([operation])
+  @@index([changedBy])
+  @@map("business_profile_history")
+}
+
+model TaxConfiguration {
+  id                String   @id @default(cuid())
+  
+  // Company Tax Information
+  gstRegistered     Boolean  @default(false)
+  gstNumber         String?  @unique
+  sstRegistered     Boolean  @default(false)
+  sstNumber         String?  @unique
+  
+  // Default Tax Rates
+  defaultGstRate    Decimal  @default(0) @db.Decimal(5, 4)
+  defaultSstRate    Decimal  @default(0) @db.Decimal(5, 4)
+  
+  // Tax Settings
+  taxInclusivePricing Boolean @default(true)
+  autoCalculateTax    Boolean @default(true)
+  
+  // System Fields
+  isActive          Boolean  @default(true)
+  effectiveFrom     DateTime @default(now())
+  effectiveTo       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  updatedBy         String
+  
+  @@index([isActive])
+  @@index([gstRegistered])
+  @@index([sstRegistered])
+  @@index([effectiveFrom, effectiveTo])
+  @@map("tax_configuration")
+}
+
 enum UserRole {
   CUSTOMER
   STAFF
