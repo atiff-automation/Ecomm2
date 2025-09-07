@@ -24,7 +24,11 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface MembershipConfig {
   membershipThreshold: number;
@@ -158,62 +162,41 @@ export default function MembershipConfigPage() {
     );
   }
 
-  const breadcrumbItems = [
-    {
-      label: 'Membership',
-      href: '/admin/membership',
-      icon: Users as React.ComponentType<{ className?: string }>,
-    },
-    {
-      label: 'Configuration',
-      href: '/admin/membership/config',
-      icon: Settings as React.ComponentType<{ className?: string }>,
-    },
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Membership', href: '/admin/membership' },
+    { label: 'Configuration', href: '/admin/membership/config' },
   ];
 
+  const pageActions = (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleReset}
+        disabled={!hasChanges || saving}
+      >
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Reset
+      </Button>
+      <Button
+        size="sm"
+        onClick={handleSave}
+        disabled={!hasChanges || saving}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        {saving ? 'Saving...' : 'Save'}
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs */}
-      <Breadcrumbs
-        items={[
-          { label: 'Membership', href: '/admin/membership' },
-          { label: 'Configuration' },
-        ]}
-        className="mb-6"
-      />
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Settings className="h-6 w-6 text-primary" />
-            Membership Configuration
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Configure membership settings and requirements
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleReset}
-            disabled={!hasChanges || saving}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
-      </div>
-
+    <AdminPageLayout
+      title="Membership Configuration"
+      subtitle="Configure membership settings and requirements"
+      actions={pageActions}
+      breadcrumbs={breadcrumbs}
+      loading={loading}
+    >
       {/* Message Alert */}
       {message && (
         <Alert
@@ -354,6 +337,6 @@ export default function MembershipConfigPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

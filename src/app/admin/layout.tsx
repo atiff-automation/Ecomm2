@@ -87,13 +87,6 @@ const navigationItems = [
 
   // Additional sections that exist but don't fit main categories
   {
-    label: 'Site Customization',
-    href: '/admin/site-customization',
-    icon: Palette,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'Themes, Branding, Content',
-  },
-  {
     label: 'Notifications',
     href: '/admin/notifications',
     icon: MessageCircle,
@@ -105,7 +98,7 @@ const navigationItems = [
     href: '/admin/settings',
     icon: Settings,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'General Configuration',
+    description: 'Business Profile, Tax Config, Site Customization',
   },
 ];
 

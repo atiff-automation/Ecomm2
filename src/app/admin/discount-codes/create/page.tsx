@@ -34,7 +34,10 @@ import {
   DollarSign,
   Truck,
 } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+} from '@/components/admin/layout';
 
 interface CreateDiscountCodeForm {
   code: string;
@@ -249,41 +252,22 @@ export default function CreateDiscountCodePage() {
     }
   };
 
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Membership', href: '/admin/membership' },
+    { label: 'Discount Codes', href: '/admin/discount-codes' },
+    { label: 'Create', href: '/admin/discount-codes/create' },
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs */}
-      <Breadcrumbs
-        items={[
-          { label: 'Membership', href: '/admin/membership' },
-          { label: 'Discount Codes', href: '/admin/discount-codes' },
-          { label: 'Create' },
-        ]}
-        className="mb-6"
-      />
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Ticket className="h-8 w-8 text-purple-600" />
-              Create Discount Code
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Create a new discount code or coupon for your store
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <AdminPageLayout
+      title="Create Discount Code"
+      subtitle="Create a new discount code or coupon for your store"
+      breadcrumbs={breadcrumbs}
+      showBackButton={true}
+      backButtonLabel="Back to Discount Codes"
+      backButtonHref="/admin/discount-codes"
+      loading={loading}
+    >
       {/* Message Display */}
       {message && (
         <Alert
@@ -714,6 +698,6 @@ export default function CreateDiscountCodePage() {
           </Card>
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

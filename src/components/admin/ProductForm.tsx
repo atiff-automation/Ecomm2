@@ -506,15 +506,10 @@ export function ProductForm({
                                 value: category.id
                               }))
                             : [];
-                          console.log('🎯 MultiSelect - Category options:', categoryOptions);
                           return categoryOptions;
                         })()}
-                        selected={(() => {
-                          console.log('🎯 MultiSelect - Selected categoryIds:', formData.categoryIds);
-                          return formData.categoryIds || [];
-                        })()}
+                        selected={formData.categoryIds || []}
                         onChange={(values) => {
-                          console.log('🎯 MultiSelect - onChange called with:', values);
                           handleInputChange('categoryIds', values);
                         }}
                         placeholder="Select categories"
@@ -863,28 +858,38 @@ export function ProductForm({
             <Card className="mt-6">
               <CardContent className="p-4">
                 <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={isFirstStep}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Previous
-                  </Button>
+                  {/* Previous button - hidden on first step (Basic Info) */}
+                  {!isFirstStep && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
+                    </Button>
+                  )}
+                  
+                  {/* Spacer for alignment when Previous button is hidden */}
+                  {isFirstStep && <div />}
                   
                   <div className="text-sm text-muted-foreground">
                     Step {currentIndex + 1} of {steps.length}
                   </div>
                   
-                  <Button
-                    type="button"
-                    onClick={nextStep}
-                    disabled={isLastStep}
-                  >
-                    Next
-                    <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
-                  </Button>
+                  {/* Next button - hidden on last step (Advanced) */}
+                  {!isLastStep && (
+                    <Button
+                      type="button"
+                      onClick={nextStep}
+                    >
+                      Next
+                      <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+                    </Button>
+                  )}
+                  
+                  {/* Spacer for alignment when Next button is hidden */}
+                  {isLastStep && <div />}
                 </div>
               </CardContent>
             </Card>

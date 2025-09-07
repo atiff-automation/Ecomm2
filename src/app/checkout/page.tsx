@@ -42,6 +42,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/use-cart';
 import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
+import { malaysianStatesOptions } from '@/lib/validation/settings';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
 import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
 import PaymentMethodSelection from '@/components/checkout/PaymentMethodSelection';
@@ -196,7 +197,7 @@ export default function CheckoutPage() {
   }, [cart?.items]);
 
   // Malaysian states from enhanced database service
-  const [malaysianStates, setMalaysianStates] = useState<Array<{code: string; name: string; zone: 'west' | 'east'}>>([]);
+  // Use static malaysianStatesOptions for consistency with business profile
 
   // Initialize checkout data using cart service
   const initializeCheckoutData = useCallback(async () => {
@@ -245,30 +246,7 @@ export default function CheckoutPage() {
         console.log('✅ Cart has items, proceeding with checkout');
       }
 
-      // Load Malaysian states from API (client-safe)
-      try {
-        const response = await fetch('/api/postcode/states');
-        if (response.ok) {
-          const states = await response.json();
-          setMalaysianStates(states.map((state: any) => ({
-            code: state.code,
-            name: state.name,
-            zone: state.zone
-          })));
-        } else {
-          throw new Error('Failed to fetch states');
-        }
-      } catch (error) {
-        console.error('Error loading Malaysian states:', error);
-        // Fallback to basic states if API fails
-        setMalaysianStates([
-          { code: 'KUL', name: 'Wilayah Persekutuan Kuala Lumpur', zone: 'west' },
-          { code: 'SGR', name: 'Selangor', zone: 'west' },
-          { code: 'JHR', name: 'Johor', zone: 'west' },
-          { code: 'PNG', name: 'Pulau Pinang', zone: 'west' },
-          { code: 'PRK', name: 'Perak', zone: 'west' }
-        ]);
-      }
+      // Malaysian states now handled via static import from settings.ts
 
       // Pre-fill user info and default address if available
       if (session?.user) {
@@ -398,11 +376,11 @@ export default function CheckoutPage() {
           const validation = await response.json();
 
           if (validation.valid && validation.location) {
-            // Auto-fill state and city using database data
+            // Auto-fill state and city using database data - use state code for consistency
             addressSetter(prev => ({
               ...prev,
               postcode: validation.formatted || postcode,
-              state: validation.location.stateName,
+              state: validation.location.stateCode, // Use stateCode instead of stateName
               city: validation.location.city,
             }));
 
@@ -413,7 +391,8 @@ export default function CheckoutPage() {
 
             console.log(`✅ Auto-filled ${addressType} address from database:`, {
               postcode: validation.formatted,
-              state: validation.location.stateName,
+              stateCode: validation.location.stateCode,
+              stateName: validation.location.stateName,
               city: validation.location.city,
               zone: validation.location.zone,
             });
@@ -1070,38 +1049,9 @@ export default function CheckoutPage() {
                 />
               </div>
 
+              {/* Address fields ordered for optimal auto-fill workflow: Postcode → City → State */}
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="shippingCity">City *</Label>
-                  <Input
-                    id="shippingCity"
-                    value={shippingAddress.city}
-                    onChange={e =>
-                      handleAddressChange('shipping', 'city', e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="shippingState">State *</Label>
-                  <Select
-                    value={shippingAddress.state}
-                    onValueChange={value =>
-                      handleAddressChange('shipping', 'state', value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {malaysianStates.map(state => (
-                        <SelectItem key={state.code} value={state.name}>
-                          {state.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Postal Code - First position for auto-fill workflow */}
                 <div>
                   <Label htmlFor="shippingPostcode">
                     Postcode *
@@ -1141,6 +1091,39 @@ export default function CheckoutPage() {
                         ✓ Valid Malaysian postcode
                       </p>
                     )}
+                </div>
+                {/* City - Second position, auto-filled from postcode */}
+                <div>
+                  <Label htmlFor="shippingCity">City *</Label>
+                  <Input
+                    id="shippingCity"
+                    value={shippingAddress.city}
+                    onChange={e =>
+                      handleAddressChange('shipping', 'city', e.target.value)
+                    }
+                    required
+                  />
+                </div>
+                {/* State - Third position, auto-filled from postcode */}
+                <div>
+                  <Label htmlFor="shippingState">State *</Label>
+                  <Select
+                    value={shippingAddress.state}
+                    onValueChange={value =>
+                      handleAddressChange('shipping', 'state', value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {malaysianStatesOptions.map(state => (
+                        <SelectItem key={state.value} value={state.value}>
+                          {state.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -1287,38 +1270,9 @@ export default function CheckoutPage() {
                   />
                 </div>
 
+                {/* Address fields ordered for optimal auto-fill workflow: Postcode → City → State */}
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="billingCity">City *</Label>
-                    <Input
-                      id="billingCity"
-                      value={billingAddress.city}
-                      onChange={e =>
-                        handleAddressChange('billing', 'city', e.target.value)
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="billingState">State *</Label>
-                    <Select
-                      value={billingAddress.state}
-                      onValueChange={value =>
-                        handleAddressChange('billing', 'state', value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {malaysianStates.map(state => (
-                          <SelectItem key={state.code} value={state.name}>
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Postal Code - First position for auto-fill workflow */}
                   <div>
                     <Label htmlFor="billingPostcode">
                       Postcode *
@@ -1358,6 +1312,39 @@ export default function CheckoutPage() {
                           ✓ Valid Malaysian postcode
                         </p>
                       )}
+                  </div>
+                  {/* City - Second position, auto-filled from postcode */}
+                  <div>
+                    <Label htmlFor="billingCity">City *</Label>
+                    <Input
+                      id="billingCity"
+                      value={billingAddress.city}
+                      onChange={e =>
+                        handleAddressChange('billing', 'city', e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  {/* State - Third position, auto-filled from postcode */}
+                  <div>
+                    <Label htmlFor="billingState">State *</Label>
+                    <Select
+                      value={billingAddress.state}
+                      onValueChange={value =>
+                        handleAddressChange('billing', 'state', value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {malaysianStatesOptions.map(state => (
+                          <SelectItem key={state.value} value={state.value}>
+                            {state.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

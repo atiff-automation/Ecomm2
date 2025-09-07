@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AdminPageLayout,
   TabConfig,
-  BreadcrumbItem,
-  BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,11 +102,7 @@ export default function AdminMembership() {
     );
   }
 
-  // Define breadcrumbs to show hierarchical location
-  const breadcrumbs: BreadcrumbItem[] = [
-    BREADCRUMB_CONFIGS.customers.main,
-    BREADCRUMB_CONFIGS.customers.membership,
-  ];
+  // Remove breadcrumbs - using AdminPageLayout with contextual navigation
 
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers (Membership section)
   const tabs: TabConfig[] = [
@@ -141,7 +135,6 @@ export default function AdminMembership() {
       subtitle="Manage your membership program and track member engagement"
       actions={pageActions}
       tabs={tabs}
-      breadcrumbs={breadcrumbs}
       parentSection={{ label: 'Customers', href: '/admin/customers' }}
       loading={loading}
     >

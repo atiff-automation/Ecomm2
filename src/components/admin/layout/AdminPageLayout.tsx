@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 import { PageHeader } from './PageHeader';
 import { ContextualTabs } from './ContextualTabs';
-import { Breadcrumb, BreadcrumbItem } from './Breadcrumb';
 
 export interface TabConfig {
   id: string;
@@ -31,7 +30,6 @@ interface AdminPageLayoutProps {
   showBackButton?: boolean;
   backButtonLabel?: string;
   backButtonHref?: string;
-  breadcrumbs?: BreadcrumbItem[];
   parentSection?: ParentSection;
 }
 
@@ -48,7 +46,6 @@ export function AdminPageLayout({
   showBackButton = false,
   backButtonLabel,
   backButtonHref,
-  breadcrumbs,
   parentSection,
 }: AdminPageLayoutProps) {
   if (error) {
@@ -71,13 +68,7 @@ export function AdminPageLayout({
   }
 
   return (
-    <div className="flex flex-col">
-      {/* Breadcrumb Navigation */}
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="bg-white border-b border-gray-100 px-6 py-3">
-          <Breadcrumb items={breadcrumbs} />
-        </div>
-      )}
+    <div className="flex flex-col">{/* Breadcrumb Navigation removed - using contextual navigation instead */}
 
       {/* Page Header - 64px height */}
       <PageHeader

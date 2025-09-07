@@ -6,7 +6,6 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import {
-  SettingsLayout,
   SettingsCard,
   SettingsSection,
   SettingsInput,
@@ -150,14 +149,9 @@ export default function TaxConfigurationPage() {
 
   if (isLoading) {
     return (
-      <SettingsLayout
-        title="Tax Configuration"
-        subtitle="Loading tax settings..."
-      >
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </SettingsLayout>
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
@@ -166,10 +160,7 @@ export default function TaxConfigurationPage() {
   const isConfigured = hasGstRegistration || hasSstRegistration;
 
   return (
-    <SettingsLayout
-      title="Tax Configuration"
-      subtitle="Manage GST/SST settings and tax calculations for your business"
-    >
+    <div className="space-y-6">
       {/* Status Overview */}
       <SettingsCard
         title="Tax Status Overview"
@@ -473,41 +464,6 @@ export default function TaxConfigurationPage() {
         </div>
       </SettingsCard>
 
-      {/* Quick Actions */}
-      <SettingsCard
-        title="Related Settings"
-        description="Related configuration areas"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/admin/settings/business-profile">
-            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Business Profile</h4>
-                  <p className="text-sm text-gray-500">Company registration details</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/admin/settings">
-            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Settings Dashboard</h4>
-                  <p className="text-sm text-gray-500">Back to settings overview</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </SettingsCard>
-    </SettingsLayout>
+    </div>
   );
 }

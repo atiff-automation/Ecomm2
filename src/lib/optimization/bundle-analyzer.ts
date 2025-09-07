@@ -232,7 +232,7 @@ jobs:
       - run: npm run build
       - uses: andresz1/size-limit-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: \${{ secrets.GITHUB_TOKEN }}
     `.trim(),
     
     packageJsonScript: {

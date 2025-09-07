@@ -212,7 +212,7 @@ export function useFormValidation(
   }, [values, fieldValidators, validator, clearFieldError, setFieldError]);
 
   // Validate entire form
-  const validateForm = useCallback(): FormValidationResult => {
+  const validateForm = useCallback(() => {
     if (!validator) {
       return { isValid: true, errors: [] };
     }

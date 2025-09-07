@@ -257,25 +257,47 @@ export async function POST(request: NextRequest) {
       newOrderStatus = 'PENDING';
     }
 
-    // Use universal status handler - this will handle Telegram notifications automatically
-    await updateOrderStatus(
-      order.id,
-      newOrderStatus,
-      newPaymentStatus,
-      'toyyibpay-webhook',
-      {
-        paymentMethod: 'TOYYIBPAY',
-        toyyibpayBillCode: callback.billcode,
-        toyyibpayRefNo: callback.refno,
-        paidAmount: callback.amount,
-        paymentStatus: callback.status,
-        paymentReason: callback.reason,
-        transactionTime: callback.transaction_time,
-        webhookOrderId: callback.order_id,
-      }
-    );
+    // Update order status directly without triggering notifications
+    // Notifications are handled by the centralized payment-success webhook to avoid duplicates
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: newOrderStatus,
+        paymentStatus: newPaymentStatus,
+        paymentId: callback.refno,
+        updatedAt: new Date(),
+      },
+    });
 
-    // Note: Audit logs are automatically created by updateOrderStatus function
+    console.log(`✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`);
+
+    // Create audit log for the order status change
+    if (order.user) {
+      await prisma.auditLog.create({
+        data: {
+          userId: order.user.id,
+          action: 'ORDER_STATUS_CHANGE',
+          resource: 'ORDER',
+          resourceId: order.id,
+          details: {
+            orderNumber: order.orderNumber,
+            newStatus: newOrderStatus,
+            newPaymentStatus: newPaymentStatus,
+            triggeredBy: 'toyyibpay-webhook',
+            paymentMethod: 'TOYYIBPAY',
+            toyyibpayBillCode: callback.billcode,
+            toyyibpayRefNo: callback.refno,
+            paidAmount: callback.amount,
+            paymentStatus: callback.status,
+            paymentReason: callback.reason,
+            transactionTime: callback.transaction_time,
+            webhookOrderId: callback.order_id,
+          },
+          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
+        },
+      });
+    }
 
     // Send additional notifications if needed
     if (newPaymentStatus === 'PAID') {

@@ -16,6 +16,11 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Save, Crown } from 'lucide-react';
 import Link from 'next/link';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 
 interface CustomerFormData {
   firstName: string;
@@ -199,31 +204,36 @@ export default function AdminCustomerEdit({
     );
   }
 
+  // Define breadcrumbs to show hierarchical location
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.customers.main,
+    {
+      label: `${customer.firstName} ${customer.lastName}`,
+      href: `/admin/customers/${customer.id}`,
+    },
+    {
+      label: 'Edit',
+      href: `/admin/customers/${customer.id}/edit`,
+    },
+  ];
+
+  // Page actions
+  const pageActions = (
+    <div className="flex items-center gap-2">
+      {customer.isMember && <Crown className="h-5 w-5 text-yellow-500" />}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href={`/admin/customers/${customer.id}`}>
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                Edit Customer
-                {customer.isMember && (
-                  <Crown className="h-6 w-6 text-yellow-500" />
-                )}
-              </h1>
-              <p className="text-gray-600">
-                {customer.firstName} {customer.lastName} • {customer.id}
-              </p>
-            </div>
-          </div>
-        </div>
+    <AdminPageLayout
+      title="Edit Customer"
+      subtitle={`${customer.firstName} ${customer.lastName} • ${customer.id}`}
+      actions={pageActions}
+      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
+      showBackButton={true}
+      className="max-w-2xl mx-auto"
+    >
 
         {/* Form */}
         <Card>
@@ -384,7 +394,6 @@ export default function AdminCustomerEdit({
             </form>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminPageLayout>
   );
 }

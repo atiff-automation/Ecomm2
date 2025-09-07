@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import {
-  SettingsLayout,
   SettingsCard,
   SettingsSection,
   SettingsInput,
@@ -16,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { businessProfileSchema, MALAYSIAN_STATES } from '@/lib/validation/settings';
+import { businessProfileSchema, malaysianStatesOptions } from '@/lib/validation/settings';
 import type { BusinessProfileFormData } from '@/lib/validation/settings';
 import { 
   Building2, 
@@ -212,41 +211,83 @@ export default function BusinessProfilePage() {
   };
 
   const copyOperationalToShipping = () => {
-    setValue('shippingAddress.addressLine1', watchedValues.operationalAddress?.addressLine1 || '');
-    setValue('shippingAddress.addressLine2', watchedValues.operationalAddress?.addressLine2 || '');
-    setValue('shippingAddress.city', watchedValues.operationalAddress?.city || '');
-    setValue('shippingAddress.state', watchedValues.operationalAddress?.state || '');
-    setValue('shippingAddress.postalCode', watchedValues.operationalAddress?.postalCode || '');
+    const operational = watchedValues.operationalAddress;
+    if (!operational) {
+      toast.error('No operational address to copy');
+      return;
+    }
+
+    setValue('shippingAddress.addressLine1', operational.addressLine1 || '');
+    setValue('shippingAddress.addressLine2', operational.addressLine2 || '');
+    setValue('shippingAddress.city', operational.city || '');
+    setValue('shippingAddress.state', operational.state || '');
+    setValue('shippingAddress.postalCode', operational.postalCode || '');
+    
+    // Copy postcode validation state
+    setPostcodeValidation(prev => ({
+      ...prev,
+      shipping: { ...prev.operational }
+    }));
+    
     toast.success('Copied operational address to shipping address');
   };
 
   const copyRegisteredToOperational = () => {
-    setValue('operationalAddress.addressLine1', watchedValues.registeredAddress?.addressLine1 || '');
-    setValue('operationalAddress.addressLine2', watchedValues.registeredAddress?.addressLine2 || '');
-    setValue('operationalAddress.city', watchedValues.registeredAddress?.city || '');
-    setValue('operationalAddress.state', watchedValues.registeredAddress?.state || '');
-    setValue('operationalAddress.postalCode', watchedValues.registeredAddress?.postalCode || '');
+    const registered = watchedValues.registeredAddress;
+    if (!registered) {
+      toast.error('No registered address to copy');
+      return;
+    }
+
+    setValue('operationalAddress.addressLine1', registered.addressLine1 || '');
+    setValue('operationalAddress.addressLine2', registered.addressLine2 || '');
+    setValue('operationalAddress.city', registered.city || '');
+    setValue('operationalAddress.state', registered.state || '');
+    setValue('operationalAddress.postalCode', registered.postalCode || '');
+    
+    // Copy postcode validation state
+    setPostcodeValidation(prev => ({
+      ...prev,
+      operational: { ...prev.registered }
+    }));
+    
     toast.success('Copied registered address to operational address');
   };
+
 
   // Handle postcode change with auto-fill (same as checkout page)
   const handlePostcodeChange = (
     addressType: 'registered' | 'operational' | 'shipping',
     postcode: string
   ) => {
+    console.log(`🔍 handlePostcodeChange called for ${addressType} with postcode:`, postcode);
+    
     // Update the postcode value immediately
     const fieldPath = `${addressType}Address.postalCode` as keyof BusinessProfileFormData;
     setValue(fieldPath, postcode);
 
+    // Only proceed with validation if postcode is exactly 5 digits
+    if (!/^\d{5}$/.test(postcode)) {
+      console.log(`⏭️ Skipping API call - postcode not 5 digits: "${postcode}"`);
+      setPostcodeValidation(prev => ({
+        ...prev,
+        [addressType]: { valid: true, loading: false },
+      }));
+      return;
+    }
+
     // Set loading state
+    console.log(`⏳ Setting loading state for ${addressType}`);
     setPostcodeValidation(prev => ({
       ...prev,
       [addressType]: { valid: true, loading: true },
     }));
 
     // Debounce the validation and auto-fill with API call
+    console.log(`⏰ Starting 500ms timeout for API call`);
     setTimeout(async () => {
       try {
+        console.log(`📞 Making API call to validate postcode: ${postcode}`);
         const response = await fetch(`/api/postcode/validate?postcode=${encodeURIComponent(postcode)}`);
         
         if (response.ok) {
@@ -254,8 +295,20 @@ export default function BusinessProfilePage() {
 
           if (validation.valid && validation.location) {
             // Auto-fill state and city using database data
-            setValue(`${addressType}Address.city` as keyof BusinessProfileFormData, validation.location.city);
-            setValue(`${addressType}Address.state` as keyof BusinessProfileFormData, validation.location.stateName);
+            // Use stateCode instead of stateName for form validation
+            const cityField = `${addressType}Address.city` as keyof BusinessProfileFormData;
+            const stateField = `${addressType}Address.state` as keyof BusinessProfileFormData;
+            
+            console.log(`🎯 Attempting to set fields:`, {
+              cityField,
+              stateField,
+              city: validation.location.city,
+              stateCode: validation.location.stateCode,
+              currentFormValues: watchedValues
+            });
+            
+            setValue(cityField, validation.location.city);
+            setValue(stateField, validation.location.stateCode);
             setValue(fieldPath, validation.formatted || postcode);
 
             setPostcodeValidation(prev => ({
@@ -263,11 +316,12 @@ export default function BusinessProfilePage() {
               [addressType]: { valid: true, loading: false },
             }));
 
-            console.log(`✅ Auto-filled ${addressType} address from database:`, {
+            console.log(`✅ Successfully called setValue for ${addressType} address:`, {
               postcode: validation.formatted,
-              state: validation.location.stateName,
+              state: `${validation.location.stateCode} (${validation.location.stateName})`,
               city: validation.location.city,
               zone: validation.location.zone,
+              formValues: watchedValues
             });
           } else if (postcode.length === 5) {
             // Invalid postcode from database
@@ -305,24 +359,16 @@ export default function BusinessProfilePage() {
 
   if (isLoading) {
     return (
-      <SettingsLayout
-        title="Business Profile"
-        subtitle="Loading business information..."
-      >
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </SettingsLayout>
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
   const completeness = profile ? calculateCompleteness(profile) : 0;
 
   return (
-    <SettingsLayout
-      title="Business Profile"
-      subtitle="Manage your company information, addresses, and banking details"
-    >
+    <div className="space-y-6">
       {/* Status Overview */}
       <SettingsCard
         title="Profile Status"
@@ -530,59 +576,65 @@ export default function BusinessProfilePage() {
               />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Postal Code - First position for auto-fill workflow */}
+                <SettingsInput
+                  label={
+                    <span className="text-sm font-medium">
+                      Postal Code
+                      {postcodeValidation.registered.loading && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                        </span>
+                      )}
+                    </span>
+                  }
+                  type="text"
+                  required
+                  value={watchedValues.registeredAddress?.postalCode || ''}
+                  onChange={(e) => handlePostcodeChange('registered', e.target.value)}
+                  error={
+                    errors.registeredAddress?.postalCode?.message ||
+                    (!postcodeValidation.registered.valid ? postcodeValidation.registered.error : undefined)
+                  }
+                  placeholder="12345"
+                  className={
+                    !postcodeValidation.registered.valid
+                      ? 'border-red-300 focus:border-red-500'
+                      : postcodeValidation.registered.loading
+                        ? 'border-blue-300 focus:border-blue-500'
+                        : ''
+                  }
+                />
+                
+                {/* City - Second position, auto-filled from postcode */}
                 <SettingsInput
                   label="City"
                   type="text"
                   required
-                  {...register('registeredAddress.city')}
+                  value={watchedValues.registeredAddress?.city || ''}
+                  onChange={(e) => setValue('registeredAddress.city', e.target.value)}
                   error={errors.registeredAddress?.city?.message}
                   placeholder="City"
                 />
                 
+                {/* State - Third position, auto-filled from postcode */}
                 <SettingsSelect
                   label="State"
                   required
-                  options={MALAYSIAN_STATES}
+                  options={malaysianStatesOptions}
                   value={watchedValues.registeredAddress?.state || ''}
                   onValueChange={(value) => setValue('registeredAddress.state', value)}
                   placeholder="Select state"
                 />
-                
-                <div>
-                  <label className="text-sm font-medium">
-                    Postal Code *
-                    {postcodeValidation.registered.loading && (
-                      <span className="ml-2 text-xs text-blue-600">
-                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
-                      </span>
-                    )}
-                  </label>
-                  <SettingsInput
-                    type="text"
-                    required
-                    value={watchedValues.registeredAddress?.postalCode || ''}
-                    onChange={(e) => handlePostcodeChange('registered', e.target.value)}
-                    error={
-                      errors.registeredAddress?.postalCode?.message ||
-                      (!postcodeValidation.registered.valid ? postcodeValidation.registered.error : undefined)
-                    }
-                    placeholder="12345"
-                    className={
-                      !postcodeValidation.registered.valid
-                        ? 'border-red-300 focus:border-red-500'
-                        : postcodeValidation.registered.loading
-                          ? 'border-blue-300 focus:border-blue-500'
-                          : ''
-                    }
-                  />
-                  {postcodeValidation.registered.valid &&
-                    watchedValues.registeredAddress?.postalCode?.length === 5 && (
-                      <p className="mt-1 text-xs text-green-600">
-                        ✓ Valid Malaysian postcode
-                      </p>
-                    )}
-                </div>
               </div>
+              
+              {/* Postcode validation success message */}
+              {postcodeValidation.registered.valid &&
+                watchedValues.registeredAddress?.postalCode?.length === 5 && (
+                  <p className="mt-1 text-xs text-green-600">
+                    ✓ Valid Malaysian postcode
+                  </p>
+                )}
             </div>
           </SettingsSection>
 
@@ -619,56 +671,62 @@ export default function BusinessProfilePage() {
               />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Postal Code - First position for auto-fill workflow */}
+                <SettingsInput
+                  label={
+                    <span className="text-sm font-medium">
+                      Postal Code
+                      {postcodeValidation.operational.loading && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                        </span>
+                      )}
+                    </span>
+                  }
+                  type="text"
+                  value={watchedValues.operationalAddress?.postalCode || ''}
+                  onChange={(e) => handlePostcodeChange('operational', e.target.value)}
+                  error={
+                    errors.operationalAddress?.postalCode?.message ||
+                    (!postcodeValidation.operational.valid ? postcodeValidation.operational.error : undefined)
+                  }
+                  placeholder="12345"
+                  className={
+                    !postcodeValidation.operational.valid
+                      ? 'border-red-300 focus:border-red-500'
+                      : postcodeValidation.operational.loading
+                        ? 'border-blue-300 focus:border-blue-500'
+                        : ''
+                  }
+                />
+                
+                {/* City - Second position, auto-filled from postcode */}
                 <SettingsInput
                   label="City"
                   type="text"
-                  {...register('operationalAddress.city')}
+                  value={watchedValues.operationalAddress?.city || ''}
+                  onChange={(e) => setValue('operationalAddress.city', e.target.value)}
                   error={errors.operationalAddress?.city?.message}
                   placeholder="City"
                 />
                 
+                {/* State - Third position, auto-filled from postcode */}
                 <SettingsSelect
                   label="State"
-                  options={MALAYSIAN_STATES}
+                  options={malaysianStatesOptions}
                   value={watchedValues.operationalAddress?.state || ''}
                   onValueChange={(value) => setValue('operationalAddress.state', value)}
                   placeholder="Select state"
                 />
-                
-                <div>
-                  <label className="text-sm font-medium">
-                    Postal Code *
-                    {postcodeValidation.operational.loading && (
-                      <span className="ml-2 text-xs text-blue-600">
-                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
-                      </span>
-                    )}
-                  </label>
-                  <SettingsInput
-                    type="text"
-                    value={watchedValues.operationalAddress?.postalCode || ''}
-                    onChange={(e) => handlePostcodeChange('operational', e.target.value)}
-                    error={
-                      errors.operationalAddress?.postalCode?.message ||
-                      (!postcodeValidation.operational.valid ? postcodeValidation.operational.error : undefined)
-                    }
-                    placeholder="12345"
-                    className={
-                      !postcodeValidation.operational.valid
-                        ? 'border-red-300 focus:border-red-500'
-                        : postcodeValidation.operational.loading
-                          ? 'border-blue-300 focus:border-blue-500'
-                          : ''
-                    }
-                  />
-                  {postcodeValidation.operational.valid &&
-                    watchedValues.operationalAddress?.postalCode?.length === 5 && (
-                      <p className="mt-1 text-xs text-green-600">
-                        ✓ Valid Malaysian postcode
-                      </p>
-                    )}
-                </div>
               </div>
+              
+              {/* Postcode validation success message */}
+              {postcodeValidation.operational.valid &&
+                watchedValues.operationalAddress?.postalCode?.length === 5 && (
+                  <p className="mt-1 text-xs text-green-600">
+                    ✓ Valid Malaysian postcode
+                  </p>
+                )}
             </div>
           </SettingsSection>
 
@@ -705,56 +763,62 @@ export default function BusinessProfilePage() {
               />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Postal Code - First position for auto-fill workflow */}
+                <SettingsInput
+                  label={
+                    <span className="text-sm font-medium">
+                      Postal Code
+                      {postcodeValidation.shipping.loading && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
+                        </span>
+                      )}
+                    </span>
+                  }
+                  type="text"
+                  value={watchedValues.shippingAddress?.postalCode || ''}
+                  onChange={(e) => handlePostcodeChange('shipping', e.target.value)}
+                  error={
+                    errors.shippingAddress?.postalCode?.message ||
+                    (!postcodeValidation.shipping.valid ? postcodeValidation.shipping.error : undefined)
+                  }
+                  placeholder="12345"
+                  className={
+                    !postcodeValidation.shipping.valid
+                      ? 'border-red-300 focus:border-red-500'
+                      : postcodeValidation.shipping.loading
+                        ? 'border-blue-300 focus:border-blue-500'
+                        : ''
+                  }
+                />
+                
+                {/* City - Second position, auto-filled from postcode */}
                 <SettingsInput
                   label="City"
                   type="text"
-                  {...register('shippingAddress.city')}
+                  value={watchedValues.shippingAddress?.city || ''}
+                  onChange={(e) => setValue('shippingAddress.city', e.target.value)}
                   error={errors.shippingAddress?.city?.message}
                   placeholder="City"
                 />
                 
+                {/* State - Third position, auto-filled from postcode */}
                 <SettingsSelect
                   label="State"
-                  options={MALAYSIAN_STATES}
+                  options={malaysianStatesOptions}
                   value={watchedValues.shippingAddress?.state || ''}
                   onValueChange={(value) => setValue('shippingAddress.state', value)}
                   placeholder="Select state"
                 />
-                
-                <div>
-                  <label className="text-sm font-medium">
-                    Postal Code *
-                    {postcodeValidation.shipping.loading && (
-                      <span className="ml-2 text-xs text-blue-600">
-                        <Loader2 className="inline h-3 w-3 animate-spin" /> Looking up...
-                      </span>
-                    )}
-                  </label>
-                  <SettingsInput
-                    type="text"
-                    value={watchedValues.shippingAddress?.postalCode || ''}
-                    onChange={(e) => handlePostcodeChange('shipping', e.target.value)}
-                    error={
-                      errors.shippingAddress?.postalCode?.message ||
-                      (!postcodeValidation.shipping.valid ? postcodeValidation.shipping.error : undefined)
-                    }
-                    placeholder="12345"
-                    className={
-                      !postcodeValidation.shipping.valid
-                        ? 'border-red-300 focus:border-red-500'
-                        : postcodeValidation.shipping.loading
-                          ? 'border-blue-300 focus:border-blue-500'
-                          : ''
-                    }
-                  />
-                  {postcodeValidation.shipping.valid &&
-                    watchedValues.shippingAddress?.postalCode?.length === 5 && (
-                      <p className="mt-1 text-xs text-green-600">
-                        ✓ Valid Malaysian postcode
-                      </p>
-                    )}
-                </div>
               </div>
+              
+              {/* Postcode validation success message */}
+              {postcodeValidation.shipping.valid &&
+                watchedValues.shippingAddress?.postalCode?.length === 5 && (
+                  <p className="mt-1 text-xs text-green-600">
+                    ✓ Valid Malaysian postcode
+                  </p>
+                )}
             </div>
           </SettingsSection>
         </SettingsCard>
@@ -828,42 +892,7 @@ export default function BusinessProfilePage() {
         </SettingsFormActions>
       </form>
 
-      {/* Quick Actions */}
-      <SettingsCard
-        title="Related Settings"
-        description="Related configuration areas"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/admin/settings/tax-configuration">
-            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Tax Configuration</h4>
-                  <p className="text-sm text-gray-500">Manage GST/SST settings</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/admin/settings">
-            <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Settings Dashboard</h4>
-                  <p className="text-sm text-gray-500">Back to settings overview</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </SettingsCard>
-    </SettingsLayout>
+    </div>
   );
 }
 
