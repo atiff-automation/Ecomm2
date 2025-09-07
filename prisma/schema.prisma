@@ -8,45 +8,45 @@ datasource db {
 }
 
 model User {
-  id                          String                   @id @default(cuid())
-  email                       String                   @unique
-  password                    String
-  firstName                   String
-  lastName                    String
-  phone                       String?
-  dateOfBirth                 DateTime?
-  role                        UserRole                 @default(CUSTOMER)
-  status                      UserStatus               @default(PENDING_VERIFICATION)
-  emailVerified               DateTime?
-  isMember                    Boolean                  @default(false)
-  memberSince                 DateTime?
-  membershipTotal             Decimal                  @default(0) @db.Decimal(10, 2)
-  createdAt                   DateTime                 @default(now())
-  updatedAt                   DateTime                 @updatedAt
-  lastLoginAt                 DateTime?
-  addresses                   Address[]
-  auditLogs                   AuditLog[]
-  cartItems                   CartItem[]
-  complianceReports           ComplianceReport[]
-  discountCodesCreated        DiscountCode[]
-  discountUsage               DiscountUsage[]
-  heroSectionsCreated         HeroSection[]            @relation("HeroCreator")
-  importExportJobs            ImportExportJob[]
-  mediaUploads                MediaUpload[]            @relation("MediaUploader")
-  referralsReceived           MemberReferral[]         @relation("ReferralsReceived")
-  referralsMade               MemberReferral[]         @relation("ReferralsMade")
-  notificationPreferences     NotificationPreference[]
-  orders                      Order[]
-  pendingMembership           PendingMembership?
-  recentlyViewed              RecentlyViewed[]
-  rewardsProcessed            ReferralReward[]         @relation("RewardsProcessed")
-  referralRewards             ReferralReward[]
-  referralSettings            ReferralSetting[]
-  reviews                     Review[]
-  siteCustomizationsCreated   SiteCustomization[]      @relation("SiteCustomizationCreator")
-  themesCreated               SiteTheme[]              @relation("ThemeCreator")
-  telegramConfig              TelegramConfig?
-  wishlistItems               WishlistItem[]
+  id                        String                   @id @default(cuid())
+  email                     String                   @unique
+  password                  String
+  firstName                 String
+  lastName                  String
+  phone                     String?
+  dateOfBirth               DateTime?
+  role                      UserRole                 @default(CUSTOMER)
+  status                    UserStatus               @default(PENDING_VERIFICATION)
+  emailVerified             DateTime?
+  isMember                  Boolean                  @default(false)
+  memberSince               DateTime?
+  membershipTotal           Decimal                  @default(0) @db.Decimal(10, 2)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  lastLoginAt               DateTime?
+  addresses                 Address[]
+  auditLogs                 AuditLog[]
+  cartItems                 CartItem[]
+  complianceReports         ComplianceReport[]
+  discountCodesCreated      DiscountCode[]
+  discountUsage             DiscountUsage[]
+  heroSectionsCreated       HeroSection[]            @relation("HeroCreator")
+  importExportJobs          ImportExportJob[]
+  mediaUploads              MediaUpload[]            @relation("MediaUploader")
+  referralsReceived         MemberReferral[]         @relation("ReferralsReceived")
+  referralsMade             MemberReferral[]         @relation("ReferralsMade")
+  notificationPreferences   NotificationPreference[]
+  orders                    Order[]
+  pendingMembership         PendingMembership?
+  recentlyViewed            RecentlyViewed[]
+  rewardsProcessed          ReferralReward[]         @relation("RewardsProcessed")
+  referralRewards           ReferralReward[]
+  referralSettings          ReferralSetting[]
+  reviews                   Review[]
+  siteCustomizationsCreated SiteCustomization[]      @relation("SiteCustomizationCreator")
+  themesCreated             SiteTheme[]              @relation("ThemeCreator")
+  telegramConfig            TelegramConfig?
+  wishlistItems             WishlistItem[]
 
   @@index([email])
   @@index([role])
@@ -905,7 +905,6 @@ model AdminTelegramConfig {
   updatedBy           String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  // SIMPLIFIED: No user relationships for admin-only setup (following @CLAUDE.md NO HARDCODE)
 
   @@index([isActive])
   @@index([ordersEnabled])
@@ -914,47 +913,33 @@ model AdminTelegramConfig {
 }
 
 model BusinessProfile {
-  id                    String   @id @default(cuid())
-  
-  // Company Information
-  legalName            String
-  tradingName          String?
-  registrationNumber   String   @unique // SSM Registration
-  taxRegistrationNumber String? // GST Registration
-  businessType         String   @default("SDN_BHD")
-  
-  // Addresses
-  registeredAddress    Json     // Full address object
-  operationalAddress   Json?    // Can be different from registered
-  shippingAddress      Json?    // Default shipping sender address
-  
-  // Contact Information
-  primaryPhone         String
-  secondaryPhone       String?
-  primaryEmail         String
-  supportEmail         String?
-  website              String?
-  
-  // Banking Information (Encrypted)
-  bankName             String?
-  bankAccountNumber    String?  // Encrypted field
-  bankAccountHolder    String?
-  
-  // Legal & Compliance
-  businessLicense      String?
-  industryCode         String?
-  establishedDate      DateTime?
-  
-  // System Fields
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  createdBy            String
-  updatedBy            String?
-  
-  // Relations
-  history              BusinessProfileHistory[]
-  
+  id                    String                   @id @default(cuid())
+  legalName             String
+  tradingName           String?
+  registrationNumber    String                   @unique
+  taxRegistrationNumber String?
+  businessType          String                   @default("SDN_BHD")
+  registeredAddress     Json
+  operationalAddress    Json?
+  shippingAddress       Json?
+  primaryPhone          String
+  secondaryPhone        String?
+  primaryEmail          String
+  supportEmail          String?
+  website               String?
+  bankName              String?
+  bankAccountNumber     String?
+  bankAccountHolder     String?
+  businessLicense       String?
+  industryCode          String?
+  establishedDate       DateTime?
+  isActive              Boolean                  @default(true)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  createdBy             String
+  updatedBy             String?
+  history               BusinessProfileHistory[]
+
   @@index([isActive])
   @@index([registrationNumber])
   @@index([taxRegistrationNumber])
@@ -962,18 +947,16 @@ model BusinessProfile {
 }
 
 model BusinessProfileHistory {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   businessProfileId String
-  operation         String   // CREATE, UPDATE, DELETE
+  operation         String
   oldValues         Json?
   newValues         Json
   changedBy         String
   changeReason      String?
-  createdAt         DateTime @default(now())
-  
-  // Relations
+  createdAt         DateTime        @default(now())
   businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
-  
+
   @@index([businessProfileId, createdAt])
   @@index([operation])
   @@index([changedBy])
@@ -981,30 +964,22 @@ model BusinessProfileHistory {
 }
 
 model TaxConfiguration {
-  id                String   @id @default(cuid())
-  
-  // Company Tax Information
-  gstRegistered     Boolean  @default(false)
-  gstNumber         String?  @unique
-  sstRegistered     Boolean  @default(false)
-  sstNumber         String?  @unique
-  
-  // Default Tax Rates
-  defaultGstRate    Decimal  @default(0) @db.Decimal(5, 4)
-  defaultSstRate    Decimal  @default(0) @db.Decimal(5, 4)
-  
-  // Tax Settings
-  taxInclusivePricing Boolean @default(true)
-  autoCalculateTax    Boolean @default(true)
-  
-  // System Fields
-  isActive          Boolean  @default(true)
-  effectiveFrom     DateTime @default(now())
-  effectiveTo       DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  updatedBy         String
-  
+  id                  String    @id @default(cuid())
+  gstRegistered       Boolean   @default(false)
+  gstNumber           String?   @unique
+  sstRegistered       Boolean   @default(false)
+  sstNumber           String?   @unique
+  defaultGstRate      Decimal   @default(0) @db.Decimal(5, 4)
+  defaultSstRate      Decimal   @default(0) @db.Decimal(5, 4)
+  taxInclusivePricing Boolean   @default(true)
+  autoCalculateTax    Boolean   @default(true)
+  isActive            Boolean   @default(true)
+  effectiveFrom       DateTime  @default(now())
+  effectiveTo         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  updatedBy           String
+
   @@index([isActive])
   @@index([gstRegistered])
   @@index([sstRegistered])
