@@ -927,6 +927,7 @@ model BusinessProfile {
   primaryEmail          String
   supportEmail          String?
   website               String?
+  logoUrl               String?
   bankName              String?
   bankAccountNumber     String?
   bankAccountHolder     String?
@@ -1168,4 +1169,30 @@ enum TrackingJobType {
   RETRY
   MANUAL
   CLEANUP
+}
+
+model ReceiptTemplate {
+  id               String              @id @default(cuid())
+  name             String
+  description      String?
+  templateType     ReceiptTemplateType
+  templateContent  Json
+  isDefault        Boolean             @default(false)
+  isActive         Boolean             @default(true)
+  previewImage     String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String
+  updatedBy        String?
+
+  @@index([templateType])
+  @@index([isDefault, isActive])
+  @@map("receipt_templates")
+}
+
+enum ReceiptTemplateType {
+  THERMAL_RECEIPT
+  BUSINESS_INVOICE
+  MINIMAL_RECEIPT
+  DETAILED_INVOICE
 }

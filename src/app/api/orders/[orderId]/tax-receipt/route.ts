@@ -21,6 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'html'; // html, pdf
     const download = searchParams.get('download') === 'true';
+    const templateId = searchParams.get('templateId') || undefined;
 
     // Check authentication and authorization
     const orderId = params.orderId;
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (format === 'html') {
       // Return HTML tax receipt for preview or client-side PDF generation
-      const htmlReceipt = taxReceiptService.generateTaxReceiptHTML(receiptData);
+      const htmlReceipt = await taxReceiptService.generateTaxReceiptHTML(receiptData, templateId);
 
       return new Response(htmlReceipt, {
         headers: {
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // For PDF generation, we'll return the HTML and let the client handle PDF conversion
     // This avoids the complexity of server-side PDF generation
-    const htmlReceipt = taxReceiptService.generateTaxReceiptHTML(receiptData);
+    const htmlReceipt = await taxReceiptService.generateTaxReceiptHTML(receiptData, templateId);
 
     return NextResponse.json({
       success: true,

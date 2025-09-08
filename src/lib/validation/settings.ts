@@ -254,6 +254,12 @@ export const businessProfileSchema = z.object({
 
   website: z.string().url('Invalid website URL').optional().or(z.literal('')),
 
+  logoUrl: z
+    .string()
+    .url('Invalid logo URL')
+    .optional()
+    .or(z.literal('')),
+
   // Banking Information (optional)
   bankName: z
     .string()

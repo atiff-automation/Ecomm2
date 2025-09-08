@@ -1,4 +1,4 @@
-import { Building2, Calculator, Palette } from 'lucide-react';
+import { Building2, Calculator, Palette, Receipt } from 'lucide-react';
 
 export interface SettingsTab {
   id: string;
@@ -36,6 +36,13 @@ export const SETTINGS_CONFIG: SettingsConfig = {
       description: 'Themes, branding, and content management',
       icon: Palette,
       path: '/admin/settings/site-customization'
+    },
+    {
+      id: 'receipt-templates',
+      label: 'Receipt Templates',
+      description: 'Configure receipt and invoice templates for customers',
+      icon: Receipt,
+      path: '/admin/settings/receipt-templates'
     }
   ]
 } as const;

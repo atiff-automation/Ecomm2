@@ -75,6 +75,7 @@ export default function BusinessProfilePage() {
       primaryEmail: '',
       supportEmail: '',
       website: '',
+      logoUrl: '',
       registeredAddress: {
         addressLine1: '',
         addressLine2: '',
@@ -137,6 +138,7 @@ export default function BusinessProfilePage() {
             primaryEmail: profileData.primaryEmail || '',
             supportEmail: profileData.supportEmail || '',
             website: profileData.website || '',
+            logoUrl: profileData.logoUrl || '',
             registeredAddress: {
               addressLine1: profileData.registeredAddress?.addressLine1 || '',
               addressLine2: profileData.registeredAddress?.addressLine2 || '',
@@ -546,6 +548,15 @@ export default function BusinessProfilePage() {
               error={errors.website?.message}
               placeholder="https://www.company.com"
               helperText="Optional company website"
+            />
+            
+            <SettingsInput
+              label="Logo URL"
+              type="url"
+              {...register('logoUrl')}
+              error={errors.logoUrl?.message}
+              placeholder="https://www.company.com/logo.png"
+              helperText="Optional company logo URL for receipts and invoices"
             />
           </SettingsSection>
         </SettingsCard>
