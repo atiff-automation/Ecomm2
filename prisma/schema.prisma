@@ -928,6 +928,8 @@ model BusinessProfile {
   supportEmail          String?
   website               String?
   logoUrl               String?
+  logoWidth             Int?                     @default(120)
+  logoHeight            Int?                     @default(40)
   bankName              String?
   bankAccountNumber     String?
   bankAccountHolder     String?

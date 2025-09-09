@@ -246,6 +246,7 @@ export default function AdminReports() {
   // Define contextual tabs for Reports section
   const tabs: TabConfig[] = [
     { id: 'analytics', label: 'Analytics', href: '/admin/reports' },
+    { id: 'sales', label: 'Sales Reports', href: '/admin/reports/sales' },
   ];
 
   // Extract page actions

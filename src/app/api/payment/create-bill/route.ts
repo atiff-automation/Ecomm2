@@ -71,12 +71,9 @@ export async function GET(request: NextRequest) {
 
     // Get payment method from order or use default
     const paymentMethodFromOrder = order.paymentMethod?.toUpperCase();
-    let paymentMethod: 'BILLPLZ' | 'TOYYIBPAY' | undefined;
+    let paymentMethod: 'TOYYIBPAY' | undefined;
 
-    if (
-      paymentMethodFromOrder === 'BILLPLZ' ||
-      paymentMethodFromOrder === 'TOYYIBPAY'
-    ) {
+    if (paymentMethodFromOrder === 'TOYYIBPAY') {
       paymentMethod = paymentMethodFromOrder;
     }
 

@@ -23,6 +23,7 @@ import {
   MessageCircle,
   CreditCard,
   Monitor,
+  BarChart3,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
@@ -83,6 +84,15 @@ const navigationItems = [
     icon: Truck,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
     description: 'Configuration, Couriers, Tracking',
+  },
+
+  // 📊 Reports Section - Sales analytics and reporting
+  {
+    label: 'Reports',
+    href: '/admin/reports',
+    icon: BarChart3,
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
+    description: 'Sales Analytics, Performance Reports',
   },
 
   // Additional sections that exist but don't fit main categories

@@ -211,6 +211,18 @@ export class SiteCustomizationService {
       // Parse and validate the JSON configuration
       const config = activeConfig.config as any;
       
+      // Handle legacy configuration format
+      if (config && !config.hero) {
+        console.log('Legacy configuration detected, migrating to new format');
+        return this.migrateLegacyConfig(config, activeConfig);
+      }
+
+      // Ensure the config has the expected structure
+      if (!config || !config.hero) {
+        console.log('Invalid configuration structure, returning default');
+        return this.getDefaultConfiguration();
+      }
+      
       // Ensure metadata is up to date
       config.metadata = {
         lastUpdated: activeConfig.updatedAt,
@@ -407,6 +419,49 @@ export class SiteCustomizationService {
         });
       }
     }
+  }
+
+  // ==================== MIGRATION ====================
+
+  private migrateLegacyConfig(legacyConfig: any, activeConfig: any): SiteCustomizationConfig {
+    const defaultConfig = this.getDefaultConfiguration();
+    
+    // Migrate legacy config to new format
+    const migratedConfig: SiteCustomizationConfig = {
+      hero: {
+        title: defaultConfig.hero.title,
+        subtitle: defaultConfig.hero.subtitle,
+        description: defaultConfig.hero.description,
+        ctaPrimary: defaultConfig.hero.ctaPrimary,
+        ctaSecondary: defaultConfig.hero.ctaSecondary,
+        background: defaultConfig.hero.background,
+        layout: defaultConfig.hero.layout
+      },
+      branding: {
+        colors: {
+          primary: legacyConfig.theme?.primaryColor || defaultConfig.branding.colors?.primary || '#3B82F6',
+          secondary: legacyConfig.theme?.secondaryColor || defaultConfig.branding.colors?.secondary || '#FDE047',
+          background: defaultConfig.branding.colors?.background || '#F8FAFC',
+          text: defaultConfig.branding.colors?.text || '#1E293B'
+        }
+      },
+      metadata: {
+        lastUpdated: activeConfig.updatedAt,
+        updatedBy: activeConfig.creator?.email || activeConfig.createdBy || 'system',
+        version: activeConfig.version
+      }
+    };
+
+    // Add logo information if available from legacy config
+    if (legacyConfig.branding?.logoUrl) {
+      migratedConfig.branding.logo = {
+        url: legacyConfig.branding.logoUrl,
+        width: 120,
+        height: 40
+      };
+    }
+
+    return migratedConfig;
   }
 
   // ==================== UTILITY METHODS ====================

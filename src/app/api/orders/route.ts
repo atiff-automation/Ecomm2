@@ -38,9 +38,7 @@ const createOrderSchema = z.object({
   shippingAddress: addressSchema,
   billingAddress: addressSchema,
   paymentMethod: z.enum([
-    'billplz',
     'toyyibpay',
-    'BILLPLZ',
     'TOYYIBPAY',
   ]),
   orderNotes: z.string().optional(),
@@ -563,10 +561,7 @@ export async function POST(request: NextRequest) {
     let paymentUrl = null;
     const paymentMethod = orderData.paymentMethod.toLowerCase();
 
-    if (paymentMethod === 'billplz') {
-      // Create Billplz bill
-      paymentUrl = `/payment/billplz/${result.id}`;
-    } else if (paymentMethod === 'toyyibpay') {
+    if (paymentMethod === 'toyyibpay') {
       // Create toyyibPay bill
       paymentUrl = `/api/payment/create-bill?orderId=${result.id}`;
     }

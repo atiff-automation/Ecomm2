@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +23,12 @@ import {
   Receipt,
   FileText,
   FileCheck,
-  FileBarChart
+  FileBarChart,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReceiptTemplate, TEMPLATE_TYPE_LABELS } from '@/types/receipt-templates';
@@ -47,9 +55,20 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
   const [previewTemplate, setPreviewTemplate] = useState<EnhancedReceiptTemplate | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
+  
+  // Logo upload states
+  const [businessProfile, setBusinessProfile] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [logoWidth, setLogoWidth] = useState<number>(120);
+  const [logoHeight, setLogoHeight] = useState<number>(40);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     loadTemplates();
+    loadBusinessProfile();
   }, []);
 
   const loadTemplates = async () => {
@@ -160,6 +179,110 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       setPreviewHtml(templateDisplayService.generatePreviewFallbackHtml(template));
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const loadBusinessProfile = async () => {
+    try {
+      const response = await fetch('/api/admin/settings/business-profile');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.profile) {
+          setBusinessProfile(data.profile);
+          if (data.profile.logoWidth) {
+            setLogoWidth(data.profile.logoWidth);
+          }
+          if (data.profile.logoHeight) {
+            setLogoHeight(data.profile.logoHeight);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading business profile:', error);
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setMessage({
+        type: 'error',
+        text: 'File size too large. Maximum size is 5MB.',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('width', logoWidth.toString());
+      formData.append('height', logoHeight.toString());
+
+      const response = await fetch('/api/admin/receipt-templates/logo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await loadBusinessProfile(); // Refresh business profile data
+        setMessage({ type: 'success', text: data.message });
+        toast.success('Logo uploaded successfully!');
+      } else {
+        throw new Error(data.message || 'Failed to upload logo');
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Upload failed',
+      });
+      toast.error('Failed to upload logo');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!confirm('Are you sure you want to remove the logo?')) {
+      return;
+    }
+
+    setIsUploading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/receipt-templates/logo', {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await loadBusinessProfile(); // Refresh business profile data
+        setMessage({ type: 'success', text: data.message });
+        toast.success('Logo removed successfully!');
+      } else {
+        throw new Error(data.message || 'Failed to remove logo');
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Removal failed',
+      });
+      toast.error('Failed to remove logo');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -352,6 +475,150 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
         </Card>
       )}
 
+      {/* Logo Upload Section */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-blue-600" />
+            Receipt Logo
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Upload your business logo to appear on all receipts and invoices
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Messages */}
+          {message && (
+            <Alert
+              className={`${message.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+            >
+              {message.type === 'success' ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <AlertDescription
+                className={
+                  message.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }
+              >
+                {message.text}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Logo Preview */}
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Current Logo</Label>
+              
+              {businessProfile?.logoUrl ? (
+                <div className="border rounded-lg p-4 bg-white">
+                  <div className="flex items-center justify-center mb-4">
+                    <img
+                      src={businessProfile.logoUrl}
+                      alt="Business Logo"
+                      width={businessProfile.logoWidth || 120}
+                      height={businessProfile.logoHeight || 40}
+                      className="max-w-full h-auto"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">
+                    Size: {businessProfile.logoWidth || 120}×{businessProfile.logoHeight || 40}px
+                  </p>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                  <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No logo uploaded</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload a logo to display on your receipts
+                  </p>
+                </div>
+              )}
+
+              {businessProfile?.logoUrl && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleRemoveLogo}
+                  disabled={isUploading}
+                  className="w-full"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove Logo
+                </Button>
+              )}
+            </div>
+
+            {/* Upload Controls */}
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Upload New Logo</Label>
+              
+              {/* Logo Dimensions */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="logoWidth">Width (px)</Label>
+                  <Input
+                    id="logoWidth"
+                    type="number"
+                    value={logoWidth}
+                    onChange={e =>
+                      setLogoWidth(parseInt(e.target.value) || 120)
+                    }
+                    min="20"
+                    max="400"
+                    disabled={isUploading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="logoHeight">Height (px)</Label>
+                  <Input
+                    id="logoHeight"
+                    type="number"
+                    value={logoHeight}
+                    onChange={e =>
+                      setLogoHeight(parseInt(e.target.value) || 40)
+                    }
+                    min="20"
+                    max="200"
+                    disabled={isUploading}
+                  />
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <Label>Select Logo File</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                  onChange={handleLogoUpload}
+                  disabled={isUploading}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported formats: PNG, JPEG, SVG, WebP (Max 5MB)
+                </p>
+              </div>
+
+              {/* Upload Guidelines */}
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-medium text-yellow-800 text-sm mb-2">
+                  Logo Guidelines:
+                </h4>
+                <ul className="text-xs text-yellow-700 space-y-1">
+                  <li>• Use high-quality PNG or SVG files for best results</li>
+                  <li>• Recommended size: 120×40px to 200×80px</li>
+                  <li>• Ensure good contrast for receipt printing</li>
+                  <li>• Simple designs work best on receipts</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Help Card - matching business profile warning style */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-start space-x-3">
@@ -435,6 +702,16 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Loading Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Uploading logo...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

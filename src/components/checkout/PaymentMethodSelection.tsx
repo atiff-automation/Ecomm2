@@ -35,11 +35,6 @@ interface PaymentMethodsResponse {
   activeMethods: PaymentMethod[];
   defaultMethod: string | null;
   availability: {
-    billplz: {
-      available: boolean;
-      configured: boolean;
-      error?: string;
-    };
     toyyibpay: {
       available: boolean;
       configured: boolean;
@@ -131,8 +126,6 @@ export default function PaymentMethodSelection({
     switch (methodId.toUpperCase()) {
       case 'TOYYIBPAY':
         return '🇲🇾';
-      case 'BILLPLZ':
-        return '🏦';
       default:
         return <CreditCard className="w-4 h-4" />;
     }
@@ -279,10 +272,6 @@ export default function PaymentMethodSelection({
                         {method.id === 'TOYYIBPAY' &&
                           availability.toyyibpay.error && (
                             <span>Status: {availability.toyyibpay.error}</span>
-                          )}
-                        {method.id === 'BILLPLZ' &&
-                          availability.billplz.error && (
-                            <span>Status: {availability.billplz.error}</span>
                           )}
                       </div>
                     )}

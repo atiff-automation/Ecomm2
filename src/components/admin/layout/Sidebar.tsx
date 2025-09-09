@@ -195,6 +195,26 @@ const navigationItems: NavigationItem[] = [
       },
     ],
   },
+  {
+    id: 'reports',
+    label: 'Reports',
+    href: '/admin/reports',
+    icon: BarChart3,
+    children: [
+      {
+        id: 'sales-reports',
+        label: 'Sales Reports',
+        href: '/admin/reports/sales',
+        icon: BarChart,
+      },
+      {
+        id: 'analytics',
+        label: 'Analytics',
+        href: '/admin/reports/analytics',
+        icon: BarChart3,
+      },
+    ],
+  },
 ];
 
 interface SidebarProps {

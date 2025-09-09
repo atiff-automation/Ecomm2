@@ -32,7 +32,11 @@ export interface BusinessProfileData {
     accountNumber: string;
     accountHolder: string;
   };
-  logo?: string; // logo URL if available
+  logo?: {
+    url: string;
+    width: number;
+    height: number;
+  }; // logo data if available
 }
 
 export class BusinessProfileService {
@@ -73,7 +77,11 @@ export class BusinessProfileService {
         registrationNumber: profile.registrationNumber || 'Not Registered',
         taxRegistrationNumber: profile.taxRegistrationNumber || undefined,
         businessType: profile.businessType || 'SDN_BHD',
-        logo: profile.logoUrl || undefined,
+        logo: profile.logoUrl ? {
+          url: profile.logoUrl,
+          width: profile.logoWidth || 120,
+          height: profile.logoHeight || 40
+        } : undefined,
         address: {
           line1: profile.registeredAddress?.addressLine1 || 'Address Line 1',
           line2: profile.registeredAddress?.addressLine2,
@@ -173,7 +181,8 @@ export class BusinessProfileService {
       phone: profile.contact.primaryPhone,
       email: profile.contact.primaryEmail,
       registrationNo: profile.registrationNumber,
-      sstNo: profile.taxRegistrationNumber || 'Not Registered'
+      sstNo: profile.taxRegistrationNumber || 'Not Registered',
+      logo: profile.logo // Include logo data
     };
   }
 }
