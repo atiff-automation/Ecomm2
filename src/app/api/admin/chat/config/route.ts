@@ -1,0 +1,352 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../auth/[...nextauth]/route';
+import { prisma } from '@/lib/prisma';
+import { UserRole } from '@prisma/client';
+
+// Get chat configuration
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userRole = (session.user as any)?.role;
+    const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
+    
+    if (!allowedRoles.includes(userRole)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    // Get active chat configuration
+    const config = await prisma.chatConfig.findFirst({
+      where: { isActive: true },
+      select: {
+        id: true,
+        webhookUrl: true,
+        webhookSecret: true, // In production, you might want to mask this
+        apiKey: true,
+        sessionTimeoutMinutes: true,
+        maxMessageLength: true,
+        rateLimitMessages: true,
+        rateLimitWindowMs: true,
+        queueEnabled: true,
+        queueMaxRetries: true,
+        queueRetryDelayMs: true,
+        queueBatchSize: true,
+        websocketEnabled: true,
+        websocketPort: true,
+        isActive: true,
+        verified: true,
+        lastHealthCheck: true,
+        healthStatus: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // If no config exists, return default values
+    if (!config) {
+      const defaultConfig = {
+        webhookUrl: '',
+        webhookSecret: '',
+        apiKey: '',
+        sessionTimeoutMinutes: 30,
+        maxMessageLength: 4000,
+        rateLimitMessages: 20,
+        rateLimitWindowMs: 60000,
+        queueEnabled: true,
+        queueMaxRetries: 3,
+        queueRetryDelayMs: 5000,
+        queueBatchSize: 10,
+        websocketEnabled: true,
+        websocketPort: 3001,
+        isActive: false,
+        verified: false,
+        healthStatus: 'NOT_CONFIGURED',
+      };
+
+      return NextResponse.json({
+        success: true,
+        config: defaultConfig,
+        isConfigured: false,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      config: {
+        ...config,
+        lastHealthCheck: config.lastHealthCheck?.toISOString(),
+        createdAt: config.createdAt.toISOString(),
+        updatedAt: config.updatedAt.toISOString(),
+      },
+      isConfigured: true,
+    });
+
+  } catch (error) {
+    console.error('Chat config GET error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch chat configuration' },
+      { status: 500 }
+    );
+  }
+}
+
+// Create or update chat configuration
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userRole = (session.user as any)?.role;
+    const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
+    
+    if (!allowedRoles.includes(userRole)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      webhookUrl,
+      webhookSecret,
+      apiKey,
+      sessionTimeoutMinutes,
+      maxMessageLength,
+      rateLimitMessages,
+      rateLimitWindowMs,
+      queueEnabled,
+      queueMaxRetries,
+      queueRetryDelayMs,
+      queueBatchSize,
+      websocketEnabled,
+      websocketPort,
+    } = body;
+
+    // Validation
+    if (!webhookUrl || !webhookSecret || !apiKey) {
+      return NextResponse.json(
+        { error: 'Webhook URL, secret, and API key are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate webhook URL format
+    try {
+      new URL(webhookUrl);
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid webhook URL format' },
+        { status: 400 }
+      );
+    }
+
+    // Check if configuration already exists
+    const existingConfig = await prisma.chatConfig.findFirst({
+      where: { isActive: true },
+    });
+
+    let config;
+
+    if (existingConfig) {
+      // Update existing configuration
+      config = await prisma.chatConfig.update({
+        where: { id: existingConfig.id },
+        data: {
+          webhookUrl,
+          webhookSecret,
+          apiKey,
+          sessionTimeoutMinutes: sessionTimeoutMinutes || 30,
+          maxMessageLength: maxMessageLength || 4000,
+          rateLimitMessages: rateLimitMessages || 20,
+          rateLimitWindowMs: rateLimitWindowMs || 60000,
+          queueEnabled: queueEnabled !== undefined ? queueEnabled : true,
+          queueMaxRetries: queueMaxRetries || 3,
+          queueRetryDelayMs: queueRetryDelayMs || 5000,
+          queueBatchSize: queueBatchSize || 10,
+          websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
+          websocketPort: websocketPort || 3001,
+          updatedBy: session.user.email,
+          verified: false, // Reset verification when config changes
+          healthStatus: 'PENDING_VERIFICATION',
+        },
+      });
+    } else {
+      // Create new configuration
+      config = await prisma.chatConfig.create({
+        data: {
+          webhookUrl,
+          webhookSecret,
+          apiKey,
+          sessionTimeoutMinutes: sessionTimeoutMinutes || 30,
+          maxMessageLength: maxMessageLength || 4000,
+          rateLimitMessages: rateLimitMessages || 20,
+          rateLimitWindowMs: rateLimitWindowMs || 60000,
+          queueEnabled: queueEnabled !== undefined ? queueEnabled : true,
+          queueMaxRetries: queueMaxRetries || 3,
+          queueRetryDelayMs: queueRetryDelayMs || 5000,
+          queueBatchSize: queueBatchSize || 10,
+          websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
+          websocketPort: websocketPort || 3001,
+          isActive: true,
+          verified: false,
+          healthStatus: 'PENDING_VERIFICATION',
+          createdBy: session.user.email,
+          updatedBy: session.user.email,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: existingConfig ? 'Chat configuration updated successfully' : 'Chat configuration created successfully',
+      config: {
+        id: config.id,
+        webhookUrl: config.webhookUrl,
+        sessionTimeoutMinutes: config.sessionTimeoutMinutes,
+        maxMessageLength: config.maxMessageLength,
+        rateLimitMessages: config.rateLimitMessages,
+        rateLimitWindowMs: config.rateLimitWindowMs,
+        queueEnabled: config.queueEnabled,
+        queueMaxRetries: config.queueMaxRetries,
+        queueRetryDelayMs: config.queueRetryDelayMs,
+        queueBatchSize: config.queueBatchSize,
+        websocketEnabled: config.websocketEnabled,
+        websocketPort: config.websocketPort,
+        isActive: config.isActive,
+        verified: config.verified,
+        healthStatus: config.healthStatus,
+      },
+    });
+
+  } catch (error) {
+    console.error('Chat config POST error:', error);
+    return NextResponse.json(
+      { error: 'Failed to save chat configuration' },
+      { status: 500 }
+    );
+  }
+}
+
+// Test webhook connectivity
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userRole = (session.user as any)?.role;
+    const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
+    
+    if (!allowedRoles.includes(userRole)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const config = await prisma.chatConfig.findFirst({
+      where: { isActive: true },
+    });
+
+    if (!config) {
+      return NextResponse.json(
+        { error: 'No active chat configuration found' },
+        { status: 404 }
+      );
+    }
+
+    // Test webhook by sending a test payload
+    const testPayload = {
+      type: 'health_check',
+      timestamp: new Date().toISOString(),
+      message: 'Chat system health check',
+      sessionId: 'test-session-' + Date.now(),
+    };
+
+    try {
+      const response = await fetch(config.webhookUrl!, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Secret': config.webhookSecret || '',
+          'X-API-Key': config.apiKey || '',
+        },
+        body: JSON.stringify(testPayload),
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
+
+      const isHealthy = response.ok;
+      const statusText = response.statusText;
+
+      // Update configuration with health check results
+      await prisma.chatConfig.update({
+        where: { id: config.id },
+        data: {
+          verified: isHealthy,
+          healthStatus: isHealthy ? 'HEALTHY' : `UNHEALTHY: ${response.status} ${statusText}`,
+          lastHealthCheck: new Date(),
+          updatedBy: session.user.email,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        verified: isHealthy,
+        status: response.status,
+        statusText: statusText,
+        message: isHealthy ? 'Webhook is responding correctly' : `Webhook test failed: ${response.status} ${statusText}`,
+        lastHealthCheck: new Date().toISOString(),
+      });
+
+    } catch (fetchError: any) {
+      // Update configuration with error status
+      await prisma.chatConfig.update({
+        where: { id: config.id },
+        data: {
+          verified: false,
+          healthStatus: `CONNECTION_ERROR: ${fetchError.message}`,
+          lastHealthCheck: new Date(),
+          updatedBy: session.user.email,
+        },
+      });
+
+      return NextResponse.json({
+        success: false,
+        verified: false,
+        error: fetchError.message,
+        message: 'Failed to connect to webhook URL',
+        lastHealthCheck: new Date().toISOString(),
+      });
+    }
+
+  } catch (error) {
+    console.error('Chat config health check error:', error);
+    return NextResponse.json(
+      { error: 'Failed to perform health check' },
+      { status: 500 }
+    );
+  }
+}

@@ -47,6 +47,7 @@ model User {
   themesCreated             SiteTheme[]              @relation("ThemeCreator")
   telegramConfig            TelegramConfig?
   wishlistItems             WishlistItem[]
+  chatSessions              ChatSession[]
 
   @@index([email])
   @@index([role])
@@ -1197,4 +1198,103 @@ enum ReceiptTemplateType {
   BUSINESS_INVOICE
   MINIMAL_RECEIPT
   DETAILED_INVOICE
+}
+
+// Chat System Models
+model ChatSession {
+  id           String      @id @default(cuid())
+  sessionId    String      @unique @default(cuid())
+  userId       String?
+  guestEmail   String?
+  status       String      @default("active")
+  metadata     Json?
+  userAgent    String?
+  ipAddress    String?
+  lastActivity DateTime    @default(now())
+  endedAt      DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  expiresAt    DateTime?
+  
+  user         User?       @relation(fields: [userId], references: [id])
+  messages     ChatMessage[]
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
+  @@index([lastActivity])
+  @@index([expiresAt])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id              String    @id @default(cuid())
+  sessionId       String
+  senderType      String    // 'user' or 'bot'
+  content         String
+  messageType     String    @default("text")
+  metadata        Json?
+  status          String    @default("delivered")
+  webhookAttempts Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  session         ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  webhookQueue    ChatWebhookQueue[]
+  
+  @@index([sessionId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model ChatWebhookQueue {
+  id           String    @id @default(cuid())
+  messageId    String
+  webhookUrl   String
+  payload      Json
+  status       String    @default("pending")
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  nextRetryAt  DateTime  @default(now())
+  lastError    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  message      ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+  @@index([nextRetryAt])
+  @@index([messageId])
+  @@map("chat_webhook_queue")
+}
+
+model ChatConfig {
+  id                    String    @id @default(cuid())
+  webhookUrl            String?
+  webhookSecret         String?
+  apiKey                String?
+  sessionTimeoutMinutes Int       @default(30)
+  maxMessageLength      Int       @default(4000)
+  rateLimitMessages     Int       @default(20)
+  rateLimitWindowMs     Int       @default(60000)
+  queueEnabled          Boolean   @default(true)
+  queueMaxRetries       Int       @default(3)
+  queueRetryDelayMs     Int       @default(5000)
+  queueBatchSize        Int       @default(10)
+  websocketEnabled      Boolean   @default(true)
+  websocketPort         Int       @default(3001)
+  isActive              Boolean   @unique(map: "unique_active_chat_config") @default(true)
+  verified              Boolean   @default(false)
+  lastHealthCheck       DateTime?
+  healthStatus          String    @default("UNKNOWN")
+  createdBy             String?
+  updatedBy             String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([verified])
+  @@index([healthStatus])
+  @@map("chat_config")
 }

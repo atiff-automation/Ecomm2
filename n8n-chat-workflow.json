@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "instanceId": "your-n8n-instance-id"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "your-webhook-id"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "webhook_secret",
+              "name": "webhook_secret",
+              "value": "REPLACE_WITH_YOUR_WEBHOOK_SECRET",
+              "type": "string"
+            },
+            {
+              "id": "api_key",
+              "name": "api_key", 
+              "value": "REPLACE_WITH_YOUR_API_KEY",
+              "type": "string"
+            },
+            {
+              "id": "app_webhook_url",
+              "name": "app_webhook_url",
+              "value": "http://localhost:3000/api/chat/webhook",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "config-variables",
+      "name": "📋 Config Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        200
+      ],
+      "notes": "UPDATE THESE VALUES:\n1. webhook_secret: From your admin config\n2. api_key: From your admin config  \n3. app_webhook_url: Your app's webhook URL"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the incoming chat data from your application\nconst sessionId = $json.sessionId;\nconst messageId = $json.messageId;\nconst userMessage = $json.message.content;\nconst userContext = $json.userContext;\nconst isAuthenticated = userContext.isAuthenticated;\nconst membershipLevel = userContext.membershipLevel;\n\n// Log the incoming data for debugging\nconsole.log('Chat webhook received:', {\n  sessionId,\n  messageId,\n  userMessage,\n  isAuthenticated,\n  membershipLevel\n});\n\n// Simple intent detection based on keywords\nlet intent = 'general';\nlet response = '';\nlet quickReplies = [];\n\nconst lowerMessage = userMessage.toLowerCase();\n\n// Greeting detection\nif (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {\n  intent = 'greeting';\n  if (isAuthenticated && userContext.userInfo) {\n    response = `Hello ${userContext.userInfo.name}! How can I help you today?`;\n  } else {\n    response = 'Hello! Welcome to our store. How can I assist you today?';\n  }\n  quickReplies = [\n    { text: 'View Products', payload: 'view_products' },\n    { text: 'Order Status', payload: 'order_status' },\n    { text: 'Help & Support', payload: 'help_support' }\n  ];\n}\n// Product inquiry\nelse if (lowerMessage.includes('product') || lowerMessage.includes('item') || lowerMessage.includes('buy')) {\n  intent = 'product_inquiry';\n  response = 'I can help you find the perfect product! What are you looking for?';\n  quickReplies = [\n    { text: 'Browse Categories', payload: 'browse_categories' },\n    { text: 'Search Products', payload: 'search_products' },\n    { text: 'Best Sellers', payload: 'best_sellers' }\n  ];\n}\n// Order status\nelse if (lowerMessage.includes('order') || lowerMessage.includes('shipping') || lowerMessage.includes('delivery')) {\n  intent = 'order_status';\n  if (isAuthenticated) {\n    response = 'I can help you check your order status. Let me look that up for you.';\n    quickReplies = [\n      { text: 'Recent Orders', payload: 'recent_orders' },\n      { text: 'Track Package', payload: 'track_package' }\n    ];\n  } else {\n    response = 'To check your order status, please log in to your account or provide your order number.';\n    quickReplies = [\n      { text: 'Login', payload: 'login' },\n      { text: 'Guest Order Lookup', payload: 'guest_lookup' }\n    ];\n  }\n}\n// Support request\nelse if (lowerMessage.includes('help') || lowerMessage.includes('support') || lowerMessage.includes('problem')) {\n  intent = 'support';\n  response = 'I\\'m here to help! What specific issue are you facing?';\n  quickReplies = [\n    { text: 'Payment Issues', payload: 'payment_help' },\n    { text: 'Returns & Refunds', payload: 'returns_help' },\n    { text: 'Technical Issues', payload: 'tech_help' },\n    { text: 'Talk to Human', payload: 'human_support' }\n  ];\n}\n// Membership related\nelse if (lowerMessage.includes('member') || lowerMessage.includes('account')) {\n  intent = 'membership';\n  if (membershipLevel === 'member') {\n    response = `Great! As a member, you have access to exclusive benefits. Your total membership purchases: $${userContext.membershipTotal || 0}`;\n    quickReplies = [\n      { text: 'Member Benefits', payload: 'member_benefits' },\n      { text: 'Exclusive Deals', payload: 'exclusive_deals' }\n    ];\n  } else {\n    response = 'Would you like to learn about our membership program and its benefits?';\n    quickReplies = [\n      { text: 'Join Membership', payload: 'join_membership' },\n      { text: 'Learn More', payload: 'membership_info' }\n    ];\n  }\n}\n// Default fallback\nelse {\n  intent = 'fallback';\n  response = 'I understand you\\'re asking about \"' + userMessage + '\". Let me help you find what you need.';\n  quickReplies = [\n    { text: 'Browse Products', payload: 'browse_products' },\n    { text: 'Contact Support', payload: 'contact_support' },\n    { text: 'FAQ', payload: 'faq' }\n  ];\n}\n\n// Return the formatted response\nreturn {\n  sessionId: sessionId,\n  messageId: messageId,\n  response: {\n    content: response,\n    type: 'text',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: intent,\n    confidence: 0.8,\n    processedAt: new Date().toISOString(),\n    userContext: {\n      isAuthenticated: isAuthenticated,\n      membershipLevel: membershipLevel\n    }\n  }\n};"
+      },
+      "id": "message-processor",
+      "name": "Process Chat Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('📋 Config Variables').first().json.app_webhook_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "headers": {
+            "x-webhook-signature": "={{ $crypto.createHmac('sha256', $('📋 Config Variables').first().json.webhook_secret).update(JSON.stringify($json)).digest('hex') }}",
+            "x-api-key": "={{ $('📋 Config Variables').first().json.api_key }}"
+          }
+        }
+      },
+      "id": "send-response",
+      "name": "Send Response to Chat App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "error-condition",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "error-check",
+      "name": "Check for Errors",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful response\nconsole.log('Chat response sent successfully:', {\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString()\n});\n\nreturn {\n  success: true,\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "success-logger",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error details\nconst error = $json.error || 'Unknown error';\nconsole.error('Chat webhook error:', {\n  error: error,\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString()\n});\n\n// Send fallback response\nreturn {\n  sessionId: $json.sessionId || 'unknown',\n  messageId: $json.messageId || 'unknown',\n  response: {\n    content: 'I apologize, but I\\'m experiencing technical difficulties right now. Please try again in a moment or contact our support team.',\n    type: 'text',\n    quickReplies: [\n      { text: 'Try Again', payload: 'retry' },\n      { text: 'Contact Support', payload: 'contact_support' }\n    ]\n  },\n  metadata: {\n    intent: 'error_fallback',\n    confidence: 1.0,\n    processedAt: new Date().toISOString(),\n    errorHandled: true\n  }\n};"
+      },
+      "id": "error-handler",
+      "name": "Handle Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "📋 Config Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Config Variables": {
+      "main": [
+        [
+          {
+            "node": "Process Chat Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Chat Message": {
+      "main": [
+        [
+          {
+            "node": "Send Response to Chat App",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response to Chat App": {
+      "main": [
+        [
+          {
+            "node": "Check for Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Errors": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveExecutions": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": {
+      "enabled": false
+    }
+  },
+  "versionId": "1",
+  "id": "chat-workflow-test",
+  "name": "Chat System Test Workflow",
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "chat",
+      "name": "chat"
+    }
+  ]
+}

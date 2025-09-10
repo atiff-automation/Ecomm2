@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
 import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
+import { ChatWidget } from '@/components/chat';
 import './globals.css';
 
 const geistSans = localFont({
@@ -155,6 +156,15 @@ export default function RootLayout({
                   },
                   className: 'group',
                   descriptionClassName: 'group-[.toast]:text-muted-foreground',
+                }}
+              />
+              <ChatWidget
+                config={{
+                  position: 'bottom-right',
+                  primaryColor: '#2563eb',
+                  enableSound: true,
+                  enableTypingIndicator: true,
+                  welcomeMessage: 'Hi! How can we help you today?'
                 }}
               />
             </AuthProvider>

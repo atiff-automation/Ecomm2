@@ -1,0 +1,327 @@
+/**
+ * Chat System Type Definitions
+ * Centralized type definitions for the chat system following DRY principles
+ */
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  senderType: 'user' | 'bot';
+  content: string;
+  messageType: 'text' | 'quick_reply' | 'rich_content';
+  metadata?: Record<string, any>;
+  status: 'pending' | 'sent' | 'delivered' | 'failed';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  userId?: string;
+  guestEmail?: string;
+  status: 'active' | 'inactive' | 'expired';
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt?: string;
+  expiresAt?: string;
+}
+
+export interface QuickReply {
+  id?: string;
+  text: string;
+  value?: string; // The value to send when clicked
+  payload?: string; // Additional payload data
+  icon?: string; // Optional icon (emoji or icon name)
+  metadata?: Record<string, any>;
+}
+
+export interface ChatAttachment {
+  type: 'image' | 'file' | 'link';
+  url: string;
+  title?: string;
+  description?: string;
+  size?: number;
+  mimeType?: string;
+  thumbnail?: string;
+}
+
+export interface RichContentCard {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+  buttons?: QuickReply[];
+  metadata?: Record<string, any>;
+}
+
+export interface RichContent {
+  type: 'card' | 'carousel' | 'list' | 'image_gallery';
+  cards?: RichContentCard[];
+  images?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface BotResponse {
+  content: string;
+  type: 'text' | 'quick_reply' | 'rich_content';
+  quickReplies?: QuickReply[];
+  attachments?: ChatAttachment[];
+  richContent?: RichContent;
+  metadata?: Record<string, any>;
+}
+
+// Configuration interfaces following centralized approach
+export interface ChatConfig {
+  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  theme: 'light' | 'dark' | 'auto';
+  primaryColor: string;
+  maxMessageLength: number;
+  enableFileUpload: boolean;
+  enableTypingIndicator: boolean;
+  enableSound: boolean;
+  autoExpand: boolean;
+  showTimestamp: boolean;
+  placeholder: string;
+  welcomeMessage?: string;
+}
+
+export interface ChatState {
+  sessionId: string | null;
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isConnected: boolean;
+  isTyping: boolean;
+  error: string | null;
+  config: ChatConfig;
+}
+
+// WebSocket event types
+export interface WebSocketEvent {
+  type: string;
+  payload: Record<string, any>;
+  timestamp: string;
+}
+
+export interface JoinChatEvent extends WebSocketEvent {
+  type: 'join_chat';
+  payload: {
+    sessionId: string;
+    userId?: string;
+  };
+}
+
+export interface LeaveChatEvent extends WebSocketEvent {
+  type: 'leave_chat';
+  payload: {
+    sessionId: string;
+  };
+}
+
+export interface NewMessageEvent extends WebSocketEvent {
+  type: 'new_message';
+  payload: {
+    sessionId: string;
+    message: ChatMessage;
+  };
+}
+
+export interface TypingEvent extends WebSocketEvent {
+  type: 'typing' | 'stop_typing';
+  payload: {
+    sessionId: string;
+    isTyping: boolean;
+  };
+}
+
+export interface MessageStatusEvent extends WebSocketEvent {
+  type: 'message_status';
+  payload: {
+    messageId: string;
+    status: ChatMessage['status'];
+  };
+}
+
+// Component prop interfaces
+export interface ChatWidgetProps {
+  userId?: string;
+  guestEmail?: string;
+  config?: Partial<ChatConfig>;
+  onSessionCreate?: (sessionId: string) => void;
+  onMessageSent?: (message: ChatMessage) => void;
+  onError?: (error: Error) => void;
+}
+
+export interface ChatWindowProps {
+  sessionId: string;
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isConnected: boolean;
+  isTyping: boolean;
+  config: ChatConfig;
+  onSendMessage: (content: string, type?: ChatMessage['messageType']) => void;
+  onClose: () => void;
+  onMinimize: () => void;
+}
+
+export interface MessageListProps {
+  messages: ChatMessage[];
+  isTyping: boolean;
+  config: ChatConfig;
+  sessionId: string;
+}
+
+export interface MessageItemProps {
+  message: ChatMessage;
+  config: ChatConfig;
+  onQuickReply?: (reply: QuickReply) => void;
+}
+
+export interface MessageInputProps {
+  onSendMessage: (content: string) => void;
+  isLoading: boolean;
+  isConnected: boolean;
+  config: ChatConfig;
+  placeholder?: string;
+}
+
+export interface TypingIndicatorProps {
+  isVisible: boolean;
+  config: ChatConfig;
+}
+
+export interface ConnectionStatusProps {
+  isConnected: boolean;
+  config: ChatConfig;
+}
+
+// Hook interfaces
+export interface UseChatOptions {
+  userId?: string;
+  guestEmail?: string;
+  autoConnect?: boolean;
+  config?: Partial<ChatConfig>;
+}
+
+export interface UseChatReturn {
+  sessionId: string | null;
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isConnected: boolean;
+  isTyping: boolean;
+  error: string | null;
+  config: ChatConfig;
+  sendMessage: (content: string, type?: ChatMessage['messageType']) => Promise<void>;
+  sendQuickReply: (reply: QuickReply) => Promise<void>;
+  loadHistory: (page?: number) => Promise<void>;
+  clearHistory: () => void;
+  reconnect: () => void;
+  disconnect: () => void;
+}
+
+export interface UseWebSocketOptions {
+  sessionId: string | null;
+  userId?: string;
+  autoConnect?: boolean;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
+}
+
+export interface UseWebSocketReturn {
+  isConnected: boolean;
+  connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
+  lastMessage: WebSocketEvent | null;
+  sendEvent: (event: WebSocketEvent) => void;
+  connect: () => void;
+  disconnect: () => void;
+}
+
+// API response interfaces
+export interface CreateSessionResponse {
+  sessionId: string;
+  status: string;
+  expiresAt: string;
+  userContext?: {
+    id: string;
+    name: string;
+    email: string;
+    isMember: boolean;
+  };
+}
+
+export interface SendMessageResponse {
+  messageId: string;
+  status: string;
+  timestamp: string;
+  sessionId: string;
+}
+
+export interface GetMessagesResponse {
+  messages: ChatMessage[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  sessionInfo: {
+    sessionId: string;
+    status: string;
+    expiresAt?: string;
+  };
+}
+
+// Error types
+export interface ChatError {
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+}
+
+// Default configurations - single source of truth
+export const DEFAULT_CHAT_CONFIG: ChatConfig = {
+  position: 'bottom-right',
+  theme: 'light',
+  primaryColor: '#007bff',
+  maxMessageLength: 1000,
+  enableFileUpload: false,
+  enableTypingIndicator: true,
+  enableSound: false,
+  autoExpand: false,
+  showTimestamp: true,
+  placeholder: 'Type a message...'
+} as const;
+
+export const CHAT_CONSTANTS = {
+  MAX_RECONNECT_ATTEMPTS: 5,
+  RECONNECT_INTERVAL: 3000,
+  TYPING_TIMEOUT: 3000,
+  MESSAGE_BATCH_SIZE: 50,
+  ANIMATION_DURATION: 300,
+  WEBSOCKET_HEARTBEAT: 30000
+} as const;
+
+// Event types for consistency
+export const CHAT_EVENTS = {
+  JOIN_CHAT: 'join_chat',
+  LEAVE_CHAT: 'leave_chat',
+  NEW_MESSAGE: 'new_message',
+  MESSAGE_STATUS: 'message_status',
+  TYPING: 'typing',
+  STOP_TYPING: 'stop_typing',
+  CONNECTION_STATUS: 'connection_status'
+} as const;
+
+export const MESSAGE_STATUS = {
+  PENDING: 'pending',
+  SENT: 'sent',
+  DELIVERED: 'delivered',
+  FAILED: 'failed'
+} as const;
+
+export const SESSION_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  EXPIRED: 'expired'
+} as const;
