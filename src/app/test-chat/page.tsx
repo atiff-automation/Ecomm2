@@ -84,7 +84,7 @@ export default function TestChatPage() {
         </div>
       </div>
 
-      {/* Chat Widget */}
+      {/* Chat Widget - Enabled for testing */}
       <ChatWidget
         config={{
           position: 'bottom-right',

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 
 // Get chat configuration
@@ -140,20 +140,74 @@ export async function POST(request: NextRequest) {
       websocketPort,
     } = body;
 
-    // Validation
-    if (!webhookUrl || !webhookSecret || !apiKey) {
-      return NextResponse.json(
-        { error: 'Webhook URL, secret, and API key are required' },
-        { status: 400 }
-      );
+    // Enhanced validation following CLAUDE.md systematic approach
+    const validationErrors: string[] = [];
+
+    // Required field validation
+    if (!webhookUrl) validationErrors.push('Webhook URL is required');
+    if (!webhookSecret) validationErrors.push('Webhook secret is required');
+    if (!apiKey) validationErrors.push('API key is required');
+
+    // Webhook URL validation
+    if (webhookUrl) {
+      try {
+        const url = new URL(webhookUrl);
+        
+        // Ensure it's HTTPS for n8n Cloud security (allow HTTP for localhost testing)
+        const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname.startsWith('192.168.');
+        if (url.protocol !== 'https:' && !isLocalhost) {
+          validationErrors.push('Webhook URL must use HTTPS protocol (HTTP allowed for localhost testing)');
+        }
+        
+        // Check for n8n Cloud domains (common patterns)
+        const validDomains = ['.n8n.cloud', '.app.n8n.io', 'localhost', '127.0.0.1'];
+        const isValidDomain = validDomains.some(domain => 
+          url.hostname.includes(domain) || url.hostname === domain.replace('.', '')
+        );
+        
+        if (!isValidDomain && !url.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+          console.warn(`Webhook URL uses non-standard domain: ${url.hostname}`);
+        }
+        
+      } catch {
+        validationErrors.push('Invalid webhook URL format');
+      }
     }
 
-    // Validate webhook URL format
-    try {
-      new URL(webhookUrl);
-    } catch {
+    // Webhook secret validation
+    if (webhookSecret && webhookSecret.length < 32) {
+      validationErrors.push('Webhook secret must be at least 32 characters long');
+    }
+
+    // API key validation
+    if (apiKey && apiKey.length < 16) {
+      validationErrors.push('API key must be at least 16 characters long');
+    }
+
+    // Numeric field validation
+    if (sessionTimeoutMinutes && (sessionTimeoutMinutes < 1 || sessionTimeoutMinutes > 1440)) {
+      validationErrors.push('Session timeout must be between 1 and 1440 minutes');
+    }
+
+    if (maxMessageLength && (maxMessageLength < 1 || maxMessageLength > 10000)) {
+      validationErrors.push('Max message length must be between 1 and 10000 characters');
+    }
+
+    if (rateLimitMessages && (rateLimitMessages < 1 || rateLimitMessages > 1000)) {
+      validationErrors.push('Rate limit messages must be between 1 and 1000');
+    }
+
+    if (websocketPort && (websocketPort < 1024 || websocketPort > 65535)) {
+      validationErrors.push('WebSocket port must be between 1024 and 65535');
+    }
+
+    // Return validation errors if any
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { error: 'Invalid webhook URL format' },
+        { 
+          error: 'Configuration validation failed', 
+          details: validationErrors 
+        },
         { status: 400 }
       );
     }
@@ -286,15 +340,23 @@ export async function PATCH(request: NextRequest) {
       sessionId: 'test-session-' + Date.now(),
     };
 
+    // Generate proper HMAC signature for the test payload
+    const crypto = require('crypto');
+    const payloadString = JSON.stringify(testPayload);
+    const signature = 'sha256=' + crypto
+      .createHmac('sha256', config.webhookSecret || '')
+      .update(payloadString, 'utf8')
+      .digest('hex');
+
     try {
       const response = await fetch(config.webhookUrl!, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Webhook-Secret': config.webhookSecret || '',
+          'X-Webhook-Signature': signature,
           'X-API-Key': config.apiKey || '',
         },
-        body: JSON.stringify(testPayload),
+        body: payloadString,
         signal: AbortSignal.timeout(10000), // 10 second timeout
       });
 

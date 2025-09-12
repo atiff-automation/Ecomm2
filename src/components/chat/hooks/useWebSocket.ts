@@ -14,6 +14,8 @@ interface WebSocketOptions {
   reconnectDelay?: number;
   maxReconnectAttempts?: number;
   enabled?: boolean;
+  state?: any;
+  dispatch?: any;
 }
 
 interface WebSocketState {
@@ -32,10 +34,28 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
     url = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001',
     reconnectDelay = 5000,
     maxReconnectAttempts = 5,
-    enabled = true
+    enabled = true,
+    state: providedState,
+    dispatch: providedDispatch
   } = options;
 
-  const { state, dispatch } = useChatContext();
+  // Use provided state/dispatch or get from context
+  let chatContext;
+  
+  // Only try to get context if not provided explicitly (to avoid circular dependency)
+  if (!providedState && !providedDispatch) {
+    try {
+      chatContext = useChatContext();
+    } catch (error) {
+      // Context not available - this is expected during initialization
+      chatContext = null;
+    }
+  } else {
+    chatContext = null; // Use provided state/dispatch instead
+  }
+  
+  const state = providedState || chatContext?.state;
+  const dispatch = providedDispatch || chatContext?.dispatch;
   const socketRef = useRef<Socket | null>(null);
   
   const [wsState, setWsState] = useState<WebSocketState>({
@@ -47,7 +67,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
   // Connect to Socket.io
   const connect = useCallback(() => {
-    if (!enabled || !state.session?.id || socketRef.current?.connected) {
+    if (!enabled || !state?.session?.id || socketRef.current?.connected) {
       return;
     }
 
@@ -80,15 +100,15 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
         // Join chat session
         socket.emit('join_chat', {
-          sessionId: state.session?.id,
-          userId: state.session?.metadata?.userId
+          sessionId: state?.session?.id,
+          userId: state?.session?.metadata?.userId
         });
       });
 
       // Connection confirmed
       socket.on('connection_status', (data: any) => {
         console.log('Connection status:', data);
-        if (data.status === 'connected') {
+        if (data.status === 'connected' && dispatch) {
           dispatch({ type: 'SET_CONNECTED', payload: true });
         }
       });
@@ -100,12 +120,12 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
       // New message received
       socket.on('new_message', (event: ServerToClientEvent) => {
-        if (event.type === 'new_message') {
+        if (event.type === 'new_message' && dispatch) {
           console.log('📨 New message received:', event.message);
           dispatch({ type: 'ADD_MESSAGE', payload: event.message });
           
           // Mark as unread if chat is closed
-          if (!state.isOpen) {
+          if (!state?.isOpen) {
             dispatch({ type: 'SET_UNREAD_MESSAGES', payload: true });
           }
         }
@@ -113,7 +133,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
       // Message status update
       socket.on('message_status', (event: ServerToClientEvent) => {
-        if (event.type === 'message_status') {
+        if (event.type === 'message_status' && dispatch) {
           console.log('Message status update:', event);
           dispatch({ 
             type: 'UPDATE_MESSAGE', 
@@ -127,7 +147,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
 
       // Bot typing indicator
       socket.on('bot_typing', (event: ServerToClientEvent) => {
-        if (event.type === 'bot_typing') {
+        if (event.type === 'bot_typing' && dispatch) {
           dispatch({ type: 'SET_TYPING', payload: event.isTyping });
         }
       });
@@ -142,7 +162,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       
       // User presence updates
       socket.on('user_presence', (event: ServerToClientEvent) => {
-        if (event.type === 'user_presence') {
+        if (event.type === 'user_presence' && dispatch) {
           console.log('👤 User presence update:', event);
           // Update user presence in chat state if needed
           dispatch({ 
@@ -157,7 +177,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       
       // Message delivered receipts
       socket.on('message_delivered', (event: ServerToClientEvent) => {
-        if (event.type === 'message_delivered') {
+        if (event.type === 'message_delivered' && dispatch) {
           console.log('✅ Message delivered:', event);
           dispatch({ 
             type: 'UPDATE_MESSAGE', 
@@ -174,7 +194,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       
       // Message read receipts
       socket.on('message_read', (event: ServerToClientEvent) => {
-        if (event.type === 'message_read') {
+        if (event.type === 'message_read' && dispatch) {
           console.log('📖 Message read:', event);
           dispatch({ 
             type: 'UPDATE_MESSAGE', 
@@ -209,7 +229,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
           isConnected: false, 
           isConnecting: false 
         }));
-        dispatch({ type: 'SET_CONNECTED', payload: false });
+        if (dispatch) dispatch({ type: 'SET_CONNECTED', payload: false });
       });
 
       // Connection error
@@ -221,7 +241,7 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
           isConnecting: false,
           reconnectAttempts: prev.reconnectAttempts + 1
         }));
-        dispatch({ type: 'SET_CONNECTION_ERROR', payload: error.message });
+        if (dispatch) dispatch({ type: 'SET_CONNECTION_ERROR', payload: error.message });
       });
 
       // Pong response for heartbeat
@@ -239,13 +259,13 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
         isConnecting: false 
       }));
     }
-  }, [enabled, state.session?.id, state.isOpen, url, reconnectDelay, maxReconnectAttempts, dispatch]);
+  }, [enabled, state?.session?.id, state?.isOpen, url, reconnectDelay, maxReconnectAttempts, dispatch]);
 
   // Disconnect Socket.io
   const disconnect = useCallback(() => {
     if (socketRef.current) {
       // Leave chat session before disconnecting
-      if (state.session?.id) {
+      if (state?.session?.id) {
         socketRef.current.emit('leave_chat', {
           sessionId: state.session.id
         });
@@ -272,34 +292,34 @@ export const useWebSocket = (options: WebSocketOptions = {}) => {
       return true;
     }
     return false;
-  }, [state.session?.id]);
+  }, [state?.session?.id]);
 
   // Send typing indicator with enhanced timeout management
   const sendTyping = useCallback((isTyping: boolean) => {
-    if (socketRef.current?.connected && state.session?.id) {
+    if (socketRef.current?.connected && state?.session?.id) {
       socketRef.current.emit('typing', {
         sessionId: state.session.id,
         isTyping,
         userId: state.session?.metadata?.userId,
         timestamp: Date.now()
       });
-      dispatch({ type: 'SET_USER_TYPING', payload: isTyping });
+      if (dispatch) dispatch({ type: 'SET_USER_TYPING', payload: isTyping });
     }
-  }, [state.session?.id, state.session?.metadata?.userId, dispatch]);
+  }, [state?.session?.id, state?.session?.metadata?.userId, dispatch]);
   
   // Send presence update
   const sendPresenceUpdate = useCallback((status: 'online' | 'away') => {
-    if (socketRef.current?.connected && state.session?.id) {
+    if (socketRef.current?.connected && state?.session?.id) {
       socketRef.current.emit('presence_update', {
         sessionId: state.session.id,
         status
       });
     }
-  }, [state.session?.id]);
+  }, [state?.session?.id]);
   
   // Mark message as read
   const markMessageAsRead = useCallback((messageId: string) => {
-    if (socketRef.current?.connected && state.session?.id) {
+    if (socketRef.current?.connected && state?.session?.id) {
       socketRef.current.emit('message_read', {
         messageId,
         sessionId: state.session.id

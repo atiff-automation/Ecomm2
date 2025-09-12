@@ -21,9 +21,10 @@ async function handleGET(
     
     // Verify session exists and is active
     const session = await prisma.chatSession.findUnique({
-      where: { id: validatedParams.sessionId },
+      where: { sessionId: validatedParams.sessionId },
       select: {
         id: true,
+        sessionId: true,
         status: true,
         expiresAt: true,
       },
@@ -44,7 +45,7 @@ async function handleGET(
     // Get messages with pagination
     const [messages, totalCount] = await Promise.all([
       prisma.chatMessage.findMany({
-        where: { sessionId: validatedParams.sessionId },
+        where: { sessionId: session.id },
         orderBy: { createdAt: 'asc' },
         skip,
         take: validatedParams.limit,
@@ -59,7 +60,7 @@ async function handleGET(
         },
       }),
       prisma.chatMessage.count({
-        where: { sessionId: validatedParams.sessionId },
+        where: { sessionId: session.id },
       }),
     ]);
     
@@ -76,7 +77,7 @@ async function handleGET(
         hasPrev: validatedParams.page > 1,
       },
       sessionInfo: {
-        sessionId: session.id,
+        sessionId: session.sessionId,
         status: session.status,
         expiresAt: session.expiresAt?.toISOString(),
       },

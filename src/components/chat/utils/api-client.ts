@@ -23,6 +23,10 @@ interface CreateSessionRequest {
   metadata?: Record<string, any>;
 }
 
+interface InitSessionRequest extends CreateSessionRequest {
+  isUIInit: boolean;
+}
+
 interface SendMessageRequest {
   sessionId: string;
   content: string;
@@ -130,6 +134,16 @@ class ChatApiClient {
   }
 
   /**
+   * Initialize a chat session for UI (bypasses rate limits)
+   */
+  async initSession(request: InitSessionRequest): Promise<ApiResponse<CreateSessionResponse>> {
+    return this.makeRequest<CreateSessionResponse>('/init', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
    * Get session details with recent messages
    */
   async getSession(params: GetSessionParams): Promise<ApiResponse<CreateSessionResponse & { messages: ChatMessage[] }>> {
@@ -196,12 +210,97 @@ class ChatApiClient {
   }
 
   /**
-   * Get chat health status
+   * Get chat health status (using fast lightweight endpoint)
    */
-  async getHealthStatus(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    return this.makeRequest<{ status: string; timestamp: string }>('/webhook', {
+  async getHealthStatus(): Promise<ApiResponse<{ status: string; timestamp: string; service: string }>> {
+    // Use dedicated health endpoint which is optimized for speed
+    return this.makeRequest<{ status: string; timestamp: string; service: string }>('/health', {
       method: 'GET',
     });
+  }
+
+  /**
+   * Make request with custom timeout (for health checks that need more time)
+   */
+  private async makeRequestWithTimeout<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    customTimeout: number = this.timeout
+  ): Promise<ApiResponse<T>> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), customTimeout);
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error || { code: 'UNKNOWN_ERROR', message: 'Unknown error occurred' }
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data || data
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          return {
+            success: false,
+            error: {
+              code: 'TIMEOUT_ERROR',
+              message: 'Request timed out'
+            }
+          };
+        }
+        
+        return {
+          success: false,
+          error: {
+            code: 'NETWORK_ERROR',
+            message: error.message
+          }
+        };
+      }
+
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: 'An unknown error occurred'
+        }
+      };
+    }
+  }
+
+  /**
+   * Get chat health status with extended timeout
+   */
+  async getHealthStatusWithTimeout(): Promise<ApiResponse<{ status: string; timestamp: string; service: string }>> {
+    // Use dedicated health endpoint with extended 30-second timeout for development
+    return this.makeRequestWithTimeout<{ status: string; timestamp: string; service: string }>('/health', {
+      method: 'GET',
+    }, 30000);
   }
 }
 

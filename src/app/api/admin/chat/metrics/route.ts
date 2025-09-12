@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         SELECT 
           DATE_TRUNC('hour', "createdAt") as hour,
           COUNT(*) as count
-        FROM "ChatMessage"
+        FROM "chat_messages"
         WHERE "createdAt" >= ${startDate}
         GROUP BY DATE_TRUNC('hour', "createdAt")
         ORDER BY hour DESC
@@ -135,17 +135,17 @@ export async function GET(request: NextRequest) {
           AVG(
             EXTRACT(EPOCH FROM (
               SELECT MIN("createdAt") 
-              FROM "ChatMessage" bot_msg 
+              FROM "chat_messages" bot_msg 
               WHERE bot_msg."sessionId" = user_msg."sessionId" 
                 AND bot_msg."senderType" = 'bot' 
                 AND bot_msg."createdAt" > user_msg."createdAt"
             ) - user_msg."createdAt")
           ) as avg_response_time
-        FROM "ChatMessage" user_msg
+        FROM "chat_messages" user_msg
         WHERE user_msg."senderType" = 'user'
           AND user_msg."createdAt" >= ${startDate}
           AND EXISTS (
-            SELECT 1 FROM "ChatMessage" bot_msg 
+            SELECT 1 FROM "chat_messages" bot_msg 
             WHERE bot_msg."sessionId" = user_msg."sessionId" 
               AND bot_msg."senderType" = 'bot' 
               AND bot_msg."createdAt" > user_msg."createdAt"

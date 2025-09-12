@@ -62,7 +62,7 @@ export const CHAT_CONFIG = {
   },
   RATE_LIMITS: {
     WINDOW: 60 * 1000, // 1 minute
-    MAX_MESSAGES: 10,
+    MAX_MESSAGES: 100, // Increased for testing
   },
 } as const;
 

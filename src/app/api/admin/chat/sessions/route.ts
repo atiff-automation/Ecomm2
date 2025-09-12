@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             email: true,
-            name: true,
+            firstName: true,
+            lastName: true,
           },
         },
         _count: {
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
       messageCount: session._count.messages,
       userId: session.user?.id,
       userEmail: session.user?.email,
-      userName: session.user?.name,
+      userName: session.user ? `${session.user.firstName} ${session.user.lastName}`.trim() : null,
       userAgent: session.userAgent,
       ipAddress: session.ipAddress,
       metadata: session.metadata,

@@ -115,10 +115,10 @@ export const RateLimitPresets = {
     message: 'Too many messages sent. Please wait before sending another message.'
   },
 
-  // Strict rate limiting for session creation
+  // Relaxed rate limiting for session creation (development)
   SESSION_CREATE: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    maxRequests: 3,
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 50,
     message: 'Too many session creation attempts. Please try again later.'
   },
 

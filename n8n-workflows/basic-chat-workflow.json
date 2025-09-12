@@ -1,0 +1,183 @@
+{
+  "name": "E-commerce Basic Chat Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ecommerce-chat",
+        "responseMode": "responseNode",
+        "options": {
+          "noResponseBody": false
+        }
+      },
+      "id": "ff8799c8-c80c-4b6f-8b0a-1c5c5c5c5c5c",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ecommerce-chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify webhook signature for security\nconst crypto = require('crypto');\n\nfunction verifyWebhookSignature(payload, signature, secret) {\n  const expectedSignature = crypto\n    .createHmac('sha256', secret)\n    .update(JSON.stringify(payload), 'utf8')\n    .digest('hex');\n  \n  const receivedSignature = signature.replace('sha256=', '');\n  \n  return crypto.timingSafeEqual(\n    Buffer.from(expectedSignature, 'hex'),\n    Buffer.from(receivedSignature, 'hex')\n  );\n}\n\n// Get webhook secret from n8n environment variable\nconst webhookSecret = $env.ECOMMERCE_WEBHOOK_SECRET;\nconst signature = $node[\"Webhook Trigger\"].json[\"headers\"][\"x-webhook-signature\"];\n\n// Verify signature\nif (!webhookSecret || !signature) {\n  throw new Error('Missing webhook secret or signature');\n}\n\nconst isValid = verifyWebhookSignature($json, signature, webhookSecret);\n\nif (!isValid) {\n  throw new Error('Invalid webhook signature');\n}\n\n// Validate required fields\nif (!$json.sessionId || !$json.messageId || !$json.message?.content) {\n  throw new Error('Missing required fields');\n}\n\n// Pass through validated payload\nreturn $json;"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Security Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.userContext.isAuthenticated }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-f6g7-8901-bcde-f23456789012",
+      "name": "Check User Authentication",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle authenticated user messages\nconst userMessage = $json.message.content.toLowerCase();\nconst userName = $json.userContext.userInfo?.name || 'Valued Customer';\nconst membershipTotal = $json.userContext.membershipTotal || 0;\n\nlet responseContent = '';\nlet quickReplies = [];\nlet intent = 'general_inquiry';\n\n// Order-related keywords\nif (userMessage.includes('order') || userMessage.includes('purchase') || userMessage.includes('tracking')) {\n  responseContent = `Hello ${userName}! I'd be happy to help with your order. Could you please provide your order number?`;\n  quickReplies = ['Check Order Status', 'Track Package', 'Return Item', 'Contact Support'];\n  intent = 'order_inquiry';\n}\n// Account-related keywords\nelse if (userMessage.includes('account') || userMessage.includes('profile') || userMessage.includes('membership')) {\n  responseContent = `Hi ${userName}! I can help with your account. As a member with $${membershipTotal.toFixed(2)} in total purchases, you have access to exclusive benefits.`;\n  quickReplies = ['View Account', 'Membership Benefits', 'Update Profile', 'Order History'];\n  intent = 'account_inquiry';\n}\n// Product-related keywords\nelse if (userMessage.includes('product') || userMessage.includes('item') || userMessage.includes('buy') || userMessage.includes('price')) {\n  responseContent = `Hello ${userName}! I can help you find the perfect products. What are you looking for today?`;\n  quickReplies = ['Browse Categories', 'View Deals', 'Product Recommendations', 'Check Stock'];\n  intent = 'product_inquiry';\n}\n// Shipping-related keywords\nelse if (userMessage.includes('shipping') || userMessage.includes('delivery') || userMessage.includes('ship')) {\n  responseContent = `Hi ${userName}! I can provide information about shipping options and delivery times.`;\n  quickReplies = ['Shipping Rates', 'Delivery Times', 'Express Options', 'International Shipping'];\n  intent = 'shipping_inquiry';\n}\n// Support keywords\nelse if (userMessage.includes('help') || userMessage.includes('support') || userMessage.includes('problem') || userMessage.includes('issue')) {\n  responseContent = `Hello ${userName}! I'm here to help. What can I assist you with today?`;\n  quickReplies = ['Order Support', 'Technical Help', 'Billing Questions', 'Product Support'];\n  intent = 'support_request';\n}\n// Greeting keywords\nelse if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('hey') || userMessage.includes('good')) {\n  responseContent = `Hello ${userName}! Welcome back. How can I assist you today?`;\n  quickReplies = ['View Orders', 'Browse Products', 'Account Settings', 'Contact Support'];\n  intent = 'greeting';\n}\n// Default response\nelse {\n  responseContent = `Hi ${userName}! I understand you said: \"${$json.message.content}\". How can I help you with that?`;\n  quickReplies = ['Need Help', 'Browse Products', 'Check Orders', 'Contact Support'];\n  intent = 'general_inquiry';\n}\n\nreturn {\n  sessionId: $json.sessionId,\n  response: {\n    content: responseContent,\n    type: 'quick_reply',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: intent,\n    confidence: 0.8,\n    userType: 'authenticated',\n    membershipLevel: $json.userContext.membershipLevel,\n    membershipTotal: membershipTotal\n  }\n};"
+      },
+      "id": "c3d4e5f6-g7h8-9012-cdef-345678901234",
+      "name": "Handle Member Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle guest user messages\nconst userMessage = $json.message.content.toLowerCase();\nconst guestEmail = $json.guestEmail;\n\nlet responseContent = '';\nlet quickReplies = [];\nlet intent = 'general_inquiry';\n\n// Order-related keywords for guests\nif (userMessage.includes('order') || userMessage.includes('purchase') || userMessage.includes('tracking')) {\n  responseContent = 'I can help you track an order! For order tracking, you\\'ll need your order confirmation email. Would you like me to guide you through the process?';\n  quickReplies = ['Track Order', 'Find Confirmation', 'Contact Support', 'Create Account'];\n  intent = 'order_inquiry';\n}\n// Product-related keywords\nelse if (userMessage.includes('product') || userMessage.includes('item') || userMessage.includes('buy') || userMessage.includes('price')) {\n  responseContent = 'I\\'d be happy to help you find products! Browse our categories or let me know what you\\'re looking for.';\n  quickReplies = ['Browse Products', 'View Deals', 'Create Account', 'Guest Checkout'];\n  intent = 'product_inquiry';\n}\n// Shipping-related keywords\nelse if (userMessage.includes('shipping') || userMessage.includes('delivery') || userMessage.includes('ship')) {\n  responseContent = 'Here\\'s information about our shipping options. We offer various delivery speeds to meet your needs.';\n  quickReplies = ['Shipping Info', 'Calculate Cost', 'Delivery Times', 'Create Account'];\n  intent = 'shipping_inquiry';\n}\n// Account creation interest\nelse if (userMessage.includes('account') || userMessage.includes('register') || userMessage.includes('sign up') || userMessage.includes('member')) {\n  responseContent = 'Great! Creating an account gives you access to order tracking, exclusive deals, and faster checkout. Would you like to get started?';\n  quickReplies = ['Create Account', 'Learn Benefits', 'Guest Checkout', 'Browse Products'];\n  intent = 'account_creation';\n}\n// Support keywords\nelse if (userMessage.includes('help') || userMessage.includes('support') || userMessage.includes('problem') || userMessage.includes('issue')) {\n  responseContent = 'I\\'m here to help! What do you need assistance with? Creating an account can also give you access to additional support options.';\n  quickReplies = ['Get Help', 'Create Account', 'Contact Support', 'FAQ'];\n  intent = 'support_request';\n}\n// Greeting keywords\nelse if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('hey') || userMessage.includes('good')) {\n  responseContent = 'Hello! Welcome to our store. I\\'m here to help you find what you need. Browse our products or create an account for a personalized experience!';\n  quickReplies = ['Browse Products', 'Create Account', 'View Deals', 'Need Help'];\n  intent = 'greeting';\n}\n// Default response\nelse {\n  responseContent = `Thanks for your message: \"${$json.message.content}\". I\\'m here to help! You can browse products as a guest or create an account for the best experience.`;\n  quickReplies = ['Browse Products', 'Create Account', 'Need Help', 'Contact Support'];\n  intent = 'general_inquiry';\n}\n\nreturn {\n  sessionId: $json.sessionId,\n  response: {\n    content: responseContent,\n    type: 'quick_reply',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: intent,\n    confidence: 0.7,\n    userType: 'guest',\n    guestEmail: guestEmail,\n    leadCapture: true\n  }\n};"
+      },
+      "id": "d4e5f6g7-h8i9-0123-defg-456789012345",
+      "name": "Handle Guest Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "e5f6g7h8-i9j0-1234-efgh-567890123456",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Security Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Security Validation": {
+      "main": [
+        [
+          {
+            "node": "Check User Authentication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User Authentication": {
+      "main": [
+        [
+          {
+            "node": "Handle Member Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Guest Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Member Message": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Guest Message": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "id": "tag1",
+      "name": "E-commerce"
+    },
+    {
+      "createdAt": "2024-01-15T10:30:00.000Z", 
+      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "id": "tag2",
+      "name": "Chat"
+    },
+    {
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z", 
+      "id": "tag3",
+      "name": "Customer Support"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:30:00.000Z",
+  "versionId": "basic-chat-v1.0"
+}

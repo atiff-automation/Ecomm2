@@ -470,7 +470,7 @@ export const performTrackingSystemHealthCheck =
           errorRate: 100 - (performanceData.successRate || 100),
           queueDepth: 0, // Would be from job queue stats
         },
-        alerts: alerts.length > 0 ? alerts : undefined,
+        alerts: alerts,
       };
 
       // Log health check results

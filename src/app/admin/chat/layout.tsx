@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Users,
   Archive,
-  Zap
+  Zap,
+  Activity
 } from 'lucide-react';
 
 interface ChatLayoutProps {
@@ -46,6 +47,12 @@ const chatNavigationItems = [
     href: '/admin/chat/queue',
     icon: Zap,
     description: 'Webhook Queue Management',
+  },
+  {
+    label: 'Monitoring',
+    href: '/admin/chat/monitoring',
+    icon: Activity,
+    description: 'Webhook Performance & Health',
   },
   {
     label: 'Archive',

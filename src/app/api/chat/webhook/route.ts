@@ -28,7 +28,7 @@ async function handlePOST(request: NextRequest) {
     
     // Verify session exists and is active
     const session = await prisma.chatSession.findUnique({
-      where: { id: validatedData.sessionId },
+      where: { sessionId: validatedData.sessionId },
     });
     
     if (!session) {
@@ -42,7 +42,7 @@ async function handlePOST(request: NextRequest) {
     // Create bot response message
     const botMessage = await prisma.chatMessage.create({
       data: {
-        sessionId: validatedData.sessionId,
+        sessionId: session.id, // Use internal database ID for FK relationship
         senderType: 'bot',
         content: validatedData.response.content,
         messageType: validatedData.response.type,
@@ -57,8 +57,8 @@ async function handlePOST(request: NextRequest) {
     
     // Update session's updated timestamp
     await prisma.chatSession.update({
-      where: { id: validatedData.sessionId },
-      data: { updatedAt: new Date() },
+      where: { sessionId: validatedData.sessionId },
+      data: { lastActivity: new Date() },
     });
     
     // Broadcast bot message via WebSocket
@@ -115,4 +115,5 @@ async function handleGET(request: NextRequest) {
 
 // Apply rate limiting to endpoints
 export const POST = withRateLimit(handlePOST, RateLimitPresets.WEBHOOK);
-export const GET = withRateLimit(handleGET, RateLimitPresets.WEBHOOK);
+// Disable rate limiting for health checks during development
+export const GET = handleGET;

@@ -267,7 +267,7 @@ export interface SystemHealthCheck {
     errorRate: number;
     queueDepth: number;
   };
-  alerts?: string[];
+  alerts: string[];
 }
 
 // ==================== VALIDATION ====================

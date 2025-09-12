@@ -1,0 +1,136 @@
+{
+  "name": "E-commerce Lead Capture Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "responseMode": "responseNode",
+        "options": {
+          "noResponseBody": false
+        }
+      },
+      "id": "lead-webhook-1234-5678-9012-abcdef123456",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "lead-capture"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Security validation and lead detection\nconst crypto = require('crypto');\n\n// Verify webhook signature\nfunction verifyWebhookSignature(payload, signature, secret) {\n  if (!secret || !signature) return false;\n  \n  try {\n    const expectedSignature = crypto\n      .createHmac('sha256', secret)\n      .update(JSON.stringify(payload), 'utf8')\n      .digest('hex');\n    \n    const receivedSignature = signature.replace('sha256=', '');\n    \n    return crypto.timingSafeEqual(\n      Buffer.from(expectedSignature, 'hex'),\n      Buffer.from(receivedSignature, 'hex')\n    );\n  } catch (error) {\n    return false;\n  }\n}\n\n// Security check\nconst webhookSecret = $env.ECOMMERCE_WEBHOOK_SECRET;\nconst signature = $node[\"Webhook Trigger\"].json[\"headers\"][\"x-webhook-signature\"];\n\nif (!verifyWebhookSignature($json, signature, webhookSecret)) {\n  throw new Error('Invalid webhook signature');\n}\n\n// Validate payload\nif (!$json.sessionId || !$json.messageId || !$json.message?.content) {\n  throw new Error('Invalid payload structure');\n}\n\n// Determine if this is a potential lead\nfunction isLeadCandidate(payload) {\n  // Guest users are potential leads\n  if (!payload.userContext.isAuthenticated && payload.guestEmail) {\n    return true;\n  }\n  \n  // Users asking about products without recent purchases\n  if (payload.userContext.isAuthenticated && \n      (!payload.userContext.membershipTotal || payload.userContext.membershipTotal < 50)) {\n    return true;\n  }\n  \n  return false;\n}\n\n// Detect lead intent\nfunction detectLeadIntent(message) {\n  const content = message.toLowerCase();\n  \n  const intents = {\n    product_interest: ['interested', 'want to buy', 'looking for', 'need', 'searching', 'price'],\n    comparison_shopping: ['compare', 'vs', 'versus', 'better than', 'which is', 'difference'],\n    discount_seeking: ['discount', 'coupon', 'deal', 'sale', 'promo', 'cheaper', 'save money'],\n    first_time_buyer: ['first time', 'new customer', 'never bought', 'trying', 'considering'],\n    high_intent: ['buy now', 'purchase', 'order', 'checkout', 'add to cart', 'how to buy']\n  };\n  \n  for (const [intent, keywords] of Object.entries(intents)) {\n    if (keywords.some(keyword => content.includes(keyword))) {\n      return intent;\n    }\n  }\n  \n  return 'general_inquiry';\n}\n\n// Add lead analysis to payload\n$json.leadAnalysis = {\n  isLead: isLeadCandidate($json),\n  intent: detectLeadIntent($json.message.content),\n  source: $json.sessionMetadata?.source || 'chat',\n  timestamp: new Date().toISOString(),\n  sessionId: $json.sessionId\n};\n\nreturn $json;"
+      },
+      "id": "lead-validation-1234-5678-9012-abcdef123456",
+      "name": "Lead Detection & Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.leadAnalysis.isLead }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "lead-filter-1234-5678-9012-abcdef123456",
+      "name": "Is Potential Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.leadAnalysis.intent }}",
+              "rightValue": "high_intent",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "intent-check-1234-5678-9012-abcdef123456",
+      "name": "High Purchase Intent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// High-intent lead response - immediate sales focus\nconst userMessage = $json.message.content;\nconst guestEmail = $json.guestEmail;\nconst userName = $json.userContext.userInfo?.name || 'there';\nconst isAuthenticated = $json.userContext.isAuthenticated;\n\nlet responseContent = '';\nlet quickReplies = [];\n\nif (!isAuthenticated) {\n  responseContent = `I can see you're interested in making a purchase! I'd love to help you complete your order. Creating an account takes just 30 seconds and gives you:\\n\\n• Exclusive member discounts (10-20% off)\\n• Free shipping on orders over $50\\n• Priority customer support\\n• Order tracking\\n\\nShould I help you get started with your purchase?`;\n  quickReplies = ['Create Account & Buy', 'Continue as Guest', 'See Discounts', 'Speak to Sales'];\n} else {\n  responseContent = `Hi ${userName}! I can see you're ready to make a purchase. As a member, you have access to exclusive discounts and free shipping. Let me help you complete your order quickly!`;\n  quickReplies = ['Show Products', 'Apply Discount', 'Quick Checkout', 'Speak to Sales'];\n}\n\nreturn {\n  sessionId: $json.sessionId,\n  response: {\n    content: responseContent,\n    type: 'quick_reply',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: 'high_purchase_intent',\n    leadScore: 95,\n    urgency: 'high',\n    followUpRequired: true,\n    salesQualified: true\n  }\n};"
+      },
+      "id": "high-intent-1234-5678-9012-abcdef123456",
+      "name": "High Intent Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Regular lead nurturing response\nconst userMessage = $json.message.content;\nconst leadIntent = $json.leadAnalysis.intent;\nconst guestEmail = $json.guestEmail;\nconst userName = $json.userContext.userInfo?.name || 'there';\nconst isAuthenticated = $json.userContext.isAuthenticated;\n\nlet responseContent = '';\nlet quickReplies = [];\nlet leadScore = 50;\n\n// Customize response based on lead intent\nswitch (leadIntent) {\n  case 'product_interest':\n    responseContent = `Hi ${userName}! I'd be happy to help you find the perfect product. What specific features are you looking for? I can show you our top-rated items and current deals.`;\n    quickReplies = ['Browse Products', 'See Top Rated', 'Current Deals', 'Get Recommendations'];\n    leadScore = 70;\n    break;\n    \n  case 'comparison_shopping':\n    responseContent = `Great question! I can help you compare our products to find the best fit for your needs. We also offer a price match guarantee and free returns.`;\n    quickReplies = ['Compare Products', 'Price Match', 'See Reviews', 'Get Expert Advice'];\n    leadScore = 75;\n    break;\n    \n  case 'discount_seeking':\n    responseContent = `You're in luck! We have several ways to save:\\n\\n• New customer discount: 15% off first order\\n• Member exclusive deals up to 30% off\\n• Free shipping on orders $50+\\n• Bundle discounts\\n\\nWant to see what's available?`;\n    quickReplies = ['New Customer Deal', 'See All Deals', 'Create Account', 'Bundle Offers'];\n    leadScore = 80;\n    break;\n    \n  case 'first_time_buyer':\n    responseContent = `Welcome! It's great to have you here. As a first-time customer, I can offer you:\\n\\n• 15% off your first order\\n• Free shipping\\n• 30-day money-back guarantee\\n• Personal shopping assistance\\n\\nWhat can I help you find today?`;\n    quickReplies = ['Claim First-Time Deal', 'Browse Catalog', 'Popular Items', 'Get Help Shopping'];\n    leadScore = 85;\n    break;\n    \n  default:\n    if (!isAuthenticated) {\n      responseContent = `Hi ${userName}! Thanks for your interest. I'm here to help you find exactly what you need. Creating a free account gives you access to member prices and exclusive deals.`;\n      quickReplies = ['Browse Products', 'Create Account', 'See Deals', 'Need Help'];\n    } else {\n      responseContent = `Hi ${userName}! How can I help you today? As a member, you have access to exclusive deals and personalized recommendations.`;\n      quickReplies = ['Member Deals', 'Recommendations', 'Browse Products', 'Account Settings'];\n    }\n    leadScore = 60;\n}\n\nreturn {\n  sessionId: $json.sessionId,\n  response: {\n    content: responseContent,\n    type: 'quick_reply',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: leadIntent,\n    leadScore: leadScore,\n    urgency: 'medium',\n    followUpRequired: true,\n    salesQualified: leadScore >= 70\n  }\n};"
+      },
+      "id": "nurture-response-1234-5678-9012-abcdef123456",
+      "name": "Lead Nurturing Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Non-lead standard response\nconst userMessage = $json.message.content.toLowerCase();\nconst userName = $json.userContext.userInfo?.name || 'there';\nconst isAuthenticated = $json.userContext.isAuthenticated;\n\nlet responseContent = '';\nlet quickReplies = [];\n\n// Standard helpful response for existing customers\nif (userMessage.includes('order') || userMessage.includes('tracking')) {\n  responseContent = `Hi ${userName}! I can help you with your order. What would you like to know?`;\n  quickReplies = ['Track Order', 'Order History', 'Return Item', 'Contact Support'];\n} else if (userMessage.includes('account') || userMessage.includes('profile')) {\n  responseContent = `Hi ${userName}! I can help with your account settings and profile information.`;\n  quickReplies = ['Account Settings', 'Update Profile', 'View Orders', 'Contact Support'];\n} else if (userMessage.includes('help') || userMessage.includes('support')) {\n  responseContent = `Hi ${userName}! I'm here to help. What can I assist you with today?`;\n  quickReplies = ['Order Help', 'Product Info', 'Account Help', 'Technical Support'];\n} else {\n  responseContent = `Hello ${userName}! Thanks for reaching out. How can I assist you today?`;\n  quickReplies = ['Browse Products', 'Check Orders', 'Account Help', 'Contact Support'];\n}\n\nreturn {\n  sessionId: $json.sessionId,\n  response: {\n    content: responseContent,\n    type: 'quick_reply',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: 'customer_service',\n    leadScore: 10,\n    urgency: 'normal',\n    followUpRequired: false,\n    salesQualified: false\n  }\n};"
+      },
+      "id": "standard-response-1234-5678-9012-abcdef123456",
+      "name": "Standard Customer Service",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 500]
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "operation": "create",
+        "leadData": {
+          "mappingMode": "defineBelow",
+          "values": {
+            "email": "={{ $node[\"Lead Detection & Validation\"].json.guestEmail || $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.email }}",
+            "firstName": "={{ $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.name ? $node[\"Lead Detection & Validation\"].json.userContext.userInfo.name.split(' ')[0] : '' }}",
+            "lastName": "={{ $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.name ? $node[\"Lead Detection & Validation\"].json.userContext.userInfo.name.split(' ').slice(1).join(' ') : '' }}",
+            "leadSource": "Chat",
+            "leadScore": "={{ $json.metadata.leadScore }}",
+            "intent": "={{ $json.metadata.intent }}",
+            "urgency": "={{ $json.metadata.urgency }}",
+            "salesQualified": "={{ $json.metadata.salesQualified }}",
+            "sessionId": "={{ $json.sessionId }}",
+            "originalMessage": "={{ $node[\"Lead Detection & Validation\"].json.message.content }}",
+            "userAgent": "Chat Widget",
+            "referralSource": "={{ $node[\"Lead Detection & Validation\"].json.sessionMetadata?.referrer || 'Direct' }}",
+            "tags": "e-commerce,chat-lead,{{ $json.metadata.intent }}"
+          }\n        },\n        \"additionalFields\": {\n          \"customFields\": {\n            \"values\": [\n              {\n                \"key\": \"chat_session_id\",\n                \"value\": \"={{ $json.sessionId }}\"\n              },\n              {\n                \"key\": \"first_message\",\n                \"value\": \"={{ $node[\"Lead Detection & Validation\"].json.message.content }}\"\n              },\n              {\n                \"key\": \"user_type\",\n                \"value\": \"={{ $node[\"Lead Detection & Validation\"].json.userContext.isAuthenticated ? 'authenticated' : 'guest' }}\"\n              },\n              {\n                \"key\": \"membership_level\",\n                \"value\": \"={{ $node[\"Lead Detection & Validation\"].json.userContext.membershipLevel }}\"\n              }\n            ]\n          }\n        }\n      },\n      \"id\": \"crm-lead-1234-5678-9012-abcdef123456\",\n      \"name\": \"Create CRM Lead\",\n      \"type\": \"n8n-nodes-base.hubspot\",\n      \"typeVersion\": 2,\n      \"position\": [1340, 200],\n      \"credentials\": {\n        \"hubspotApi\": {\n          \"id\": \"hubspot-credentials\",\n          \"name\": \"HubSpot CRM\"\n        }\n      }\n    },\n    {\n      \"parameters\": {\n        \"resource\": \"contact\",\n        \"operation\": \"create\",\n        \"email\": \"={{ $node[\"Lead Detection & Validation\"].json.guestEmail || $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.email }}\",\n        \"additionalFields\": {\n          \"customFieldsUi\": {\n            \"customFieldsValues\": [\n              {\n                \"fieldId\": \"lead_source\",\n                \"value\": \"Chat Widget\"\n              },\n              {\n                \"fieldId\": \"lead_score\",\n                \"value\": \"={{ $json.metadata.leadScore }}\"\n              },\n              {\n                \"fieldId\": \"chat_intent\",\n                \"value\": \"={{ $json.metadata.intent }}\"\n              },\n              {\n                \"fieldId\": \"first_interaction\",\n                \"value\": \"={{ $node[\"Lead Detection & Validation\"].json.message.content }}\"\n              }\n            ]\n          },\n          \"firstName\": \"={{ $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.name ? $node[\"Lead Detection & Validation\"].json.userContext.userInfo.name.split(' ')[0] : 'Chat User' }}\",\n          \"lastName\": \"={{ $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.name ? $node[\"Lead Detection & Validation\"].json.userContext.userInfo.name.split(' ').slice(1).join(' ') : '' }}\",\n          \"tags\": \"chat-lead,{{ $json.metadata.intent }},{{ $json.metadata.urgency }}-priority\"\n        }\n      },\n      \"id\": \"email-list-1234-5678-9012-abcdef123456\",\n      \"name\": \"Add to Email List\",\n      \"type\": \"n8n-nodes-base.mailchimp\",\n      \"typeVersion\": 2,\n      \"position\": [1340, 350],\n      \"credentials\": {\n        \"mailchimpApi\": {\n          \"id\": \"mailchimp-credentials\",\n          \"name\": \"Email Marketing\"\n        }\n      }\n    },\n    {\n      \"parameters\": {\n        \"operation\": \"insert\",\n        \"table\": \"leads\",\n        \"columns\": {\n          \"mappingMode\": \"defineBelow\",\n          \"values\": {\n            \"session_id\": \"={{ $json.sessionId }}\",\n            \"email\": \"={{ $node[\"Lead Detection & Validation\"].json.guestEmail || $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.email }}\",\n            \"user_id\": \"={{ $node[\"Lead Detection & Validation\"].json.userId || null }}\",\n            \"lead_score\": \"={{ $json.metadata.leadScore }}\",\n            \"intent\": \"={{ $json.metadata.intent }}\",\n            \"urgency\": \"={{ $json.metadata.urgency }}\",\n            \"sales_qualified\": \"={{ $json.metadata.salesQualified }}\",\n            \"first_message\": \"={{ $node[\"Lead Detection & Validation\"].json.message.content }}\",\n            \"response_given\": \"={{ $json.response.content }}\",\n            \"source\": \"={{ $node[\"Lead Detection & Validation\"].json.leadAnalysis.source }}\",\n            \"referrer\": \"={{ $node[\"Lead Detection & Validation\"].json.sessionMetadata?.referrer || null }}\",\n            \"user_agent\": \"Chat Widget\",\n            \"created_at\": \"={{ $node[\"Lead Detection & Validation\"].json.leadAnalysis.timestamp }}\",\n            \"follow_up_required\": \"={{ $json.metadata.followUpRequired }}\"\n          }\n        },\n        \"options\": {}\n      },\n      \"id\": \"database-lead-1234-5678-9012-abcdef123456\",\n      \"name\": \"Store Lead in Database\",\n      \"type\": \"n8n-nodes-base.postgres\",\n      \"typeVersion\": 2,\n      \"position\": [1340, 450],\n      \"credentials\": {\n        \"postgres\": {\n          \"id\": \"postgres-credentials\",\n          \"name\": \"E-commerce Database\"\n        }\n      }\n    },\n    {\n      \"parameters\": {\n        \"conditions\": {\n          \"options\": {\n            \"caseSensitive\": false,\n            \"leftValue\": \"\",\n            \"typeValidation\": \"strict\"\n          },\n          \"conditions\": [\n            {\n              \"leftValue\": \"={{ $json.metadata.leadScore }}\",\n              \"rightValue\": 80,\n              \"operator\": {\n                \"type\": \"number\",\n                \"operation\": \"gte\"\n              }\n            }\n          ],\n          \"combinator\": \"and\"\n        },\n        \"options\": {}\n      },\n      \"id\": \"hot-lead-check-1234-5678-9012-abcdef123456\",\n      \"name\": \"Hot Lead Alert?\",\n      \"type\": \"n8n-nodes-base.if\",\n      \"typeVersion\": 2,\n      \"position\": [1560, 300]\n    },\n    {\n      \"parameters\": {\n        \"fromEmail\": \"sales@yourstore.com\",\n        \"toEmail\": \"sales-team@yourstore.com\",\n        \"subject\": \"🔥 Hot Lead Alert - Immediate Follow-up Required\",\n        \"text\": \"**HOT LEAD DETECTED**\\n\\nLead Score: {{ $json.metadata.leadScore }}/100\\nIntent: {{ $json.metadata.intent }}\\nUrgency: {{ $json.metadata.urgency }}\\n\\n**Customer Details:**\\nEmail: {{ $node[\"Lead Detection & Validation\"].json.guestEmail || $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.email }}\\nName: {{ $node[\"Lead Detection & Validation\"].json.userContext.userInfo?.name || 'Not provided' }}\\nAuthenticated: {{ $node[\"Lead Detection & Validation\"].json.userContext.isAuthenticated ? 'Yes' : 'No' }}\\n\\n**Interaction:**\\nFirst Message: {{ $node[\"Lead Detection & Validation\"].json.message.content }}\\nOur Response: {{ $json.response.content }}\\n\\n**Session Info:**\\nSession ID: {{ $json.sessionId }}\\nSource: {{ $node[\"Lead Detection & Validation\"].json.leadAnalysis.source }}\\nReferrer: {{ $node[\"Lead Detection & Validation\"].json.sessionMetadata?.referrer || 'Direct' }}\\n\\n**Next Steps:**\\n1. Follow up within 5 minutes\\n2. Offer personalized assistance\\n3. Present relevant product recommendations\\n4. Apply appropriate discounts\\n\\n**Chat System:** The customer is still active in the chat session. Reach out immediately for best conversion.\",\n        \"options\": {\n          \"priority\": \"high\"\n        }\n      },\n      \"id\": \"sales-alert-1234-5678-9012-abcdef123456\",\n      \"name\": \"Send Hot Lead Alert\",\n      \"type\": \"n8n-nodes-base.emailSend\",\n      \"typeVersion\": 2,\n      \"position\": [1780, 200],\n      \"credentials\": {\n        \"smtp\": {\n          \"id\": \"smtp-credentials\",\n          \"name\": \"Sales Email Account\"\n        }\n      }\n    },\n    {\n      \"parameters\": {\n        \"respondWith\": \"json\",\n        \"responseBody\": \"={{ $json }}\",\n        \"options\": {}\n      },\n      \"id\": \"final-response-1234-5678-9012-abcdef123456\",\n      \"name\": \"Send Final Response\",\n      \"type\": \"n8n-nodes-base.respondToWebhook\",\n      \"typeVersion\": 1,\n      \"position\": [1780, 400]\n    }\n  ],\n  \"connections\": {\n    \"Webhook Trigger\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Lead Detection & Validation\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Lead Detection & Validation\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Is Potential Lead?\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Is Potential Lead?\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"High Purchase Intent?\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Standard Customer Service\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"High Purchase Intent?\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"High Intent Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Lead Nurturing Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"High Intent Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Create CRM Lead\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Add to Email List\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Store Lead in Database\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Hot Lead Alert?\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Lead Nurturing Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Create CRM Lead\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Add to Email List\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Store Lead in Database\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Hot Lead Alert?\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Standard Customer Service\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Send Final Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Hot Lead Alert?\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Send Hot Lead Alert\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Send Final Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Send Hot Lead Alert\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Send Final Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    }\n  },\n  \"pinData\": {},\n  \"settings\": {\n    \"executionOrder\": \"v1\",\n    \"saveManualExecutions\": true,\n    \"callerPolicy\": \"workflowsFromSameOwner\"\n  },\n  \"staticData\": null,\n  \"tags\": [\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"lead-tag1\",\n      \"name\": \"Lead Generation\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"lead-tag2\",\n      \"name\": \"Sales\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"lead-tag3\",\n      \"name\": \"CRM Integration\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"lead-tag4\",\n      \"name\": \"E-commerce\"\n    }\n  ],\n  \"triggerCount\": 1,\n  \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n  \"versionId\": \"lead-capture-v1.0\",\n  \"meta\": {\n    \"description\": \"Advanced lead capture and nurturing workflow with CRM integration, email marketing, and sales team alerts for high-intent prospects.\"\n  }\n}

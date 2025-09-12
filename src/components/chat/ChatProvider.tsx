@@ -72,7 +72,7 @@ interface ChatContextValue {
   state: ChatState;
   
   // Session actions
-  createSession: (email?: string) => Promise<void>;
+  createSession: (email?: string, isUIInit?: boolean) => Promise<void>;
   loadSession: () => Promise<void>;
   clearSession: () => void;
   
@@ -94,6 +94,9 @@ interface ChatContextValue {
   sendTyping: (isTyping: boolean) => void;
   sendPresenceUpdate: (status: 'online' | 'away') => void;
   markMessageAsRead: (messageId: string) => void;
+  
+  // Connection management
+  forceHealthCheck: () => Promise<void>;
   
   // Utilities
   isSessionExpired: () => boolean;
@@ -346,30 +349,54 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
   // Connection health check
   const checkConnection = useCallback(async () => {
+    console.log('🔍 ChatProvider: Checking connection health with extended timeout...');
     try {
-      const response = await chatApi.getHealthStatus();
+      const response = await chatApi.getHealthStatusWithTimeout();
+      console.log('🏥 ChatProvider: Health check response:', response);
+      
       if (response.success) {
+        console.log('✅ ChatProvider: Health check successful, setting connected=true');
         dispatch({ type: 'SET_CONNECTED', payload: true });
       } else {
-        dispatch({ type: 'SET_CONNECTION_ERROR', payload: 'Service unavailable' });
+        console.log('❌ ChatProvider: Health check failed, response not successful');
+        console.log('❌ ChatProvider: Error details:', response.error);
+        dispatch({ type: 'SET_CONNECTION_ERROR', payload: response.error?.message || 'Service unavailable' });
       }
     } catch (error) {
+      console.error('❌ ChatProvider: Health check error:', error);
       dispatch({ type: 'SET_CONNECTION_ERROR', payload: 'Connection failed' });
     }
   }, []);
 
+  // Force health check when chat is opened
+  const forceHealthCheck = useCallback(async () => {
+    console.log('🔄 ChatProvider: Forcing health check...');
+    await checkConnection();
+  }, [checkConnection]);
+
   // Session management
-  const createSession = useCallback(async (guestEmail?: string) => {
+  const createSession = useCallback(async (guestEmail?: string, isUIInit = false) => {
     dispatch({ type: 'SET_SESSION_LOADING', payload: true });
     
     try {
-      const response = await chatApi.createSession({
-        guestEmail,
-        metadata: {
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString()
-        }
-      });
+      // Use init endpoint for UI initialization to bypass rate limits
+      const response = isUIInit 
+        ? await chatApi.initSession({
+            guestEmail: guestEmail || 'guest@example.com',
+            isUIInit: true,
+            metadata: {
+              userAgent: navigator.userAgent,
+              timestamp: new Date().toISOString(),
+              source: 'chat-widget-init'
+            }
+          })
+        : await chatApi.createSession({
+            guestEmail: guestEmail || 'guest@example.com',
+            metadata: {
+              userAgent: navigator.userAgent,
+              timestamp: new Date().toISOString()
+            }
+          });
 
       if (response.success && response.data) {
         const session: ChatSession = {
@@ -625,6 +652,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     sendTyping,
     sendPresenceUpdate,
     markMessageAsRead,
+    forceHealthCheck: checkConnection,
     isSessionExpired
   };
 

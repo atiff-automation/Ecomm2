@@ -1,0 +1,220 @@
+{
+  "name": "E-commerce AI-Powered Chat Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-chat",
+        "responseMode": "responseNode",
+        "options": {
+          "noResponseBody": false
+        }
+      },
+      "id": "webhook-1234-5678-9012-abcdef123456",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ai-chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Enhanced security validation with logging\nconst crypto = require('crypto');\n\nfunction verifyWebhookSignature(payload, signature, secret) {\n  if (!secret || !signature) {\n    return false;\n  }\n  \n  try {\n    const expectedSignature = crypto\n      .createHmac('sha256', secret)\n      .update(JSON.stringify(payload), 'utf8')\n      .digest('hex');\n    \n    const receivedSignature = signature.replace('sha256=', '');\n    \n    return crypto.timingSafeEqual(\n      Buffer.from(expectedSignature, 'hex'),\n      Buffer.from(receivedSignature, 'hex')\n    );\n  } catch (error) {\n    console.error('Signature verification error:', error);\n    return false;\n  }\n}\n\n// Security validation\nconst webhookSecret = $env.ECOMMERCE_WEBHOOK_SECRET;\nconst signature = $node[\"Webhook Trigger\"].json[\"headers\"][\"x-webhook-signature\"];\nconst apiKey = $node[\"Webhook Trigger\"].json[\"headers\"][\"x-api-key\"];\n\nif (!verifyWebhookSignature($json, signature, webhookSecret)) {\n  throw new Error('Invalid webhook signature');\n}\n\nif (!apiKey || apiKey !== $env.ECOMMERCE_API_KEY) {\n  throw new Error('Invalid API key');\n}\n\n// Enhanced payload validation\nconst errors = [];\nif (!$json.sessionId) errors.push('sessionId required');\nif (!$json.messageId) errors.push('messageId required');\nif (!$json.message?.content) errors.push('message.content required');\nif (!$json.userContext) errors.push('userContext required');\nif (!$json.userId && !$json.guestEmail) errors.push('userId or guestEmail required');\n\nif (errors.length > 0) {\n  throw new Error(`Validation failed: ${errors.join(', ')}`);\n}\n\n// Add processing metadata\n$json._processingStart = new Date().toISOString();\n$json._workflowVersion = 'ai-powered-v2.0';\n\nreturn $json;"
+      },
+      "id": "security-1234-5678-9012-abcdef123456",
+      "name": "Enhanced Security Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Context enrichment and intent detection\nconst userMessage = $json.message.content.toLowerCase();\nconst userContext = $json.userContext;\n\n// Detect intent using keywords\nfunction detectIntent(message) {\n  const intents = {\n    order_inquiry: ['order', 'purchase', 'buy', 'bought', 'tracking', 'track', 'delivery', 'shipped'],\n    product_search: ['product', 'item', 'find', 'search', 'looking for', 'need', 'want', 'recommend'],\n    pricing_inquiry: ['price', 'cost', 'how much', 'expensive', 'cheap', 'discount', 'sale'],\n    account_help: ['account', 'login', 'password', 'profile', 'settings', 'membership'],\n    shipping_inquiry: ['shipping', 'ship', 'delivery', 'deliver', 'arrive', 'when will'],\n    return_refund: ['return', 'refund', 'exchange', 'send back', 'not happy', 'wrong item'],\n    technical_support: ['error', 'problem', 'issue', 'bug', 'not working', 'broken'],\n    greeting: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],\n    complaint: ['angry', 'frustrated', 'terrible', 'awful', 'worst', 'horrible', 'disappointed']\n  };\n  \n  let maxScore = 0;\n  let detectedIntent = 'general_inquiry';\n  \n  for (const [intent, keywords] of Object.entries(intents)) {\n    let score = 0;\n    keywords.forEach(keyword => {\n      if (message.includes(keyword)) {\n        score += keyword.length; // Longer keywords get higher weight\n      }\n    });\n    \n    if (score > maxScore) {\n      maxScore = score;\n      detectedIntent = intent;\n    }\n  }\n  \n  return {\n    intent: detectedIntent,\n    confidence: Math.min(maxScore / 10, 1) // Normalize to 0-1\n  };\n}\n\n// Extract entities (order numbers, product names, etc.)\nfunction extractEntities(message) {\n  const entities = {};\n  \n  // Order number pattern\n  const orderMatch = message.match(/\\b(?:order|#)?\\s*(\\d{6,12})\\b/i);\n  if (orderMatch) {\n    entities.orderNumber = orderMatch[1];\n  }\n  \n  // Email pattern\n  const emailMatch = message.match(/\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/);\n  if (emailMatch) {\n    entities.email = emailMatch[0];\n  }\n  \n  // Phone number pattern\n  const phoneMatch = message.match(/\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b/);\n  if (phoneMatch) {\n    entities.phone = phoneMatch[0];\n  }\n  \n  return entities;\n}\n\n// Determine urgency level\nfunction determineUrgency(message, userContext) {\n  const urgentKeywords = ['urgent', 'emergency', 'asap', 'immediately', 'now', 'angry', 'frustrated'];\n  const hasUrgentKeywords = urgentKeywords.some(keyword => message.includes(keyword));\n  \n  // Premium members get higher priority\n  const isPremium = userContext.membershipTotal && userContext.membershipTotal > 1000;\n  \n  if (hasUrgentKeywords && isPremium) return 'high';\n  if (hasUrgentKeywords || isPremium) return 'medium';\n  return 'normal';\n}\n\n// Enrich the payload with AI context\nconst intentData = detectIntent(userMessage);\nconst entities = extractEntities($json.message.content);\nconst urgency = determineUrgency(userMessage, userContext);\n\n// Build enriched context for AI\nconst enrichedPayload = {\n  ...$json,\n  aiContext: {\n    intent: intentData.intent,\n    confidence: intentData.confidence,\n    entities: entities,\n    urgency: urgency,\n    userTier: userContext.membershipLevel,\n    isAuthenticated: userContext.isAuthenticated,\n    membershipValue: userContext.membershipTotal || 0,\n    messageLength: $json.message.content.length,\n    processingTimestamp: new Date().toISOString()\n  }\n};\n\nreturn enrichedPayload;"
+      },
+      "id": "context-1234-5678-9012-abcdef123456",
+      "name": "Context Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.aiContext.urgency }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "urgency-1234-5678-9012-abcdef123456",
+      "name": "Check Urgency Level",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "message",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert e-commerce customer service AI for a premium online store. You have access to the customer's context and should provide personalized, helpful responses.\n\nCustomer Context:\n- Authentication Status: {{ $json.userContext.isAuthenticated }}\n- Membership Level: {{ $json.userContext.membershipLevel }}\n- Total Purchases: ${{ $json.userContext.membershipTotal || 0 }}\n- Detected Intent: {{ $json.aiContext.intent }}\n- Urgency Level: {{ $json.aiContext.urgency }}\n- User Name: {{ $json.userContext.userInfo?.name || 'Valued Customer' }}\n\nGuidelines:\n1. This is a HIGH PRIORITY urgent request - respond immediately and empathetically\n2. Offer immediate escalation to human support\n3. Provide specific next steps\n4. Be apologetic if this appears to be a complaint\n5. Keep responses under 200 words\n6. Offer 3-4 relevant quick reply options\n\nRespond professionally and prioritize resolution."
+            },
+            {
+              "role": "user", 
+              "content": "{{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 300
+        }
+      },
+      "id": "urgent-ai-1234-5678-9012-abcdef123456",
+      "name": "Urgent AI Response",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.userContext.isAuthenticated }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "auth-check-1234-5678-9012-abcdef123456",
+      "name": "Check Authentication",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "message",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert e-commerce customer service AI for a premium online store. You're helping an authenticated member.\n\nCustomer Profile:\n- Name: {{ $json.userContext.userInfo?.name || 'Valued Member' }}\n- Email: {{ $json.userContext.userInfo?.email }}\n- Membership Level: {{ $json.userContext.membershipLevel }}\n- Total Purchases: ${{ $json.userContext.membershipTotal || 0 }}\n- Detected Intent: {{ $json.aiContext.intent }}\n- Confidence: {{ $json.aiContext.confidence }}\n\nDetected Entities: {{ JSON.stringify($json.aiContext.entities) }}\n\nInstructions:\n1. Address the customer by name\n2. Reference their membership status and purchase history when relevant\n3. Provide personalized recommendations\n4. Offer member-exclusive options\n5. Keep responses conversational but professional\n6. Limit response to 250 words\n7. Suggest 3-4 relevant quick actions\n\nFor order inquiries: If an order number was detected, acknowledge it specifically.\nFor product searches: Consider their purchase history for recommendations.\nFor account issues: Offer specific account-related solutions."
+            },
+            {
+              "role": "user",
+              "content": "{{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.8,
+          "maxTokens": 400
+        }
+      },
+      "id": "member-ai-1234-5678-9012-abcdef123456",
+      "name": "Member AI Response",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "message",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a friendly e-commerce customer service AI helping a guest customer who hasn't created an account yet.\n\nGuest Context:\n- Email: {{ $json.guestEmail || 'Not provided' }}\n- Detected Intent: {{ $json.aiContext.intent }}\n- Confidence: {{ $json.aiContext.confidence }}\n\nDetected Entities: {{ JSON.stringify($json.aiContext.entities) }}\n\nInstructions:\n1. Be welcoming and helpful\n2. Gently encourage account creation by highlighting benefits\n3. Provide guest-friendly solutions\n4. Focus on building trust and relationship\n5. Keep responses under 200 words\n6. Offer 3-4 quick actions including account creation\n\nFor order tracking: Guide them through guest order lookup process.\nFor product questions: Provide helpful information and suggest creating account for personalized experience.\nFor general inquiries: Be helpful while showcasing membership benefits."
+            },
+            {
+              "role": "user",
+              "content": "{{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.9,
+          "maxTokens": 300
+        }
+      },
+      "id": "guest-ai-1234-5678-9012-abcdef123456",
+      "name": "Guest AI Response",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1340, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process AI response and format for e-commerce system\nconst aiResponse = $json.choices[0].message.content;\nconst originalPayload = $node[\"Context Enrichment\"].json;\n\n// Extract quick replies from AI response (look for numbered lists or bullet points)\nfunction extractQuickReplies(text) {\n  const replies = [];\n  \n  // Look for numbered lists (1. 2. 3.)\n  const numberedMatches = text.match(/\\d+\\. ([^\\n\\r]{1,25})/g);\n  if (numberedMatches) {\n    numberedMatches.forEach(match => {\n      const reply = match.replace(/\\d+\\. /, '').trim();\n      if (reply.length <= 25) replies.push(reply);\n    });\n  }\n  \n  // Look for bullet points (• - *)\n  const bulletMatches = text.match(/[•\\-\\*] ([^\\n\\r]{1,25})/g);\n  if (bulletMatches) {\n    bulletMatches.forEach(match => {\n      const reply = match.replace(/[•\\-\\*] /, '').trim();\n      if (reply.length <= 25 && !replies.includes(reply)) replies.push(reply);\n    });\n  }\n  \n  // Default quick replies based on intent if none found\n  if (replies.length === 0) {\n    const intentDefaults = {\n      order_inquiry: ['Track Order', 'Order Status', 'Contact Support', 'Return Item'],\n      product_search: ['Browse Products', 'View Deals', 'Get Recommendations', 'Compare Items'],\n      pricing_inquiry: ['View Prices', 'Check Deals', 'Price Match', 'Apply Coupon'],\n      account_help: ['Account Settings', 'Password Reset', 'Update Profile', 'Contact Support'],\n      shipping_inquiry: ['Shipping Rates', 'Delivery Times', 'Track Package', 'Express Options'],\n      return_refund: ['Start Return', 'Refund Status', 'Exchange Item', 'Return Policy'],\n      technical_support: ['Technical Help', 'Contact Support', 'Report Bug', 'User Guide'],\n      greeting: ['Browse Products', 'Check Orders', 'Account Settings', 'Need Help'],\n      complaint: ['Speak to Manager', 'File Complaint', 'Get Refund', 'Contact Support'],\n      general_inquiry: ['Browse Products', 'Check Orders', 'Create Account', 'Contact Support']\n    };\n    \n    const intent = originalPayload.aiContext.intent;\n    return intentDefaults[intent] || intentDefaults.general_inquiry;\n  }\n  \n  return replies.slice(0, 4); // Max 4 quick replies\n}\n\n// Clean up AI response (remove quick reply suggestions if they were included)\nfunction cleanResponse(text) {\n  // Remove numbered lists at the end\n  text = text.replace(/\\n\\n?\\d+\\.[^\\n]*$/gm, '');\n  // Remove bullet points at the end\n  text = text.replace(/\\n\\n?[•\\-\\*][^\\n]*$/gm, '');\n  return text.trim();\n}\n\n// Determine response type\nfunction getResponseType(intent, hasQuickReplies) {\n  if (hasQuickReplies) return 'quick_reply';\n  if (['product_search', 'pricing_inquiry'].includes(intent)) return 'rich_content';\n  return 'text';\n}\n\nconst cleanedResponse = cleanResponse(aiResponse);\nconst quickReplies = extractQuickReplies(aiResponse);\nconst responseType = getResponseType(originalPayload.aiContext.intent, quickReplies.length > 0);\n\n// Calculate processing time\nconst processingTime = new Date() - new Date(originalPayload._processingStart);\n\n// Build final response\nconst finalResponse = {\n  sessionId: originalPayload.sessionId,\n  response: {\n    content: cleanedResponse,\n    type: responseType,\n    ...(quickReplies.length > 0 && { quickReplies: quickReplies })\n  },\n  metadata: {\n    intent: originalPayload.aiContext.intent,\n    confidence: originalPayload.aiContext.confidence,\n    urgency: originalPayload.aiContext.urgency,\n    userType: originalPayload.userContext.isAuthenticated ? 'member' : 'guest',\n    processingTimeMs: processingTime,\n    aiModel: $json.model,\n    workflowVersion: originalPayload._workflowVersion,\n    entities: originalPayload.aiContext.entities,\n    timestamp: new Date().toISOString()\n  }\n};\n\nreturn finalResponse;"
+      },
+      "id": "format-1234-5678-9012-abcdef123456",
+      "name": "Format AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1560, 350]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "response-1234-5678-9012-abcdef123456",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1780, 350]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "chat_ai_logs",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "values": {
+            "session_id": "={{ $node[\"Context Enrichment\"].json.sessionId }}",
+            "message_id": "={{ $node[\"Context Enrichment\"].json.messageId }}",
+            "user_message": "={{ $node[\"Context Enrichment\"].json.message.content }}",
+            "ai_response": "={{ $json.response.content }}",
+            "intent": "={{ $json.metadata.intent }}",
+            "confidence": "={{ $json.metadata.confidence }}",
+            "urgency": "={{ $json.metadata.urgency }}",
+            "processing_time_ms": "={{ $json.metadata.processingTimeMs }}",
+            "user_type": "={{ $json.metadata.userType }}",
+            "ai_model": "={{ $json.metadata.aiModel }}",
+            "created_at": "={{ $json.metadata.timestamp }}"
+          }\n        },\n        \"options\": {}\n      },\n      \"id\": \"logging-1234-5678-9012-abcdef123456\",\n      \"name\": \"Log AI Interaction\",\n      \"type\": \"n8n-nodes-base.postgres\",\n      \"typeVersion\": 2,\n      \"position\": [1780, 500],\n      \"credentials\": {\n        \"postgres\": {\n          \"id\": \"postgres-credentials\",\n          \"name\": \"E-commerce Database\"\n        }\n      }\n    }\n  ],\n  \"connections\": {\n    \"Webhook Trigger\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Enhanced Security Validation\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Enhanced Security Validation\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Context Enrichment\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Context Enrichment\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Check Urgency Level\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Check Urgency Level\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Urgent AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Check Authentication\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Urgent AI Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Format AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Check Authentication\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Member AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Guest AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Member AI Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Format AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Guest AI Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Format AI Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Format AI Response\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Send Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Log AI Interaction\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    }\n  },\n  \"pinData\": {},\n  \"settings\": {\n    \"executionOrder\": \"v1\",\n    \"saveManualExecutions\": true,\n    \"callerPolicy\": \"workflowsFromSameOwner\",\n    \"errorWorkflow\": \"error-handler-workflow\"\n  },\n  \"staticData\": null,\n  \"tags\": [\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"ai-tag1\",\n      \"name\": \"AI-Powered\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"ai-tag2\",\n      \"name\": \"E-commerce\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"ai-tag3\",\n      \"name\": \"Customer Support\"\n    },\n    {\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"id\": \"ai-tag4\",\n      \"name\": \"OpenAI\"\n    }\n  ],\n  \"triggerCount\": 1,\n  \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n  \"versionId\": \"ai-chat-v2.0\",\n  \"meta\": {\n    \"description\": \"Advanced AI-powered chat workflow with context enrichment, intent detection, and personalized responses for authenticated members and guest users.\"\n  }\n}

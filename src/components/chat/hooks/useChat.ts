@@ -24,19 +24,32 @@ export const useChat = () => {
     markAsRead,
     updateConfig,
     sendTyping,
+    forceHealthCheck,
     isSessionExpired
   } = useChatContext();
 
-  // Initialize WebSocket connection here (after context is available)
-  const webSocket = useWebSocket({
-    enabled: true,
-    url: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001'
-  });
+  // WebSocket integration for real-time features (temporarily disabled to fix input issue)
+  // TODO: Re-enable after fixing circular dependency completely
+  // const webSocket = useWebSocket({
+  //   enabled: true,
+  //   url: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001'
+  // });
+
+  // Force health check when chat opens to ensure connection status is accurate
+  useEffect(() => {
+    if (state.isOpen) {
+      console.log('📡 Chat opened - triggering health check...');
+      forceHealthCheck().catch(error => {
+        console.error('Failed to perform health check on chat open:', error);
+      });
+    }
+  }, [state.isOpen, forceHealthCheck]);
 
   // Auto-create session if none exists and chat is opened
   useEffect(() => {
     if (state.isOpen && !state.session && !state.isSessionLoading) {
-      createSession().catch(console.error);
+      // Use UI init flag to bypass rate limits for widget initialization
+      createSession(undefined, true).catch(console.error);
     }
   }, [state.isOpen, state.session, state.isSessionLoading, createSession]);
 
@@ -63,6 +76,7 @@ export const useChat = () => {
     try {
       // Ensure we have a session
       if (!state.session) {
+        // For message sending, use normal session creation (with rate limits)
         await createSession();
       }
       
