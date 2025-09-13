@@ -72,7 +72,7 @@ interface ChatContextValue {
   state: ChatState;
   
   // Session actions
-  createSession: (email?: string, isUIInit?: boolean) => Promise<void>;
+  createSession: (email?: string, isUIInit?: boolean, guestPhone?: string) => Promise<void>;
   loadSession: () => Promise<void>;
   clearSession: () => void;
   
@@ -311,11 +311,29 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         // Load saved session
         const savedSession = chatStorage.getSession();
         if (savedSession && !chatUtils.isSessionExpired(savedSession.expiresAt)) {
-          dispatch({ type: 'SET_SESSION', payload: savedSession });
+          console.log('💾 Loading saved session:', savedSession.id);
           
-          // Load saved messages
-          const savedMessages = chatStorage.getMessages(savedSession.id);
-          dispatch({ type: 'SET_MESSAGES', payload: savedMessages });
+          // Validate session with server to ensure it still exists
+          try {
+            const validation = await chatApi.validateSession(savedSession.id);
+            if (validation.success && validation.data?.valid) {
+              console.log('✅ Saved session is still valid');
+              dispatch({ type: 'SET_SESSION', payload: savedSession });
+              
+              // Load saved messages
+              const savedMessages = chatStorage.getMessages(savedSession.id);
+              dispatch({ type: 'SET_MESSAGES', payload: savedMessages });
+            } else {
+              console.log('❌ Saved session is no longer valid, clearing storage');
+              chatStorage.clearSession();
+            }
+          } catch (error) {
+            console.warn('Failed to validate saved session, clearing storage:', error);
+            chatStorage.clearSession();
+          }
+        } else if (savedSession) {
+          console.log('⏰ Saved session expired, clearing storage');
+          chatStorage.clearSession();
         }
 
         // Load saved config
@@ -375,36 +393,38 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, [checkConnection]);
 
   // Session management
-  const createSession = useCallback(async (guestEmail?: string, isUIInit = false) => {
+  const createSession = useCallback(async (guestEmail?: string, isUIInit = false, guestPhone?: string) => {
     dispatch({ type: 'SET_SESSION_LOADING', payload: true });
     
     try {
+      // Prioritize phone over email for contact collection
+      const contactData = {
+        guestPhone: guestPhone || undefined,
+        guestEmail: !guestPhone ? (guestEmail || 'guest@example.com') : undefined, // Fallback for backward compatibility
+        metadata: {
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          source: isUIInit ? 'chat-widget-init' : 'chat-widget-session'
+        },
+        ...(isUIInit && { isUIInit: true })
+      };
+
       // Use init endpoint for UI initialization to bypass rate limits
       const response = isUIInit 
-        ? await chatApi.initSession({
-            guestEmail: guestEmail || 'guest@example.com',
-            isUIInit: true,
-            metadata: {
-              userAgent: navigator.userAgent,
-              timestamp: new Date().toISOString(),
-              source: 'chat-widget-init'
-            }
-          })
-        : await chatApi.createSession({
-            guestEmail: guestEmail || 'guest@example.com',
-            metadata: {
-              userAgent: navigator.userAgent,
-              timestamp: new Date().toISOString()
-            }
-          });
+        ? await chatApi.initSession(contactData)
+        : await chatApi.createSession(contactData);
 
       if (response.success && response.data) {
         const session: ChatSession = {
           id: response.data.sessionId,
           status: 'active' as ChatSession['status'],
           expiresAt: response.data.expiresAt,
-          createdAt: new Date().toISOString(),
-          metadata: {}
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          updatedAt: response.data.updatedAt || new Date().toISOString(),
+          metadata: response.data.metadata || {},
+          // Include contact information from session creation
+          guestPhone: guestPhone || undefined,
+          guestEmail: !guestPhone ? guestEmail : undefined
         };
         
         dispatch({ type: 'SET_SESSION', payload: session });
@@ -440,8 +460,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           id: response.data.sessionId,
           status: 'active' as ChatSession['status'],
           expiresAt: response.data.expiresAt,
-          createdAt: new Date().toISOString(),
-          metadata: {}
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          updatedAt: response.data.updatedAt || new Date().toISOString(),
+          metadata: response.data.metadata || {},
+          // Include full session data from server
+          guestPhone: response.data.guestPhone,
+          guestEmail: response.data.guestEmail,
+          userId: response.data.userId
         };
         
         dispatch({ type: 'SET_SESSION', payload: session });

@@ -239,13 +239,37 @@ class ChatUtilities {
     if (remaining <= 0) return 'Expired';
     
     const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor(remaining / (1000 * 60));
     
     if (hours > 0) {
-      return `${hours}h remaining`;
+      return `${hours}h ${minutes % 60}m remaining`;
     }
     
-    const minutes = Math.floor(remaining / (1000 * 60));
     return `${minutes}m remaining`;
+  }
+
+  /**
+   * Check if session needs warning (within 5 minutes of expiry)
+   */
+  shouldWarnSessionExpiry(expiresAt?: string): boolean {
+    const remaining = this.getSessionTimeRemaining(expiresAt);
+    return remaining > 0 && remaining <= 5 * 60 * 1000; // 5 minutes
+  }
+
+  /**
+   * Get session expiry warning message
+   */
+  getSessionExpiryWarning(expiresAt?: string): string | null {
+    if (!this.shouldWarnSessionExpiry(expiresAt)) return null;
+    
+    const remaining = this.getSessionTimeRemaining(expiresAt);
+    const minutes = Math.floor(remaining / (1000 * 60));
+    
+    if (minutes <= 1) {
+      return 'Your session expires in less than 1 minute. Your conversation will be saved, but you\'ll need to start a new session to continue.';
+    }
+    
+    return `Your session expires in ${minutes} minutes. Your conversation will be saved, but you'll need to start a new session to continue.`;
   }
 
 

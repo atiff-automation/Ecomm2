@@ -64,10 +64,15 @@ export function createChatError(
       
     case 'SESSION_EXPIRED':
       return new ChatError(
-        message || 'Chat session has expired',
+        message || 'Your chat session has expired. Please start a new conversation to continue.',
         errorCode,
         410,
-        details
+        { 
+          ...details,
+          userFriendly: true,
+          action: 'start_new_session',
+          suggestion: 'Click "Start New Chat" to continue your conversation'
+        }
       );
       
     case 'MESSAGE_TOO_LONG':

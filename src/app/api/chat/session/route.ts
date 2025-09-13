@@ -17,19 +17,20 @@ async function handlePOST(request: NextRequest) {
         : CHAT_CONFIG.SESSION_TIMEOUT.GUEST)
     );
     
-    // Validate that either userId or guestEmail is provided
-    if (!validatedData.userId && !validatedData.guestEmail) {
-      throw createChatError('VALIDATION_ERROR', 'Either userId or guestEmail must be provided');
+    // Validate that either userId or guestPhone (or guestEmail for backward compatibility) is provided
+    if (!validatedData.userId && !validatedData.guestPhone && !validatedData.guestEmail) {
+      throw createChatError('VALIDATION_ERROR', 'Either userId, guestPhone, or guestEmail must be provided');
     }
     
-    console.log(`🆕 Creating new session for: ${validatedData.userId ? 'user ' + validatedData.userId : validatedData.guestEmail}`);
+    console.log(`🆕 Creating new session for: ${validatedData.userId ? 'user ' + validatedData.userId : validatedData.guestPhone || validatedData.guestEmail}`);
     
     // Create new chat session with explicit transaction to prevent race conditions
     const session = await prisma.$transaction(async (tx) => {
       const newSession = await tx.chatSession.create({
         data: {
           userId: validatedData.userId,
-          guestEmail: validatedData.guestEmail,
+          guestEmail: validatedData.guestEmail, // Keep for backward compatibility during transition
+          guestPhone: validatedData.guestPhone, // New field for contact number
           status: 'active',
           metadata: validatedData.metadata,
           expiresAt: expirationTime,

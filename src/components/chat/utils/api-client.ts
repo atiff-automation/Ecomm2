@@ -19,7 +19,8 @@ interface ApiResponse<T> {
 
 interface CreateSessionRequest {
   userId?: string;
-  guestEmail?: string;
+  guestEmail?: string; // Keep for backward compatibility during transition
+  guestPhone?: string; // New field for contact number
   metadata?: Record<string, any>;
 }
 

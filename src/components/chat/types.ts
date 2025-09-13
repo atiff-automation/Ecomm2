@@ -18,7 +18,8 @@ export interface ChatMessage {
 export interface ChatSession {
   id: string;
   userId?: string;
-  guestEmail?: string;
+  guestEmail?: string; // Keep for backward compatibility during transition
+  guestPhone?: string; // New field for contact number
   status: 'active' | 'inactive' | 'expired';
   metadata?: Record<string, any>;
   createdAt: string;
@@ -144,7 +145,8 @@ export interface MessageStatusEvent extends WebSocketEvent {
 // Component prop interfaces
 export interface ChatWidgetProps {
   userId?: string;
-  guestEmail?: string;
+  guestEmail?: string; // Keep for backward compatibility during transition
+  guestPhone?: string; // New field for contact number
   config?: Partial<ChatConfig>;
   onSessionCreate?: (sessionId: string) => void;
   onMessageSent?: (message: ChatMessage) => void;
@@ -197,7 +199,8 @@ export interface ConnectionStatusProps {
 // Hook interfaces
 export interface UseChatOptions {
   userId?: string;
-  guestEmail?: string;
+  guestEmail?: string; // Keep for backward compatibility during transition
+  guestPhone?: string; // New field for contact number
   autoConnect?: boolean;
   config?: Partial<ChatConfig>;
 }

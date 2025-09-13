@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChatProvider } from './ChatProvider';
 import { ChatBubble } from './ChatBubble';
 import { ChatWindow } from './ChatWindow';
+import { ContactForm } from './ContactForm';
 import { useChat } from './hooks/useChat';
 import { usePolling } from './hooks/usePolling';
 import type { ChatConfig } from './types';
@@ -14,6 +15,8 @@ interface ChatWidgetInternalProps {
 
 // Internal component that uses the chat context
 const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
+  const [showContactForm, setShowContactForm] = useState(false);
+  
   const {
     // State
     session,
@@ -28,6 +31,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     sendMessage,
     sendQuickReply,
     sendTyping,
+    startNewSession,
     openChat,
     closeChat,
     toggleChat
@@ -59,6 +63,38 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     }
   };
 
+  const handleChatToggle = () => {
+    if (!session && !isOpen) {
+      // Show contact form if no session exists
+      setShowContactForm(true);
+    } else {
+      // Normal toggle behavior
+      toggleChat();
+    }
+  };
+
+  const handleContactSubmit = async (contactInfo: { phone?: string; email?: string }) => {
+    try {
+      // Create session with contact info
+      if (contactInfo.phone) {
+        await startNewSession(contactInfo.phone, 'phone');
+      } else if (contactInfo.email) {
+        await startNewSession(contactInfo.email, 'email');
+      }
+      
+      // Close contact form and open chat
+      setShowContactForm(false);
+      // Chat will open automatically after session is created
+    } catch (error) {
+      console.error('Failed to create session with contact info:', error);
+      throw error; // Re-throw to be handled by ContactForm
+    }
+  };
+
+  const handleContactFormClose = () => {
+    setShowContactForm(false);
+  };
+
   return (
     <>
       <ChatBubble
@@ -66,7 +102,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         isConnected={isConnected}
         hasUnreadMessages={hasUnreadMessages}
         config={config}
-        onClick={toggleChat}
+        onClick={handleChatToggle}
       />
 
       <ChatWindow
@@ -80,6 +116,14 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         onSendMessage={handleSendMessage}
         onQuickReply={handleQuickReply}
         onTyping={sendTyping}
+      />
+
+      {/* Contact Form - shown before first chat */}
+      <ContactForm
+        isOpen={showContactForm}
+        config={config}
+        onSubmit={handleContactSubmit}
+        onClose={handleContactFormClose}
       />
 
       {/* Error overlay for connection issues */}

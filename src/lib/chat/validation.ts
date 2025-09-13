@@ -3,7 +3,8 @@ import { z } from 'zod';
 // Chat Session Schemas
 export const CreateSessionSchema = z.object({
   userId: z.string().optional(),
-  guestEmail: z.string().email().optional(),
+  guestEmail: z.string().email().optional(), // Keep for backward compatibility during transition
+  guestPhone: z.string().regex(/^[+]?[\d\s\-()]{10,15}$/, 'Invalid phone number format').optional(), // New field for contact number
   metadata: z.record(z.any()).optional(),
 });
 
@@ -48,8 +49,8 @@ export const WebhookResponseSchema = z.object({
 // Chat Configuration Constants
 export const CHAT_CONFIG = {
   SESSION_TIMEOUT: {
-    GUEST: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-    AUTHENTICATED: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    GUEST: 30 * 60 * 1000, // 30 minutes - industry standard for customer support
+    AUTHENTICATED: 2 * 60 * 60 * 1000, // 2 hours - reasonable for authenticated support users
   },
   MESSAGE_LIMITS: {
     MAX_LENGTH: 1000,

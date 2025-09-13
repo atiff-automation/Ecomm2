@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test New 30-Minute Timeout</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .session-info { background: #f0f8ff; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .expired { background: #ffe4e4; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🕐 Test New 30-Minute Session Timeout</h1>
+    
+    <div>
+        <h3>Create New Guest Session:</h3>
+        <input type="email" id="guestEmail" placeholder="Enter test email (e.g., test123@example.com)" value="test123@example.com">
+        <button onclick="createSession()">Create New Session</button>
+    </div>
+    
+    <div id="sessionInfo"></div>
+    
+    <div>
+        <h3>Test Message Sending:</h3>
+        <input type="text" id="messageContent" placeholder="Type a test message" value="Hello, testing new timeout!">
+        <button onclick="sendMessage()" id="sendBtn" disabled>Send Message</button>
+    </div>
+    
+    <div id="messageResult"></div>
+
+    <script>
+        let currentSessionId = null;
+        
+        async function createSession() {
+            const email = document.getElementById('guestEmail').value;
+            if (!email) {
+                alert('Please enter an email');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ guestEmail: email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSessionId = result.data.sessionId;
+                    displaySessionInfo(result.data);
+                    document.getElementById('sendBtn').disabled = false;
+                } else {
+                    alert('Error creating session: ' + result.error.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function displaySessionInfo(sessionData) {
+            const now = new Date();
+            const expiresAt = new Date(sessionData.expiresAt);
+            const timeRemaining = expiresAt - now;
+            const minutesRemaining = Math.floor(timeRemaining / (1000 * 60));
+            
+            const sessionInfo = document.getElementById('sessionInfo');
+            sessionInfo.innerHTML = `
+                <div class="session-info ${timeRemaining <= 0 ? 'expired' : ''}">
+                    <h4>📋 Session Created Successfully!</h4>
+                    <p><strong>Session ID:</strong> ${sessionData.sessionId}</p>
+                    <p><strong>Status:</strong> ${sessionData.status}</p>
+                    <p><strong>Created:</strong> ${now.toLocaleString()}</p>
+                    <p><strong>Expires:</strong> ${expiresAt.toLocaleString()}</p>
+                    <p><strong>⏰ Time Remaining:</strong> <span id="countdown">${minutesRemaining} minutes</span></p>
+                    ${timeRemaining <= 0 ? '<p style="color: red; font-weight: bold;">❌ SESSION EXPIRED</p>' : ''}
+                </div>
+            `;
+            
+            // Update countdown every minute
+            setInterval(() => updateCountdown(expiresAt), 60000);
+        }
+        
+        function updateCountdown(expiresAt) {
+            const now = new Date();
+            const timeRemaining = expiresAt - now;
+            const minutesRemaining = Math.floor(timeRemaining / (1000 * 60));
+            
+            const countdownElement = document.getElementById('countdown');
+            if (countdownElement) {
+                if (timeRemaining <= 0) {
+                    countdownElement.parentElement.parentElement.classList.add('expired');
+                    countdownElement.innerHTML = 'EXPIRED';
+                    document.getElementById('sendBtn').disabled = true;
+                } else {
+                    countdownElement.innerHTML = `${minutesRemaining} minutes`;
+                }
+            }
+        }
+        
+        async function sendMessage() {
+            if (!currentSessionId) {
+                alert('No active session. Create a session first.');
+                return;
+            }
+            
+            const content = document.getElementById('messageContent').value;
+            if (!content) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sessionId: currentSessionId,
+                        content: content 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const messageResult = document.getElementById('messageResult');
+                if (result.success) {
+                    messageResult.innerHTML = `
+                        <div class="session-info">
+                            <h4>✅ Message Sent Successfully!</h4>
+                            <p><strong>Message:</strong> ${content}</p>
+                            <p><strong>Status:</strong> ${result.data.status}</p>
+                        </div>
+                    `;
+                } else {
+                    messageResult.innerHTML = `
+                        <div class="session-info expired">
+                            <h4>❌ Message Failed!</h4>
+                            <p><strong>Error:</strong> ${result.error.message}</p>
+                            <p><strong>Code:</strong> ${result.error.code}</p>
+                            ${result.error.code === 'SESSION_EXPIRED' ? '<p style="color: red;">🕐 <strong>This confirms the 30-minute timeout is working!</strong></p>' : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('messageResult').innerHTML = `
+                    <div class="session-info expired">
+                        <h4>❌ Network Error!</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

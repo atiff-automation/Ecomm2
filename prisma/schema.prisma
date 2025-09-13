@@ -1205,7 +1205,8 @@ model ChatSession {
   id           String      @id @default(cuid())
   sessionId    String      @unique @default(cuid())
   userId       String?
-  guestEmail   String?
+  guestEmail   String?     // Keep for backward compatibility during transition
+  guestPhone   String?     // New field for contact number
   status       String      @default("active")
   metadata     Json?
   userAgent    String?
@@ -1224,6 +1225,7 @@ model ChatSession {
   @@index([status])
   @@index([lastActivity])
   @@index([expiresAt])
+  @@index([guestPhone])
   @@map("chat_sessions")
 }
 

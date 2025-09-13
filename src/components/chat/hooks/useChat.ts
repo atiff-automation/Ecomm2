@@ -68,24 +68,37 @@ export const useChat = () => {
     }
   }, [state.session, isSessionExpired, clearSession]);
 
-  // Enhanced send message with error handling
+  // Enhanced send message with error handling and session expiration handling
   const handleSendMessage = useCallback(async (
     content: string, 
     messageType?: ChatMessage['messageType']
   ) => {
     try {
-      // Ensure we have a session
-      if (!state.session) {
+      // Check if session is expired first
+      if (state.session && isSessionExpired()) {
+        console.warn('⚠️ Session expired, clearing and creating new session');
+        clearSession();
+        await createSession();
+      } else if (!state.session) {
         // For message sending, use normal session creation (with rate limits)
         await createSession();
       }
       
       await sendMessage(content, messageType);
     } catch (error) {
-      console.error('Failed to send message:', error);
-      throw error;
+      // Handle session expiration errors gracefully
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
+        console.warn('🔄 Session expired during send, creating new session...');
+        clearSession();
+        // Auto-retry with new session
+        await createSession();
+        await sendMessage(content, messageType);
+      } else {
+        console.error('Failed to send message:', error);
+        throw error;
+      }
     }
-  }, [state.session, createSession, sendMessage]);
+  }, [state.session, createSession, sendMessage, isSessionExpired, clearSession]);
 
   // Enhanced quick reply handler
   const handleQuickReply = useCallback(async (reply: string) => {
@@ -97,16 +110,20 @@ export const useChat = () => {
     }
   }, [sendQuickReply]);
 
-  // Start new session with optional email
-  const startNewSession = useCallback(async (guestEmail?: string) => {
+  // Start new session with optional phone or email (for backward compatibility)
+  const startNewSession = useCallback(async (guestContact?: string, contactType?: 'email' | 'phone') => {
     try {
       // Clear existing session first
       if (state.session) {
         clearSession();
       }
       
-      // Create new session
-      await createSession(guestEmail);
+      // Create new session with contact info
+      if (contactType === 'phone') {
+        await createSession(undefined, false, guestContact); // guestEmail, isUIInit, guestPhone
+      } else {
+        await createSession(guestContact); // backward compatibility for email
+      }
       
       // Open chat after session is created
       openChat();
