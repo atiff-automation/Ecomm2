@@ -114,7 +114,7 @@ const server = http.createServer(async (req, res) => {
           
           const options = {
             hostname: 'localhost',
-            port: 3000,
+            port: 3002,
             path: '/api/chat/webhook',
             method: 'POST',
             headers: {

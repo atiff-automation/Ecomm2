@@ -67,30 +67,38 @@ async function handlePOST(request: NextRequest) {
       return createSuccessResponse(response, 200);
     }
     
-    // Create new chat session
-    const session = await prisma.chatSession.create({
-      data: {
-        userId: validatedData.userId,
-        guestEmail: validatedData.guestEmail,
-        status: 'active',
-        metadata: {
-          ...validatedData.metadata,
-          initSource: 'ui-widget',
-          clientId: getClientIdentifier(request, 'unknown')
+    console.log(`🆕 Creating UI init session for: ${validatedData.userId ? 'user ' + validatedData.userId : validatedData.guestEmail}`);
+    
+    // Create new chat session with explicit transaction to prevent race conditions
+    const session = await prisma.$transaction(async (tx) => {
+      const newSession = await tx.chatSession.create({
+        data: {
+          userId: validatedData.userId,
+          guestEmail: validatedData.guestEmail,
+          status: 'active',
+          metadata: {
+            ...validatedData.metadata,
+            initSource: 'ui-widget',
+            clientId: getClientIdentifier(request, 'unknown')
+          },
+          expiresAt: expirationTime,
         },
-        expiresAt: expirationTime,
-      },
-      include: {
-        user: validatedData.userId ? {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            isMember: true,
-          }
-        } : false,
-      },
+        include: {
+          user: validatedData.userId ? {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              isMember: true,
+            }
+          } : false,
+        },
+      });
+      
+      // Ensure session is committed before returning
+      console.log(`✅ Created UI init session: ${newSession.sessionId} (id: ${newSession.id})`);
+      return newSession;
     });
     
     const response = {

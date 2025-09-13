@@ -12,22 +12,58 @@ async function handlePOST(request: NextRequest) {
     const body = await request.json();
     const validatedData = SendMessageSchema.parse(body);
     
-    // Validate session exists and is active
-    const session = await prisma.chatSession.findUnique({
-      where: { sessionId: validatedData.sessionId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            isMember: true,
-            membershipTotal: true,
-          }
+    console.log(`🔍 Looking up session: ${validatedData.sessionId}`);
+    
+    // Validate session exists and is active with retry logic for race conditions
+    let session = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (!session && attempts < maxAttempts) {
+      attempts++;
+      
+      session = await prisma.chatSession.findUnique({
+        where: { sessionId: validatedData.sessionId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              isMember: true,
+              membershipTotal: true,
+            }
+          },
         },
-      },
-    });
+      });
+      
+      if (!session && attempts < maxAttempts) {
+        console.log(`⏳ Session not found on attempt ${attempts}, retrying... (sessionId: ${validatedData.sessionId})`);
+        // Wait 100ms before retry to handle race conditions
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    if (!session) {
+      console.error(`❌ Session not found after ${attempts} attempts: ${validatedData.sessionId}`);
+      
+      // Additional debugging: Check if session exists with different status
+      const sessionCheck = await prisma.chatSession.findFirst({
+        where: { sessionId: validatedData.sessionId },
+        select: { id: true, sessionId: true, status: true, createdAt: true }
+      });
+      
+      if (sessionCheck) {
+        console.error(`🔍 Session exists but query failed:`, sessionCheck);
+      } else {
+        console.error(`🔍 Session does not exist in database`);
+      }
+      
+      throw createChatError('SESSION_NOT_FOUND');
+    }
+    
+    console.log(`✅ Session found: ${session.sessionId} (id: ${session.id}, status: ${session.status})`);
     
     if (!session) {
       throw createChatError('SESSION_NOT_FOUND');

@@ -22,26 +22,34 @@ async function handlePOST(request: NextRequest) {
       throw createChatError('VALIDATION_ERROR', 'Either userId or guestEmail must be provided');
     }
     
-    // Create new chat session
-    const session = await prisma.chatSession.create({
-      data: {
-        userId: validatedData.userId,
-        guestEmail: validatedData.guestEmail,
-        status: 'active',
-        metadata: validatedData.metadata,
-        expiresAt: expirationTime,
-      },
-      include: {
-        user: validatedData.userId ? {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            isMember: true,
-          }
-        } : false,
-      },
+    console.log(`🆕 Creating new session for: ${validatedData.userId ? 'user ' + validatedData.userId : validatedData.guestEmail}`);
+    
+    // Create new chat session with explicit transaction to prevent race conditions
+    const session = await prisma.$transaction(async (tx) => {
+      const newSession = await tx.chatSession.create({
+        data: {
+          userId: validatedData.userId,
+          guestEmail: validatedData.guestEmail,
+          status: 'active',
+          metadata: validatedData.metadata,
+          expiresAt: expirationTime,
+        },
+        include: {
+          user: validatedData.userId ? {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              isMember: true,
+            }
+          } : false,
+        },
+      });
+      
+      // Ensure session is committed before returning
+      console.log(`✅ Created session: ${newSession.sessionId} (id: ${newSession.id})`);
+      return newSession;
     });
     
     const response = {
