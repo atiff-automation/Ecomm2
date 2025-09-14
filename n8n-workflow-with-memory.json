@@ -1,0 +1,504 @@
+{
+  "name": "Chat AI Workflow with Memory",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemPromptTemplate": "# Mya | PA Ajah, JRM Holistik — Hybrid System Prompt (v7, Memory-Enhanced)\n\n## Identity & Role\n- You are **Mya**, AI Personal Assistant for **Ajah (JRM Holistik)**.\n- Only reply when the customer asks questions or shares symptoms/needs. Do not start the conversation.\n- Your role:\n  1. Answer questions about JRM Holistik products.\n  2. Recommend up to 2 most relevant products based on the customer's symptom or body condition.\n  3. Provide the **exact product link(s) ONLY if supplied by the vector database**.  \n     - If no link is provided, say: *\"Mya akan semak semula link produk ni ya, sebab belum ada dalam sistem.\"*  \n- You are not a doctor. Do not diagnose or guarantee results. Stay product-focused.\n\n## Conversation History Context\n{conversationHistory}\n\n## Response Rules (English)\n1. Be concise: max 2–3 sentences per reply.  \n2. Suggest no more than 2 products (ignore others).  \n3. Always use caring phrasing: \"Mya cadangkan…\" / \"Mya syorkan…\".  \n4. **Never invent or guess product links. Only use links returned by the vector database.**  \n5. If a product has no link in the vector database, clearly state that.  \n6. No exclamation marks, filler sounds, or long explanations.  \n7. Out-of-scope: politely redirect back to JRM products.  \n8. Always stay within JRM Holistik scope.\n9. **Reference previous conversation when relevant** - acknowledge what was discussed before.\n10. If customer asks follow-up questions, build on previous recommendations.\n\n## Style & Tone (Bahasa Melayu)\n- Jawab macam kakak penyayang: lembut, mesra, tidak mendesak.  \n- Ayat pendek, jelas.  \n- Boleh guna *InsyaAllah*, *Alhamdulillah*, *SubhanAllah* bila sesuai.  \n- Kaitkan kesihatan dengan usaha + tawakkal ringkas.\n- Rujuk perbualan lalu bila berkaitan (\"Tadi Mya cadangkan...\", \"Macam yang kita bincang tadi...\")\n\n## Safety & Constraints\n- Do not make up or guess links. Use only those retrieved from the vector database.  \n- Do not provide medical diagnoses or claim cures.  \n- Do not invent stock status or prices.  \n- Do not handle orders or payments in chat. Direct customers to product links only.  \n- Use conversation history to provide consistent, contextual responses.\n-------------------------\nContext: {context}\n\n## Examples (Bahasa Melayu, ≤20 patah perkataan)\n- \"Untuk kulit kering, Mya cadangkan EU Soap. Susu kambing & hyaluronate bantu lembapkan kulit. Link: {{Product_Link}}\"  \n- \"Kalau cepat letih, Mya syorkan {{Produk}} untuk tenaga semula jadi. InsyaAllah bermanfaat. Link: {{Product_Link}}\"  \n- \"Tadi Mya cadangkan EU Soap untuk kulit. Ada nak tambah produk lain tak untuk masalah tu?\"  \n- \"Macam yang kita bincang tadi, {{Produk}} sesuai untuk {{masalah}}. Ada soalan lain?\"  \n- \"Mya cuma boleh bantu dari sudut produk JRM ya. Nak saya cadangkan ikut keadaan badan?\"  \n- \"Mya ada di sini je kalau {{contact.first_name}} nak sambung bila-bila.\"  \n- \"Mya akan semak semula link produk ni ya, sebab belum ada dalam sistem.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "typeVersion": 1.6,
+      "position": [
+        96,
+        112
+      ],
+      "id": "1458aa57-c634-4901-a8f9-c1ed24002fd4",
+      "name": "Question and Answer Chain"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-sonnet",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        64,
+        336
+      ],
+      "id": "f9939be5-1a34-47c8-9d4e-564d40e4eb19",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "zBU7YtpsCStFa9Qd",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "typeVersion": 1,
+      "position": [
+        192,
+        336
+      ],
+      "id": "ded0ffc0-aa0e-4392-9c50-f52dddd7c87d",
+      "name": "Vector Store Retriever"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo",
+          "mode": "list",
+          "cachedResultName": "demo"
+        },
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        544
+      ],
+      "id": "bc5f267f-34e7-450e-8444-092b9429f609",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "owW8iynxIFssu4FI",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        752
+      ],
+      "id": "f209482b-6db9-47ce-8bbb-ade86b355c63",
+      "name": "Embeddings OpenAI2",
+      "credentials": {
+        "openAiApi": {
+          "id": "D9KF28beePr91heT",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "options": {}
+      },
+      "id": "ec2a6d22-af9b-4fd3-885d-c942ebf6d90a",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        112
+      ],
+      "webhookId": "your-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "webhook_secret",
+              "name": "webhook_secret",
+              "value": "chat-webhook-secret-2024-secure-key-for-n8n-integration",
+              "type": "string"
+            },
+            {
+              "id": "api_key",
+              "name": "api_key",
+              "value": "4cb769e04a4a46a588553a442fb3d3db",
+              "type": "string"
+            },
+            {
+              "id": "app_webhook_url",
+              "name": "app_webhook_url",
+              "value": "https://eca5935689ac.ngrok-free.app/api/chat/webhook",
+              "type": "string"
+            },
+            {
+              "id": "app_messages_url",
+              "name": "app_messages_url",
+              "value": "https://eca5935689ac.ngrok-free.app/api/chat/messages",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09c654b0-b070-47d2-9ec4-60444539c72d",
+      "name": "Config Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        112
+      ],
+      "notes": "UPDATED VALUES:\n1. webhook_secret: From your admin config\n2. api_key: From your admin config  \n3. app_webhook_url: Your app's webhook URL\n4. app_messages_url: Your app's messages API for history"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config Variables').first().json.app_messages_url }}/{{ $('Chat Webhook').first().json.sessionId || $('Chat Webhook').first().json.body?.sessionId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "get-conversation-history",
+      "name": "Get Conversation History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -320,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chatInput",
+              "name": "chatInput",
+              "value": "={{ $('Chat Webhook').first().json.body?.message?.content || $('Chat Webhook').first().json.message?.content || 'No message content found' }}",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ $('Chat Webhook').first().json.sessionId || $('Chat Webhook').first().json.body?.sessionId || 'cm1g4n2y50000abc123456789' }}",
+              "type": "string"
+            },
+            {
+              "id": "conversationHistory",
+              "name": "conversationHistory",
+              "value": "={{ $('Format Conversation History').first().json.formattedHistory || 'No previous conversation' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prep-qa-input",
+      "name": "Prepare QA Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format conversation history for AI context\ntry {\n  const historyResponse = $('Get Conversation History').first().json;\n  \n  // Check if we got a successful response\n  if (!historyResponse || historyResponse.error) {\n    console.log('No conversation history available or error occurred');\n    return [{\n      json: {\n        formattedHistory: '## Previous Conversation\\nThis is the start of our conversation.'\n      }\n    }];\n  }\n  \n  // Extract messages from the response\n  const messages = historyResponse.data || historyResponse.messages || [];\n  \n  if (!Array.isArray(messages) || messages.length === 0) {\n    console.log('No previous messages found');\n    return [{\n      json: {\n        formattedHistory: '## Previous Conversation\\nThis is the start of our conversation.'\n      }\n    }];\n  }\n  \n  // Sort messages by creation time (oldest first)\n  const sortedMessages = messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));\n  \n  // Take only the last 10 messages to avoid overwhelming the AI\n  const recentMessages = sortedMessages.slice(-10);\n  \n  // Format messages for AI context\n  let formattedHistory = '## Previous Conversation\\n';\n  \n  recentMessages.forEach((msg, index) => {\n    const sender = msg.senderType === 'user' ? 'Customer' : 'Mya';\n    const timestamp = new Date(msg.createdAt).toLocaleString('ms-MY', {\n      day: '2-digit',\n      month: '2-digit',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    \n    formattedHistory += `\\n**${sender}** (${timestamp}): ${msg.content}`;\n    \n    // Add line break between messages for readability\n    if (index < recentMessages.length - 1) {\n      formattedHistory += '\\n';\n    }\n  });\n  \n  formattedHistory += '\\n\\n---\\n**Current Message**: Please respond to the customer\\'s latest message while considering the conversation context above.';\n  \n  console.log('Formatted conversation history:', {\n    messageCount: recentMessages.length,\n    preview: formattedHistory.substring(0, 200) + '...'\n  });\n  \n  return [{\n    json: {\n      formattedHistory,\n      messageCount: recentMessages.length,\n      hasHistory: recentMessages.length > 0\n    }\n  }];\n  \n} catch (error) {\n  console.error('Error formatting conversation history:', error.message);\n  \n  // Return fallback on error\n  return [{\n    json: {\n      formattedHistory: '## Previous Conversation\\nThis is the start of our conversation.',\n      messageCount: 0,\n      hasHistory: false,\n      error: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        112
+      ],
+      "id": "format-conversation-history",
+      "name": "Format Conversation History"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config Variables').first().json.app_webhook_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Signature",
+              "value": "={{$node[\"Sign Payload\"].json[\"signature\"]}}"
+            },
+            {
+              "name": "X-API-Key",
+              "value": "={{$node[\"Sign Payload\"].json[\"apiKey\"]}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$node[\"Sign Payload\"].json[\"payloadString\"]}}",
+        "options": {}
+      },
+      "id": "74a00f76-a826-4e4e-a6e9-2d64fde49548",
+      "name": "Send Response to Chat App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "error-condition",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9655fb2e-2961-4954-8e1e-789023095185",
+      "name": "Check for Errors",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful response with memory context\nconst memoryInfo = $('Format Conversation History').first().json;\n\nconsole.log('Chat response sent successfully:', {\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString(),\n  hadPreviousMessages: memoryInfo?.hasHistory || false,\n  messageCount: memoryInfo?.messageCount || 0\n});\n\nreturn {\n  success: true,\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString(),\n  memoryEnabled: true,\n  conversationLength: memoryInfo?.messageCount || 0\n};"
+      },
+      "id": "5833b9e5-123c-4b86-9edd-31fae69b391e",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error details\nconst error = $json.error || 'Unknown error';\nconsole.error('Chat webhook error:', {\n  error: error,\n  sessionId: $json.sessionId,\n  messageId: $json.messageId,\n  timestamp: new Date().toISOString()\n});\n\n// Send fallback response\nreturn {\n  sessionId: $json.sessionId || 'unknown',\n  messageId: $json.messageId || 'unknown',\n  response: {\n    content: 'Maaf, Mya mengalami masalah teknikal sebentar. Sila cuba lagi dalam beberapa saat atau hubungi sokongan kami.',\n    type: 'text',\n    quickReplies: [\n      { text: 'Cuba Lagi', payload: 'retry' },\n      { text: 'Hubungi Sokongan', payload: 'contact_support' }\n    ]\n  },\n  metadata: {\n    intent: 'error_fallback',\n    confidence: 1.0,\n    processedAt: new Date().toISOString(),\n    errorHandled: true\n  }\n};"
+      },
+      "id": "358aa641-f2b4-4700-8fa8-9cfc31444ee5",
+      "name": "Handle Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ENHANCED: Sign Payload Function with Memory Support\n// Includes conversation context and enhanced metadata\n\nconst crypto = require('crypto');\n\ntry {\n  // Get config from Config Variables node\n  const config = $('Config Variables').first().json;\n  const webhookSecret = config.webhook_secret;\n  const apiKey = config.api_key;\n  \n  if (!webhookSecret || !apiKey) {\n    throw new Error('Missing webhook secret or API key in config');\n  }\n\n  // Get AI response from Question and Answer Chain\n  const qnaResponse = $('Question and Answer Chain').first().json;\n  const responseText = qnaResponse.text || qnaResponse.response || qnaResponse.output || 'No response available';\n  \n  // Get sessionId from Prepare QA Input node\n  const prepData = $('Prepare QA Input').first().json;\n  const sessionId = prepData.sessionId || 'unknown-session';\n  \n  // Get memory information\n  const memoryInfo = $('Format Conversation History').first().json;\n  const hasMemory = memoryInfo?.hasHistory || false;\n  const messageCount = memoryInfo?.messageCount || 0;\n  \n  console.log('Processing data with memory:', {\n    sessionId,\n    responseText: responseText.substring(0, 100) + '...',\n    hasSecret: !!webhookSecret,\n    hasApiKey: !!apiKey,\n    hasMemory,\n    messageCount\n  });\n\n  // Build the complete payload with enhanced metadata\n  const payloadObj = {\n    sessionId: sessionId,\n    response: {\n      content: responseText,\n      type: 'text'\n    },\n    metadata: {\n      intent: 'chat_response',\n      confidence: 1.0,\n      processedAt: new Date().toISOString(),\n      source: 'n8n_workflow_with_memory',\n      memoryEnabled: true,\n      conversationLength: messageCount,\n      hasConversationHistory: hasMemory,\n      workflowVersion: '2.0-memory'\n    }\n  };\n\n  // Convert to string for signing (no pretty printing)\n  const payloadString = JSON.stringify(payloadObj);\n  console.log('Payload to sign:', payloadString.substring(0, 200) + '...');\n\n  // Create HMAC signature\n  const hmac = crypto.createHmac('sha256', webhookSecret);\n  hmac.update(payloadString, 'utf8');\n  const signature = `sha256=${hmac.digest('hex')}`;\n  \n  console.log('Generated signature:', signature.substring(0, 20) + '...', {\n    memoryContext: hasMemory ? `${messageCount} messages` : 'first message'\n  });\n\n  return [{\n    json: {\n      payloadObj,\n      payloadString,\n      signature,\n      apiKey,\n      sessionId, // Pass through for logging\n      memoryEnabled: true,\n      conversationLength: messageCount\n    }\n  }];\n  \n} catch (error) {\n  console.error('Sign Payload Error:', error.message);\n  \n  // Return error payload that can be handled downstream\n  return [{\n    json: {\n      error: error.message,\n      payloadString: JSON.stringify({\n        sessionId: 'error',\n        response: {\n          content: 'Error processing request with memory',\n          type: 'text'\n        },\n        metadata: {\n          error: true,\n          processedAt: new Date().toISOString(),\n          memoryEnabled: false\n        }\n      }),\n      signature: 'error',\n      apiKey: 'error'\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        112
+      ],
+      "id": "9c8b8e86-a079-4fa3-bd9f-60d8c077b4ca",
+      "name": "Sign Payload"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Question and Answer Chain": {
+      "main": [
+        [
+          {
+            "node": "Sign Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_retriever",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Retriever",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Variables": {
+      "main": [
+        [
+          {
+            "node": "Get Conversation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Conversation History": {
+      "main": [
+        [
+          {
+            "node": "Format Conversation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Conversation History": {
+      "main": [
+        [
+          {
+            "node": "Prepare QA Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare QA Input": {
+      "main": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response to Chat App": {
+      "main": [
+        [
+          {
+            "node": "Check for Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Errors": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign Payload": {
+      "main": [
+        [
+          {
+            "node": "Send Response to Chat App",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "memory-enhanced-v2",
+  "meta": {
+    "instanceId": "40eae341c90e70155d433a42d61a484077ec5c2ecc4c1ea62f194f14f4f43e07"
+  },
+  "id": "memory-chat-workflow",
+  "tags": ["production", "memory", "chat"]
+}
