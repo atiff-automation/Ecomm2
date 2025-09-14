@@ -3,19 +3,17 @@ import { prisma } from '@/lib/db/prisma';
 import { CreateSessionSchema, CHAT_CONFIG } from '@/lib/chat/validation';
 import { handleChatError, createSuccessResponse, createChatError } from '@/lib/chat/errors';
 import { withRateLimit, RateLimitPresets } from '@/lib/middleware/rate-limit';
+import { getSessionTimeoutMsByUserType } from '@/lib/chat/config';
 
 async function handlePOST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = CreateSessionSchema.parse(body);
     
-    // Calculate expiration time based on user authentication
+    // Calculate expiration time based on user authentication status
     const isAuthenticated = !!validatedData.userId;
-    const expirationTime = new Date(
-      Date.now() + (isAuthenticated 
-        ? CHAT_CONFIG.SESSION_TIMEOUT.AUTHENTICATED 
-        : CHAT_CONFIG.SESSION_TIMEOUT.GUEST)
-    );
+    const sessionTimeoutMs = await getSessionTimeoutMsByUserType(isAuthenticated);
+    const expirationTime = new Date(Date.now() + sessionTimeoutMs);
     
     // Validate that either userId or guestPhone (or guestEmail for backward compatibility) is provided
     if (!validatedData.userId && !validatedData.guestPhone && !validatedData.guestEmail) {

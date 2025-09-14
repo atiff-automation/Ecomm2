@@ -41,6 +41,8 @@ interface ChatSessionDetail {
     email: string;
     name: string;
   };
+  guestEmail?: string;
+  guestPhone?: string;
   userAgent?: string;
   ipAddress?: string;
   metadata?: Record<string, any>;
@@ -117,7 +119,10 @@ export default function SessionDetailPage() {
         endedAt: sessionDetail.endedAt,
         duration: calculateDuration(),
         user: sessionDetail.user,
+        guestEmail: sessionDetail.guestEmail,
+        guestPhone: sessionDetail.guestPhone,
         messageCount: sessionDetail.messageCount,
+        sessionType: sessionDetail.user ? 'authenticated' : 'guest',
       },
       messages: sessionDetail.messages.map(msg => ({
         timestamp: new Date(msg.createdAt).toLocaleString(),
@@ -427,6 +432,36 @@ export default function SessionDetailPage() {
                 <div>
                   <span className="text-sm text-gray-600">User ID</span>
                   <p className="font-mono text-sm">{sessionDetail.user.id}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Guest Contact Information */}
+          {(sessionDetail.guestEmail || sessionDetail.guestPhone) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Guest Contact Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {sessionDetail.guestEmail && (
+                  <div>
+                    <span className="text-sm text-gray-600">Email</span>
+                    <p className="font-medium">{sessionDetail.guestEmail}</p>
+                  </div>
+                )}
+                {sessionDetail.guestPhone && (
+                  <div>
+                    <span className="text-sm text-gray-600">Phone</span>
+                    <p className="font-medium">{sessionDetail.guestPhone}</p>
+                  </div>
+                )}
+                <div>
+                  <span className="text-sm text-gray-600">Session Type</span>
+                  <Badge variant="outline" className="ml-2">Guest</Badge>
                 </div>
               </CardContent>
             </Card>

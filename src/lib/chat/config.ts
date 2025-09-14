@@ -4,7 +4,9 @@ export interface ChatConfigData {
   webhookUrl: string | null;
   webhookSecret: string | null;
   apiKey: string | null;
-  sessionTimeoutMinutes: number;
+  sessionTimeoutMinutes: number; // Keep for backward compatibility
+  guestSessionTimeoutMinutes: number;
+  authenticatedSessionTimeoutMinutes: number;
   maxMessageLength: number;
   rateLimitMessages: number;
   rateLimitWindowMs: number;
@@ -41,6 +43,8 @@ export async function getChatConfig(): Promise<ChatConfigData> {
         webhookSecret: true,
         apiKey: true,
         sessionTimeoutMinutes: true,
+        guestSessionTimeoutMinutes: true,
+        authenticatedSessionTimeoutMinutes: true,
         maxMessageLength: true,
         rateLimitMessages: true,
         rateLimitWindowMs: true,
@@ -67,7 +71,9 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       webhookUrl: null,
       webhookSecret: null,
       apiKey: null,
-      sessionTimeoutMinutes: 30,
+      sessionTimeoutMinutes: 30, // Backward compatibility
+      guestSessionTimeoutMinutes: 30,
+      authenticatedSessionTimeoutMinutes: 120,
       maxMessageLength: 4000,
       rateLimitMessages: 20,
       rateLimitWindowMs: 60000,
@@ -91,7 +97,9 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       webhookUrl: null,
       webhookSecret: null,
       apiKey: null,
-      sessionTimeoutMinutes: 30,
+      sessionTimeoutMinutes: 30, // Backward compatibility
+      guestSessionTimeoutMinutes: 30,
+      authenticatedSessionTimeoutMinutes: 120,
       maxMessageLength: 4000,
       rateLimitMessages: 20,
       rateLimitWindowMs: 60000,
@@ -127,11 +135,54 @@ export async function isChatSystemHealthy(): Promise<boolean> {
 }
 
 /**
- * Get session timeout in milliseconds
+ * Get session timeout in milliseconds (backward compatibility)
  */
 export async function getSessionTimeoutMs(): Promise<number> {
   const config = await getChatConfig();
   return config.sessionTimeoutMinutes * 60 * 1000;
+}
+
+/**
+ * Get session timeout in milliseconds based on user authentication status
+ */
+export async function getSessionTimeoutMsByUserType(isAuthenticated: boolean): Promise<number> {
+  const config = await getChatConfig();
+  
+  if (isAuthenticated) {
+    return config.authenticatedSessionTimeoutMinutes * 60 * 1000;
+  } else {
+    return config.guestSessionTimeoutMinutes * 60 * 1000;
+  }
+}
+
+/**
+ * Get guest session timeout in milliseconds
+ */
+export async function getGuestSessionTimeoutMs(): Promise<number> {
+  const config = await getChatConfig();
+  return config.guestSessionTimeoutMinutes * 60 * 1000;
+}
+
+/**
+ * Get authenticated session timeout in milliseconds
+ */
+export async function getAuthenticatedSessionTimeoutMs(): Promise<number> {
+  const config = await getChatConfig();
+  return config.authenticatedSessionTimeoutMinutes * 60 * 1000;
+}
+
+/**
+ * Get both session timeout values
+ */
+export async function getSessionTimeouts(): Promise<{
+  guestTimeoutMs: number;
+  authenticatedTimeoutMs: number;
+}> {
+  const config = await getChatConfig();
+  return {
+    guestTimeoutMs: config.guestSessionTimeoutMinutes * 60 * 1000,
+    authenticatedTimeoutMs: config.authenticatedSessionTimeoutMinutes * 60 * 1000,
+  };
 }
 
 /**

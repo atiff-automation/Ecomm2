@@ -93,6 +93,9 @@ export async function GET(
         email: chatSession.user.email,
         name: `${chatSession.user.firstName} ${chatSession.user.lastName}`.trim(),
       } : null,
+      // Guest contact information
+      guestEmail: chatSession.guestEmail,
+      guestPhone: chatSession.guestPhone,
       userAgent: chatSession.userAgent,
       ipAddress: chatSession.ipAddress,
       metadata: chatSession.metadata,

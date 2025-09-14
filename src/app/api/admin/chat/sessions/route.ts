@@ -74,6 +74,8 @@ export async function GET(request: NextRequest) {
       userId: session.user?.id,
       userEmail: session.user?.email,
       userName: session.user ? `${session.user.firstName} ${session.user.lastName}`.trim() : null,
+      guestEmail: session.guestEmail,
+      guestPhone: session.guestPhone,
       userAgent: session.userAgent,
       ipAddress: session.ipAddress,
       metadata: session.metadata,

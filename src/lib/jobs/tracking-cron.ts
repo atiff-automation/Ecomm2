@@ -18,6 +18,7 @@ import {
   isDebugMode,
 } from '../config/tracking-refactor';
 import { TrackingRefactorError } from '../types/tracking-refactor';
+import { cleanupChatSessions, getSessionCleanupStatistics } from '../chat/session-cleanup';
 
 class TrackingCronManager {
   private intervals: Map<string, NodeJS.Timeout> = new Map();
@@ -36,9 +37,14 @@ class TrackingCronManager {
     console.log('🚀 Starting tracking cron jobs...');
 
     try {
-      // Every 15 minutes: Process urgent jobs
+      // Every 15 minutes: Process urgent jobs and chat session cleanup
       this.scheduleInterval('urgent-jobs', 15 * 60 * 1000, () => {
         this.processUrgentJobs();
+      });
+
+      // Every 15 minutes: Clean up expired chat sessions
+      this.scheduleInterval('chat-session-cleanup', 15 * 60 * 1000, () => {
+        this.performChatSessionCleanup();
       });
 
       // Every hour: Process regular updates
@@ -118,6 +124,30 @@ class TrackingCronManager {
       console.log(
         `📅 Scheduled ${name} to run every ${intervalMs / 1000} seconds`
       );
+    }
+  }
+
+  /**
+   * Perform chat session cleanup
+   */
+  private async performChatSessionCleanup(): Promise<void> {
+    try {
+      const result = await cleanupChatSessions();
+      
+      const totalProcessed = result.expiredCount + result.inactiveCount;
+      if (totalProcessed > 0) {
+        console.log(
+          `💬 Chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} inactive`
+        );
+      } else if (isDebugMode()) {
+        console.log('💬 No chat sessions needed cleanup');
+      }
+
+      if (result.error) {
+        console.error('⚠️ Chat session cleanup had errors:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Failed to perform chat session cleanup:', error);
     }
   }
 
@@ -258,6 +288,7 @@ class TrackingCronManager {
 
       // Get detailed statistics
       const stats = await getCacheStatistics();
+      const chatSessionStats = await getSessionCleanupStatistics();
 
       // Daily report
       console.log('📊 Daily Tracking Report:', {
@@ -265,6 +296,8 @@ class TrackingCronManager {
         caches: stats.caches,
         jobs: stats.jobs,
         consistencyIssues: consistencyIssues.length,
+        chatSessions: chatSessionStats?.sessions || null,
+        chatCleanup: chatSessionStats?.cleanup || null,
       });
 
       // Performance metrics
@@ -436,6 +469,34 @@ export const triggerCleanup = async (): Promise<void> => {
     throw new TrackingRefactorError(
       `Manual cleanup failed: ${error.message}`,
       'MANUAL_CLEANUP_ERROR'
+    );
+  }
+};
+
+/**
+ * Manually trigger chat session cleanup
+ */
+export const triggerChatSessionCleanup = async (): Promise<void> => {
+  console.log('💬 Manually triggering chat session cleanup...');
+
+  try {
+    const result = await cleanupChatSessions();
+    const totalProcessed = result.expiredCount + result.inactiveCount;
+    
+    console.log(
+      `✅ Manual chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} inactive`
+    );
+
+    if (result.error) {
+      console.warn('⚠️ Chat session cleanup had errors:', result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('❌ Manual chat session cleanup failed:', error);
+    throw new TrackingRefactorError(
+      `Manual chat session cleanup failed: ${error.message}`,
+      'MANUAL_CHAT_CLEANUP_ERROR'
     );
   }
 };
