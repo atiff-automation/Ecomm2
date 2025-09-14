@@ -34,7 +34,9 @@ export async function GET() {
         webhookUrl: true,
         webhookSecret: true, // In production, you might want to mask this
         apiKey: true,
-        sessionTimeoutMinutes: true,
+        sessionTimeoutMinutes: true, // Keep for backward compatibility
+        guestSessionTimeoutMinutes: true,
+        authenticatedSessionTimeoutMinutes: true,
         maxMessageLength: true,
         rateLimitMessages: true,
         rateLimitWindowMs: true,
@@ -59,7 +61,9 @@ export async function GET() {
         webhookUrl: '',
         webhookSecret: '',
         apiKey: '',
-        sessionTimeoutMinutes: 30,
+        sessionTimeoutMinutes: 30, // Backward compatibility
+        guestSessionTimeoutMinutes: 30,
+        authenticatedSessionTimeoutMinutes: 120,
         maxMessageLength: 4000,
         rateLimitMessages: 20,
         rateLimitWindowMs: 60000,
@@ -128,7 +132,9 @@ export async function POST(request: NextRequest) {
       webhookUrl,
       webhookSecret,
       apiKey,
-      sessionTimeoutMinutes,
+      sessionTimeoutMinutes, // Keep for backward compatibility
+      guestSessionTimeoutMinutes,
+      authenticatedSessionTimeoutMinutes,
       maxMessageLength,
       rateLimitMessages,
       rateLimitWindowMs,
@@ -189,6 +195,14 @@ export async function POST(request: NextRequest) {
       validationErrors.push('Session timeout must be between 1 and 1440 minutes');
     }
 
+    if (guestSessionTimeoutMinutes && (guestSessionTimeoutMinutes < 1 || guestSessionTimeoutMinutes > 1440)) {
+      validationErrors.push('Guest session timeout must be between 1 and 1440 minutes');
+    }
+
+    if (authenticatedSessionTimeoutMinutes && (authenticatedSessionTimeoutMinutes < 1 || authenticatedSessionTimeoutMinutes > 1440)) {
+      validationErrors.push('Authenticated session timeout must be between 1 and 1440 minutes');
+    }
+
     if (maxMessageLength && (maxMessageLength < 1 || maxMessageLength > 10000)) {
       validationErrors.push('Max message length must be between 1 and 10000 characters');
     }
@@ -227,7 +241,9 @@ export async function POST(request: NextRequest) {
           webhookUrl,
           webhookSecret,
           apiKey,
-          sessionTimeoutMinutes: sessionTimeoutMinutes || 30,
+          sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
+          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 30,
+          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 120,
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,
@@ -249,7 +265,9 @@ export async function POST(request: NextRequest) {
           webhookUrl,
           webhookSecret,
           apiKey,
-          sessionTimeoutMinutes: sessionTimeoutMinutes || 30,
+          sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
+          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 30,
+          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 120,
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,
@@ -274,7 +292,9 @@ export async function POST(request: NextRequest) {
       config: {
         id: config.id,
         webhookUrl: config.webhookUrl,
-        sessionTimeoutMinutes: config.sessionTimeoutMinutes,
+        sessionTimeoutMinutes: config.sessionTimeoutMinutes, // Backward compatibility
+        guestSessionTimeoutMinutes: config.guestSessionTimeoutMinutes,
+        authenticatedSessionTimeoutMinutes: config.authenticatedSessionTimeoutMinutes,
         maxMessageLength: config.maxMessageLength,
         rateLimitMessages: config.rateLimitMessages,
         rateLimitWindowMs: config.rateLimitWindowMs,

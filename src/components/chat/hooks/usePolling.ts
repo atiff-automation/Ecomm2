@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useChatContext } from '../ChatProvider';
 import { chatApi } from '../utils/api-client';
+import { chatUtils } from '../utils/chat-utils';
 
 interface PollingOptions {
   interval?: number;
@@ -27,6 +28,7 @@ export const usePolling = (options: PollingOptions = {}) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageTimestampRef = useRef<string | null>(null);
   const isPollingRef = useRef(false);
+  const stopPollingRef = useRef<() => void>();
 
   // Update last message timestamp when messages change
   useEffect(() => {
@@ -36,9 +38,26 @@ export const usePolling = (options: PollingOptions = {}) => {
     }
   }, [state.messages]);
 
+  // Stop polling - defined first to avoid dependency issues
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // Update ref
+  stopPollingRef.current = stopPolling;
+
   // Polling function
   const poll = useCallback(async () => {
     if (isPollingRef.current || !state.session?.id || !state.isConnected) {
+      return;
+    }
+
+    // Check if session is expired before polling
+    if (chatUtils.isSessionExpired(state.session.expiresAt)) {
+      console.log('💤 Session expired, skipping poll');
       return;
     }
 
@@ -48,16 +67,16 @@ export const usePolling = (options: PollingOptions = {}) => {
       const response = await chatApi.getMessages({
         sessionId: state.session.id,
         limit: 20 // Get recent messages
-      });
+      }, state.session.expiresAt);
 
       if (response.success && response.data?.messages) {
         const serverMessages = response.data.messages;
-        
+
         // Filter for new messages
         let newMessages = serverMessages;
-        
+
         if (lastMessageTimestampRef.current) {
-          newMessages = serverMessages.filter(msg => 
+          newMessages = serverMessages.filter(msg =>
             new Date(msg.createdAt) > new Date(lastMessageTimestampRef.current!)
           );
         }
@@ -66,16 +85,29 @@ export const usePolling = (options: PollingOptions = {}) => {
         if (newMessages.length > 0) {
           // Call the messages update through context
           await loadMessages();
-          
+
           // Notify callback if provided
           if (onNewMessages) {
             onNewMessages(newMessages);
           }
         }
+      } else if (!response.success && response.error?.code === 'SESSION_EXPIRED') {
+        // Handle client-side session expiry response
+        console.log('💤 API Client blocked expired session call, stopping polling');
+        stopPollingRef.current?.();
+        return;
       }
     } catch (error) {
+      // Handle session expiration errors silently for polling
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
+        console.log('💤 Session expired during poll, stopping polling');
+        // Stop polling when session expires
+        stopPollingRef.current?.();
+        return;
+      }
+
       console.warn('Polling error:', error);
-      
+
       if (onError) {
         onError(error instanceof Error ? error : new Error('Polling failed'));
       }
@@ -93,54 +125,46 @@ export const usePolling = (options: PollingOptions = {}) => {
     if (enabled && state.session?.id && state.isConnected) {
       // Initial poll
       poll();
-      
+
       // Set up interval
       intervalRef.current = setInterval(poll, interval);
     }
   }, [enabled, state.session?.id, state.isConnected, interval, poll]);
-
-  // Stop polling
-  const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
 
   // Auto-start/stop polling based on conditions
   useEffect(() => {
     if (enabled && state.session?.id && state.isConnected && state.isOpen) {
       startPolling();
     } else {
-      stopPolling();
+      stopPollingRef.current?.();
     }
 
-    return stopPolling;
-  }, [enabled, state.session?.id, state.isConnected, state.isOpen, startPolling, stopPolling]);
+    return () => stopPollingRef.current?.();
+  }, [enabled, state.session?.id, state.isConnected, state.isOpen, startPolling]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopPolling();
+      stopPollingRef.current?.();
     };
-  }, [stopPolling]);
+  }, []);
 
   // Pause polling when tab is not visible (Page Visibility API)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        stopPolling();
+        stopPollingRef.current?.();
       } else if (enabled && state.session?.id && state.isConnected && state.isOpen) {
         startPolling();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [enabled, state.session?.id, state.isConnected, state.isOpen, startPolling, stopPolling]);
+  }, [enabled, state.session?.id, state.isConnected, state.isOpen, startPolling]);
 
   return {
     isPolling: intervalRef.current !== null,

@@ -3,13 +3,14 @@
  * Centralized API communication for chat system
  */
 
-import type { 
-  CreateSessionResponse, 
-  SendMessageResponse, 
+import type {
+  CreateSessionResponse,
+  SendMessageResponse,
   GetMessagesResponse,
   ChatError,
-  ChatMessage 
+  ChatMessage
 } from '../types';
+import { chatUtils } from './chat-utils';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -160,7 +161,22 @@ class ChatApiClient {
   /**
    * Send a message
    */
-  async sendMessage(request: SendMessageRequest): Promise<ApiResponse<SendMessageResponse>> {
+  async sendMessage(request: SendMessageRequest, sessionExpiresAt?: string): Promise<ApiResponse<SendMessageResponse>> {
+    // Check if session is expired before making API call
+    if (sessionExpiresAt && chatUtils.isSessionExpired(sessionExpiresAt)) {
+      console.log('🚫 API Client: Blocked sendMessage call for expired session');
+      return {
+        success: false,
+        error: {
+          code: 'SESSION_EXPIRED',
+          message: 'Session has expired',
+          userFriendly: true,
+          action: 'start_new_session',
+          suggestion: 'Please start a new chat session'
+        }
+      };
+    }
+
     return this.makeRequest<SendMessageResponse>('/send', {
       method: 'POST',
       body: JSON.stringify(request),
@@ -170,7 +186,22 @@ class ChatApiClient {
   /**
    * Get message history for a session
    */
-  async getMessages(params: GetMessagesParams): Promise<ApiResponse<GetMessagesResponse>> {
+  async getMessages(params: GetMessagesParams, sessionExpiresAt?: string): Promise<ApiResponse<GetMessagesResponse>> {
+    // Check if session is expired before making API call
+    if (sessionExpiresAt && chatUtils.isSessionExpired(sessionExpiresAt)) {
+      console.log('🚫 API Client: Blocked getMessages call for expired session');
+      return {
+        success: false,
+        error: {
+          code: 'SESSION_EXPIRED',
+          message: 'Session has expired',
+          userFriendly: true,
+          action: 'start_new_session',
+          suggestion: 'Please start a new chat session'
+        }
+      };
+    }
+
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());

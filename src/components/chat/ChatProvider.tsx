@@ -619,7 +619,18 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
   const loadMessages = useCallback(async () => {
     if (!state.session?.id) return;
-    
+
+    // Check if session is expired before loading messages
+    if (chatUtils.isSessionExpired(state.session.expiresAt)) {
+      console.log('💤 Session expired, clearing and skipping message load');
+      // Clear both Redux state and localStorage
+      dispatch({ type: 'CLEAR_SESSION' });
+      dispatch({ type: 'SET_MESSAGES_ERROR', payload: null });
+      chatStorage.clearSession();
+      chatStorage.clearMessages(state.session.id);
+      return;
+    }
+
     dispatch({ type: 'SET_MESSAGES_LOADING', payload: true });
     
     try {
