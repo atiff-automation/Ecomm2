@@ -110,21 +110,30 @@ export const useChat = () => {
     }
   }, [sendQuickReply]);
 
-  // Start new session with optional phone or email (for backward compatibility)
-  const startNewSession = useCallback(async (guestContact?: string, contactType?: 'email' | 'phone') => {
+  // Enhanced session creation supporting authenticated sessions - systematic approach
+  const startNewSession = useCallback(async (
+    contactOrEmail?: string,
+    contactType?: 'email' | 'phone' | 'authenticated',
+    userId?: string
+  ) => {
     try {
-      // Clear existing session first
+      // Clear existing session first - centralized cleanup
       if (state.session) {
         clearSession();
       }
-      
-      // Create new session with contact info
-      if (contactType === 'phone') {
-        await createSession(undefined, false, guestContact); // guestEmail, isUIInit, guestPhone
+
+      // Create new session with enhanced parameters
+      if (contactType === 'authenticated' && userId) {
+        // Authenticated session creation
+        await createSession(contactOrEmail, 'authenticated', userId);
+      } else if (contactType === 'phone') {
+        // Phone-based guest session
+        await createSession(contactOrEmail, 'phone');
       } else {
-        await createSession(guestContact); // backward compatibility for email
+        // Email-based guest session (backward compatibility)
+        await createSession(contactOrEmail, 'email');
       }
-      
+
       // Open chat after session is created
       openChat();
     } catch (error) {

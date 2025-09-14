@@ -7,6 +7,7 @@ import { ChatWindow } from './ChatWindow';
 import { ContactForm } from './ContactForm';
 import { useChat } from './hooks/useChat';
 import { usePolling } from './hooks/usePolling';
+import { useAuth } from '@/hooks/use-auth';
 import type { ChatConfig } from './types';
 
 interface ChatWidgetInternalProps {
@@ -15,8 +16,12 @@ interface ChatWidgetInternalProps {
 
 // Internal component that uses the chat context
 const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
+  // Modal state management - centralized approach
   const [showContactForm, setShowContactForm] = useState(false);
-  
+
+  // Authentication detection - systematic approach
+  const { isLoggedIn, user } = useAuth();
+
   const {
     // State
     session,
@@ -26,7 +31,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     isTyping,
     hasUnreadMessages,
     error,
-    
+
     // Actions
     sendMessage,
     sendQuickReply,
@@ -63,10 +68,23 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     }
   };
 
-  const handleChatToggle = () => {
+  const handleChatToggle = async () => {
     if (!session && !isOpen) {
-      // Show contact form if no session exists
-      setShowContactForm(true);
+      // Direct authenticated session for logged-in users - streamlined UX
+      if (isLoggedIn && user) {
+        try {
+          // Start authenticated session directly - no choice modal
+          await startNewSession(user.email, 'authenticated', user.id);
+          // Chat will open automatically after session is created
+        } catch (error) {
+          console.error('Failed to create authenticated session:', error);
+          // Fallback to guest flow if authenticated session fails
+          setShowContactForm(true);
+        }
+      } else {
+        // Non-authenticated user - existing guest flow
+        setShowContactForm(true);
+      }
     } else {
       // Normal toggle behavior
       toggleChat();
@@ -95,6 +113,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     setShowContactForm(false);
   };
 
+
   return (
     <>
       <ChatBubble
@@ -118,7 +137,8 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         onTyping={sendTyping}
       />
 
-      {/* Contact Form - shown before first chat */}
+
+      {/* Contact Form - shown for guest chat selection */}
       <ContactForm
         isOpen={showContactForm}
         config={config}

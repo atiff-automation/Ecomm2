@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Authentication Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .success { border-color: #28a745; background-color: #f8fff9; }
+        .error { border-color: #dc3545; background-color: #fff5f5; }
+        .info { border-color: #007bff; background-color: #f8f9ff; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Chat Authentication Flow Test</h1>
+    <p>This page tests our new authentication integration for the chat system.</p>
+
+    <div class="test-section info">
+        <h3>📋 Test Plan</h3>
+        <ul>
+            <li><strong>Non-authenticated User</strong>: Should see ContactForm modal</li>
+            <li><strong>Authenticated User</strong>: Should see AuthChoiceModal with 2 options</li>
+            <li><strong>Session Timeouts</strong>: Guest 30min, Authenticated 120min</li>
+            <li><strong>API Compatibility</strong>: Existing API should handle both session types</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🔐 Authentication Status</h3>
+        <div id="auth-status">Checking authentication status...</div>
+        <button class="btn-secondary" onclick="checkAuthStatus()">Refresh Auth Status</button>
+    </div>
+
+    <div class="test-section">
+        <h3>💬 Session Creation Tests</h3>
+        <button class="btn-primary" onclick="testGuestSession()">Test Guest Session (30min)</button>
+        <button class="btn-primary" onclick="testAuthenticatedSession()">Test Authenticated Session (120min)</button>
+        <div id="session-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>⚙️ API Endpoint Tests</h3>
+        <button class="btn-secondary" onclick="testHealthCheck()">Test Health Check</button>
+        <button class="btn-secondary" onclick="testConfigFetch()">Test Config Fetch</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Test Results</h3>
+        <div id="test-log"></div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testResults.push({ message: logEntry, type });
+            updateTestLog();
+            console.log(logEntry);
+        }
+
+        function updateTestLog() {
+            const logDiv = document.getElementById('test-log');
+            logDiv.innerHTML = testResults.map(result =>
+                `<div class="${result.type}">${result.message}</div>`
+            ).join('');
+        }
+
+        async function checkAuthStatus() {
+            try {
+                log('🔍 Checking authentication status...', 'info');
+                const response = await fetch('/api/auth/session');
+                const session = await response.json();
+
+                const statusDiv = document.getElementById('auth-status');
+
+                if (session && session.user) {
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Authenticated User</strong><br>
+                            Name: ${session.user.name || 'N/A'}<br>
+                            Email: ${session.user.email}<br>
+                            Role: ${session.user.role || 'CUSTOMER'}<br>
+                            <small>Should see AuthChoiceModal with 120min option</small>
+                        </div>
+                    `;
+                    log('✅ User is authenticated', 'success');
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="info">
+                            <strong>👤 Guest User</strong><br>
+                            Not authenticated<br>
+                            <small>Should see ContactForm modal</small>
+                        </div>
+                    `;
+                    log('ℹ️  User is not authenticated (guest)', 'info');
+                }
+            } catch (error) {
+                log(`❌ Auth check error: ${error.message}`, 'error');
+                document.getElementById('auth-status').innerHTML =
+                    `<div class="error">Error checking authentication: ${error.message}</div>`;
+            }
+        }
+
+        async function testGuestSession() {
+            try {
+                log('🧪 Testing guest session creation...', 'info');
+                const response = await fetch('/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        guestPhone: '+60123456789',
+                        metadata: { source: 'test-guest-session' }
+                    })
+                });
+
+                const result = await response.json();
+                const resultsDiv = document.getElementById('session-results');
+
+                if (response.ok && result.sessionId) {
+                    resultsDiv.innerHTML += `
+                        <div class="success">
+                            <strong>✅ Guest Session Created</strong><br>
+                            Session ID: ${result.sessionId}<br>
+                            Expires: ${result.expiresAt}<br>
+                            Status: ${result.status}<br>
+                            <small>Should have 30-minute timeout</small>
+                        </div>
+                    `;
+                    log(`✅ Guest session created: ${result.sessionId}`, 'success');
+
+                    // Calculate timeout duration
+                    const expiresAt = new Date(result.expiresAt);
+                    const now = new Date();
+                    const timeoutMinutes = Math.round((expiresAt - now) / (1000 * 60));
+                    log(`⏱️  Timeout duration: ${timeoutMinutes} minutes`, 'info');
+
+                } else {
+                    resultsDiv.innerHTML += `<div class="error">❌ Guest session failed: ${result.error || 'Unknown error'}</div>`;
+                    log(`❌ Guest session creation failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Guest session test error: ${error.message}`, 'error');
+                document.getElementById('session-results').innerHTML +=
+                    `<div class="error">❌ Test error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAuthenticatedSession() {
+            try {
+                log('🧪 Testing authenticated session creation...', 'info');
+
+                // First check if user is authenticated
+                const authResponse = await fetch('/api/auth/session');
+                const session = await authResponse.json();
+
+                if (!session || !session.user) {
+                    document.getElementById('session-results').innerHTML +=
+                        `<div class="error">❌ Cannot test authenticated session - user not logged in</div>`;
+                    log('❌ Cannot test authenticated session - user not logged in', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: session.user.id,
+                        metadata: { source: 'test-authenticated-session' }
+                    })
+                });
+
+                const result = await response.json();
+                const resultsDiv = document.getElementById('session-results');
+
+                if (response.ok && result.sessionId) {
+                    resultsDiv.innerHTML += `
+                        <div class="success">
+                            <strong>✅ Authenticated Session Created</strong><br>
+                            Session ID: ${result.sessionId}<br>
+                            Expires: ${result.expiresAt}<br>
+                            Status: ${result.status}<br>
+                            User: ${result.userContext?.name || 'N/A'}<br>
+                            <small>Should have 120-minute timeout</small>
+                        </div>
+                    `;
+                    log(`✅ Authenticated session created: ${result.sessionId}`, 'success');
+
+                    // Calculate timeout duration
+                    const expiresAt = new Date(result.expiresAt);
+                    const now = new Date();
+                    const timeoutMinutes = Math.round((expiresAt - now) / (1000 * 60));
+                    log(`⏱️  Timeout duration: ${timeoutMinutes} minutes`, 'info');
+
+                } else {
+                    resultsDiv.innerHTML += `<div class="error">❌ Authenticated session failed: ${result.error || 'Unknown error'}</div>`;
+                    log(`❌ Authenticated session creation failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Authenticated session test error: ${error.message}`, 'error');
+                document.getElementById('session-results').innerHTML +=
+                    `<div class="error">❌ Test error: ${error.message}</div>`;
+            }
+        }
+
+        async function testHealthCheck() {
+            try {
+                log('🏥 Testing health check...', 'info');
+                const response = await fetch('/api/chat/health');
+                const result = await response.json();
+
+                const resultsDiv = document.getElementById('api-results');
+                if (response.ok) {
+                    resultsDiv.innerHTML += `<div class="success">✅ Health check passed: ${result.status}</div>`;
+                    log('✅ Health check passed', 'success');
+                } else {
+                    resultsDiv.innerHTML += `<div class="error">❌ Health check failed</div>`;
+                    log('❌ Health check failed', 'error');
+                }
+            } catch (error) {
+                log(`❌ Health check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConfigFetch() {
+            try {
+                log('⚙️ Testing timeout configuration...', 'info');
+                const response = await fetch('/api/admin/chat/config');
+                const result = await response.json();
+
+                const resultsDiv = document.getElementById('api-results');
+                if (response.ok && result.guestSessionTimeoutMinutes !== undefined) {
+                    resultsDiv.innerHTML += `
+                        <div class="success">
+                            <strong>✅ Configuration fetched</strong><br>
+                            Guest timeout: ${result.guestSessionTimeoutMinutes} minutes<br>
+                            Authenticated timeout: ${result.authenticatedSessionTimeoutMinutes} minutes
+                        </div>
+                    `;
+                    log(`✅ Config fetched - Guest: ${result.guestSessionTimeoutMinutes}min, Auth: ${result.authenticatedSessionTimeoutMinutes}min`, 'success');
+                } else {
+                    resultsDiv.innerHTML += `<div class="error">❌ Config fetch failed or missing timeout fields</div>`;
+                    log('❌ Config fetch failed or missing timeout fields', 'error');
+                }
+            } catch (error) {
+                log(`❌ Config fetch error: ${error.message}`, 'error');
+            }
+        }
+
+        // Run initial auth check
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            log('🚀 Test page loaded', 'info');
+        });
+    </script>
+</body>
+</html>

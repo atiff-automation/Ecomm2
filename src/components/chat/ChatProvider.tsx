@@ -392,22 +392,48 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     await checkConnection();
   }, [checkConnection]);
 
-  // Session management
-  const createSession = useCallback(async (guestEmail?: string, isUIInit = false, guestPhone?: string) => {
+  // Session management - Enhanced for authenticated sessions
+  const createSession = useCallback(async (
+    contactOrEmail?: string,
+    contactType: 'email' | 'phone' | 'authenticated' | boolean = 'email',
+    userId?: string
+  ) => {
     dispatch({ type: 'SET_SESSION_LOADING', payload: true });
-    
+
     try {
-      // Prioritize phone over email for contact collection
-      const contactData = {
-        guestPhone: guestPhone || undefined,
-        guestEmail: !guestPhone ? (guestEmail || 'guest@example.com') : undefined, // Fallback for backward compatibility
-        metadata: {
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString(),
-          source: isUIInit ? 'chat-widget-init' : 'chat-widget-session'
-        },
-        ...(isUIInit && { isUIInit: true })
-      };
+      let contactData;
+
+      // Handle backward compatibility with boolean parameter
+      const isUIInit = typeof contactType === 'boolean' ? contactType : false;
+      const actualContactType = typeof contactType === 'string' ? contactType : 'email';
+
+      if (actualContactType === 'authenticated' && userId) {
+        // Authenticated session - systematic approach with centralized user data
+        contactData = {
+          userId: userId,
+          metadata: {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            source: 'chat-widget-authenticated',
+            authenticationType: 'session-based'
+          }
+        };
+      } else {
+        // Guest session - existing logic maintained for backward compatibility
+        const guestPhone = actualContactType === 'phone' ? contactOrEmail : undefined;
+        const guestEmail = actualContactType === 'email' ? contactOrEmail : undefined;
+
+        contactData = {
+          guestPhone: guestPhone || undefined,
+          guestEmail: !guestPhone ? (guestEmail || 'guest@example.com') : undefined, // Fallback for backward compatibility
+          metadata: {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            source: isUIInit ? 'chat-widget-init' : 'chat-widget-guest'
+          },
+          ...(isUIInit && { isUIInit: true })
+        };
+      }
 
       // Use init endpoint for UI initialization to bypass rate limits
       const response = isUIInit 
@@ -415,6 +441,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         : await chatApi.createSession(contactData);
 
       if (response.success && response.data) {
+        // Systematic session object creation with proper type safety
         const session: ChatSession = {
           id: response.data.sessionId,
           status: 'active' as ChatSession['status'],
@@ -422,9 +449,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           createdAt: response.data.createdAt || new Date().toISOString(),
           updatedAt: response.data.updatedAt || new Date().toISOString(),
           metadata: response.data.metadata || {},
-          // Include contact information from session creation
-          guestPhone: guestPhone || undefined,
-          guestEmail: !guestPhone ? guestEmail : undefined
+          // Include contact/user information based on session type
+          userId: actualContactType === 'authenticated' ? userId : undefined,
+          guestPhone: actualContactType === 'phone' ? contactOrEmail : undefined,
+          guestEmail: actualContactType === 'email' && !userId ? contactOrEmail : undefined
         };
         
         dispatch({ type: 'SET_SESSION', payload: session });
