@@ -3,13 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  MessageCircle, 
-  Settings, 
-  BarChart3, 
+import {
+  MessageCircle,
+  Settings,
+  BarChart3,
   Users,
   Archive,
-  Zap,
   Activity
 } from 'lucide-react';
 
@@ -19,22 +18,16 @@ interface ChatLayoutProps {
 
 const chatNavigationItems = [
   {
-    label: 'Overview',
-    href: '/admin/chat',
-    icon: MessageCircle,
-    description: 'Chat Sessions & Analytics',
-  },
-  {
     label: 'Sessions',
-    href: '/admin/chat/sessions',
+    href: '/admin/chat',
     icon: Users,
-    description: 'Active & Historical Sessions',
+    description: 'Session Management & Metrics',
   },
   {
     label: 'Analytics',
     href: '/admin/chat/analytics',
     icon: BarChart3,
-    description: 'Performance & Usage Metrics',
+    description: 'Performance & Usage Analytics',
   },
   {
     label: 'Configuration',
@@ -43,16 +36,10 @@ const chatNavigationItems = [
     description: 'n8n Integration & Settings',
   },
   {
-    label: 'Queue',
-    href: '/admin/chat/queue',
-    icon: Zap,
-    description: 'Webhook Queue Management',
-  },
-  {
-    label: 'Monitoring',
-    href: '/admin/chat/monitoring',
+    label: 'Operations',
+    href: '/admin/chat/operations',
     icon: Activity,
-    description: 'Webhook Performance & Health',
+    description: 'Queue & Monitoring',
   },
   {
     label: 'Archive',

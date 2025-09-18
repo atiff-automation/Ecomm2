@@ -8,7 +8,7 @@ import { Toaster } from 'sonner';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
 import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
-import { ChatWidget } from '@/components/chat';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 import './globals.css';
 
 const geistSans = localFont({

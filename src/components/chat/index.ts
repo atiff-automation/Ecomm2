@@ -1,36 +1,41 @@
 /**
- * Chat System Component Exports
- * Centralized export file for all chat components
+ * Chat Components Barrel Export
+ * Centralized exports following DRY principles
  */
 
-// Main components
+export { default as MetricsCards, DetailedMetricsCards } from './MetricsCards';
 export { ChatWidget } from './ChatWidget';
-export { ChatBubble } from './ChatBubble';
-export { ChatWindow } from './ChatWindow';
-export { MessageList } from './MessageList';
-export { MessageItem } from './MessageItem';
-export { MessageInput } from './MessageInput';
-export { TypingIndicator } from './TypingIndicator';
-export { ConnectionStatus } from './ConnectionStatus';
-export { QuickReply } from './QuickReply';
-export { RichContent } from './RichContent';
-export { MediaUpload } from './MediaUpload';
+export { SessionFilters } from './SessionFilters';
+export { SessionsTable } from './SessionsTable';
+export { ExportDialog } from './ExportDialog';
 
-// Context and providers
-export { ChatProvider } from './ChatProvider';
-export { useChatContext } from './ChatProvider';
+// Export all chat-related types for convenience
+export type {
+  ChatSession,
+  ChatMetrics,
+  FilterState,
+  SortConfig,
+  PaginationConfig,
+  ExportOptions,
+  ExportProgress,
+  ExportJob,
+} from '@/types/chat';
 
-// Hooks
-export { useChat } from './hooks/useChat';
-export { useWebSocket } from './hooks/useWebSocket';
-export { useChatHistory } from './hooks/useChatHistory';
-export { usePolling } from './hooks/usePolling';
+// Export commonly used utilities
+export {
+  formatDuration,
+  formatTimestamp,
+  formatDate,
+  formatDateTime,
+  getRelativeTime,
+  getStatusColor,
+  getStatusIcon,
+  getUserTypeLabel,
+  getDurationCategory,
+  getMessageCountCategory,
+  cn,
+} from '@/utils/chat';
 
-// Types and constants
-export * from './types';
-
-// Utilities
-export { chatApi } from './utils/api-client';
-export { chatUtils } from './utils/chat-utils';
-export { chatStorage } from './utils/storage';
-export { chatValidation } from './utils/validation';
+// TODO: Re-enable hooks once server/client context issues are resolved
+// export { useSessionData } from '@/hooks/useSessionData';
+// export { useExport } from '@/hooks/useExport';

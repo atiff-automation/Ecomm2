@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChatWidget } from '@/components/chat';
+// import { ChatWidget } from '@/components/chat/ChatWidget';
 
 export default function TestChatPage() {
   return (
@@ -84,8 +84,8 @@ export default function TestChatPage() {
         </div>
       </div>
 
-      {/* Chat Widget - Enabled for testing */}
-      <ChatWidget
+      {/* Chat Widget - Temporarily disabled for debugging */}
+      {/*<ChatWidget
         config={{
           position: 'bottom-right',
           theme: 'light',
@@ -95,7 +95,7 @@ export default function TestChatPage() {
           placeholder: 'Type your message...',
           maxMessageLength: 1000
         }}
-      />
+      />*/}
     </div>
   );
 }

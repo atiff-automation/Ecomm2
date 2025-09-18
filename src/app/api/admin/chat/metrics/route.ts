@@ -63,10 +63,12 @@ export async function GET(request: NextRequest) {
         },
       }),
 
-      // Active sessions count
+      // Active sessions count (mapping database values to expected values)
       prisma.chatSession.count({
         where: {
-          status: 'active',
+          status: {
+            in: ['active', 'inactive'], // 'inactive' is essentially 'active' in our system
+          },
         },
       }),
 
@@ -173,9 +175,23 @@ export async function GET(request: NextRequest) {
       timestamp: new Date(item.hour).getTime(),
     })).reverse();
 
-    // Transform status distribution
+    // Transform status distribution - map database values to expected frontend values
     const statusDistribution = sessionsByStatus.reduce((acc, item) => {
-      acc[item.status] = item._count.status;
+      let mappedStatus: string;
+      switch (item.status) {
+        case 'active':
+        case 'inactive':
+          mappedStatus = 'active';
+          break;
+        case 'expired':
+        case 'ended':
+        case 'archived':
+          mappedStatus = 'ended';
+          break;
+        default:
+          mappedStatus = 'idle';
+      }
+      acc[mappedStatus] = (acc[mappedStatus] || 0) + item._count.status;
       return acc;
     }, {} as Record<string, number>);
 

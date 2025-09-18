@@ -32,10 +32,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Build where clause
+    // Build where clause with database status mapping
     const whereClause: any = {};
     if (status && status !== 'all') {
-      whereClause.status = status;
+      // Map frontend filter status to database status values
+      switch (status) {
+        case 'active':
+          whereClause.status = { in: ['active', 'inactive'] };
+          break;
+        case 'ended':
+          whereClause.status = { in: ['expired', 'ended', 'archived'] };
+          break;
+        case 'idle':
+          whereClause.status = 'idle';
+          break;
+        default:
+          whereClause.status = status;
+      }
     }
 
     // Fetch chat sessions with related data
@@ -63,11 +76,27 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
+    // Map database status values to expected frontend values
+    const mapDatabaseStatus = (dbStatus: string): 'active' | 'idle' | 'ended' => {
+      switch (dbStatus) {
+        case 'active':
+        case 'inactive':
+          return 'active';
+        case 'expired':
+          return 'ended';
+        case 'ended':
+        case 'archived':
+          return 'ended';
+        default:
+          return 'idle';
+      }
+    };
+
     // Transform the data for the frontend
     const transformedSessions = sessions.map(session => ({
       id: session.id,
       sessionId: session.sessionId,
-      status: session.status,
+      status: mapDatabaseStatus(session.status),
       startedAt: session.createdAt.toISOString(),
       lastActivity: session.lastActivity.toISOString(),
       messageCount: session._count.messages,
