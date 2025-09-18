@@ -133,7 +133,7 @@ export class ChatPerformanceUtils {
 
   /**
    * Optimized metrics calculation with parallel processing
-   * Using database aggregations instead of application-level calculations
+   * Using database aggregations with proper timeout-based active session calculation
    */
   static async getOptimizedMetrics(timeRange: string = '24h') {
     const now = new Date();
@@ -148,6 +148,11 @@ export class ChatPerformanceUtils {
     const startDate = ranges[timeRange as keyof typeof ranges] || ranges['24h'];
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Get timeout configuration for accurate active session calculation
+    const timeouts = await this.getSessionTimeouts();
+    const guestCutoff = new Date(now.getTime() - timeouts.guestTimeoutMs);
+    const authenticatedCutoff = new Date(now.getTime() - timeouts.authenticatedTimeoutMs);
+
     // Execute all queries in parallel - key performance optimization
     const [
       totalSessions,
@@ -161,9 +166,30 @@ export class ChatPerformanceUtils {
         where: { createdAt: { gte: startDate } }
       }),
 
-      // Optimized active sessions count
+      // FIXED: Active sessions count based on timeout rules, not just database status
       prisma.chatSession.count({
-        where: { status: { in: ['active', 'inactive'] } }
+        where: {
+          OR: [
+            // Explicitly active sessions (regardless of timeout)
+            { status: 'active' },
+            // Guest sessions within timeout window
+            {
+              AND: [
+                { status: { in: ['inactive'] } },
+                { userId: null }, // Guest sessions
+                { lastActivity: { gte: guestCutoff } }
+              ]
+            },
+            // Authenticated sessions within timeout window
+            {
+              AND: [
+                { status: { in: ['inactive'] } },
+                { userId: { not: null } }, // Authenticated sessions
+                { lastActivity: { gte: authenticatedCutoff } }
+              ]
+            }
+          ]
+        }
       }),
 
       // Optimized message count
@@ -200,6 +226,36 @@ export class ChatPerformanceUtils {
       averageSessionDuration: 0, // Simplified for performance
       responseTime: 0, // Simplified for performance
       messagesPerSession: totalSessions > 0 ? Math.round(totalMessages / totalSessions) : 0,
+    };
+  }
+
+  /**
+   * Get session timeout configuration
+   * Centralized timeout access for metrics calculation
+   */
+  static async getSessionTimeouts(): Promise<{
+    guestTimeoutMs: number;
+    authenticatedTimeoutMs: number;
+  }> {
+    const config = await prisma.chatConfig.findFirst({
+      where: { isActive: true },
+      select: {
+        guestSessionTimeoutMinutes: true,
+        authenticatedSessionTimeoutMinutes: true,
+      },
+    });
+
+    if (config) {
+      return {
+        guestTimeoutMs: config.guestSessionTimeoutMinutes * 60 * 1000,
+        authenticatedTimeoutMs: config.authenticatedSessionTimeoutMinutes * 60 * 1000,
+      };
+    }
+
+    // Default timeouts if no config found
+    return {
+      guestTimeoutMs: 13 * 60 * 1000, // 13 minutes
+      authenticatedTimeoutMs: 19 * 60 * 1000, // 19 minutes
     };
   }
 
