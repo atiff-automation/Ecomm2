@@ -10,7 +10,7 @@ async function updateChatConfig() {
       data: {
         verified: true,
         healthStatus: 'HEALTHY',
-        webhookUrl: 'https://demo.webhook.com/chat',
+        webhookUrl: 'http://localhost:3001/webhook/chat-integration',
         lastHealthCheck: new Date()
       }
     });
