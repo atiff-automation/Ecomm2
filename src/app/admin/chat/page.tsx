@@ -47,7 +47,7 @@ export default function SessionsPage() {
     search: '',
     status: 'all',
     dateRange: {
-      from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+      from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days instead of 365
       to: new Date(),
     },
     userType: 'all',
@@ -86,7 +86,16 @@ export default function SessionsPage() {
 
       if (sessionsResponse.ok) {
         const sessionsData = await sessionsResponse.json();
+        // console.log('🔍 Frontend Sessions Debug:', {
+        //   sessionsCount: sessionsData.sessions?.length || 0,
+        //   paginationTotal: sessionsData.pagination?.total,
+        // });
         setSessions(sessionsData.sessions || []);
+      } else {
+        console.error('🔍 Frontend Sessions Error:', {
+          status: sessionsResponse.status,
+          statusText: sessionsResponse.statusText
+        });
       }
 
       if (metricsResponse.ok) {
@@ -100,9 +109,9 @@ export default function SessionsPage() {
     }
   };
 
-  // Real-time updates temporarily disabled to fix refresh issue
+  // Real-time updates for session list - COMPLETELY DISABLED to fix race condition
   // const realTimeUpdates = useRealTimeUpdates({
-  //   enabled: true,
+  //   enabled: false, // TEMPORARILY DISABLED - was causing race condition with initial load
   //   interval: 30000, // 30 seconds
   //   onUpdate: fetchChatData,
   //   onError: (error) => {
@@ -124,6 +133,13 @@ export default function SessionsPage() {
     (pagination.page - 1) * pagination.pageSize,
     pagination.page * pagination.pageSize
   );
+
+  // Debug logging (remove in production)
+  // console.log('🔍 Session Processing Debug:', {
+  //   originalSessions: sessions.length,
+  //   filteredSessions: filteredSessions.length,
+  //   paginatedSessions: paginatedSessions.length,
+  // });
 
   // Update pagination total when filtered data changes
   useEffect(() => {

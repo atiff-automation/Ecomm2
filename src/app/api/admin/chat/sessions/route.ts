@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
+import { ChatPerformanceUtils, PerformanceMonitor } from '@/lib/db/performance-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,88 +33,45 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Build where clause with database status mapping
-    const whereClause: any = {};
-    if (status && status !== 'all') {
-      // Map frontend filter status to database status values
-      switch (status) {
-        case 'active':
-          whereClause.status = { in: ['active', 'inactive'] };
-          break;
-        case 'ended':
-          whereClause.status = { in: ['expired', 'ended', 'archived'] };
-          break;
-        case 'idle':
-          whereClause.status = 'idle';
-          break;
-        default:
-          whereClause.status = status;
-      }
-    }
+    // Use optimized performance utilities - centralized approach
+    const [sessions, totalCount] = await Promise.all([
+      PerformanceMonitor.measureQueryTime(
+        'chat-sessions-fetch',
+        () => ChatPerformanceUtils.getOptimizedChatSessions({ status, limit, offset })
+      ),
+      PerformanceMonitor.measureQueryTime(
+        'chat-sessions-count',
+        () => {
+          const whereClause: any = {};
+          if (status && status !== 'all') {
+            switch (status) {
+              case 'active':
+                whereClause.status = { in: ['active', 'inactive'] };
+                break;
+              case 'ended':
+                whereClause.status = { in: ['expired', 'ended', 'archived'] };
+                break;
+              case 'idle':
+                whereClause.status = 'idle';
+                break;
+              default:
+                whereClause.status = status;
+            }
+          }
+          return ChatPerformanceUtils.getOptimizedSessionCount(whereClause);
+        }
+      ),
+    ]);
 
-    // Fetch chat sessions with related data
-    const sessions = await prisma.chatSession.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        _count: {
-          select: {
-            messages: true,
-          },
-        },
-      },
-      orderBy: {
-        lastActivity: 'desc',
-      },
-      take: limit,
-      skip: offset,
-    });
+    // Transform using centralized utility
+    const transformedSessions = ChatPerformanceUtils.transformSessionData(sessions);
 
-    // Map database status values to expected frontend values
-    const mapDatabaseStatus = (dbStatus: string): 'active' | 'idle' | 'ended' => {
-      switch (dbStatus) {
-        case 'active':
-        case 'inactive':
-          return 'active';
-        case 'expired':
-          return 'ended';
-        case 'ended':
-        case 'archived':
-          return 'ended';
-        default:
-          return 'idle';
-      }
-    };
-
-    // Transform the data for the frontend
-    const transformedSessions = sessions.map(session => ({
-      id: session.id,
-      sessionId: session.sessionId,
-      status: mapDatabaseStatus(session.status),
-      startedAt: session.createdAt.toISOString(),
-      lastActivity: session.lastActivity.toISOString(),
-      messageCount: session._count.messages,
-      userId: session.user?.id,
-      userEmail: session.user?.email,
-      userName: session.user ? `${session.user.firstName} ${session.user.lastName}`.trim() : null,
-      guestEmail: session.guestEmail,
-      guestPhone: session.guestPhone,
-      userAgent: session.userAgent,
-      ipAddress: session.ipAddress,
-      metadata: session.metadata,
-    }));
-
-    // Get total count for pagination
-    const totalCount = await prisma.chatSession.count({
-      where: whereClause,
-    });
+    // Debug logging (remove in production)
+    // console.log('🔍 Sessions API Debug:', {
+    //   totalSessions: sessions.length,
+    //   transformedSessions: transformedSessions.length,
+    //   totalCount,
+    // });
 
     return NextResponse.json({
       sessions: transformedSessions,

@@ -162,6 +162,35 @@ class ChatApiClient {
    * Send a message
    */
   async sendMessage(request: SendMessageRequest, sessionExpiresAt?: string): Promise<ApiResponse<SendMessageResponse>> {
+    // Validate request parameters before making API call
+    if (!request.sessionId || typeof request.sessionId !== 'string') {
+      console.error('🚫 API Client: Invalid sessionId:', request.sessionId);
+      return {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid session ID',
+          userFriendly: true,
+          action: 'start_new_session',
+          suggestion: 'Please start a new chat session'
+        }
+      };
+    }
+
+    if (!request.content || typeof request.content !== 'string') {
+      console.error('🚫 API Client: Invalid content:', request.content);
+      return {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Message content is required',
+          userFriendly: true,
+          action: 'retry',
+          suggestion: 'Please enter a message'
+        }
+      };
+    }
+
     // Check if session is expired before making API call
     if (sessionExpiresAt && chatUtils.isSessionExpired(sessionExpiresAt)) {
       console.log('🚫 API Client: Blocked sendMessage call for expired session');
@@ -176,6 +205,12 @@ class ChatApiClient {
         }
       };
     }
+
+    console.log('📤 API Client: Sending message:', {
+      sessionId: request.sessionId,
+      contentLength: request.content.length,
+      messageType: request.messageType
+    });
 
     return this.makeRequest<SendMessageResponse>('/send', {
       method: 'POST',

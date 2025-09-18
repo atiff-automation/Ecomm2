@@ -34,75 +34,12 @@ interface PerformanceReport {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // Rate limiting
-    const identifier = request.ip || 'anonymous';
-    const { success } = await rateLimit.limit(identifier, {
-      limit: 200,
-      window: '1h',
-      key: 'performance-monitoring',
-    });
-
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded' },
-        { status: 429 }
-      );
-    }
-
-    // Parse JSON with error handling
-    let performanceReport: PerformanceReport;
-    try {
-      const body = await request.text();
-      if (!body || body.trim() === '') {
-        return NextResponse.json(
-          { error: 'Empty request body' },
-          { status: 400 }
-        );
-      }
-      performanceReport = JSON.parse(body);
-    } catch (parseError) {
-      console.error('JSON parsing error:', parseError);
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-
-    // Validate required fields - support multiple data formats
-    if (!performanceReport.timestamp || !performanceReport.url) {
-      return NextResponse.json(
-        { error: 'Missing required fields: timestamp, url' },
-        { status: 400 }
-      );
-    }
-
-    // Must have either 'type' (for performance reports) or 'metric' (for individual metrics)
-    if (!performanceReport.type && !performanceReport.metric) {
-      return NextResponse.json(
-        { error: 'Missing data type: must have either type or metric field' },
-        { status: 400 }
-      );
-    }
-
-    // Process the performance report
-    await processPerformanceReport(performanceReport);
-
-    return NextResponse.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Error processing performance report:', error);
-
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
-  }
+  // DISABLED: Performance monitoring is temporarily disabled to fix feedback loop issues
+  return NextResponse.json({
+    success: true,
+    message: 'Performance monitoring disabled',
+    timestamp: new Date().toISOString(),
+  });
 }
 
 /**

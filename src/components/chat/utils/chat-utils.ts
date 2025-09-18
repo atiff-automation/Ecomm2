@@ -89,11 +89,25 @@ class ChatUtilities {
     messageType: ChatMessage['messageType'] = 'text',
     metadata?: Record<string, any>
   ): ChatMessage {
+    // Validate inputs to prevent invalid messages
+    if (!sessionId || typeof sessionId !== 'string') {
+      throw new Error('Invalid sessionId provided to createOptimisticMessage');
+    }
+
+    if (!content || typeof content !== 'string') {
+      throw new Error('Invalid content provided to createOptimisticMessage');
+    }
+
+    const sanitizedContent = this.sanitizeMessageContent(content);
+    if (!sanitizedContent.trim()) {
+      throw new Error('Message content cannot be empty after sanitization');
+    }
+
     return {
       id: this.generateTempMessageId(),
       sessionId,
       senderType: 'user',
-      content: this.sanitizeMessageContent(content),
+      content: sanitizedContent,
       messageType,
       metadata,
       status: 'pending',

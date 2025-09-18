@@ -128,10 +128,10 @@ export default function RootLayout({
         <GlobalErrorBoundary>
           <MonitoringProvider
             config={{
-              enableErrorReporting: process.env.ENABLE_ERROR_MONITORING !== 'false',
-              enablePerformanceMonitoring: process.env.ENABLE_PERFORMANCE_MONITORING !== 'false',
-              enableUserTracking: process.env.ENABLE_USER_TRACKING !== 'false',
-              sampleRate: process.env.MONITORING_EMERGENCY_DISABLE === 'true' ? 0 : (process.env.NODE_ENV === 'production' ? 0.1 : 1.0),
+              enableErrorReporting: false,
+              enablePerformanceMonitoring: false,
+              enableUserTracking: false,
+              sampleRate: 0,
             }}
           >
             <AuthProvider>

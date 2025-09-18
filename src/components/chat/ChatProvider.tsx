@@ -526,11 +526,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
   // Message management
   const sendMessage = useCallback(async (
-    content: string, 
+    content: string,
     messageType: 'text' | 'quick_reply' = 'text'
   ) => {
+    // Validate inputs first
+    if (!content || typeof content !== 'string') {
+      throw new Error('Message content is required and must be a string');
+    }
+
     if (!state.session?.id) {
       throw new Error('No active session');
+    }
+
+    // Validate session ID format
+    if (typeof state.session.id !== 'string' || state.session.id.length < 10) {
+      throw new Error('Invalid session ID format');
     }
 
     // Validate message

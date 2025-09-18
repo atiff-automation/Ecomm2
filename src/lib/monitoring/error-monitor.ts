@@ -499,17 +499,19 @@ class ErrorMonitor {
   }
 
   private async sendToEndpoint(endpoint: string, data: any) {
-    try {
-      await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error(`Failed to send data to ${endpoint}:`, error);
-    }
+    // TEMPORARILY DISABLED - was causing fetch death spiral
+    // try {
+    //   await fetch(endpoint, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(data),
+    //   });
+    // } catch (error) {
+    //   console.error(`Failed to send data to ${endpoint}:`, error);
+    // }
+    return; // No-op to prevent fetch death spiral
   }
 
   public getStats() {

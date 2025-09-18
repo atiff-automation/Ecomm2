@@ -90,6 +90,12 @@ async function handlePOST(request: NextRequest) {
         metadata: validatedData.metadata,
       },
     });
+
+    // Update session's lastActivity to reflect user interaction
+    await prisma.chatSession.update({
+      where: { sessionId: validatedData.sessionId },
+      data: { lastActivity: new Date() },
+    });
     
     // Prepare webhook payload with user context
     const webhookPayload = {

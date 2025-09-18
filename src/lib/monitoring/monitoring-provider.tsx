@@ -40,8 +40,8 @@ export function MonitoringProvider({
   const { reportError, addBreadcrumb, getStats } = useErrorMonitor();
 
   useEffect(() => {
-    // Initialize centralized monitoring service - DRY approach
-    monitoringService.initialize();
+    // Initialize centralized monitoring service - DRY approach - TEMPORARILY DISABLED
+    // monitoringService.initialize(); // DISABLED due to fetch interference
     
     // Update legacy monitoring configuration if provided
     if (Object.keys(config).length > 0) {
