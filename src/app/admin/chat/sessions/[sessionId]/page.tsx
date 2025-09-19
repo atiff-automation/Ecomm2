@@ -31,7 +31,7 @@ interface ChatMessage {
 interface ChatSessionDetail {
   id: string;
   sessionId: string;
-  status: 'active' | 'idle' | 'ended';
+  status: 'active' | 'ended';
   startedAt: string;
   endedAt?: string;
   lastActivity: string;
@@ -170,8 +170,6 @@ export default function SessionDetailPage() {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800';
-      case 'idle':
-        return 'bg-yellow-100 text-yellow-800';
       case 'ended':
         return 'bg-gray-100 text-gray-800';
       default:

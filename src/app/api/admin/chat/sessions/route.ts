@@ -46,13 +46,10 @@ export async function GET(request: NextRequest) {
           if (status && status !== 'all') {
             switch (status) {
               case 'active':
-                whereClause.status = { in: ['active', 'inactive'] };
+                whereClause.status = 'active';
                 break;
               case 'ended':
-                whereClause.status = { in: ['expired', 'ended', 'archived'] };
-                break;
-              case 'idle':
-                whereClause.status = 'idle';
+                whereClause.status = { in: ['ended', 'expired', 'archived', 'completed', 'inactive', 'pending'] };
                 break;
               default:
                 whereClause.status = status;

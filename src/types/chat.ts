@@ -7,7 +7,7 @@
 export interface ChatSession {
   id: string;
   sessionId: string;
-  status: 'active' | 'idle' | 'ended';
+  status: 'active' | 'ended';
   startedAt: string;
   lastActivity: string;
   messageCount: number;
@@ -70,7 +70,7 @@ export interface DetailedMetrics extends ChatMetrics {
 // Filtering and Search Types
 export interface FilterState {
   search: string;
-  status: 'all' | 'active' | 'idle' | 'ended';
+  status: 'all' | 'active' | 'ended';
   dateRange: {
     from: Date;
     to: Date;

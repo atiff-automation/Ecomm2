@@ -89,7 +89,6 @@ export const getRelativeTime = (timestamp: string): string => {
 export const getStatusColor = (status: SessionStatus): string => {
   const statusColors: Record<SessionStatus, string> = {
     active: 'bg-green-100 text-green-800 border-green-200',
-    idle: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     ended: 'bg-gray-100 text-gray-800 border-gray-200',
   };
   return statusColors[status] || statusColors.ended;
@@ -98,10 +97,17 @@ export const getStatusColor = (status: SessionStatus): string => {
 export const getStatusIcon = (status: SessionStatus): string => {
   const statusIcons: Record<SessionStatus, string> = {
     active: '🟢',
-    idle: '🟡',
     ended: '⚪',
   };
   return statusIcons[status] || statusIcons.ended;
+};
+
+export const getDisplayStatus = (status: SessionStatus): string => {
+  const displayStatuses: Record<SessionStatus, string> = {
+    active: 'Active',
+    ended: 'Ended',
+  };
+  return displayStatuses[status] || 'Ended';
 };
 
 export const getUserTypeLabel = (session: ChatSession): UserType => {
@@ -135,7 +141,7 @@ export const filterSessions = (sessions: ChatSession[], filters: FilterState): C
       if (!matchesSearch) return false;
     }
 
-    // Status filter
+    // Status filter - simplified to active/ended only
     if (filters.status !== 'all' && session.status !== filters.status) {
       return false;
     }

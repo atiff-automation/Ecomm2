@@ -137,7 +137,7 @@ class TrackingCronManager {
       const totalProcessed = result.expiredCount + result.inactiveCount;
       if (totalProcessed > 0) {
         console.log(
-          `💬 Chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} inactive`
+          `💬 Chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} ended`
         );
       } else if (isDebugMode()) {
         console.log('💬 No chat sessions needed cleanup');
@@ -484,7 +484,7 @@ export const triggerChatSessionCleanup = async (): Promise<void> => {
     const totalProcessed = result.expiredCount + result.inactiveCount;
     
     console.log(
-      `✅ Manual chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} inactive`
+      `✅ Manual chat session cleanup completed: ${result.expiredCount} expired, ${result.inactiveCount} ended`
     );
 
     if (result.error) {

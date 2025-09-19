@@ -27,13 +27,10 @@ export class ChatPerformanceUtils {
     if (status && status !== 'all') {
       switch (status) {
         case 'active':
-          whereClause.status = { in: ['active', 'inactive'] };
+          whereClause.status = 'active';
           break;
         case 'ended':
-          whereClause.status = { in: ['expired', 'ended', 'archived'] };
-          break;
-        case 'idle':
-          whereClause.status = 'idle';
+          whereClause.status = { in: ['expired', 'ended', 'archived', 'completed', 'inactive', 'pending'] };
           break;
         default:
           whereClause.status = status;
@@ -93,17 +90,19 @@ export class ChatPerformanceUtils {
   /**
    * Map database status to frontend status - centralized logic
    */
-  static mapDatabaseStatus(dbStatus: string): 'active' | 'idle' | 'ended' {
+  static mapDatabaseStatus(dbStatus: string): 'active' | 'ended' {
     switch (dbStatus) {
       case 'active':
-      case 'inactive':
         return 'active';
       case 'expired':
       case 'ended':
       case 'archived':
+      case 'inactive':
+      case 'completed':
+      case 'pending':
         return 'ended';
       default:
-        return 'idle';
+        return 'ended';
     }
   }
 
@@ -174,30 +173,10 @@ export class ChatPerformanceUtils {
       // All time sessions count
       prisma.chatSession.count(),
 
-      // FIXED: Active sessions count based on timeout rules, not just database status
+      // Simplified: Active sessions count - just count database status 'active'
+      // The status simplification means we now only have 'active' and 'ended'
       prisma.chatSession.count({
-        where: {
-          OR: [
-            // Explicitly active sessions (regardless of timeout)
-            { status: 'active' },
-            // Guest sessions within timeout window
-            {
-              AND: [
-                { status: { in: ['inactive'] } },
-                { userId: null }, // Guest sessions
-                { lastActivity: { gte: guestCutoff } }
-              ]
-            },
-            // Authenticated sessions within timeout window
-            {
-              AND: [
-                { status: { in: ['inactive'] } },
-                { userId: { not: null } }, // Authenticated sessions
-                { lastActivity: { gte: authenticatedCutoff } }
-              ]
-            }
-          ]
-        }
+        where: { status: 'active' }
       }),
 
       // Messages in time range
@@ -228,7 +207,7 @@ export class ChatPerformanceUtils {
           AVG(EXTRACT(EPOCH FROM (COALESCE("endedAt", "lastActivity") - "createdAt"))/60) as avg_duration_minutes
         FROM "chat_sessions"
         WHERE "createdAt" >= ${startDate}
-          AND "status" IN ('ended', 'expired', 'archived')
+          AND "status" IN ('ended', 'expired', 'archived', 'completed', 'inactive', 'pending')
           AND ("endedAt" IS NOT NULL OR "lastActivity" IS NOT NULL)
       `,
     ]);

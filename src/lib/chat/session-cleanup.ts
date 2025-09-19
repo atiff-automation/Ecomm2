@@ -121,7 +121,7 @@ export async function updateExpiredChatSessions(): Promise<SessionCleanupResult>
 }
 
 /**
- * Mark inactive sessions as 'inactive' (sessions that haven't had activity beyond timeout but no explicit expiry)
+ * Mark inactive sessions as 'ended' (sessions that haven't had activity beyond timeout but no explicit expiry)
  * This handles sessions that might not have proper expiresAt set
  */
 export async function updateInactiveChatSessions(): Promise<SessionCleanupResult> {
@@ -175,7 +175,7 @@ export async function updateInactiveChatSessions(): Promise<SessionCleanupResult
 
     console.log(`Found ${inactiveSessions.length} inactive chat sessions`);
 
-    // Update status to 'inactive'
+    // Update status to 'ended'
     const updateResult = await prisma.chatSession.updateMany({
       where: {
         status: 'active',
@@ -197,7 +197,7 @@ export async function updateInactiveChatSessions(): Promise<SessionCleanupResult
         ],
       },
       data: {
-        status: 'inactive',
+        status: 'ended',
         endedAt: now,
       },
     });
@@ -211,7 +211,7 @@ export async function updateInactiveChatSessions(): Promise<SessionCleanupResult
           resource: 'ChatSession',
           resourceId: 'batch-inactivity',
           details: {
-            cleanupType: 'inactive_chat_sessions',
+            cleanupType: 'ended_chat_sessions',
             inactiveCount: updateResult.count,
             guestTimeoutMinutes: timeouts.guestTimeoutMs / (60 * 1000),
             authenticatedTimeoutMinutes: timeouts.authenticatedTimeoutMs / (60 * 1000),
@@ -238,7 +238,7 @@ export async function updateInactiveChatSessions(): Promise<SessionCleanupResult
       inactiveCount: updateResult.count,
     };
   } catch (error) {
-    console.error('Error updating inactive chat sessions:', error);
+    console.error('Error updating ended chat sessions:', error);
     return {
       expiredCount: 0,
       inactiveCount: 0,
@@ -248,7 +248,7 @@ export async function updateInactiveChatSessions(): Promise<SessionCleanupResult
 }
 
 /**
- * Comprehensive session cleanup - handles both expired and inactive sessions
+ * Comprehensive session cleanup - handles both expired and ended sessions
  */
 export async function cleanupChatSessions(): Promise<SessionCleanupResult> {
   try {
@@ -269,7 +269,7 @@ export async function cleanupChatSessions(): Promise<SessionCleanupResult> {
 
     const totalProcessed = totalResult.expiredCount + totalResult.inactiveCount;
     if (totalProcessed > 0) {
-      console.log(`✅ Chat session cleanup completed: ${totalResult.expiredCount} expired, ${totalResult.inactiveCount} inactive`);
+      console.log(`✅ Chat session cleanup completed: ${totalResult.expiredCount} expired, ${totalResult.inactiveCount} ended`);
     } else {
       console.log('📦 No chat sessions needed cleanup');
     }
@@ -337,10 +337,10 @@ export async function getChatSessionsExpiringSoon(
  */
 export async function getSessionCleanupStatistics() {
   try {
-    const [activeCount, expiredCount, inactiveCount, totalCount] = await Promise.all([
+    const [activeCount, expiredCount, endedCount, totalCount] = await Promise.all([
       prisma.chatSession.count({ where: { status: 'active' } }),
       prisma.chatSession.count({ where: { status: 'expired' } }),
-      prisma.chatSession.count({ where: { status: 'inactive' } }),
+      prisma.chatSession.count({ where: { status: 'ended' } }),
       prisma.chatSession.count(),
     ]);
 
@@ -352,7 +352,7 @@ export async function getSessionCleanupStatistics() {
     const authenticatedCutoff = new Date(now.getTime() - timeouts.authenticatedTimeoutMs);
 
     // Count sessions that need cleanup
-    const [expiredNeedingCleanup, inactiveNeedingCleanup] = await Promise.all([
+    const [expiredNeedingCleanup, endedNeedingCleanup] = await Promise.all([
       prisma.chatSession.count({
         where: {
           status: 'active',
@@ -375,12 +375,12 @@ export async function getSessionCleanupStatistics() {
         total: totalCount,
         active: activeCount,
         expired: expiredCount,
-        inactive: inactiveCount,
+        ended: endedCount,
       },
       cleanup: {
         expiredNeedingCleanup,
-        inactiveNeedingCleanup,
-        totalNeedingCleanup: expiredNeedingCleanup + inactiveNeedingCleanup,
+        endedNeedingCleanup,
+        totalNeedingCleanup: expiredNeedingCleanup + endedNeedingCleanup,
       },
       timeouts: {
         guestTimeoutMinutes: timeouts.guestTimeoutMs / (60 * 1000),

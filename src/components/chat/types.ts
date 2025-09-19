@@ -20,7 +20,7 @@ export interface ChatSession {
   userId?: string;
   guestEmail?: string; // Keep for backward compatibility during transition
   guestPhone?: string; // New field for contact number
-  status: 'active' | 'inactive' | 'expired';
+  status: 'active' | 'ended';
   metadata?: Record<string, any>;
   createdAt: string;
   updatedAt?: string;
@@ -325,6 +325,5 @@ export const MESSAGE_STATUS = {
 
 export const SESSION_STATUS = {
   ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  EXPIRED: 'expired'
+  ENDED: 'ended'
 } as const;

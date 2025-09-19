@@ -90,6 +90,8 @@ export default function SessionsPage() {
 
       if (sessionsResponse.ok) {
         const sessionsData = await sessionsResponse.json();
+        // Debug: Sessions API successful
+        console.log('✅ Sessions loaded:', sessionsData.sessions?.length || 0);
         setSessions(sessionsData.sessions || []);
       } else {
         console.error('Sessions API Error:', {
@@ -125,7 +127,7 @@ export default function SessionsPage() {
   // Real-time updates for session list - Fixed race condition with loading state management
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // TEMPORARILY DISABLED - Real-time updates causing compilation issues
+  // Real-time updates - TEMPORARILY DISABLED FOR DEBUGGING
   // const realTimeUpdates = useRealTimeUpdates({
   //   enabled: !loading && !isInitialLoad, // Only enable after initial load is complete
   //   interval: 30000, // 30 seconds
@@ -139,7 +141,7 @@ export default function SessionsPage() {
   useEffect(() => {
     setIsInitialLoad(true); // Reset for new time range
     fetchChatData();
-  }, [timeRange]); // Only depend on timeRange, not fetchChatData
+  }, [fetchChatData, timeRange]); // Include fetchChatData in dependencies
 
   // Data processing following centralized utilities
   const filteredSessions = filterSessions(sessions, filters);
@@ -150,6 +152,16 @@ export default function SessionsPage() {
     (pagination.page - 1) * pagination.pageSize,
     pagination.page * pagination.pageSize
   );
+
+  // Debug logging for session processing - REMOVED TO PREVENT RE-RENDER LOOPS
+  // console.log('🔍 Session Processing Debug:', {
+  //   originalSessions: sessions.length,
+  //   filteredSessions: filteredSessions.length,
+  //   sortedSessions: sortedSessions.length,
+  //   paginatedSessions: paginatedSessions.length,
+  //   filters,
+  //   loading
+  // });
 
   // Debug logging (remove in production)
   // console.log('🔍 Session Processing Debug:', {
@@ -165,6 +177,14 @@ export default function SessionsPage() {
       total: filteredSessions.length,
     }));
   }, [filteredSessions.length]);
+
+  // Debug: Log when sessions state actually changes
+  useEffect(() => {
+    console.log('🔍 Sessions state changed:', {
+      count: sessions.length,
+      sample: sessions[0]?.sessionId || 'none'
+    });
+  }, [sessions]);
 
   // Event handlers following plan component structure
   const handleFiltersChange = (newFilters: Partial<FilterState>) => {

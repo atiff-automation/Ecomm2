@@ -105,7 +105,6 @@ export function SessionFilters({
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="idle">Idle</SelectItem>
             <SelectItem value="ended">Ended</SelectItem>
           </SelectContent>
         </Select>
