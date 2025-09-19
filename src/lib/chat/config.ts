@@ -72,8 +72,8 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       webhookSecret: null,
       apiKey: null,
       sessionTimeoutMinutes: 30, // Backward compatibility
-      guestSessionTimeoutMinutes: 30,
-      authenticatedSessionTimeoutMinutes: 120,
+      guestSessionTimeoutMinutes: 13, // Match database default
+      authenticatedSessionTimeoutMinutes: 19, // Match database default
       maxMessageLength: 4000,
       rateLimitMessages: 20,
       rateLimitWindowMs: 60000,
@@ -98,8 +98,8 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       webhookSecret: null,
       apiKey: null,
       sessionTimeoutMinutes: 30, // Backward compatibility
-      guestSessionTimeoutMinutes: 30,
-      authenticatedSessionTimeoutMinutes: 120,
+      guestSessionTimeoutMinutes: 13, // Match database default
+      authenticatedSessionTimeoutMinutes: 19, // Match database default
       maxMessageLength: 4000,
       rateLimitMessages: 20,
       rateLimitWindowMs: 60000,

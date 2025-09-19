@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { RefreshCw, MessageSquare, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,12 +78,11 @@ export default function SessionsPage() {
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
   const [loading, setLoading] = useState(true);
 
-  // Data fetching following centralized pattern
-  const fetchChatData = async () => {
+  // Data fetching following centralized pattern - Simplified without real-time updates
+  const fetchChatData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Parallel data fetching for optimal performance
       const [sessionsResponse, metricsResponse] = await Promise.all([
         fetch('/api/admin/chat/sessions'),
         fetch(`/api/admin/chat/metrics?range=${timeRange}`),
@@ -91,13 +90,9 @@ export default function SessionsPage() {
 
       if (sessionsResponse.ok) {
         const sessionsData = await sessionsResponse.json();
-        // console.log('🔍 Frontend Sessions Debug:', {
-        //   sessionsCount: sessionsData.sessions?.length || 0,
-        //   paginationTotal: sessionsData.pagination?.total,
-        // });
         setSessions(sessionsData.sessions || []);
       } else {
-        console.error('🔍 Frontend Sessions Error:', {
+        console.error('Sessions API Error:', {
           status: sessionsResponse.status,
           statusText: sessionsResponse.statusText
         });
@@ -105,18 +100,34 @@ export default function SessionsPage() {
 
       if (metricsResponse.ok) {
         const metricsData = await metricsResponse.json();
-        setMetrics(metricsData.metrics || metrics);
+        setMetrics(metricsData.metrics || {
+          totalSessions: 0,
+          activeSessions: 0,
+          totalMessages: 0,
+          averageSessionDuration: 0,
+          todaysSessions: 0,
+          messagesPerSession: 0,
+        });
+      } else {
+        console.error('Metrics API Error:', {
+          status: metricsResponse.status,
+          statusText: metricsResponse.statusText
+        });
       }
     } catch (error) {
       console.error('Error fetching chat data:', error);
     } finally {
       setLoading(false);
+      setIsInitialLoad(false); // Mark initial load as complete
     }
-  };
+  }, [timeRange]); // Include timeRange dependency for manual refresh
 
-  // Real-time updates for session list - COMPLETELY DISABLED to fix race condition
+  // Real-time updates for session list - Fixed race condition with loading state management
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // TEMPORARILY DISABLED - Real-time updates causing compilation issues
   // const realTimeUpdates = useRealTimeUpdates({
-  //   enabled: false, // TEMPORARILY DISABLED - was causing race condition with initial load
+  //   enabled: !loading && !isInitialLoad, // Only enable after initial load is complete
   //   interval: 30000, // 30 seconds
   //   onUpdate: fetchChatData,
   //   onError: (error) => {
@@ -126,8 +137,9 @@ export default function SessionsPage() {
 
   // Initial data load and when time range changes
   useEffect(() => {
+    setIsInitialLoad(true); // Reset for new time range
     fetchChatData();
-  }, [timeRange]);
+  }, [timeRange]); // Only depend on timeRange, not fetchChatData
 
   // Data processing following centralized utilities
   const filteredSessions = filterSessions(sessions, filters);
@@ -279,6 +291,8 @@ export default function SessionsPage() {
       href: '/admin/chat/archive',
     },
   ];
+
+  // Component rendering - loading state and data management
 
   return (
     <AdminPageLayout

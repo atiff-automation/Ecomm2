@@ -293,31 +293,15 @@ export class ChatPerformanceUtils {
   /**
    * Get session timeout configuration
    * Centralized timeout access for metrics calculation
+   * @CLAUDE.md - Use centralized config function to avoid duplication
    */
   static async getSessionTimeouts(): Promise<{
     guestTimeoutMs: number;
     authenticatedTimeoutMs: number;
   }> {
-    const config = await prisma.chatConfig.findFirst({
-      where: { isActive: true },
-      select: {
-        guestSessionTimeoutMinutes: true,
-        authenticatedSessionTimeoutMinutes: true,
-      },
-    });
-
-    if (config) {
-      return {
-        guestTimeoutMs: config.guestSessionTimeoutMinutes * 60 * 1000,
-        authenticatedTimeoutMs: config.authenticatedSessionTimeoutMinutes * 60 * 1000,
-      };
-    }
-
-    // Default timeouts if no config found
-    return {
-      guestTimeoutMs: 13 * 60 * 1000, // 13 minutes
-      authenticatedTimeoutMs: 19 * 60 * 1000, // 19 minutes
-    };
+    // Import here to avoid circular dependency
+    const { getSessionTimeouts } = await import('@/lib/chat/config');
+    return await getSessionTimeouts();
   }
 
   /**

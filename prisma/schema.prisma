@@ -1277,8 +1277,8 @@ model ChatConfig {
   webhookSecret         String?
   apiKey                String?
   sessionTimeoutMinutes            Int       @default(30) // Backward compatibility
-  guestSessionTimeoutMinutes       Int       @default(30)
-  authenticatedSessionTimeoutMinutes Int     @default(120)
+  guestSessionTimeoutMinutes       Int       @default(13) // Match database default
+  authenticatedSessionTimeoutMinutes Int     @default(19) // Match database default
   maxMessageLength      Int       @default(4000)
   rateLimitMessages     Int       @default(20)
   rateLimitWindowMs     Int       @default(60000)

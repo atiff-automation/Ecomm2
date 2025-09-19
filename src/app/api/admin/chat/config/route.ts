@@ -62,8 +62,8 @@ export async function GET() {
         webhookSecret: '',
         apiKey: '',
         sessionTimeoutMinutes: 30, // Backward compatibility
-        guestSessionTimeoutMinutes: 30,
-        authenticatedSessionTimeoutMinutes: 120,
+        guestSessionTimeoutMinutes: 13, // Match database default
+        authenticatedSessionTimeoutMinutes: 19, // Match database default
         maxMessageLength: 4000,
         rateLimitMessages: 20,
         rateLimitWindowMs: 60000,
@@ -242,8 +242,8 @@ export async function POST(request: NextRequest) {
           webhookSecret,
           apiKey,
           sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
-          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 30,
-          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 120,
+          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 13, // Match database default
+          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 19, // Match database default
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,
@@ -266,8 +266,8 @@ export async function POST(request: NextRequest) {
           webhookSecret,
           apiKey,
           sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
-          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 30,
-          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 120,
+          guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 13, // Match database default
+          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 19, // Match database default
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,

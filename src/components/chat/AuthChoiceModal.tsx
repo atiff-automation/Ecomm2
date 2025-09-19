@@ -5,31 +5,39 @@ import type { ChatConfig } from './types';
 
 /**
  * AuthChoiceModal Component
- * Provides authenticated users with choice between authenticated chat (120min) and guest chat (30min)
- * Following @CLAUDE.md systematic approach with centralized configuration
+ * Provides authenticated users with choice between authenticated and guest chat
+ * Following @CLAUDE.md systematic approach with centralized configuration - NO hardcoded values
  */
 
-// Centralized timeout configuration - single source of truth
-const TIMEOUT_DISPLAY = {
-  AUTHENTICATED: '120 minutes',
-  GUEST: '30 minutes'
-} as const;
+// Helper function to get timeout display from config - single source of truth
+const getTimeoutDisplay = (minutes: number): string => {
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes === 0) {
+      return `${hours} hour${hours > 1 ? 's' : ''}`;
+    } else {
+      return `${hours}h ${remainingMinutes}min`;
+    }
+  }
+  return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+};
 
-// Centralized benefits configuration
-const CHAT_BENEFITS = {
+// Dynamic benefits configuration based on config - NO hardcoded values
+const getChatBenefits = (config: ChatConfig) => ({
   AUTHENTICATED: [
-    'Extended 2-hour chat session',
+    `Extended ${getTimeoutDisplay(config.authenticatedSessionTimeoutMinutes)} chat session`,
     'No need to re-enter contact details',
     'Chat history linked to your account',
     'Faster response prioritization'
   ],
   GUEST: [
-    '30-minute anonymous session',
+    `${getTimeoutDisplay(config.guestSessionTimeoutMinutes)} anonymous session`,
     'Privacy-focused experience',
     'No account linking required',
     'Quick contact entry'
   ]
-} as const;
+});
 
 interface AuthChoiceModalProps {
   isOpen: boolean;
@@ -57,6 +65,13 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
 
   // Centralized display name logic
   const displayName = user.name || user.email.split('@')[0];
+
+  // Get dynamic benefits and timeouts from config - NO hardcoded values
+  const chatBenefits = getChatBenefits(config);
+  const timeoutDisplay = {
+    AUTHENTICATED: getTimeoutDisplay(config.authenticatedSessionTimeoutMinutes),
+    GUEST: getTimeoutDisplay(config.guestSessionTimeoutMinutes)
+  };
 
   const handleAuthenticatedStart = async () => {
     setError('');
@@ -135,12 +150,12 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
                   Continue as {displayName}
                 </div>
                 <div className="auth-choice-modal__option-duration">
-                  {TIMEOUT_DISPLAY.AUTHENTICATED}
+                  {timeoutDisplay.AUTHENTICATED}
                 </div>
               </div>
 
               <ul className="auth-choice-modal__option-benefits">
-                {CHAT_BENEFITS.AUTHENTICATED.map((benefit, index) => (
+                {chatBenefits.AUTHENTICATED.map((benefit, index) => (
                   <li key={index}>• {benefit}</li>
                 ))}
               </ul>
@@ -176,12 +191,12 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
                   Chat as Guest
                 </div>
                 <div className="auth-choice-modal__option-duration">
-                  {TIMEOUT_DISPLAY.GUEST}
+                  {timeoutDisplay.GUEST}
                 </div>
               </div>
 
               <ul className="auth-choice-modal__option-benefits">
-                {CHAT_BENEFITS.GUEST.map((benefit, index) => (
+                {chatBenefits.GUEST.map((benefit, index) => (
                   <li key={index}>• {benefit}</li>
                 ))}
               </ul>
