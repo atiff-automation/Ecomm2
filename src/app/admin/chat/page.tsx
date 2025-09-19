@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { RefreshCw, MessageSquare, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import MetricsCards from '@/components/chat/MetricsCards';
 import { SessionFilters } from '@/components/chat/SessionFilters';
 import { SessionsTable } from '@/components/chat/SessionsTable';
-import { useRealTimeUpdates } from '@/hooks/useRealTimeUpdates';
+// Removed problematic useRealTimeUpdates hook - using production polling pattern instead
 import type {
   ChatSession,
   ChatMetrics,
@@ -78,7 +78,7 @@ export default function SessionsPage() {
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
   const [loading, setLoading] = useState(true);
 
-  // Data fetching following centralized pattern - Simplified without real-time updates
+  // Data fetching with improved error handling and stability
   const fetchChatData = useCallback(async () => {
     try {
       setLoading(true);
@@ -90,8 +90,6 @@ export default function SessionsPage() {
 
       if (sessionsResponse.ok) {
         const sessionsData = await sessionsResponse.json();
-        // Debug: Sessions API successful
-        console.log('✅ Sessions loaded:', sessionsData.sessions?.length || 0);
         setSessions(sessionsData.sessions || []);
       } else {
         console.error('Sessions API Error:', {
@@ -122,20 +120,56 @@ export default function SessionsPage() {
       setLoading(false);
       setIsInitialLoad(false); // Mark initial load as complete
     }
-  }, [timeRange]); // Include timeRange dependency for manual refresh
+  }, [timeRange]);
 
   // Real-time updates for session list - Fixed race condition with loading state management
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Real-time updates - TEMPORARILY DISABLED FOR DEBUGGING
-  // const realTimeUpdates = useRealTimeUpdates({
-  //   enabled: !loading && !isInitialLoad, // Only enable after initial load is complete
-  //   interval: 30000, // 30 seconds
-  //   onUpdate: fetchChatData,
-  //   onError: (error) => {
-  //     console.warn('Real-time update failed:', error);
-  //   },
-  // });
+  // Real-time updates - Production-ready polling pattern
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isComponentMounted = useRef(true);
+
+  // Setup polling with proper cleanup
+  useEffect(() => {
+    const startPolling = () => {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Only start polling after initial load is complete and we have data
+      if (!loading && !isInitialLoad && sessions.length > 0) {
+        intervalRef.current = setInterval(() => {
+          // Only fetch if component is still mounted and not currently loading
+          if (isComponentMounted.current && !loading) {
+            fetchChatData();
+          }
+        }, 30000); // 30 seconds
+      }
+    };
+
+    startPolling();
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [loading, isInitialLoad, sessions.length]); // Dependencies that should trigger polling restart
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isComponentMounted.current = true;
+
+    return () => {
+      isComponentMounted.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   // Initial data load and when time range changes
   useEffect(() => {
@@ -153,22 +187,6 @@ export default function SessionsPage() {
     pagination.page * pagination.pageSize
   );
 
-  // Debug logging for session processing - REMOVED TO PREVENT RE-RENDER LOOPS
-  // console.log('🔍 Session Processing Debug:', {
-  //   originalSessions: sessions.length,
-  //   filteredSessions: filteredSessions.length,
-  //   sortedSessions: sortedSessions.length,
-  //   paginatedSessions: paginatedSessions.length,
-  //   filters,
-  //   loading
-  // });
-
-  // Debug logging (remove in production)
-  // console.log('🔍 Session Processing Debug:', {
-  //   originalSessions: sessions.length,
-  //   filteredSessions: filteredSessions.length,
-  //   paginatedSessions: paginatedSessions.length,
-  // });
 
   // Update pagination total when filtered data changes
   useEffect(() => {
@@ -178,12 +196,11 @@ export default function SessionsPage() {
     }));
   }, [filteredSessions.length]);
 
-  // Debug: Log when sessions state actually changes
+  // Update pagination when sessions change
   useEffect(() => {
-    console.log('🔍 Sessions state changed:', {
-      count: sessions.length,
-      sample: sessions[0]?.sessionId || 'none'
-    });
+    if (sessions.length > 0) {
+      // Sessions loaded successfully, no action needed
+    }
   }, [sessions]);
 
   // Event handlers following plan component structure
