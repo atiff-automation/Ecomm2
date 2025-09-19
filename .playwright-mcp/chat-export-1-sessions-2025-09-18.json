@@ -1,0 +1,51 @@
+{
+  "exportedAt": "2025-09-18T19:10:33.747Z",
+  "sessionCount": 1,
+  "sessions": [
+    {
+      "sessionId": "cmfps7l9k0011gpl8fho33uxy",
+      "status": "active",
+      "startedAt": "2025-09-18T19:06:22.952Z",
+      "lastActivity": "2025-09-18T19:06:38.234Z",
+      "duration": 15,
+      "messageCount": 2,
+      "user": {
+        "id": "cmfig9rzj0001gpq1kils65nt",
+        "email": "admin@jrm.com",
+        "name": "Admin User"
+      },
+      "guestEmail": null,
+      "guestPhone": null,
+      "userAgent": null,
+      "ipAddress": null,
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-18T19:06:19.444Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "messages": [
+        {
+          "id": "cmfps7rqa0013gpl8gugdzc8g",
+          "senderType": "user",
+          "content": "hijau",
+          "messageType": "text",
+          "status": "sent",
+          "createdAt": "2025-09-18T19:06:31.329Z",
+          "metadata": {
+            "timestamp": "2025-09-18T19:06:28.013Z"
+          }
+        },
+        {
+          "id": "cmfps7x0c0017gpl8zzyhbn1r",
+          "senderType": "bot",
+          "content": "🤖 Dynamic Mock n8n Response: I received your message \"hijau\" and processed it using database configuration!",
+          "messageType": "text",
+          "status": "delivered",
+          "createdAt": "2025-09-18T19:06:38.172Z",
+          "metadata": {}
+        }
+      ]
+    }
+  ]
+}

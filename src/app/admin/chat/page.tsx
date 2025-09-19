@@ -8,8 +8,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, MessageSquare, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 // Import directly with correct default/named imports
 import MetricsCards from '@/components/chat/MetricsCards';
 import { SessionFilters } from '@/components/chat/SessionFilters';
@@ -39,8 +41,11 @@ export default function SessionsPage() {
     totalMessages: 0,
     averageSessionDuration: 0,
     todaysSessions: 0,
-    responseTime: 0,
+    messagesPerSession: 0,
   });
+
+  // @CLAUDE.md - Time range selector state for clear metrics display
+  const [timeRange, setTimeRange] = useState<string>('24h');
 
   // Enhanced filtering state following plan specification
   const [filters, setFilters] = useState<FilterState>({
@@ -81,7 +86,7 @@ export default function SessionsPage() {
       // Parallel data fetching for optimal performance
       const [sessionsResponse, metricsResponse] = await Promise.all([
         fetch('/api/admin/chat/sessions'),
-        fetch('/api/admin/chat/metrics'),
+        fetch(`/api/admin/chat/metrics?range=${timeRange}`),
       ]);
 
       if (sessionsResponse.ok) {
@@ -119,10 +124,10 @@ export default function SessionsPage() {
   //   },
   // });
 
-  // Initial data load
+  // Initial data load and when time range changes
   useEffect(() => {
     fetchChatData();
-  }, []);
+  }, [timeRange]);
 
   // Data processing following centralized utilities
   const filteredSessions = filterSessions(sessions, filters);
@@ -246,26 +251,71 @@ export default function SessionsPage() {
     setTimeout(() => handleExport(), 100);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-medium text-gray-900">Session Management</h2>
-          <p className="text-gray-600">
-            Enhanced session management with metrics and export capabilities
-          </p>
-        </div>
-        <Button onClick={fetchChatData} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+  // Tab configuration for chat navigation
+  const chatTabs: TabConfig[] = [
+    {
+      id: 'sessions',
+      label: 'Sessions',
+      href: '/admin/chat',
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      href: '/admin/chat/analytics',
+    },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/chat/config',
+    },
+    {
+      id: 'operations',
+      label: 'Operations',
+      href: '/admin/chat/operations',
+    },
+    {
+      id: 'archive',
+      label: 'Archive',
+      href: '/admin/chat/archive',
+    },
+  ];
 
-      {/* 1. Metrics Dashboard (Top Section) - Following Plan Structure */}
+  return (
+    <AdminPageLayout
+      title="Chat Management"
+      subtitle="Monitor and manage customer chat interactions"
+      tabs={chatTabs}
+      actions={
+        <div className="flex items-center gap-2">
+          {/* @CLAUDE.md - Time range selector for clear metrics context */}
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">Last Hour</SelectItem>
+                <SelectItem value="24h">Last 24h</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="90d">Last 90 Days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={fetchChatData} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      }
+      loading={loading}
+    >
+      {/* Metrics Dashboard - Stats Cards */}
       <MetricsCards metrics={metrics} loading={loading} />
 
-      {/* 2. Advanced Filters (Middle Section) - Following Plan Structure */}
+      {/* Filters Bar - Horizontal layout matching products page */}
       <SessionFilters
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -276,20 +326,22 @@ export default function SessionsPage() {
         onExportFormatChange={setExportFormat}
       />
 
-      {/* 3. Sessions Table (Main Section) - Following Plan Structure */}
-      <SessionsTable
-        sessions={paginatedSessions}
-        selectedSessions={selectedSessions}
-        onSelectionChange={setSelectedSessions}
-        onExportSession={handleExportSession}
-        onViewSession={handleViewSession}
-        onEndSession={handleEndSession}
-        sortConfig={sortConfig}
-        onSort={handleSort}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        loading={loading}
-      />
-    </div>
+      {/* Sessions Table - Clean container */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <SessionsTable
+          sessions={paginatedSessions}
+          selectedSessions={selectedSessions}
+          onSelectionChange={setSelectedSessions}
+          onExportSession={handleExportSession}
+          onViewSession={handleViewSession}
+          onEndSession={handleEndSession}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          loading={loading}
+        />
+      </div>
+    </AdminPageLayout>
   );
 }

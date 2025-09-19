@@ -134,6 +134,7 @@ export class ChatPerformanceUtils {
   /**
    * Optimized metrics calculation with parallel processing
    * Using database aggregations with proper timeout-based active session calculation
+   * @CLAUDE.md - No hardcoded values, centralized approach with clear time range handling
    */
   static async getOptimizedMetrics(timeRange: string = '24h') {
     const now = new Date();
@@ -143,6 +144,7 @@ export class ChatPerformanceUtils {
       '7d': new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
       '30d': new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
       '90d': new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+      'all': new Date(0), // All time data
     };
 
     const startDate = ranges[timeRange as keyof typeof ranges] || ranges['24h'];
@@ -156,15 +158,21 @@ export class ChatPerformanceUtils {
     // Execute all queries in parallel - key performance optimization
     const [
       totalSessions,
+      totalSessionsAllTime,
       activeSessions,
       totalMessages,
+      totalMessagesAllTime,
       todaysSessions,
       sessionsByStatus,
+      averageDurationData,
     ] = await Promise.all([
-      // Optimized session count
+      // Sessions in time range
       prisma.chatSession.count({
         where: { createdAt: { gte: startDate } }
       }),
+
+      // All time sessions count
+      prisma.chatSession.count(),
 
       // FIXED: Active sessions count based on timeout rules, not just database status
       prisma.chatSession.count({
@@ -192,10 +200,13 @@ export class ChatPerformanceUtils {
         }
       }),
 
-      // Optimized message count
+      // Messages in time range
       prisma.chatMessage.count({
         where: { createdAt: { gte: startDate } }
       }),
+
+      // All time messages count
+      prisma.chatMessage.count(),
 
       // Today's sessions count
       prisma.chatSession.count({
@@ -208,6 +219,18 @@ export class ChatPerformanceUtils {
         where: { createdAt: { gte: startDate } },
         _count: { status: true },
       }),
+
+      // Calculate real average session duration - NO hardcoded values
+      // Using raw query since we need to calculate duration from timestamps
+      prisma.$queryRaw`
+        SELECT
+          COUNT(*) as session_count,
+          AVG(EXTRACT(EPOCH FROM (COALESCE("endedAt", "lastActivity") - "createdAt"))/60) as avg_duration_minutes
+        FROM "chat_sessions"
+        WHERE "createdAt" >= ${startDate}
+          AND "status" IN ('ended', 'expired', 'archived')
+          AND ("endedAt" IS NOT NULL OR "lastActivity" IS NOT NULL)
+      `,
     ]);
 
     // Transform status distribution
@@ -217,16 +240,54 @@ export class ChatPerformanceUtils {
       return acc;
     }, {} as Record<string, number>);
 
+    // Calculate real average duration from completed sessions
+    const durationResult = averageDurationData[0] as any;
+    const averageSessionDurationMinutes = Number(durationResult?.avg_duration_minutes) || 0;
+    const completedSessionsCount = Number(durationResult?.session_count) || 0;
+
     return {
+      // Time range specific data
       totalSessions,
-      activeSessions,
       totalMessages,
       todaysSessions,
-      statusDistribution,
-      averageSessionDuration: 0, // Simplified for performance
-      responseTime: 0, // Simplified for performance
+
+      // All time data for comparison
+      totalSessionsAllTime,
+      totalMessagesAllTime,
+
+      // Real-time data
+      activeSessions,
+
+      // Calculated metrics - NO hardcoded values
+      averageSessionDuration: Math.round(averageSessionDurationMinutes * 60), // Convert to seconds
+      completedSessionsCount,
       messagesPerSession: totalSessions > 0 ? Math.round(totalMessages / totalSessions) : 0,
+
+      // Meta information for clarity
+      timeRange,
+      isAllTime: timeRange === 'all',
+      statusDistribution,
+
+      // Time range labels for UI clarity
+      timeRangeLabel: this.getTimeRangeLabel(timeRange),
+      generatedAt: now.toISOString(),
     };
+  }
+
+  /**
+   * Get human-readable time range labels - centralized approach
+   * @CLAUDE.md - Single source of truth for time range labeling
+   */
+  static getTimeRangeLabel(timeRange: string): string {
+    const labels = {
+      '1h': 'Last Hour',
+      '24h': 'Last 24 Hours',
+      '7d': 'Last 7 Days',
+      '30d': 'Last 30 Days',
+      '90d': 'Last 90 Days',
+      'all': 'All Time',
+    };
+    return labels[timeRange as keyof typeof labels] || 'Last 24 Hours';
   }
 
   /**

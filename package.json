@@ -73,6 +73,7 @@
     "critters": "^0.0.23",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
+    "express": "^5.1.0",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",

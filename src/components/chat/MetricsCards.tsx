@@ -47,39 +47,51 @@ const MetricsCards: React.FC<MetricsCardProps> = ({
     return <MetricsCardsError />;
   }
 
+  // @CLAUDE.md - Clear, descriptive metric cards with proper time range indication
+  const timeRangeLabel = (metrics as any).timeRangeLabel || 'Last 24 Hours';
+  const isAllTime = (metrics as any).isAllTime || false;
+
   const metricCards: MetricCardData[] = [
     {
-      title: 'Total Sessions',
+      title: isAllTime ? 'Total Sessions (All Time)' : `Sessions (${timeRangeLabel})`,
       value: metrics.totalSessions.toLocaleString(),
       icon: MessageCircle,
       iconColor: 'text-blue-600',
       trend: {
         value: metrics.todaysSessions,
         isPositive: true,
-        label: 'today',
+        label: 'created today',
       },
-      description: 'All chat sessions',
+      description: isAllTime
+        ? `${(metrics as any).totalSessionsAllTime?.toLocaleString() || '0'} total sessions ever`
+        : `${(metrics as any).totalSessionsAllTime?.toLocaleString() || '0'} total all time`,
     },
     {
-      title: 'Active Sessions',
+      title: 'Active Now',
       value: metrics.activeSessions.toLocaleString(),
       icon: Users,
       iconColor: 'text-green-600',
-      description: 'Currently chatting',
+      description: 'Currently active sessions',
     },
     {
-      title: 'Total Messages',
+      title: isAllTime ? 'Total Messages (All Time)' : `Messages (${timeRangeLabel})`,
       value: metrics.totalMessages.toLocaleString(),
       icon: Activity,
       iconColor: 'text-purple-600',
-      description: 'All time messages',
+      description: isAllTime
+        ? 'All messages ever sent'
+        : `${(metrics as any).totalMessagesAllTime?.toLocaleString() || '0'} total all time`,
     },
     {
       title: 'Avg Duration',
-      value: `${Math.round(metrics.averageSessionDuration / 60)}m`,
+      value: metrics.averageSessionDuration > 0
+        ? `${Math.round(metrics.averageSessionDuration / 60)}m`
+        : 'N/A',
       icon: Clock,
       iconColor: 'text-yellow-600',
-      description: 'Per session',
+      description: (metrics as any).completedSessionsCount > 0
+        ? `From ${(metrics as any).completedSessionsCount} completed sessions`
+        : 'No completed sessions',
     },
   ];
 

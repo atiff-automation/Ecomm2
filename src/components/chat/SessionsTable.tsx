@@ -10,7 +10,6 @@ import React from 'react';
 import { Eye, Download, Archive, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ChatSession, SortConfig, PaginationConfig } from '@/types/chat';
 import { formatDuration, formatTimestamp, getStatusColor } from '@/utils/chat';
 
@@ -86,39 +85,74 @@ export function SessionsTable({
     }
 
     return (
-      <div className="flex items-center justify-between px-6 py-3 border-t">
-        <div className="text-sm text-gray-500">
-          Showing {((currentPage - 1) * pagination.pageSize) + 1} to{' '}
-          {Math.min(currentPage * pagination.pageSize, pagination.total)} of{' '}
-          {pagination.total} sessions
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-          >
-            Previous
-          </Button>
-          {pages.map((page) => (
+      <div className="bg-white border-t border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="text-sm text-gray-700">
+            Showing <span className="font-medium">{((currentPage - 1) * pagination.pageSize) + 1}</span> to{' '}
+            <span className="font-medium">{Math.min(currentPage * pagination.pageSize, pagination.total)}</span> of{' '}
+            <span className="font-medium">{pagination.total}</span> sessions
+          </div>
+          <div className="flex items-center space-x-1">
             <Button
-              key={page}
-              variant={page === currentPage ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => onPageChange(page)}
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="h-9"
             >
-              {page}
+              Previous
             </Button>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-          >
-            Next
-          </Button>
+            {start > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(1)}
+                  className="h-9 w-9"
+                >
+                  1
+                </Button>
+                {start > 2 && (
+                  <span className="px-2 text-gray-400">...</span>
+                )}
+              </>
+            )}
+            {pages.map((page) => (
+              <Button
+                key={page}
+                variant={page === currentPage ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange(page)}
+                className="h-9 w-9"
+              >
+                {page}
+              </Button>
+            ))}
+            {end < totalPages && (
+              <>
+                {end < totalPages - 1 && (
+                  <span className="px-2 text-gray-400">...</span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(totalPages)}
+                  className="h-9 w-9"
+                >
+                  {totalPages}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="h-9"
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -126,26 +160,22 @@ export function SessionsTable({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Chat Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div>
+      {/* Table Header */}
+      <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <CardTitle>
-            Chat Sessions ({pagination.total})
-          </CardTitle>
+          <h3 className="text-lg font-medium text-gray-900">
+            Sessions
+          </h3>
           {sessions.length > 0 && (
             <Button
               onClick={() => handleSelectAll(selectedSessions.length !== sessions.length)}
@@ -156,8 +186,10 @@ export function SessionsTable({
             </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
+      </div>
+
+      {/* Table Content */}
+      <div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
@@ -316,7 +348,7 @@ export function SessionsTable({
         </div>
 
         {renderPagination()}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

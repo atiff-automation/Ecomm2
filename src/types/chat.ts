@@ -21,13 +21,33 @@ export interface ChatSession {
 }
 
 // Metrics and Analytics Types
+// @CLAUDE.md - Enhanced metrics interface with proper time range support
 export interface ChatMetrics {
+  // Time range specific metrics
   totalSessions: number;
-  activeSessions: number;
   totalMessages: number;
-  averageSessionDuration: number;
   todaysSessions: number;
-  responseTime: number;
+
+  // All time data for comparison
+  totalSessionsAllTime?: number;
+  totalMessagesAllTime?: number;
+
+  // Real-time metrics
+  activeSessions: number;
+
+  // Calculated metrics - NO hardcoded values
+  averageSessionDuration: number; // in seconds, calculated from completed sessions
+  completedSessionsCount?: number;
+  messagesPerSession: number;
+
+  // Time range metadata for clarity
+  timeRange?: string;
+  timeRangeLabel?: string;
+  isAllTime?: boolean;
+  generatedAt?: string;
+
+  // Legacy fields for backward compatibility
+  responseTime?: number;
   yesterdaySessions?: number;
   weeklyGrowth?: number;
   monthlyGrowth?: number;
