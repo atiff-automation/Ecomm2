@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface ChatConfig {
   id?: string;
@@ -85,18 +86,6 @@ export default function ChatConfigPage() {
   useEffect(() => {
     fetchConfig();
   }, []);
-
-  if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
-
-  if (
-    !session?.user ||
-    !['SUPERADMIN', 'ADMIN'].includes((session.user as any)?.role)
-  ) {
-    redirect('/admin');
-  }
-
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,16 +207,63 @@ export default function ChatConfigPage() {
     }
   };
 
-  if (loading) {
+  // Tab configuration for chat navigation - consistent across all chat pages
+  const chatTabs: TabConfig[] = [
+    {
+      id: 'sessions',
+      label: 'Sessions',
+      href: '/admin/chat',
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      href: '/admin/chat/analytics',
+    },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/chat/config',
+    },
+    {
+      id: 'operations',
+      label: 'Operations',
+      href: '/admin/chat/operations',
+    },
+    {
+      id: 'archive',
+      label: 'Archive',
+      href: '/admin/chat/archive',
+    },
+  ];
+
+  if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <AdminPageLayout
+        title="Chat Management"
+        subtitle="Monitor and manage customer chat interactions"
+        tabs={chatTabs}
+        loading={true}
+      >
+        <div>Loading...</div>
+      </AdminPageLayout>
     );
   }
 
+  if (
+    !session?.user ||
+    !['SUPERADMIN', 'ADMIN'].includes((session.user as any)?.role)
+  ) {
+    redirect('/admin');
+  }
+
   return (
-    <div className="space-y-6">
+    <AdminPageLayout
+      title="Chat Management"
+      subtitle="Monitor and manage customer chat interactions"
+      tabs={chatTabs}
+      loading={loading}
+    >
+      <div className="space-y-6">
       {/* Status Header */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -892,6 +928,7 @@ export default function ChatConfigPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminPageLayout>
   );
 }

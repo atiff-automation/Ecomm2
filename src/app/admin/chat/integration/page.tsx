@@ -24,6 +24,7 @@ import {
   Settings,
   RefreshCw,
 } from 'lucide-react';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface ChatConfig {
   id?: string;

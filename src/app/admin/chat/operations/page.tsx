@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface QueueMetrics {
   totalJobs: number;
@@ -161,12 +162,56 @@ export default function OperationsPage() {
     }
   };
 
+  // Tab configuration for chat navigation - consistent across all chat pages
+  const chatTabs: TabConfig[] = [
+    {
+      id: 'sessions',
+      label: 'Sessions',
+      href: '/admin/chat',
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      href: '/admin/chat/analytics',
+    },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      href: '/admin/chat/config',
+    },
+    {
+      id: 'operations',
+      label: 'Operations',
+      href: '/admin/chat/operations',
+    },
+    {
+      id: 'archive',
+      label: 'Archive',
+      href: '/admin/chat/archive',
+    },
+  ];
+
   if (loading) {
-    return <OperationsPageSkeleton />;
+    return (
+      <AdminPageLayout
+        title="Chat Management"
+        subtitle="Monitor and manage customer chat interactions"
+        tabs={chatTabs}
+        loading={true}
+      >
+        <OperationsPageSkeleton />
+      </AdminPageLayout>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout
+      title="Chat Management"
+      subtitle="Monitor and manage customer chat interactions"
+      tabs={chatTabs}
+      loading={loading}
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -432,7 +477,8 @@ export default function OperationsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AdminPageLayout>
   );
 }
 
