@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import type { FilterState } from '@/types/chat';
 
 interface SessionFiltersProps {
@@ -82,24 +82,24 @@ export function SessionFilters({
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mb-6">
-      {/* Search Input - Following admin layout standards */}
+      {/* Enhanced Search Input - Following promotional date design aesthetics */}
       <div className="flex-1 min-w-0">
         <div className="relative">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
           <Input
             placeholder="Search sessions by ID or user email..."
             value={filters.search}
             onChange={handleSearchChange}
-            className="pl-10 h-10"
+            className="pl-10 h-10 border-gray-300 focus:border-green-500 focus:ring-green-500 transition-colors bg-white shadow-sm"
           />
         </div>
       </div>
 
       {/* Filters - Clean horizontal layout like products page */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Status Filter */}
+        {/* Status Filter - Enhanced with green accents */}
         <Select value={filters.status} onValueChange={handleStatusChange}>
-          <SelectTrigger className="h-10 w-[140px]">
+          <SelectTrigger className="h-10 w-[140px] border-gray-300 focus:border-green-500 focus:ring-green-500">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -109,8 +109,8 @@ export function SessionFilters({
           </SelectContent>
         </Select>
 
-        {/* Date Range Picker */}
-        <DateRangePicker
+        {/* Date Range Picker - Following promotional date design */}
+        <CustomDateRangePicker
           startDate={filters.dateRange.from}
           endDate={filters.dateRange.to}
           onStartDateChange={(date) => handleDateRangeChange(date, filters.dateRange.to)}
@@ -119,21 +119,21 @@ export function SessionFilters({
           className="h-10 w-[240px]"
         />
 
-        {/* Clear Dates Button */}
+        {/* Clear Dates Button - Enhanced styling */}
         {hasCustomDateRange() && (
           <Button
             variant="outline"
             size="sm"
             onClick={handleClearDates}
-            className="h-10 px-3 whitespace-nowrap"
+            className="h-10 px-3 whitespace-nowrap border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors"
           >
             Clear Dates
           </Button>
         )}
 
-        {/* Export Format Selector */}
+        {/* Export Format Selector - Enhanced with green accents */}
         <Select value={exportFormat} onValueChange={handleExportFormatChange}>
-          <SelectTrigger className="h-10 w-[100px]">
+          <SelectTrigger className="h-10 w-[100px] border-gray-300 focus:border-green-500 focus:ring-green-500">
             <SelectValue placeholder="Format" />
           </SelectTrigger>
           <SelectContent>
@@ -143,12 +143,12 @@ export function SessionFilters({
           </SelectContent>
         </Select>
 
-        {/* Export Button */}
+        {/* Export Button - Enhanced with green styling */}
         <Button
           onClick={onExport}
           disabled={selectedCount === 0 || isExporting}
           variant="outline"
-          className="h-10 px-4 whitespace-nowrap"
+          className="h-10 px-4 whitespace-nowrap border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-transparent transition-colors"
         >
           {isExporting ? 'Exporting...' : `Export (${selectedCount})`}
         </Button>
