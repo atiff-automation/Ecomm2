@@ -321,43 +321,81 @@ export default function OperationsPage() {
           </div>
 
           {/* Queue Jobs Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Jobs</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="bg-white rounded-lg border border-gray-200">
+            {/* Table Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Recent Jobs
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {queueJobs.length} jobs
+                </span>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            <div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Job ID</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Created</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Duration</th>
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Job ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Duration
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {queueJobs.map((job) => (
-                      <tr key={job.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm font-mono">{job.id.slice(0, 8)}...</td>
-                        <td className="py-3 px-4">
-                          <Badge className={getStatusColor(job.status)}>
-                            {job.status}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {new Date(job.createdAt).toLocaleTimeString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {job.processingTime ? `${job.processingTime}ms` : '-'}
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {queueJobs.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                          <div className="flex flex-col items-center">
+                            <Database className="h-12 w-12 text-gray-300 mb-4" />
+                            <span className="text-sm font-medium">No jobs found</span>
+                            <span className="text-xs text-gray-400 mt-1">Queue is currently empty</span>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      queueJobs.map((job) => (
+                        <tr key={job.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                            {job.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge className={getStatusColor(job.status)}>
+                              {job.status}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(job.createdAt).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {job.processingTime ? `${job.processingTime}ms` : '-'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Performance Monitoring Tab */}
