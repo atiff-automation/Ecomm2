@@ -75,12 +75,21 @@ export default function OperationsPage() {
 
       if (metricsResponse.ok) {
         const metricsData = await metricsResponse.json();
-        setQueueMetrics(metricsData);
+        // Transform API response to match expected interface
+        const transformedMetrics: QueueMetrics = {
+          totalJobs: metricsData.total || 0,
+          pendingJobs: metricsData.pending || 0,
+          processingJobs: metricsData.processing || 0,
+          completedJobs: metricsData.completed || 0,
+          failedJobs: metricsData.failed || 0,
+          averageProcessingTime: metricsData.processingRate || 0,
+        };
+        setQueueMetrics(transformedMetrics);
       }
 
       if (jobsResponse.ok) {
         const jobsData = await jobsResponse.json();
-        setQueueJobs(jobsData.jobs || []);
+        setQueueJobs(jobsData.items || []);
       }
     } catch (err) {
       console.error('Error fetching queue data:', err);
@@ -94,7 +103,17 @@ export default function OperationsPage() {
       const response = await fetch('/api/admin/chat/monitoring/metrics');
       if (response.ok) {
         const data = await response.json();
-        setMonitoringMetrics(data);
+        // Transform API response to match expected interface
+        const transformedMetrics: MonitoringMetrics = {
+          webhookHealth: data.healthStatus === 'HEALTHY' ? 'healthy' :
+                        data.healthStatus === 'DEGRADED' ? 'degraded' : 'critical',
+          responseTime: data.avgResponseTime || 0,
+          successRate: data.successRate || 0,
+          errorRate: 100 - (data.successRate || 0),
+          totalRequests: data.totalDeliveries || 0,
+          uptime: data.successRate ? data.successRate / 100 : 0,
+        };
+        setMonitoringMetrics(transformedMetrics);
       }
     } catch (err) {
       console.error('Error fetching monitoring data:', err);
