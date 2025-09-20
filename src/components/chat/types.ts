@@ -96,51 +96,7 @@ export interface ChatState {
   config: ChatConfig;
 }
 
-// WebSocket event types
-export interface WebSocketEvent {
-  type: string;
-  payload: Record<string, any>;
-  timestamp: string;
-}
-
-export interface JoinChatEvent extends WebSocketEvent {
-  type: 'join_chat';
-  payload: {
-    sessionId: string;
-    userId?: string;
-  };
-}
-
-export interface LeaveChatEvent extends WebSocketEvent {
-  type: 'leave_chat';
-  payload: {
-    sessionId: string;
-  };
-}
-
-export interface NewMessageEvent extends WebSocketEvent {
-  type: 'new_message';
-  payload: {
-    sessionId: string;
-    message: ChatMessage;
-  };
-}
-
-export interface TypingEvent extends WebSocketEvent {
-  type: 'typing' | 'stop_typing';
-  payload: {
-    sessionId: string;
-    isTyping: boolean;
-  };
-}
-
-export interface MessageStatusEvent extends WebSocketEvent {
-  type: 'message_status';
-  payload: {
-    messageId: string;
-    status: ChatMessage['status'];
-  };
-}
+// Removed WebSocket event types - using polling approach instead
 
 // Component prop interfaces
 export interface ChatWidgetProps {
@@ -221,22 +177,7 @@ export interface UseChatReturn {
   disconnect: () => void;
 }
 
-export interface UseWebSocketOptions {
-  sessionId: string | null;
-  userId?: string;
-  autoConnect?: boolean;
-  reconnectInterval?: number;
-  maxReconnectAttempts?: number;
-}
-
-export interface UseWebSocketReturn {
-  isConnected: boolean;
-  connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
-  lastMessage: WebSocketEvent | null;
-  sendEvent: (event: WebSocketEvent) => void;
-  connect: () => void;
-  disconnect: () => void;
-}
+// Removed UseWebSocket interfaces - using polling approach instead
 
 // API response interfaces
 export interface CreateSessionResponse {

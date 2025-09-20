@@ -307,7 +307,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={isConnected ? placeholder : 'Connecting...'}
             disabled={isDisabled || !isConnected}
-            maxLength={config.maxMessageLength + 100} // Allow some overflow for validation
+            maxLength={(config.maxMessageLength || 1000) + 100} // Allow some overflow for validation
             rows={1}
             aria-label="Type your message"
           />

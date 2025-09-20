@@ -4,7 +4,6 @@ import { SendMessageSchema, CHAT_CONFIG } from '@/lib/chat/validation';
 import { handleChatError, createSuccessResponse, createChatError } from '@/lib/chat/errors';
 import { webhookService } from '@/lib/chat/webhook-service';
 import { withRateLimit, RateLimitPresets } from '@/lib/middleware/rate-limit';
-import { webSocketManager } from '@/lib/websocket/server';
 import { getChatConfig, isChatSystemHealthy } from '@/lib/chat/config';
 
 async function handlePOST(request: NextRequest) {
@@ -140,13 +139,8 @@ async function handlePOST(request: NextRequest) {
       data: { status: 'sent' },
     });
     
-    // Send delivery receipt via WebSocket
-    try {
-      await webSocketManager.sendDeliveryReceipt(userMessage.id, validatedData.sessionId);
-    } catch (wsError) {
-      console.warn('Failed to send WebSocket delivery receipt:', wsError);
-      // Don't fail the request if WebSocket fails
-    }
+    // Note: Using polling approach for real-time updates instead of WebSocket
+    // The client will poll for new messages and receive updates
     
     const response = {
       messageId: userMessage.id,

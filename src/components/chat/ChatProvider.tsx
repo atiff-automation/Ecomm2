@@ -72,7 +72,11 @@ interface ChatContextValue {
   state: ChatState;
   
   // Session actions
-  createSession: (email?: string, isUIInit?: boolean, guestPhone?: string) => Promise<void>;
+  createSession: (
+    contactOrEmail?: string,
+    contactType?: 'email' | 'phone' | 'authenticated' | boolean,
+    userId?: string
+  ) => Promise<void>;
   loadSession: () => Promise<void>;
   clearSession: () => void;
   

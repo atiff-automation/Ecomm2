@@ -23,7 +23,10 @@ app.post('/webhook/chat-integration', (req, res) => {
   console.log('\n🎯 Mock n8n Webhook Received');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
   console.log('Payload:', JSON.stringify(req.body, null, 2));
-  
+
+  // Use the database webhook secret to match what the main app expects
+  const WEBHOOK_SECRET = 'b1191eeddaac2c64b969de6ba7be053e0cafb5b56d83aa0b95845c99418b5ede';
+
   // Simulate signature verification
   const signature = req.headers['x-webhook-signature'];
   if (signature) {
@@ -35,28 +38,38 @@ app.post('/webhook/chat-integration', (req, res) => {
   // Simulate processing delay
   setTimeout(() => {
     console.log('🚀 Sending mock response back to chat system...');
-    
+
+    // Create response payload
+    const responsePayload = {
+      sessionId: req.body.sessionId,
+      messageId: req.body.messageId,
+      response: {
+        content: `🤖 Mock n8n Response: I received your message "${req.body.message.content}" and processed it successfully!`,
+        type: 'text',
+        timestamp: new Date().toISOString()
+      },
+      metadata: {
+        source: 'mock-n8n',
+        processingTime: Math.random() * 1000,
+        processed: true
+      }
+    };
+
+    // Generate proper signature for the response
+    const responseBody = JSON.stringify(responsePayload);
+    const responseSignature = 'sha256=' + crypto
+      .createHmac('sha256', WEBHOOK_SECRET)
+      .update(responseBody, 'utf8')
+      .digest('hex');
+
     // Send response back to the chat system
-    fetch('http://localhost:3000/api/chat/webhook', {
+    fetch('http://localhost:3002/api/chat/webhook', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Webhook-Signature': signature || 'mock-signature'
+        'X-Webhook-Signature': responseSignature
       },
-      body: JSON.stringify({
-        sessionId: req.body.sessionId,
-        messageId: req.body.messageId,
-        response: {
-          content: `🤖 Mock n8n Response: I received your message "${req.body.message.content}" and processed it successfully!`,
-          type: 'text',
-          timestamp: new Date().toISOString()
-        },
-        metadata: {
-          source: 'mock-n8n',
-          processingTime: Math.random() * 1000,
-          processed: true
-        }
-      })
+      body: responseBody
     })
     .then(response => {
       console.log('✅ Response sent to chat system:', response.status);
@@ -94,7 +107,7 @@ app.listen(PORT, () => {
   console.log(`🏥 Health check: http://localhost:${PORT}/health`);
   console.log('\n📝 Instructions:');
   console.log('1. Configure chat admin with: http://localhost:3001/webhook/chat-integration');
-  console.log('2. Test chat at: http://localhost:3000/test-chat');
+  console.log('2. Test chat at: http://localhost:3002/test-chat');
   console.log('3. Watch this console for webhook activity\n');
 });
 

@@ -4,21 +4,24 @@ import { WebhookResponseSchema } from '@/lib/chat/validation';
 import { handleChatError, createSuccessResponse, createChatError } from '@/lib/chat/errors';
 import { verifyWebhookSignature } from '@/lib/chat/security';
 import { withRateLimit, RateLimitPresets } from '@/lib/middleware/rate-limit';
-import { webSocketManager } from '@/lib/websocket/server';
 
 async function handlePOST(request: NextRequest) {
   try {
     // Get raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('x-webhook-signature');
-    
-    // Verify webhook signature
-    const webhookSecret = process.env.CHAT_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw createChatError('INTERNAL_ERROR', 'Webhook secret not configured');
+
+    // Get webhook secret from database configuration
+    const chatConfig = await prisma.chatConfig.findFirst({
+      where: { isActive: true },
+      select: { webhookSecret: true }
+    });
+
+    if (!chatConfig?.webhookSecret) {
+      throw createChatError('INTERNAL_ERROR', 'Webhook secret not configured in database');
     }
-    
-    if (!signature || !verifyWebhookSignature(body, signature, webhookSecret)) {
+
+    if (!signature || !verifyWebhookSignature(body, signature, chatConfig.webhookSecret)) {
       throw createChatError('WEBHOOK_SIGNATURE_INVALID');
     }
     
@@ -61,24 +64,8 @@ async function handlePOST(request: NextRequest) {
       data: { lastActivity: new Date() },
     });
     
-    // Broadcast bot message via WebSocket
-    try {
-      await webSocketManager.broadcastMessage(validatedData.sessionId, {
-        id: botMessage.id,
-        sessionId: validatedData.sessionId,
-        senderType: 'bot',
-        content: validatedData.response.content,
-        messageType: validatedData.response.type,
-        status: 'delivered',
-        createdAt: botMessage.createdAt.toISOString()
-      });
-      
-      // Send delivery receipt for the bot message
-      await webSocketManager.sendDeliveryReceipt(botMessage.id, validatedData.sessionId);
-    } catch (wsError) {
-      console.warn('Failed to broadcast message via WebSocket:', wsError);
-      // Don't fail the webhook if WebSocket fails
-    }
+    // Note: Using polling approach for real-time updates instead of WebSocket
+    // The client will poll for new messages and receive this bot response
     
     const response = {
       success: true,

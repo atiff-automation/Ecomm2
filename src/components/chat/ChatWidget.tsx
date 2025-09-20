@@ -44,7 +44,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
 
   // Set up polling for basic real-time updates
   usePolling({
-    interval: 3000,
+    interval: 5000, // Increased from 3000ms to 5000ms to reduce rate limiting
     enabled: isOpen && !!session,
     onError: (error) => {
       console.warn('Polling error:', error);
@@ -99,7 +99,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
       } else if (contactInfo.email) {
         await startNewSession(contactInfo.email, 'email');
       }
-      
+
       // Close contact form and open chat
       setShowContactForm(false);
       // Chat will open automatically after session is created
