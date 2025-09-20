@@ -47,14 +47,12 @@ interface MonitoringMetrics {
 
 interface QueueJob {
   id: string;
-  type: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   createdAt: string;
   startedAt?: string;
   completedAt?: string;
   processingTime?: number;
   error?: string;
-  priority: 'low' | 'normal' | 'high';
 }
 
 export default function OperationsPage() {
@@ -168,18 +166,6 @@ export default function OperationsPage() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'text-red-600 bg-red-100';
-      case 'normal':
-        return 'text-blue-600 bg-blue-100';
-      case 'low':
-        return 'text-gray-600 bg-gray-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   // Tab configuration for chat navigation - consistent across all chat pages
   const chatTabs: TabConfig[] = [
@@ -345,9 +331,7 @@ export default function OperationsPage() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-medium text-gray-600">Job ID</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Priority</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-600">Created</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-600">Duration</th>
                     </tr>
@@ -356,15 +340,9 @@ export default function OperationsPage() {
                     {queueJobs.map((job) => (
                       <tr key={job.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4 text-sm font-mono">{job.id.slice(0, 8)}...</td>
-                        <td className="py-3 px-4 text-sm">{job.type}</td>
                         <td className="py-3 px-4">
                           <Badge className={getStatusColor(job.status)}>
                             {job.status}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge className={getPriorityColor(job.priority)}>
-                            {job.priority}
                           </Badge>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-600">
