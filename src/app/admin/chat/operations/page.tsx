@@ -188,6 +188,11 @@ export default function OperationsPage() {
       label: 'Operations',
       href: '/admin/chat/operations',
     },
+    {
+      id: 'archive',
+      label: 'Data Management',
+      href: '/admin/chat/archive',
+    },
   ];
 
   if (loading) {

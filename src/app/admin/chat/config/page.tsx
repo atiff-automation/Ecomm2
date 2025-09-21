@@ -224,6 +224,11 @@ export default function ChatConfigPage() {
       label: 'Operations',
       href: '/admin/chat/operations',
     },
+    {
+      id: 'archive',
+      label: 'Data Management',
+      href: '/admin/chat/archive',
+    },
   ];
 
   if (status === 'loading') {
