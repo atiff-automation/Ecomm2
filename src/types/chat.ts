@@ -311,3 +311,364 @@ export const DEFAULT_EXPORT_OPTIONS: Partial<ExportOptions> = {
   includeSystemMessages: false,
   autoArchive: false,
 };
+
+// ============================================================================
+// Analytics Types - Extended for comprehensive analytics dashboard
+// ============================================================================
+
+export interface AnalyticsData {
+  sessionMetrics: {
+    totalSessions: number;
+    activeSessions: number;
+    endedSessions: number;
+    averageSessionDuration: number;
+    sessionGrowth: number;
+  };
+
+  messageMetrics: {
+    totalMessages: number;
+    messagesPerSession: number;
+    botMessages: number;
+    userMessages: number;
+    messageGrowth: number;
+  };
+
+  performanceMetrics: {
+    averageResponseTime: number;
+    successRate: number;
+    queueProcessingTime: number;
+    errorRate: number;
+  };
+
+  engagementMetrics: {
+    peakHours: Array<{ hour: number; sessions: number }>;
+    userTypes: { authenticated: number; guest: number };
+    sessionLengthDistribution: Array<{ range: string; count: number }>;
+    returnUserRate: number;
+  };
+
+  trendData: {
+    sessionsOverTime: Array<{ date: string; sessions: number; messages: number }>;
+    hourlyDistribution: Array<{ hour: number; count: number }>;
+    dailyComparison: Array<{ day: string; current: number; previous: number }>;
+  };
+
+  timeRange: string;
+  generatedAt: string;
+  periodComparison?: {
+    previousPeriod: string;
+    growth: {
+      sessions: number;
+      messages: number;
+      avgDuration: number;
+    };
+  };
+}
+
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+  date?: string;
+  color?: string;
+}
+
+export interface ChartData {
+  type: 'line' | 'bar' | 'pie' | 'area';
+  title: string;
+  data: ChartDataPoint[];
+  xAxis?: string;
+  yAxis?: string;
+  format?: 'number' | 'percentage' | 'duration' | 'date';
+}
+
+export interface ReportConfig {
+  title: string;
+  subtitle?: string;
+  timeRange: string;
+  includeCharts: boolean;
+  includeSummary: boolean;
+  includeDetails: boolean;
+  format: 'json' | 'csv' | 'pdf';
+  branding?: {
+    logo?: string;
+    companyName?: string;
+    companyAddress?: string;
+  };
+}
+
+export interface AnalyticsExportData {
+  filename: string;
+  content: string | Buffer;
+  mimeType: string;
+  size: number;
+}
+
+// ============================================================================
+// Archive Types - Extended for comprehensive archive management
+// ============================================================================
+
+export interface ArchiveSession {
+  id: string;
+  sessionId: string;
+  status: string;
+  originalStatus: string;
+  startedAt: string;
+  endedAt?: string;
+  lastActivity: string;
+  archivedAt: string;
+  archiveReason?: string;
+  retentionUntil: string;
+  messageCount: number;
+  userId?: string;
+  userEmail?: string;
+  userName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  userAgent?: string;
+  ipAddress?: string;
+  metadata?: any;
+  canRestore: boolean;
+  daysUntilPurge: number;
+}
+
+export interface ArchiveStats {
+  totalArchived: number;
+  archivedToday: number;
+  scheduledForPurge: number;
+  storageUsed: number;
+  averageRetentionDays: number;
+  oldestArchive?: string;
+  newestArchive?: string;
+}
+
+export interface ArchiveOperation {
+  sessionIds: string[];
+  reason?: string;
+  scheduledPurgeDate?: Date;
+}
+
+export interface RestoreOperation {
+  sessionIds: string[];
+  reason?: string;
+  restoreToStatus?: string;
+}
+
+export interface RestoreValidation {
+  sessionId: string;
+  canRestore: boolean;
+  reasons: string[];
+  warnings: string[];
+  metadata?: any;
+}
+
+export interface RestorePreview {
+  sessionId: string;
+  originalStatus: string;
+  archivedAt: string;
+  retentionUntil: string;
+  messageCount: number;
+  userInfo: string;
+  estimatedRestoreTime: number;
+  dataIntegrityChecks: {
+    messagesIntact: boolean;
+    metadataIntact: boolean;
+    userLinksIntact: boolean;
+  };
+}
+
+export interface RestoreTransaction {
+  id: string;
+  sessionIds: string[];
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
+  startedAt: Date;
+  completedAt?: Date;
+  results: RestoreResult[];
+  summary: {
+    total: number;
+    successful: number;
+    failed: number;
+    warnings: number;
+  };
+}
+
+export interface RestoreResult {
+  sessionId: string;
+  success: boolean;
+  newStatus: string;
+  restoredAt: string;
+  warnings: string[];
+  errors: string[];
+  dataIntegrity: {
+    messagesRestored: number;
+    metadataPreserved: boolean;
+    userLinksPreserved: boolean;
+  };
+}
+
+export interface RetentionPolicy {
+  name: string;
+  description: string;
+  autoArchiveAfterDays: number;
+  purgeAfterDays: number;
+  applies: 'all' | 'guest' | 'authenticated';
+  enabled: boolean;
+  lastRun?: string;
+  nextRun?: string;
+}
+
+export interface RetentionReport {
+  policy: RetentionPolicy;
+  stats: {
+    totalSessions: number;
+    eligibleForArchive: number;
+    eligibleForPurge: number;
+    archivedInPeriod: number;
+    purgedInPeriod: number;
+    storageFreed: number;
+  };
+  recommendations: string[];
+  nextActions: Array<{
+    action: string;
+    count: number;
+    scheduledFor: Date;
+  }>;
+}
+
+// ============================================================================
+// Component Props Types - Extended for Analytics and Archive
+// ============================================================================
+
+export interface AnalyticsChartsProps {
+  data: AnalyticsData;
+  loading?: boolean;
+  timeRange: string;
+  onTimeRangeChange: (range: string) => void;
+}
+
+export interface MetricsOverviewProps {
+  metrics: AnalyticsData['sessionMetrics'] & AnalyticsData['messageMetrics'];
+  loading?: boolean;
+}
+
+export interface ReportFiltersProps {
+  timeRange: string;
+  onTimeRangeChange: (range: string) => void;
+  onExport: (config: ReportConfig) => void;
+  disabled?: boolean;
+}
+
+export interface ArchiveTableProps {
+  sessions: ArchiveSession[];
+  selectedSessions: string[];
+  onSelectionChange: (selected: string[]) => void;
+  onRestoreSession: (sessionId: string) => void;
+  onBulkRestore: (sessionIds: string[]) => void;
+  sortConfig: SortConfig;
+  onSort: (config: SortConfig) => void;
+  pagination: PaginationConfig;
+  onPageChange: (page: number) => void;
+  loading?: boolean;
+}
+
+export interface ArchiveFiltersProps {
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  onBulkArchive: () => void;
+  onBulkRestore: () => void;
+  selectedCount: number;
+  disabled?: boolean;
+}
+
+export interface RestoreControlsProps {
+  selectedSessions: string[];
+  onRestore: (operation: RestoreOperation) => void;
+  onPreview: (sessionIds: string[]) => void;
+  disabled?: boolean;
+}
+
+export interface RetentionStatusProps {
+  policy: RetentionPolicy;
+  stats: ArchiveStats;
+  compliance: {
+    compliant: boolean;
+    violations: string[];
+    warnings: string[];
+    score: number;
+  };
+}
+
+// ============================================================================
+// Hook Return Types - Extended for Analytics and Archive
+// ============================================================================
+
+export interface UseAnalyticsReturn {
+  analytics: AnalyticsData | null;
+  chartData: ChartData[];
+  loading: boolean;
+  error: string | null;
+  timeRange: string;
+  setTimeRange: (range: string) => void;
+  refreshAnalytics: () => Promise<void>;
+  exportReport: (config: ReportConfig) => Promise<AnalyticsExportData>;
+}
+
+export interface UseArchiveReturn {
+  sessions: ArchiveSession[];
+  stats: ArchiveStats;
+  loading: boolean;
+  error: string | null;
+  filters: FilterState;
+  setFilters: (filters: FilterState) => void;
+  selectedSessions: string[];
+  setSelectedSessions: (sessions: string[]) => void;
+  archiveSessions: (operation: ArchiveOperation) => Promise<void>;
+  restoreSessions: (operation: RestoreOperation) => Promise<RestoreTransaction>;
+  validateRestore: (sessionIds: string[]) => Promise<RestoreValidation[]>;
+  getRestorePreview: (sessionIds: string[]) => Promise<RestorePreview[]>;
+  refreshArchive: () => Promise<void>;
+}
+
+export interface UseRetentionReturn {
+  policy: RetentionPolicy;
+  report: RetentionReport | null;
+  compliance: {
+    compliant: boolean;
+    violations: string[];
+    warnings: string[];
+    score: number;
+  };
+  loading: boolean;
+  error: string | null;
+  executeRetention: () => Promise<void>;
+  generateReport: () => Promise<void>;
+  checkCompliance: () => Promise<void>;
+}
+
+// ============================================================================
+// Default Values - Extended for Analytics and Archive
+// ============================================================================
+
+export const DEFAULT_ANALYTICS_TIME_RANGE = '24h';
+
+export const DEFAULT_ARCHIVE_FILTERS: FilterState = {
+  search: '',
+  status: 'all',
+  dateRange: {
+    from: new Date(new Date().setDate(new Date().getDate() - 90)), // Last 90 days for archive
+    to: new Date(),
+  },
+  userType: 'all',
+  durationFilter: 'all',
+  messageCountFilter: 'all',
+};
+
+export const DEFAULT_REPORT_CONFIG: Partial<ReportConfig> = {
+  includeCharts: true,
+  includeSummary: true,
+  includeDetails: true,
+  format: 'pdf',
+};
+
+export const DEFAULT_RESTORE_STATUS = 'ended';
+
+export const ARCHIVE_RETENTION_DAYS = 365; // 1 year as specified

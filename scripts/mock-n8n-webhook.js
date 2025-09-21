@@ -63,7 +63,7 @@ app.post('/webhook/chat-integration', (req, res) => {
       .digest('hex');
 
     // Send response back to the chat system
-    fetch('http://localhost:3002/api/chat/webhook', {
+    fetch('http://localhost:3000/api/chat/webhook', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ app.listen(PORT, () => {
   console.log(`🏥 Health check: http://localhost:${PORT}/health`);
   console.log('\n📝 Instructions:');
   console.log('1. Configure chat admin with: http://localhost:3001/webhook/chat-integration');
-  console.log('2. Test chat at: http://localhost:3002/test-chat');
+  console.log('2. Test chat at: http://localhost:3000');
   console.log('3. Watch this console for webhook activity\n');
 });
 

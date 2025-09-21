@@ -337,8 +337,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       <style jsx>{`
         .message-input {
-          padding: 16px;
-          background: white;
+          padding: 20px 24px;
+          background: linear-gradient(180deg, white 0%, #fafafa 100%);
+          border-top: 1px solid rgba(229, 231, 235, 0.6);
+          backdrop-filter: blur(10px);
         }
 
         .message-input__error {
@@ -355,17 +357,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         .message-input__container {
           display: flex;
           align-items: flex-end;
-          gap: 8px;
-          background: #f8f9fa;
-          border: 1px solid #e1e5e9;
-          border-radius: 24px;
-          padding: 8px 12px;
-          transition: all 200ms ease;
+          gap: 12px;
+          background: linear-gradient(135deg, white 0%, #f9fafb 100%);
+          border: 1.5px solid #e5e7eb;
+          border-radius: 28px;
+          padding: 14px 18px;
+          transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+          backdrop-filter: blur(10px);
         }
 
         .message-input__container:focus-within {
-          border-color: var(--chat-primary-color, #007bff);
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+          border-color: var(--chat-primary-color, #2563eb);
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+          transform: translateY(-1px);
         }
 
         .message-input--disconnected .message-input__container {
@@ -560,23 +565,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
         .message-input__send-btn {
           flex-shrink: 0;
-          width: 36px;
-          height: 36px;
+          width: 42px;
+          height: 42px;
           border: none;
-          background: var(--chat-primary-color, #007bff);
+          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
           color: white;
           border-radius: 50%;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 200ms ease;
+          transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
           transform: scale(1);
+          box-shadow: 0 5px 16px rgba(37, 99, 235, 0.3), 0 3px 8px rgba(37, 99, 235, 0.2);
+          border: 1.5px solid rgba(255, 255, 255, 0.25);
         }
 
         .message-input__send-btn:hover:not(:disabled) {
-          background: #0056b3;
-          transform: scale(1.05);
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+          transform: scale(1.05) translateY(-1px);
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35), 0 3px 8px rgba(37, 99, 235, 0.2);
         }
 
         .message-input__send-btn:active:not(:disabled) {

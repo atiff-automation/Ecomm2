@@ -54,24 +54,50 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Header */}
       <div className="chat-window__header">
         <div className="chat-window__header-content">
-          <div className="chat-window__title">
-            <span>Chat Support</span>
-            <div className={`chat-window__status ${isConnected ? 'chat-window__status--connected' : 'chat-window__status--disconnected'}`}>
-              {isConnected ? 'Online' : 'Offline'}
+          <div className="chat-window__profile">
+            <div className="chat-window__avatar">
+              <div className="chat-window__avatar-img">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <div className="chat-window__info">
+              <div className="chat-window__title">
+                <span>Chat with</span>
+                <span className="chat-window__agent-name">Customer Support</span>
+              </div>
+              <div className={`chat-window__status ${isConnected ? 'chat-window__status--connected' : 'chat-window__status--disconnected'}`}>
+                {isConnected ? "We're online" : 'Currently offline'}
+              </div>
             </div>
           </div>
-          <button
-            className="chat-window__close"
-            onClick={onClose}
-            aria-label="Close chat"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className="chat-window__actions">
+            <button
+              className="chat-window__minimize"
+              onClick={onClose}
+              aria-label="Minimize chat"
+              type="button"
+              title="Minimize"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              className="chat-window__close"
+              onClick={onClose}
+              aria-label="Close chat"
+              type="button"
+              title="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        
+
         {/* Session info */}
         {session && (
           <div className="chat-window__session-info">
@@ -112,17 +138,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <style jsx>{`
         .chat-window {
           position: fixed;
-          width: 380px;
-          height: 500px;
+          width: 400px;
+          height: 560px;
           background: white;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+          border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 25px rgba(0, 0, 0, 0.1);
           display: flex;
           flex-direction: column;
           z-index: 1000;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
           overflow: hidden;
-          animation: slideUp 300ms ease-out;
+          animation: slideUp 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
         }
 
         .chat-window--dark {
@@ -155,11 +183,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         }
 
         .chat-window__header {
-          padding: 16px 20px 12px;
-          border-bottom: 1px solid #e1e5e9;
-          background: var(--chat-primary-color, #007bff);
+          padding: 20px 24px 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
           color: white;
           flex-shrink: 0;
+          position: relative;
+          backdrop-filter: blur(10px);
+        }
+
+        .chat-window__header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+          pointer-events: none;
         }
 
         .chat-window--dark .chat-window__header {
@@ -170,18 +211,62 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           display: flex;
           justify-content: space-between;
           align-items: center;
+          position: relative;
+          z-index: 1;
+        }
+
+        .chat-window__profile {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+        }
+
+        .chat-window__avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-window__avatar-img {
+          color: white;
+          opacity: 0.9;
+        }
+
+        .chat-window__info {
+          flex: 1;
+          min-width: 0;
         }
 
         .chat-window__title {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
         }
 
-        .chat-window__title span {
+        .chat-window__title span:first-child {
+          font-size: 13px;
+          font-weight: 400;
+          opacity: 0.85;
+          line-height: 1;
+        }
+
+        .chat-window__agent-name {
           font-size: 16px;
           font-weight: 600;
-          line-height: 1;
+          line-height: 1.2;
+        }
+
+        .chat-window__actions {
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
 
         .chat-window__status {
@@ -201,20 +286,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           margin-right: 4px;
         }
 
+        .chat-window__minimize,
         .chat-window__close {
           background: none;
           border: none;
           color: white;
           cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
+          padding: 8px;
+          border-radius: 6px;
           opacity: 0.8;
-          transition: opacity 200ms ease;
+          transition: all 200ms ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 32px;
+          min-height: 32px;
         }
 
+        .chat-window__minimize:hover,
         .chat-window__close:hover {
           opacity: 1;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.15);
+          transform: scale(1.05);
         }
 
         .chat-window__session-info {
@@ -237,7 +330,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         .chat-window__body {
           flex: 1;
           min-height: 0;
-          background: #f8f9fa;
+          background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
+          position: relative;
+        }
+
+        .chat-window__body::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 20px;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+          pointer-events: none;
+          z-index: 1;
         }
 
         .chat-window--dark .chat-window__body {

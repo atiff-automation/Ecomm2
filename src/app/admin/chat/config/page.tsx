@@ -111,7 +111,7 @@ export default function ChatConfigPage() {
           text: data.error || 'Failed to save configuration',
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error occurred' });
     } finally {
       setSaving(false);
@@ -151,7 +151,7 @@ export default function ChatConfigPage() {
           healthStatus: 'UNHEALTHY',
         }));
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error during test' });
     } finally {
       setTesting(false);
@@ -264,468 +264,346 @@ export default function ChatConfigPage() {
       loading={loading}
     >
       <div className="space-y-6">
-      {/* Status Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Chat System Status
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Current webhook configuration and health status
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getHealthStatusColor(config.healthStatus)}`}
-            >
-              {config.healthStatus}
-            </span>
-            {config.verified && (
-              <span className="px-3 py-1 rounded-full text-sm font-medium text-green-600 bg-green-100">
-                ✓ Verified
+        {/* Status Header */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Chat System Status
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Current webhook configuration and health status
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getHealthStatusColor(config.healthStatus)}`}
+              >
+                {config.healthStatus}
               </span>
-            )}
+              {config.verified && (
+                <span className="px-3 py-1 rounded-full text-sm font-medium text-green-600 bg-green-100">
+                  ✓ Verified
+                </span>
+              )}
+            </div>
           </div>
+          {config.lastHealthCheck && (
+            <p className="text-sm text-gray-500 mt-2">
+              Last health check:{' '}
+              {new Date(config.lastHealthCheck).toLocaleString()}
+            </p>
+          )}
         </div>
-        {config.lastHealthCheck && (
-          <p className="text-sm text-gray-500 mt-2">
-            Last health check:{' '}
-            {new Date(config.lastHealthCheck).toLocaleString()}
-          </p>
+
+        {message && (
+          <div
+            className={`p-4 rounded-md ${
+              message.type === 'success'
+                ? 'bg-green-50 text-green-800'
+                : 'bg-red-50 text-red-800'
+            }`}
+          >
+            {message.text}
+          </div>
         )}
-      </div>
 
-      {message && (
-        <div
-          className={`p-4 rounded-md ${
-            message.type === 'success'
-              ? 'bg-green-50 text-green-800'
-              : 'bg-red-50 text-red-800'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+        {/* Configuration Form */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <form onSubmit={handleSave} className="p-6 space-y-6">
+            {/* n8n Webhook Configuration */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                n8n Webhook Integration
+              </h3>
 
-      {/* Configuration Form */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <form onSubmit={handleSave} className="p-6 space-y-6">
-          {/* n8n Webhook Configuration */}
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              n8n Webhook Integration
-            </h3>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* Webhook URL */}
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor="webhookUrl"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Webhook URL <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="url"
-                  id="webhookUrl"
-                  value={config.webhookUrl}
-                  onChange={e =>
-                    setConfig(prev => ({ ...prev, webhookUrl: e.target.value }))
-                  }
-                  placeholder="https://your-n8n-instance.com/webhook/chat"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  required
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Your n8n webhook endpoint URL
-                </p>
-              </div>
-
-              {/* Webhook Secret */}
-              <div>
-                <label
-                  htmlFor="webhookSecret"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Webhook Secret <span className="text-red-500">*</span>
-                </label>
-                <div className="flex">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* Webhook URL */}
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="webhookUrl"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Webhook URL <span className="text-red-500">*</span>
+                  </label>
                   <input
-                    type={showWebhookSecret ? 'text' : 'password'}
-                    id="webhookSecret"
-                    value={config.webhookSecret}
+                    type="url"
+                    id="webhookUrl"
+                    value={config.webhookUrl}
                     onChange={e =>
                       setConfig(prev => ({
                         ...prev,
-                        webhookSecret: e.target.value,
+                        webhookUrl: e.target.value,
                       }))
                     }
-                    placeholder="Enter webhook secret"
-                    className="block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="https://your-n8n-instance.com/webhook/chat"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowWebhookSecret(!showWebhookSecret)}
-                    className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                    title={showWebhookSecret ? 'Hide secret' : 'Show secret'}
-                  >
-                    {showWebhookSecret ? (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      copyToClipboard(config.webhookSecret, 'webhookSecret')
-                    }
-                    disabled={!config.webhookSecret}
-                    className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Copy webhook secret"
-                  >
-                    {copiedField === 'webhookSecret' ? (
-                      <svg
-                        className="w-4 h-4 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={generateWebhookSecret}
-                    className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                  >
-                    Generate
-                  </button>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Your n8n webhook endpoint URL
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Secret key for webhook authentication
-                </p>
-              </div>
 
-              {/* API Key */}
-              <div>
-                <label
-                  htmlFor="apiKey"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  API Key <span className="text-red-500">*</span>
-                </label>
-                <div className="flex">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    id="apiKey"
-                    value={config.apiKey}
-                    onChange={e =>
-                      setConfig(prev => ({ ...prev, apiKey: e.target.value }))
-                    }
-                    placeholder="Enter API key"
-                    className="block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                    title={showApiKey ? 'Hide API key' : 'Show API key'}
+                {/* Webhook Secret */}
+                <div>
+                  <label
+                    htmlFor="webhookSecret"
+                    className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    {showApiKey ? (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(config.apiKey, 'apiKey')}
-                    disabled={!config.apiKey}
-                    className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Copy API key"
-                  >
-                    {copiedField === 'apiKey' ? (
-                      <svg
-                        className="w-4 h-4 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={generateApiKey}
-                    className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                  >
-                    Generate
-                  </button>
+                    Webhook Secret <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex">
+                    <input
+                      type={showWebhookSecret ? 'text' : 'password'}
+                      id="webhookSecret"
+                      value={config.webhookSecret}
+                      onChange={e =>
+                        setConfig(prev => ({
+                          ...prev,
+                          webhookSecret: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter webhook secret"
+                      className="block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                      className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      title={showWebhookSecret ? 'Hide secret' : 'Show secret'}
+                    >
+                      {showWebhookSecret ? (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyToClipboard(config.webhookSecret, 'webhookSecret')
+                      }
+                      disabled={!config.webhookSecret}
+                      className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Copy webhook secret"
+                    >
+                      {copiedField === 'webhookSecret' ? (
+                        <svg
+                          className="w-4 h-4 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateWebhookSecret}
+                      className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Secret key for webhook authentication
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Static API key for n8n webhook access control
-                </p>
+
+                {/* API Key */}
+                <div>
+                  <label
+                    htmlFor="apiKey"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    API Key <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      id="apiKey"
+                      value={config.apiKey}
+                      onChange={e =>
+                        setConfig(prev => ({ ...prev, apiKey: e.target.value }))
+                      }
+                      placeholder="Enter API key"
+                      className="block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      title={showApiKey ? 'Hide API key' : 'Show API key'}
+                    >
+                      {showApiKey ? (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(config.apiKey, 'apiKey')}
+                      disabled={!config.apiKey}
+                      className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Copy API key"
+                    >
+                      {copiedField === 'apiKey' ? (
+                        <svg
+                          className="w-4 h-4 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateApiKey}
+                      className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Static API key for n8n webhook access control
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Session & Rate Limiting */}
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Session & Rate Limiting
-            </h3>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              <div>
-                <label
-                  htmlFor="guestSessionTimeout"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Guest Session Timeout (minutes)
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Session timeout for guest users (non-authenticated)
-                </p>
-                <input
-                  type="number"
-                  id="guestSessionTimeout"
-                  min="1"
-                  max="1440"
-                  value={config.guestSessionTimeoutMinutes}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      guestSessionTimeoutMinutes: parseInt(e.target.value, 10) || 13,
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="authenticatedSessionTimeout"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Authenticated Session Timeout (minutes)
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Session timeout for authenticated users (logged in)
-                </p>
-                <input
-                  type="number"
-                  id="authenticatedSessionTimeout"
-                  min="1"
-                  max="1440"
-                  value={config.authenticatedSessionTimeoutMinutes}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      authenticatedSessionTimeoutMinutes: parseInt(e.target.value, 10) || 19,
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="maxMessageLength"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Max Message Length
-                </label>
-                <input
-                  type="number"
-                  id="maxMessageLength"
-                  min="100"
-                  max="10000"
-                  value={config.maxMessageLength}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      maxMessageLength: parseInt(e.target.value, 10) || 4000,
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="rateLimitMessages"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Rate Limit (messages/minute)
-                </label>
-                <input
-                  type="number"
-                  id="rateLimitMessages"
-                  min="1"
-                  max="100"
-                  value={config.rateLimitMessages}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      rateLimitMessages: parseInt(e.target.value, 10) || 20,
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Queue Configuration */}
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Queue Configuration
-            </h3>
-
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="queueEnabled"
-                  checked={config.queueEnabled}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      queueEnabled: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="queueEnabled"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Enable message queue processing
-                </label>
-              </div>
+            {/* Session & Rate Limiting */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Session & Rate Limiting
+              </h3>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <div>
                   <label
-                    htmlFor="queueMaxRetries"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    htmlFor="guestSessionTimeout"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Max Retries
+                    Guest Session Timeout (minutes)
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Session timeout for guest users (non-authenticated)
+                  </p>
                   <input
                     type="number"
-                    id="queueMaxRetries"
+                    id="guestSessionTimeout"
                     min="1"
-                    max="10"
-                    value={config.queueMaxRetries}
+                    max="1440"
+                    value={config.guestSessionTimeoutMinutes}
                     onChange={e =>
                       setConfig(prev => ({
                         ...prev,
-                        queueMaxRetries: parseInt(e.target.value, 10) || 3,
+                        guestSessionTimeoutMinutes:
+                          parseInt(e.target.value, 10) || 13,
                       }))
                     }
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -734,22 +612,25 @@ export default function ChatConfigPage() {
 
                 <div>
                   <label
-                    htmlFor="queueRetryDelay"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    htmlFor="authenticatedSessionTimeout"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Retry Delay (ms)
+                    Authenticated Session Timeout (minutes)
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Session timeout for authenticated users (logged in)
+                  </p>
                   <input
                     type="number"
-                    id="queueRetryDelay"
-                    min="1000"
-                    max="60000"
-                    step="1000"
-                    value={config.queueRetryDelayMs}
+                    id="authenticatedSessionTimeout"
+                    min="1"
+                    max="1440"
+                    value={config.authenticatedSessionTimeoutMinutes}
                     onChange={e =>
                       setConfig(prev => ({
                         ...prev,
-                        queueRetryDelayMs: parseInt(e.target.value, 10) || 5000,
+                        authenticatedSessionTimeoutMinutes:
+                          parseInt(e.target.value, 10) || 19,
                       }))
                     }
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -758,21 +639,44 @@ export default function ChatConfigPage() {
 
                 <div>
                   <label
-                    htmlFor="queueBatchSize"
+                    htmlFor="maxMessageLength"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Batch Size
+                    Max Message Length
                   </label>
                   <input
                     type="number"
-                    id="queueBatchSize"
-                    min="1"
-                    max="50"
-                    value={config.queueBatchSize}
+                    id="maxMessageLength"
+                    min="100"
+                    max="10000"
+                    value={config.maxMessageLength}
                     onChange={e =>
                       setConfig(prev => ({
                         ...prev,
-                        queueBatchSize: parseInt(e.target.value, 10) || 10,
+                        maxMessageLength: parseInt(e.target.value, 10) || 4000,
+                      }))
+                    }
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="rateLimitMessages"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Rate Limit (messages/minute)
+                  </label>
+                  <input
+                    type="number"
+                    id="rateLimitMessages"
+                    min="1"
+                    max="100"
+                    value={config.rateLimitMessages}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        rateLimitMessages: parseInt(e.target.value, 10) || 20,
                       }))
                     }
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -780,122 +684,224 @@ export default function ChatConfigPage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* WebSocket Configuration */}
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Real-time Configuration
-            </h3>
+            {/* Queue Configuration */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Queue Configuration
+              </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="websocketEnabled"
-                  checked={config.websocketEnabled}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      websocketEnabled: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="websocketEnabled"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Enable WebSocket for real-time messaging
-                </label>
-              </div>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="queueEnabled"
+                    checked={config.queueEnabled}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        queueEnabled: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="queueEnabled"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    Enable message queue processing
+                  </label>
+                </div>
 
-              <div className="max-w-sm">
-                <label
-                  htmlFor="websocketPort"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  WebSocket Port
-                </label>
-                <input
-                  type="number"
-                  id="websocketPort"
-                  min="3000"
-                  max="9999"
-                  value={config.websocketPort}
-                  onChange={e =>
-                    setConfig(prev => ({
-                      ...prev,
-                      websocketPort: parseInt(e.target.value, 10) || 3001,
-                    }))
-                  }
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  <div>
+                    <label
+                      htmlFor="queueMaxRetries"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Max Retries
+                    </label>
+                    <input
+                      type="number"
+                      id="queueMaxRetries"
+                      min="1"
+                      max="10"
+                      value={config.queueMaxRetries}
+                      onChange={e =>
+                        setConfig(prev => ({
+                          ...prev,
+                          queueMaxRetries: parseInt(e.target.value, 10) || 3,
+                        }))
+                      }
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="queueRetryDelay"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Retry Delay (ms)
+                    </label>
+                    <input
+                      type="number"
+                      id="queueRetryDelay"
+                      min="1000"
+                      max="60000"
+                      step="1000"
+                      value={config.queueRetryDelayMs}
+                      onChange={e =>
+                        setConfig(prev => ({
+                          ...prev,
+                          queueRetryDelayMs:
+                            parseInt(e.target.value, 10) || 5000,
+                        }))
+                      }
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="queueBatchSize"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Batch Size
+                    </label>
+                    <input
+                      type="number"
+                      id="queueBatchSize"
+                      min="1"
+                      max="50"
+                      value={config.queueBatchSize}
+                      onChange={e =>
+                        setConfig(prev => ({
+                          ...prev,
+                          queueBatchSize: parseInt(e.target.value, 10) || 10,
+                        }))
+                      }
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={
-                !config.webhookUrl ||
-                !config.webhookSecret ||
-                !config.apiKey ||
-                testing
-              }
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {testing ? 'Testing...' : 'Test Connection'}
-            </button>
+            {/* WebSocket Configuration */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Real-time Configuration
+              </h3>
 
-            <button
-              type="submit"
-              disabled={
-                saving ||
-                !config.webhookUrl ||
-                !config.webhookSecret ||
-                !config.apiKey
-              }
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving
-                ? 'Saving...'
-                : isConfigured
-                  ? 'Update Configuration'
-                  : 'Save Configuration'}
-            </button>
-          </div>
-        </form>
-      </div>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="websocketEnabled"
+                    checked={config.websocketEnabled}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        websocketEnabled: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="websocketEnabled"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    Enable WebSocket for real-time messaging
+                  </label>
+                </div>
 
-      {/* Integration Instructions */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            n8n Integration Guide
-          </h3>
+                <div className="max-w-sm">
+                  <label
+                    htmlFor="websocketPort"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    WebSocket Port
+                  </label>
+                  <input
+                    type="number"
+                    id="websocketPort"
+                    min="3000"
+                    max="9999"
+                    value={config.websocketPort}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        websocketPort: parseInt(e.target.value, 10) || 3001,
+                      }))
+                    }
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={
+                  !config.webhookUrl ||
+                  !config.webhookSecret ||
+                  !config.apiKey ||
+                  testing
+                }
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testing ? 'Testing...' : 'Test Connection'}
+              </button>
+
+              <button
+                type="submit"
+                disabled={
+                  saving ||
+                  !config.webhookUrl ||
+                  !config.webhookSecret ||
+                  !config.apiKey
+                }
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving
+                  ? 'Saving...'
+                  : isConfigured
+                    ? 'Update Configuration'
+                    : 'Save Configuration'}
+              </button>
+            </div>
+          </form>
         </div>
-        <div className="p-6">
-          <div className="prose max-w-none text-sm">
-            <h4 className="text-base font-medium text-gray-900 mb-3">
-              Setup Instructions:
-            </h4>
-            <ol className="list-decimal list-inside space-y-2 text-gray-700">
-              <li>Create a new n8n workflow</li>
-              <li>Add a Webhook node as the trigger</li>
-              <li>Configure the webhook with the URL and secret above</li>
-              <li>Add your AI processing logic (OpenAI, Claude, etc.)</li>
-              <li>Return a response in the expected format</li>
-            </ol>
 
-            <h4 className="text-base font-medium text-gray-900 mt-6 mb-3">
-              Webhook Payload Format:
-            </h4>
-            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-xs">
-              {`{
+        {/* Integration Instructions */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">
+              n8n Integration Guide
+            </h3>
+          </div>
+          <div className="p-6">
+            <div className="prose max-w-none text-sm">
+              <h4 className="text-base font-medium text-gray-900 mb-3">
+                Setup Instructions:
+              </h4>
+              <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                <li>Create a new n8n workflow</li>
+                <li>Add a Webhook node as the trigger</li>
+                <li>Configure the webhook with the URL and secret above</li>
+                <li>Add your AI processing logic (OpenAI, Claude, etc.)</li>
+                <li>Return a response in the expected format</li>
+              </ol>
+
+              <h4 className="text-base font-medium text-gray-900 mt-6 mb-3">
+                Webhook Payload Format:
+              </h4>
+              <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-xs">
+                {`{
   "sessionId": "session-uuid",
   "messageId": "message-id", 
   "content": "User message",
@@ -904,13 +910,13 @@ export default function ChatConfigPage() {
   "metadata": {},
   "timestamp": "2025-01-01T00:00:00Z"
 }`}
-            </pre>
+              </pre>
 
-            <h4 className="text-base font-medium text-gray-900 mt-6 mb-3">
-              Expected Response Format:
-            </h4>
-            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-xs">
-              {`{
+              <h4 className="text-base font-medium text-gray-900 mt-6 mb-3">
+                Expected Response Format:
+              </h4>
+              <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-xs">
+                {`{
   "content": "Bot response message",
   "messageType": "text",
   "metadata": {
@@ -924,10 +930,10 @@ export default function ChatConfigPage() {
     }
   }
 }`}
-            </pre>
+              </pre>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </AdminPageLayout>
   );

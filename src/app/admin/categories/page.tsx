@@ -50,10 +50,7 @@ import {
   Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  AdminPageLayout,
-  TabConfig,
-} from '@/components/admin/layout';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface Category {
   id: string;

@@ -19,6 +19,21 @@ async function handlePOST(request: NextRequest) {
     if (!validatedData.userId && !validatedData.guestPhone && !validatedData.guestEmail) {
       throw createChatError('VALIDATION_ERROR', 'Either userId, guestPhone, or guestEmail must be provided');
     }
+
+    // If userId is provided, validate that the user actually exists
+    if (validatedData.userId) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: validatedData.userId },
+        select: { id: true }
+      });
+
+      if (!userExists) {
+        console.error(`❌ Attempted to create chat session with non-existent user ID: ${validatedData.userId}`);
+        throw createChatError('VALIDATION_ERROR', 'User does not exist');
+      }
+
+      console.log(`✅ User validation passed for ID: ${validatedData.userId}`);
+    }
     
     console.log(`🆕 Creating new session for: ${validatedData.userId ? 'user ' + validatedData.userId : validatedData.guestPhone || validatedData.guestEmail}`);
     

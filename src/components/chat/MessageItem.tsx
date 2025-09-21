@@ -144,18 +144,18 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
       <style jsx>{`
         .message-item {
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           max-width: 100%;
         }
 
         .message-item--consecutive {
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
 
         .message-item__wrapper {
           display: flex;
           align-items: flex-end;
-          gap: 8px;
+          gap: 12px;
         }
 
         .message-item--user .message-item__wrapper {
@@ -182,7 +182,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         .message-item__content {
           flex: 1;
           min-width: 0;
-          max-width: 280px;
+          max-width: 300px;
         }
 
         .message-item--user .message-item__content {
@@ -192,28 +192,30 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         }
 
         .message-item__bubble {
-          background: white;
-          border: 1px solid #e1e5e9;
-          border-radius: 16px 16px 16px 4px;
-          padding: 12px 16px;
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          border: 1px solid rgba(229, 231, 235, 0.5);
+          border-radius: 20px 20px 20px 6px;
+          padding: 16px 20px;
           word-wrap: break-word;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
           position: relative;
+          backdrop-filter: blur(10px);
         }
 
         .message-item--user .message-item__bubble {
-          background: var(--chat-primary-color, #007bff);
+          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
           color: white;
-          border: none;
-          border-radius: 16px 16px 4px 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 20px 20px 6px 20px;
+          box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(37, 99, 235, 0.15);
         }
 
         .message-item--consecutive .message-item__bubble {
-          border-radius: 16px 16px 16px 8px;
+          border-radius: 20px 20px 20px 8px;
         }
 
         .message-item--user.message-item--consecutive .message-item__bubble {
-          border-radius: 16px 16px 8px 16px;
+          border-radius: 20px 20px 8px 20px;
         }
 
         .message-item--failed .message-item__bubble {
@@ -223,10 +225,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         }
 
         .message-item__text {
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 15px;
+          line-height: 1.45;
           margin: 0;
           white-space: pre-wrap;
+          font-weight: 400;
+          letter-spacing: -0.01em;
         }
 
         .message-item__rich-content {

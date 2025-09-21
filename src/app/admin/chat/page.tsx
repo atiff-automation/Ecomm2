@@ -8,9 +8,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { RefreshCw, MessageSquare, Clock } from 'lucide-react';
+import { RefreshCw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 // Import directly with correct default/named imports
 import MetricsCards from '@/components/chat/MetricsCards';
@@ -22,13 +28,9 @@ import type {
   ChatMetrics,
   FilterState,
   SortConfig,
-  PaginationConfig
+  PaginationConfig,
 } from '@/types/chat';
-import {
-  filterSessions,
-  sortSessions,
-  calculateMetrics
-} from '@/utils/chat';
+import { filterSessions, sortSessions, calculateMetrics } from '@/utils/chat';
 
 export default function SessionsPage() {
   const { data: session } = useSession();
@@ -75,7 +77,9 @@ export default function SessionsPage() {
   // Selection and export state
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>(
+    'json'
+  );
   const [loading, setLoading] = useState(true);
 
   // Data fetching with improved error handling and stability
@@ -94,24 +98,26 @@ export default function SessionsPage() {
       } else {
         console.error('Sessions API Error:', {
           status: sessionsResponse.status,
-          statusText: sessionsResponse.statusText
+          statusText: sessionsResponse.statusText,
         });
       }
 
       if (metricsResponse.ok) {
         const metricsData = await metricsResponse.json();
-        setMetrics(metricsData.metrics || {
-          totalSessions: 0,
-          activeSessions: 0,
-          totalMessages: 0,
-          averageSessionDuration: 0,
-          todaysSessions: 0,
-          messagesPerSession: 0,
-        });
+        setMetrics(
+          metricsData.metrics || {
+            totalSessions: 0,
+            activeSessions: 0,
+            totalMessages: 0,
+            averageSessionDuration: 0,
+            todaysSessions: 0,
+            messagesPerSession: 0,
+          }
+        );
       } else {
         console.error('Metrics API Error:', {
           status: metricsResponse.status,
-          statusText: metricsResponse.statusText
+          statusText: metricsResponse.statusText,
         });
       }
     } catch (error) {
@@ -187,7 +193,6 @@ export default function SessionsPage() {
     pagination.page * pagination.pageSize
   );
 
-
   // Update pagination total when filtered data changes
   useEffect(() => {
     setPagination(prev => ({
@@ -226,9 +231,12 @@ export default function SessionsPage() {
 
   const handleEndSession = async (sessionId: string) => {
     try {
-      const response = await fetch(`/api/admin/chat/sessions/${sessionId}/end`, {
-        method: 'POST',
-      });
+      const response = await fetch(
+        `/api/admin/chat/sessions/${sessionId}/end`,
+        {
+          method: 'POST',
+        }
+      );
       if (response.ok) {
         fetchChatData();
       }
@@ -285,7 +293,6 @@ export default function SessionsPage() {
 
       // Clear selection after successful export
       setSelectedSessions([]);
-
     } catch (error) {
       console.error('Export error:', error);
       alert('Failed to export sessions. Please try again.');

@@ -374,12 +374,12 @@ class ChatUtilities {
    */
   getMessageStatusIcon(status: ChatMessage['status']): string {
     const icons = {
-      pending: '⏳',
+      pending: '○',
       sent: '✓',
       delivered: '✓✓',
       failed: '❌'
     };
-    
+
     return icons[status] || icons.pending;
   }
 

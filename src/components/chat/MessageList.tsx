@@ -97,17 +97,20 @@ export const MessageList: React.FC<MessageListProps> = ({
     >
       <div className="message-list__content">
         {/* Welcome message if no messages */}
-        {messages.length === 0 && !isTyping && (
+        {messages.length === 0 && !isTyping && config.welcomeMessage && (
           <div className="message-list__welcome">
-            <div className="message-list__welcome-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div className="message-list__welcome-bubble">
+              <div className="message-list__welcome-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="message-list__welcome-content">
+                <div className="message-list__welcome-text">
+                  {config.welcomeMessage}
+                </div>
+              </div>
             </div>
-            <h3 className="message-list__welcome-title">Welcome to Chat Support</h3>
-            <p className="message-list__welcome-text">
-              Send us a message and we'll get back to you as soon as possible.
-            </p>
           </div>
         )}
 
@@ -156,35 +159,51 @@ export const MessageList: React.FC<MessageListProps> = ({
         }
 
         .message-list__welcome {
+          padding: 20px 0;
+          margin-bottom: 16px;
+        }
+
+        .message-list__welcome-bubble {
           display: flex;
-          flex-direction: column;
+          align-items: flex-end;
+          gap: 12px;
+          max-width: 300px;
+        }
+
+        .message-list__welcome-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--chat-primary-color, #007bff);
+          display: flex;
           align-items: center;
           justify-content: center;
-          text-align: center;
-          padding: 32px 16px;
+          flex-shrink: 0;
+          margin-bottom: 2px;
+        }
+
+        .message-list__welcome-avatar svg {
+          color: white;
+          opacity: 0.9;
+        }
+
+        .message-list__welcome-content {
           flex: 1;
-          min-height: 200px;
-        }
-
-        .message-list__welcome-icon {
-          margin-bottom: 16px;
-          color: var(--chat-primary-color, #007bff);
-          opacity: 0.6;
-        }
-
-        .message-list__welcome-title {
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0 0 8px 0;
-          color: #333;
+          min-width: 0;
         }
 
         .message-list__welcome-text {
-          font-size: 14px;
-          color: #666;
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          border: 1px solid rgba(229, 231, 235, 0.5);
+          border-radius: 20px 20px 20px 6px;
+          padding: 16px 20px;
+          font-size: 15px;
+          line-height: 1.45;
+          color: #374151;
           margin: 0;
-          line-height: 1.5;
-          max-width: 280px;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+          backdrop-filter: blur(10px);
+          white-space: pre-wrap;
         }
 
         .message-list__date-separator {

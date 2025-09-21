@@ -81,16 +81,16 @@ export function SessionFilters({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 mb-6">
+    <div className="flex flex-col lg:flex-row lg:items-center gap-4 my-6">
       {/* Enhanced Search Input - Following promotional date design aesthetics */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 max-w-md">
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
           <Input
             placeholder="Search sessions by ID or user email..."
             value={filters.search}
             onChange={handleSearchChange}
-            className="pl-10 h-10 border-gray-300 focus:border-green-500 focus:ring-green-500 transition-colors bg-white shadow-sm"
+            className="pl-10 h-10 w-full border-gray-300 focus:border-green-500 focus:ring-green-500 transition-colors bg-white shadow-sm"
           />
         </div>
       </div>
