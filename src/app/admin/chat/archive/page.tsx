@@ -1,280 +1,322 @@
 /**
- * Archive Management Dashboard - Complete Chat Archive Implementation
- * Following @CLAUDE.md DRY principles with centralized architecture
- * Replacing placeholder with production-ready archive functionality
+ * Data Management Dashboard
+ * Centralized data operations interface
+ * Following standard AdminPageLayout pattern for consistency
  */
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSession } from 'next-auth/react';
-import { RefreshCw, Archive, Shield, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import {
+  CalendarIcon,
+  DownloadIcon,
+  TrashIcon,
+  DatabaseIcon,
+  FileIcon,
+  PlayIcon,
+  StopIcon,
+  RefreshCwIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+} from 'lucide-react';
+import { format } from 'date-fns';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
-import { ArchiveTable } from '@/components/chat/archive/ArchiveTable';
-import { ArchiveFilters } from '@/components/chat/archive/ArchiveFilters';
-import { RestoreControls } from '@/components/chat/archive/RestoreControls';
-import { RetentionStatus } from '@/components/chat/archive/RetentionStatus';
-import type {
-  ArchiveSession,
-  ArchiveStats,
-  RetentionPolicy,
-  FilterState,
-  SortConfig,
-  PaginationConfig,
-  RestoreOperation,
-} from '@/types/chat';
-import { filterSessions, sortSessions } from '@/utils/chat';
 
-export default function ChatArchivePage() {
-  useSession(); // For authentication
+interface BackupFile {
+  id: string;
+  filename: string;
+  month: number;
+  year: number;
+  createdAt: string;
+  fileSize: string;
+  sessionCount: number;
+  status: string;
+}
 
-  // Core state management - centralized approach
-  const [sessions, setSessions] = useState<ArchiveSession[]>([]);
-  const [stats, setStats] = useState<ArchiveStats>({
-    totalArchived: 0,
-    archivedToday: 0,
-    scheduledForPurge: 0,
-    storageUsed: 0,
-    averageRetentionDays: 365,
-  });
-  const [policy] = useState<RetentionPolicy>({
-    name: 'Default Policy',
-    description: '1-year retention policy with automatic archiving',
-    autoArchiveAfterDays: 90,
-    purgeAfterDays: 365,
-    applies: 'all',
-    enabled: true,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface CleanupStats {
+  totalSessions: number;
+  totalMessages: number;
+  sessionsAtRisk: number;
+  messagesAtRisk: number;
+  nextCleanupDate?: string;
+  config: {
+    retentionDays: number;
+    gracePeriodDays: number;
+    autoDeleteEnabled: boolean;
+    backupEnabled: boolean;
+  };
+}
 
-  // Enhanced filtering state following plan specification
-  const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    status: 'all',
-    dateRange: {
-      from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Last 90 days for archive
-      to: new Date(),
-    },
-    userType: 'all',
-    durationFilter: 'all',
-    messageCountFilter: 'all',
-  });
+interface JobStatus {
+  isRunning: boolean;
+  scheduledJobs: string[];
+  jobDefinitions: any;
+}
 
-  // Sorting and pagination state following plan
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'archivedAt',
-    direction: 'desc',
-  });
+export default function DataManagementPage() {
+  const [exportStartDate, setExportStartDate] = useState<Date>();
+  const [exportEndDate, setExportEndDate] = useState<Date>();
+  const [exportFormat, setExportFormat] = useState<string>('json');
+  const [includeMessages, setIncludeMessages] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const [pagination, setPagination] = useState<PaginationConfig>({
-    page: 1,
-    pageSize: 20,
-    total: 0,
-  });
+  const [backupFiles, setBackupFiles] = useState<BackupFile[]>([]);
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
-  // Selection state
-  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
+  const [cleanupStats, setCleanupStats] = useState<CleanupStats | null>(null);
+  const [isLoadingCleanup, setIsLoadingCleanup] = useState(false);
 
-  // Real-time updates - Production-ready polling pattern
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isComponentMounted = useRef(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
 
-  // Data fetching with improved error handling and stability
-  const fetchArchiveData = useCallback(async () => {
+  useEffect(() => {
+    fetchBackupFiles();
+    fetchCleanupStats();
+    fetchJobStatus();
+  }, []);
+
+  const fetchBackupFiles = async () => {
+    setIsLoadingBackups(true);
     try {
-      setLoading(true);
-      setError(null);
+      const response = await fetch('/api/admin/chat/backups');
+      const data = await response.json();
 
-      const [sessionsResponse, statsResponse] = await Promise.all([
-        fetch('/api/admin/chat/archive'),
-        fetch('/api/admin/chat/archive/stats'),
-      ]);
-
-      if (sessionsResponse.ok) {
-        const sessionsData = await sessionsResponse.json();
-        setSessions(sessionsData.sessions || []);
-        setPagination(prev => ({ ...prev, total: sessionsData.total || 0 }));
+      if (data.success) {
+        setBackupFiles(data.backups);
       } else {
-        console.error('Archive Sessions API Error:', {
-          status: sessionsResponse.status,
-          statusText: sessionsResponse.statusText,
-        });
-      }
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStats(prevStats => statsData.stats || prevStats);
-      } else {
-        console.error('Archive Stats API Error:', {
-          status: statsResponse.status,
-          statusText: statsResponse.statusText,
-        });
+        toast.error('Failed to load backup files');
       }
     } catch (error) {
-      console.error('Error fetching archive data:', error);
-      setError(
-        error instanceof Error ? error.message : 'Failed to load archive data'
-      );
+      toast.error('Failed to load backup files');
     } finally {
-      setLoading(false);
-      setIsInitialLoad(false);
+      setIsLoadingBackups(false);
     }
-  }, []);
-
-  // Setup polling with proper cleanup
-  useEffect(() => {
-    const startPolling = () => {
-      // Clear any existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-
-      // Only start polling after initial load is complete and we have data
-      if (!loading && !isInitialLoad && sessions.length >= 0) {
-        intervalRef.current = setInterval(() => {
-          // Only fetch if component is still mounted and not currently loading
-          if (isComponentMounted.current && !loading) {
-            fetchArchiveData();
-          }
-        }, 120000); // 2 minutes for archive (less frequent than sessions)
-      }
-    };
-
-    startPolling();
-
-    // Cleanup function
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [loading, isInitialLoad, sessions.length, fetchArchiveData]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    isComponentMounted.current = true;
-
-    return () => {
-      isComponentMounted.current = false;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  // Initial data load
-  useEffect(() => {
-    setIsInitialLoad(true);
-    fetchArchiveData();
-  }, [fetchArchiveData]);
-
-  // Data processing following centralized utilities
-  const filteredSessions = filterSessions(sessions, filters);
-  const sortedSessions = sortSessions(filteredSessions, sortConfig);
-
-  // Pagination logic
-  const paginatedSessions = sortedSessions.slice(
-    (pagination.page - 1) * pagination.pageSize,
-    pagination.page * pagination.pageSize
-  );
-
-  // Update pagination total when filtered data changes
-  useEffect(() => {
-    setPagination(prev => ({
-      ...prev,
-      total: filteredSessions.length,
-    }));
-  }, [filteredSessions.length]);
-
-  // Event handlers following plan component structure
-  const handleFiltersChange = (newFilters: Partial<FilterState>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
   };
 
-  const handleSort = (config: SortConfig) => {
-    setSortConfig(config);
-  };
-
-  const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, page }));
-  };
-
-  const handleRestoreSession = async (sessionId: string) => {
+  const fetchCleanupStats = async () => {
+    setIsLoadingCleanup(true);
     try {
-      const response = await fetch('/api/admin/chat/archive/restore', {
+      const response = await fetch('/api/admin/chat/cleanup');
+      const data = await response.json();
+
+      if (data.success) {
+        setCleanupStats(data.stats);
+      } else {
+        toast.error('Failed to load cleanup stats');
+      }
+    } catch (error) {
+      toast.error('Failed to load cleanup stats');
+    } finally {
+      setIsLoadingCleanup(false);
+    }
+  };
+
+  const fetchJobStatus = async () => {
+    setIsLoadingJobs(true);
+    try {
+      const response = await fetch('/api/admin/chat/jobs');
+      const data = await response.json();
+
+      if (data.success) {
+        setJobStatus(data.status);
+      } else {
+        toast.error('Failed to load job status');
+      }
+    } catch (error) {
+      toast.error('Failed to load job status');
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
+
+  const handleDateExport = async () => {
+    if (!exportStartDate || !exportEndDate) {
+      toast.error('Please select both start and end dates');
+      return;
+    }
+
+    if (exportStartDate > exportEndDate) {
+      toast.error('Start date must be before end date');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const response = await fetch('/api/admin/chat/export/date-range', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionIds: [sessionId],
-          reason: 'Single session restore',
+          startDate: exportStartDate.toISOString(),
+          endDate: exportEndDate.toISOString(),
+          format: exportFormat,
+          includeMessages,
         }),
       });
 
       if (response.ok) {
-        fetchArchiveData();
-        setSelectedSessions(prev => prev.filter(id => id !== sessionId));
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || `chat-export.${exportFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('Export completed successfully');
+      } else {
+        const errorData = await response.json();
+        toast.error(`Export failed: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error restoring session:', error);
+      toast.error('Export failed');
+    } finally {
+      setIsExporting(false);
     }
   };
 
-  const handleBulkRestore = async (sessionIds: string[]) => {
+  const handleCreateBackup = async () => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = lastMonth.getFullYear();
+    const month = lastMonth.getMonth() + 1;
+
+    setIsCreatingBackup(true);
     try {
-      const response = await fetch('/api/admin/chat/archive/restore', {
+      const response = await fetch('/api/admin/chat/backups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          sessionIds,
-          reason: 'Bulk restore operation',
-        }),
+        body: JSON.stringify({ year, month }),
       });
 
-      if (response.ok) {
-        fetchArchiveData();
-        setSelectedSessions([]);
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Backup created successfully');
+        fetchBackupFiles();
+      } else {
+        toast.error(`Backup failed: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error bulk restoring sessions:', error);
+      toast.error('Backup creation failed');
+    } finally {
+      setIsCreatingBackup(false);
     }
   };
 
-  const handleRestore = (operation: RestoreOperation) => {
-    handleBulkRestore(operation.sessionIds);
+  const handleDownloadBackup = async (filename: string) => {
+    try {
+      const response = await fetch(`/api/admin/chat/backups/${filename}`);
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('Backup downloaded successfully');
+      } else {
+        toast.error('Failed to download backup');
+      }
+    } catch (error) {
+      toast.error('Download failed');
+    }
   };
 
-  const handlePreview = (sessionIds: string[]) => {
-    // This would typically call the preview API
-    // Preview functionality implementation would go here
-    void sessionIds; // Suppress unused variable warning
+  const handleDeleteBackup = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/chat/backups?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Backup deleted successfully');
+        fetchBackupFiles();
+      } else {
+        toast.error(`Delete failed: ${data.error}`);
+      }
+    } catch (error) {
+      toast.error('Delete failed');
+    }
   };
 
-  const handleBulkArchive = () => {
-    // Archive functionality (if needed)
-    // Bulk archive implementation would go here
+  const handleRunCleanup = async () => {
+    try {
+      const response = await fetch('/api/admin/chat/cleanup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'scheduled' }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`Cleanup completed: ${data.result.deletedSessionsCount} sessions and ${data.result.deletedMessagesCount} messages deleted`);
+        fetchCleanupStats();
+      } else {
+        toast.error(`Cleanup failed: ${data.error}`);
+      }
+    } catch (error) {
+      toast.error('Cleanup failed');
+    }
   };
 
-  // Calculate compliance status
-  const compliance = {
-    compliant: policy.enabled && stats.scheduledForPurge < 100,
-    violations: policy.enabled ? [] : ['Retention policy is disabled'],
-    warnings:
-      stats.scheduledForPurge > 50
-        ? ['High number of sessions scheduled for purge']
-        : [],
-    score: policy.enabled ? (stats.scheduledForPurge > 100 ? 60 : 95) : 40,
+  const handleJobAction = async (action: string, jobName?: string) => {
+    try {
+      const response = await fetch('/api/admin/chat/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action, jobName }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message);
+        fetchJobStatus();
+      } else {
+        toast.error(`Action failed: ${data.error}`);
+      }
+    } catch (error) {
+      toast.error('Action failed');
+    }
   };
 
-  // Tab configuration for chat navigation
+  const formatFileSize = (bytes: string) => {
+    const size = parseInt(bytes);
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  };
+
+  // Tab configuration for chat navigation - consistent across all chat pages
   const chatTabs: TabConfig[] = [
     {
       id: 'sessions',
@@ -293,172 +335,399 @@ export default function ChatArchivePage() {
     },
     {
       id: 'archive',
-      label: 'Archive',
+      label: 'Data Management',
       href: '/admin/chat/archive',
     },
   ];
-
-  // Error state
-  if (error && !loading) {
-    return (
-      <AdminPageLayout
-        title="Chat Management"
-        subtitle="Monitor and manage customer chat interactions"
-        tabs={chatTabs}
-        loading={false}
-      >
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex items-center">
-            <Archive className="h-6 w-6 text-red-600 mr-3" />
-            <div>
-              <h3 className="text-lg font-medium text-red-800">
-                Failed to Load Archive
-              </h3>
-              <p className="text-red-700 mt-1">{error}</p>
-              <Button
-                onClick={fetchArchiveData}
-                variant="outline"
-                size="sm"
-                className="mt-3"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
-      </AdminPageLayout>
-    );
-  }
 
   return (
     <AdminPageLayout
       title="Chat Management"
       subtitle="Monitor and manage customer chat interactions"
       tabs={chatTabs}
-      actions={
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={fetchArchiveData}
-            variant="outline"
-            size="sm"
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
-            />
-            Refresh
-          </Button>
-        </div>
-      }
-      loading={loading && isInitialLoad}
+      loading={isLoadingBackups || isLoadingCleanup || isLoadingJobs}
     >
-      <div className="space-y-6">
-        {/* Retention Policy Status */}
-        <RetentionStatus
-          policy={policy}
-          stats={stats}
-          compliance={compliance}
-          disabled={loading}
-        />
 
-        {/* Filters and Controls */}
-        <ArchiveFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onBulkArchive={handleBulkArchive}
-          onBulkRestore={() => handleBulkRestore(selectedSessions)}
-          selectedCount={selectedSessions.length}
-          disabled={loading}
-        />
+      <Tabs defaultValue="export" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="export">Data Export</TabsTrigger>
+          <TabsTrigger value="backups">Backup Management</TabsTrigger>
+          <TabsTrigger value="cleanup">Data Cleanup</TabsTrigger>
+          <TabsTrigger value="jobs">Scheduled Jobs</TabsTrigger>
+        </TabsList>
 
-        {/* Restore Controls */}
-        <RestoreControls
-          selectedSessions={selectedSessions}
-          onRestore={handleRestore}
-          onPreview={handlePreview}
-          disabled={loading}
-        />
+        <TabsContent value="export" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DownloadIcon className="h-5 w-5" />
+                Date Range Export
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {exportStartDate ? format(exportStartDate, 'PPP') : 'Pick a date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={exportStartDate}
+                        onSelect={setExportStartDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-        {/* Archive Sessions Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <ArchiveTable
-            sessions={paginatedSessions}
-            selectedSessions={selectedSessions}
-            onSelectionChange={setSelectedSessions}
-            onRestoreSession={handleRestoreSession}
-            onBulkRestore={handleBulkRestore}
-            sortConfig={sortConfig}
-            onSort={handleSort}
-            pagination={pagination}
-            onPageChange={handlePageChange}
-            loading={loading}
-          />
-        </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {exportEndDate ? format(exportEndDate, 'PPP') : 'Pick a date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={exportEndDate}
+                        onSelect={setExportEndDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-        {/* Archive Summary */}
-        {!loading && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Archive Summary
-              </h3>
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Format</label>
+                  <Select value={exportFormat} onValueChange={setExportFormat}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="json">JSON</SelectItem>
+                      <SelectItem value="csv">CSV</SelectItem>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Total Archived:</span>
-                <span className="ml-2 font-medium">
-                  {stats.totalArchived.toLocaleString()}
-                </span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Options</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="includeMessages"
+                      checked={includeMessages}
+                      onChange={(e) => setIncludeMessages(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <label htmlFor="includeMessages" className="text-sm">
+                      Include messages
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-600">Archived Today:</span>
-                <span className="ml-2 font-medium">
-                  {stats.archivedToday.toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-600">Scheduled for Purge:</span>
-                <span className="ml-2 font-medium">
-                  {stats.scheduledForPurge.toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-600">Average Retention:</span>
-                <span className="ml-2 font-medium">
-                  {stats.averageRetentionDays} days
-                </span>
-              </div>
-            </div>
 
-            {/* Compliance Status */}
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                {compliance.compliant ? (
-                  <div className="flex items-center text-green-600">
-                    <Shield className="h-4 w-4 mr-1" />
-                    <span className="text-sm font-medium">
-                      Policy Compliant
-                    </span>
+              <Button
+                onClick={handleDateExport}
+                disabled={isExporting || !exportStartDate || !exportEndDate}
+                className="w-full"
+              >
+                {isExporting ? (
+                  <RefreshCwIcon className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <DownloadIcon className="mr-2 h-4 w-4" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export Data'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backups" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DatabaseIcon className="h-5 w-5" />
+                  Backup Files
+                </div>
+                <Button onClick={handleCreateBackup} disabled={isCreatingBackup}>
+                  {isCreatingBackup ? (
+                    <RefreshCwIcon className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <DatabaseIcon className="mr-2 h-4 w-4" />
+                  )}
+                  Create Backup
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingBackups ? (
+                <div className="flex justify-center py-8">
+                  <RefreshCwIcon className="h-6 w-6 animate-spin" />
+                </div>
+              ) : backupFiles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No backup files found
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {backupFiles.map((backup) => (
+                    <div
+                      key={backup.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <FileIcon className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">{backup.filename}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {backup.year}-{backup.month.toString().padStart(2, '0')} •
+                            {backup.sessionCount} sessions •
+                            {formatFileSize(backup.fileSize)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={backup.status === 'completed' ? 'success' : 'destructive'}>
+                          {backup.status}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadBackup(backup.filename)}
+                        >
+                          <DownloadIcon className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <TrashIcon className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete backup?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the backup file {backup.filename}.
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteBackup(backup.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="cleanup" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangleIcon className="h-5 w-5" />
+                  Data Retention Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingCleanup ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCwIcon className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : cleanupStats ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-2xl font-bold">{cleanupStats.totalSessions.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground">Total Sessions</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{cleanupStats.totalMessages.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground">Total Messages</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-orange-600">{cleanupStats.sessionsAtRisk.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground">Sessions at Risk</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-orange-600">{cleanupStats.messagesAtRisk.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground">Messages at Risk</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <div className="text-sm space-y-1">
+                        <div>Retention: {cleanupStats.config.retentionDays} days</div>
+                        <div>Grace Period: {cleanupStats.config.gracePeriodDays} days</div>
+                        <div className="flex items-center gap-2">
+                          Auto Delete:
+                          {cleanupStats.config.autoDeleteEnabled ? (
+                            <Badge variant="success">Enabled</Badge>
+                          ) : (
+                            <Badge variant="destructive">Disabled</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center text-red-600">
-                    <AlertTriangle className="h-4 w-4 mr-1" />
-                    <span className="text-sm font-medium">
-                      Policy Violations
-                    </span>
+                  <div className="text-center py-8 text-muted-foreground">
+                    Failed to load cleanup stats
                   </div>
                 )}
-                <span className="text-sm text-gray-500">
-                  • Score: {compliance.score}/100
-                </span>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrashIcon className="h-5 w-5" />
+                  Manual Cleanup
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Run cleanup manually according to the current retention policy.
+                </p>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      <TrashIcon className="mr-2 h-4 w-4" />
+                      Run Cleanup Now
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Run data cleanup?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will delete {cleanupStats?.sessionsAtRisk || 0} sessions and {cleanupStats?.messagesAtRisk || 0} messages
+                        that are older than the retention policy. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleRunCleanup}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Run Cleanup
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                <Button
+                  variant="outline"
+                  onClick={fetchCleanupStats}
+                  className="w-full"
+                >
+                  <RefreshCwIcon className="mr-2 h-4 w-4" />
+                  Refresh Stats
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="jobs" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5" />
+                  Scheduled Jobs
+                </div>
+                <div className="flex items-center gap-2">
+                  {jobStatus?.isRunning ? (
+                    <Badge variant="success">Running</Badge>
+                  ) : (
+                    <Badge variant="destructive">Stopped</Badge>
+                  )}
+                  <Button
+                    onClick={() => handleJobAction(jobStatus?.isRunning ? 'stop' : 'start')}
+                    variant={jobStatus?.isRunning ? 'destructive' : 'default'}
+                    size="sm"
+                  >
+                    {jobStatus?.isRunning ? (
+                      <>
+                        <StopIcon className="mr-2 h-4 w-4" />
+                        Stop Scheduler
+                      </>
+                    ) : (
+                      <>
+                        <PlayIcon className="mr-2 h-4 w-4" />
+                        Start Scheduler
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingJobs ? (
+                <div className="flex justify-center py-8">
+                  <RefreshCwIcon className="h-6 w-6 animate-spin" />
+                </div>
+              ) : jobStatus ? (
+                <div className="space-y-4">
+                  {Object.entries(jobStatus.jobDefinitions).map(([key, job]: [string, any]) => (
+                    <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{job.description}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Schedule: {job.cron} ({job.timezone})
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleJobAction('run', job.name)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <PlayIcon className="mr-2 h-4 w-4" />
+                        Run Now
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Failed to load job status
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </AdminPageLayout>
   );
 }

@@ -30,10 +30,10 @@ import type {
   SortConfig,
   PaginationConfig,
 } from '@/types/chat';
-import { filterSessions, sortSessions, calculateMetrics } from '@/utils/chat';
+import { filterSessions, sortSessions } from '@/utils/chat';
 
 export default function SessionsPage() {
-  const { data: session } = useSession();
+  useSession();
 
   // Core state management - centralized approach
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -74,12 +74,6 @@ export default function SessionsPage() {
     total: 0,
   });
 
-  // Selection and export state
-  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>(
-    'json'
-  );
   const [loading, setLoading] = useState(true);
 
   // Data fetching with improved error handling and stability
@@ -132,7 +126,7 @@ export default function SessionsPage() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Real-time updates - Production-ready polling pattern
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isComponentMounted = useRef(true);
 
   // Setup polling with proper cleanup
@@ -163,7 +157,7 @@ export default function SessionsPage() {
         intervalRef.current = null;
       }
     };
-  }, [loading, isInitialLoad, sessions.length]); // Dependencies that should trigger polling restart
+  }, [loading, isInitialLoad, sessions.length, fetchChatData]); // Dependencies that should trigger polling restart
 
   // Cleanup on unmount
   useEffect(() => {
@@ -245,68 +239,6 @@ export default function SessionsPage() {
     }
   };
 
-  // Enhanced export functionality
-  const handleExport = async () => {
-    if (selectedSessions.length === 0) {
-      alert('Please select sessions to export');
-      return;
-    }
-
-    try {
-      setIsExporting(true);
-
-      const response = await fetch('/api/admin/chat/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionIds: selectedSessions,
-          format: exportFormat,
-          includeMessages: true,
-          dateRange: {
-            from: filters.dateRange.from.toISOString(),
-            to: filters.dateRange.to.toISOString(),
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Export failed');
-      }
-
-      // Download handling
-      const contentDisposition = response.headers.get('content-disposition');
-      const filename = contentDisposition
-        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
-        : `chat_export_${selectedSessions.length}_sessions_${new Date().toISOString().split('T')[0]}.${exportFormat}`;
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      // Clear selection after successful export
-      setSelectedSessions([]);
-    } catch (error) {
-      console.error('Export error:', error);
-      alert('Failed to export sessions. Please try again.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportSession = (sessionId: string) => {
-    setSelectedSessions([sessionId]);
-    // Trigger export immediately for single session
-    setTimeout(() => handleExport(), 100);
-  };
-
   // Tab configuration for chat navigation
   const chatTabs: TabConfig[] = [
     {
@@ -326,7 +258,7 @@ export default function SessionsPage() {
     },
     {
       id: 'archive',
-      label: 'Archive',
+      label: 'Data Management',
       href: '/admin/chat/archive',
     },
   ];
@@ -369,23 +301,12 @@ export default function SessionsPage() {
       <MetricsCards metrics={metrics} loading={loading} />
 
       {/* Filters Bar - Horizontal layout matching products page */}
-      <SessionFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onExport={handleExport}
-        selectedCount={selectedSessions.length}
-        isExporting={isExporting}
-        exportFormat={exportFormat}
-        onExportFormatChange={setExportFormat}
-      />
+      <SessionFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       {/* Sessions Table - Clean container */}
       <div className="bg-white rounded-lg border border-gray-200">
         <SessionsTable
           sessions={paginatedSessions}
-          selectedSessions={selectedSessions}
-          onSelectionChange={setSelectedSessions}
-          onExportSession={handleExportSession}
           onViewSession={handleViewSession}
           onEndSession={handleEndSession}
           sortConfig={sortConfig}

@@ -403,139 +403,9 @@ export interface AnalyticsExportData {
   size: number;
 }
 
-// ============================================================================
-// Archive Types - Extended for comprehensive archive management
-// ============================================================================
-
-export interface ArchiveSession {
-  id: string;
-  sessionId: string;
-  status: string;
-  originalStatus: string;
-  startedAt: string;
-  endedAt?: string;
-  lastActivity: string;
-  archivedAt: string;
-  archiveReason?: string;
-  retentionUntil: string;
-  messageCount: number;
-  userId?: string;
-  userEmail?: string;
-  userName?: string;
-  guestEmail?: string;
-  guestPhone?: string;
-  userAgent?: string;
-  ipAddress?: string;
-  metadata?: any;
-  canRestore: boolean;
-  daysUntilPurge: number;
-}
-
-export interface ArchiveStats {
-  totalArchived: number;
-  archivedToday: number;
-  scheduledForPurge: number;
-  storageUsed: number;
-  averageRetentionDays: number;
-  oldestArchive?: string;
-  newestArchive?: string;
-}
-
-export interface ArchiveOperation {
-  sessionIds: string[];
-  reason?: string;
-  scheduledPurgeDate?: Date;
-}
-
-export interface RestoreOperation {
-  sessionIds: string[];
-  reason?: string;
-  restoreToStatus?: string;
-}
-
-export interface RestoreValidation {
-  sessionId: string;
-  canRestore: boolean;
-  reasons: string[];
-  warnings: string[];
-  metadata?: any;
-}
-
-export interface RestorePreview {
-  sessionId: string;
-  originalStatus: string;
-  archivedAt: string;
-  retentionUntil: string;
-  messageCount: number;
-  userInfo: string;
-  estimatedRestoreTime: number;
-  dataIntegrityChecks: {
-    messagesIntact: boolean;
-    metadataIntact: boolean;
-    userLinksIntact: boolean;
-  };
-}
-
-export interface RestoreTransaction {
-  id: string;
-  sessionIds: string[];
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
-  startedAt: Date;
-  completedAt?: Date;
-  results: RestoreResult[];
-  summary: {
-    total: number;
-    successful: number;
-    failed: number;
-    warnings: number;
-  };
-}
-
-export interface RestoreResult {
-  sessionId: string;
-  success: boolean;
-  newStatus: string;
-  restoredAt: string;
-  warnings: string[];
-  errors: string[];
-  dataIntegrity: {
-    messagesRestored: number;
-    metadataPreserved: boolean;
-    userLinksPreserved: boolean;
-  };
-}
-
-export interface RetentionPolicy {
-  name: string;
-  description: string;
-  autoArchiveAfterDays: number;
-  purgeAfterDays: number;
-  applies: 'all' | 'guest' | 'authenticated';
-  enabled: boolean;
-  lastRun?: string;
-  nextRun?: string;
-}
-
-export interface RetentionReport {
-  policy: RetentionPolicy;
-  stats: {
-    totalSessions: number;
-    eligibleForArchive: number;
-    eligibleForPurge: number;
-    archivedInPeriod: number;
-    purgedInPeriod: number;
-    storageFreed: number;
-  };
-  recommendations: string[];
-  nextActions: Array<{
-    action: string;
-    count: number;
-    scheduledFor: Date;
-  }>;
-}
 
 // ============================================================================
-// Component Props Types - Extended for Analytics and Archive
+// Component Props Types - Extended for Analytics
 // ============================================================================
 
 export interface AnalyticsChartsProps {
@@ -557,48 +427,9 @@ export interface ReportFiltersProps {
   disabled?: boolean;
 }
 
-export interface ArchiveTableProps {
-  sessions: ArchiveSession[];
-  selectedSessions: string[];
-  onSelectionChange: (selected: string[]) => void;
-  onRestoreSession: (sessionId: string) => void;
-  onBulkRestore: (sessionIds: string[]) => void;
-  sortConfig: SortConfig;
-  onSort: (config: SortConfig) => void;
-  pagination: PaginationConfig;
-  onPageChange: (page: number) => void;
-  loading?: boolean;
-}
-
-export interface ArchiveFiltersProps {
-  filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
-  onBulkArchive: () => void;
-  onBulkRestore: () => void;
-  selectedCount: number;
-  disabled?: boolean;
-}
-
-export interface RestoreControlsProps {
-  selectedSessions: string[];
-  onRestore: (operation: RestoreOperation) => void;
-  onPreview: (sessionIds: string[]) => void;
-  disabled?: boolean;
-}
-
-export interface RetentionStatusProps {
-  policy: RetentionPolicy;
-  stats: ArchiveStats;
-  compliance: {
-    compliant: boolean;
-    violations: string[];
-    warnings: string[];
-    score: number;
-  };
-}
 
 // ============================================================================
-// Hook Return Types - Extended for Analytics and Archive
+// Hook Return Types - Extended for Analytics
 // ============================================================================
 
 export interface UseAnalyticsReturn {
@@ -612,55 +443,13 @@ export interface UseAnalyticsReturn {
   exportReport: (config: ReportConfig) => Promise<AnalyticsExportData>;
 }
 
-export interface UseArchiveReturn {
-  sessions: ArchiveSession[];
-  stats: ArchiveStats;
-  loading: boolean;
-  error: string | null;
-  filters: FilterState;
-  setFilters: (filters: FilterState) => void;
-  selectedSessions: string[];
-  setSelectedSessions: (sessions: string[]) => void;
-  archiveSessions: (operation: ArchiveOperation) => Promise<void>;
-  restoreSessions: (operation: RestoreOperation) => Promise<RestoreTransaction>;
-  validateRestore: (sessionIds: string[]) => Promise<RestoreValidation[]>;
-  getRestorePreview: (sessionIds: string[]) => Promise<RestorePreview[]>;
-  refreshArchive: () => Promise<void>;
-}
-
-export interface UseRetentionReturn {
-  policy: RetentionPolicy;
-  report: RetentionReport | null;
-  compliance: {
-    compliant: boolean;
-    violations: string[];
-    warnings: string[];
-    score: number;
-  };
-  loading: boolean;
-  error: string | null;
-  executeRetention: () => Promise<void>;
-  generateReport: () => Promise<void>;
-  checkCompliance: () => Promise<void>;
-}
 
 // ============================================================================
-// Default Values - Extended for Analytics and Archive
+// Default Values - Extended for Analytics
 // ============================================================================
 
 export const DEFAULT_ANALYTICS_TIME_RANGE = '24h';
 
-export const DEFAULT_ARCHIVE_FILTERS: FilterState = {
-  search: '',
-  status: 'all',
-  dateRange: {
-    from: new Date(new Date().setDate(new Date().getDate() - 90)), // Last 90 days for archive
-    to: new Date(),
-  },
-  userType: 'all',
-  durationFilter: 'all',
-  messageCountFilter: 'all',
-};
 
 export const DEFAULT_REPORT_CONFIG: Partial<ReportConfig> = {
   includeCharts: true,
@@ -669,6 +458,3 @@ export const DEFAULT_REPORT_CONFIG: Partial<ReportConfig> = {
   format: 'pdf',
 };
 
-export const DEFAULT_RESTORE_STATUS = 'ended';
-
-export const ARCHIVE_RETENTION_DAYS = 365; // 1 year as specified

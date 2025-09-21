@@ -7,7 +7,7 @@
 'use client';
 
 import React from 'react';
-import { Eye, Download, Archive, ChevronUp, ChevronDown } from 'lucide-react';
+import { Eye, Archive, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { ChatSession, SortConfig, PaginationConfig } from '@/types/chat';
@@ -15,9 +15,6 @@ import { formatDuration, formatTimestamp, getStatusColor } from '@/utils/chat';
 
 interface SessionsTableProps {
   sessions: ChatSession[];
-  selectedSessions: string[];
-  onSelectionChange: (selected: string[]) => void;
-  onExportSession: (sessionId: string) => void;
   onViewSession: (sessionId: string) => void;
   onEndSession: (sessionId: string) => void;
   sortConfig: SortConfig;
@@ -29,9 +26,6 @@ interface SessionsTableProps {
 
 export function SessionsTable({
   sessions,
-  selectedSessions,
-  onSelectionChange,
-  onExportSession,
   onViewSession,
   onEndSession,
   sortConfig,
@@ -40,21 +34,6 @@ export function SessionsTable({
   onPageChange,
   loading = false,
 }: SessionsTableProps) {
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelectionChange(sessions.map(s => s.sessionId));
-    } else {
-      onSelectionChange([]);
-    }
-  };
-
-  const handleSelectSession = (sessionId: string, checked: boolean) => {
-    if (checked) {
-      onSelectionChange([...selectedSessions, sessionId]);
-    } else {
-      onSelectionChange(selectedSessions.filter(id => id !== sessionId));
-    }
-  };
 
   const getSortIcon = (key: keyof ChatSession) => {
     if (sortConfig.key !== key) {
@@ -176,15 +155,6 @@ export function SessionsTable({
           <h3 className="text-lg font-medium text-gray-900">
             Sessions
           </h3>
-          {sessions.length > 0 && (
-            <Button
-              onClick={() => handleSelectAll(selectedSessions.length !== sessions.length)}
-              variant="outline"
-              size="sm"
-            >
-              {selectedSessions.length === sessions.length ? 'Deselect All' : 'Select All'}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -194,14 +164,6 @@ export function SessionsTable({
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={sessions.length > 0 && selectedSessions.length === sessions.length}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded"
-                  />
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <button
                     onClick={() => onSort('sessionId')}
@@ -259,14 +221,6 @@ export function SessionsTable({
               {sessions.map((session) => (
                 <tr key={session.sessionId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={selectedSessions.includes(session.sessionId)}
-                      onChange={(e) => handleSelectSession(session.sessionId, e.target.checked)}
-                      className="rounded"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {session.sessionId}
                     </div>
@@ -307,13 +261,6 @@ export function SessionsTable({
                         onClick={() => onViewSession(session.sessionId)}
                       >
                         <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onExportSession(session.sessionId)}
-                      >
-                        <Download className="h-4 w-4" />
                       </Button>
                       {session.status === 'active' && (
                         <Button

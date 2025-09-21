@@ -1020,6 +1020,7 @@ model ChatSession {
   updatedAt    DateTime      @updatedAt
   expiresAt    DateTime?
   endedAt      DateTime?
+  archivedAt   DateTime?
   guestPhone   String?
   ipAddress    String?
   lastActivity DateTime      @default(now())
@@ -1107,6 +1108,23 @@ model ChatConfig {
   @@index([verified])
   @@index([healthStatus])
   @@map("chat_config")
+}
+
+model ChatBackup {
+  id           String   @id @default(cuid())
+  filename     String   @unique
+  month        Int
+  year         Int
+  createdAt    DateTime @default(now())
+  fileSize     BigInt
+  sessionCount Int
+  status       String   // "completed", "failed", "in_progress"
+
+  @@unique([month, year])
+  @@index([year, month])
+  @@index([status])
+  @@index([createdAt])
+  @@map("chat_backups")
 }
 
 enum UserRole {
