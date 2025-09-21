@@ -282,11 +282,6 @@ export default function ChatArchivePage() {
       href: '/admin/chat',
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
-      href: '/admin/chat/analytics',
-    },
-    {
       id: 'configuration',
       label: 'Configuration',
       href: '/admin/chat/config',
