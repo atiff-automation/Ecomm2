@@ -13,6 +13,7 @@ export async function GET() {
       select: {
         welcomeMessage: true,
         maxMessageLength: true,
+        botIconUrl: true,
         isActive: true,
       },
     });
@@ -24,6 +25,7 @@ export async function GET() {
         config: {
           welcomeMessage: 'Hi! How can we help you today?',
           maxMessageLength: 4000,
+          botIconUrl: null,
           isActive: false,
         },
       });
@@ -34,6 +36,7 @@ export async function GET() {
       config: {
         welcomeMessage: config.welcomeMessage || 'Hi! How can we help you today?',
         maxMessageLength: config.maxMessageLength,
+        botIconUrl: config.botIconUrl,
         isActive: config.isActive,
       },
     });
@@ -47,6 +50,7 @@ export async function GET() {
         config: {
           welcomeMessage: 'Hi! How can we help you today?',
           maxMessageLength: 4000,
+          botIconUrl: null,
           isActive: false,
         }
       },

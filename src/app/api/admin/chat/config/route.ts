@@ -47,6 +47,7 @@ export async function GET() {
         websocketEnabled: true,
         websocketPort: true,
         welcomeMessage: true,
+        botIconUrl: true,
         isActive: true,
         verified: true,
         lastHealthCheck: true,
@@ -75,6 +76,7 @@ export async function GET() {
         websocketEnabled: true,
         websocketPort: 3001,
         welcomeMessage: 'Hi! How can we help you today?',
+        botIconUrl: null,
         isActive: false,
         verified: false,
         healthStatus: 'NOT_CONFIGURED',
@@ -154,6 +156,7 @@ export async function POST(request: NextRequest) {
       websocketEnabled,
       websocketPort,
       welcomeMessage,
+      botIconUrl,
     } = body;
 
     // Enhanced validation following CLAUDE.md systematic approach
@@ -268,6 +271,7 @@ export async function POST(request: NextRequest) {
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
+          botIconUrl: botIconUrl || null,
           updatedBy: session.user.email,
           verified: false, // Reset verification when config changes
           healthStatus: 'PENDING_VERIFICATION',
@@ -293,6 +297,7 @@ export async function POST(request: NextRequest) {
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
+          botIconUrl: botIconUrl || null,
           isActive: true,
           verified: false,
           healthStatus: 'PENDING_VERIFICATION',
@@ -321,6 +326,7 @@ export async function POST(request: NextRequest) {
         websocketEnabled: config.websocketEnabled,
         websocketPort: config.websocketPort,
         welcomeMessage: config.welcomeMessage,
+        botIconUrl: config.botIconUrl,
         isActive: config.isActive,
         verified: config.verified,
         healthStatus: config.healthStatus,

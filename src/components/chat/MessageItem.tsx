@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { chatUtils } from './utils/chat-utils';
 import { QuickReply } from './QuickReply';
 import { RichContent } from './RichContent';
@@ -24,6 +25,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const isUser = chatUtils.isUserMessage(message);
   const isBot = chatUtils.isBotMessage(message);
   const quickReplies = chatUtils.parseQuickReplies(message);
+  const [botIconUrl, setBotIconUrl] = useState<string | null>(null);
+
+  // Fetch bot icon from chat config
+  useEffect(() => {
+    const fetchBotIcon = async () => {
+      try {
+        const response = await fetch('/api/chat/config');
+        const data = await response.json();
+        if (data.success && data.config?.botIconUrl) {
+          setBotIconUrl(data.config.botIconUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch bot icon:', error);
+      }
+    };
+
+    fetchBotIcon();
+  }, []);
 
   const messageClasses = [
     'message-item',
@@ -38,11 +57,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     return (
       <div className="message-item__avatar">
-        <div className="message-item__avatar-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {botIconUrl ? (
+          <div className="message-item__avatar-image">
+            <Image
+              src={botIconUrl}
+              alt="Bot"
+              width={32}
+              height={32}
+              className="w-full h-full object-cover rounded-full"
+              unoptimized={false}
+            />
+          </div>
+        ) : (
+          <div className="message-item__avatar-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
       </div>
     );
   };
@@ -177,6 +209,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         .message-item__avatar-icon {
           color: white;
           opacity: 0.9;
+        }
+
+        .message-item__avatar-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .message-item__content {

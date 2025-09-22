@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import ImageUpload, { UploadedImage } from '@/components/ui/image-upload';
 
 interface ChatConfig {
   id?: string;
@@ -23,6 +24,7 @@ interface ChatConfig {
   websocketEnabled: boolean;
   websocketPort: number;
   welcomeMessage: string;
+  botIconUrl?: string;
   isActive: boolean;
   verified: boolean;
   healthStatus: string;
@@ -64,6 +66,7 @@ export default function ChatConfigPage() {
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [botIcon, setBotIcon] = useState<UploadedImage[]>([]);
 
   const fetchConfig = async () => {
     try {
@@ -73,6 +76,11 @@ export default function ChatConfigPage() {
       if (data.success && data.config) {
         setConfig(data.config);
         setIsConfigured(true);
+
+        // Set bot icon if it exists
+        if (data.config.botIconUrl) {
+          setBotIcon([{ url: data.config.botIconUrl }]);
+        }
       } else {
         // eslint-disable-next-line no-console
         console.log('No configuration found, using defaults');
@@ -95,10 +103,15 @@ export default function ChatConfigPage() {
     setMessage(null);
 
     try {
+      const configToSave = {
+        ...config,
+        botIconUrl: botIcon.length > 0 ? botIcon[0].url : null,
+      };
+
       const response = await fetch('/api/admin/chat/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify(configToSave),
       });
 
       const data = await response.json();
@@ -207,6 +220,10 @@ export default function ChatConfigPage() {
       }
       document.body.removeChild(textArea);
     }
+  };
+
+  const handleBotIconChange = (images: UploadedImage[]) => {
+    setBotIcon(images);
   };
 
   // Tab configuration for chat navigation - consistent across all chat pages
@@ -844,7 +861,7 @@ export default function ChatConfigPage() {
                 Chat Interface
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <label
                     htmlFor="welcomeMessage"
@@ -871,6 +888,28 @@ export default function ChatConfigPage() {
                   </p>
                   <p className="text-xs text-gray-400">
                     {config.welcomeMessage.length}/500 characters
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bot Icon
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Upload a custom icon for the chatbot. This will replace the default icon in chat messages.
+                  </p>
+                  <ImageUpload
+                    value={botIcon}
+                    onChange={handleBotIconChange}
+                    accept="image/*"
+                    maxFiles={1}
+                    maxSize={2 * 1024 * 1024} // 2MB
+                    uploadPath="/api/admin/chat/config/upload-icon"
+                    className="max-w-md"
+                    disabled={saving}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Recommended: Square image, 64x64px or larger. Max size: 2MB.
                   </p>
                 </div>
               </div>

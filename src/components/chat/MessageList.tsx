@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { MessageItem } from './MessageItem';
 import { chatUtils } from './utils/chat-utils';
 import type { ChatConfig, ChatMessage, QuickReply } from './types';
@@ -20,6 +21,24 @@ export const MessageList: React.FC<MessageListProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  const [botIconUrl, setBotIconUrl] = useState<string | null>(null);
+
+  // Fetch bot icon from chat config
+  useEffect(() => {
+    const fetchBotIcon = async () => {
+      try {
+        const response = await fetch('/api/chat/config');
+        const data = await response.json();
+        if (data.success && data.config?.botIconUrl) {
+          setBotIconUrl(data.config.botIconUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch bot icon:', error);
+      }
+    };
+
+    fetchBotIcon();
+  }, []);
 
 
   // Auto-scroll to bottom when new messages arrive
@@ -71,11 +90,24 @@ export const MessageList: React.FC<MessageListProps> = ({
   const renderTypingIndicator = () => (
     <div className="message-list__typing" key="typing-indicator">
       <div className="message-list__typing-avatar">
-        <div className="message-list__typing-avatar-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {botIconUrl ? (
+          <div className="message-list__typing-avatar-image">
+            <Image
+              src={botIconUrl}
+              alt="Bot"
+              width={32}
+              height={32}
+              className="w-full h-full object-cover rounded-full"
+              unoptimized={false}
+            />
+          </div>
+        ) : (
+          <div className="message-list__typing-avatar-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
       </div>
       <div className="message-list__typing-content">
         <div className="message-list__typing-dots">
@@ -102,9 +134,22 @@ export const MessageList: React.FC<MessageListProps> = ({
           <div className="message-list__welcome">
             <div className="message-list__welcome-bubble">
               <div className="message-list__welcome-avatar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                {botIconUrl ? (
+                  <div className="message-list__welcome-avatar-image">
+                    <Image
+                      src={botIconUrl}
+                      alt="Bot"
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover rounded-full"
+                      unoptimized={false}
+                    />
+                  </div>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
               </div>
               <div className="message-list__welcome-content">
                 <div className="message-list__welcome-text">
@@ -188,6 +233,16 @@ export const MessageList: React.FC<MessageListProps> = ({
           opacity: 0.9;
         }
 
+        .message-list__welcome-avatar-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .message-list__welcome-content {
           flex: 1;
           min-width: 0;
@@ -265,6 +320,16 @@ export const MessageList: React.FC<MessageListProps> = ({
         .message-list__typing-avatar-icon {
           color: white;
           opacity: 0.9;
+        }
+
+        .message-list__typing-avatar-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .message-list__typing-content {
