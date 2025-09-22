@@ -185,6 +185,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           flex-direction: column;
           z-index: 1000;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+          font-size: 15px;
+          line-height: 1.5;
+          color: #1a202c;
           overflow: hidden;
           animation: slideUp 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid rgba(255, 255, 255, 0.2);

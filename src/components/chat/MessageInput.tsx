@@ -529,8 +529,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           resize: none;
           outline: none;
           font-family: inherit;
-          font-size: 14px;
+          font-size: 15px;
           line-height: 1.5;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          color: #1a202c;
           padding: 6px 0;
           max-height: 120px;
           overflow-y: auto;

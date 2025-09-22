@@ -268,16 +268,20 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
         .message-item__text {
           font-size: 15px;
-          line-height: 1.45;
+          line-height: 1.5;
           margin: 0;
           white-space: pre-wrap;
           font-weight: 400;
           letter-spacing: -0.01em;
+          font-family: inherit;
+          color: #1a202c;
         }
 
         .message-item__rich-content {
-          font-size: 14px;
+          font-size: 15px;
           line-height: 1.5;
+          font-family: inherit;
+          color: #1a202c;
         }
 
         .message-item__quick-replies {
@@ -396,7 +400,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
           .message-item__bubble {
             padding: 10px 12px;
-            font-size: 14px;
+            font-size: 15px;
           }
         }
 

@@ -254,12 +254,15 @@ export const MessageList: React.FC<MessageListProps> = ({
           border-radius: 20px 20px 20px 6px;
           padding: 16px 20px;
           font-size: 15px;
-          line-height: 1.45;
-          color: #374151;
+          line-height: 1.5;
+          color: #1a202c;
           margin: 0;
           box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
           backdrop-filter: blur(10px);
           white-space: pre-wrap;
+          font-family: inherit;
+          font-weight: 400;
+          letter-spacing: -0.01em;
         }
 
         .message-list__date-separator {

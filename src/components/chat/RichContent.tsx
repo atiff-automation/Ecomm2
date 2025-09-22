@@ -247,26 +247,29 @@ export const RichContent: React.FC<RichContentProps> = ({
         }
 
         .rich-content-card__title {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 600;
           color: #1a202c;
           margin: 0 0 8px 0;
-          line-height: 1.4;
+          line-height: 1.5;
+          font-family: inherit;
         }
 
         .rich-content-card__subtitle {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 500;
           color: #4a5568;
           margin: 0 0 8px 0;
-          line-height: 1.3;
+          line-height: 1.5;
+          font-family: inherit;
         }
 
         .rich-content-card__description {
-          font-size: 13px;
+          font-size: 15px;
           color: #718096;
           margin: 0 0 16px 0;
-          line-height: 1.4;
+          line-height: 1.5;
+          font-family: inherit;
           display: -webkit-box;
           -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
@@ -371,18 +374,20 @@ export const RichContent: React.FC<RichContentProps> = ({
         }
 
         .rich-content-list__title {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 600;
           color: #1a202c;
           margin: 0 0 4px 0;
-          line-height: 1.3;
+          line-height: 1.5;
+          font-family: inherit;
         }
 
         .rich-content-list__description {
-          font-size: 13px;
+          font-size: 15px;
           color: #718096;
           margin: 0;
-          line-height: 1.4;
+          line-height: 1.5;
+          font-family: inherit;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
