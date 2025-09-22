@@ -104,7 +104,6 @@ export async function GET(request: NextRequest) {
     // Group messages by time buckets
     const messageBuckets = new Map<string, number>();
 
-    console.log(`🔍 Processing ${messages.length} messages for bucketing (${timeRange})`);
 
     messages.forEach((message) => {
       const date = new Date(message.createdAt);
@@ -151,9 +150,6 @@ export async function GET(request: NextRequest) {
       messageBuckets.set(bucketKey, (messageBuckets.get(bucketKey) || 0) + 1);
     });
 
-    console.log(`📊 Total buckets created: ${messageBuckets.size}, sample bucket counts:`,
-      Array.from(messageBuckets.values()).slice(0, 5));
-    console.log(`🔑 Sample bucket keys:`, Array.from(messageBuckets.keys()).slice(0, 3));
 
     // Generate time series with gaps filled
     const messagesOverTime: Array<{ time_bucket: Date; message_count: number }> = [];
@@ -187,41 +183,7 @@ export async function GET(request: NextRequest) {
     }
 
     while (current <= now) {
-      // Apply same rounding logic as bucketing
-      const roundedDate = new Date(current);
-
-      switch (timeRange) {
-        case '1h':
-          // Round to nearest 10 minutes
-          const minutes = Math.floor(roundedDate.getMinutes() / 10) * 10;
-          roundedDate.setMinutes(minutes, 0, 0);
-          break;
-        case '24h':
-          // Round to nearest hour
-          roundedDate.setMinutes(0, 0, 0);
-          break;
-        case '7d':
-        case '30d':
-          // Round to day
-          roundedDate.setHours(0, 0, 0, 0);
-          break;
-        case '90d':
-          // Round to week start (Monday)
-          const dayOfWeek = roundedDate.getDay();
-          const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          roundedDate.setDate(roundedDate.getDate() - daysToMonday);
-          roundedDate.setHours(0, 0, 0, 0);
-          break;
-        case 'all':
-          // Round to month
-          roundedDate.setDate(1);
-          roundedDate.setHours(0, 0, 0, 0);
-          break;
-        default:
-          roundedDate.setHours(0, 0, 0, 0);
-      }
-
-      const bucketKey = roundedDate.toISOString();
+      const bucketKey = current.toISOString();
       const messageCount = messageBuckets.get(bucketKey) || 0;
 
       messagesOverTime.push({
@@ -229,10 +191,6 @@ export async function GET(request: NextRequest) {
         message_count: messageCount,
       });
 
-      // Debug first few iterations
-      if (messagesOverTime.length <= 3) {
-        console.log(`🔍 Gap fill ${messagesOverTime.length}: ${bucketKey} -> ${messageCount} messages`);
-      }
 
       // Increment current by interval
       switch (timeRange) {
@@ -313,7 +271,6 @@ export async function GET(request: NextRequest) {
     // Calculate total messages in period for context
     const totalMessages = chartData.reduce((sum, item) => sum + item.messages, 0);
 
-    console.log(`📈 Final chart: ${chartData.length} points, total messages: ${totalMessages}`);
 
 
     // Calculate peak and average

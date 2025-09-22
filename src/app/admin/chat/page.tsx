@@ -306,7 +306,7 @@ export default function SessionsPage() {
         </div>
 
         {/* Compact Metrics - 1/4 width, stacked vertically */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 flex flex-col justify-between h-full">
           <MetricsCards metrics={metrics} loading={loading} variant="compact" />
         </div>
       </div>

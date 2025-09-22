@@ -99,8 +99,8 @@ const MetricsCards: React.FC<MetricsCardProps> = ({
 
   return (
     <div className={cn(
-      'grid gap-4',
-      isCompact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+      'grid',
+      isCompact ? 'grid-cols-1 gap-3 h-full' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'
     )}>
       {metricCards.map((card, index) => (
         <MetricCard
@@ -140,7 +140,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ data, compact, index }) => {
   return (
     <Card className={cn(
       'border border-gray-200 hover:shadow-md transition-shadow duration-200',
-      compact && 'p-3'
+      compact && 'p-2'
     )}>
       <CardContent className={cn(
         'flex items-center justify-between',
@@ -156,7 +156,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ data, compact, index }) => {
             </p>
             <div className={cn(
               'rounded-lg flex items-center justify-center',
-              compact ? 'h-8 w-8' : 'h-12 w-12',
+              compact ? 'h-6 w-6' : 'h-12 w-12',
               iconColor.includes('blue') && 'bg-blue-100',
               iconColor.includes('green') && 'bg-green-100',
               iconColor.includes('purple') && 'bg-purple-100',
@@ -164,26 +164,26 @@ const MetricCard: React.FC<MetricCardProps> = ({ data, compact, index }) => {
             )}>
               <Icon className={cn(
                 iconColor,
-                compact ? 'h-4 w-4' : 'h-6 w-6'
+                compact ? 'h-3 w-3' : 'h-6 w-6'
               )} />
             </div>
           </div>
 
-          <div className="mt-2">
+          <div className={cn('mt-1', compact && 'mt-0.5')}>
             <p className={cn(
               'font-bold text-gray-900',
-              compact ? 'text-lg' : 'text-3xl'
+              compact ? 'text-base' : 'text-3xl'
             )}>
               {value}
             </p>
 
             {(trend || description) && (
-              <div className="mt-1 flex items-center justify-between">
+              <div className={cn('flex items-center justify-between', compact ? 'mt-0' : 'mt-1')}>
                 {trend && (
                   <div className={cn(
                     'flex items-center space-x-1',
                     getTrendColor(),
-                    compact ? 'text-xs' : 'text-sm'
+                    'text-xs'
                   )}>
                     {getTrendIcon()}
                     <span>+{trend.value} {trend.label}</span>
@@ -193,7 +193,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ data, compact, index }) => {
                 {description && !trend && (
                   <p className={cn(
                     'text-gray-500',
-                    compact ? 'text-xs' : 'text-sm'
+                    'text-xs'
                   )}>
                     {description}
                   </p>
