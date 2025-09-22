@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { chatUtils } from './utils/chat-utils';
@@ -33,6 +34,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const themeClasses = chatUtils.getThemeClasses(config);
   const themeStyles = chatUtils.generateThemeStyles(config);
+  const [botIconUrl, setBotIconUrl] = useState<string | null>(null);
+
+  // Fetch bot icon from chat config
+  useEffect(() => {
+    const fetchBotIcon = async () => {
+      try {
+        const response = await fetch('/api/chat/config');
+        const data = await response.json();
+        if (data.success && data.config?.botIconUrl) {
+          setBotIconUrl(data.config.botIconUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch bot icon:', error);
+      }
+    };
+
+    fetchBotIcon();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -56,11 +75,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div className="chat-window__header-content">
           <div className="chat-window__profile">
             <div className="chat-window__avatar">
-              <div className="chat-window__avatar-img">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
+              {botIconUrl ? (
+                <div className="chat-window__avatar-image">
+                  <Image
+                    src={botIconUrl}
+                    alt="Bot"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover rounded-full"
+                    unoptimized={false}
+                  />
+                </div>
+              ) : (
+                <div className="chat-window__avatar-img">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              )}
             </div>
             <div className="chat-window__info">
               <div className="chat-window__title">
@@ -237,6 +269,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         .chat-window__avatar-img {
           color: white;
           opacity: 0.9;
+        }
+
+        .chat-window__avatar-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .chat-window__info {
