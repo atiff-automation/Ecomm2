@@ -12,6 +12,7 @@ export async function GET() {
       where: { isActive: true },
       select: {
         welcomeMessage: true,
+        agentName: true,
         maxMessageLength: true,
         botIconUrl: true,
         isActive: true,
@@ -24,6 +25,7 @@ export async function GET() {
         success: true,
         config: {
           welcomeMessage: 'Hi! How can we help you today?',
+          agentName: 'Customer Support',
           maxMessageLength: 4000,
           botIconUrl: null,
           isActive: false,
@@ -35,6 +37,7 @@ export async function GET() {
       success: true,
       config: {
         welcomeMessage: config.welcomeMessage || 'Hi! How can we help you today?',
+        agentName: config.agentName || 'Customer Support',
         maxMessageLength: config.maxMessageLength,
         botIconUrl: config.botIconUrl,
         isActive: config.isActive,
@@ -49,6 +52,7 @@ export async function GET() {
         error: 'Failed to fetch chat configuration',
         config: {
           welcomeMessage: 'Hi! How can we help you today?',
+          agentName: 'Customer Support',
           maxMessageLength: 4000,
           botIconUrl: null,
           isActive: false,

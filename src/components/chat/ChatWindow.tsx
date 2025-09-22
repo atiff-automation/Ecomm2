@@ -35,22 +35,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const themeClasses = chatUtils.getThemeClasses(config);
   const themeStyles = chatUtils.generateThemeStyles(config);
   const [botIconUrl, setBotIconUrl] = useState<string | null>(null);
+  const [agentName, setAgentName] = useState<string>('Customer Support');
 
-  // Fetch bot icon from chat config
+  // Fetch bot icon and agent name from chat config
   useEffect(() => {
-    const fetchBotIcon = async () => {
+    const fetchChatConfig = async () => {
       try {
         const response = await fetch('/api/chat/config');
         const data = await response.json();
-        if (data.success && data.config?.botIconUrl) {
-          setBotIconUrl(data.config.botIconUrl);
+        if (data.success && data.config) {
+          if (data.config.botIconUrl) {
+            setBotIconUrl(data.config.botIconUrl);
+          }
+          if (data.config.agentName) {
+            setAgentName(data.config.agentName);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch bot icon:', error);
+        console.error('Failed to fetch chat config:', error);
       }
     };
 
-    fetchBotIcon();
+    fetchChatConfig();
   }, []);
 
   if (!isOpen) return null;
@@ -97,7 +103,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <div className="chat-window__info">
               <div className="chat-window__title">
                 <span>Chat with</span>
-                <span className="chat-window__agent-name">Customer Support</span>
+                <span className="chat-window__agent-name">{agentName}</span>
               </div>
               <div className={`chat-window__status ${isConnected ? 'chat-window__status--connected' : 'chat-window__status--disconnected'}`}>
                 {isConnected ? "We're online" : 'Currently offline'}

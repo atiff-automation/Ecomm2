@@ -47,6 +47,7 @@ export async function GET() {
         websocketEnabled: true,
         websocketPort: true,
         welcomeMessage: true,
+        agentName: true,
         botIconUrl: true,
         isActive: true,
         verified: true,
@@ -76,6 +77,7 @@ export async function GET() {
         websocketEnabled: true,
         websocketPort: 3001,
         welcomeMessage: 'Hi! How can we help you today?',
+        agentName: 'Customer Support',
         botIconUrl: null,
         isActive: false,
         verified: false,
@@ -156,6 +158,7 @@ export async function POST(request: NextRequest) {
       websocketEnabled,
       websocketPort,
       welcomeMessage,
+      agentName,
       botIconUrl,
     } = body;
 
@@ -232,6 +235,10 @@ export async function POST(request: NextRequest) {
       validationErrors.push('Welcome message must be 500 characters or less');
     }
 
+    if (agentName && agentName.length > 100) {
+      validationErrors.push('Agent name must be 100 characters or less');
+    }
+
     // Return validation errors if any
     if (validationErrors.length > 0) {
       return NextResponse.json(
@@ -271,6 +278,7 @@ export async function POST(request: NextRequest) {
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
+          agentName: agentName || 'Customer Support',
           botIconUrl: botIconUrl || null,
           updatedBy: session.user.email,
           verified: false, // Reset verification when config changes
@@ -297,6 +305,7 @@ export async function POST(request: NextRequest) {
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
+          agentName: agentName || 'Customer Support',
           botIconUrl: botIconUrl || null,
           isActive: true,
           verified: false,
@@ -326,6 +335,7 @@ export async function POST(request: NextRequest) {
         websocketEnabled: config.websocketEnabled,
         websocketPort: config.websocketPort,
         welcomeMessage: config.welcomeMessage,
+        agentName: config.agentName,
         botIconUrl: config.botIconUrl,
         isActive: config.isActive,
         verified: config.verified,
