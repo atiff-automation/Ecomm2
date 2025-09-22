@@ -288,7 +288,7 @@ class ChatUtilities {
 
 
   /**
-   * Debounce function for typing indicators
+   * Debounce function for typing indicators and polling optimizations
    */
   debounce<T extends (...args: any[]) => any>(
     func: T,
@@ -303,7 +303,7 @@ class ChatUtilities {
   }
 
   /**
-   * Throttle function for API calls
+   * Throttle function for polling requests and API rate limiting
    */
   throttle<T extends (...args: any[]) => any>(
     func: T,
@@ -384,10 +384,10 @@ class ChatUtilities {
   }
 
   /**
-   * Check if browser supports WebSocket
+   * Check if browser supports modern HTTP features for polling
    */
-  supportsWebSocket(): boolean {
-    return typeof WebSocket !== 'undefined';
+  supportsPolling(): boolean {
+    return typeof fetch !== 'undefined' && typeof AbortController !== 'undefined';
   }
 
   /**

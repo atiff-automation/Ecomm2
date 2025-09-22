@@ -94,9 +94,9 @@ interface ChatContextValue {
   // Configuration
   updateConfig: (config: Partial<ChatConfig>) => void;
   
-  // WebSocket actions
+  // Real-time simulation actions
   sendTyping: (isTyping: boolean) => void;
-  sendPresenceUpdate: (status: 'online' | 'away') => void;
+  updatePresence: (status: 'online' | 'away') => void;
   markMessageAsRead: (messageId: string) => void;
   
   // Connection management
@@ -306,7 +306,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     })
   });
 
-  // WebSocket will be initialized in useChat hook to avoid circular dependency
+  // Real-time updates handled via polling for reliable connectivity
 
   // Initialize from storage on mount
   useEffect(() => {
@@ -588,8 +588,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     // Add optimistic message to UI
     dispatch({ type: 'ADD_MESSAGE', payload: optimisticMessage });
 
-    // Stop typing indicator if WebSocket is connected
-    // WebSocket typing will be handled in useChat hook
+    // Typing indicators handled via polling and local state
 
     try {
       const response = await chatApi.sendMessage({
@@ -712,20 +711,20 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     dispatch({ type: 'UPDATE_CONFIG', payload: config });
   }, []);
 
-  // WebSocket actions
+  // Real-time simulation actions for polling-based architecture
   const sendTyping = useCallback((isTyping: boolean) => {
-    // WebSocket typing will be handled in useChat hook
+    // Update local typing state for UI feedback
     dispatch({ type: 'SET_USER_TYPING', payload: isTyping });
   }, []);
 
-  const sendPresenceUpdate = useCallback((status: 'online' | 'away') => {
-    // WebSocket presence will be handled in useChat hook
-    console.log('Presence update:', status);
+  const updatePresence = useCallback((status: 'online' | 'away') => {
+    // Update user presence status for polling integration
+    dispatch({ type: 'UPDATE_USER_PRESENCE', payload: { status } });
   }, []);
 
   const markMessageAsRead = useCallback((messageId: string) => {
-    // WebSocket read receipts will be handled in useChat hook
-    console.log('Mark message as read:', messageId);
+    // Mark message read status for HTTP-based read receipts
+    console.log('Message marked as read:', messageId);
   }, []);
 
   // Utilities
@@ -748,7 +747,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     markAsRead,
     updateConfig,
     sendTyping,
-    sendPresenceUpdate,
+    updatePresence,
     markMessageAsRead,
     forceHealthCheck: checkConnection,
     isSessionExpired

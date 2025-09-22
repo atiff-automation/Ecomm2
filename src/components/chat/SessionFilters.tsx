@@ -8,9 +8,7 @@
 
 import React from 'react';
 import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -36,8 +34,6 @@ export function SessionFilters({
   const handleStatusChange = (value: string) => {
     onFiltersChange({ status: value as FilterState['status'] });
   };
-
-
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-4 my-6">
@@ -67,8 +63,6 @@ export function SessionFilters({
             <SelectItem value="ended">Ended</SelectItem>
           </SelectContent>
         </Select>
-
-
       </div>
     </div>
   );

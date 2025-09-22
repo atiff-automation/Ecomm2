@@ -12,7 +12,7 @@ interface ConnectionStatusProps {
 
 /**
  * Connection Status Component
- * Shows the WebSocket connection status to users
+ * Shows the HTTP connection health status to users
  * Follows DRY principles with centralized styling
  */
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
@@ -21,7 +21,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   config,
   onRetry
 }) => {
-  // Only show when not connected or in error state
+  // Only show when connection issues detected
   if (isConnected && connectionStatus === 'connected') {
     return null;
   }
@@ -30,28 +30,28 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     switch (connectionStatus) {
       case 'connecting':
         return {
-          message: 'Connecting...',
+          message: 'Establishing connection...',
           icon: '🔄',
           color: '#ffc107',
           showRetry: false
         };
       case 'disconnected':
         return {
-          message: 'Disconnected from chat',
+          message: 'Chat service unavailable',
           icon: '⚠️',
           color: '#dc3545',
           showRetry: true
         };
       case 'error':
         return {
-          message: 'Connection error',
+          message: 'Service connection failed',
           icon: '❌',
           color: '#dc3545',
           showRetry: true
         };
       default:
         return {
-          message: 'Connecting...',
+          message: 'Checking service...',
           icon: '🔄',
           color: '#6c757d',
           showRetry: false

@@ -32,6 +32,7 @@ import type {
   PaginationConfig,
 } from '@/types/chat';
 import { filterSessions, sortSessions } from '@/utils/chat';
+import { logger } from '@/lib/logger/production-logger';
 
 export default function SessionsPage() {
   useSession();
@@ -91,10 +92,14 @@ export default function SessionsPage() {
         const sessionsData = await sessionsResponse.json();
         setSessions(sessionsData.sessions || []);
       } else {
-        console.error('Sessions API Error:', {
-          status: sessionsResponse.status,
-          statusText: sessionsResponse.statusText,
-        });
+        logger.apiError(
+          'fetch-sessions',
+          sessionsResponse.status,
+          sessionsResponse.statusText,
+          {
+            component: 'admin-chat-page',
+          }
+        );
       }
 
       if (metricsResponse.ok) {
@@ -110,13 +115,22 @@ export default function SessionsPage() {
           }
         );
       } else {
-        console.error('Metrics API Error:', {
-          status: metricsResponse.status,
-          statusText: metricsResponse.statusText,
-        });
+        logger.apiError(
+          'fetch-metrics',
+          metricsResponse.status,
+          metricsResponse.statusText,
+          {
+            component: 'admin-chat-page',
+            timeRange,
+          }
+        );
       }
     } catch (error) {
-      console.error('Error fetching chat data:', error);
+      logger.error(
+        'Failed to fetch chat data',
+        { component: 'admin-chat-page' },
+        error as Error
+      );
     } finally {
       setLoading(false);
       setIsInitialLoad(false); // Mark initial load as complete
@@ -236,7 +250,11 @@ export default function SessionsPage() {
         fetchChatData();
       }
     } catch (error) {
-      console.error('Error ending session:', error);
+      logger.error(
+        'Failed to end session',
+        { component: 'admin-chat-page', sessionId },
+        error as Error
+      );
     }
   };
 

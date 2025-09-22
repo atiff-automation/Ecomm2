@@ -96,7 +96,7 @@ export interface ChatState {
   config: ChatConfig;
 }
 
-// Removed WebSocket event types - using polling approach instead
+// Polling-based real-time updates - no WebSocket dependency required
 
 // Component prop interfaces
 export interface ChatWidgetProps {
@@ -177,7 +177,20 @@ export interface UseChatReturn {
   disconnect: () => void;
 }
 
-// Removed UseWebSocket interfaces - using polling approach instead
+// Polling interfaces for HTTP-based real-time simulation
+export interface PollingOptions {
+  interval?: number;
+  enabled?: boolean;
+  onNewMessages?: (messages: ChatMessage[]) => void;
+  onError?: (error: Error) => void;
+}
+
+export interface PollingState {
+  isPolling: boolean;
+  lastPollTimestamp: string | null;
+  pollCount: number;
+  errorCount: number;
+}
 
 // API response interfaces
 export interface CreateSessionResponse {
@@ -243,7 +256,8 @@ export const CHAT_CONSTANTS = {
   TYPING_TIMEOUT: 3000,
   MESSAGE_BATCH_SIZE: 1000, // Match backend validation limit
   ANIMATION_DURATION: 300,
-  WEBSOCKET_HEARTBEAT: 30000
+  POLLING_INTERVAL: 3000,
+  POLLING_RETRY_DELAY: 5000
 } as const;
 
 // Event types for consistency

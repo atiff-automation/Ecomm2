@@ -34,26 +34,29 @@ export function SessionsTable({
   onPageChange,
   loading = false,
 }: SessionsTableProps) {
-
   const getSortIcon = (key: keyof ChatSession) => {
     if (sortConfig.key !== key) {
       return <ChevronUp className="h-4 w-4 text-gray-400" />;
     }
-    return sortConfig.direction === 'asc'
-      ? <ChevronUp className="h-4 w-4 text-blue-600" />
-      : <ChevronDown className="h-4 w-4 text-blue-600" />;
+    return sortConfig.direction === 'asc' ? (
+      <ChevronUp className="h-4 w-4 text-blue-600" />
+    ) : (
+      <ChevronDown className="h-4 w-4 text-blue-600" />
+    );
   };
 
   const renderPagination = () => {
     const totalPages = Math.ceil(pagination.total / pagination.pageSize);
     const currentPage = pagination.page;
 
-    if (totalPages <= 1) return null;
+    if (totalPages <= 1) {
+      return null;
+    }
 
     const pages = [];
     const showPages = 5;
     let start = Math.max(1, currentPage - Math.floor(showPages / 2));
-    let end = Math.min(totalPages, start + showPages - 1);
+    const end = Math.min(totalPages, start + showPages - 1);
 
     if (end - start + 1 < showPages) {
       start = Math.max(1, end - showPages + 1);
@@ -67,9 +70,15 @@ export function SessionsTable({
       <div className="bg-white border-t border-gray-200">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">{((currentPage - 1) * pagination.pageSize) + 1}</span> to{' '}
-            <span className="font-medium">{Math.min(currentPage * pagination.pageSize, pagination.total)}</span> of{' '}
-            <span className="font-medium">{pagination.total}</span> sessions
+            Showing{' '}
+            <span className="font-medium">
+              {(currentPage - 1) * pagination.pageSize + 1}
+            </span>{' '}
+            to{' '}
+            <span className="font-medium">
+              {Math.min(currentPage * pagination.pageSize, pagination.total)}
+            </span>{' '}
+            of <span className="font-medium">{pagination.total}</span> sessions
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -91,15 +100,13 @@ export function SessionsTable({
                 >
                   1
                 </Button>
-                {start > 2 && (
-                  <span className="px-2 text-gray-400">...</span>
-                )}
+                {start > 2 && <span className="px-2 text-gray-400">...</span>}
               </>
             )}
-            {pages.map((page) => (
+            {pages.map(page => (
               <Button
                 key={page}
-                variant={page === currentPage ? "default" : "outline"}
+                variant={page === currentPage ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onPageChange(page)}
                 className="h-9 w-9"
@@ -152,9 +159,7 @@ export function SessionsTable({
       {/* Table Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">
-            Sessions
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900">Sessions</h3>
         </div>
       </div>
 
@@ -218,7 +223,7 @@ export function SessionsTable({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sessions.map((session) => (
+              {sessions.map(session => (
                 <tr key={session.sessionId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -244,7 +249,9 @@ export function SessionsTable({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDuration(
                       session.startedAt,
-                      session.status === 'ended' ? session.lastActivity : undefined
+                      session.status === 'ended'
+                        ? session.lastActivity
+                        : undefined
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

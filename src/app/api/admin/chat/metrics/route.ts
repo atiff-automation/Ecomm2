@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]/route';
-import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
-import { ChatPerformanceUtils, PerformanceMonitor } from '@/lib/db/performance-utils';
+import {
+  ChatPerformanceUtils,
+  PerformanceMonitor,
+} from '@/lib/db/performance-utils';
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication and admin access
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -43,7 +45,6 @@ export async function GET(request: NextRequest) {
       timeRange,
       generatedAt: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Admin chat metrics API error:', error);
     return NextResponse.json(

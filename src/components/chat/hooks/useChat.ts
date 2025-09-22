@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo } from 'react';
 import { useChatContext } from '../ChatProvider';
-import { useWebSocket } from './useWebSocket';
 import type { ChatMessage } from '../types';
+import { logger } from '@/lib/logger/production-logger';
 
 /**
  * Main chat hook that provides comprehensive chat functionality
- * This is the primary hook that components should use for chat interactions
+ * Primary interface for chat interactions using HTTP-based polling architecture
  */
 export const useChat = () => {
   const {
@@ -28,19 +28,13 @@ export const useChat = () => {
     isSessionExpired
   } = useChatContext();
 
-  // WebSocket integration for real-time features (temporarily disabled to fix input issue)
-  // TODO: Re-enable after fixing circular dependency completely
-  // const webSocket = useWebSocket({
-  //   enabled: true,
-  //   url: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001'
-  // });
 
   // Force health check when chat opens to ensure connection status is accurate
   useEffect(() => {
     if (state.isOpen) {
-      console.log('📡 Chat opened - triggering health check...');
+      logger.debug('Chat opened - triggering health check', { component: 'chat-hook' });
       forceHealthCheck().catch(error => {
-        console.error('Failed to perform health check on chat open:', error);
+        logger.error('Failed to perform health check on chat open', { component: 'chat-hook' }, error);
       });
     }
   }, [state.isOpen, forceHealthCheck]);
@@ -49,21 +43,25 @@ export const useChat = () => {
   useEffect(() => {
     if (state.isOpen && !state.session && !state.isSessionLoading) {
       // Use UI init flag to bypass rate limits for widget initialization
-      createSession(undefined, true).catch(console.error);
+      createSession(undefined, true).catch(error => {
+        logger.error('Failed to auto-create session', { component: 'chat-hook' }, error);
+      });
     }
   }, [state.isOpen, state.session, state.isSessionLoading, createSession]);
 
   // Auto-load messages when session is available
   useEffect(() => {
     if (state.session && state.messages.length === 0 && !state.isMessagesLoading) {
-      loadMessages().catch(console.error);
+      loadMessages().catch(error => {
+        logger.error('Failed to auto-load messages', { component: 'chat-hook' }, error);
+      });
     }
   }, [state.session, state.messages.length, state.isMessagesLoading, loadMessages]);
 
   // Check for expired session
   useEffect(() => {
     if (state.session && isSessionExpired()) {
-      console.warn('Chat session has expired');
+      logger.warn('Chat session has expired', { component: 'chat-hook', sessionId: state.session?.sessionId });
       clearSession();
     }
   }, [state.session, isSessionExpired, clearSession]);
@@ -76,7 +74,10 @@ export const useChat = () => {
     try {
       // Check if session is expired first
       if (state.session && isSessionExpired()) {
-        console.warn('⚠️ Session expired, clearing and creating new session');
+        logger.warn('Session expired during message send, creating new session', {
+          component: 'chat-hook',
+          sessionId: state.session?.sessionId
+        });
         clearSession();
         await createSession();
       } else if (!state.session) {
@@ -88,13 +89,16 @@ export const useChat = () => {
     } catch (error) {
       // Handle session expiration errors gracefully
       if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
-        console.warn('🔄 Session expired during send, creating new session...');
+        logger.warn('Session expired during send, retrying with new session', {
+          component: 'chat-hook',
+          sessionId: state.session?.sessionId
+        });
         clearSession();
         // Auto-retry with new session
         await createSession();
         await sendMessage(content, messageType);
       } else {
-        console.error('Failed to send message:', error);
+        logger.error('Failed to send message', { component: 'chat-hook' }, error);
         throw error;
       }
     }
@@ -105,7 +109,7 @@ export const useChat = () => {
     try {
       await sendQuickReply(reply);
     } catch (error) {
-      console.error('Failed to send quick reply:', error);
+      logger.error('Failed to send quick reply', { component: 'chat-hook' }, error);
       throw error;
     }
   }, [sendQuickReply]);
@@ -137,7 +141,7 @@ export const useChat = () => {
       // Open chat after session is created
       openChat();
     } catch (error) {
-      console.error('Failed to start new session:', error);
+      logger.error('Failed to start new session', { component: 'chat-hook' }, error);
       throw error;
     }
   }, [state.session, clearSession, createSession, openChat]);
@@ -150,7 +154,7 @@ export const useChat = () => {
         await loadMessages();
       }
     } catch (error) {
-      console.error('Failed to reconnect:', error);
+      logger.error('Failed to reconnect', { component: 'chat-hook' }, error);
       throw error;
     }
   }, [state.session, loadSession, loadMessages]);
@@ -217,7 +221,7 @@ export const useChat = () => {
     toggleChat,
     markAsRead,
     
-    // WebSocket actions
+    // Real-time simulation actions
     sendTyping,
     
     // Configuration

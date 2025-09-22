@@ -14,8 +14,6 @@ export interface ChatConfigData {
   queueMaxRetries: number;
   queueRetryDelayMs: number;
   queueBatchSize: number;
-  websocketEnabled: boolean;
-  websocketPort: number;
   welcomeMessage: string | null;
   isActive: boolean;
   verified: boolean;
@@ -53,8 +51,6 @@ export async function getChatConfig(): Promise<ChatConfigData> {
         queueMaxRetries: true,
         queueRetryDelayMs: true,
         queueBatchSize: true,
-        websocketEnabled: true,
-        websocketPort: true,
         welcomeMessage: true,
         isActive: true,
         verified: true,
@@ -83,8 +79,6 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       queueMaxRetries: 3,
       queueRetryDelayMs: 5000,
       queueBatchSize: 10,
-      websocketEnabled: true,
-      websocketPort: 3001,
       welcomeMessage: 'Hi! How can we help you today?',
       isActive: false,
       verified: false,
@@ -110,8 +104,6 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       queueMaxRetries: 3,
       queueRetryDelayMs: 5000,
       queueBatchSize: 10,
-      websocketEnabled: false, // Disable websocket on error
-      websocketPort: 3001,
       welcomeMessage: 'Hi! How can we help you today?',
       isActive: false,
       verified: false,
@@ -230,16 +222,6 @@ export async function getQueueConfig(): Promise<{
   };
 }
 
-/**
- * Get WebSocket configuration
- */
-export async function getWebSocketConfig(): Promise<{ enabled: boolean; port: number }> {
-  const config = await getChatConfig();
-  return {
-    enabled: config.websocketEnabled,
-    port: config.websocketPort,
-  };
-}
 
 /**
  * Get welcome message

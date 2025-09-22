@@ -1093,8 +1093,6 @@ model ChatConfig {
   queueMaxRetries                    Int       @default(3)
   queueRetryDelayMs                  Int       @default(5000)
   queueBatchSize                     Int       @default(10)
-  websocketEnabled                   Boolean   @default(true)
-  websocketPort                      Int       @default(3001)
   welcomeMessage                     String?   @default("Hi! How can we help you today?")
   agentName                          String?   @default("Customer Support")
   botIconUrl                         String?

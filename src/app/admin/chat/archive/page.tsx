@@ -12,9 +12,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import {
   CalendarIcon,
@@ -23,7 +43,7 @@ import {
   DatabaseIcon,
   FileIcon,
   PlayIcon,
-  StopIcon,
+  Square,
   RefreshCwIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
@@ -56,10 +76,17 @@ interface CleanupStats {
   };
 }
 
+interface JobDefinition {
+  name: string;
+  description: string;
+  cron: string;
+  timezone: string;
+}
+
 interface JobStatus {
   isRunning: boolean;
   scheduledJobs: string[];
-  jobDefinitions: any;
+  jobDefinitions: Record<string, JobDefinition>;
 }
 
 export default function DataManagementPage() {
@@ -96,7 +123,7 @@ export default function DataManagementPage() {
       } else {
         toast.error('Failed to load backup files');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load backup files');
     } finally {
       setIsLoadingBackups(false);
@@ -114,7 +141,7 @@ export default function DataManagementPage() {
       } else {
         toast.error('Failed to load cleanup stats');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load cleanup stats');
     } finally {
       setIsLoadingCleanup(false);
@@ -132,7 +159,7 @@ export default function DataManagementPage() {
       } else {
         toast.error('Failed to load job status');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load job status');
     } finally {
       setIsLoadingJobs(false);
@@ -170,7 +197,11 @@ export default function DataManagementPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || `chat-export.${exportFormat}`;
+        a.download =
+          response.headers
+            .get('Content-Disposition')
+            ?.split('filename=')[1]
+            ?.replace(/"/g, '') || `chat-export.${exportFormat}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -181,7 +212,7 @@ export default function DataManagementPage() {
         const errorData = await response.json();
         toast.error(`Export failed: ${errorData.error}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Export failed');
     } finally {
       setIsExporting(false);
@@ -212,7 +243,7 @@ export default function DataManagementPage() {
       } else {
         toast.error(`Backup failed: ${data.error}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Backup creation failed');
     } finally {
       setIsCreatingBackup(false);
@@ -238,7 +269,7 @@ export default function DataManagementPage() {
       } else {
         toast.error('Failed to download backup');
       }
-    } catch (error) {
+    } catch {
       toast.error('Download failed');
     }
   };
@@ -257,7 +288,7 @@ export default function DataManagementPage() {
       } else {
         toast.error(`Delete failed: ${data.error}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Delete failed');
     }
   };
@@ -275,12 +306,14 @@ export default function DataManagementPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success(`Cleanup completed: ${data.result.deletedSessionsCount} sessions and ${data.result.deletedMessagesCount} messages deleted`);
+        toast.success(
+          `Cleanup completed: ${data.result.deletedSessionsCount} sessions and ${data.result.deletedMessagesCount} messages deleted`
+        );
         fetchCleanupStats();
       } else {
         toast.error(`Cleanup failed: ${data.error}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Cleanup failed');
     }
   };
@@ -303,16 +336,22 @@ export default function DataManagementPage() {
       } else {
         toast.error(`Action failed: ${data.error}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Action failed');
     }
   };
 
   const formatFileSize = (bytes: string) => {
-    const size = parseInt(bytes);
-    if (size < 1024) return `${size} B`;
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-    if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    const size = parseInt(bytes, 10);
+    if (size < 1024) {
+      return `${size} B`;
+    }
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+    if (size < 1024 * 1024 * 1024) {
+      return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
     return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
@@ -347,7 +386,6 @@ export default function DataManagementPage() {
       tabs={chatTabs}
       loading={isLoadingBackups || isLoadingCleanup || isLoadingJobs}
     >
-
       <Tabs defaultValue="export" className="space-y-4">
         <TabsList>
           <TabsTrigger value="export">Data Export</TabsTrigger>
@@ -375,7 +413,9 @@ export default function DataManagementPage() {
                         className="w-full justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {exportStartDate ? format(exportStartDate, 'PPP') : 'Pick a date'}
+                        {exportStartDate
+                          ? format(exportStartDate, 'PPP')
+                          : 'Pick a date'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -398,7 +438,9 @@ export default function DataManagementPage() {
                         className="w-full justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {exportEndDate ? format(exportEndDate, 'PPP') : 'Pick a date'}
+                        {exportEndDate
+                          ? format(exportEndDate, 'PPP')
+                          : 'Pick a date'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -433,7 +475,7 @@ export default function DataManagementPage() {
                       type="checkbox"
                       id="includeMessages"
                       checked={includeMessages}
-                      onChange={(e) => setIncludeMessages(e.target.checked)}
+                      onChange={e => setIncludeMessages(e.target.checked)}
                       className="rounded border-gray-300"
                     />
                     <label htmlFor="includeMessages" className="text-sm">
@@ -467,7 +509,10 @@ export default function DataManagementPage() {
                   <DatabaseIcon className="h-5 w-5" />
                   Backup Files
                 </div>
-                <Button onClick={handleCreateBackup} disabled={isCreatingBackup}>
+                <Button
+                  onClick={handleCreateBackup}
+                  disabled={isCreatingBackup}
+                >
                   {isCreatingBackup ? (
                     <RefreshCwIcon className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -488,7 +533,7 @@ export default function DataManagementPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {backupFiles.map((backup) => (
+                  {backupFiles.map(backup => (
                     <div
                       key={backup.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
@@ -498,14 +543,21 @@ export default function DataManagementPage() {
                         <div>
                           <div className="font-medium">{backup.filename}</div>
                           <div className="text-sm text-muted-foreground">
-                            {backup.year}-{backup.month.toString().padStart(2, '0')} •
+                            {backup.year}-
+                            {backup.month.toString().padStart(2, '0')} •
                             {backup.sessionCount} sessions •
                             {formatFileSize(backup.fileSize)}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={backup.status === 'completed' ? 'success' : 'destructive'}>
+                        <Badge
+                          variant={
+                            backup.status === 'completed'
+                              ? 'success'
+                              : 'destructive'
+                          }
+                        >
                           {backup.status}
                         </Badge>
                         <Button
@@ -523,10 +575,12 @@ export default function DataManagementPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete backup?</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Delete backup?
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete the backup file {backup.filename}.
-                                This action cannot be undone.
+                                This will permanently delete the backup file{' '}
+                                {backup.filename}. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -567,27 +621,48 @@ export default function DataManagementPage() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-2xl font-bold">{cleanupStats.totalSessions.toLocaleString()}</div>
-                        <div className="text-sm text-muted-foreground">Total Sessions</div>
+                        <div className="text-2xl font-bold">
+                          {cleanupStats.totalSessions.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Total Sessions
+                        </div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold">{cleanupStats.totalMessages.toLocaleString()}</div>
-                        <div className="text-sm text-muted-foreground">Total Messages</div>
+                        <div className="text-2xl font-bold">
+                          {cleanupStats.totalMessages.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Total Messages
+                        </div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-orange-600">{cleanupStats.sessionsAtRisk.toLocaleString()}</div>
-                        <div className="text-sm text-muted-foreground">Sessions at Risk</div>
+                        <div className="text-2xl font-bold text-orange-600">
+                          {cleanupStats.sessionsAtRisk.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Sessions at Risk
+                        </div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-orange-600">{cleanupStats.messagesAtRisk.toLocaleString()}</div>
-                        <div className="text-sm text-muted-foreground">Messages at Risk</div>
+                        <div className="text-2xl font-bold text-orange-600">
+                          {cleanupStats.messagesAtRisk.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Messages at Risk
+                        </div>
                       </div>
                     </div>
 
                     <div className="pt-4 border-t">
                       <div className="text-sm space-y-1">
-                        <div>Retention: {cleanupStats.config.retentionDays} days</div>
-                        <div>Grace Period: {cleanupStats.config.gracePeriodDays} days</div>
+                        <div>
+                          Retention: {cleanupStats.config.retentionDays} days
+                        </div>
+                        <div>
+                          Grace Period: {cleanupStats.config.gracePeriodDays}{' '}
+                          days
+                        </div>
                         <div className="flex items-center gap-2">
                           Auto Delete:
                           {cleanupStats.config.autoDeleteEnabled ? (
@@ -616,7 +691,8 @@ export default function DataManagementPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Run cleanup manually according to the current retention policy.
+                  Run cleanup manually according to the current retention
+                  policy.
                 </p>
 
                 <AlertDialog>
@@ -630,8 +706,10 @@ export default function DataManagementPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Run data cleanup?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will delete {cleanupStats?.sessionsAtRisk || 0} sessions and {cleanupStats?.messagesAtRisk || 0} messages
-                        that are older than the retention policy. This action cannot be undone.
+                        This will delete {cleanupStats?.sessionsAtRisk || 0}{' '}
+                        sessions and {cleanupStats?.messagesAtRisk || 0}{' '}
+                        messages that are older than the retention policy. This
+                        action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -674,13 +752,15 @@ export default function DataManagementPage() {
                     <Badge variant="destructive">Stopped</Badge>
                   )}
                   <Button
-                    onClick={() => handleJobAction(jobStatus?.isRunning ? 'stop' : 'start')}
+                    onClick={() =>
+                      handleJobAction(jobStatus?.isRunning ? 'stop' : 'start')
+                    }
                     variant={jobStatus?.isRunning ? 'destructive' : 'default'}
                     size="sm"
                   >
                     {jobStatus?.isRunning ? (
                       <>
-                        <StopIcon className="mr-2 h-4 w-4" />
+                        <Square className="mr-2 h-4 w-4" />
                         Stop Scheduler
                       </>
                     ) : (
@@ -700,24 +780,29 @@ export default function DataManagementPage() {
                 </div>
               ) : jobStatus ? (
                 <div className="space-y-4">
-                  {Object.entries(jobStatus.jobDefinitions).map(([key, job]: [string, any]) => (
-                    <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">{job.description}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Schedule: {job.cron} ({job.timezone})
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handleJobAction('run', job.name)}
-                        variant="outline"
-                        size="sm"
+                  {Object.entries(jobStatus.jobDefinitions).map(
+                    ([key, job]: [string, JobDefinition]) => (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between p-4 border rounded-lg"
                       >
-                        <PlayIcon className="mr-2 h-4 w-4" />
-                        Run Now
-                      </Button>
-                    </div>
-                  ))}
+                        <div>
+                          <div className="font-medium">{job.description}</div>
+                          <div className="text-sm text-muted-foreground">
+                            Schedule: {job.cron} ({job.timezone})
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => handleJobAction('run', job.name)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <PlayIcon className="mr-2 h-4 w-4" />
+                          Run Now
+                        </Button>
+                      </div>
+                    )
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">

@@ -15,7 +15,7 @@ export interface ChatSession {
   userEmail?: string;
   userAgent?: string;
   ipAddress?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   duration?: number;
   endedAt?: string;
 }
@@ -116,14 +116,6 @@ export interface ExportProgress {
   processedSessions: number;
 }
 
-export interface ExportProgress {
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  downloadUrl?: string;
-  error?: string;
-}
-
 export interface ExportJob {
   id: string;
   options: ExportOptions;
@@ -156,7 +148,7 @@ export interface ChatMessage {
   content: string;
   sender: 'user' | 'bot' | 'system';
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SessionDetail extends ChatSession {
@@ -254,7 +246,10 @@ export interface UseSessionDataReturn {
 
 export interface UseExportReturn {
   exportJobs: ExportJob[];
-  exportSession: (sessionId: string, options: Partial<ExportOptions>) => Promise<void>;
+  exportSession: (
+    sessionId: string,
+    options: Partial<ExportOptions>
+  ) => Promise<void>;
   exportSessions: (options: ExportOptions) => Promise<void>;
   getExportProgress: (jobId: string) => ExportProgress | null;
   cancelExport: (jobId: string) => Promise<void>;
@@ -265,7 +260,7 @@ export interface UseExportReturn {
 export interface ChatError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // Validation Types
@@ -348,7 +343,11 @@ export interface AnalyticsData {
   };
 
   trendData: {
-    sessionsOverTime: Array<{ date: string; sessions: number; messages: number }>;
+    sessionsOverTime: Array<{
+      date: string;
+      sessions: number;
+      messages: number;
+    }>;
     hourlyDistribution: Array<{ hour: number; count: number }>;
     dailyComparison: Array<{ day: string; current: number; previous: number }>;
   };
@@ -403,7 +402,6 @@ export interface AnalyticsExportData {
   size: number;
 }
 
-
 // ============================================================================
 // Component Props Types - Extended for Analytics
 // ============================================================================
@@ -427,7 +425,6 @@ export interface ReportFiltersProps {
   disabled?: boolean;
 }
 
-
 // ============================================================================
 // Hook Return Types - Extended for Analytics
 // ============================================================================
@@ -443,13 +440,11 @@ export interface UseAnalyticsReturn {
   exportReport: (config: ReportConfig) => Promise<AnalyticsExportData>;
 }
 
-
 // ============================================================================
 // Default Values - Extended for Analytics
 // ============================================================================
 
 export const DEFAULT_ANALYTICS_TIME_RANGE = '24h';
-
 
 export const DEFAULT_REPORT_CONFIG: Partial<ReportConfig> = {
   includeCharts: true,
@@ -457,4 +452,3 @@ export const DEFAULT_REPORT_CONFIG: Partial<ReportConfig> = {
   includeDetails: true,
   format: 'pdf',
 };
-

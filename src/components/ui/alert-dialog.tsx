@@ -150,3 +150,84 @@ export function useAlertDialog() {
     AlertDialog: AlertDialogComponent,
   };
 }
+
+// Export individual components for compatibility with shadcn/ui style usage
+export const AlertDialogTrigger = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentPropsWithoutRef<typeof Button>
+>(({ children, ...props }, ref) => (
+  <Button ref={ref} {...props}>
+    {children}
+  </Button>
+));
+AlertDialogTrigger.displayName = "AlertDialogTrigger";
+
+export const AlertDialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogContent>,
+  React.ComponentPropsWithoutRef<typeof DialogContent>
+>(({ children, ...props }, ref) => (
+  <DialogContent ref={ref} {...props}>
+    {children}
+  </DialogContent>
+));
+AlertDialogContent.displayName = "AlertDialogContent";
+
+export const AlertDialogHeader = React.forwardRef<
+  React.ElementRef<typeof DialogHeader>,
+  React.ComponentPropsWithoutRef<typeof DialogHeader>
+>(({ children, ...props }, ref) => (
+  <DialogHeader ref={ref} {...props}>
+    {children}
+  </DialogHeader>
+));
+AlertDialogHeader.displayName = "AlertDialogHeader";
+
+export const AlertDialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogTitle>,
+  React.ComponentPropsWithoutRef<typeof DialogTitle>
+>(({ children, ...props }, ref) => (
+  <DialogTitle ref={ref} {...props}>
+    {children}
+  </DialogTitle>
+));
+AlertDialogTitle.displayName = "AlertDialogTitle";
+
+export const AlertDialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogDescription>,
+  React.ComponentPropsWithoutRef<typeof DialogDescription>
+>(({ children, ...props }, ref) => (
+  <DialogDescription ref={ref} {...props}>
+    {children}
+  </DialogDescription>
+));
+AlertDialogDescription.displayName = "AlertDialogDescription";
+
+export const AlertDialogFooter = React.forwardRef<
+  React.ElementRef<typeof DialogFooter>,
+  React.ComponentPropsWithoutRef<typeof DialogFooter>
+>(({ children, ...props }, ref) => (
+  <DialogFooter ref={ref} {...props}>
+    {children}
+  </DialogFooter>
+));
+AlertDialogFooter.displayName = "AlertDialogFooter";
+
+export const AlertDialogAction = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentPropsWithoutRef<typeof Button>
+>(({ children, ...props }, ref) => (
+  <Button ref={ref} {...props}>
+    {children}
+  </Button>
+));
+AlertDialogAction.displayName = "AlertDialogAction";
+
+export const AlertDialogCancel = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentPropsWithoutRef<typeof Button>
+>(({ children, variant = "outline", ...props }, ref) => (
+  <Button ref={ref} variant={variant} {...props}>
+    {children}
+  </Button>
+));
+AlertDialogCancel.displayName = "AlertDialogCancel";

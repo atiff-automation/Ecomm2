@@ -4,17 +4,13 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useChatContext } from '../ChatProvider';
 import { chatApi } from '../utils/api-client';
 import { chatUtils } from '../utils/chat-utils';
+import type { PollingOptions } from '../types';
 
-interface PollingOptions {
-  interval?: number;
-  enabled?: boolean;
-  onNewMessages?: (messages: any[]) => void;
-  onError?: (error: Error) => void;
-}
+
 
 /**
- * Polling hook for basic real-time message updates
- * This provides a fallback mechanism when WebSocket is not available
+ * Polling hook for real-time message updates via HTTP requests
+ * Primary mechanism for chat real-time functionality with reliable connectivity
  */
 export const usePolling = (options: PollingOptions = {}) => {
   const {
