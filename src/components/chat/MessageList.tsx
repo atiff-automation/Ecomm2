@@ -21,6 +21,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
 
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (shouldAutoScrollRef.current && scrollContainerRef.current) {
@@ -96,8 +97,8 @@ export const MessageList: React.FC<MessageListProps> = ({
       aria-live="polite"
     >
       <div className="message-list__content">
-        {/* Welcome message if no messages */}
-        {messages.length === 0 && !isTyping && config.welcomeMessage && (
+        {/* Welcome message always appears as first message (UI only, not stored in DB) */}
+        {config.welcomeMessage && (
           <div className="message-list__welcome">
             <div className="message-list__welcome-bubble">
               <div className="message-list__welcome-avatar">

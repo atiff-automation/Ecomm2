@@ -26,6 +26,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     // State
     session,
     messages,
+    config: contextConfig,
     isOpen,
     isConnected,
     isTyping,
@@ -120,7 +121,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         isExpanded={isOpen}
         isConnected={isConnected}
         hasUnreadMessages={hasUnreadMessages}
-        config={config}
+        config={contextConfig}
         onClick={handleChatToggle}
       />
 
@@ -130,7 +131,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         isTyping={isTyping}
         session={session}
         messages={messages}
-        config={config}
+        config={contextConfig}
         onClose={closeChat}
         onSendMessage={handleSendMessage}
         onQuickReply={handleQuickReply}
@@ -141,7 +142,7 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
       {/* Contact Form - shown for guest chat selection */}
       <ContactForm
         isOpen={showContactForm}
-        config={config}
+        config={contextConfig}
         onSubmit={handleContactSubmit}
         onClose={handleContactFormClose}
       />

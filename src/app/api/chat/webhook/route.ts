@@ -25,19 +25,30 @@ async function handlePOST(request: NextRequest) {
       throw createChatError('WEBHOOK_SIGNATURE_INVALID');
     }
     
-    // Parse and validate request body
+    // Parse request body
     const requestData = JSON.parse(body);
+
+    // Handle health check requests separately
+    if (requestData.type === 'health_check') {
+      console.log('✅ Health check webhook received');
+      return createSuccessResponse('Health check successful', {
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Validate regular webhook responses
     const validatedData = WebhookResponseSchema.parse(requestData);
-    
+
     // Verify session exists and is active
     const session = await prisma.chatSession.findUnique({
       where: { sessionId: validatedData.sessionId },
     });
-    
+
     if (!session) {
       throw createChatError('SESSION_NOT_FOUND');
     }
-    
+
     if (session.status !== 'active') {
       throw createChatError('SESSION_NOT_FOUND', 'Chat session is not active');
     }

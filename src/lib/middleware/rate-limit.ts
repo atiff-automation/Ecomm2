@@ -125,7 +125,7 @@ export const RateLimitPresets = {
   // Lenient rate limiting for message retrieval
   MESSAGE_READ: {
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60, // Increased from 30 to 60 to handle polling better
+    maxRequests: 300, // Temporarily increased for testing welcome message
     message: 'Too many message requests. Please slow down.'
   },
 

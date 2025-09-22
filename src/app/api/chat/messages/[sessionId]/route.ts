@@ -90,5 +90,5 @@ async function handleGET(
   }
 }
 
-// Apply rate limiting to the GET endpoint
-export const GET = withRateLimit(handleGET, RateLimitPresets.MESSAGE_READ);
+// Temporarily disable rate limiting for testing welcome message
+export const GET = handleGET;

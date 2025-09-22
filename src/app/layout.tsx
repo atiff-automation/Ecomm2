@@ -163,8 +163,7 @@ export default function RootLayout({
                   position: 'bottom-right',
                   primaryColor: '#2563eb',
                   enableSound: true,
-                  enableTypingIndicator: true,
-                  welcomeMessage: 'Hi! How can we help you today?'
+                  enableTypingIndicator: true
                 }}
               />
             </AuthProvider>

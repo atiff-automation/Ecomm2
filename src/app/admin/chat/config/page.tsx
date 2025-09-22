@@ -22,6 +22,7 @@ interface ChatConfig {
   queueBatchSize: number;
   websocketEnabled: boolean;
   websocketPort: number;
+  welcomeMessage: string;
   isActive: boolean;
   verified: boolean;
   healthStatus: string;
@@ -46,6 +47,7 @@ export default function ChatConfigPage() {
     queueBatchSize: 10,
     websocketEnabled: true,
     websocketPort: 3001,
+    welcomeMessage: 'Hi! How can we help you today?',
     isActive: true,
     verified: false,
     healthStatus: 'UNKNOWN',
@@ -832,6 +834,44 @@ export default function ChatConfigPage() {
                     }
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Interface Configuration */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Chat Interface
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="welcomeMessage"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Welcome Message
+                  </label>
+                  <textarea
+                    id="welcomeMessage"
+                    rows={3}
+                    value={config.welcomeMessage}
+                    onChange={e =>
+                      setConfig(prev => ({
+                        ...prev,
+                        welcomeMessage: e.target.value,
+                      }))
+                    }
+                    placeholder="Hi! How can we help you today?"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-none"
+                    maxLength={500}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    First message displayed to users when they open the chat widget (max 500 characters)
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {config.welcomeMessage.length}/500 characters
+                  </p>
                 </div>
               </div>
             </div>

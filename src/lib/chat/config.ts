@@ -16,6 +16,7 @@ export interface ChatConfigData {
   queueBatchSize: number;
   websocketEnabled: boolean;
   websocketPort: number;
+  welcomeMessage: string | null;
   isActive: boolean;
   verified: boolean;
   healthStatus: string;
@@ -54,6 +55,7 @@ export async function getChatConfig(): Promise<ChatConfigData> {
         queueBatchSize: true,
         websocketEnabled: true,
         websocketPort: true,
+        welcomeMessage: true,
         isActive: true,
         verified: true,
         healthStatus: true,
@@ -83,6 +85,7 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       queueBatchSize: 10,
       websocketEnabled: true,
       websocketPort: 3001,
+      welcomeMessage: 'Hi! How can we help you today?',
       isActive: false,
       verified: false,
       healthStatus: 'NOT_CONFIGURED',
@@ -109,6 +112,7 @@ export async function getChatConfig(): Promise<ChatConfigData> {
       queueBatchSize: 10,
       websocketEnabled: false, // Disable websocket on error
       websocketPort: 3001,
+      welcomeMessage: 'Hi! How can we help you today?',
       isActive: false,
       verified: false,
       healthStatus: 'ERROR',
@@ -235,4 +239,12 @@ export async function getWebSocketConfig(): Promise<{ enabled: boolean; port: nu
     enabled: config.websocketEnabled,
     port: config.websocketPort,
   };
+}
+
+/**
+ * Get welcome message
+ */
+export async function getWelcomeMessage(): Promise<string> {
+  const config = await getChatConfig();
+  return config.welcomeMessage || 'Hi! How can we help you today?';
 }

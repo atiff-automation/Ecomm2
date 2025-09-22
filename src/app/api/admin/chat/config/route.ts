@@ -46,6 +46,7 @@ export async function GET() {
         queueBatchSize: true,
         websocketEnabled: true,
         websocketPort: true,
+        welcomeMessage: true,
         isActive: true,
         verified: true,
         lastHealthCheck: true,
@@ -73,6 +74,7 @@ export async function GET() {
         queueBatchSize: 10,
         websocketEnabled: true,
         websocketPort: 3001,
+        welcomeMessage: 'Hi! How can we help you today?',
         isActive: false,
         verified: false,
         healthStatus: 'NOT_CONFIGURED',
@@ -98,6 +100,13 @@ export async function GET() {
 
   } catch (error) {
     console.error('Chat config GET error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
     return NextResponse.json(
       { error: 'Failed to fetch chat configuration' },
       { status: 500 }
@@ -144,6 +153,7 @@ export async function POST(request: NextRequest) {
       queueBatchSize,
       websocketEnabled,
       websocketPort,
+      welcomeMessage,
     } = body;
 
     // Enhanced validation following CLAUDE.md systematic approach
@@ -215,6 +225,10 @@ export async function POST(request: NextRequest) {
       validationErrors.push('WebSocket port must be between 1024 and 65535');
     }
 
+    if (welcomeMessage && welcomeMessage.length > 500) {
+      validationErrors.push('Welcome message must be 500 characters or less');
+    }
+
     // Return validation errors if any
     if (validationErrors.length > 0) {
       return NextResponse.json(
@@ -253,6 +267,7 @@ export async function POST(request: NextRequest) {
           queueBatchSize: queueBatchSize || 10,
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
+          welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
           updatedBy: session.user.email,
           verified: false, // Reset verification when config changes
           healthStatus: 'PENDING_VERIFICATION',
@@ -277,6 +292,7 @@ export async function POST(request: NextRequest) {
           queueBatchSize: queueBatchSize || 10,
           websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
           websocketPort: websocketPort || 3001,
+          welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
           isActive: true,
           verified: false,
           healthStatus: 'PENDING_VERIFICATION',
@@ -304,6 +320,7 @@ export async function POST(request: NextRequest) {
         queueBatchSize: config.queueBatchSize,
         websocketEnabled: config.websocketEnabled,
         websocketPort: config.websocketPort,
+        welcomeMessage: config.welcomeMessage,
         isActive: config.isActive,
         verified: config.verified,
         healthStatus: config.healthStatus,
@@ -312,6 +329,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Chat config POST error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
     return NextResponse.json(
       { error: 'Failed to save chat configuration' },
       { status: 500 }
@@ -357,7 +381,7 @@ export async function PATCH(request: NextRequest) {
       type: 'health_check',
       timestamp: new Date().toISOString(),
       message: 'Chat system health check',
-      sessionId: 'test-session-' + Date.now(),
+      sessionId: 'cm000000000000000000000',  // Valid CUID format for health check
     };
 
     // Generate proper HMAC signature for the test payload

@@ -312,6 +312,26 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   useEffect(() => {
     const initializeChat = async () => {
       try {
+        // Fetch chat configuration including welcome message
+        try {
+          const configResponse = await fetch('/api/chat/config');
+          const configData = await configResponse.json();
+
+          if (configData.success && configData.config) {
+            // Update config with server values - use just the server config values
+            dispatch({
+              type: 'UPDATE_CONFIG',
+              payload: {
+                welcomeMessage: configData.config.welcomeMessage,
+                maxMessageLength: configData.config.maxMessageLength,
+                isActive: configData.config.isActive
+              }
+            });
+          }
+        } catch (configError) {
+          console.warn('Failed to fetch chat config, using defaults:', configError);
+        }
+
         // Load saved session
         const savedSession = chatStorage.getSession();
         if (savedSession && !chatUtils.isSessionExpired(savedSession.expiresAt)) {
