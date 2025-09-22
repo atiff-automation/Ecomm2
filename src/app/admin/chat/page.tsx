@@ -22,6 +22,7 @@ import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import MetricsCards from '@/components/chat/MetricsCards';
 import { SessionFilters } from '@/components/chat/SessionFilters';
 import { SessionsTable } from '@/components/chat/SessionsTable';
+import { MessagesChart } from '@/components/chat/MessagesChart';
 // Removed problematic useRealTimeUpdates hook - using production polling pattern instead
 import type {
   ChatSession,
@@ -297,8 +298,18 @@ export default function SessionsPage() {
       }
       loading={loading}
     >
-      {/* Metrics Dashboard - Stats Cards */}
-      <MetricsCards metrics={metrics} loading={loading} />
+      {/* Analytics Dashboard - Chart and Compact Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+        {/* Messages Chart - 3/4 width */}
+        <div className="lg:col-span-3">
+          <MessagesChart timeRange={timeRange} loading={loading} />
+        </div>
+
+        {/* Compact Metrics - 1/4 width, stacked vertically */}
+        <div className="lg:col-span-1">
+          <MetricsCards metrics={metrics} loading={loading} variant="compact" />
+        </div>
+      </div>
 
       {/* Filters Bar - Horizontal layout matching products page */}
       <SessionFilters filters={filters} onFiltersChange={handleFiltersChange} />

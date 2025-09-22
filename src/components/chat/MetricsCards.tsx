@@ -100,7 +100,7 @@ const MetricsCards: React.FC<MetricsCardProps> = ({
   return (
     <div className={cn(
       'grid gap-4',
-      isCompact ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+      isCompact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
     )}>
       {metricCards.map((card, index) => (
         <MetricCard
