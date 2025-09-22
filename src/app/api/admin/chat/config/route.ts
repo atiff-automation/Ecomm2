@@ -6,10 +6,21 @@ import { UserRole } from '@prisma/client';
 
 // Get chat configuration
 export async function GET() {
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
   try {
+    console.log(`[${requestId}] Admin chat config GET request started`);
+
     const session = await getServerSession(authOptions);
-    
+    console.log(`[${requestId}] Session check completed:`, {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email || 'none',
+      userRole: (session?.user as any)?.role || 'none'
+    });
+
     if (!session?.user) {
+      console.log(`[${requestId}] Authentication failed - no session/user`);
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -18,13 +29,16 @@ export async function GET() {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
+      console.log(`[${requestId}] Authorization failed - insufficient role:`, userRole);
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
+
+    console.log(`[${requestId}] Authentication/authorization successful, querying database...`);
 
     // Get active chat configuration
     const config = await prisma.chatConfig.findFirst({
@@ -58,8 +72,18 @@ export async function GET() {
       },
     });
 
+    console.log(`[${requestId}] Database query completed:`, {
+      configFound: !!config,
+      configId: config?.id || 'none',
+      webhookUrl: config?.webhookUrl || 'none',
+      welcomeMessage: config?.welcomeMessage || 'none',
+      agentName: config?.agentName || 'none'
+    });
+
     // If no config exists, return default values
     if (!config) {
+      console.log(`[${requestId}] No config found in database, returning defaults`);
+      console.warn(`[${requestId}] WARNING: Expected to find active chat configuration but none exists. This indicates a data issue.`);
       const defaultConfig = {
         webhookUrl: '',
         webhookSecret: '',
@@ -91,7 +115,16 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({
+    console.log(`[${requestId}] Config found, preparing successful response:`, {
+      configId: config.id,
+      hasWebhookUrl: !!config.webhookUrl,
+      hasWelcomeMessage: !!config.welcomeMessage,
+      hasAgentName: !!config.agentName,
+      isActive: config.isActive,
+      verified: config.verified
+    });
+
+    const response = {
       success: true,
       config: {
         ...config,
@@ -100,19 +133,31 @@ export async function GET() {
         updatedAt: config.updatedAt.toISOString(),
       },
       isConfigured: true,
-    });
+    };
+
+    console.log(`[${requestId}] Admin chat config GET request completed successfully`);
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Chat config GET error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
-      stack: error.stack
+    console.error(`[${requestId}] Chat config GET error:`, error);
+    console.error(`[${requestId}] Error details:`, {
+      name: (error as Error).name,
+      message: (error as Error).message,
+      code: (error as any).code,
+      meta: (error as any).meta,
+      stack: (error as Error).stack,
+      timestamp: new Date().toISOString()
     });
+
+    // Return more detailed error information for debugging
     return NextResponse.json(
-      { error: 'Failed to fetch chat configuration' },
+      {
+        error: 'Failed to fetch chat configuration',
+        debug: process.env.NODE_ENV === 'development' ? {
+          message: (error as Error).message,
+          requestId: requestId
+        } : undefined
+      },
       { status: 500 }
     );
   }
