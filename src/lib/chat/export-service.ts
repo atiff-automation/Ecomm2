@@ -223,60 +223,137 @@ export class ChatExportService {
   }
 
   private async generatePDFExport(sessions: ChatSessionData[], includeMessages: boolean): Promise<Buffer> {
-    // Using a simple text-based PDF generation for now
-    // In production, you might want to use a library like puppeteer or pdfkit
-    const PDFDocument = require('pdfkit');
-    const doc = new PDFDocument();
+    // Using puppeteer for PDF generation since pdfkit has font path issues in Next.js
+    const puppeteer = require('puppeteer');
 
-    const chunks: Buffer[] = [];
-    doc.on('data', chunk => chunks.push(chunk));
-
-    return new Promise((resolve, reject) => {
-      doc.on('end', () => {
-        resolve(Buffer.concat(chunks));
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
 
-      doc.on('error', reject);
+      const page = await browser.newPage();
 
-      // Header
-      doc.fontSize(20).text('Chat Sessions Export Report', { align: 'center' });
-      doc.moveDown();
+      // Generate HTML content
+      const htmlContent = this.generatePDFHTMLContent(sessions, includeMessages);
 
-      doc.fontSize(12);
-      doc.text(`Export Date: ${new Date().toISOString()}`);
-      doc.text(`Total Sessions: ${sessions.length}`);
-      doc.text(`Total Messages: ${sessions.reduce((acc, session) => acc + (session.messages?.length || 0), 0)}`);
-      doc.moveDown();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-      // Sessions
-      for (const session of sessions) {
-        doc.fontSize(14).text(`Session: ${session.sessionId}`, { underline: true });
-        doc.fontSize(10);
-        doc.text(`Status: ${session.status}`);
-        doc.text(`Created: ${session.createdAt.toISOString()}`);
-        if (session.userId) doc.text(`User ID: ${session.userId}`);
-        if (session.guestEmail) doc.text(`Guest Email: ${session.guestEmail}`);
-        if (session.guestPhone) doc.text(`Guest Phone: ${session.guestPhone}`);
-
-        if (includeMessages && session.messages && session.messages.length > 0) {
-          doc.moveDown(0.5);
-          doc.text('Messages:', { underline: true });
-
-          for (const message of session.messages) {
-            doc.text(`[${message.createdAt.toISOString()}] ${message.senderType}: ${message.content}`);
-          }
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20mm',
+          right: '15mm',
+          bottom: '20mm',
+          left: '15mm'
         }
+      });
 
-        doc.moveDown();
+      return pdfBuffer;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
 
-        // Add page break if needed
-        if (doc.y > 700) {
-          doc.addPage();
-        }
+  private generatePDFHTMLContent(sessions: ChatSessionData[], includeMessages: boolean): string {
+    const totalMessages = sessions.reduce((acc, session) => acc + (session.messages?.length || 0), 0);
+
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Chat Sessions Export Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .header h1 { font-size: 24px; margin-bottom: 10px; }
+          .metadata { background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+          .session { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+          .session-header { font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+          .session-info { margin-bottom: 15px; }
+          .session-info div { margin: 3px 0; }
+          .messages { margin-top: 15px; }
+          .messages h4 { margin-bottom: 10px; text-decoration: underline; }
+          .message { margin: 8px 0; padding: 8px; border-radius: 8px; }
+          .message.user { background: #eff6ff; border-left: 3px solid #2563eb; }
+          .message.bot { background: #f0fdf4; border-left: 3px solid #16a34a; }
+          .message.system { background: #fff7ed; border-left: 3px solid #ea580c; }
+          .message-meta { font-size: 12px; color: #666; margin-bottom: 5px; }
+          .message-content { font-size: 14px; }
+          .page-break { page-break-before: always; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Chat Sessions Export Report</h1>
+        </div>
+
+        <div class="metadata">
+          <div><strong>Export Date:</strong> ${new Date().toISOString()}</div>
+          <div><strong>Total Sessions:</strong> ${sessions.length}</div>
+          <div><strong>Total Messages:</strong> ${totalMessages}</div>
+        </div>
+    `;
+
+    sessions.forEach((session, index) => {
+      if (index > 0 && index % 5 === 0) {
+        html += '<div class="page-break"></div>';
       }
 
-      doc.end();
+      html += `
+        <div class="session">
+          <div class="session-header">Session: ${session.sessionId}</div>
+          <div class="session-info">
+            <div><strong>Status:</strong> ${session.status}</div>
+            <div><strong>Created:</strong> ${session.createdAt.toISOString()}</div>
+            ${session.userId ? `<div><strong>User ID:</strong> ${session.userId}</div>` : ''}
+            ${session.guestEmail ? `<div><strong>Guest Email:</strong> ${session.guestEmail}</div>` : ''}
+            ${session.guestPhone ? `<div><strong>Guest Phone:</strong> ${session.guestPhone}</div>` : ''}
+            ${session.lastActivity ? `<div><strong>Last Activity:</strong> ${session.lastActivity.toISOString()}</div>` : ''}
+          </div>
+      `;
+
+      if (includeMessages && session.messages && session.messages.length > 0) {
+        html += `
+          <div class="messages">
+            <h4>Messages:</h4>
+        `;
+
+        session.messages.forEach(message => {
+          html += `
+            <div class="message ${message.senderType}">
+              <div class="message-meta">[${message.createdAt.toISOString()}] ${message.senderType}</div>
+              <div class="message-content">${this.escapeHtml(message.content)}</div>
+            </div>
+          `;
+        });
+
+        html += '</div>';
+      }
+
+      html += '</div>';
     });
+
+    html += `
+      </body>
+      </html>
+    `;
+
+    return html;
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private escapeCsvValue(value: string): string {

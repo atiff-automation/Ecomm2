@@ -11,12 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { DataExportDatePicker } from '@/components/ui/data-export-date-picker';
 import {
   Select,
   SelectContent,
@@ -93,7 +88,6 @@ export default function DataManagementPage() {
   const [exportStartDate, setExportStartDate] = useState<Date>();
   const [exportEndDate, setExportEndDate] = useState<Date>();
   const [exportFormat, setExportFormat] = useState<string>('json');
-  const [includeMessages, setIncludeMessages] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
   const [backupFiles, setBackupFiles] = useState<BackupFile[]>([]);
@@ -188,7 +182,6 @@ export default function DataManagementPage() {
           startDate: exportStartDate.toISOString(),
           endDate: exportEndDate.toISOString(),
           format: exportFormat,
-          includeMessages,
         }),
       });
 
@@ -404,54 +397,16 @@ export default function DataManagementPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Start Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {exportStartDate
-                          ? format(exportStartDate, 'PPP')
-                          : 'Pick a date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={exportStartDate}
-                        onSelect={setExportStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">End Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {exportEndDate
-                          ? format(exportEndDate, 'PPP')
-                          : 'Pick a date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={exportEndDate}
-                        onSelect={setExportEndDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-medium">Export Date Range</label>
+                  <DataExportDatePicker
+                    startDate={exportStartDate}
+                    endDate={exportEndDate}
+                    onStartDateChange={setExportStartDate}
+                    onEndDateChange={setExportEndDate}
+                    placeholder="Select export date range"
+                    className="w-full"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -468,21 +423,6 @@ export default function DataManagementPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Options</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="includeMessages"
-                      checked={includeMessages}
-                      onChange={e => setIncludeMessages(e.target.checked)}
-                      className="rounded border-gray-300"
-                    />
-                    <label htmlFor="includeMessages" className="text-sm">
-                      Include messages
-                    </label>
-                  </div>
-                </div>
               </div>
 
               <Button

@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { startDate, endDate, format, includeMessages } = body;
+    const { startDate, endDate, format } = body;
 
     // Validate input
     if (!startDate || !endDate || !format) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       format: format as 'json' | 'csv' | 'pdf',
-      includeMessages: includeMessages ?? true,
+      includeMessages: true,
     };
 
     // Validate export options

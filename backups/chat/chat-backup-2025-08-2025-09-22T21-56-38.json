@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "createdAt": "2025-09-22T21:56:38.758Z",
+    "sessionCount": 0,
+    "fileSize": 0,
+    "format": "json",
+    "retentionPolicy": {
+      "retentionDays": 180,
+      "backupDirectory": "backups/chat",
+      "gracePeriodDays": 7,
+      "autoDeleteEnabled": true,
+      "backupEnabled": true
+    }
+  },
+  "period": {
+    "year": 2025,
+    "month": 8,
+    "start": "2025-07-31T16:00:00.000Z",
+    "end": "2025-08-31T15:59:59.999Z"
+  },
+  "sessions": []
+}

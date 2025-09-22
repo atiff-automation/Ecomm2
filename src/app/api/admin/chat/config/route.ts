@@ -58,8 +58,6 @@ export async function GET() {
         queueMaxRetries: true,
         queueRetryDelayMs: true,
         queueBatchSize: true,
-        websocketEnabled: true,
-        websocketPort: true,
         welcomeMessage: true,
         agentName: true,
         botIconUrl: true,
@@ -98,8 +96,6 @@ export async function GET() {
         queueMaxRetries: 3,
         queueRetryDelayMs: 5000,
         queueBatchSize: 10,
-        websocketEnabled: true,
-        websocketPort: 3001,
         welcomeMessage: 'Hi! How can we help you today?',
         agentName: 'Customer Support',
         botIconUrl: null,
@@ -200,8 +196,6 @@ export async function POST(request: NextRequest) {
       queueMaxRetries,
       queueRetryDelayMs,
       queueBatchSize,
-      websocketEnabled,
-      websocketPort,
       welcomeMessage,
       agentName,
       botIconUrl,
@@ -272,9 +266,6 @@ export async function POST(request: NextRequest) {
       validationErrors.push('Rate limit messages must be between 1 and 1000');
     }
 
-    if (websocketPort && (websocketPort < 1024 || websocketPort > 65535)) {
-      validationErrors.push('WebSocket port must be between 1024 and 65535');
-    }
 
     if (welcomeMessage && welcomeMessage.length > 500) {
       validationErrors.push('Welcome message must be 500 characters or less');
@@ -320,8 +311,6 @@ export async function POST(request: NextRequest) {
           queueMaxRetries: queueMaxRetries || 3,
           queueRetryDelayMs: queueRetryDelayMs || 5000,
           queueBatchSize: queueBatchSize || 10,
-          websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
-          websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
           agentName: agentName || 'Customer Support',
           botIconUrl: botIconUrl || null,
@@ -347,8 +336,6 @@ export async function POST(request: NextRequest) {
           queueMaxRetries: queueMaxRetries || 3,
           queueRetryDelayMs: queueRetryDelayMs || 5000,
           queueBatchSize: queueBatchSize || 10,
-          websocketEnabled: websocketEnabled !== undefined ? websocketEnabled : true,
-          websocketPort: websocketPort || 3001,
           welcomeMessage: welcomeMessage || 'Hi! How can we help you today?',
           agentName: agentName || 'Customer Support',
           botIconUrl: botIconUrl || null,
@@ -377,8 +364,6 @@ export async function POST(request: NextRequest) {
         queueMaxRetries: config.queueMaxRetries,
         queueRetryDelayMs: config.queueRetryDelayMs,
         queueBatchSize: config.queueBatchSize,
-        websocketEnabled: config.websocketEnabled,
-        websocketPort: config.websocketPort,
         welcomeMessage: config.welcomeMessage,
         agentName: config.agentName,
         botIconUrl: config.botIconUrl,
