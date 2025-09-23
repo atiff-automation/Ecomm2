@@ -207,7 +207,7 @@ export default function SessionDetailPage() {
           </h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
-            <Button onClick={() => router.back()} variant="outline">
+            <Button onClick={() => router.push('/admin/chat')} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
@@ -229,7 +229,7 @@ export default function SessionDetailPage() {
             The requested chat session could not be found.
           </p>
           <div className="mt-6">
-            <Button onClick={() => router.back()} variant="outline">
+            <Button onClick={() => router.push('/admin/chat')} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
@@ -244,7 +244,7 @@ export default function SessionDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/admin/chat')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
