@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdminChatView } from '@/components/admin/chat/AdminChatView';
+import { adminChatUtils } from '@/components/admin/chat/utils/admin-chat-utils';
 
 interface ChatMessage {
   id: string;
@@ -111,6 +113,9 @@ export default function SessionDetailPage() {
       return;
     }
 
+    // Generate comprehensive export data using admin utilities
+    const exportData = adminChatUtils.generateTechnicalExport(sessionDetail.messages);
+
     const chatData = {
       session: {
         id: sessionDetail.sessionId,
@@ -124,13 +129,14 @@ export default function SessionDetailPage() {
         messageCount: sessionDetail.messageCount,
         sessionType: sessionDetail.user ? 'authenticated' : 'guest',
       },
-      messages: sessionDetail.messages.map(msg => ({
-        timestamp: new Date(msg.createdAt).toLocaleString(),
-        sender: msg.senderType,
-        content: msg.content,
-        type: msg.messageType,
-        status: msg.status,
-      })),
+      analysis: {
+        summary: exportData.summary,
+        highlights: exportData.highlights,
+        attentionRequired: exportData.attention,
+        technicalMetrics: exportData.technicalDetails,
+        exportedAt: new Date().toISOString(),
+      },
+      messages: exportData.rawMessages,
     };
 
     const blob = new Blob([JSON.stringify(chatData, null, 2)], {
@@ -140,7 +146,7 @@ export default function SessionDetailPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chat-session-${sessionDetail.sessionId}.json`;
+    a.download = `chat-session-${sessionDetail.sessionId}-complete.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -174,32 +180,6 @@ export default function SessionDetailPage() {
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getSenderIcon = (senderType: string) => {
-    switch (senderType) {
-      case 'user':
-        return <User className="h-4 w-4" />;
-      case 'bot':
-        return <Bot className="h-4 w-4" />;
-      case 'system':
-        return <AlertCircle className="h-4 w-4" />;
-      default:
-        return <MessageCircle className="h-4 w-4" />;
-    }
-  };
-
-  const getSenderColor = (senderType: string) => {
-    switch (senderType) {
-      case 'user':
-        return 'text-blue-600 bg-blue-50';
-      case 'bot':
-        return 'text-green-600 bg-green-50';
-      case 'system':
-        return 'text-orange-600 bg-orange-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
     }
   };
 
@@ -301,57 +281,15 @@ export default function SessionDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Chat Messages ({sessionDetail.messageCount})
+                Conversation
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {sessionDetail.messages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageCircle className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">
-                      No messages in this session
-                    </p>
-                  </div>
-                ) : (
-                  sessionDetail.messages.map(message => (
-                    <div
-                      key={message.id}
-                      className={`flex items-start space-x-3 p-3 rounded-lg ${getSenderColor(message.senderType)}`}
-                    >
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getSenderIcon(message.senderType)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-sm capitalize">
-                            {message.senderType}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(message.createdAt).toLocaleTimeString()}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {message.messageType}
-                          </Badge>
-                        </div>
-                        <div className="text-sm">{message.content}</div>
-                        {message.metadata &&
-                          Object.keys(message.metadata).length > 0 && (
-                            <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-                              <details>
-                                <summary className="cursor-pointer">
-                                  Metadata
-                                </summary>
-                                <pre className="mt-1 text-xs">
-                                  {JSON.stringify(message.metadata, null, 2)}
-                                </pre>
-                              </details>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  ))
-                )}
+            <CardContent className="p-0">
+              <div className="max-h-[600px] overflow-y-auto p-6">
+                <AdminChatView
+                  messages={sessionDetail.messages}
+                  showSummary={true}
+                />
               </div>
             </CardContent>
           </Card>
