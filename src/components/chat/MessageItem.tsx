@@ -5,7 +5,11 @@ import Image from 'next/image';
 import { chatUtils } from './utils/chat-utils';
 import { QuickReply } from './QuickReply';
 import { RichContent } from './RichContent';
-import type { ChatConfig, ChatMessage, QuickReply as QuickReplyType } from './types';
+import type {
+  ChatConfig,
+  ChatMessage,
+  QuickReply as QuickReplyType,
+} from './types';
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -20,7 +24,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   showTimestamp,
   isConsecutive,
   config,
-  onQuickReply
+  onQuickReply,
 }) => {
   const isUser = chatUtils.isUserMessage(message);
   const isBot = chatUtils.isBotMessage(message);
@@ -49,8 +53,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     isUser && 'message-item--user',
     isBot && 'message-item--bot',
     isConsecutive && 'message-item--consecutive',
-    message.status === 'failed' && 'message-item--failed'
-  ].filter(Boolean).join(' ');
+    message.status === 'failed' && 'message-item--failed',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const renderAvatar = () => {
     if (isUser || isConsecutive) return null;
@@ -70,8 +76,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         ) : (
           <div className="message-item__avatar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
         )}
@@ -86,9 +103,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       return (
         <div className="message-item__rich-content">
           {message.content && (
-            <div className="message-item__text">
-              {message.content}
-            </div>
+            <div className="message-item__text">{message.content}</div>
           )}
           {richContent && (
             <RichContent
@@ -101,15 +116,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       );
     }
 
-    return (
-      <div className="message-item__text">
-        {message.content}
-      </div>
-    );
+    return <div className="message-item__text">{message.content}</div>;
   };
 
   const renderQuickReplies = () => {
-    if (quickReplies.length === 0 || chatUtils.hasRichContent(message)) return null;
+    if (quickReplies.length === 0 || chatUtils.hasRichContent(message))
+      return null;
 
     return (
       <div className="message-item__quick-replies">
@@ -120,7 +132,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           config={{
             layout: 'horizontal',
             buttonStyle: 'pill',
-            maxReplies: 4
+            maxReplies: 4,
           }}
         />
       </div>
@@ -134,7 +146,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const statusColor = chatUtils.getMessageStatusColor(message.status);
 
     return (
-      <div 
+      <div
         className="message-item__status"
         style={{ color: statusColor }}
         title={`Message ${message.status}`}
@@ -164,7 +176,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     <div className={messageClasses}>
       <div className="message-item__wrapper">
         {renderAvatar()}
-        
+
         <div className="message-item__content">
           <div className="message-item__bubble">
             {renderContent()}
@@ -239,17 +251,25 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           border-radius: 20px 20px 20px 6px;
           padding: 16px 20px;
           word-wrap: break-word;
-          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+          box-shadow:
+            0 3px 12px rgba(0, 0, 0, 0.08),
+            0 1px 4px rgba(0, 0, 0, 0.04);
           position: relative;
           backdrop-filter: blur(10px);
         }
 
         .message-item--user .message-item__bubble {
-          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
+          background: linear-gradient(
+            135deg,
+            var(--chat-primary-color, #2563eb) 0%,
+            #3b82f6 100%
+          );
           color: white;
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 20px 20px 6px 20px;
-          box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(37, 99, 235, 0.15);
+          box-shadow:
+            0 4px 16px rgba(37, 99, 235, 0.25),
+            0 2px 8px rgba(37, 99, 235, 0.15);
         }
 
         .message-item--consecutive .message-item__bubble {
@@ -408,7 +428,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           .message-item {
             animation: none;
           }
-          
+
           .message-item__quick-reply-btn {
             transition: none;
           }

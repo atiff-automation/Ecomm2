@@ -7,8 +7,8 @@ export async function GET() {
     const recentActivity = await prisma.chatWebhookQueue.findMany({
       where: {
         createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-        }
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+        },
       },
       select: {
         id: true,
@@ -18,10 +18,10 @@ export async function GET() {
         createdAt: true,
         updatedAt: true,
         lastError: true,
-        webhookUrl: true
+        webhookUrl: true,
       },
       orderBy: { createdAt: 'desc' },
-      take: 50 // Limit to most recent 50 activities
+      take: 50, // Limit to most recent 50 activities
     });
 
     // Format the response to match the expected interface
@@ -32,11 +32,10 @@ export async function GET() {
       attempts: activity.attempts,
       createdAt: activity.createdAt.toISOString(),
       lastError: activity.lastError,
-      webhookUrl: activity.webhookUrl
+      webhookUrl: activity.webhookUrl,
     }));
 
     return NextResponse.json(formattedActivity);
-
   } catch (error) {
     console.error('Error fetching webhook activity:', error);
     return NextResponse.json(

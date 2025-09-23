@@ -40,16 +40,16 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     startNewSession,
     openChat,
     closeChat,
-    toggleChat
+    toggleChat,
   } = useChat();
 
   // Set up polling for basic real-time updates
   usePolling({
     interval: 5000, // Increased from 3000ms to 5000ms to reduce rate limiting
     enabled: isOpen && !!session,
-    onError: (error) => {
+    onError: error => {
       console.warn('Polling error:', error);
-    }
+    },
   });
 
   const handleSendMessage = async (content: string, messageType?: any) => {
@@ -92,7 +92,10 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
     }
   };
 
-  const handleContactSubmit = async (contactInfo: { phone?: string; email?: string }) => {
+  const handleContactSubmit = async (contactInfo: {
+    phone?: string;
+    email?: string;
+  }) => {
     try {
       // Create session with contact info
       if (contactInfo.phone) {
@@ -113,7 +116,6 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
   const handleContactFormClose = () => {
     setShowContactForm(false);
   };
-
 
   return (
     <>
@@ -138,7 +140,6 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         onTyping={sendTyping}
       />
 
-
       {/* Contact Form - shown for guest chat selection */}
       <ContactForm
         isOpen={showContactForm}
@@ -152,14 +153,14 @@ const ChatWidgetInternal: React.FC<ChatWidgetInternalProps> = ({ config }) => {
         <div className="chat-error-overlay">
           <div className="chat-error-message">
             <span>{error}</span>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="chat-error-retry"
             >
               Retry
             </button>
           </div>
-          
+
           <style jsx>{`
             .chat-error-overlay {
               position: fixed;
@@ -229,33 +230,33 @@ interface ChatWidgetProps {
    * Chat configuration options
    */
   config?: Partial<ChatConfig>;
-  
+
   /**
    * CSS class name for the widget container
    */
   className?: string;
-  
+
   /**
    * Inline styles for the widget container
    */
   style?: React.CSSProperties;
-  
+
   /**
    * Whether the chat widget should be enabled
    * @default true
    */
   enabled?: boolean;
-  
+
   /**
    * Callback fired when chat is opened
    */
   onOpen?: () => void;
-  
+
   /**
    * Callback fired when chat is closed
    */
   onClose?: () => void;
-  
+
   /**
    * Callback fired when a message is sent
    */
@@ -264,13 +265,13 @@ interface ChatWidgetProps {
 
 /**
  * Main Chat Widget Component
- * 
+ *
  * This is the primary component that provides a complete chat interface
  * including the floating bubble, chat window, and all chat functionality.
- * 
+ *
  * Example usage:
  * ```tsx
- * <ChatWidget 
+ * <ChatWidget
  *   config={{
  *     position: 'bottom-right',
  *     primaryColor: '#007bff',
@@ -287,7 +288,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   enabled = true,
   onOpen,
   onClose,
-  onMessage
+  onMessage,
 }) => {
   if (!enabled) {
     return null;
@@ -298,10 +299,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       <ChatProvider initialConfig={config}>
         <ChatWidgetInternal config={config as ChatConfig} />
       </ChatProvider>
-      
+
       <style jsx>{`
         .chat-widget-container {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+          font-family:
+            -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+            'Helvetica Neue', Arial, sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }

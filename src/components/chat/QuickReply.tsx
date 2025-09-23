@@ -24,12 +24,12 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
   replies,
   onQuickReply,
   disabled = false,
-  config = {}
+  config = {},
 }) => {
   const {
     maxReplies = 6,
     buttonStyle = 'pill',
-    layout = 'horizontal'
+    layout = 'horizontal',
   } = config;
 
   // Limit the number of quick replies displayed
@@ -41,7 +41,7 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
 
   const handleQuickReply = (reply: QuickReplyType) => {
     if (disabled) return;
-    
+
     // Validate reply before sending
     if (chatUtils.validateQuickReply(reply)) {
       onQuickReply(reply.value || reply.text);
@@ -52,9 +52,11 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
     const baseClasses = [
       'quick-reply-button',
       `quick-reply-button--${buttonStyle}`,
-      isDisabled && 'quick-reply-button--disabled'
-    ].filter(Boolean).join(' ');
-    
+      isDisabled && 'quick-reply-button--disabled',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return baseClasses;
   };
 
@@ -62,12 +64,14 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
     return [
       'quick-reply-container',
       `quick-reply-container--${layout}`,
-      disabled && 'quick-reply-container--disabled'
-    ].filter(Boolean).join(' ');
+      disabled && 'quick-reply-container--disabled',
+    ]
+      .filter(Boolean)
+      .join(' ');
   };
 
   return (
-    <div 
+    <div
       className={getContainerClasses()}
       role="group"
       aria-label="Quick reply options"
@@ -86,9 +90,7 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
               {reply.icon}
             </span>
           )}
-          <span className="quick-reply-button__text">
-            {reply.text}
-          </span>
+          <span className="quick-reply-button__text">{reply.text}</span>
         </button>
       ))}
 
@@ -247,11 +249,11 @@ export const QuickReply: React.FC<QuickReplyProps> = ({
           .quick-reply-container {
             animation: none;
           }
-          
+
           .quick-reply-button {
             transition: none;
           }
-          
+
           .quick-reply-button:hover:not(:disabled) {
             transform: none;
           }

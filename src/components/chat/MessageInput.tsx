@@ -11,7 +11,11 @@ interface MessageInputProps {
   isDisabled: boolean;
   config: ChatConfig;
   placeholder: string;
-  onSendMessage: (content: string, messageType?: ChatMessage['messageType'], attachments?: ChatAttachment[]) => void;
+  onSendMessage: (
+    content: string,
+    messageType?: ChatMessage['messageType'],
+    attachments?: ChatAttachment[]
+  ) => void;
   onTyping?: (isTyping: boolean) => void;
 }
 
@@ -21,7 +25,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   config,
   placeholder,
   onSendMessage,
-  onTyping
+  onTyping,
 }) => {
   const [message, setMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -39,7 +43,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const scrollHeight = textareaRef.current.scrollHeight;
       const maxHeight = 120; // Maximum 5 lines approximately
       textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-      
+
       setIsExpanded(scrollHeight > 44); // Single line height
     }
   }, [message]);
@@ -66,9 +70,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const validation = chatValidation.validateMessage(content, {
         maxLength: config.maxMessageLength,
         allowEmpty: false,
-        sanitize: true
+        sanitize: true,
       });
-      
+
       if (!validation.isValid) {
         setValidationError(validation.error || 'Invalid message');
       } else {
@@ -83,21 +87,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const value = e.target.value;
     setMessage(value);
     debouncedValidation(value);
-    
+
     // Handle typing indicators
     if (onTyping && isConnected && config.enableTypingIndicator) {
       const hasContent = value.trim().length > 0;
-      
+
       if (hasContent && !isTyping) {
         setIsTyping(true);
         onTyping(true);
       }
-      
+
       // Clear existing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      
+
       // Set new timeout to stop typing indicator
       typingTimeoutRef.current = setTimeout(() => {
         if (isTyping) {
@@ -117,8 +121,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
-    
-    if ((!trimmedMessage && attachments.length === 0) || isDisabled || !isConnected) {
+
+    if (
+      (!trimmedMessage && attachments.length === 0) ||
+      isDisabled ||
+      !isConnected
+    ) {
       return;
     }
 
@@ -127,7 +135,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const validation = chatValidation.validateMessage(trimmedMessage, {
         maxLength: config.maxMessageLength,
         allowEmpty: false,
-        sanitize: true
+        sanitize: true,
       });
 
       if (!validation.isValid) {
@@ -144,15 +152,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         clearTimeout(typingTimeoutRef.current);
       }
     }
-    
+
     // Clear validation error and send message
     setValidationError(null);
     const messageType = attachments.length > 0 ? 'rich_content' : 'text';
-    onSendMessage(trimmedMessage || '', messageType, attachments.length > 0 ? attachments : undefined);
+    onSendMessage(
+      trimmedMessage || '',
+      messageType,
+      attachments.length > 0 ? attachments : undefined
+    );
     setMessage('');
     setAttachments([]);
     setShowMediaUpload(false);
-    
+
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -160,13 +172,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleMediaUpload = (files: File[], newAttachments: ChatAttachment[]) => {
+  const handleMediaUpload = (
+    files: File[],
+    newAttachments: ChatAttachment[]
+  ) => {
     if (!config.enableFileUpload) return;
 
     // Add new attachments to existing ones
     setAttachments(prev => [...prev, ...newAttachments]);
     setValidationError(null);
-    
+
     // Auto-focus back to textarea
     if (textareaRef.current) {
       textareaRef.current.focus();
@@ -193,9 +208,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     });
   };
 
-  const canSend = (message.trim() || attachments.length > 0) && isConnected && !isDisabled && !validationError;
+  const canSend =
+    (message.trim() || attachments.length > 0) &&
+    isConnected &&
+    !isDisabled &&
+    !validationError;
   const characterCount = message.length;
-  const isNearLimit = characterCount > (config.maxMessageLength * 0.8);
+  const isNearLimit = characterCount > config.maxMessageLength * 0.8;
   const isOverLimit = characterCount > config.maxMessageLength;
 
   const inputClasses = [
@@ -203,8 +222,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     isExpanded && 'message-input--expanded',
     !isConnected && 'message-input--disconnected',
     isDisabled && 'message-input--disabled',
-    validationError && 'message-input--error'
-  ].filter(Boolean).join(' ');
+    validationError && 'message-input--error',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={inputClasses}>
@@ -222,11 +243,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             disabled={isDisabled || !isConnected}
             maxFiles={5}
             maxFileSize={10}
-            acceptedTypes={['image/*', 'video/*', 'audio/*', 'application/pdf', '.doc,.docx']}
+            acceptedTypes={[
+              'image/*',
+              'video/*',
+              'audio/*',
+              'application/pdf',
+              '.doc,.docx',
+            ]}
             config={{
               enableDragDrop: true,
               showPreview: true,
-              enableCompression: true
+              enableCompression: true,
             }}
           />
         </div>
@@ -237,7 +264,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <div className="message-input__attachments">
           <div className="message-input__attachments-header">
             <span className="message-input__attachments-count">
-              {attachments.length} file{attachments.length > 1 ? 's' : ''} attached
+              {attachments.length} file{attachments.length > 1 ? 's' : ''}{' '}
+              attached
             </span>
             <button
               type="button"
@@ -260,7 +288,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </div>
           <div className="message-input__attachments-list">
             {attachments.map((attachment, index) => (
-              <div key={`attachment-${index}`} className="message-input__attachment">
+              <div
+                key={`attachment-${index}`}
+                className="message-input__attachment"
+              >
                 <div className="message-input__attachment-icon">
                   {attachment.type === 'image' ? '🖼️' : '📄'}
                 </div>
@@ -280,7 +311,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="message-input__container">
         {/* File upload button */}
         {config.enableFileUpload && (
@@ -291,8 +322,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             disabled={isDisabled || !isConnected}
             title="Attach files"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59722 21.9983 8.005 21.9983C6.41278 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0948 2.00613 15.155 2.00613C16.2152 2.00613 17.2294 2.42944 17.98 3.18C18.7306 3.93056 19.1539 4.94477 19.1539 6.005C19.1539 7.06523 18.7306 8.07944 17.98 8.83L10.69 16.12C10.3148 16.4952 9.80186 16.7077 9.27 16.7077C8.73814 16.7077 8.22518 16.4952 7.85 16.12C7.47482 15.7448 7.26234 15.2319 7.26234 14.7C7.26234 14.1681 7.47482 13.6552 7.85 13.28L15.54 5.59" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59722 21.9983 8.005 21.9983C6.41278 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0948 2.00613 15.155 2.00613C16.2152 2.00613 17.2294 2.42944 17.98 3.18C18.7306 3.93056 19.1539 4.94477 19.1539 6.005C19.1539 7.06523 18.7306 8.07944 17.98 8.83L10.69 16.12C10.3148 16.4952 9.80186 16.7077 9.27 16.7077C8.73814 16.7077 8.22518 16.4952 7.85 16.12C7.47482 15.7448 7.26234 15.2319 7.26234 14.7C7.26234 14.1681 7.47482 13.6552 7.85 13.28L15.54 5.59"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         )}
@@ -311,10 +354,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             rows={1}
             aria-label="Type your message"
           />
-          
+
           {/* Character counter */}
           {(isNearLimit || isOverLimit) && (
-            <div className={`message-input__counter ${isOverLimit ? 'message-input__counter--over' : ''}`}>
+            <div
+              className={`message-input__counter ${isOverLimit ? 'message-input__counter--over' : ''}`}
+            >
               {characterCount}/{config.maxMessageLength}
             </div>
           )}
@@ -329,8 +374,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           aria-label="Send message"
           title={!canSend ? 'Enter a message to send' : 'Send message (Enter)'}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
@@ -363,13 +420,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           border-radius: 28px;
           padding: 14px 18px;
           transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+          box-shadow:
+            0 3px 12px rgba(0, 0, 0, 0.06),
+            0 1px 4px rgba(0, 0, 0, 0.03);
           backdrop-filter: blur(10px);
         }
 
         .message-input__container:focus-within {
           border-color: var(--chat-primary-color, #2563eb);
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+          box-shadow:
+            0 0 0 4px rgba(37, 99, 235, 0.12),
+            0 4px 12px rgba(0, 0, 0, 0.08);
           transform: translateY(-1px);
         }
 
@@ -571,7 +632,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           width: 42px;
           height: 42px;
           border: none;
-          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
+          background: linear-gradient(
+            135deg,
+            var(--chat-primary-color, #2563eb) 0%,
+            #3b82f6 100%
+          );
           color: white;
           border-radius: 50%;
           cursor: pointer;
@@ -580,14 +645,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           justify-content: center;
           transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
           transform: scale(1);
-          box-shadow: 0 5px 16px rgba(37, 99, 235, 0.3), 0 3px 8px rgba(37, 99, 235, 0.2);
+          box-shadow:
+            0 5px 16px rgba(37, 99, 235, 0.3),
+            0 3px 8px rgba(37, 99, 235, 0.2);
           border: 1.5px solid rgba(255, 255, 255, 0.25);
         }
 
         .message-input__send-btn:hover:not(:disabled) {
           background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
           transform: scale(1.05) translateY(-1px);
-          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35), 0 3px 8px rgba(37, 99, 235, 0.2);
+          box-shadow:
+            0 6px 16px rgba(37, 99, 235, 0.35),
+            0 3px 8px rgba(37, 99, 235, 0.2);
         }
 
         .message-input__send-btn:active:not(:disabled) {

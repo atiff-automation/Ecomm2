@@ -4,15 +4,15 @@ import { webhookService } from '@/lib/chat/webhook-service';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    
+
     // Parse query parameters
     const status = searchParams.get('status') || undefined;
     const messageId = searchParams.get('messageId') || undefined;
-    const fromDate = searchParams.get('fromDate') 
-      ? new Date(searchParams.get('fromDate')!) 
+    const fromDate = searchParams.get('fromDate')
+      ? new Date(searchParams.get('fromDate')!)
       : undefined;
-    const toDate = searchParams.get('toDate') 
-      ? new Date(searchParams.get('toDate')!) 
+    const toDate = searchParams.get('toDate')
+      ? new Date(searchParams.get('toDate')!)
       : undefined;
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
@@ -39,11 +39,10 @@ export async function GET(request: NextRequest) {
       fromDate,
       toDate,
       limit,
-      offset
+      offset,
     });
 
     return NextResponse.json(result);
-
   } catch (error) {
     console.error('Error fetching delivery logs:', error);
     return NextResponse.json(
@@ -61,10 +60,10 @@ export async function POST(request: NextRequest) {
     if (action === 'retry' && Array.isArray(queueIds)) {
       // Retry failed webhooks
       const result = await webhookService.retryFailedWebhooks(queueIds);
-      
+
       return NextResponse.json({
         message: `Retry completed: ${result.successful} successful, ${result.failed} failed`,
-        ...result
+        ...result,
       });
     }
 
@@ -72,7 +71,6 @@ export async function POST(request: NextRequest) {
       { error: 'Invalid action or parameters' },
       { status: 400 }
     );
-
   } catch (error) {
     console.error('Error processing logs action:', error);
     return NextResponse.json(

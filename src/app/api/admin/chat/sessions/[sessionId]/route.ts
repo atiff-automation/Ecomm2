@@ -11,7 +11,7 @@ export async function GET(
   try {
     // Check authentication and admin access
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -21,7 +21,7 @@ export async function GET(
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -88,11 +88,13 @@ export async function GET(
       endedAt: chatSession.endedAt?.toISOString(),
       lastActivity: chatSession.lastActivity.toISOString(),
       messageCount: chatSession._count.messages,
-      user: chatSession.user ? {
-        id: chatSession.user.id,
-        email: chatSession.user.email,
-        name: `${chatSession.user.firstName} ${chatSession.user.lastName}`.trim(),
-      } : null,
+      user: chatSession.user
+        ? {
+            id: chatSession.user.id,
+            email: chatSession.user.email,
+            name: `${chatSession.user.firstName} ${chatSession.user.lastName}`.trim(),
+          }
+        : null,
       // Guest contact information
       guestEmail: chatSession.guestEmail,
       guestPhone: chatSession.guestPhone,
@@ -114,7 +116,6 @@ export async function GET(
       success: true,
       session: sessionDetail,
     });
-
   } catch (error) {
     console.error('Admin session detail API error:', error);
     return NextResponse.json(
@@ -132,7 +133,7 @@ export async function PATCH(
   try {
     // Check authentication and admin access
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -142,7 +143,7 @@ export async function PATCH(
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -212,7 +213,6 @@ export async function PATCH(
         metadata: updatedSession.metadata,
       },
     });
-
   } catch (error) {
     console.error('Admin session update error:', error);
     return NextResponse.json(
@@ -230,7 +230,7 @@ export async function DELETE(
   try {
     // Check authentication and admin access
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -293,7 +293,6 @@ export async function DELETE(
         status: archivedSession.status,
       },
     });
-
   } catch (error) {
     console.error('Admin session delete error:', error);
     return NextResponse.json(

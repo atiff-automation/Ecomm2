@@ -29,14 +29,14 @@ const getChatBenefits = (config: ChatConfig) => ({
     `Extended ${getTimeoutDisplay(config.authenticatedSessionTimeoutMinutes)} chat session`,
     'No need to re-enter contact details',
     'Chat history linked to your account',
-    'Faster response prioritization'
+    'Faster response prioritization',
   ],
   GUEST: [
     `${getTimeoutDisplay(config.guestSessionTimeoutMinutes)} anonymous session`,
     'Privacy-focused experience',
     'No account linking required',
-    'Quick contact entry'
-  ]
+    'Quick contact entry',
+  ],
 });
 
 interface AuthChoiceModalProps {
@@ -58,7 +58,7 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
   config,
   onAuthenticatedStart,
   onGuestStart,
-  onClose
+  onClose,
 }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [error, setError] = useState('');
@@ -70,7 +70,7 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
   const chatBenefits = getChatBenefits(config);
   const timeoutDisplay = {
     AUTHENTICATED: getTimeoutDisplay(config.authenticatedSessionTimeoutMinutes),
-    GUEST: getTimeoutDisplay(config.guestSessionTimeoutMinutes)
+    GUEST: getTimeoutDisplay(config.guestSessionTimeoutMinutes),
   };
 
   const handleAuthenticatedStart = async () => {
@@ -113,21 +113,24 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
             type="button"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
 
         <div className="auth-choice-modal__body">
           <p className="auth-choice-modal__greeting">
-            Hello <strong>{displayName}</strong>! Choose your preferred chat experience:
+            Hello <strong>{displayName}</strong>! Choose your preferred chat
+            experience:
           </p>
 
-          {error && (
-            <div className="auth-choice-modal__error">
-              {error}
-            </div>
-          )}
+          {error && <div className="auth-choice-modal__error">{error}</div>}
 
           <div className="auth-choice-modal__options">
             {/* Authenticated Option */}
@@ -140,10 +143,36 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
               <div className="auth-choice-modal__option-header">
                 <div className="auth-choice-modal__option-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="m19 8 2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="m17 10h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="9"
+                      cy="7"
+                      r="4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m19 8 2 2-2 2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m17 10h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
                 <div className="auth-choice-modal__option-title">
@@ -182,9 +211,29 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
               <div className="auth-choice-modal__option-header">
                 <div className="auth-choice-modal__option-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M4 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      d="M20 21v-2a4 4 0 0 0-3-3.87"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
                 <div className="auth-choice-modal__option-title">
@@ -262,7 +311,9 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
           padding: 6px;
           border-radius: 6px;
           opacity: 0.8;
-          transition: opacity 200ms ease, background 200ms ease;
+          transition:
+            opacity 200ms ease,
+            background 200ms ease;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -320,11 +371,19 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
 
         .auth-choice-modal__option--primary {
           border-color: ${config.primaryColor};
-          background: linear-gradient(135deg, ${config.primaryColor}08 0%, ${config.primaryColor}04 100%);
+          background: linear-gradient(
+            135deg,
+            ${config.primaryColor}08 0%,
+            ${config.primaryColor}04 100%
+          );
         }
 
         .auth-choice-modal__option--primary:hover:not(:disabled) {
-          background: linear-gradient(135deg, ${config.primaryColor}12 0%, ${config.primaryColor}08 100%);
+          background: linear-gradient(
+            135deg,
+            ${config.primaryColor}12 0%,
+            ${config.primaryColor}08 100%
+          );
           border-color: ${config.primaryColor};
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0, 123, 255, 0.15);
@@ -376,7 +435,8 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
           flex-shrink: 0;
         }
 
-        .auth-choice-modal__option--secondary .auth-choice-modal__option-duration {
+        .auth-choice-modal__option--secondary
+          .auth-choice-modal__option-duration {
           color: #718096;
           background: #f7fafc;
         }
@@ -457,8 +517,12 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
 
         @keyframes slideInScale {
@@ -473,8 +537,12 @@ export const AuthChoiceModal: React.FC<AuthChoiceModalProps> = ({
         }
 
         @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         @media (max-width: 480px) {

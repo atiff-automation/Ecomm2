@@ -16,11 +16,11 @@ export async function GET(
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { filename } = params;
@@ -33,11 +33,12 @@ export async function GET(
     }
 
     // Security check: ensure filename doesn't contain path traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return NextResponse.json(
-        { error: 'Invalid filename' },
-        { status: 400 }
-      );
+    if (
+      filename.includes('..') ||
+      filename.includes('/') ||
+      filename.includes('\\')
+    ) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
     }
 
     // Verify backup exists in database
@@ -45,10 +46,7 @@ export async function GET(
     const backup = await backupService.getBackupByFilename(filename);
 
     if (!backup) {
-      return NextResponse.json(
-        { error: 'Backup not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Backup not found' }, { status: 404 });
     }
 
     // Verify backup integrity
@@ -75,8 +73,8 @@ export async function GET(
           'Content-Disposition': `attachment; filename="${filename}"`,
           'Content-Length': fileBuffer.length.toString(),
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       });
     } catch (fileError) {
@@ -89,7 +87,10 @@ export async function GET(
   } catch (error) {
     console.error('Download backup API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

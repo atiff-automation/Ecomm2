@@ -18,7 +18,7 @@ interface TypingIndicatorProps {
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   isVisible,
   config,
-  userName = 'Assistant'
+  userName = 'Assistant',
 }) => {
   if (!isVisible || !config.enableTypingIndicator) {
     return null;
@@ -29,16 +29,28 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       <div className="typing-indicator__wrapper">
         <div className="typing-indicator__avatar">
           <div className="typing-indicator__avatar-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
         </div>
-        
+
         <div className="typing-indicator__content">
           <div className="typing-indicator__bubble">
             <div className="typing-indicator__text">
-              <span className="typing-indicator__name">{userName}</span> is typing
+              <span className="typing-indicator__name">{userName}</span> is
+              typing
             </div>
             <div className="typing-indicator__dots">
               <span className="typing-indicator__dot"></span>
@@ -143,7 +155,9 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         }
 
         @keyframes typingDot {
-          0%, 60%, 100% {
+          0%,
+          60%,
+          100% {
             transform: scale(1);
             opacity: 0.5;
           }
@@ -214,7 +228,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           .typing-indicator {
             animation: none;
           }
-          
+
           .typing-indicator__dot {
             animation: none;
             opacity: 0.7;
@@ -226,11 +240,11 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           .typing-indicator__bubble {
             border-width: 2px;
           }
-          
+
           .typing-indicator__text {
             color: #000;
           }
-          
+
           .typing-indicator__dot {
             background: #000;
           }

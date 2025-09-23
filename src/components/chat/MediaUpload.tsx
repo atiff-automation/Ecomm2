@@ -27,17 +27,25 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   disabled = false,
   maxFiles = 5,
   maxFileSize = 10, // 10MB default
-  acceptedTypes = ['image/*', 'video/*', 'audio/*', 'application/pdf', '.doc,.docx'],
-  config = {}
+  acceptedTypes = [
+    'image/*',
+    'video/*',
+    'audio/*',
+    'application/pdf',
+    '.doc,.docx',
+  ],
+  config = {},
 }) => {
   const {
     enableDragDrop = true,
     showPreview = true,
-    enableCompression = true
+    enableCompression = true,
   } = config;
 
   const [isDragOver, setIsDragOver] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>(
+    {}
+  );
   const [previews, setPreviews] = useState<ChatAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +54,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     if (file.size > maxFileSize * 1024 * 1024) {
       return {
         valid: false,
-        error: `File "${file.name}" exceeds ${maxFileSize}MB limit`
+        error: `File "${file.name}" exceeds ${maxFileSize}MB limit`,
       };
     }
 
@@ -62,7 +70,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     if (!isValidType) {
       return {
         valid: false,
-        error: `File type "${file.type}" is not supported`
+        error: `File type "${file.type}" is not supported`,
       };
     }
 
@@ -71,7 +79,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const processFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    
+
     if (fileArray.length > maxFiles) {
       alert(`You can only upload up to ${maxFiles} files at once`);
       return;
@@ -83,7 +91,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     // Validate all files first
     for (const file of fileArray) {
       const validation = validateFile(file);
-      
+
       if (!validation.valid) {
         alert(validation.error);
         continue;
@@ -98,7 +106,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         title: file.name,
         size: file.size,
         mimeType: file.type,
-        thumbnail: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+        thumbnail: file.type.startsWith('image/')
+          ? URL.createObjectURL(file)
+          : undefined,
       };
 
       tempAttachments.push(tempAttachment);
@@ -129,7 +139,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
       const response = await fetch('/api/chat/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       // Clear upload progress
@@ -147,29 +157,31 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Upload failed');
       }
 
       // Convert server response to attachments
-      const serverAttachments: ChatAttachment[] = result.files.map((file: any) => ({
-        type: file.type === 'document' ? 'file' : file.type,
-        url: file.url,
-        title: file.originalName,
-        size: file.size,
-        mimeType: file.mimeType,
-        thumbnail: file.type === 'image' ? file.url : undefined
-      }));
+      const serverAttachments: ChatAttachment[] = result.files.map(
+        (file: any) => ({
+          type: file.type === 'document' ? 'file' : file.type,
+          url: file.url,
+          title: file.originalName,
+          size: file.size,
+          mimeType: file.mimeType,
+          thumbnail: file.type === 'image' ? file.url : undefined,
+        })
+      );
 
       // Replace temp attachments with server URLs
       if (showPreview) {
         setPreviews(prev => {
           // Remove temp attachments and add server attachments
-          const withoutTemp = prev.filter(att => 
-            !tempAttachments.some(temp => temp.title === att.title)
+          const withoutTemp = prev.filter(
+            att => !tempAttachments.some(temp => temp.title === att.title)
           );
-          
+
           // Revoke temp URLs
           tempAttachments.forEach(temp => {
             if (temp.url.startsWith('blob:')) {
@@ -179,25 +191,26 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               URL.revokeObjectURL(temp.thumbnail);
             }
           });
-          
+
           return [...withoutTemp, ...serverAttachments];
         });
       }
 
       // Call parent handler with server URLs
       onFileUpload(validFiles, serverAttachments);
-
     } catch (error) {
       console.error('Upload error:', error);
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
+      alert(
+        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+
       // Remove temp previews on error
       if (showPreview) {
         setPreviews(prev => {
-          const withoutTemp = prev.filter(att => 
-            !tempAttachments.some(temp => temp.title === att.title)
+          const withoutTemp = prev.filter(
+            att => !tempAttachments.some(temp => temp.title === att.title)
           );
-          
+
           // Revoke temp URLs
           tempAttachments.forEach(temp => {
             if (temp.url.startsWith('blob:')) {
@@ -207,7 +220,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               URL.revokeObjectURL(temp.thumbnail);
             }
           });
-          
+
           return withoutTemp;
         });
       }
@@ -256,7 +269,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     setIsDragOver(false);
-    
+
     if (disabled || !enableDragDrop) return;
 
     const files = event.dataTransfer.files;
@@ -304,14 +317,33 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         >
           <div className="media-upload__drop-zone-content">
             <div className="media-upload__drop-zone-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 15V3M12 3L8 7M12 3L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 15V3M12 3L8 7M12 3L16 7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
             <div className="media-upload__drop-zone-text">
               <p className="media-upload__drop-zone-primary">
-                {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                {isDragOver
+                  ? 'Drop files here'
+                  : 'Click to upload or drag and drop'}
               </p>
               <p className="media-upload__drop-zone-secondary">
                 Max {maxFiles} files, up to {maxFileSize}MB each
@@ -369,7 +401,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               Clear All
             </button>
           </div>
-          
+
           <div className="media-upload__previews-list">
             {previews.map((attachment, index) => (
               <div key={`preview-${index}`} className="media-upload__preview">
@@ -379,7 +411,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                       <img
                         src={attachment.thumbnail}
                         alt={attachment.title || 'Preview'}
-                        onError={(e) => {
+                        onError={e => {
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
                         }}
@@ -390,7 +422,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                       {attachment.type === 'image' ? '🖼️' : '📄'}
                     </div>
                   )}
-                  
+
                   <div className="media-upload__preview-info">
                     <div className="media-upload__preview-name">
                       {attachment.title}
@@ -400,7 +432,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                     </div>
                   </div>
                 </div>
-                
+
                 <button
                   type="button"
                   className="media-upload__preview-remove"
@@ -743,7 +775,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
           .media-upload__preview-remove {
             transition: none;
           }
-          
+
           .media-upload__drop-zone--active {
             transform: none;
           }

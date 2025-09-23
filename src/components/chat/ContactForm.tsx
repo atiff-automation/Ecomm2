@@ -14,7 +14,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   isOpen,
   config,
   onSubmit,
-  onClose
+  onClose,
 }) => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -52,7 +52,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
     setIsLoading(true);
     try {
       const contactInfo: { phone?: string; email?: string } = {};
-      
+
       // Prioritize phone number
       if (phone.trim()) {
         contactInfo.phone = phone.trim();
@@ -81,7 +81,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             type="button"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -100,7 +106,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 type="tel"
                 id="phone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={e => setPhone(e.target.value)}
                 className="contact-form__input"
                 placeholder="e.g., +60123456789"
                 disabled={isLoading}
@@ -124,7 +130,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className="contact-form__input"
                 placeholder="your@email.com"
                 disabled={isLoading || !!phone.trim()}
@@ -133,11 +139,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               />
             </div>
 
-            {error && (
-              <div className="contact-form__error">
-                {error}
-              </div>
-            )}
+            {error && <div className="contact-form__error">{error}</div>}
 
             <button
               type="submit"
@@ -212,7 +214,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           padding: 4px;
           border-radius: 4px;
           opacity: 0.8;
-          transition: opacity 200ms ease, background 200ms ease;
+          transition:
+            opacity 200ms ease,
+            background 200ms ease;
         }
 
         .contact-form__close:hover {
@@ -258,7 +262,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           border: 2px solid #e2e8f0;
           border-radius: 8px;
           font-size: 14px;
-          transition: border-color 200ms ease, box-shadow 200ms ease;
+          transition:
+            border-color 200ms ease,
+            box-shadow 200ms ease;
           outline: none;
         }
 
@@ -357,8 +363,12 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
 
         @keyframes slideInScale {
@@ -373,8 +383,12 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         }
 
         @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         @media (max-width: 480px) {

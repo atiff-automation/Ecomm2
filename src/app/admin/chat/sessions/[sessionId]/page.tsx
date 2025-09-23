@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   User,
-  Bot,
   MessageCircle,
   Activity,
   Monitor,
@@ -27,7 +26,7 @@ interface ChatMessage {
   messageType: 'text' | 'quick_reply' | 'rich_content' | 'media' | 'system';
   status: 'pending' | 'sent' | 'delivered' | 'failed';
   createdAt: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface ChatSessionDetail {
@@ -47,12 +46,12 @@ interface ChatSessionDetail {
   guestPhone?: string;
   userAgent?: string;
   ipAddress?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   messages: ChatMessage[];
 }
 
 export default function SessionDetailPage() {
-  const {} = useSession();
+  useSession(); // Just to ensure auth is checked
   const params = useParams();
   const router = useRouter();
   const sessionId = params.sessionId as string;
@@ -114,7 +113,9 @@ export default function SessionDetailPage() {
     }
 
     // Generate comprehensive export data using admin utilities
-    const exportData = adminChatUtils.generateTechnicalExport(sessionDetail.messages);
+    const exportData = adminChatUtils.generateTechnicalExport(
+      sessionDetail.messages
+    );
 
     const chatData = {
       session: {
@@ -207,7 +208,10 @@ export default function SessionDetailPage() {
           </h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
-            <Button onClick={() => router.push('/admin/chat')} variant="outline">
+            <Button
+              onClick={() => router.push('/admin/chat')}
+              variant="outline"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
@@ -229,7 +233,10 @@ export default function SessionDetailPage() {
             The requested chat session could not be found.
           </p>
           <div className="mt-6">
-            <Button onClick={() => router.push('/admin/chat')} variant="outline">
+            <Button
+              onClick={() => router.push('/admin/chat')}
+              variant="outline"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
@@ -244,7 +251,11 @@ export default function SessionDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.push('/admin/chat')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/admin/chat')}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>

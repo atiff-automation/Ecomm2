@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    
+
     // Parse query parameters
     const status = searchParams.get('status');
     const search = searchParams.get('search') || '';
@@ -24,15 +24,15 @@ export async function GET(request: NextRequest) {
         {
           messageId: {
             contains: search,
-            mode: 'insensitive'
-          }
+            mode: 'insensitive',
+          },
         },
         {
           webhookUrl: {
             contains: search,
-            mode: 'insensitive'
-          }
-        }
+            mode: 'insensitive',
+          },
+        },
       ];
     }
 
@@ -51,15 +51,15 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           nextRetryAt: true,
-          payload: true
+          payload: true,
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
-        skip: offset
+        skip: offset,
       }),
       prisma.chatWebhookQueue.count({
-        where: whereConditions
-      })
+        where: whereConditions,
+      }),
     ]);
 
     return NextResponse.json({
@@ -70,10 +70,9 @@ export async function GET(request: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
         hasNext: offset + items.length < total,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     });
-
   } catch (error) {
     console.error('Error fetching queue items:', error);
     return NextResponse.json(

@@ -13,11 +13,11 @@ export async function GET(request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get archive statistics
@@ -26,16 +26,16 @@ export async function GET(request: NextRequest) {
       totalArchivedMessages,
       oldestArchive,
       newestArchive,
-      sizeByMonth
+      sizeByMonth,
     ] = await Promise.all([
       // Total archived sessions
       prisma.chatSession.count({
         where: {
           status: 'archived',
           archivedAt: {
-            not: null
-          }
-        }
+            not: null,
+          },
+        },
       }),
 
       // Total archived messages
@@ -44,10 +44,10 @@ export async function GET(request: NextRequest) {
           session: {
             status: 'archived',
             archivedAt: {
-              not: null
-            }
-          }
-        }
+              not: null,
+            },
+          },
+        },
       }),
 
       // Oldest archive
@@ -55,15 +55,15 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'archived',
           archivedAt: {
-            not: null
-          }
+            not: null,
+          },
         },
         orderBy: {
-          archivedAt: 'asc'
+          archivedAt: 'asc',
         },
         select: {
-          archivedAt: true
-        }
+          archivedAt: true,
+        },
       }),
 
       // Newest archive
@@ -71,15 +71,15 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'archived',
           archivedAt: {
-            not: null
-          }
+            not: null,
+          },
         },
         orderBy: {
-          archivedAt: 'desc'
+          archivedAt: 'desc',
         },
         select: {
-          archivedAt: true
-        }
+          archivedAt: true,
+        },
       }),
 
       // Archive size by month
@@ -95,14 +95,17 @@ export async function GET(request: NextRequest) {
         GROUP BY DATE_TRUNC('month', "archivedAt")
         ORDER BY month DESC
         LIMIT 12
-      `
+      `,
     ]);
 
     // Calculate storage estimates (rough approximation)
     const avgMessageSize = 200; // bytes
     const avgSessionSize = 1000; // bytes
-    const estimatedStorageBytes = (totalArchivedMessages * avgMessageSize) + (totalArchivedSessions * avgSessionSize);
-    const estimatedStorageMB = Math.round(estimatedStorageBytes / 1024 / 1024 * 100) / 100;
+    const estimatedStorageBytes =
+      totalArchivedMessages * avgMessageSize +
+      totalArchivedSessions * avgSessionSize;
+    const estimatedStorageMB =
+      Math.round((estimatedStorageBytes / 1024 / 1024) * 100) / 100;
 
     const stats = {
       totalSessions: totalArchivedSessions,
@@ -110,11 +113,10 @@ export async function GET(request: NextRequest) {
       estimatedStorageMB,
       oldestArchive: oldestArchive?.archivedAt || null,
       newestArchive: newestArchive?.archivedAt || null,
-      monthlyBreakdown: sizeByMonth
+      monthlyBreakdown: sizeByMonth,
     };
 
     return NextResponse.json({ stats });
-
   } catch (error) {
     console.error('Archive stats API error:', error);
     return NextResponse.json(

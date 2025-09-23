@@ -68,10 +68,7 @@ export async function GET(
     });
 
     if (!chatSession) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
     // Transform session data
@@ -82,14 +79,23 @@ export async function GET(
       lastActivity: chatSession.lastActivity.toISOString(),
       endedAt: chatSession.endedAt?.toISOString(),
       duration: chatSession.endedAt
-        ? Math.floor((chatSession.endedAt.getTime() - chatSession.createdAt.getTime()) / 1000)
-        : Math.floor((chatSession.lastActivity.getTime() - chatSession.createdAt.getTime()) / 1000),
+        ? Math.floor(
+            (chatSession.endedAt.getTime() - chatSession.createdAt.getTime()) /
+              1000
+          )
+        : Math.floor(
+            (chatSession.lastActivity.getTime() -
+              chatSession.createdAt.getTime()) /
+              1000
+          ),
       messageCount: chatSession.messages.length,
-      user: chatSession.user ? {
-        id: chatSession.user.id,
-        email: chatSession.user.email,
-        name: `${chatSession.user.firstName} ${chatSession.user.lastName}`.trim(),
-      } : null,
+      user: chatSession.user
+        ? {
+            id: chatSession.user.id,
+            email: chatSession.user.email,
+            name: `${chatSession.user.firstName} ${chatSession.user.lastName}`.trim(),
+          }
+        : null,
       guestEmail: chatSession.guestEmail,
       guestPhone: chatSession.guestPhone,
       userAgent: chatSession.userAgent,
@@ -110,7 +116,6 @@ export async function GET(
           { status: 400 }
         );
     }
-
   } catch (error) {
     console.error('Transcript export error:', error);
     return NextResponse.json(
@@ -139,7 +144,7 @@ function generateJsonTranscript(sessionData: any) {
 }
 
 async function generatePdfTranscript(sessionData: any): Promise<NextResponse> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const doc = new (PDFDocument as any)();
     const chunks: Buffer[] = [];
 
@@ -148,13 +153,15 @@ async function generatePdfTranscript(sessionData: any): Promise<NextResponse> {
       const pdfBuffer = Buffer.concat(chunks);
       const filename = `chat_transcript_${sessionData.sessionId}_${new Date().toISOString().split('T')[0]}.pdf`;
 
-      resolve(new NextResponse(pdfBuffer, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      }));
+      resolve(
+        new NextResponse(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': pdfBuffer.length.toString(),
+          },
+        })
+      );
     });
 
     // Generate detailed PDF transcript
@@ -164,12 +171,21 @@ async function generatePdfTranscript(sessionData: any): Promise<NextResponse> {
     // Session header
     doc.text(`Session ID: ${sessionData.sessionId}`, 50, 90);
     doc.text(`Status: ${sessionData.status}`, 50, 110);
-    doc.text(`Started: ${new Date(sessionData.startedAt).toLocaleString()}`, 50, 130);
-    doc.text(`Duration: ${Math.floor(sessionData.duration / 60)}m ${sessionData.duration % 60}s`, 50, 150);
+    doc.text(
+      `Started: ${new Date(sessionData.startedAt).toLocaleString()}`,
+      50,
+      130
+    );
+    doc.text(
+      `Duration: ${Math.floor(sessionData.duration / 60)}m ${sessionData.duration % 60}s`,
+      50,
+      150
+    );
     doc.text(`Messages: ${sessionData.messageCount}`, 50, 170);
 
     // User information
-    const userInfo = sessionData.user?.email || sessionData.guestEmail || 'Anonymous';
+    const userInfo =
+      sessionData.user?.email || sessionData.guestEmail || 'Anonymous';
     doc.text(`User: ${userInfo}`, 50, 190);
     if (sessionData.ipAddress) {
       doc.text(`IP: ${sessionData.ipAddress}`, 50, 210);
@@ -191,23 +207,25 @@ async function generatePdfTranscript(sessionData: any): Promise<NextResponse> {
       const sender = message.senderType === 'user' ? 'User' : 'Bot';
 
       // Message header
-      doc.fontSize(10)
+      doc
+        .fontSize(10)
         .fillColor('#666666')
         .text(`[${timestamp}] ${sender}:`, 50, yPosition);
       yPosition += 15;
 
       // Message content
-      doc.fontSize(11)
+      doc
+        .fontSize(11)
         .fillColor('#000000')
         .text(message.content, 70, yPosition, {
           width: 500,
-          align: 'left'
+          align: 'left',
         });
 
       // Calculate text height for proper spacing
       const textHeight = doc.heightOfString(message.content, {
         width: 500,
-        align: 'left'
+        align: 'left',
       });
       yPosition += textHeight + 15;
 
@@ -222,7 +240,8 @@ async function generatePdfTranscript(sessionData: any): Promise<NextResponse> {
     }
 
     yPosition += 30;
-    doc.fontSize(10)
+    doc
+      .fontSize(10)
       .fillColor('#666666')
       .text(`Generated on ${new Date().toLocaleString()}`, 50, yPosition);
 

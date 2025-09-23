@@ -17,7 +17,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   messages,
   isTyping,
   config,
-  onQuickReply
+  onQuickReply,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -39,7 +39,6 @@ export const MessageList: React.FC<MessageListProps> = ({
 
     fetchBotIcon();
   }, []);
-
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -65,18 +64,23 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   const renderDateSeparator = (date: string) => {
     const isToday = new Date(date).toDateString() === new Date().toDateString();
-    const isYesterday = new Date(date).toDateString() === new Date(Date.now() - 86400000).toDateString();
-    
+    const isYesterday =
+      new Date(date).toDateString() ===
+      new Date(Date.now() - 86400000).toDateString();
+
     let displayDate: string;
     if (isToday) {
       displayDate = 'Today';
     } else if (isYesterday) {
       displayDate = 'Yesterday';
     } else {
-      displayDate = new Date(date).toLocaleDateString([], { 
-        month: 'short', 
+      displayDate = new Date(date).toLocaleDateString([], {
+        month: 'short',
         day: 'numeric',
-        year: new Date(date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        year:
+          new Date(date).getFullYear() !== new Date().getFullYear()
+            ? 'numeric'
+            : undefined,
       });
     }
 
@@ -103,8 +107,19 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         ) : (
           <div className="message-list__typing-avatar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 21V17.5C20 16.1193 18.8807 15 17.5 15S15 16.1193 15 17.5V21M12 7V21M8 11V21M4 15V21"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
         )}
@@ -120,7 +135,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   );
 
   return (
-    <div 
+    <div
       className="message-list"
       ref={scrollContainerRef}
       onScroll={handleScroll}
@@ -146,8 +161,20 @@ export const MessageList: React.FC<MessageListProps> = ({
                     />
                   </div>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </div>
@@ -164,10 +191,11 @@ export const MessageList: React.FC<MessageListProps> = ({
         {Object.entries(groupedMessages).map(([date, dateMessages]) => (
           <div key={date} className="message-list__date-group">
             {renderDateSeparator(date)}
-            
+
             {dateMessages.map((message, index) => {
-              const previousMessage = index > 0 ? dateMessages[index - 1] : null;
-              const isConsecutive = previousMessage 
+              const previousMessage =
+                index > 0 ? dateMessages[index - 1] : null;
+              const isConsecutive = previousMessage
                 ? chatUtils.areConsecutiveMessages(message, previousMessage)
                 : false;
 
@@ -257,7 +285,9 @@ export const MessageList: React.FC<MessageListProps> = ({
           line-height: 1.5;
           color: #1a202c;
           margin: 0;
-          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+          box-shadow:
+            0 3px 12px rgba(0, 0, 0, 0.08),
+            0 1px 4px rgba(0, 0, 0, 0.04);
           backdrop-filter: blur(10px);
           white-space: pre-wrap;
           font-family: inherit;
@@ -369,7 +399,9 @@ export const MessageList: React.FC<MessageListProps> = ({
         }
 
         @keyframes typing-dot {
-          0%, 80%, 100% {
+          0%,
+          80%,
+          100% {
             opacity: 0.3;
             transform: scale(1);
           }
@@ -435,7 +467,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           .message-list {
             scroll-behavior: auto;
           }
-          
+
           .message-list__typing-dots span {
             animation: none;
             opacity: 0.6;

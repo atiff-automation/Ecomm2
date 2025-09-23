@@ -1,16 +1,22 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+} from 'react';
 import { chatApi, ChatApiError } from './utils/api-client';
 import { chatStorage } from './utils/storage';
 import { chatValidation } from './utils/validation';
 import { chatUtils } from './utils/chat-utils';
-import type { 
-  ChatConfig, 
-  ChatMessage, 
-  ChatSession, 
+import type {
+  ChatConfig,
+  ChatMessage,
+  ChatSession,
   QuickReply,
-  CreateSessionResponse 
+  CreateSessionResponse,
 } from './types';
 import { DEFAULT_CHAT_CONFIG } from './types';
 
@@ -30,27 +36,30 @@ interface ChatState {
   isOpen: boolean;
   isMinimized: boolean;
   hasUnreadMessages: boolean;
-  
+
   // Connection
   isConnected: boolean;
   connectionError: string | null;
-  
+
   // Typing indicators
   isTyping: boolean;
   isUserTyping: boolean;
-  
+
   // Configuration
   config: ChatConfig;
 }
 
 // Action Types
-type ChatAction = 
+type ChatAction =
   | { type: 'SET_SESSION'; payload: ChatSession | null }
   | { type: 'SET_SESSION_LOADING'; payload: boolean }
   | { type: 'SET_SESSION_ERROR'; payload: string | null }
   | { type: 'SET_MESSAGES'; payload: ChatMessage[] }
   | { type: 'ADD_MESSAGE'; payload: ChatMessage }
-  | { type: 'UPDATE_MESSAGE'; payload: { id: string; updates: Partial<ChatMessage> } }
+  | {
+      type: 'UPDATE_MESSAGE';
+      payload: { id: string; updates: Partial<ChatMessage> };
+    }
   | { type: 'SET_MESSAGES_LOADING'; payload: boolean }
   | { type: 'SET_MESSAGES_ERROR'; payload: string | null }
   | { type: 'TOGGLE_CHAT' }
@@ -62,7 +71,10 @@ type ChatAction =
   | { type: 'SET_CONNECTION_ERROR'; payload: string | null }
   | { type: 'SET_TYPING'; payload: boolean }
   | { type: 'SET_USER_TYPING'; payload: boolean }
-  | { type: 'UPDATE_USER_PRESENCE'; payload: { status: 'online' | 'offline' | 'away'; lastSeen?: string } }
+  | {
+      type: 'UPDATE_USER_PRESENCE';
+      payload: { status: 'online' | 'offline' | 'away'; lastSeen?: string };
+    }
   | { type: 'UPDATE_CONFIG'; payload: Partial<ChatConfig> }
   | { type: 'RESET_CHAT' };
 
@@ -70,7 +82,7 @@ type ChatAction =
 interface ChatContextValue {
   // State
   state: ChatState;
-  
+
   // Session actions
   createSession: (
     contactOrEmail?: string,
@@ -79,29 +91,32 @@ interface ChatContextValue {
   ) => Promise<void>;
   loadSession: () => Promise<void>;
   clearSession: () => void;
-  
+
   // Message actions
-  sendMessage: (content: string, messageType?: ChatMessage['messageType']) => Promise<void>;
+  sendMessage: (
+    content: string,
+    messageType?: ChatMessage['messageType']
+  ) => Promise<void>;
   sendQuickReply: (reply: string) => Promise<void>;
   loadMessages: () => Promise<void>;
-  
+
   // UI actions
   openChat: () => void;
   closeChat: () => void;
   toggleChat: () => void;
   markAsRead: () => void;
-  
+
   // Configuration
   updateConfig: (config: Partial<ChatConfig>) => void;
-  
+
   // Real-time simulation actions
   sendTyping: (isTyping: boolean) => void;
   updatePresence: (status: 'online' | 'away') => void;
   markMessageAsRead: (messageId: string) => void;
-  
+
   // Connection management
   forceHealthCheck: () => Promise<void>;
-  
+
   // Utilities
   isSessionExpired: () => boolean;
 }
@@ -111,174 +126,181 @@ const initialState: ChatState = {
   session: null,
   isSessionLoading: false,
   sessionError: null,
-  
+
   messages: [],
   isMessagesLoading: false,
   messagesError: null,
-  
+
   isOpen: false,
   isMinimized: false,
   hasUnreadMessages: false,
-  
+
   isConnected: true, // Optimistically start as connected
   connectionError: null,
-  
+
   isTyping: false,
   isUserTyping: false,
-  
-  config: DEFAULT_CHAT_CONFIG
+
+  config: DEFAULT_CHAT_CONFIG,
 };
 
 // Reducer
 const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
   switch (action.type) {
     case 'SET_SESSION':
-      return { 
-        ...state, 
+      return {
+        ...state,
         session: action.payload,
-        sessionError: null 
+        sessionError: null,
       };
-    
+
     case 'SET_SESSION_LOADING':
-      return { 
-        ...state, 
+      return {
+        ...state,
         isSessionLoading: action.payload,
-        sessionError: action.payload ? null : state.sessionError
+        sessionError: action.payload ? null : state.sessionError,
       };
-    
+
     case 'SET_SESSION_ERROR':
-      return { 
-        ...state, 
+      return {
+        ...state,
         sessionError: action.payload,
-        isSessionLoading: false
+        isSessionLoading: false,
       };
-    
+
     case 'SET_MESSAGES':
-      return { 
-        ...state, 
+      return {
+        ...state,
         messages: action.payload,
-        messagesError: null
+        messagesError: null,
       };
-    
+
     case 'ADD_MESSAGE':
       // Check for duplicate messages
-      const existingMessageIndex = state.messages.findIndex(m => m.id === action.payload.id);
+      const existingMessageIndex = state.messages.findIndex(
+        m => m.id === action.payload.id
+      );
       if (existingMessageIndex >= 0) {
         // Update existing message
         const updatedMessages = [...state.messages];
         updatedMessages[existingMessageIndex] = action.payload;
         return { ...state, messages: updatedMessages };
       }
-      
+
       // Add new message
-      return { 
-        ...state, 
+      return {
+        ...state,
         messages: [...state.messages, action.payload],
-        hasUnreadMessages: !state.isOpen && chatUtils.isBotMessage(action.payload)
+        hasUnreadMessages:
+          !state.isOpen && chatUtils.isBotMessage(action.payload),
       };
-    
+
     case 'UPDATE_MESSAGE':
       return {
         ...state,
         messages: state.messages.map(msg =>
-          msg.id === action.payload.id 
-            ? { ...msg, ...action.payload.updates, updatedAt: new Date().toISOString() }
+          msg.id === action.payload.id
+            ? {
+                ...msg,
+                ...action.payload.updates,
+                updatedAt: new Date().toISOString(),
+              }
             : msg
-        )
+        ),
       };
-    
+
     case 'SET_MESSAGES_LOADING':
-      return { 
-        ...state, 
+      return {
+        ...state,
         isMessagesLoading: action.payload,
-        messagesError: action.payload ? null : state.messagesError
+        messagesError: action.payload ? null : state.messagesError,
       };
-    
+
     case 'SET_MESSAGES_ERROR':
-      return { 
-        ...state, 
+      return {
+        ...state,
         messagesError: action.payload,
-        isMessagesLoading: false
+        isMessagesLoading: false,
       };
-    
+
     case 'TOGGLE_CHAT':
       const newIsOpen = !state.isOpen;
-      return { 
-        ...state, 
+      return {
+        ...state,
         isOpen: newIsOpen,
-        hasUnreadMessages: newIsOpen ? false : state.hasUnreadMessages
+        hasUnreadMessages: newIsOpen ? false : state.hasUnreadMessages,
       };
-    
+
     case 'OPEN_CHAT':
-      return { 
-        ...state, 
+      return {
+        ...state,
         isOpen: true,
-        hasUnreadMessages: false
+        hasUnreadMessages: false,
       };
-    
+
     case 'CLOSE_CHAT':
-      return { 
-        ...state, 
-        isOpen: false
+      return {
+        ...state,
+        isOpen: false,
       };
-    
+
     case 'SET_MINIMIZED':
-      return { 
-        ...state, 
-        isMinimized: action.payload
+      return {
+        ...state,
+        isMinimized: action.payload,
       };
-    
+
     case 'SET_UNREAD_MESSAGES':
-      return { 
-        ...state, 
-        hasUnreadMessages: action.payload
+      return {
+        ...state,
+        hasUnreadMessages: action.payload,
       };
-    
+
     case 'SET_CONNECTED':
-      return { 
-        ...state, 
+      return {
+        ...state,
         isConnected: action.payload,
-        connectionError: action.payload ? null : state.connectionError
+        connectionError: action.payload ? null : state.connectionError,
       };
-    
+
     case 'SET_CONNECTION_ERROR':
-      return { 
-        ...state, 
+      return {
+        ...state,
         connectionError: action.payload,
-        isConnected: !action.payload
+        isConnected: !action.payload,
       };
-    
+
     case 'SET_TYPING':
-      return { 
-        ...state, 
-        isTyping: action.payload
+      return {
+        ...state,
+        isTyping: action.payload,
       };
-    
+
     case 'SET_USER_TYPING':
-      return { 
-        ...state, 
-        isUserTyping: action.payload
+      return {
+        ...state,
+        isUserTyping: action.payload,
       };
-    
+
     case 'UPDATE_USER_PRESENCE':
       // For now, we'll just log presence updates
       // In a multi-user chat, this would update user presence state
       console.log('User presence updated:', action.payload);
       return state;
-    
+
     case 'UPDATE_CONFIG':
       const newConfig = { ...state.config, ...action.payload };
-      return { 
-        ...state, 
-        config: chatValidation.sanitizeConfig(newConfig)
+      return {
+        ...state,
+        config: chatValidation.sanitizeConfig(newConfig),
       };
-    
+
     case 'RESET_CHAT':
       return {
         ...initialState,
-        config: state.config // Preserve configuration
+        config: state.config, // Preserve configuration
       };
-    
+
     default:
       return state;
   }
@@ -294,16 +316,16 @@ interface ChatProviderProps {
 }
 
 // Provider Component
-export const ChatProvider: React.FC<ChatProviderProps> = ({ 
-  children, 
-  initialConfig 
+export const ChatProvider: React.FC<ChatProviderProps> = ({
+  children,
+  initialConfig,
 }) => {
   const [state, dispatch] = useReducer(chatReducer, {
     ...initialState,
-    config: chatValidation.sanitizeConfig({ 
-      ...DEFAULT_CHAT_CONFIG, 
-      ...initialConfig 
-    })
+    config: chatValidation.sanitizeConfig({
+      ...DEFAULT_CHAT_CONFIG,
+      ...initialConfig,
+    }),
   });
 
   // Real-time updates handled via polling for reliable connectivity
@@ -324,35 +346,46 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
               payload: {
                 welcomeMessage: configData.config.welcomeMessage,
                 maxMessageLength: configData.config.maxMessageLength,
-                isActive: configData.config.isActive
-              }
+                isActive: configData.config.isActive,
+              },
             });
           }
         } catch (configError) {
-          console.warn('Failed to fetch chat config, using defaults:', configError);
+          console.warn(
+            'Failed to fetch chat config, using defaults:',
+            configError
+          );
         }
 
         // Load saved session
         const savedSession = chatStorage.getSession();
-        if (savedSession && !chatUtils.isSessionExpired(savedSession.expiresAt)) {
+        if (
+          savedSession &&
+          !chatUtils.isSessionExpired(savedSession.expiresAt)
+        ) {
           console.log('💾 Loading saved session:', savedSession.id);
-          
+
           // Validate session with server to ensure it still exists
           try {
             const validation = await chatApi.validateSession(savedSession.id);
             if (validation.success && validation.data?.valid) {
               console.log('✅ Saved session is still valid');
               dispatch({ type: 'SET_SESSION', payload: savedSession });
-              
+
               // Load saved messages
               const savedMessages = chatStorage.getMessages(savedSession.id);
               dispatch({ type: 'SET_MESSAGES', payload: savedMessages });
             } else {
-              console.log('❌ Saved session is no longer valid, clearing storage');
+              console.log(
+                '❌ Saved session is no longer valid, clearing storage'
+              );
               chatStorage.clearSession();
             }
           } catch (error) {
-            console.warn('Failed to validate saved session, clearing storage:', error);
+            console.warn(
+              'Failed to validate saved session, clearing storage:',
+              error
+            );
             chatStorage.clearSession();
           }
         } else if (savedSession) {
@@ -391,18 +424,27 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
   // Connection health check
   const checkConnection = useCallback(async () => {
-    console.log('🔍 ChatProvider: Checking connection health with extended timeout...');
+    console.log(
+      '🔍 ChatProvider: Checking connection health with extended timeout...'
+    );
     try {
       const response = await chatApi.getHealthStatusWithTimeout();
       console.log('🏥 ChatProvider: Health check response:', response);
-      
+
       if (response.success) {
-        console.log('✅ ChatProvider: Health check successful, setting connected=true');
+        console.log(
+          '✅ ChatProvider: Health check successful, setting connected=true'
+        );
         dispatch({ type: 'SET_CONNECTED', payload: true });
       } else {
-        console.log('❌ ChatProvider: Health check failed, response not successful');
+        console.log(
+          '❌ ChatProvider: Health check failed, response not successful'
+        );
         console.log('❌ ChatProvider: Error details:', response.error);
-        dispatch({ type: 'SET_CONNECTION_ERROR', payload: response.error?.message || 'Service unavailable' });
+        dispatch({
+          type: 'SET_CONNECTION_ERROR',
+          payload: response.error?.message || 'Service unavailable',
+        });
       }
     } catch (error) {
       console.error('❌ ChatProvider: Health check error:', error);
@@ -417,96 +459,111 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, [checkConnection]);
 
   // Session management - Enhanced for authenticated sessions
-  const createSession = useCallback(async (
-    contactOrEmail?: string,
-    contactType: 'email' | 'phone' | 'authenticated' | boolean = 'email',
-    userId?: string
-  ) => {
-    dispatch({ type: 'SET_SESSION_LOADING', payload: true });
+  const createSession = useCallback(
+    async (
+      contactOrEmail?: string,
+      contactType: 'email' | 'phone' | 'authenticated' | boolean = 'email',
+      userId?: string
+    ) => {
+      dispatch({ type: 'SET_SESSION_LOADING', payload: true });
 
-    try {
-      let contactData;
+      try {
+        let contactData;
 
-      // Handle backward compatibility with boolean parameter
-      const isUIInit = typeof contactType === 'boolean' ? contactType : false;
-      const actualContactType = typeof contactType === 'string' ? contactType : 'email';
+        // Handle backward compatibility with boolean parameter
+        const isUIInit = typeof contactType === 'boolean' ? contactType : false;
+        const actualContactType =
+          typeof contactType === 'string' ? contactType : 'email';
 
-      if (actualContactType === 'authenticated' && userId) {
-        // Authenticated session - systematic approach with centralized user data
-        contactData = {
-          userId: userId,
-          metadata: {
-            userAgent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-            source: 'chat-widget-authenticated',
-            authenticationType: 'session-based'
-          }
-        };
-      } else {
-        // Guest session - existing logic maintained for backward compatibility
-        const guestPhone = actualContactType === 'phone' ? contactOrEmail : undefined;
-        const guestEmail = actualContactType === 'email' ? contactOrEmail : undefined;
+        if (actualContactType === 'authenticated' && userId) {
+          // Authenticated session - systematic approach with centralized user data
+          contactData = {
+            userId: userId,
+            metadata: {
+              userAgent: navigator.userAgent,
+              timestamp: new Date().toISOString(),
+              source: 'chat-widget-authenticated',
+              authenticationType: 'session-based',
+            },
+          };
+        } else {
+          // Guest session - existing logic maintained for backward compatibility
+          const guestPhone =
+            actualContactType === 'phone' ? contactOrEmail : undefined;
+          const guestEmail =
+            actualContactType === 'email' ? contactOrEmail : undefined;
 
-        contactData = {
-          guestPhone: guestPhone || undefined,
-          guestEmail: !guestPhone ? (guestEmail || 'guest@example.com') : undefined, // Fallback for backward compatibility
-          metadata: {
-            userAgent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-            source: isUIInit ? 'chat-widget-init' : 'chat-widget-guest'
-          },
-          ...(isUIInit && { isUIInit: true })
-        };
+          contactData = {
+            guestPhone: guestPhone || undefined,
+            guestEmail: !guestPhone
+              ? guestEmail || 'guest@example.com'
+              : undefined, // Fallback for backward compatibility
+            metadata: {
+              userAgent: navigator.userAgent,
+              timestamp: new Date().toISOString(),
+              source: isUIInit ? 'chat-widget-init' : 'chat-widget-guest',
+            },
+            ...(isUIInit && { isUIInit: true }),
+          };
+        }
+
+        // Use init endpoint for UI initialization to bypass rate limits
+        const response = isUIInit
+          ? await chatApi.initSession(contactData)
+          : await chatApi.createSession(contactData);
+
+        if (response.success && response.data) {
+          // Systematic session object creation with proper type safety
+          const session: ChatSession = {
+            id: response.data.sessionId,
+            status: 'active' as ChatSession['status'],
+            expiresAt: response.data.expiresAt,
+            createdAt: response.data.createdAt || new Date().toISOString(),
+            updatedAt: response.data.updatedAt || new Date().toISOString(),
+            metadata: response.data.metadata || {},
+            // Include contact/user information based on session type
+            userId: actualContactType === 'authenticated' ? userId : undefined,
+            guestPhone:
+              actualContactType === 'phone' ? contactOrEmail : undefined,
+            guestEmail:
+              actualContactType === 'email' && !userId
+                ? contactOrEmail
+                : undefined,
+          };
+
+          dispatch({ type: 'SET_SESSION', payload: session });
+
+          // Clear any existing messages when creating new session
+          dispatch({ type: 'SET_MESSAGES', payload: [] });
+
+          return;
+        }
+
+        throw new Error(response.error?.message || 'Failed to create session');
+      } catch (error) {
+        const errorMessage =
+          error instanceof ChatApiError
+            ? error.message
+            : 'Failed to create session';
+        dispatch({ type: 'SET_SESSION_ERROR', payload: errorMessage });
+        throw error;
+      } finally {
+        dispatch({ type: 'SET_SESSION_LOADING', payload: false });
       }
-
-      // Use init endpoint for UI initialization to bypass rate limits
-      const response = isUIInit 
-        ? await chatApi.initSession(contactData)
-        : await chatApi.createSession(contactData);
-
-      if (response.success && response.data) {
-        // Systematic session object creation with proper type safety
-        const session: ChatSession = {
-          id: response.data.sessionId,
-          status: 'active' as ChatSession['status'],
-          expiresAt: response.data.expiresAt,
-          createdAt: response.data.createdAt || new Date().toISOString(),
-          updatedAt: response.data.updatedAt || new Date().toISOString(),
-          metadata: response.data.metadata || {},
-          // Include contact/user information based on session type
-          userId: actualContactType === 'authenticated' ? userId : undefined,
-          guestPhone: actualContactType === 'phone' ? contactOrEmail : undefined,
-          guestEmail: actualContactType === 'email' && !userId ? contactOrEmail : undefined
-        };
-        
-        dispatch({ type: 'SET_SESSION', payload: session });
-        
-        // Clear any existing messages when creating new session
-        dispatch({ type: 'SET_MESSAGES', payload: [] });
-        
-        return;
-      }
-
-      throw new Error(response.error?.message || 'Failed to create session');
-    } catch (error) {
-      const errorMessage = error instanceof ChatApiError 
-        ? error.message 
-        : 'Failed to create session';
-      dispatch({ type: 'SET_SESSION_ERROR', payload: errorMessage });
-      throw error;
-    } finally {
-      dispatch({ type: 'SET_SESSION_LOADING', payload: false });
-    }
-  }, []);
+    },
+    []
+  );
 
   const loadSession = useCallback(async () => {
     if (!state.session?.id) return;
-    
+
     dispatch({ type: 'SET_SESSION_LOADING', payload: true });
-    
+
     try {
-      const response = await chatApi.getSession({ sessionId: state.session.id });
-      
+      const response = await chatApi.getSession({
+        sessionId: state.session.id,
+      });
+
       if (response.success && response.data) {
         const session: ChatSession = {
           id: response.data.sessionId,
@@ -518,24 +575,25 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           // Include full session data from server
           guestPhone: response.data.guestPhone,
           guestEmail: response.data.guestEmail,
-          userId: response.data.userId
+          userId: response.data.userId,
         };
-        
+
         dispatch({ type: 'SET_SESSION', payload: session });
-        
+
         // Load messages if available
         if (response.data.messages) {
           dispatch({ type: 'SET_MESSAGES', payload: response.data.messages });
         }
-        
+
         return;
       }
 
       throw new Error(response.error?.message || 'Failed to load session');
     } catch (error) {
-      const errorMessage = error instanceof ChatApiError 
-        ? error.message 
-        : 'Failed to load session';
+      const errorMessage =
+        error instanceof ChatApiError
+          ? error.message
+          : 'Failed to load session';
       dispatch({ type: 'SET_SESSION_ERROR', payload: errorMessage });
       throw error;
     } finally {
@@ -549,106 +607,116 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, []);
 
   // Message management
-  const sendMessage = useCallback(async (
-    content: string,
-    messageType: 'text' | 'quick_reply' = 'text'
-  ) => {
-    // Validate inputs first
-    if (!content || typeof content !== 'string') {
-      throw new Error('Message content is required and must be a string');
-    }
-
-    if (!state.session?.id) {
-      throw new Error('No active session');
-    }
-
-    // Validate session ID format
-    if (typeof state.session.id !== 'string' || state.session.id.length < 10) {
-      throw new Error('Invalid session ID format');
-    }
-
-    // Validate message
-    const validation = chatValidation.validateMessage(content, {
-      maxLength: state.config.maxMessageLength,
-      allowEmpty: false,
-      sanitize: true
-    });
-
-    if (!validation.isValid) {
-      throw new Error(validation.error || 'Invalid message');
-    }
-
-    // Create optimistic message
-    const optimisticMessage = chatUtils.createOptimisticMessage(
-      state.session.id,
-      content,
-      messageType
-    );
-
-    // Add optimistic message to UI
-    dispatch({ type: 'ADD_MESSAGE', payload: optimisticMessage });
-
-    // Typing indicators handled via polling and local state
-
-    try {
-      const response = await chatApi.sendMessage({
-        sessionId: state.session.id,
-        content: chatValidation.sanitizeMessage(content),
-        messageType,
-        metadata: {
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      if (response.success && response.data) {
-        // Update optimistic message with server response
-        dispatch({ 
-          type: 'UPDATE_MESSAGE', 
-          payload: { 
-            id: optimisticMessage.id,
-            updates: {
-              id: response.data.messageId,
-              status: 'sent' as const,
-              createdAt: response.data.createdAt
-            }
-          }
-        });
-
-        // Handle bot response if included
-        if (response.data.botMessage) {
-          dispatch({ type: 'ADD_MESSAGE', payload: response.data.botMessage });
-          
-          // Play notification sound
-          if (state.config.enableSound) {
-            chatUtils.playNotificationSound(state.config);
-          }
-        }
-
-        return;
+  const sendMessage = useCallback(
+    async (content: string, messageType: 'text' | 'quick_reply' = 'text') => {
+      // Validate inputs first
+      if (!content || typeof content !== 'string') {
+        throw new Error('Message content is required and must be a string');
       }
 
-      throw new Error(response.error?.message || 'Failed to send message');
-    } catch (error) {
-      // Mark optimistic message as failed
-      dispatch({ 
-        type: 'UPDATE_MESSAGE', 
-        payload: { 
-          id: optimisticMessage.id,
-          updates: { status: 'failed' as const }
-        }
-      });
-      
-      const errorMessage = error instanceof ChatApiError 
-        ? error.message 
-        : 'Failed to send message';
-      dispatch({ type: 'SET_MESSAGES_ERROR', payload: errorMessage });
-      throw new Error(errorMessage);
-    }
-  }, [state.session?.id, state.config]);
+      if (!state.session?.id) {
+        throw new Error('No active session');
+      }
 
-  const sendQuickReply = useCallback(async (reply: string) => {
-    return sendMessage(reply, 'quick_reply');
-  }, [sendMessage]);
+      // Validate session ID format
+      if (
+        typeof state.session.id !== 'string' ||
+        state.session.id.length < 10
+      ) {
+        throw new Error('Invalid session ID format');
+      }
+
+      // Validate message
+      const validation = chatValidation.validateMessage(content, {
+        maxLength: state.config.maxMessageLength,
+        allowEmpty: false,
+        sanitize: true,
+      });
+
+      if (!validation.isValid) {
+        throw new Error(validation.error || 'Invalid message');
+      }
+
+      // Create optimistic message
+      const optimisticMessage = chatUtils.createOptimisticMessage(
+        state.session.id,
+        content,
+        messageType
+      );
+
+      // Add optimistic message to UI
+      dispatch({ type: 'ADD_MESSAGE', payload: optimisticMessage });
+
+      // Typing indicators handled via polling and local state
+
+      try {
+        const response = await chatApi.sendMessage({
+          sessionId: state.session.id,
+          content: chatValidation.sanitizeMessage(content),
+          messageType,
+          metadata: {
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        if (response.success && response.data) {
+          // Update optimistic message with server response
+          dispatch({
+            type: 'UPDATE_MESSAGE',
+            payload: {
+              id: optimisticMessage.id,
+              updates: {
+                id: response.data.messageId,
+                status: 'sent' as const,
+                createdAt: response.data.createdAt,
+              },
+            },
+          });
+
+          // Handle bot response if included
+          if (response.data.botMessage) {
+            dispatch({
+              type: 'ADD_MESSAGE',
+              payload: response.data.botMessage,
+            });
+
+            // Play notification sound
+            if (state.config.enableSound) {
+              chatUtils.playNotificationSound(state.config);
+            }
+          }
+
+          return;
+        }
+
+        throw new Error(response.error?.message || 'Failed to send message');
+      } catch (error) {
+        // Mark optimistic message as failed
+        dispatch({
+          type: 'UPDATE_MESSAGE',
+          payload: {
+            id: optimisticMessage.id,
+            updates: { status: 'failed' as const },
+          },
+        });
+
+        const errorMessage =
+          error instanceof ChatApiError
+            ? error.message
+            : 'Failed to send message';
+        dispatch({ type: 'SET_MESSAGES_ERROR', payload: errorMessage });
+        throw new Error(errorMessage);
+      }
+    },
+    [state.session?.id, state.config]
+  );
+
+  const sendQuickReply = useCallback(
+    async (reply: string) => {
+      return sendMessage(reply, 'quick_reply');
+    },
+    [sendMessage]
+  );
 
   const loadMessages = useCallback(async () => {
     if (!state.session?.id) return;
@@ -665,11 +733,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     }
 
     dispatch({ type: 'SET_MESSAGES_LOADING', payload: true });
-    
+
     try {
       const response = await chatApi.getMessages({
         sessionId: state.session.id,
-        limit: 50
+        limit: 50,
       });
 
       if (response.success && response.data) {
@@ -679,9 +747,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
       throw new Error(response.error?.message || 'Failed to load messages');
     } catch (error) {
-      const errorMessage = error instanceof ChatApiError 
-        ? error.message 
-        : 'Failed to load messages';
+      const errorMessage =
+        error instanceof ChatApiError
+          ? error.message
+          : 'Failed to load messages';
       dispatch({ type: 'SET_MESSAGES_ERROR', payload: errorMessage });
       throw error;
     } finally {
@@ -750,13 +819,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     updatePresence,
     markMessageAsRead,
     forceHealthCheck: checkConnection,
-    isSessionExpired
+    isSessionExpired,
   };
 
   return (
-    <ChatContext.Provider value={contextValue}>
-      {children}
-    </ChatContext.Provider>
+    <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
   );
 };
 

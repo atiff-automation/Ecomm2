@@ -17,7 +17,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   isConnected,
   hasUnreadMessages,
   config,
-  onClick
+  onClick,
 }) => {
   const themeClasses = chatUtils.getThemeClasses(config);
   const themeStyles = chatUtils.generateThemeStyles(config);
@@ -28,8 +28,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     `chat-bubble--${config.theme}`,
     isExpanded && 'chat-bubble--expanded',
     !isConnected && 'chat-bubble--disconnected',
-    hasUnreadMessages && 'chat-bubble--has-unread'
-  ].filter(Boolean).join(' ');
+    hasUnreadMessages && 'chat-bubble--has-unread',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <button
@@ -42,28 +44,49 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     >
       <div className="chat-bubble__icon">
         {isExpanded ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6L6 18M6 6L18 18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </div>
 
       {/* Connection status indicator */}
-      <div 
+      <div
         className={`chat-bubble__status ${isConnected ? 'chat-bubble__status--connected' : 'chat-bubble__status--disconnected'}`}
         aria-hidden="true"
       />
 
       {/* Unread message indicator */}
       {hasUnreadMessages && !isExpanded && (
-        <div 
-          className="chat-bubble__unread"
-          aria-label="Unread messages"
-        />
+        <div className="chat-bubble__unread" aria-label="Unread messages" />
       )}
 
       <style jsx>{`
@@ -172,18 +195,33 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         }
 
         @keyframes pulse-error {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
         }
 
         @keyframes pulse-status {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.2); }
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.2);
+          }
         }
 
         @keyframes pulse-unread {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
         }
 
         @media (max-width: 768px) {

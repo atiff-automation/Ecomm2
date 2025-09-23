@@ -19,7 +19,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   isConnected,
   connectionStatus,
   config,
-  onRetry
+  onRetry,
 }) => {
   // Only show when connection issues detected
   if (isConnected && connectionStatus === 'connected') {
@@ -33,28 +33,28 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           message: 'Establishing connection...',
           icon: '🔄',
           color: '#ffc107',
-          showRetry: false
+          showRetry: false,
         };
       case 'disconnected':
         return {
           message: 'Chat service unavailable',
           icon: '⚠️',
           color: '#dc3545',
-          showRetry: true
+          showRetry: true,
         };
       case 'error':
         return {
           message: 'Service connection failed',
           icon: '❌',
           color: '#dc3545',
-          showRetry: true
+          showRetry: true,
         };
       default:
         return {
           message: 'Checking service...',
           icon: '🔄',
           color: '#6c757d',
-          showRetry: false
+          showRetry: false,
         };
     }
   };
@@ -64,14 +64,16 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   return (
     <div className="connection-status">
       <div className="connection-status__content">
-        <div className="connection-status__icon" role="img" aria-label={statusInfo.message}>
+        <div
+          className="connection-status__icon"
+          role="img"
+          aria-label={statusInfo.message}
+        >
           {statusInfo.icon}
         </div>
-        
-        <div className="connection-status__text">
-          {statusInfo.message}
-        </div>
-        
+
+        <div className="connection-status__text">{statusInfo.message}</div>
+
         {statusInfo.showRetry && onRetry && (
           <button
             type="button"
@@ -102,7 +104,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
         .connection-status__icon {
           font-size: 14px;
-          animation: ${connectionStatus === 'connecting' ? 'spin 2s linear infinite' : 'none'};
+          animation: ${connectionStatus === 'connecting'
+            ? 'spin 2s linear infinite'
+            : 'none'};
         }
 
         .connection-status__text {
@@ -162,16 +166,32 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
         }
 
         .chat-window--dark .connection-status__text {
-          color: ${statusInfo.color === '#ffc107' ? '#ffd700' : statusInfo.color === '#dc3545' ? '#ff6b6b' : statusInfo.color};
+          color: ${statusInfo.color === '#ffc107'
+            ? '#ffd700'
+            : statusInfo.color === '#dc3545'
+              ? '#ff6b6b'
+              : statusInfo.color};
         }
 
         .chat-window--dark .connection-status__retry {
-          color: ${statusInfo.color === '#ffc107' ? '#ffd700' : statusInfo.color === '#dc3545' ? '#ff6b6b' : statusInfo.color};
-          border-color: ${statusInfo.color === '#ffc107' ? '#ffd700' : statusInfo.color === '#dc3545' ? '#ff6b6b' : statusInfo.color};
+          color: ${statusInfo.color === '#ffc107'
+            ? '#ffd700'
+            : statusInfo.color === '#dc3545'
+              ? '#ff6b6b'
+              : statusInfo.color};
+          border-color: ${statusInfo.color === '#ffc107'
+            ? '#ffd700'
+            : statusInfo.color === '#dc3545'
+              ? '#ff6b6b'
+              : statusInfo.color};
         }
 
         .chat-window--dark .connection-status__retry:hover {
-          background: ${statusInfo.color === '#ffc107' ? '#ffd700' : statusInfo.color === '#dc3545' ? '#ff6b6b' : statusInfo.color};
+          background: ${statusInfo.color === '#ffc107'
+            ? '#ffd700'
+            : statusInfo.color === '#dc3545'
+              ? '#ff6b6b'
+              : statusInfo.color};
           color: #1a202c;
         }
 
@@ -203,11 +223,11 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           .connection-status {
             animation: none;
           }
-          
+
           .connection-status__icon {
             animation: none !important;
           }
-          
+
           .connection-status__retry:active {
             transform: none;
           }
@@ -218,12 +238,14 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           .connection-status {
             border-width: 2px;
           }
-          
+
           .connection-status__text {
-            color: ${statusInfo.color === '#ffc107' ? '#b8860b' : statusInfo.color};
+            color: ${statusInfo.color === '#ffc107'
+              ? '#b8860b'
+              : statusInfo.color};
             font-weight: 600;
           }
-          
+
           .connection-status__retry {
             font-weight: 600;
             border-width: 2px;

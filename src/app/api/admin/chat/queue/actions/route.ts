@@ -20,15 +20,15 @@ export async function POST(request: NextRequest) {
       case 'retry':
         result = await handleRetryAction(queueIds);
         break;
-      
+
       case 'cancel':
         result = await handleCancelAction(queueIds);
         break;
-      
+
       case 'delete':
         result = await handleDeleteAction(queueIds);
         break;
-      
+
       default:
         return NextResponse.json(
           { error: 'Invalid action type' },
@@ -38,9 +38,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: `${action} action completed`,
-      ...result
+      ...result,
     });
-
   } catch (error) {
     console.error('Error performing queue action:', error);
     return NextResponse.json(
@@ -64,8 +63,8 @@ async function handleRetryAction(queueIds: string[]) {
           id: true,
           status: true,
           attempts: true,
-          maxAttempts: true
-        }
+          maxAttempts: true,
+        },
       });
 
       if (!queueItem) {
@@ -73,7 +72,7 @@ async function handleRetryAction(queueIds: string[]) {
         results.push({
           queueId,
           success: false,
-          error: 'Queue item not found'
+          error: 'Queue item not found',
         });
         continue;
       }
@@ -83,7 +82,7 @@ async function handleRetryAction(queueIds: string[]) {
         results.push({
           queueId,
           success: false,
-          error: `Cannot retry ${queueItem.status} item`
+          error: `Cannot retry ${queueItem.status} item`,
         });
         continue;
       }
@@ -93,7 +92,7 @@ async function handleRetryAction(queueIds: string[]) {
         results.push({
           queueId,
           success: false,
-          error: 'Maximum attempts exceeded'
+          error: 'Maximum attempts exceeded',
         });
         continue;
       }
@@ -105,22 +104,21 @@ async function handleRetryAction(queueIds: string[]) {
           status: 'pending',
           nextRetryAt: new Date(),
           lastError: null,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       successful++;
       results.push({
         queueId,
-        success: true
+        success: true,
       });
-
     } catch (error) {
       failed++;
       results.push({
         queueId,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -133,21 +131,20 @@ async function handleCancelAction(queueIds: string[]) {
     const result = await prisma.chatWebhookQueue.updateMany({
       where: {
         id: { in: queueIds },
-        status: { in: ['pending', 'processing'] }
+        status: { in: ['pending', 'processing'] },
       },
       data: {
         status: 'failed',
         lastError: 'Cancelled by administrator',
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return {
       successful: result.count,
       failed: queueIds.length - result.count,
-      message: `${result.count} items cancelled`
+      message: `${result.count} items cancelled`,
     };
-
   } catch (error) {
     throw error;
   }
@@ -159,16 +156,15 @@ async function handleDeleteAction(queueIds: string[]) {
     const result = await prisma.chatWebhookQueue.deleteMany({
       where: {
         id: { in: queueIds },
-        status: { in: ['completed', 'failed'] }
-      }
+        status: { in: ['completed', 'failed'] },
+      },
     });
 
     return {
       successful: result.count,
       failed: queueIds.length - result.count,
-      message: `${result.count} items deleted`
+      message: `${result.count} items deleted`,
     };
-
   } catch (error) {
     throw error;
   }

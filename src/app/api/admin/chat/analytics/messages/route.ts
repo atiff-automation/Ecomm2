@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userRole = (session.user as any)?.role;
+    const userRole = (session.user as { role: UserRole })?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
 
     if (!allowedRoles.includes(userRole)) {
@@ -73,9 +73,11 @@ export async function GET(request: NextRequest) {
         // Get the oldest message date
         const oldestMessage = await prisma.chatMessage.findFirst({
           orderBy: { createdAt: 'asc' },
-          select: { createdAt: true }
+          select: { createdAt: true },
         });
-        startDate = oldestMessage?.createdAt || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate =
+          oldestMessage?.createdAt ||
+          new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         dateFormat = 'YYYY-MM';
         intervalUnit = '1 month';
         break;
@@ -104,8 +106,7 @@ export async function GET(request: NextRequest) {
     // Group messages by time buckets
     const messageBuckets = new Map<string, number>();
 
-
-    messages.forEach((message) => {
+    messages.forEach(message => {
       const date = new Date(message.createdAt);
       let bucketKey: string;
 
@@ -150,9 +151,11 @@ export async function GET(request: NextRequest) {
       messageBuckets.set(bucketKey, (messageBuckets.get(bucketKey) || 0) + 1);
     });
 
-
     // Generate time series with gaps filled
-    const messagesOverTime: Array<{ time_bucket: Date; message_count: number }> = [];
+    const messagesOverTime: Array<{
+      time_bucket: Date;
+      message_count: number;
+    }> = [];
     const current = new Date(startDate);
 
     // Round start date to match bucketing logic
@@ -191,7 +194,6 @@ export async function GET(request: NextRequest) {
         message_count: messageCount,
       });
 
-
       // Increment current by interval
       switch (timeRange) {
         case '1h':
@@ -216,7 +218,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data for chart consumption
-    const chartData = messagesOverTime.map((row) => {
+    const chartData = messagesOverTime.map(row => {
       const date = new Date(row.time_bucket);
       let label: string;
 
@@ -225,38 +227,38 @@ export async function GET(request: NextRequest) {
         case '1h':
           label = date.toLocaleTimeString('en-US', {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
           break;
         case '24h':
           label = date.toLocaleTimeString('en-US', {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
           break;
         case '7d':
         case '30d':
           label = date.toLocaleDateString('en-US', {
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
           });
           break;
         case '90d':
           label = date.toLocaleDateString('en-US', {
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
           });
           break;
         case 'all':
           label = date.toLocaleDateString('en-US', {
             year: 'numeric',
-            month: 'short'
+            month: 'short',
           });
           break;
         default:
           label = date.toLocaleDateString('en-US', {
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
           });
       }
 
@@ -269,16 +271,18 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate total messages in period for context
-    const totalMessages = chartData.reduce((sum, item) => sum + item.messages, 0);
-
-
+    const totalMessages = chartData.reduce(
+      (sum, item) => sum + item.messages,
+      0
+    );
 
     // Calculate peak and average
     const messageCounts = chartData.map(item => item.messages);
     const peakMessages = Math.max(...messageCounts);
-    const averageMessages = messageCounts.length > 0
-      ? Math.round(totalMessages / messageCounts.length)
-      : 0;
+    const averageMessages =
+      messageCounts.length > 0
+        ? Math.round(totalMessages / messageCounts.length)
+        : 0;
 
     return NextResponse.json({
       success: true,
@@ -295,7 +299,6 @@ export async function GET(request: NextRequest) {
       },
       generatedAt: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Messages analytics API error:', error);
     return NextResponse.json(

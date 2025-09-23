@@ -15,7 +15,10 @@ interface ChatWindowProps {
   messages: ChatMessage[];
   config: ChatConfig;
   onClose: () => void;
-  onSendMessage: (content: string, messageType?: ChatMessage['messageType']) => void;
+  onSendMessage: (
+    content: string,
+    messageType?: ChatMessage['messageType']
+  ) => void;
   onQuickReply: (reply: string) => void;
   onTyping?: (isTyping: boolean) => void;
 }
@@ -30,7 +33,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onClose,
   onSendMessage,
   onQuickReply,
-  onTyping
+  onTyping,
 }) => {
   const themeClasses = chatUtils.getThemeClasses(config);
   const themeStyles = chatUtils.generateThemeStyles(config);
@@ -65,12 +68,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     'chat-window',
     `chat-window--${config.position}`,
     `chat-window--${config.theme}`,
-    !isConnected && 'chat-window--disconnected'
-  ].filter(Boolean).join(' ');
+    !isConnected && 'chat-window--disconnected',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <div 
-      className={windowClasses} 
+    <div
+      className={windowClasses}
       style={themeStyles}
       role="dialog"
       aria-label="Chat window"
@@ -94,8 +99,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </div>
               ) : (
                 <div className="chat-window__avatar-img">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
               )}
@@ -105,7 +122,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <span>Chat with</span>
                 <span className="chat-window__agent-name">{agentName}</span>
               </div>
-              <div className={`chat-window__status ${isConnected ? 'chat-window__status--connected' : 'chat-window__status--disconnected'}`}>
+              <div
+                className={`chat-window__status ${isConnected ? 'chat-window__status--connected' : 'chat-window__status--disconnected'}`}
+              >
                 {isConnected ? "We're online" : 'Currently offline'}
               </div>
             </div>
@@ -118,8 +137,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               type="button"
               title="Minimize"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19 12H5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
             <button
@@ -129,8 +160,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               type="button"
               title="Close"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -139,7 +182,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {/* Session info */}
         {session && (
           <div className="chat-window__session-info">
-            <span className="chat-window__session-id" title={`Session: ${session.id}`}>
+            <span
+              className="chat-window__session-id"
+              title={`Session: ${session.id}`}
+            >
               Session active
             </span>
             {session.expiresAt && (
@@ -180,11 +226,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           height: 560px;
           background: white;
           border-radius: 16px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 25px rgba(0, 0, 0, 0.1);
+          box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.15),
+            0 8px 25px rgba(0, 0, 0, 0.1);
           display: flex;
           flex-direction: column;
           z-index: 1000;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+          font-family:
+            -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter',
+            sans-serif;
           font-size: 15px;
           line-height: 1.5;
           color: #1a202c;
@@ -226,7 +276,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         .chat-window__header {
           padding: 20px 24px 16px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-          background: linear-gradient(135deg, var(--chat-primary-color, #2563eb) 0%, #3b82f6 100%);
+          background: linear-gradient(
+            135deg,
+            var(--chat-primary-color, #2563eb) 0%,
+            #3b82f6 100%
+          );
           color: white;
           flex-shrink: 0;
           position: relative;
@@ -240,7 +294,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.05) 100%
+          );
           pointer-events: none;
         }
 
@@ -392,7 +450,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           left: 0;
           right: 0;
           height: 20px;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+          background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.8) 0%,
+            rgba(255, 255, 255, 0) 100%
+          );
           pointer-events: none;
           z-index: 1;
         }

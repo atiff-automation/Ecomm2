@@ -9,7 +9,7 @@ import { getChatConfig } from '@/lib/chat/config';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -34,13 +34,13 @@ export async function POST(request: NextRequest) {
       case 'generate_secret':
         return NextResponse.json({
           success: true,
-          secret: webhookService.generateWebhookSecret()
+          secret: webhookService.generateWebhookSecret(),
         });
 
       case 'generate_api_key':
         return NextResponse.json({
           success: true,
-          apiKey: webhookService.generateApiKey()
+          apiKey: webhookService.generateApiKey(),
         });
 
       case 'validate_url':
@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
         const validation = webhookService.validateWebhookUrl(webhookUrl);
         return NextResponse.json({
           success: true,
-          validation
+          validation,
         });
 
       case 'generate_setup_instructions':
         const { webhookSecret, apiKey } = body;
-        
+
         if (!webhookUrl || !webhookSecret || !apiKey) {
           return NextResponse.json(
             { error: 'webhookUrl, webhookSecret, and apiKey are required' },
@@ -75,16 +75,18 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          setup: setupInstructions
+          setup: setupInstructions,
         });
 
       default:
         return NextResponse.json(
-          { error: 'Invalid action. Supported actions: generate_secret, generate_api_key, validate_url, generate_setup_instructions' },
+          {
+            error:
+              'Invalid action. Supported actions: generate_secret, generate_api_key, validate_url, generate_setup_instructions',
+          },
           { status: 400 }
         );
     }
-
   } catch (error) {
     console.error('Webhook utilities error:', error);
     return NextResponse.json(
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -118,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     // Get current configuration
     const config = await getChatConfig();
-    
+
     // Generate example setup instructions if configuration exists
     let exampleSetup = null;
     if (config.webhookUrl && config.webhookSecret && config.apiKey) {
@@ -137,18 +139,22 @@ export async function GET(request: NextRequest) {
         hasApiKey: !!config.apiKey,
         isActive: config.isActive,
         verified: config.verified,
-        healthStatus: config.healthStatus
+        healthStatus: config.healthStatus,
       },
       utilities: {
         secretLength: 64,
         apiKeyLength: 32,
-        supportedDomains: ['.n8n.cloud', '.app.n8n.io', 'localhost', '127.0.0.1'],
+        supportedDomains: [
+          '.n8n.cloud',
+          '.app.n8n.io',
+          'localhost',
+          '127.0.0.1',
+        ],
         requiredHeaders: ['X-Webhook-Signature', 'X-API-Key', 'Content-Type'],
-        signatureAlgorithm: 'HMAC-SHA256'
+        signatureAlgorithm: 'HMAC-SHA256',
       },
-      exampleSetup
+      exampleSetup,
     });
-
   } catch (error) {
     console.error('Webhook utilities GET error:', error);
     return NextResponse.json(

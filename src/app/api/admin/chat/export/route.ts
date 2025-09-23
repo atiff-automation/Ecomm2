@@ -30,14 +30,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { sessionIds, format, dateRange, includeMessages = true, autoArchive = false } = body;
+    const {
+      sessionIds,
+      format,
+      dateRange,
+      includeMessages = true,
+      autoArchive = false,
+    } = body;
 
     // Validate export options
     const exportOptions = {
       sessionIds,
       format: format || 'json',
       dateRange: {
-        from: dateRange?.from ? new Date(dateRange.from) : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+        from: dateRange?.from
+          ? new Date(dateRange.from)
+          : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
         to: dateRange?.to ? new Date(dateRange.to) : new Date(),
       },
       includeMessages,
@@ -69,18 +77,20 @@ export async function POST(request: NextRequest) {
             lastName: true,
           },
         },
-        messages: includeMessages ? {
-          orderBy: { createdAt: 'asc' },
-          select: {
-            id: true,
-            senderType: true,
-            content: true,
-            messageType: true,
-            status: true,
-            createdAt: true,
-            metadata: true,
-          },
-        } : false,
+        messages: includeMessages
+          ? {
+              orderBy: { createdAt: 'asc' },
+              select: {
+                id: true,
+                senderType: true,
+                content: true,
+                messageType: true,
+                status: true,
+                createdAt: true,
+                metadata: true,
+              },
+            }
+          : false,
         _count: {
           select: {
             messages: true,
@@ -99,15 +109,22 @@ export async function POST(request: NextRequest) {
       startedAt: session.createdAt.toISOString(),
       lastActivity: session.lastActivity.toISOString(),
       endedAt: session.endedAt?.toISOString(),
-      duration: session.endedAt ?
-        Math.floor((session.endedAt.getTime() - session.createdAt.getTime()) / 1000) :
-        Math.floor((session.lastActivity.getTime() - session.createdAt.getTime()) / 1000),
+      duration: session.endedAt
+        ? Math.floor(
+            (session.endedAt.getTime() - session.createdAt.getTime()) / 1000
+          )
+        : Math.floor(
+            (session.lastActivity.getTime() - session.createdAt.getTime()) /
+              1000
+          ),
       messageCount: session._count.messages,
-      user: session.user ? {
-        id: session.user.id,
-        email: session.user.email,
-        name: `${session.user.firstName} ${session.user.lastName}`.trim(),
-      } : null,
+      user: session.user
+        ? {
+            id: session.user.id,
+            email: session.user.email,
+            name: `${session.user.firstName} ${session.user.lastName}`.trim(),
+          }
+        : null,
       guestEmail: session.guestEmail,
       guestPhone: session.guestPhone,
       userAgent: session.userAgent,
@@ -151,7 +168,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
     }
-
   } catch (error) {
     console.error('Export API error:', error);
     return NextResponse.json(
@@ -219,11 +235,15 @@ function generateCsvExport(data: any[], sessionCount: number) {
   // Combine headers and rows
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(field =>
-      typeof field === 'string' && field.includes(',')
-        ? `"${field.replace(/"/g, '""')}"`
-        : field
-    ).join(','))
+    ...rows.map(row =>
+      row
+        .map(field =>
+          typeof field === 'string' && field.includes(',')
+            ? `"${field.replace(/"/g, '""')}"`
+            : field
+        )
+        .join(',')
+    ),
   ].join('\n');
 
   const timestamp = formatDateForFilename(new Date());
@@ -238,8 +258,11 @@ function generateCsvExport(data: any[], sessionCount: number) {
   });
 }
 
-async function generatePdfExport(data: any[], sessionCount: number): Promise<NextResponse> {
-  return new Promise((resolve) => {
+async function generatePdfExport(
+  data: any[],
+  sessionCount: number
+): Promise<NextResponse> {
+  return new Promise(resolve => {
     const doc = new (PDFDocument as any)();
     const chunks: Buffer[] = [];
 
@@ -249,18 +272,22 @@ async function generatePdfExport(data: any[], sessionCount: number): Promise<Nex
       const timestamp = formatDateForFilename(new Date());
       const filename = `Chat_Export_${timestamp}_${sessionCount}Sessions.pdf`;
 
-      resolve(new NextResponse(pdfBuffer, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      }));
+      resolve(
+        new NextResponse(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': pdfBuffer.length.toString(),
+          },
+        })
+      );
     });
 
     // Generate PDF content
     doc.fontSize(20).text('Chat Sessions Export', 50, 50);
-    doc.fontSize(12).text(`Exported on: ${new Date().toLocaleString()}`, 50, 80);
+    doc
+      .fontSize(12)
+      .text(`Exported on: ${new Date().toLocaleString()}`, 50, 80);
     doc.text(`Total Sessions: ${sessionCount}`, 50, 100);
 
     let yPosition = 140;
@@ -271,16 +298,28 @@ async function generatePdfExport(data: any[], sessionCount: number): Promise<Nex
         yPosition = 50;
       }
 
-      doc.fontSize(14).text(`Session ${index + 1}: ${session.sessionId}`, 50, yPosition);
+      doc
+        .fontSize(14)
+        .text(`Session ${index + 1}: ${session.sessionId}`, 50, yPosition);
       yPosition += 20;
 
-      doc.fontSize(10)
+      doc
+        .fontSize(10)
         .text(`Status: ${session.status}`, 50, yPosition)
-        .text(`Started: ${new Date(session.startedAt).toLocaleString()}`, 250, yPosition);
+        .text(
+          `Started: ${new Date(session.startedAt).toLocaleString()}`,
+          250,
+          yPosition
+        );
       yPosition += 15;
 
-      doc.text(`Messages: ${session.messageCount}`, 50, yPosition)
-        .text(`Duration: ${Math.floor(session.duration / 60)}m ${session.duration % 60}s`, 250, yPosition);
+      doc
+        .text(`Messages: ${session.messageCount}`, 50, yPosition)
+        .text(
+          `Duration: ${Math.floor(session.duration / 60)}m ${session.duration % 60}s`,
+          250,
+          yPosition
+        );
       yPosition += 15;
 
       const userInfo = session.user?.email || session.guestEmail || 'Anonymous';
@@ -299,13 +338,22 @@ async function generatePdfExport(data: any[], sessionCount: number): Promise<Nex
 
           const sender = message.senderType === 'user' ? 'User' : 'Bot';
           const time = new Date(message.createdAt).toLocaleTimeString();
-          doc.fontSize(9)
-            .text(`[${time}] ${sender}: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`, 70, yPosition);
+          doc
+            .fontSize(9)
+            .text(
+              `[${time}] ${sender}: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`,
+              70,
+              yPosition
+            );
           yPosition += 12;
         });
 
         if (session.messages.length > 5) {
-          doc.text(`... and ${session.messages.length - 5} more messages`, 70, yPosition);
+          doc.text(
+            `... and ${session.messages.length - 5} more messages`,
+            70,
+            yPosition
+          );
           yPosition += 12;
         }
       }

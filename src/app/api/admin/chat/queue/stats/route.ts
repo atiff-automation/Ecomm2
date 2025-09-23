@@ -4,26 +4,20 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET() {
   try {
     // Get queue statistics
-    const [
-      pending,
-      processing,
-      completed,
-      failed,
-      total
-    ] = await Promise.all([
+    const [pending, processing, completed, failed, total] = await Promise.all([
       prisma.chatWebhookQueue.count({
-        where: { status: 'pending' }
+        where: { status: 'pending' },
       }),
       prisma.chatWebhookQueue.count({
-        where: { status: 'processing' }
+        where: { status: 'processing' },
       }),
       prisma.chatWebhookQueue.count({
-        where: { status: 'completed' }
+        where: { status: 'completed' },
       }),
       prisma.chatWebhookQueue.count({
-        where: { status: 'failed' }
+        where: { status: 'failed' },
       }),
-      prisma.chatWebhookQueue.count()
+      prisma.chatWebhookQueue.count(),
     ]);
 
     // Calculate processing rate from last hour
@@ -32,9 +26,9 @@ export async function GET() {
       where: {
         status: 'completed',
         updatedAt: {
-          gte: oneHourAgo
-        }
-      }
+          gte: oneHourAgo,
+        },
+      },
     });
 
     const processingRate = processedLastHour; // per hour
@@ -45,11 +39,10 @@ export async function GET() {
       completed,
       failed,
       total,
-      processingRate
+      processingRate,
     };
 
     return NextResponse.json(stats);
-
   } catch (error) {
     console.error('Error fetching queue stats:', error);
     return NextResponse.json(

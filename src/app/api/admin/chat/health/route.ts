@@ -11,11 +11,10 @@ export async function GET() {
       ...healthCheck,
       circuitBreaker: circuitBreakerStatus,
       timestamp: new Date().toISOString(),
-      systemVersion: 'v1.0.0'
+      systemVersion: 'v1.0.0',
     };
 
     return NextResponse.json(response);
-
   } catch (error) {
     console.error('Health check API error:', error);
     return NextResponse.json(
@@ -23,7 +22,7 @@ export async function GET() {
         isHealthy: false,
         status: 'UNHEALTHY',
         error: 'Health check failed',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );
@@ -36,19 +35,15 @@ export async function POST(request: Request) {
 
     if (action === 'reset-circuit-breaker') {
       await queueProcessor.resetCircuitBreaker();
-      
+
       return NextResponse.json({
         success: true,
         message: 'Circuit breaker has been reset',
-        circuitBreaker: queueProcessor.getCircuitBreakerStatus()
+        circuitBreaker: queueProcessor.getCircuitBreakerStatus(),
       });
     }
 
-    return NextResponse.json(
-      { error: 'Invalid action' },
-      { status: 400 }
-    );
-
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Health action API error:', error);
     return NextResponse.json(

@@ -9,50 +9,53 @@ export async function GET() {
       successfulDeliveries,
       failedDeliveries,
       pendingDeliveries,
-      chatConfig
+      chatConfig,
     ] = await Promise.all([
       prisma.chatWebhookQueue.count(),
       prisma.chatWebhookQueue.count({
-        where: { status: 'completed' }
+        where: { status: 'completed' },
       }),
       prisma.chatWebhookQueue.count({
-        where: { status: 'failed' }
+        where: { status: 'failed' },
       }),
       prisma.chatWebhookQueue.count({
-        where: { status: 'pending' }
+        where: { status: 'pending' },
       }),
       prisma.chatConfig.findFirst({
-        where: { isActive: true }
-      })
+        where: { isActive: true },
+      }),
     ]);
 
     // Calculate success rate
-    const successRate = totalDeliveries > 0 
-      ? (successfulDeliveries / totalDeliveries) * 100 
-      : 0;
+    const successRate =
+      totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
 
     // Get average response time from recent completed deliveries
     const recentCompletedDeliveries = await prisma.chatWebhookQueue.findMany({
       where: {
         status: 'completed',
         updatedAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-        }
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+        },
       },
       select: {
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
       },
       orderBy: { updatedAt: 'desc' },
-      take: 100
+      take: 100,
     });
 
     // Calculate average response time in milliseconds
-    const avgResponseTime = recentCompletedDeliveries.length > 0
-      ? recentCompletedDeliveries.reduce((acc, delivery) => {
-          return acc + (delivery.updatedAt.getTime() - delivery.createdAt.getTime());
-        }, 0) / recentCompletedDeliveries.length
-      : 0;
+    const avgResponseTime =
+      recentCompletedDeliveries.length > 0
+        ? recentCompletedDeliveries.reduce((acc, delivery) => {
+            return (
+              acc +
+              (delivery.updatedAt.getTime() - delivery.createdAt.getTime())
+            );
+          }, 0) / recentCompletedDeliveries.length
+        : 0;
 
     const metrics = {
       totalDeliveries,
@@ -63,13 +66,14 @@ export async function GET() {
       avgResponseTime: Math.round(avgResponseTime),
       lastHealthCheck: chatConfig?.lastHealthCheck?.toISOString() || null,
       healthStatus: chatConfig?.healthStatus || 'UNKNOWN',
-      queueSize: pendingDeliveries + await prisma.chatWebhookQueue.count({
-        where: { status: 'processing' }
-      })
+      queueSize:
+        pendingDeliveries +
+        (await prisma.chatWebhookQueue.count({
+          where: { status: 'processing' },
+        })),
     };
 
     return NextResponse.json(metrics);
-
   } catch (error) {
     console.error('Error fetching webhook metrics:', error);
     return NextResponse.json(

@@ -167,10 +167,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Bot icon upload error:', error);
-    return NextResponse.json(
-      { message: 'Upload failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Upload failed' }, { status: 500 });
   }
 }
 
@@ -210,9 +207,6 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error('Bot icon delete error:', error);
-    return NextResponse.json(
-      { message: 'Delete failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Delete failed' }, { status: 500 });
   }
 }

@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
         const success = await notificationService.testNotification();
         return NextResponse.json({
           success,
-          message: success ? 'Test notification sent successfully' : 'Test notification failed',
+          message: success
+            ? 'Test notification sent successfully'
+            : 'Test notification failed',
         });
 
       case 'system_health':
@@ -62,14 +64,20 @@ export async function POST(request: NextRequest) {
 
       default:
         return NextResponse.json(
-          { error: 'Invalid notification type. Must be "test", "system_health", "storage_warning", or "job_failure"' },
+          {
+            error:
+              'Invalid notification type. Must be "test", "system_health", "storage_warning", or "job_failure"',
+          },
           { status: 400 }
         );
     }
   } catch (error) {
     console.error('Notification test API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

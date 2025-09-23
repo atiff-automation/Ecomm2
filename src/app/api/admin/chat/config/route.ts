@@ -16,7 +16,7 @@ export async function GET() {
       hasSession: !!session,
       hasUser: !!session?.user,
       userEmail: session?.user?.email || 'none',
-      userRole: (session?.user as any)?.role || 'none'
+      userRole: (session?.user as any)?.role || 'none',
     });
 
     if (!session?.user) {
@@ -31,14 +31,19 @@ export async function GET() {
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
 
     if (!allowedRoles.includes(userRole)) {
-      console.log(`[${requestId}] Authorization failed - insufficient role:`, userRole);
+      console.log(
+        `[${requestId}] Authorization failed - insufficient role:`,
+        userRole
+      );
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    console.log(`[${requestId}] Authentication/authorization successful, querying database...`);
+    console.log(
+      `[${requestId}] Authentication/authorization successful, querying database...`
+    );
 
     // Get active chat configuration
     const config = await prisma.chatConfig.findFirst({
@@ -75,13 +80,17 @@ export async function GET() {
       configId: config?.id || 'none',
       webhookUrl: config?.webhookUrl || 'none',
       welcomeMessage: config?.welcomeMessage || 'none',
-      agentName: config?.agentName || 'none'
+      agentName: config?.agentName || 'none',
     });
 
     // If no config exists, return default values
     if (!config) {
-      console.log(`[${requestId}] No config found in database, returning defaults`);
-      console.warn(`[${requestId}] WARNING: Expected to find active chat configuration but none exists. This indicates a data issue.`);
+      console.log(
+        `[${requestId}] No config found in database, returning defaults`
+      );
+      console.warn(
+        `[${requestId}] WARNING: Expected to find active chat configuration but none exists. This indicates a data issue.`
+      );
       const defaultConfig = {
         webhookUrl: '',
         webhookSecret: '',
@@ -117,7 +126,7 @@ export async function GET() {
       hasWelcomeMessage: !!config.welcomeMessage,
       hasAgentName: !!config.agentName,
       isActive: config.isActive,
-      verified: config.verified
+      verified: config.verified,
     });
 
     const response = {
@@ -131,9 +140,10 @@ export async function GET() {
       isConfigured: true,
     };
 
-    console.log(`[${requestId}] Admin chat config GET request completed successfully`);
+    console.log(
+      `[${requestId}] Admin chat config GET request completed successfully`
+    );
     return NextResponse.json(response);
-
   } catch (error) {
     console.error(`[${requestId}] Chat config GET error:`, error);
     console.error(`[${requestId}] Error details:`, {
@@ -142,17 +152,20 @@ export async function GET() {
       code: (error as any).code,
       meta: (error as any).meta,
       stack: (error as Error).stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Return more detailed error information for debugging
     return NextResponse.json(
       {
         error: 'Failed to fetch chat configuration',
-        debug: process.env.NODE_ENV === 'development' ? {
-          message: (error as Error).message,
-          requestId: requestId
-        } : undefined
+        debug:
+          process.env.NODE_ENV === 'development'
+            ? {
+                message: (error as Error).message,
+                requestId: requestId,
+              }
+            : undefined,
       },
       { status: 500 }
     );
@@ -163,7 +176,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -173,7 +186,7 @@ export async function POST(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -213,23 +226,34 @@ export async function POST(request: NextRequest) {
     if (webhookUrl) {
       try {
         const url = new URL(webhookUrl);
-        
+
         // Ensure it's HTTPS for n8n Cloud security (allow HTTP for localhost testing)
-        const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname.startsWith('192.168.');
+        const isLocalhost =
+          url.hostname === 'localhost' ||
+          url.hostname === '127.0.0.1' ||
+          url.hostname.startsWith('192.168.');
         if (url.protocol !== 'https:' && !isLocalhost) {
-          validationErrors.push('Webhook URL must use HTTPS protocol (HTTP allowed for localhost testing)');
+          validationErrors.push(
+            'Webhook URL must use HTTPS protocol (HTTP allowed for localhost testing)'
+          );
         }
-        
+
         // Check for n8n Cloud domains (common patterns)
-        const validDomains = ['.n8n.cloud', '.app.n8n.io', 'localhost', '127.0.0.1'];
-        const isValidDomain = validDomains.some(domain => 
-          url.hostname.includes(domain) || url.hostname === domain.replace('.', '')
+        const validDomains = [
+          '.n8n.cloud',
+          '.app.n8n.io',
+          'localhost',
+          '127.0.0.1',
+        ];
+        const isValidDomain = validDomains.some(
+          domain =>
+            url.hostname.includes(domain) ||
+            url.hostname === domain.replace('.', '')
         );
-        
+
         if (!isValidDomain && !url.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
           console.warn(`Webhook URL uses non-standard domain: ${url.hostname}`);
         }
-        
       } catch {
         validationErrors.push('Invalid webhook URL format');
       }
@@ -237,7 +261,9 @@ export async function POST(request: NextRequest) {
 
     // Webhook secret validation
     if (webhookSecret && webhookSecret.length < 32) {
-      validationErrors.push('Webhook secret must be at least 32 characters long');
+      validationErrors.push(
+        'Webhook secret must be at least 32 characters long'
+      );
     }
 
     // API key validation
@@ -246,26 +272,49 @@ export async function POST(request: NextRequest) {
     }
 
     // Numeric field validation
-    if (sessionTimeoutMinutes && (sessionTimeoutMinutes < 1 || sessionTimeoutMinutes > 1440)) {
-      validationErrors.push('Session timeout must be between 1 and 1440 minutes');
+    if (
+      sessionTimeoutMinutes &&
+      (sessionTimeoutMinutes < 1 || sessionTimeoutMinutes > 1440)
+    ) {
+      validationErrors.push(
+        'Session timeout must be between 1 and 1440 minutes'
+      );
     }
 
-    if (guestSessionTimeoutMinutes && (guestSessionTimeoutMinutes < 1 || guestSessionTimeoutMinutes > 1440)) {
-      validationErrors.push('Guest session timeout must be between 1 and 1440 minutes');
+    if (
+      guestSessionTimeoutMinutes &&
+      (guestSessionTimeoutMinutes < 1 || guestSessionTimeoutMinutes > 1440)
+    ) {
+      validationErrors.push(
+        'Guest session timeout must be between 1 and 1440 minutes'
+      );
     }
 
-    if (authenticatedSessionTimeoutMinutes && (authenticatedSessionTimeoutMinutes < 1 || authenticatedSessionTimeoutMinutes > 1440)) {
-      validationErrors.push('Authenticated session timeout must be between 1 and 1440 minutes');
+    if (
+      authenticatedSessionTimeoutMinutes &&
+      (authenticatedSessionTimeoutMinutes < 1 ||
+        authenticatedSessionTimeoutMinutes > 1440)
+    ) {
+      validationErrors.push(
+        'Authenticated session timeout must be between 1 and 1440 minutes'
+      );
     }
 
-    if (maxMessageLength && (maxMessageLength < 1 || maxMessageLength > 10000)) {
-      validationErrors.push('Max message length must be between 1 and 10000 characters');
+    if (
+      maxMessageLength &&
+      (maxMessageLength < 1 || maxMessageLength > 10000)
+    ) {
+      validationErrors.push(
+        'Max message length must be between 1 and 10000 characters'
+      );
     }
 
-    if (rateLimitMessages && (rateLimitMessages < 1 || rateLimitMessages > 1000)) {
+    if (
+      rateLimitMessages &&
+      (rateLimitMessages < 1 || rateLimitMessages > 1000)
+    ) {
       validationErrors.push('Rate limit messages must be between 1 and 1000');
     }
-
 
     if (welcomeMessage && welcomeMessage.length > 500) {
       validationErrors.push('Welcome message must be 500 characters or less');
@@ -278,9 +327,9 @@ export async function POST(request: NextRequest) {
     // Return validation errors if any
     if (validationErrors.length > 0) {
       return NextResponse.json(
-        { 
-          error: 'Configuration validation failed', 
-          details: validationErrors 
+        {
+          error: 'Configuration validation failed',
+          details: validationErrors,
         },
         { status: 400 }
       );
@@ -303,7 +352,8 @@ export async function POST(request: NextRequest) {
           apiKey,
           sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
           guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 13, // Match database default
-          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 19, // Match database default
+          authenticatedSessionTimeoutMinutes:
+            authenticatedSessionTimeoutMinutes || 19, // Match database default
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,
@@ -328,7 +378,8 @@ export async function POST(request: NextRequest) {
           apiKey,
           sessionTimeoutMinutes: sessionTimeoutMinutes || 30, // Backward compatibility
           guestSessionTimeoutMinutes: guestSessionTimeoutMinutes || 13, // Match database default
-          authenticatedSessionTimeoutMinutes: authenticatedSessionTimeoutMinutes || 19, // Match database default
+          authenticatedSessionTimeoutMinutes:
+            authenticatedSessionTimeoutMinutes || 19, // Match database default
           maxMessageLength: maxMessageLength || 4000,
           rateLimitMessages: rateLimitMessages || 20,
           rateLimitWindowMs: rateLimitWindowMs || 60000,
@@ -350,13 +401,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: existingConfig ? 'Chat configuration updated successfully' : 'Chat configuration created successfully',
+      message: existingConfig
+        ? 'Chat configuration updated successfully'
+        : 'Chat configuration created successfully',
       config: {
         id: config.id,
         webhookUrl: config.webhookUrl,
         sessionTimeoutMinutes: config.sessionTimeoutMinutes, // Backward compatibility
         guestSessionTimeoutMinutes: config.guestSessionTimeoutMinutes,
-        authenticatedSessionTimeoutMinutes: config.authenticatedSessionTimeoutMinutes,
+        authenticatedSessionTimeoutMinutes:
+          config.authenticatedSessionTimeoutMinutes,
         maxMessageLength: config.maxMessageLength,
         rateLimitMessages: config.rateLimitMessages,
         rateLimitWindowMs: config.rateLimitWindowMs,
@@ -372,7 +426,6 @@ export async function POST(request: NextRequest) {
         healthStatus: config.healthStatus,
       },
     });
-
   } catch (error) {
     console.error('Chat config POST error:', error);
     console.error('Error details:', {
@@ -380,7 +433,7 @@ export async function POST(request: NextRequest) {
       message: error.message,
       code: error.code,
       meta: error.meta,
-      stack: error.stack
+      stack: error.stack,
     });
     return NextResponse.json(
       { error: 'Failed to save chat configuration' },
@@ -393,7 +446,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -403,7 +456,7 @@ export async function PATCH(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -427,16 +480,18 @@ export async function PATCH(request: NextRequest) {
       type: 'health_check',
       timestamp: new Date().toISOString(),
       message: 'Chat system health check',
-      sessionId: 'cm000000000000000000000',  // Valid CUID format for health check
+      sessionId: 'cm000000000000000000000', // Valid CUID format for health check
     };
 
     // Generate proper HMAC signature for the test payload
     const crypto = require('crypto');
     const payloadString = JSON.stringify(testPayload);
-    const signature = 'sha256=' + crypto
-      .createHmac('sha256', config.webhookSecret || '')
-      .update(payloadString, 'utf8')
-      .digest('hex');
+    const signature =
+      'sha256=' +
+      crypto
+        .createHmac('sha256', config.webhookSecret || '')
+        .update(payloadString, 'utf8')
+        .digest('hex');
 
     try {
       const response = await fetch(config.webhookUrl!, {
@@ -458,7 +513,9 @@ export async function PATCH(request: NextRequest) {
         where: { id: config.id },
         data: {
           verified: isHealthy,
-          healthStatus: isHealthy ? 'HEALTHY' : `UNHEALTHY: ${response.status} ${statusText}`,
+          healthStatus: isHealthy
+            ? 'HEALTHY'
+            : `UNHEALTHY: ${response.status} ${statusText}`,
           lastHealthCheck: new Date(),
           updatedBy: session.user.email,
         },
@@ -469,10 +526,11 @@ export async function PATCH(request: NextRequest) {
         verified: isHealthy,
         status: response.status,
         statusText: statusText,
-        message: isHealthy ? 'Webhook is responding correctly' : `Webhook test failed: ${response.status} ${statusText}`,
+        message: isHealthy
+          ? 'Webhook is responding correctly'
+          : `Webhook test failed: ${response.status} ${statusText}`,
         lastHealthCheck: new Date().toISOString(),
       });
-
     } catch (fetchError: any) {
       // Update configuration with error status
       await prisma.chatConfig.update({
@@ -493,7 +551,6 @@ export async function PATCH(request: NextRequest) {
         lastHealthCheck: new Date().toISOString(),
       });
     }
-
   } catch (error) {
     console.error('Chat config health check error:', error);
     return NextResponse.json(

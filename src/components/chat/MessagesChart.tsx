@@ -51,7 +51,10 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
+const CustomTooltip: React.FC<CustomTooltipProps> = ({
+  active,
+  payload,
+}) => {
   if (active && payload && payload.length > 0) {
     const data = payload[0].payload;
     return (
@@ -70,7 +73,11 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label })
   return null;
 };
 
-export function MessagesChart({ timeRange, loading = false, className = '' }: MessagesChartProps) {
+export function MessagesChart({
+  timeRange,
+  loading = false,
+  className = '',
+}: MessagesChartProps) {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [metadata, setMetadata] = useState<ChartMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(loading);
@@ -82,7 +89,9 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/admin/chat/analytics/messages?range=${timeRange}`);
+        const response = await fetch(
+          `/api/admin/chat/analytics/messages?range=${timeRange}`
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -98,7 +107,9 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
         }
       } catch (err) {
         console.error('Error fetching chart data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load chart data');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load chart data'
+        );
       } finally {
         setIsLoading(false);
       }
@@ -125,7 +136,7 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
       '7d': 'Last 7 Days',
       '30d': 'Last 30 Days',
       '90d': 'Last 90 Days',
-      'all': 'All Time'
+      all: 'All Time',
     };
     return labels[range] || 'Messages Over Time';
   };
@@ -133,8 +144,12 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
   const getTrendInfo = () => {
     if (!chartData || chartData.length < 2) return null;
 
-    const recent = chartData.slice(-3).reduce((sum, item) => sum + item.messages, 0);
-    const previous = chartData.slice(-6, -3).reduce((sum, item) => sum + item.messages, 0);
+    const recent = chartData
+      .slice(-3)
+      .reduce((sum, item) => sum + item.messages, 0);
+    const previous = chartData
+      .slice(-6, -3)
+      .reduce((sum, item) => sum + item.messages, 0);
 
     if (previous === 0) return null;
 
@@ -144,7 +159,7 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
     return {
       isPositive: change >= 0,
       percentage: Math.abs(percentChange),
-      change: Math.abs(change)
+      change: Math.abs(change),
     };
   };
 
@@ -223,9 +238,24 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
 
         {metadata && (
           <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
-            <span>Total: <span className="font-medium text-gray-900">{metadata.totalMessages.toLocaleString()}</span></span>
-            <span>Peak: <span className="font-medium text-gray-900">{metadata.peakMessages.toLocaleString()}</span></span>
-            <span>Avg: <span className="font-medium text-gray-900">{metadata.averageMessages.toLocaleString()}</span></span>
+            <span>
+              Total:{' '}
+              <span className="font-medium text-gray-900">
+                {metadata.totalMessages.toLocaleString()}
+              </span>
+            </span>
+            <span>
+              Peak:{' '}
+              <span className="font-medium text-gray-900">
+                {metadata.peakMessages.toLocaleString()}
+              </span>
+            </span>
+            <span>
+              Avg:{' '}
+              <span className="font-medium text-gray-900">
+                {metadata.averageMessages.toLocaleString()}
+              </span>
+            </span>
           </div>
         )}
       </CardHeader>
@@ -242,7 +272,12 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 11, fill: '#64748b', angle: -45, textAnchor: 'end' }}
+                tick={{
+                  fontSize: 11,
+                  fill: '#64748b',
+                  angle: -45,
+                  textAnchor: 'end',
+                }}
                 height={60}
                 interval={2}
               />

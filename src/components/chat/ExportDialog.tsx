@@ -46,7 +46,9 @@ export function ExportDialog({
     ...defaultOptions,
   });
 
-  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(
+    null
+  );
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -72,25 +74,32 @@ export function ExportDialog({
       await onExport(exportOptions);
 
       clearInterval(progressInterval);
-      setExportProgress(prev => prev ? {
-        ...prev,
-        status: 'completed',
-        progress: 100,
-      } : null);
+      setExportProgress(prev =>
+        prev
+          ? {
+              ...prev,
+              status: 'completed',
+              progress: 100,
+            }
+          : null
+      );
 
       // Auto-close after successful export
       setTimeout(() => {
         onClose();
         setExportProgress(null);
       }, 2000);
-
     } catch (error) {
       console.error('Export failed:', error);
-      setExportProgress(prev => prev ? {
-        ...prev,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Export failed',
-      } : null);
+      setExportProgress(prev =>
+        prev
+          ? {
+              ...prev,
+              status: 'failed',
+              error: error instanceof Error ? error.message : 'Export failed',
+            }
+          : null
+      );
     } finally {
       setIsExporting(false);
     }
@@ -149,9 +158,13 @@ export function ExportDialog({
             <div className="text-sm text-gray-600 space-y-1">
               <div>Sessions: {selectedSessions.length}</div>
               <div>Format: {exportOptions.format.toUpperCase()}</div>
-              <div>Include Messages: {exportOptions.includeMetadata ? 'Yes' : 'No'}</div>
+              <div>
+                Include Messages: {exportOptions.includeMetadata ? 'Yes' : 'No'}
+              </div>
               {exportOptions.autoArchive && (
-                <div className="text-orange-600">⚠️ Sessions will be archived after export</div>
+                <div className="text-orange-600">
+                  ⚠️ Sessions will be archived after export
+                </div>
               )}
             </div>
           </div>
@@ -164,10 +177,12 @@ export function ExportDialog({
               </label>
               <select
                 value={exportOptions.format}
-                onChange={(e) => setExportOptions(prev => ({
-                  ...prev,
-                  format: e.target.value as 'pdf' | 'csv' | 'json'
-                }))}
+                onChange={e =>
+                  setExportOptions(prev => ({
+                    ...prev,
+                    format: e.target.value as 'pdf' | 'csv' | 'json',
+                  }))
+                }
                 disabled={isExporting}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
@@ -182,14 +197,19 @@ export function ExportDialog({
                 type="checkbox"
                 id="includeMetadata"
                 checked={exportOptions.includeMetadata}
-                onChange={(e) => setExportOptions(prev => ({
-                  ...prev,
-                  includeMetadata: e.target.checked
-                }))}
+                onChange={e =>
+                  setExportOptions(prev => ({
+                    ...prev,
+                    includeMetadata: e.target.checked,
+                  }))
+                }
                 disabled={isExporting}
                 className="rounded"
               />
-              <label htmlFor="includeMetadata" className="text-sm text-gray-700">
+              <label
+                htmlFor="includeMetadata"
+                className="text-sm text-gray-700"
+              >
                 Include chat messages and metadata
               </label>
             </div>
@@ -199,10 +219,12 @@ export function ExportDialog({
                 type="checkbox"
                 id="autoArchive"
                 checked={exportOptions.autoArchive}
-                onChange={(e) => setExportOptions(prev => ({
-                  ...prev,
-                  autoArchive: e.target.checked
-                }))}
+                onChange={e =>
+                  setExportOptions(prev => ({
+                    ...prev,
+                    autoArchive: e.target.checked,
+                  }))
+                }
                 disabled={isExporting}
                 className="rounded"
               />
@@ -243,11 +265,7 @@ export function ExportDialog({
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isExporting}
-            >
+            <Button variant="outline" onClick={onClose} disabled={isExporting}>
               Cancel
             </Button>
             <Button

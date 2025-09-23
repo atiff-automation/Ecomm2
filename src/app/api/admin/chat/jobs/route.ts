@@ -13,11 +13,11 @@ export async function GET() {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get job status
@@ -31,7 +31,10 @@ export async function GET() {
   } catch (error) {
     console.error('Jobs status API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
@@ -41,11 +44,11 @@ export async function POST(request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -92,7 +95,11 @@ export async function POST(request: NextRequest) {
           });
         } catch (jobError) {
           return NextResponse.json(
-            { error: `Failed to run job ${jobName}`, details: jobError instanceof Error ? jobError.message : 'Unknown error' },
+            {
+              error: `Failed to run job ${jobName}`,
+              details:
+                jobError instanceof Error ? jobError.message : 'Unknown error',
+            },
             { status: 400 }
           );
         }
@@ -106,7 +113,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Jobs control API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

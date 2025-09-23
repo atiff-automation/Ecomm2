@@ -7,7 +7,7 @@ import { UserRole } from '@prisma/client';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -68,7 +68,9 @@ export async function POST(request: NextRequest) {
           where: { id: config.id },
           data: {
             verified: isHealthy,
-            healthStatus: isHealthy ? 'HEALTHY' : `UNHEALTHY: ${response.status} ${statusText}`,
+            healthStatus: isHealthy
+              ? 'HEALTHY'
+              : `UNHEALTHY: ${response.status} ${statusText}`,
             lastHealthCheck: new Date(),
             updatedBy: session.user.email,
           },
@@ -80,11 +82,14 @@ export async function POST(request: NextRequest) {
         verified: isHealthy,
         status: response.status,
         statusText: statusText,
-        healthStatus: isHealthy ? 'HEALTHY' : `UNHEALTHY: ${response.status} ${statusText}`,
-        message: isHealthy ? 'Webhook is responding correctly' : `Webhook test failed: ${response.status} ${statusText}`,
+        healthStatus: isHealthy
+          ? 'HEALTHY'
+          : `UNHEALTHY: ${response.status} ${statusText}`,
+        message: isHealthy
+          ? 'Webhook is responding correctly'
+          : `Webhook test failed: ${response.status} ${statusText}`,
         lastHealthCheck: new Date().toISOString(),
       });
-
     } catch (fetchError: any) {
       // Update configuration with error status if there's an active config
       const config = await prisma.chatConfig.findFirst({
@@ -112,7 +117,6 @@ export async function POST(request: NextRequest) {
         lastHealthCheck: new Date().toISOString(),
       });
     }
-
   } catch (error) {
     console.error('Chat config test error:', error);
     return NextResponse.json(

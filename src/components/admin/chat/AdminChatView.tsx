@@ -16,13 +16,15 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
   messages,
   isLoading = false,
   showSummary = true,
-  className = ''
+  className = '',
 }) => {
   // Filter and simplify messages for admin view
   const adminMessages = adminChatUtils.filterAdminRelevantMessages(messages);
-  const groupedMessages = adminChatUtils.groupConsecutiveMessages(adminMessages);
+  const groupedMessages =
+    adminChatUtils.groupConsecutiveMessages(adminMessages);
   const summary = adminChatUtils.generateConversationSummary(adminMessages);
-  const highlights = adminChatUtils.extractConversationHighlights(adminMessages);
+  const highlights =
+    adminChatUtils.extractConversationHighlights(adminMessages);
   const attention = adminChatUtils.needsAttention(adminMessages);
 
   if (isLoading) {
@@ -30,7 +32,9 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
       <div className={`admin-chat-view ${className}`}>
         <div className="admin-chat-view__loading">
           <div className="admin-chat-view__loading-spinner" />
-          <span className="admin-chat-view__loading-text">Loading conversation...</span>
+          <span className="admin-chat-view__loading-text">
+            Loading conversation...
+          </span>
         </div>
       </div>
     );
@@ -41,7 +45,9 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
       <div className={`admin-chat-view ${className}`}>
         <div className="admin-chat-view__empty">
           <MessageCircle className="admin-chat-view__empty-icon" />
-          <p className="admin-chat-view__empty-text">No messages in this conversation</p>
+          <p className="admin-chat-view__empty-text">
+            No messages in this conversation
+          </p>
         </div>
       </div>
     );
@@ -51,7 +57,9 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
     <div className={`admin-chat-view ${className}`}>
       {/* Attention Indicator */}
       {showSummary && attention.needsAttention && (
-        <div className={`admin-chat-view__attention admin-chat-view__attention--${attention.urgency}`}>
+        <div
+          className={`admin-chat-view__attention admin-chat-view__attention--${attention.urgency}`}
+        >
           <span className="admin-chat-view__attention-label">
             Needs Attention ({attention.urgency})
           </span>
@@ -68,7 +76,9 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
       {/* Highlights */}
       {showSummary && highlights.length > 0 && (
         <div className="admin-chat-view__highlights">
-          <span className="admin-chat-view__highlights-label">Key Moments:</span>
+          <span className="admin-chat-view__highlights-label">
+            Key Moments:
+          </span>
           <div className="admin-chat-view__highlights-list">
             {highlights.slice(0, 3).map((highlight, index) => (
               <span
@@ -99,7 +109,6 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
           flex-direction: column;
           height: 100%;
         }
-
 
         .admin-chat-view__attention {
           margin-bottom: 16px;
@@ -242,8 +251,12 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
 
         /* Responsive adjustments */

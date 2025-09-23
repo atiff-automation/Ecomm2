@@ -3,7 +3,11 @@
 import React from 'react';
 import { QuickReply } from './QuickReply';
 import { chatUtils } from './utils/chat-utils';
-import type { RichContent as RichContentType, RichContentCard, QuickReply as QuickReplyType } from './types';
+import type {
+  RichContent as RichContentType,
+  RichContentCard,
+  QuickReply as QuickReplyType,
+} from './types';
 
 interface RichContentProps {
   richContent: RichContentType;
@@ -19,7 +23,7 @@ interface RichContentProps {
 export const RichContent: React.FC<RichContentProps> = ({
   richContent,
   onQuickReply,
-  disabled = false
+  disabled = false,
 }) => {
   if (!richContent) return null;
 
@@ -31,27 +35,27 @@ export const RichContent: React.FC<RichContentProps> = ({
             src={card.imageUrl}
             alt={card.title || 'Card image'}
             loading="lazy"
-            onError={(e) => {
+            onError={e => {
               const img = e.target as HTMLImageElement;
               img.style.display = 'none';
             }}
           />
         </div>
       )}
-      
+
       <div className="rich-content-card__content">
         {card.title && (
           <h3 className="rich-content-card__title">{card.title}</h3>
         )}
-        
+
         {card.subtitle && (
           <h4 className="rich-content-card__subtitle">{card.subtitle}</h4>
         )}
-        
+
         {card.description && (
           <p className="rich-content-card__description">{card.description}</p>
         )}
-        
+
         {card.buttons && card.buttons.length > 0 && (
           <div className="rich-content-card__actions">
             <QuickReply
@@ -70,15 +74,15 @@ export const RichContent: React.FC<RichContentProps> = ({
     if (!richContent.cards || richContent.cards.length === 0) return null;
 
     return (
-      <div 
-        className="rich-content-carousel" 
-        role="region" 
+      <div
+        className="rich-content-carousel"
+        role="region"
         aria-label="Content carousel"
       >
         <div className="rich-content-carousel__track">
           {richContent.cards.map((card, index) => renderCard(card, index))}
         </div>
-        
+
         {richContent.cards.length > 1 && (
           <div className="rich-content-carousel__indicators" role="tablist">
             {richContent.cards.map((_, index) => (
@@ -87,13 +91,16 @@ export const RichContent: React.FC<RichContentProps> = ({
                 className="rich-content-carousel__indicator"
                 role="tab"
                 aria-label={`View card ${index + 1}`}
-                onClick={(e) => {
-                  const track = e.currentTarget.closest('.rich-content-carousel')
-                    ?.querySelector('.rich-content-carousel__track') as HTMLElement;
+                onClick={e => {
+                  const track = e.currentTarget
+                    .closest('.rich-content-carousel')
+                    ?.querySelector(
+                      '.rich-content-carousel__track'
+                    ) as HTMLElement;
                   if (track) {
                     track.scrollTo({
                       left: index * 280, // Card width + gap
-                      behavior: 'smooth'
+                      behavior: 'smooth',
                     });
                   }
                 }}
@@ -109,9 +116,9 @@ export const RichContent: React.FC<RichContentProps> = ({
     if (!richContent.images || richContent.images.length === 0) return null;
 
     return (
-      <div 
-        className="rich-content-gallery" 
-        role="img" 
+      <div
+        className="rich-content-gallery"
+        role="img"
         aria-label="Image gallery"
       >
         {richContent.images.map((imageUrl, index) => (
@@ -124,7 +131,7 @@ export const RichContent: React.FC<RichContentProps> = ({
                 // Optional: Open image in modal/lightbox
                 window.open(imageUrl, '_blank');
               }}
-              onError={(e) => {
+              onError={e => {
                 const img = e.target as HTMLImageElement;
                 img.style.display = 'none';
               }}
@@ -141,7 +148,11 @@ export const RichContent: React.FC<RichContentProps> = ({
     return (
       <div className="rich-content-list" role="list">
         {richContent.cards.map((card, index) => (
-          <div key={`list-item-${index}`} className="rich-content-list__item" role="listitem">
+          <div
+            key={`list-item-${index}`}
+            className="rich-content-list__item"
+            role="listitem"
+          >
             {card.imageUrl && (
               <div className="rich-content-list__image">
                 <img
@@ -151,17 +162,19 @@ export const RichContent: React.FC<RichContentProps> = ({
                 />
               </div>
             )}
-            
+
             <div className="rich-content-list__content">
               {card.title && (
                 <h4 className="rich-content-list__title">{card.title}</h4>
               )}
-              
+
               {card.description && (
-                <p className="rich-content-list__description">{card.description}</p>
+                <p className="rich-content-list__description">
+                  {card.description}
+                </p>
               )}
             </div>
-            
+
             {card.buttons && card.buttons.length > 0 && (
               <div className="rich-content-list__actions">
                 <QuickReply
@@ -181,18 +194,19 @@ export const RichContent: React.FC<RichContentProps> = ({
   const renderContent = () => {
     switch (richContent.type) {
       case 'card':
-        return richContent.cards && richContent.cards.length > 0 ? 
-          renderCard(richContent.cards[0], 0) : null;
-      
+        return richContent.cards && richContent.cards.length > 0
+          ? renderCard(richContent.cards[0], 0)
+          : null;
+
       case 'carousel':
         return renderCarousel();
-      
+
       case 'list':
         return renderList();
-      
+
       case 'image_gallery':
         return renderImageGallery();
-      
+
       default:
         return null;
     }
@@ -491,11 +505,11 @@ export const RichContent: React.FC<RichContentProps> = ({
           .rich-content-carousel__indicator {
             transition: none;
           }
-          
+
           .rich-content-card__image:hover img {
             transform: none;
           }
-          
+
           .rich-content-gallery__item:hover {
             transform: none;
           }

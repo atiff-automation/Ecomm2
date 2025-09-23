@@ -11,7 +11,7 @@ export async function POST(
   try {
     // Check authentication and admin access
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -21,7 +21,7 @@ export async function POST(
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
-    
+
     if (!allowedRoles.includes(userRole)) {
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -100,7 +100,6 @@ export async function POST(
         lastActivity: updatedSession.lastActivity.toISOString(),
       },
     });
-
   } catch (error) {
     console.error('Admin end chat session error:', error);
     return NextResponse.json(

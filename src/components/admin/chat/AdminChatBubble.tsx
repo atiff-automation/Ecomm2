@@ -18,7 +18,7 @@ interface AdminChatBubbleProps {
 
 export const AdminChatBubble: React.FC<AdminChatBubbleProps> = ({
   message,
-  isConsecutive = false
+  isConsecutive = false,
 }) => {
   const isUser = message.senderType === 'user';
   const isBot = message.senderType === 'bot';
@@ -45,7 +45,7 @@ export const AdminChatBubble: React.FC<AdminChatBubbleProps> = ({
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     });
   };
 
@@ -65,15 +65,15 @@ export const AdminChatBubble: React.FC<AdminChatBubbleProps> = ({
   }
 
   return (
-    <div className={`admin-chat-bubble admin-chat-bubble--${message.senderType}`}>
+    <div
+      className={`admin-chat-bubble admin-chat-bubble--${message.senderType}`}
+    >
       <div className="admin-chat-bubble__wrapper">
         {renderAvatar()}
 
         <div className="admin-chat-bubble__content">
           <div className="admin-chat-bubble__bubble">
-            <div className="admin-chat-bubble__text">
-              {message.content}
-            </div>
+            <div className="admin-chat-bubble__text">{message.content}</div>
           </div>
 
           {!isConsecutive && (

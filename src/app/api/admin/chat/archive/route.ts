@@ -13,11 +13,11 @@ export async function GET(request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'archived',
           archivedAt: {
-            not: null
-          }
+            not: null,
+          },
         },
         select: {
           id: true,
@@ -45,24 +45,24 @@ export async function GET(request: NextRequest) {
           guestEmail: true,
           _count: {
             select: {
-              messages: true
-            }
-          }
+              messages: true,
+            },
+          },
         },
         orderBy: {
-          archivedAt: 'desc'
+          archivedAt: 'desc',
         },
         skip,
-        take: limit
+        take: limit,
       }),
       prisma.chatSession.count({
         where: {
           status: 'archived',
           archivedAt: {
-            not: null
-          }
-        }
-      })
+            not: null,
+          },
+        },
+      }),
     ]);
 
     return NextResponse.json({
@@ -71,10 +71,9 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
-
   } catch (error) {
     console.error('Archive API error:', error);
     return NextResponse.json(
@@ -88,11 +87,11 @@ export async function DELETE(request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { sessionIds } = await request.json();
@@ -105,24 +104,24 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete sessions and their messages
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Delete messages first
       await tx.chatMessage.deleteMany({
         where: {
           sessionId: {
-            in: sessionIds
-          }
-        }
+            in: sessionIds,
+          },
+        },
       });
 
       // Delete sessions
       const deletedSessions = await tx.chatSession.deleteMany({
         where: {
           id: {
-            in: sessionIds
+            in: sessionIds,
           },
-          status: 'archived'
-        }
+          status: 'archived',
+        },
       });
 
       return deletedSessions;
@@ -130,9 +129,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      deletedCount: result.count
+      deletedCount: result.count,
     });
-
   } catch (error) {
     console.error('Archive deletion error:', error);
     return NextResponse.json(
