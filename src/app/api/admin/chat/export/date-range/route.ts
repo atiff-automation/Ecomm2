@@ -51,7 +51,14 @@ export async function POST(request: NextRequest) {
     // Generate export
     const exportService = ChatExportService.getInstance();
     const exportBuffer = await exportService.exportByDateRange(exportOptions);
-    const filename = await exportService.generateFilename(exportOptions);
+
+    // Get session count for filename
+    const sessions = await exportService.fetchSessionsInDateRange(
+      exportOptions.startDate,
+      exportOptions.endDate,
+      false
+    );
+    const filename = await exportService.generateFilename(exportOptions, sessions.length);
 
     // Determine content type
     let contentType = 'application/octet-stream';

@@ -83,11 +83,11 @@ export class ChatExportService {
     }
   }
 
-  async generateFilename(options: ExportOptions): string {
-    return generateExportFilename(options);
+  async generateFilename(options: ExportOptions, sessionCount?: number): Promise<string> {
+    return generateExportFilename(options, sessionCount);
   }
 
-  private async fetchSessionsInDateRange(
+  async fetchSessionsInDateRange(
     startDate: Date,
     endDate: Date,
     includeMessages: boolean

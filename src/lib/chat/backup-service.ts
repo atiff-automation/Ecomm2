@@ -53,78 +53,83 @@ export class ChatBackupService {
         return createErrorResult(`Backup for ${year}-${month} already exists`);
       }
 
-      // Generate filename
-      const filename = generateBackupFilename(year, month);
-      const filePath = join(process.cwd(), config.backupDirectory, filename);
-
-      // Create backup record in database
-      const backupRecord = await this.prisma.chatBackup.upsert({
-        where: { month_year: { month, year } },
-        update: {
-          status: 'in_progress',
-          filename,
-        },
-        create: {
-          filename,
-          month,
-          year,
-          status: 'in_progress',
-          fileSize: 0,
-          sessionCount: 0,
-        },
-      });
-
       try {
-        // Fetch data for the month
+        // Fetch data for the month first to get session count
         const { start, end } = getMonthRange(year, month);
         const sessions = await this.fetchSessionsForBackup(start, end);
 
-        // Create backup data
-        const backupData = {
-          metadata: createBackupMetadata(sessions.length, 0),
-          period: { year, month, start: start.toISOString(), end: end.toISOString() },
-          sessions,
-        };
+        // Generate filename with session count
+        const filename = generateBackupFilename(year, month, sessions.length);
+        const filePath = join(process.cwd(), config.backupDirectory, filename);
 
-        // Ensure backup directory exists
-        await this.ensureBackupDirectory(config.backupDirectory);
+        // Create backup record in database
+        const backupRecord = await this.prisma.chatBackup.upsert({
+          where: { month_year: { month, year } },
+          update: {
+            status: 'in_progress',
+            filename,
+          },
+          create: {
+            filename,
+            month,
+            year,
+            status: 'in_progress',
+            fileSize: 0,
+            sessionCount: 0,
+          },
+        });
 
-        // Write backup file
-        const backupContent = JSON.stringify(backupData, null, 2);
-        await writeFile(filePath, backupContent, 'utf-8');
+        try {
+          // Create backup data
+          const backupData = {
+            metadata: createBackupMetadata(sessions.length, 0),
+            period: { year, month, start: start.toISOString(), end: end.toISOString() },
+            sessions,
+          };
 
-        // Get file size
-        const fileStats = await stat(filePath);
-        const fileSize = fileStats.size;
+          // Ensure backup directory exists
+          await this.ensureBackupDirectory(config.backupDirectory);
 
-        // Update backup record
-        await this.prisma.chatBackup.update({
-          where: { id: backupRecord.id },
-          data: {
-            status: 'completed',
-            fileSize: BigInt(fileSize),
+          // Write backup file
+          const backupContent = JSON.stringify(backupData, null, 2);
+          await writeFile(filePath, backupContent, 'utf-8');
+
+          // Get file size
+          const fileStats = await stat(filePath);
+          const fileSize = fileStats.size;
+
+          // Update backup record
+          await this.prisma.chatBackup.update({
+            where: { id: backupRecord.id },
+            data: {
+              status: 'completed',
+              fileSize: BigInt(fileSize),
+              sessionCount: sessions.length,
+            },
+          });
+
+          logDataOperation('monthly_backup_completed', {
+            year,
+            month,
+            filename,
+            fileSize,
             sessionCount: sessions.length,
-          },
-        });
+          });
 
-        logDataOperation('monthly_backup_completed', {
-          year,
-          month,
-          filename,
-          fileSize,
-          sessionCount: sessions.length,
-        });
+          return createSuccessResult(filename, fileSize, sessions.length);
+        } catch (error) {
+          // Update backup record to failed
+          await this.prisma.chatBackup.update({
+            where: { id: backupRecord.id },
+            data: {
+              status: 'failed',
+            },
+          });
 
-        return createSuccessResult(filename, fileSize, sessions.length);
+          throw error;
+        }
       } catch (error) {
-        // Update backup record to failed
-        await this.prisma.chatBackup.update({
-          where: { id: backupRecord.id },
-          data: {
-            status: 'failed',
-          },
-        });
-
+        // Handle error from the outer try block
         throw error;
       }
     } catch (error) {

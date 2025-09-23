@@ -127,17 +127,45 @@ export const validateDateRange = (startDate: Date, endDate: Date): ValidationRes
 };
 
 // File utilities
-export const generateBackupFilename = (year: number, month: number): string => {
-  const monthStr = month.toString().padStart(2, '0');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return `chat-backup-${year}-${monthStr}-${timestamp}.json`;
+export const generateBackupFilename = (year: number, month: number, sessionCount?: number): string => {
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  const monthStr = monthNames[month - 1];
+  const sessionCountStr = sessionCount !== undefined ? `_${sessionCount}Sessions` : '';
+  return `Chat_Backup_${monthStr}${year}${sessionCountStr}.json`;
 };
 
-export const generateExportFilename = (options: ExportOptions): string => {
-  const startStr = options.startDate.toISOString().slice(0, 10);
-  const endStr = options.endDate.toISOString().slice(0, 10);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return `chat-export-${startStr}-to-${endStr}-${timestamp}.${options.format}`;
+export const generateExportFilename = (options: ExportOptions, sessionCount?: number): string => {
+  const formatDate = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}${month}${year}`;
+  };
+
+  const startStr = formatDate(options.startDate);
+  const endStr = formatDate(options.endDate);
+  const sessionCountStr = sessionCount !== undefined ? `_${sessionCount}Sessions` : '';
+
+  return `Chat_Export_${startStr}-${endStr}${sessionCountStr}.${options.format}`;
+};
+
+// Helper function for consistent date formatting across all export types
+export const formatDateForFilename = (date: Date): string => {
+  const day = date.getDate().toString().padStart(2, '0');
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}${month}${year}`;
 };
 
 // Date utilities

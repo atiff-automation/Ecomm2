@@ -4,6 +4,7 @@ import { authOptions } from '../../../auth/[...nextauth]/route';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 import { validateExportOptions } from '@/utils/chat';
+import { formatDateForFilename } from '@/lib/chat/data-management';
 import * as PDFDocument from 'pdfkit';
 
 export async function POST(request: NextRequest) {
@@ -168,8 +169,8 @@ function generateJsonExport(data: any[], sessionCount: number) {
   };
 
   const content = JSON.stringify(exportContent, null, 2);
-  const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `chat_export_${sessionCount}_sessions_${timestamp}.json`;
+  const timestamp = formatDateForFilename(new Date());
+  const filename = `Chat_Export_${timestamp}_${sessionCount}Sessions.json`;
 
   return new NextResponse(content, {
     headers: {
@@ -225,8 +226,8 @@ function generateCsvExport(data: any[], sessionCount: number) {
     ).join(','))
   ].join('\n');
 
-  const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `chat_export_${sessionCount}_sessions_${timestamp}.csv`;
+  const timestamp = formatDateForFilename(new Date());
+  const filename = `Chat_Export_${timestamp}_${sessionCount}Sessions.csv`;
 
   return new NextResponse(csvContent, {
     headers: {
@@ -245,8 +246,8 @@ async function generatePdfExport(data: any[], sessionCount: number): Promise<Nex
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => {
       const pdfBuffer = Buffer.concat(chunks);
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `chat_export_${sessionCount}_sessions_${timestamp}.pdf`;
+      const timestamp = formatDateForFilename(new Date());
+      const filename = `Chat_Export_${timestamp}_${sessionCount}Sessions.pdf`;
 
       resolve(new NextResponse(pdfBuffer, {
         headers: {
