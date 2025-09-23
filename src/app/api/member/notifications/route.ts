@@ -1,12 +1,14 @@
 /**
  * User Notification Preferences API
  * Manages customer notification settings and preferences
+ * CENTRALIZED SECURITY: Rate limiting and validation applied systematically
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { notificationService } from '@/lib/notifications/notification-service';
+import { RateLimiter } from '@/lib/security/rate-limiter';
 import { z } from 'zod';
 
 const notificationSettingsSchema = z.object({
@@ -39,8 +41,14 @@ const notificationSettingsSchema = z.object({
 });
 
 // GET - Get user's notification preferences
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // CENTRALIZED SECURITY: Apply rate limiting first
+    const rateLimitResult = await RateLimiter.middleware(request, 'NOTIFICATIONS');
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -69,6 +77,12 @@ export async function GET() {
 // PUT - Update user's notification preferences
 export async function PUT(request: NextRequest) {
   try {
+    // CENTRALIZED SECURITY: Apply stricter rate limiting for updates
+    const rateLimitResult = await RateLimiter.middleware(request, 'PREFERENCES_UPDATE');
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -120,8 +134,14 @@ export async function PUT(request: NextRequest) {
 }
 
 // POST - Initialize default notification preferences for user
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // CENTRALIZED SECURITY: Apply rate limiting for initialization
+    const rateLimitResult = await RateLimiter.middleware(request, 'PREFERENCES_UPDATE');
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {

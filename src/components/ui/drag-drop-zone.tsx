@@ -152,15 +152,17 @@ export function DragDropZone({
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const file = e.target.files?.[0];
-    
+
     if (!file) return;
 
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
-      // Reset file input
+      // Reset file input with improved method
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
+        fileInputRef.current.type = 'text';
+        fileInputRef.current.type = 'file';
       }
       return;
     }
@@ -255,7 +257,6 @@ export function DragDropZone({
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        onClick={handleClick}
         className={cn(
           "relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
           "hover:border-blue-300 hover:bg-blue-50/50",
@@ -272,7 +273,7 @@ export function DragDropZone({
           accept={config.accept}
           onChange={handleFileInputChange}
           disabled={disabled || isUploading}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           aria-label={`Upload ${type} file`}
         />
 

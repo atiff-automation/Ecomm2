@@ -281,8 +281,7 @@ export default function SiteCustomizationSettings() {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
-      // Reset file input
-      event.target.value = '';
+      // File input reset is handled by DragDropZone component
     }
   };
 

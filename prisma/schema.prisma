@@ -1134,6 +1134,62 @@ model ChatBackup {
   @@map("chat_backups")
 }
 
+model NotificationLog {
+  id                 String   @id @default(cuid())
+  timestamp          DateTime @default(now())
+  level              String
+  event              String
+  channel            String
+  userId             String?
+  notificationId     String?
+  message            String
+  metadata           String?
+  duration           Int?
+  errorName          String?
+  errorMessage       String?
+  errorStack         String?
+  errorCode          String?
+  contextIp          String?
+  contextUserAgent   String?
+  contextEndpoint    String?
+  contextSessionId   String?
+  createdAt          DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([level])
+  @@index([event])
+  @@index([channel])
+  @@index([userId])
+  @@index([notificationId])
+  @@index([errorMessage])
+  @@map("notification_logs")
+}
+
+model FailedNotification {
+  id                String    @id @default(cuid())
+  type              String
+  payload           String
+  recipient         String
+  channel           String
+  failureReason     String
+  stackTrace        String?
+  retryCount        Int       @default(0)
+  nextRetryAt       DateTime?
+  metadata          String?
+  createdAt         DateTime  @default(now())
+  lastAttemptAt     DateTime  @default(now())
+  resolvedAt        DateTime?
+  permanentFailure  Boolean   @default(false)
+
+  @@index([nextRetryAt])
+  @@index([retryCount])
+  @@index([channel])
+  @@index([permanentFailure])
+  @@index([resolvedAt])
+  @@index([createdAt])
+  @@map("failed_notifications")
+}
+
 enum UserRole {
   CUSTOMER
   STAFF

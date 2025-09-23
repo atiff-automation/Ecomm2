@@ -1,16 +1,24 @@
 /**
  * Chat Notification Test API
  * Test notification system functionality
+ * CENTRALIZED SECURITY: Rate limiting for Telegram test operations
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { ChatNotificationService } from '@/lib/notifications/chat-notifications';
+import { RateLimiter } from '@/lib/security/rate-limiter';
 import { UserRole } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
+    // CENTRALIZED SECURITY: Apply strict rate limiting for Telegram tests
+    const rateLimitResult = await RateLimiter.middleware(request, 'TELEGRAM_TEST');
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     // Authentication check
     const session = await getServerSession(authOptions);
     if (

@@ -4,20 +4,69 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { notificationPreferencesSchema } from '@/lib/validation/settings';
 import { AuditLogger } from '@/lib/security';
+import { RateLimiter } from '@/lib/security/rate-limiter';
+import { CSRFProtection } from '@/lib/security/csrf-protection';
+import { InputSanitizer } from '@/lib/security/input-sanitizer';
+import { NotificationLogger, NotificationEvents } from '@/lib/monitoring/notification-logger';
 
 /**
  * GET /api/settings/notifications - Get notification preferences
  */
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
+    // CENTRALIZED rate limiting - Single source of truth
+    const rateLimitResult = await RateLimiter.checkRateLimit(request, 'PREFERENCES_UPDATE');
+    if (!rateLimitResult.allowed) {
+      await NotificationEvents.logRateLimit('IN_APP', 'anonymous', {
+        ip: rateLimitResult.clientIP,
+        endpoint: '/api/settings/notifications',
+      });
+
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        {
+          status: 429,
+          headers: rateLimitResult.headers
+        }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
+      await NotificationLogger.log(
+        'WARN',
+        'SECURITY_VIOLATION',
+        'IN_APP',
+        'Unauthorized access attempt to notification preferences',
+        {
+          context: {
+            ip: rateLimitResult.clientIP,
+            endpoint: '/api/settings/notifications',
+          },
+        }
+      );
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Only customers can access their notification preferences
     if (session.user.role !== 'CUSTOMER') {
+      await NotificationLogger.log(
+        'WARN',
+        'SECURITY_VIOLATION',
+        'IN_APP',
+        'Forbidden access attempt by non-customer role',
+        {
+          userId: session.user.id,
+          context: {
+            ip: rateLimitResult.clientIP,
+            endpoint: '/api/settings/notifications',
+          },
+          metadata: { role: session.user.role },
+        }
+      );
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
