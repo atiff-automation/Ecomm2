@@ -151,32 +151,19 @@ export class ChatNotificationService {
   }
 
   private async sendTelegramNotification(title: string, message: string): Promise<void> {
-    // Check if Telegram notifications are configured
-    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
-
-    if (!telegramToken || !chatId) {
-      console.warn('Telegram notifications not configured for chat data management');
-      return;
-    }
-
     try {
-      const fullMessage = `*${title}*\n\n${message}`;
+      // CENTRALIZED: Use unified telegram service instead of hardcoded env vars
+      const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
 
-      const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: fullMessage,
-          parse_mode: 'Markdown',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Telegram API error: ${response.status}`);
+      // Determine notification type and route to appropriate channel
+      if (title.toLowerCase().includes('backup') || title.toLowerCase().includes('cleanup') || title.toLowerCase().includes('data')) {
+        // Chat management notifications go to chat management channel
+        await simplifiedTelegramService.sendChatManagementNotification(title, message);
+      } else {
+        // System health and job failures go to system alerts channel
+        const severity = title.toLowerCase().includes('error') || title.toLowerCase().includes('failed') ? 'error' :
+                        title.toLowerCase().includes('warning') ? 'warning' : 'info';
+        await simplifiedTelegramService.sendSystemAlertNotification(title, message, severity);
       }
     } catch (error) {
       console.error('Failed to send Telegram notification:', error);

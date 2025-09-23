@@ -893,23 +893,29 @@ model MalaysianPostcode {
 }
 
 model AdminTelegramConfig {
-  id                  String   @id @default(cuid())
-  botToken            String
-  ordersChatId        String
-  inventoryChatId     String?
-  ordersEnabled       Boolean  @default(true)
-  inventoryEnabled    Boolean  @default(true)
-  dailySummaryEnabled Boolean  @default(true)
-  timezone            String   @default("Asia/Kuala_Lumpur")
-  isActive            Boolean  @unique(map: "unique_active_admin_telegram_config") @default(true)
-  createdBy           String?
-  updatedBy           String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  botToken                 String
+  ordersChatId             String
+  inventoryChatId          String?
+  chatManagementChatId     String?
+  systemAlertsChatId       String?
+  ordersEnabled            Boolean  @default(true)
+  inventoryEnabled         Boolean  @default(true)
+  chatManagementEnabled    Boolean  @default(true)
+  systemAlertsEnabled      Boolean  @default(true)
+  dailySummaryEnabled      Boolean  @default(true)
+  timezone                 String   @default("Asia/Kuala_Lumpur")
+  isActive                 Boolean  @unique(map: "unique_active_admin_telegram_config") @default(true)
+  createdBy                String?
+  updatedBy                String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([isActive])
   @@index([ordersEnabled])
   @@index([inventoryEnabled])
+  @@index([chatManagementEnabled])
+  @@index([systemAlertsEnabled])
   @@map("admin_telegram_config")
 }
 

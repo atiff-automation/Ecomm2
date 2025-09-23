@@ -11,8 +11,12 @@ export interface AdminTelegramConfigData {
   botToken: string;
   ordersChatId: string;
   inventoryChatId?: string;
+  chatManagementChatId?: string;
+  systemAlertsChatId?: string;
   ordersEnabled?: boolean;
   inventoryEnabled?: boolean;
+  chatManagementEnabled?: boolean;
+  systemAlertsEnabled?: boolean;
   dailySummaryEnabled?: boolean;
   timezone?: string;
 }
@@ -59,8 +63,12 @@ export class AdminTelegramConfigService {
               botToken: data.botToken,
               ordersChatId: data.ordersChatId,
               inventoryChatId: data.inventoryChatId,
+              chatManagementChatId: data.chatManagementChatId,
+              systemAlertsChatId: data.systemAlertsChatId,
               ordersEnabled: data.ordersEnabled ?? true,
               inventoryEnabled: data.inventoryEnabled ?? true,
+              chatManagementEnabled: data.chatManagementEnabled ?? true,
+              systemAlertsEnabled: data.systemAlertsEnabled ?? true,
               dailySummaryEnabled: data.dailySummaryEnabled ?? true,
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               updatedBy: null,
@@ -74,8 +82,12 @@ export class AdminTelegramConfigService {
               botToken: data.botToken,
               ordersChatId: data.ordersChatId,
               inventoryChatId: data.inventoryChatId,
+              chatManagementChatId: data.chatManagementChatId,
+              systemAlertsChatId: data.systemAlertsChatId,
               ordersEnabled: data.ordersEnabled ?? true,
               inventoryEnabled: data.inventoryEnabled ?? true,
+              chatManagementEnabled: data.chatManagementEnabled ?? true,
+              systemAlertsEnabled: data.systemAlertsEnabled ?? true,
               dailySummaryEnabled: data.dailySummaryEnabled ?? true,
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               isActive: true,
@@ -196,6 +208,46 @@ export class AdminTelegramConfigService {
         }
       }
 
+      // Test chat management chat ID if provided
+      if (config.chatManagementChatId) {
+        const chatMgmtTestResponse = await fetch(
+          `https://api.telegram.org/bot${config.botToken}/getChat`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: config.chatManagementChatId }),
+            signal: AbortSignal.timeout(10000)
+          }
+        );
+
+        if (!chatMgmtTestResponse.ok) {
+          return {
+            success: false,
+            message: 'Invalid chat management chat ID - bot cannot access this group'
+          };
+        }
+      }
+
+      // Test system alerts chat ID if provided
+      if (config.systemAlertsChatId) {
+        const systemAlertsTestResponse = await fetch(
+          `https://api.telegram.org/bot${config.botToken}/getChat`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: config.systemAlertsChatId }),
+            signal: AbortSignal.timeout(10000)
+          }
+        );
+
+        if (!systemAlertsTestResponse.ok) {
+          return {
+            success: false,
+            message: 'Invalid system alerts chat ID - bot cannot access this group'
+          };
+        }
+      }
+
       return {
         success: true,
         message: 'Configuration validated successfully'
@@ -238,6 +290,24 @@ export class AdminTelegramConfigService {
     try {
       const config = await this.getActiveConfig();
       return !!(config?.botToken && config?.inventoryChatId && config?.inventoryEnabled);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  static async isChatManagementEnabled(): Promise<boolean> {
+    try {
+      const config = await this.getActiveConfig();
+      return !!(config?.botToken && config?.chatManagementChatId && config?.chatManagementEnabled);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  static async isSystemAlertsEnabled(): Promise<boolean> {
+    try {
+      const config = await this.getActiveConfig();
+      return !!(config?.botToken && config?.systemAlertsChatId && config?.systemAlertsEnabled);
     } catch (error) {
       return false;
     }

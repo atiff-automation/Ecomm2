@@ -32,7 +32,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import {
-  CalendarIcon,
   DownloadIcon,
   TrashIcon,
   DatabaseIcon,
@@ -43,7 +42,6 @@ import {
   AlertTriangleIcon,
   CheckCircleIcon,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface BackupFile {
@@ -85,6 +83,9 @@ interface JobStatus {
 }
 
 export default function DataManagementPage() {
+  // Tab state management to persist active tab across operations
+  const [activeTab, setActiveTab] = useState<string>('export');
+
   const [exportStartDate, setExportStartDate] = useState<Date>();
   const [exportEndDate, setExportEndDate] = useState<Date>();
   const [exportFormat, setExportFormat] = useState<string>('json');
@@ -379,7 +380,11 @@ export default function DataManagementPage() {
       tabs={chatTabs}
       loading={isLoadingBackups || isLoadingCleanup || isLoadingJobs}
     >
-      <Tabs defaultValue="export" className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="export">Data Export</TabsTrigger>
           <TabsTrigger value="backups">Backup Management</TabsTrigger>
@@ -398,7 +403,9 @@ export default function DataManagementPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-medium">Export Date Range</label>
+                  <label className="text-sm font-medium">
+                    Export Date Range
+                  </label>
                   <DataExportDatePicker
                     startDate={exportStartDate}
                     endDate={exportEndDate}
@@ -422,7 +429,6 @@ export default function DataManagementPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
 
               <Button

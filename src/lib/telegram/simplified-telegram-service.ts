@@ -212,6 +212,20 @@ export class SimplifiedTelegramService {
     return !!(this.config?.botToken && this.config?.inventoryChatId && this.config?.inventoryEnabled);
   }
 
+  async isChatManagementChannelConfigured(): Promise<boolean> {
+    if (!this.configLoaded) {
+      await this.loadConfiguration();
+    }
+    return !!(this.config?.botToken && this.config?.chatManagementChatId && this.config?.chatManagementEnabled);
+  }
+
+  async isSystemAlertsChannelConfigured(): Promise<boolean> {
+    if (!this.configLoaded) {
+      await this.loadConfiguration();
+    }
+    return !!(this.config?.botToken && this.config?.systemAlertsChatId && this.config?.systemAlertsEnabled);
+  }
+
   /**
    * CENTRALIZED: Reload configuration when admin updates settings
    */
@@ -292,7 +306,7 @@ export class SimplifiedTelegramService {
     } catch (error) {
       console.error('Error sending Telegram message:', error);
       const responseTime = Date.now() - startTime;
-      console.log(`📈 Message send failed (${responseTime}ms):`, response.status, error);
+      console.log(`📈 Message send failed (${responseTime}ms):`, error);
 
       if (allowQueue) {
         this.retryQueue.push({
@@ -539,6 +553,55 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   }
 
   /**
+   * CENTRALIZED: Send chat management notifications
+   */
+  async sendChatManagementNotification(title: string, message: string): Promise<boolean> {
+    if (!(await this.isChatManagementChannelConfigured())) {
+      console.log('Chat management channel not configured, skipping notification');
+      return false;
+    }
+
+    const formattedMessage = `
+🗣️ <b>${title}</b>
+
+${message}
+
+Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
+`.trim();
+
+    return await this.sendMessage({
+      chat_id: this.config!.chatManagementChatId!,
+      text: formattedMessage,
+      parse_mode: 'HTML',
+    });
+  }
+
+  /**
+   * CENTRALIZED: Send system alerts notifications
+   */
+  async sendSystemAlertNotification(title: string, message: string, severity: 'info' | 'warning' | 'error' = 'info'): Promise<boolean> {
+    if (!(await this.isSystemAlertsChannelConfigured())) {
+      console.log('System alerts channel not configured, skipping notification');
+      return false;
+    }
+
+    const emoji = severity === 'error' ? '🚨' : severity === 'warning' ? '⚠️' : 'ℹ️';
+    const formattedMessage = `
+${emoji} <b>${title}</b>
+
+${message}
+
+Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
+`.trim();
+
+    return await this.sendMessage({
+      chat_id: this.config!.systemAlertsChatId!,
+      text: formattedMessage,
+      parse_mode: 'HTML',
+    });
+  }
+
+  /**
    * DRY: Same test connection logic
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
@@ -645,6 +708,26 @@ export const simplifiedTelegramService = {
   async isInventoryChannelConfigured(...args: Parameters<SimplifiedTelegramService['isInventoryChannelConfigured']>) {
     const instance = await this.getInstance();
     return instance.isInventoryChannelConfigured(...args);
+  },
+
+  async isChatManagementChannelConfigured(...args: Parameters<SimplifiedTelegramService['isChatManagementChannelConfigured']>) {
+    const instance = await this.getInstance();
+    return instance.isChatManagementChannelConfigured(...args);
+  },
+
+  async isSystemAlertsChannelConfigured(...args: Parameters<SimplifiedTelegramService['isSystemAlertsChannelConfigured']>) {
+    const instance = await this.getInstance();
+    return instance.isSystemAlertsChannelConfigured(...args);
+  },
+
+  async sendChatManagementNotification(...args: Parameters<SimplifiedTelegramService['sendChatManagementNotification']>) {
+    const instance = await this.getInstance();
+    return instance.sendChatManagementNotification(...args);
+  },
+
+  async sendSystemAlertNotification(...args: Parameters<SimplifiedTelegramService['sendSystemAlertNotification']>) {
+    const instance = await this.getInstance();
+    return instance.sendSystemAlertNotification(...args);
   },
   
   async reloadConfiguration(...args: Parameters<SimplifiedTelegramService['reloadConfiguration']>) {

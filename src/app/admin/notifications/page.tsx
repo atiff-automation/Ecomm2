@@ -16,6 +16,8 @@ import {
   ShoppingCart,
   Zap,
   ExternalLink,
+  Database,
+  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
@@ -95,8 +97,19 @@ export default function NotificationsPage() {
 
     try {
       let endpoint = '/api/admin/telegram/simple-test-order';
+      let notificationType = 'Order';
+
       if (channelId === 'inventory') {
         endpoint = '/api/admin/telegram/simple-test-inventory';
+        notificationType = 'Inventory';
+      } else if (channelId === 'chat-management') {
+        // Test chat management with a backup notification
+        endpoint = '/api/admin/telegram/simple-test-chat-management';
+        notificationType = 'Chat Management';
+      } else if (channelId === 'system-alerts') {
+        // Test system alerts with a health check notification
+        endpoint = '/api/admin/telegram/simple-test-system-alerts';
+        notificationType = 'System Alerts';
       }
 
       const response = await fetch(endpoint, { method: 'POST' });
@@ -104,7 +117,7 @@ export default function NotificationsPage() {
 
       if (data.success) {
         toast.success(
-          `✅ ${channelId === 'orders' ? 'Order' : 'Inventory'} notification sent!`
+          `✅ ${notificationType} notification sent!`
         );
         setChannels(prev =>
           prev.map(channel =>
@@ -290,7 +303,10 @@ export default function NotificationsPage() {
       {/* Notification Channels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {channels.map(channel => {
-          const Icon = channel.id === 'orders' ? ShoppingCart : Package;
+          const Icon = channel.id === 'orders' ? ShoppingCart :
+                      channel.id === 'inventory' ? Package :
+                      channel.id === 'chat-management' ? Database :
+                      channel.id === 'system-alerts' ? Shield : MessageCircle;
           const isTestingThis = testingChannels[channel.id];
 
           return (

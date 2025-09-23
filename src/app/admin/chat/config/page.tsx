@@ -800,7 +800,6 @@ export default function ChatConfigPage() {
               </div>
             </div>
 
-
             {/* Chat Interface Configuration */}
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -830,7 +829,8 @@ export default function ChatConfigPage() {
                     maxLength={500}
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    First message displayed to users when they open the chat widget (max 500 characters)
+                    First message displayed to users when they open the chat
+                    widget (max 500 characters)
                   </p>
                   <p className="text-xs text-gray-400">
                     {config.welcomeMessage.length}/500 characters
@@ -871,7 +871,8 @@ export default function ChatConfigPage() {
                     Bot Icon
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Upload a custom icon for the chatbot. This will replace the default icon in chat messages.
+                    Upload a custom icon for the chatbot. This will replace the
+                    default icon in chat messages.
                   </p>
                   <ImageUpload
                     value={botIcon}

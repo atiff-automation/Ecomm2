@@ -14,19 +14,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Settings, 
-  Save, 
-  TestTube2, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  Settings,
+  Save,
+  TestTube2,
+  CheckCircle,
+  AlertTriangle,
   Loader2,
   Eye,
   EyeOff,
   HelpCircle,
   MessageCircle,
   Package,
-  Trash2
+  Trash2,
+  Database,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -34,8 +36,12 @@ interface AdminTelegramConfig {
   id?: string;
   ordersChatId: string;
   inventoryChatId?: string;
+  chatManagementChatId?: string;
+  systemAlertsChatId?: string;
   ordersEnabled: boolean;
   inventoryEnabled: boolean;
+  chatManagementEnabled: boolean;
+  systemAlertsEnabled: boolean;
   dailySummaryEnabled: boolean;
   timezone: string;
   createdAt?: string;
@@ -55,8 +61,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
   const [config, setConfig] = useState<AdminTelegramConfig>({
     ordersChatId: '',
     inventoryChatId: '',
+    chatManagementChatId: '',
+    systemAlertsChatId: '',
     ordersEnabled: true,
     inventoryEnabled: true,
+    chatManagementEnabled: true,
+    systemAlertsEnabled: true,
     dailySummaryEnabled: true,
     timezone: 'Asia/Kuala_Lumpur'
   });
@@ -69,6 +79,8 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
   const [testResults, setTestResults] = useState<{
     orders?: boolean;
     inventory?: boolean;
+    chatManagement?: boolean;
+    systemAlerts?: boolean;
   }>({});
 
   // DRY: Load configuration on mount
@@ -141,7 +153,9 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
           // Only send bot token if it's provided in UI, otherwise API will use saved token
           ...(botToken.trim() && { botToken: botToken.trim() }),
           ordersChatId: config.ordersChatId.trim(),
-          inventoryChatId: config.inventoryChatId?.trim()
+          inventoryChatId: config.inventoryChatId?.trim(),
+          chatManagementChatId: config.chatManagementChatId?.trim(),
+          systemAlertsChatId: config.systemAlertsChatId?.trim()
         })
       });
 
@@ -183,8 +197,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
           botToken: botToken.trim(),
           ordersChatId: config.ordersChatId.trim(),
           inventoryChatId: config.inventoryChatId?.trim(),
+          chatManagementChatId: config.chatManagementChatId?.trim(),
+          systemAlertsChatId: config.systemAlertsChatId?.trim(),
           ordersEnabled: config.ordersEnabled,
           inventoryEnabled: config.inventoryEnabled,
+          chatManagementEnabled: config.chatManagementEnabled,
+          systemAlertsEnabled: config.systemAlertsEnabled,
           dailySummaryEnabled: config.dailySummaryEnabled,
           timezone: config.timezone
         })
@@ -250,11 +268,14 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
         if (result.success) {
           // Clear local state
           setConfig({
-            botToken: '',
             ordersChatId: '',
             inventoryChatId: '',
+            chatManagementChatId: '',
+            systemAlertsChatId: '',
             ordersEnabled: true,
             inventoryEnabled: true,
+            chatManagementEnabled: true,
+            systemAlertsEnabled: true,
             dailySummaryEnabled: true,
             timezone: 'Asia/Kuala_Lumpur'
           });
@@ -293,22 +314,36 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
   /**
    * DRY: Test notifications
    */
-  const testNotification = async (type: 'orders' | 'inventory') => {
+  const testNotification = async (type: 'orders' | 'inventory' | 'chat-management' | 'system-alerts') => {
     if (!isConfigured) {
       toast.error('Please save your configuration first');
       return;
     }
 
     try {
-      const endpoint = type === 'orders' ? 'simple-test-order' : 'simple-test-inventory';
+      const endpointMap = {
+        'orders': 'simple-test-order',
+        'inventory': 'simple-test-inventory',
+        'chat-management': 'simple-test-chat-management',
+        'system-alerts': 'simple-test-system-alerts'
+      };
+
+      const typeMap = {
+        'orders': 'Order',
+        'inventory': 'Inventory',
+        'chat-management': 'Chat Management',
+        'system-alerts': 'System Alerts'
+      };
+
+      const endpoint = endpointMap[type];
       const response = await fetch(`/api/admin/telegram/${endpoint}`, {
         method: 'POST'
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
-        toast.success(`✅ ${type === 'orders' ? 'Order' : 'Inventory'} test notification sent!`);
+        toast.success(`✅ ${typeMap[type]} test notification sent!`);
       } else {
         toast.error(`❌ Test failed: ${result.message}`);
       }
@@ -452,6 +487,74 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                   variant="outline"
                   size="sm"
                   className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                >
+                  <TestTube2 className="w-4 h-4 mr-2" />
+                  Send Test Alert
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Chat Management Channel */}
+          <div className="p-4 border rounded-lg bg-purple-50 border-purple-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="w-5 h-5 text-purple-600" />
+              <h4 className="font-medium text-purple-900">Chat Management</h4>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="chatManagementChatId">Chat Management Group Chat ID</Label>
+                <Input
+                  id="chatManagementChatId"
+                  value={config.chatManagementChatId || ''}
+                  onChange={(e) => setConfig(prev => ({ ...prev, chatManagementChatId: e.target.value }))}
+                  placeholder="-1001234567890 (optional)"
+                  className="mt-1 border-purple-300 focus:border-white focus:ring-purple-200"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Chat backups, cleanup operations, and data management notifications
+                </p>
+              </div>
+              {isConfigured && config.chatManagementChatId && (
+                <Button
+                  onClick={() => testNotification('chat-management')}
+                  variant="outline"
+                  size="sm"
+                  className="text-purple-700 border-purple-300 hover:bg-purple-100"
+                >
+                  <TestTube2 className="w-4 h-4 mr-2" />
+                  Send Test Notification
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* System Alerts Channel */}
+          <div className="p-4 border rounded-lg bg-red-50 border-red-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-5 h-5 text-red-600" />
+              <h4 className="font-medium text-red-900">System Alerts</h4>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="systemAlertsChatId">System Alerts Group Chat ID</Label>
+                <Input
+                  id="systemAlertsChatId"
+                  value={config.systemAlertsChatId || ''}
+                  onChange={(e) => setConfig(prev => ({ ...prev, systemAlertsChatId: e.target.value }))}
+                  placeholder="-1001234567890 (optional)"
+                  className="mt-1 border-red-300 focus:border-white focus:ring-red-200"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  System health, job failures, and critical application alerts
+                </p>
+              </div>
+              {isConfigured && config.systemAlertsChatId && (
+                <Button
+                  onClick={() => testNotification('system-alerts')}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-700 border-red-300 hover:bg-red-100"
                 >
                   <TestTube2 className="w-4 h-4 mr-2" />
                   Send Test Alert

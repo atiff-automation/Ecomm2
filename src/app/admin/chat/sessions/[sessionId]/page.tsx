@@ -459,7 +459,9 @@ export default function SessionDetailPage() {
                 )}
                 <div>
                   <span className="text-sm text-gray-600">Session Type</span>
-                  <Badge variant="outline" className="ml-2">Guest</Badge>
+                  <Badge variant="outline" className="ml-2">
+                    Guest
+                  </Badge>
                 </div>
               </CardContent>
             </Card>

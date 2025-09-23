@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     // SINGLE SOURCE OF TRUTH: Check admin configuration
     const ordersConfigured = await simplifiedTelegramService.isOrdersChannelConfigured();
     const inventoryConfigured = await simplifiedTelegramService.isInventoryChannelConfigured();
+    const chatManagementConfigured = await simplifiedTelegramService.isChatManagementChannelConfigured();
+    const systemAlertsConfigured = await simplifiedTelegramService.isSystemAlertsChannelConfigured();
     const config = await adminTelegramConfigService.getActiveConfig();
 
     // NO HARDCODE: Dynamic channel definitions
@@ -48,6 +50,22 @@ export async function GET(request: NextRequest) {
         configured: inventoryConfigured,
         enabled: inventoryConfigured && (config?.inventoryEnabled ?? true),
         chatId: config?.inventoryChatId || null,
+      },
+      {
+        id: 'chat-management',
+        name: 'Chat Management',
+        description: 'Chat backups, cleanup, and data management notifications',
+        configured: chatManagementConfigured,
+        enabled: chatManagementConfigured && (config?.chatManagementEnabled ?? true),
+        chatId: config?.chatManagementChatId || null,
+      },
+      {
+        id: 'system-alerts',
+        name: 'System Alerts',
+        description: 'System health, job failures, and critical alerts',
+        configured: systemAlertsConfigured,
+        enabled: systemAlertsConfigured && (config?.systemAlertsEnabled ?? true),
+        chatId: config?.systemAlertsChatId || null,
       },
     ];
 
