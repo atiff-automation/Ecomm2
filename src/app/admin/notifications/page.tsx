@@ -212,25 +212,6 @@ export default function NotificationsPage() {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Settings className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-            <p className="text-gray-600">
-              Configure order notifications for your team
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin mr-2" />
-          <span>Loading configuration...</span>
-        </div>
-      </div>
-    );
-  }
 
   // SIMPLIFIED: Admin-only tabs following @CLAUDE.md CENTRALIZED approach
   const tabs: TabConfig[] = [
@@ -398,7 +379,7 @@ export default function NotificationsPage() {
 
       {/* System Status */}
       {health?.configured && (
-        <Card className="bg-gray-50 mb-8">
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <MessageCircle className="w-5 h-5" />
@@ -407,13 +388,13 @@ export default function NotificationsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
                 <span className="font-medium">Connection Status</span>
                 {getConnectionStatus()}
               </div>
 
               {health.lastCheck && (
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl border">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
                   <span className="font-medium">Last Health Check</span>
                   <span className="font-mono text-sm text-gray-600">
                     {new Date(health.lastCheck).toLocaleTimeString()}
@@ -421,7 +402,7 @@ export default function NotificationsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
                 <span className="font-medium">Queued Messages</span>
                 <Badge
                   variant={
