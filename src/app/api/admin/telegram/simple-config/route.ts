@@ -43,8 +43,12 @@ export async function GET(request: NextRequest) {
         id: config.id,
         ordersChatId: config.ordersChatId,
         inventoryChatId: config.inventoryChatId,
+        chatManagementChatId: config.chatManagementChatId,
+        systemAlertsChatId: config.systemAlertsChatId,
         ordersEnabled: config.ordersEnabled,
         inventoryEnabled: config.inventoryEnabled,
+        chatManagementEnabled: config.chatManagementEnabled,
+        systemAlertsEnabled: config.systemAlertsEnabled,
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
@@ -79,12 +83,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // DRY: Validation schema (no hardcoded values)
-    const { 
-      botToken, 
-      ordersChatId, 
+    const {
+      botToken,
+      ordersChatId,
       inventoryChatId,
+      chatManagementChatId,
+      systemAlertsChatId,
       ordersEnabled = true,
       inventoryEnabled = true,
+      chatManagementEnabled = true,
+      systemAlertsEnabled = true,
       dailySummaryEnabled = true,
       timezone = 'Asia/Kuala_Lumpur'
     } = body;
@@ -110,8 +118,12 @@ export async function POST(request: NextRequest) {
         botToken: botToken.trim(),
         ordersChatId: ordersChatId.trim(),
         inventoryChatId: inventoryChatId?.trim() || undefined,
+        chatManagementChatId: chatManagementChatId?.trim() || undefined,
+        systemAlertsChatId: systemAlertsChatId?.trim() || undefined,
         ordersEnabled,
         inventoryEnabled,
+        chatManagementEnabled,
+        systemAlertsEnabled,
         dailySummaryEnabled,
         timezone
       },
@@ -125,8 +137,12 @@ export async function POST(request: NextRequest) {
         id: config.id,
         ordersChatId: config.ordersChatId,
         inventoryChatId: config.inventoryChatId,
+        chatManagementChatId: config.chatManagementChatId,
+        systemAlertsChatId: config.systemAlertsChatId,
         ordersEnabled: config.ordersEnabled,
         inventoryEnabled: config.inventoryEnabled,
+        chatManagementEnabled: config.chatManagementEnabled,
+        systemAlertsEnabled: config.systemAlertsEnabled,
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
@@ -159,7 +175,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { botToken, ordersChatId, inventoryChatId } = body;
+    const { botToken, ordersChatId, inventoryChatId, chatManagementChatId, systemAlertsChatId } = body;
 
     // Check if configuration already exists to use saved bot token
     const existingConfig = await adminTelegramConfigService.getActiveConfig();
@@ -183,7 +199,9 @@ export async function PUT(request: NextRequest) {
     const testResult = await adminTelegramConfigService.testConfig({
       botToken: botToken?.trim() || existingConfig?.botToken || '',
       ordersChatId: ordersChatId.trim(),
-      inventoryChatId: inventoryChatId?.trim()
+      inventoryChatId: inventoryChatId?.trim(),
+      chatManagementChatId: chatManagementChatId?.trim(),
+      systemAlertsChatId: systemAlertsChatId?.trim()
     });
 
     return NextResponse.json(testResult);
