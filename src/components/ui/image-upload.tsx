@@ -151,6 +151,12 @@ export default function ImageUpload({
     try {
       const formData = new FormData();
       formData.append('file', file);
+
+      // Use legacy mode for backward compatibility with existing ProductForm
+      formData.append('legacy', 'true');
+
+      // These parameters are now handled by the centralized configuration
+      // but we still include them for compatibility
       formData.append('maxWidth', '1200');
       formData.append('maxHeight', '1200');
       formData.append('quality', '85');

@@ -18,9 +18,11 @@ async function setupChatConfig() {
     // Create default configuration
     const config = await prisma.chatConfig.create({
       data: {
-        webhookUrl: 'https://placeholder.webhook.com/chat',
+        webhookUrl: 'http://localhost:3001/webhook/chat-integration',
         webhookSecret: 'temp-secret-' + Math.random().toString(36).substr(2, 9),
         sessionTimeoutMinutes: 30,
+        guestSessionTimeoutMinutes: 13,
+        authenticatedSessionTimeoutMinutes: 19,
         maxMessageLength: 4000,
         rateLimitMessages: 20,
         rateLimitWindowMs: 60000,
@@ -28,8 +30,8 @@ async function setupChatConfig() {
         queueMaxRetries: 3,
         queueRetryDelayMs: 5000,
         queueBatchSize: 10,
-        websocketEnabled: true,
-        websocketPort: 3001,
+        welcomeMessage: 'Hi! How can we help you today?',
+        agentName: 'Customer Support',
         isActive: true,
         verified: false,
         healthStatus: 'NOT_CONFIGURED'
