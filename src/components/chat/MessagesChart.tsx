@@ -108,6 +108,10 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
   }, [timeRange]);
 
   const formatYAxisTick = (value: number) => {
+    // Only show whole numbers for message counts
+    if (value % 1 !== 0) {
+      return '';
+    }
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)}k`;
     }
@@ -238,8 +242,9 @@ export function MessagesChart({ timeRange, loading = false, className = '' }: Me
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: '#64748b' }}
-                interval="preserveStartEnd"
+                tick={{ fontSize: 11, fill: '#64748b', angle: -45, textAnchor: 'end' }}
+                height={60}
+                interval={2}
               />
               <YAxis
                 axisLine={false}
