@@ -275,11 +275,11 @@ export default function AdminProductsPage() {
           placeholder="Search products..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-8"
         />
       </div>
       <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-        <SelectTrigger className="w-full sm:w-48">
+        <SelectTrigger className="w-full sm:w-48 h-8">
           <SelectValue
             placeholder={categoriesLoading ? 'Loading...' : 'Category'}
           />
@@ -316,7 +316,7 @@ export default function AdminProductsPage() {
         </SelectContent>
       </Select>
       <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-        <SelectTrigger className="w-full sm:w-48">
+        <SelectTrigger className="w-full sm:w-48 h-8">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
@@ -327,7 +327,7 @@ export default function AdminProductsPage() {
         </SelectContent>
       </Select>
       <Select value={selectedStockLevel} onValueChange={setSelectedStockLevel}>
-        <SelectTrigger className="w-full sm:w-48">
+        <SelectTrigger className="w-full sm:w-48 h-8">
           <SelectValue placeholder="Stock Level" />
         </SelectTrigger>
         <SelectContent>

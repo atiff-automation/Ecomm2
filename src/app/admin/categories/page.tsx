@@ -371,22 +371,22 @@ export default function AdminCategoriesPage() {
 
   // Extract filters component
   const filtersComponent = (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder="Search categories..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-8"
         />
       </div>
-      <div className="flex items-center justify-center sm:justify-end text-center sm:text-right bg-muted/50 rounded-lg px-4 py-2 min-w-[120px]">
-        <div>
-          <div className="text-2xl font-bold text-gray-900">
+      <div className="flex items-center justify-center sm:justify-end text-center sm:text-right bg-muted/50 rounded-md px-3 py-1 min-w-[100px] h-8">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-semibold text-gray-900">
             {categories.length}
-          </div>
-          <div className="text-sm text-gray-600">Total Categories</div>
+          </span>
+          <span className="text-xs text-gray-600">Categories</span>
         </div>
       </div>
     </div>
