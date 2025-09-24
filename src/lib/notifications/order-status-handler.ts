@@ -252,6 +252,62 @@ export class OrderStatusHandler {
       console.error('Failed to send cancellation notification:', error);
     }
   }
+
+  /**
+   * Handle airway bill generation failure
+   * Simple notification approach as per implementation plan
+   */
+  static async handleAirwayBillFailure(orderId: string, error: any) {
+    console.log('⚠️ Airway bill generation failed for order:', orderId);
+
+    try {
+      // Get order details for notification
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: {
+          orderNumber: true,
+          status: true,
+          paymentStatus: true,
+        },
+      });
+
+      if (!order) {
+        console.error('Order not found for airway bill failure notification:', orderId);
+        return;
+      }
+
+      // Send admin notification via Telegram
+      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error';
+
+      await simplifiedTelegramService.sendMessage({
+        message: `⚠️ AIRWAY BILL GENERATION FAILED\n\nOrder: #${order.orderNumber}\nError: ${errorMessage}\nStatus: ${order.status}\nPayment: ${order.paymentStatus}\n\nPlease check the order and retry manually if needed.`,
+        channel: 'orders',
+      });
+
+      console.log('✅ Airway bill failure notification sent for order:', order.orderNumber);
+    } catch (notificationError) {
+      console.error('❌ Failed to send airway bill failure notification:', notificationError);
+    }
+
+    // Create audit log for the failure
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: 'AIRWAY_BILL_GENERATION_FAILED',
+          resource: 'ORDER',
+          resourceId: orderId,
+          details: {
+            error: typeof error === 'string' ? error : error?.message || 'Unknown error',
+            timestamp: new Date().toISOString(),
+          },
+          ipAddress: 'system',
+          userAgent: 'airway_bill_service',
+        },
+      });
+    } catch (auditError) {
+      console.error('❌ Failed to create audit log for airway bill failure:', auditError);
+    }
+  }
 }
 
 /**

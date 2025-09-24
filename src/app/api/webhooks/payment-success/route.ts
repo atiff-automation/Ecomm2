@@ -18,6 +18,7 @@ import { prisma } from '@/lib/db/prisma';
 import { headers } from 'next/headers';
 // import { telegramService } from '@/lib/telegram/telegram-service'; // Removed - using OrderStatusHandler instead
 import { MembershipService } from '@/lib/services/membership-service';
+import { AirwayBillService } from '@/lib/services/airway-bill.service';
 
 // NOTE: Business logic moved to MembershipService for proper separation of concerns
 
@@ -98,6 +99,62 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Payment confirmed for order:', order.orderNumber);
 
+    // ✅ NEW: Process EasyParcel payment to get AWB
+    let airwayBillGenerated = false;
+    try {
+      console.log('🎯 Processing EasyParcel payment for AWB extraction:', order.orderNumber);
+      const awbResult = await AirwayBillService.processPaymentAndExtractAWB(order.orderNumber);
+
+      if (awbResult.success) {
+        // Update order with real AWB information
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            airwayBillNumber: awbResult.awbNumber,
+            airwayBillUrl: awbResult.awbPdfUrl,
+            trackingUrl: awbResult.trackingUrl,
+            airwayBillGenerated: true,
+            airwayBillGeneratedAt: new Date(),
+          },
+        });
+
+        airwayBillGenerated = true;
+        console.log('✅ AWB extracted and order updated successfully:', {
+          orderNumber: order.orderNumber,
+          awbNumber: awbResult.awbNumber,
+          trackingUrl: awbResult.trackingUrl,
+        });
+      } else {
+        console.log('⚠️ EasyParcel payment processing failed:', {
+          orderNumber: order.orderNumber,
+          error: awbResult.error,
+        });
+
+        // Send notification about the failure
+        try {
+          const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
+          await OrderStatusHandler.handleAirwayBillFailure(order.id, awbResult.error);
+        } catch (notificationError) {
+          console.error('❌ Failed to handle airway bill failure notification:', notificationError);
+        }
+
+        // Don't fail the webhook if EasyParcel processing fails
+        // This follows the plan's "simple error handling" approach
+      }
+    } catch (awbError) {
+      console.error('❌ EasyParcel AWB processing error:', awbError);
+
+      // Send notification about the exception
+      try {
+        const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
+        await OrderStatusHandler.handleAirwayBillFailure(order.id, awbError);
+      } catch (notificationError) {
+        console.error('❌ Failed to handle airway bill failure notification:', notificationError);
+      }
+
+      // Continue with webhook processing even if AWB processing fails
+    }
+
     // ✅ CORRECT: Delegate business logic to appropriate service
     let membershipActivated = false;
     if (order.userId) {
@@ -150,6 +207,7 @@ export async function POST(request: NextRequest) {
       orderReference,
       amount,
       membershipActivated,
+      airwayBillGenerated,
       transactionId,
     });
   } catch (error) {

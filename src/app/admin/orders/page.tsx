@@ -62,6 +62,12 @@ interface Order {
     estimatedDelivery?: string;
     lastTrackedAt?: string;
   };
+
+  // NEW: Airway bill fields
+  airwayBillGenerated?: boolean;
+  airwayBillNumber?: string;
+  airwayBillUrl?: string;
+  airwayBillGeneratedAt?: string;
 }
 
 interface OrderFilters {
@@ -264,6 +270,47 @@ export default function AdminOrders() {
       await navigator.clipboard.writeText(text);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
+    }
+  };
+
+  const downloadAirwayBill = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/airway-bill`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('Airway bill not available for this order');
+        } else {
+          const errorData = await response.json();
+          alert(`Failed to download airway bill: ${errorData.message}`);
+        }
+        return;
+      }
+
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'airway-bill.pdf';
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading airway bill:', error);
+      alert('Failed to download airway bill. Please try again.');
     }
   };
 
@@ -553,6 +600,17 @@ export default function AdminOrders() {
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
+
+                            {order.airwayBillGenerated && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadAirwayBill(order.id)}
+                                title={`Download Airway Bill ${order.airwayBillNumber || ''}`}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
 
                             {order.shipment?.trackingNumber && (
                               <Button

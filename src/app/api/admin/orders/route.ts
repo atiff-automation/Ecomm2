@@ -126,12 +126,31 @@ export async function GET(request: NextRequest) {
       status: order.status,
       paymentStatus: order.paymentStatus,
       createdAt: order.createdAt.toISOString(),
+      itemCount: order.orderItems.length,
+
+      // Airway bill fields
+      airwayBillGenerated: order.airwayBillGenerated,
+      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
+      airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString(),
+
+      // Shipment fields (matching frontend interface)
+      shipment: order.shipment
+        ? {
+            trackingNumber: order.shipment.trackingNumber,
+            status: order.shipment.status?.toLowerCase(),
+            courierName: order.shipment.courierName,
+            estimatedDelivery: order.shipment.estimatedDelivery?.toISOString(),
+            lastTrackedAt: order.updatedAt.toISOString(), // Use order updated time as approximation
+          }
+        : null,
+
       shippingAddress: order.shippingAddress
         ? {
-            address: order.shippingAddress.address,
+            address: order.shippingAddress.addressLine1,
             city: order.shippingAddress.city,
             state: order.shippingAddress.state,
-            postcode: order.shippingAddress.postcode,
+            postcode: order.shippingAddress.postalCode,
           }
         : null,
       items: order.orderItems.map(item => ({
@@ -140,17 +159,6 @@ export async function GET(request: NextRequest) {
         quantity: item.quantity,
         weight: item.product.weight || 0.5,
       })),
-      shipping: order.shipments?.[0]
-        ? {
-            courierName: order.shipments[0].courierName,
-            serviceName: order.shipments[0].serviceName,
-            price: order.shipments[0].shippingCost,
-            trackingNumber: order.shipments[0].trackingNumber,
-            status: order.shipments[0].status,
-            estimatedDelivery:
-              order.shipments[0].estimatedDelivery?.toISOString(),
-          }
-        : null,
     }));
 
     return NextResponse.json({
