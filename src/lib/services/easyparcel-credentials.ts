@@ -13,15 +13,14 @@ import crypto from 'crypto';
 
 export interface EasyParcelCredentials {
   apiKey: string;
-  apiSecret: string;
-  environment: 'sandbox' | 'production';
+  endpoint: string;
   lastUpdated?: Date;
   updatedBy?: string;
 }
 
 export interface CredentialStatus {
   hasCredentials: boolean;
-  environment: 'sandbox' | 'production';
+  endpoint: string;
   apiKeyMasked?: string;
   lastUpdated?: Date;
   updatedBy?: string;
@@ -98,14 +97,13 @@ export class EasyParcelCredentialsService {
   async storeCredentials(
     credentials: Pick<
       EasyParcelCredentials,
-      'apiKey' | 'apiSecret' | 'environment'
+      'apiKey' | 'endpoint'
     >,
     updatedBy: string
   ): Promise<void> {
     try {
       // Encrypt the credentials
       const encryptedApiKey = this.encryptCredential(credentials.apiKey);
-      const encryptedApiSecret = this.encryptCredential(credentials.apiSecret);
 
       // Store in database using upsert pattern
       await Promise.all([
@@ -123,30 +121,16 @@ export class EasyParcelCredentialsService {
           },
         }),
 
-        // API Secret
+        // Endpoint URL
         prisma.systemConfig.upsert({
-          where: { key: 'easyparcel_api_secret_encrypted' },
+          where: { key: 'easyparcel_endpoint' },
           update: {
-            value: JSON.stringify(encryptedApiSecret),
+            value: credentials.endpoint,
             updatedAt: new Date(),
           },
           create: {
-            key: 'easyparcel_api_secret_encrypted',
-            value: JSON.stringify(encryptedApiSecret),
-            type: 'json',
-          },
-        }),
-
-        // Environment
-        prisma.systemConfig.upsert({
-          where: { key: 'easyparcel_environment' },
-          update: {
-            value: credentials.environment,
-            updatedAt: new Date(),
-          },
-          create: {
-            key: 'easyparcel_environment',
-            value: credentials.environment,
+            key: 'easyparcel_endpoint',
+            value: credentials.endpoint,
             type: 'string',
           },
         }),
@@ -208,8 +192,7 @@ export class EasyParcelCredentialsService {
           key: {
             in: [
               'easyparcel_api_key_encrypted',
-              'easyparcel_api_secret_encrypted',
-              'easyparcel_environment',
+              'easyparcel_endpoint',
               'easyparcel_credentials_updated_by',
               'easyparcel_credentials_enabled',
             ],
@@ -230,21 +213,19 @@ export class EasyParcelCredentialsService {
       }
 
       const apiKeyConfig = configMap.get('easyparcel_api_key_encrypted');
-      const apiSecretConfig = configMap.get('easyparcel_api_secret_encrypted');
-      const environmentConfig = configMap.get('easyparcel_environment');
+      const endpointConfig = configMap.get('easyparcel_endpoint');
       const updatedByConfig = configMap.get(
         'easyparcel_credentials_updated_by'
       );
 
       console.log(`🔍 Database credential check:`, {
         hasApiKey: !!apiKeyConfig,
-        hasApiSecret: !!apiSecretConfig,
-        environment: environmentConfig?.value,
+        endpoint: endpointConfig?.value,
       });
 
-      if (!apiKeyConfig || !apiSecretConfig) {
+      if (!apiKeyConfig) {
         console.log(
-          `❌ No encrypted credentials in database, falling back to environment variables`
+          `❌ No encrypted API key in database, falling back to environment variables`
         );
         return null; // No credentials stored
       }
@@ -253,25 +234,18 @@ export class EasyParcelCredentialsService {
       const encryptedApiKey: EncryptedCredential = JSON.parse(
         apiKeyConfig.value
       );
-      const encryptedApiSecret: EncryptedCredential = JSON.parse(
-        apiSecretConfig.value
-      );
 
       const apiKey = this.decryptCredential(encryptedApiKey);
-      const apiSecret = this.decryptCredential(encryptedApiSecret);
-      const environment =
-        (environmentConfig?.value as 'sandbox' | 'production') || 'sandbox';
+      const endpoint = endpointConfig?.value || 'https://connect.easyparcel.my';
 
       console.log(`🔍 Decrypted credentials:`, {
         apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
-        apiSecret: apiSecret ? `${apiSecret.substring(0, 8)}...` : 'MISSING',
-        environment,
+        endpoint,
       });
 
       const credentials: EasyParcelCredentials = {
         apiKey,
-        apiSecret,
-        environment,
+        endpoint,
         lastUpdated: apiKeyConfig.updatedAt,
         updatedBy: updatedByConfig?.value,
       };
@@ -291,15 +265,19 @@ export class EasyParcelCredentialsService {
 
   /**
    * Get credential status without exposing sensitive data
+   * Follows @CLAUDE.md systematic approach with environment-aware behavior
    */
   async getCredentialStatus(): Promise<CredentialStatus> {
     try {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
       const credentials = await this.getCredentials();
 
       if (credentials) {
         return {
           hasCredentials: true,
-          environment: credentials.environment,
+          endpoint: credentials.endpoint,
           apiKeyMasked: this.maskApiKey(credentials.apiKey),
           lastUpdated: credentials.lastUpdated,
           updatedBy: credentials.updatedBy,
@@ -307,16 +285,24 @@ export class EasyParcelCredentialsService {
         };
       }
 
-      // Check if environment variables are available as fallback
+      // Production mode: no fallback status checking
+      if (isStrictMode) {
+        return {
+          hasCredentials: false,
+          endpoint: 'https://connect.easyparcel.my',
+          isUsingEnvFallback: false,
+        };
+      }
+
+      // Development mode only: check environment variable fallback
       const hasEnvCredentials = !!(
         process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
       );
-      const envEnvironment =
-        process.env.EASYPARCEL_SANDBOX === 'true' ? 'sandbox' : 'production';
+      const envEndpoint = process.env.EASYPARCEL_ENDPOINT || 'https://connect.easyparcel.my';
 
       return {
         hasCredentials: hasEnvCredentials,
-        environment: envEnvironment,
+        endpoint: envEndpoint,
         apiKeyMasked: hasEnvCredentials
           ? this.maskApiKey(process.env.EASYPARCEL_API_KEY!)
           : undefined,
@@ -326,63 +312,12 @@ export class EasyParcelCredentialsService {
       console.error('Error getting credential status:', error);
       return {
         hasCredentials: false,
-        environment: 'sandbox',
+        endpoint: 'https://connect.easyparcel.my',
         isUsingEnvFallback: false,
       };
     }
   }
 
-  /**
-   * Switch between sandbox and production environments
-   */
-  async switchEnvironment(
-    environment: 'sandbox' | 'production',
-    updatedBy: string
-  ): Promise<void> {
-    try {
-      // CRITICAL: Check if we have stored credentials first
-      const currentCredentials = await this.getCredentials();
-      if (!currentCredentials) {
-        throw new Error(
-          'No stored credentials found. Please configure API credentials first before switching environments.'
-        );
-      }
-
-      await prisma.systemConfig.upsert({
-        where: { key: 'easyparcel_environment' },
-        update: {
-          value: environment,
-          updatedAt: new Date(),
-        },
-        create: {
-          key: 'easyparcel_environment',
-          value: environment,
-          type: 'string',
-        },
-      });
-
-      await prisma.systemConfig.upsert({
-        where: { key: 'easyparcel_credentials_updated_by' },
-        update: {
-          value: updatedBy,
-          updatedAt: new Date(),
-        },
-        create: {
-          key: 'easyparcel_credentials_updated_by',
-          value: updatedBy,
-          type: 'string',
-        },
-      });
-
-      // Clear cache to force refresh
-      this.clearCache();
-
-      console.log(`EasyParcel environment switched to: ${environment}`);
-    } catch (error) {
-      console.error('Error switching environment:', error);
-      throw error; // Re-throw the original error
-    }
-  }
 
   /**
    * Clear stored credentials and fallback to environment variables
@@ -394,7 +329,6 @@ export class EasyParcelCredentialsService {
           key: {
             in: [
               'easyparcel_api_key_encrypted',
-              'easyparcel_api_secret_encrypted',
               'easyparcel_credentials_enabled',
             ],
           },
@@ -417,35 +351,42 @@ export class EasyParcelCredentialsService {
   }
 
   /**
-   * Get credentials for EasyParcel service (with fallback to env vars)
+   * Get credentials for EasyParcel service (production-ready)
+   * Follows @CLAUDE.md single source of truth principle
    */
   async getCredentialsForService(): Promise<{
     apiKey: string;
-    apiSecret: string;
-    isSandbox: boolean;
+    endpoint: string;
     source: 'database' | 'environment';
   } | null> {
-    // Try database first
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
+    // Try database first - primary source of truth
     const dbCredentials = await this.getCredentials();
     if (dbCredentials) {
       return {
         apiKey: dbCredentials.apiKey,
-        apiSecret: dbCredentials.apiSecret,
-        isSandbox: dbCredentials.environment === 'sandbox',
+        endpoint: dbCredentials.endpoint,
         source: 'database',
       };
     }
 
-    // Fallback to environment variables
-    const envApiKey = process.env.EASYPARCEL_API_KEY;
-    const envApiSecret = process.env.EASYPARCEL_API_SECRET;
-    const envSandbox = process.env.EASYPARCEL_SANDBOX === 'true';
+    // Production mode: NO fallbacks - database credentials required
+    if (isStrictMode) {
+      console.error('🚫 Production mode: EasyParcel credentials must be configured in database via System Settings');
+      return null; // Force configuration through admin UI
+    }
 
-    if (envApiKey && envApiSecret) {
+    // Development mode only: fallback to environment variables for developer convenience
+    const envApiKey = process.env.EASYPARCEL_API_KEY;
+    const envEndpoint = process.env.EASYPARCEL_ENDPOINT || 'https://connect.easyparcel.my';
+
+    if (envApiKey) {
+      console.warn('⚠️ Development mode: Using environment variable fallback. Configure credentials in System Settings for production.');
       return {
         apiKey: envApiKey,
-        apiSecret: envApiSecret,
-        isSandbox: envSandbox,
+        endpoint: envEndpoint,
         source: 'environment',
       };
     }
@@ -458,8 +399,7 @@ export class EasyParcelCredentialsService {
    */
   async validateCredentials(
     apiKey: string,
-    apiSecret: string,
-    environment: 'sandbox' | 'production'
+    endpoint: string
   ): Promise<{
     isValid: boolean;
     error?: string;
@@ -470,23 +410,19 @@ export class EasyParcelCredentialsService {
     const startTime = Date.now();
 
     try {
-      // STRICT: Use URL based on environment setting only
-      const baseUrl = getEasyParcelUrl(environment === 'sandbox');
-
       console.log(
-        `🔍 Testing EasyParcel API - Environment: ${environment}, URL: ${baseUrl}`
+        `🔍 Testing EasyParcel API - Endpoint: ${endpoint}`
       );
 
       // Use the same API format as the working EasyParcel service
       const formData = new URLSearchParams();
       formData.append('api', apiKey);
 
-      const response = await fetch(`${baseUrl}/?ac=EPCheckCreditBalance`, {
+      const response = await fetch(`${endpoint}/?ac=EPCheckCreditBalance`, {
         method: 'POST',
         body: formData.toString(),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'X-API-SECRET': apiSecret,
         },
       });
 
@@ -497,6 +433,7 @@ export class EasyParcelCredentialsService {
           isValid: false,
           error: `HTTP ${response.status}: ${response.statusText}`,
           responseTime,
+          endpoint,
         };
       }
 
@@ -505,24 +442,15 @@ export class EasyParcelCredentialsService {
         `🔍 API Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`
       );
 
-      // Handle EasyParcel sandbox behavior - may return empty/minimal response
+      // Handle EasyParcel empty response behavior
       if (!responseText || responseText.trim().length === 0) {
-        // For sandbox, empty response with 200 status indicates successful authentication
-        if (environment === 'sandbox') {
-          return {
-            isValid: true,
-            responseTime,
-            servicesFound: 0, // Sandbox may return no services
-            endpoint: baseUrl,
-          };
-        } else {
-          return {
-            isValid: false,
-            error: 'Empty response from API',
-            responseTime,
-            endpoint: baseUrl,
-          };
-        }
+        // Empty response with 200 status may indicate successful authentication
+        return {
+          isValid: true,
+          responseTime,
+          servicesFound: 0,
+          endpoint,
+        };
       }
 
       // Try to parse JSON response
@@ -539,14 +467,14 @@ export class EasyParcelCredentialsService {
             isValid: false,
             error: 'Server error - HTML response received',
             responseTime,
-            endpoint: baseUrl,
+            endpoint,
           };
         }
         return {
           isValid: false,
           error: 'Invalid JSON response',
           responseTime,
-          endpoint: baseUrl,
+          endpoint,
         };
       }
 
@@ -556,14 +484,14 @@ export class EasyParcelCredentialsService {
           isValid: true,
           responseTime,
           servicesFound: data.result ? 1 : 0,
-          endpoint: baseUrl,
+          endpoint,
         };
       } else if (data.api_status === 'Fail' || data.error_remark) {
         return {
           isValid: false,
           error: data.error_remark || 'API authentication failed',
           responseTime,
-          endpoint: baseUrl,
+          endpoint,
         };
       }
 
@@ -572,17 +500,16 @@ export class EasyParcelCredentialsService {
         isValid: false,
         error: 'Unexpected API response format',
         responseTime,
-        endpoint: baseUrl,
+        endpoint,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      const baseUrl = getEasyParcelUrl(environment === 'sandbox');
 
       return {
         isValid: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         responseTime,
-        endpoint: baseUrl,
+        endpoint,
       };
     }
   }

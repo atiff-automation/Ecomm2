@@ -269,16 +269,13 @@ export default function AdminOrderShippingPage() {
     return <div className="p-6">Loading orders...</div>;
   }
 
-  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Shipping
+  // Flat navigation tabs - consistent across all shipping pages
   const tabs: TabConfig[] = [
-    { id: 'orders', label: 'Shipping Orders', href: '/admin/shipping/orders' },
-    {
-      id: 'configuration',
-      label: 'Configuration',
-      href: '/admin/shipping/config',
-    },
-    { id: 'couriers', label: 'Couriers', href: '/admin/shipping' },
-    { id: 'tracking', label: 'Tracking', href: '/admin/shipping/fulfillment' },
+    { id: 'dashboard', label: 'Dashboard', href: '/admin/shipping' },
+    { id: 'policies', label: 'Shipping Policies', href: '/admin/shipping/policies' },
+    { id: 'couriers', label: 'Courier Management', href: '/admin/shipping/couriers' },
+    { id: 'orders', label: 'Order Processing', href: '/admin/shipping/orders' },
+    { id: 'system', label: 'System Config', href: '/admin/shipping/system' },
   ];
 
   return (

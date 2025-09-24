@@ -228,7 +228,7 @@ export class EasyParcelService {
           console.log(`🔄 EasyParcel baseURL switched to: ${newBaseURL}`);
         }
 
-        this.initializeClient(credentials.apiKey, credentials.apiSecret);
+        this.initializeClient(credentials.apiKey);
 
         console.log(
           `🚚 EasyParcel configured from ${credentials.source} (${this.isSandbox ? 'sandbox' : 'production'}) - URL: ${this.baseURL}`
@@ -250,8 +250,12 @@ export class EasyParcelService {
 
   /**
    * Ensure credentials are loaded before making API calls
+   * Follows @CLAUDE.md systematic approach with production-first error handling
    */
   private async ensureCredentials(): Promise<void> {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
     if (
       !this.isConfigured ||
       Date.now() - this.lastCredentialCheck >= this.CREDENTIAL_CACHE_DURATION
@@ -260,23 +264,27 @@ export class EasyParcelService {
     }
 
     if (!this.isConfigured) {
-      throw new Error(
-        'EasyParcel credentials not configured. Please configure API credentials in admin panel.'
-      );
+      if (isStrictMode) {
+        throw new Error(
+          'EasyParcel credentials required for production. Please configure API credentials in System Settings under Admin > Shipping > System Config. No fallback credentials are available in production mode.'
+        );
+      } else {
+        throw new Error(
+          'EasyParcel credentials not configured. Please configure API credentials in System Settings or set environment variables for development.'
+        );
+      }
     }
   }
 
-  private initializeClient(apiKey: string, apiSecret: string): void {
+  private initializeClient(apiKey: string): void {
     console.log(`🔧 Initializing EasyParcel client:`, {
       apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
-      apiSecret: apiSecret ? `${apiSecret.substring(0, 8)}...` : 'MISSING',
       baseURL: this.baseURL,
       isSandbox: this.isSandbox,
     });
 
     // Set instance variables BEFORE creating client
     this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
 
     // Get timeout values from centralized config
     const timeout = getEasyParcelTimeout(this.isSandbox);
@@ -543,16 +551,25 @@ export class EasyParcelService {
         method: error.config?.method,
       });
 
-      // Only fall back to mock data in sandbox/development mode
-      if (this.isSandbox || process.env.NODE_ENV === 'development') {
-        console.log(
-          '🔄 Falling back to mock shipping rates due to API error (development mode)'
-        );
-        return this.getMockRateResponse(request);
+      // Environment-aware error handling following @CLAUDE.md principles
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
+      // Production mode: NO mock fallback, fail clearly with actionable guidance
+      if (isStrictMode) {
+        const productionError = this.handleApiError(error);
+        console.error('❌ Production EasyParcel API failure - no fallback available:', {
+          originalError: productionError.message,
+          guidance: 'Verify API credentials in System Settings and check EasyParcel service status'
+        });
+        throw productionError;
       }
 
-      // In production, throw the error to be handled by the business layer
-      throw this.handleApiError(error);
+      // Development mode: allow mock fallback for testing
+      console.log(
+        '🔄 Development mode: Falling back to mock shipping rates due to API error'
+      );
+      return this.getMockRateResponse(request);
     }
   }
 
@@ -583,12 +600,16 @@ export class EasyParcelService {
     } catch (error) {
       console.error('Error booking shipment:', error);
 
-      // Return mock booking in development
-      if (this.isSandbox || process.env.NODE_ENV === 'development') {
-        return this.getMockShipmentBooking(request);
+      // Environment-aware error handling following @CLAUDE.md principles
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
+      if (isStrictMode) {
+        throw this.handleApiError(error);
       }
 
-      throw this.handleApiError(error);
+      // Development mode: mock booking for testing
+      return this.getMockShipmentBooking(request);
     }
   }
 
@@ -706,18 +727,23 @@ export class EasyParcelService {
     } catch (error) {
       console.error('Error checking credit balance:', error);
 
-      if (this.isSandbox || process.env.NODE_ENV === 'development') {
-        const mockBalance = parseFloat(
-          process.env.MOCK_CREDIT_BALANCE || '1000.00'
-        );
-        return {
-          balance: mockBalance,
-          currency: 'MYR',
-          wallets: [{ balance: mockBalance, currency_code: 'MYR' }],
-        };
+      // Environment-aware error handling following @CLAUDE.md principles
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+
+      if (isStrictMode) {
+        throw this.handleApiError(error);
       }
 
-      throw this.handleApiError(error);
+      // Development mode: mock balance for testing
+      const mockBalance = parseFloat(
+        process.env.MOCK_CREDIT_BALANCE || '1000.00'
+      );
+      return {
+        balance: mockBalance,
+        currency: 'MYR',
+        wallets: [{ balance: mockBalance, currency_code: 'MYR' }],
+      };
     }
   }
 
@@ -1276,7 +1302,6 @@ startxref
       credentialSource: this.credentialSource,
       lastCredentialCheck: this.lastCredentialCheck,
       hasApiKey: !!this.apiKey,
-      hasApiSecret: !!this.apiSecret,
     };
   }
 
