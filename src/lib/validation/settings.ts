@@ -337,6 +337,7 @@ export const malaysianStatesOptions = [
   { value: 'PLS', label: 'Perlis' },
   { value: 'PNG', label: 'Pulau Pinang' },
   { value: 'KUL', label: 'Kuala Lumpur' },
+  { value: 'PJY', label: 'Putrajaya' },
   { value: 'TRG', label: 'Terengganu' },
   { value: 'SEL', label: 'Selangor' },
   { value: 'SBH', label: 'Sabah' },

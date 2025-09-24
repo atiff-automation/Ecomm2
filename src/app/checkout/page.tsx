@@ -173,8 +173,8 @@ export default function CheckoutPage() {
 
   // Postcode validation state
   const [postcodeValidation, setPostcodeValidation] = useState<{
-    shipping: { valid: boolean; error?: string; loading?: boolean };
-    billing: { valid: boolean; error?: string; loading?: boolean };
+    shipping: { valid: boolean; error?: string; loading?: boolean; manualEntry?: boolean };
+    billing: { valid: boolean; error?: string; loading?: boolean; manualEntry?: boolean };
   }>({
     shipping: { valid: true },
     billing: { valid: true },
@@ -397,13 +397,14 @@ export default function CheckoutPage() {
               zone: validation.location.zone,
             });
           } else if (postcode.length === 5) {
-            // Invalid postcode from database
+            // Invalid postcode from database - enable manual entry
             setPostcodeValidation(prev => ({
               ...prev,
               [addressType]: {
                 valid: false,
-                error: `${validation.error || 'Invalid Malaysian postcode'}. This may affect shipping calculation.`,
+                error: `${validation.error || 'Invalid Malaysian postcode'}. Please enter city and state manually to proceed.`,
                 loading: false,
+                manualEntry: true,
               },
             }));
           } else {
@@ -566,7 +567,7 @@ export default function CheckoutPage() {
       }
       if (!shippingAddress.postcode.trim()) {
         errors['shippingAddress.postcode'] = 'Postcode is required';
-      } else if (!postcodeValidation.shipping.valid) {
+      } else if (!postcodeValidation.shipping.valid && !postcodeValidation.shipping.manualEntry) {
         errors['shippingAddress.postcode'] =
           'Please enter a valid Malaysian postcode for accurate shipping calculation';
       }
@@ -593,7 +594,7 @@ export default function CheckoutPage() {
         }
         if (!billingAddress.postcode.trim()) {
           errors['billingAddress.postcode'] = 'Postcode is required';
-        } else if (!postcodeValidation.billing.valid) {
+        } else if (!postcodeValidation.billing.valid && !postcodeValidation.billing.manualEntry) {
           errors['billingAddress.postcode'] =
             'Please enter a valid Malaysian postcode';
         }
@@ -1094,19 +1095,35 @@ export default function CheckoutPage() {
                 </div>
                 {/* City - Second position, auto-filled from postcode */}
                 <div>
-                  <Label htmlFor="shippingCity">City *</Label>
+                  <Label htmlFor="shippingCity">
+                    City *
+                    {postcodeValidation.shipping.manualEntry && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        Manual Entry
+                      </Badge>
+                    )}
+                  </Label>
                   <Input
                     id="shippingCity"
                     value={shippingAddress.city}
                     onChange={e =>
                       handleAddressChange('shipping', 'city', e.target.value)
                     }
+                    placeholder={postcodeValidation.shipping.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
+                    className={postcodeValidation.shipping.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}
                     required
                   />
                 </div>
                 {/* State - Third position, auto-filled from postcode */}
                 <div>
-                  <Label htmlFor="shippingState">State *</Label>
+                  <Label htmlFor="shippingState">
+                    State *
+                    {postcodeValidation.shipping.manualEntry && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        Manual Entry
+                      </Badge>
+                    )}
+                  </Label>
                   <Select
                     value={shippingAddress.state}
                     onValueChange={value =>
@@ -1315,19 +1332,35 @@ export default function CheckoutPage() {
                   </div>
                   {/* City - Second position, auto-filled from postcode */}
                   <div>
-                    <Label htmlFor="billingCity">City *</Label>
+                    <Label htmlFor="billingCity">
+                      City *
+                      {postcodeValidation.billing.manualEntry && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Manual Entry
+                        </Badge>
+                      )}
+                    </Label>
                     <Input
                       id="billingCity"
                       value={billingAddress.city}
                       onChange={e =>
                         handleAddressChange('billing', 'city', e.target.value)
                       }
+                      placeholder={postcodeValidation.billing.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
+                      className={postcodeValidation.billing.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}
                       required
                     />
                   </div>
                   {/* State - Third position, auto-filled from postcode */}
                   <div>
-                    <Label htmlFor="billingState">State *</Label>
+                    <Label htmlFor="billingState">
+                      State *
+                      {postcodeValidation.billing.manualEntry && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Manual Entry
+                        </Badge>
+                      )}
+                    </Label>
                     <Select
                       value={billingAddress.state}
                       onValueChange={value =>

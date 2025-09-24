@@ -41,25 +41,6 @@ export class ServerPostcodeService {
   private isRedisAvailable = false;
   private fallbackCache = new Map<string, { data: LocationData; expires: number }>();
 
-  // State mappings for backward compatibility
-  private readonly stateCodeMappings: Record<string, MalaysianState> = {
-    'JHR': 'JOH',
-    'KDH': 'KDH', 
-    'KTN': 'KTN',
-    'KUL': 'KUL',
-    'LBN': 'LBN',
-    'MLK': 'MLK',
-    'NSN': 'NSN',
-    'PHG': 'PHG',
-    'PJY': 'PJY',
-    'PLS': 'PLS',
-    'PNG': 'PNG',
-    'PRK': 'PRK',
-    'SBH': 'SBH',
-    'SGR': 'SEL',
-    'SRW': 'SWK',
-    'TRG': 'TRG'
-  };
 
   private constructor() {
     this.initRedis();
@@ -166,11 +147,9 @@ export class ServerPostcodeService {
         return null;
       }
 
-      const legacyStateCode = this.stateCodeMappings[postcodeData.stateCode] || postcodeData.stateCode;
-
       const locationData: LocationData = {
-        state: legacyStateCode as MalaysianState,
-        stateCode: legacyStateCode,
+        state: postcodeData.stateCode as MalaysianState,
+        stateCode: postcodeData.stateCode,
         stateName: postcodeData.state.name,
         city: postcodeData.district,
         zone: this.getZone(postcodeData.stateCode),
@@ -210,7 +189,7 @@ export class ServerPostcodeService {
         code: state.id,
         name: state.name,
         zone: this.getZone(state.id),
-        legacyCode: (this.stateCodeMappings[state.id] || state.id) as MalaysianState
+        legacyCode: state.id as MalaysianState
       }));
     } catch (error) {
       console.error('Error fetching states:', error);
