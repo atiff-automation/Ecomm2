@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
+import { easyParcelService } from '@/lib/shipping/easyparcel-service';
 
 interface SaveCredentialsRequest {
   apiKey: string;
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
       session.user.id
     );
 
+    // CRITICAL FIX: Refresh EasyParcel service to use new credentials immediately
+    console.log('🔄 Refreshing EasyParcel service after credential save');
+    await easyParcelService.refreshCredentials();
+
     // Log the operation for audit trail
     await easyParcelCredentialsService.logCredentialOperation(
       'SAVE',
@@ -71,6 +76,7 @@ export async function POST(request: NextRequest) {
         userEmail: session.user.email,
         endpoint: data.endpoint,
         timestamp: new Date().toISOString(),
+        serviceRefreshed: true,
       }
     );
 

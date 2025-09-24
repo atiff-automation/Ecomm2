@@ -62,6 +62,7 @@ interface DashboardData {
   statistics: ShippingStats;
   apiStatus: APIConnectionStatus;
   balance?: BalanceInfo;
+  balanceError?: { error: string; requiresConfiguration?: boolean };
   configured: boolean;
 }
 
@@ -100,12 +101,34 @@ export default function ShippingDashboardPage() {
       const [configResponse, statsResponse, balanceResponse] = await Promise.all([
         fetch('/api/admin/shipping/config'),
         fetch('/api/admin/shipping/stats'),
-        fetch('/api/admin/shipping/balance').catch(() => null), // Balance is optional
+        fetch('/api/admin/shipping/balance').catch(err => {
+          // Handle network errors but still pass the error for proper handling
+          console.error('Balance API network error:', err);
+          return new Response(JSON.stringify({ error: 'Network error', requiresConfiguration: true }), { status: 500 });
+        })
       ]);
 
       const configData = configResponse.ok ? await configResponse.json() : null;
       const statsData = statsResponse.ok ? await statsResponse.json() : null;
-      const balanceData = balanceResponse?.ok ? await balanceResponse.json() : null;
+
+      // CRITICAL FIX: Properly handle balance API response including error states
+      let balanceData = null;
+      let balanceError = null;
+      if (balanceResponse.ok) {
+        balanceData = await balanceResponse.json();
+      } else {
+        // Parse error response to understand why balance failed
+        try {
+          balanceError = await balanceResponse.json();
+        } catch {
+          balanceError = { error: 'Failed to fetch balance', requiresConfiguration: true };
+        }
+      }
+
+      // CRITICAL FIX: Determine API status based on balance API validation result
+      // If balance API returns success, credentials are valid
+      // If balance API has requiresConfiguration error, credentials are invalid/missing
+      const hasValidCredentials = !!(balanceData?.success && !balanceError?.requiresConfiguration);
 
       setDashboardData({
         profile: configData?.profile,
@@ -116,12 +139,13 @@ export default function ShippingDashboardPage() {
           activeCouriers: 0,
         },
         apiStatus: {
-          connected: !!configData?.profile,
+          connected: hasValidCredentials,
           lastChecked: new Date().toISOString(),
           responseTime: 120,
         },
         balance: balanceData?.balance,
-        configured: !!configData?.profile,
+        balanceError: balanceError,
+        configured: hasValidCredentials,
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -140,8 +164,26 @@ export default function ShippingDashboardPage() {
         setDashboardData(prev => ({
           ...prev,
           balance: data.balance,
+          balanceError: undefined, // Clear any previous errors
+          apiStatus: {
+            ...prev.apiStatus,
+            connected: true, // If balance API succeeds, connection is valid
+          }
         }));
         toast.success('Balance refreshed');
+      } else {
+        // CRITICAL FIX: Handle balance refresh errors including invalid credentials
+        const errorData = await response.json();
+        setDashboardData(prev => ({
+          ...prev,
+          balance: undefined,
+          balanceError: errorData,
+          apiStatus: {
+            ...prev.apiStatus,
+            connected: false, // Any balance API failure means no valid connection
+          }
+        }));
+        toast.error(errorData.message || 'Failed to refresh balance');
       }
     } catch (error) {
       console.error('Error refreshing balance:', error);
@@ -267,8 +309,8 @@ export default function ShippingDashboardPage() {
           </Card>
         </div>
 
-        {/* EasyParcel Balance */}
-        {dashboardData.balance && (
+        {/* EasyParcel Balance - Always show, with error states */}
+        {(dashboardData.balance || dashboardData.balanceError) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -277,45 +319,88 @@ export default function ShippingDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="text-3xl font-bold">
-                    <span
-                      className={`${
-                        dashboardData.balance.status === 'critical'
-                          ? 'text-red-600'
-                          : dashboardData.balance.status === 'low'
-                            ? 'text-yellow-600'
-                            : 'text-green-600'
-                      }`}
-                    >
-                      {dashboardData.balance.currency} {dashboardData.balance.current.toFixed(2)}
-                    </span>
+              {/* CRITICAL FIX: Show different states based on balance vs error */}
+              {dashboardData.balance ? (
+                // Show balance when available
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-3xl font-bold">
+                      <span
+                        className={`${
+                          dashboardData.balance.status === 'critical'
+                            ? 'text-red-600'
+                            : dashboardData.balance.status === 'low'
+                              ? 'text-yellow-600'
+                              : 'text-green-600'
+                        }`}
+                      >
+                        {dashboardData.balance.currency} {dashboardData.balance.current.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <Badge
+                        variant={
+                          dashboardData.balance.status === 'critical'
+                            ? 'destructive'
+                            : dashboardData.balance.status === 'low'
+                              ? 'secondary'
+                              : 'default'
+                        }
+                      >
+                        {dashboardData.balance.status.toUpperCase()}
+                      </Badge>
+                      <p className="text-sm text-gray-600">
+                        {dashboardData.balance.cacheInfo.cached
+                          ? `Cached ${dashboardData.balance.cacheInfo.age}s ago`
+                          : 'Live data'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Badge
-                      variant={
-                        dashboardData.balance.status === 'critical'
-                          ? 'destructive'
-                          : dashboardData.balance.status === 'low'
-                            ? 'secondary'
-                            : 'default'
-                      }
-                    >
-                      {dashboardData.balance.status.toUpperCase()}
-                    </Badge>
-                    <p className="text-sm text-gray-600">
-                      {dashboardData.balance.cacheInfo.cached
-                        ? `Cached ${dashboardData.balance.cacheInfo.age}s ago`
-                        : 'Live data'}
-                    </p>
+                  <Button onClick={refreshBalance} disabled={refreshing} variant="outline" size="sm">
+                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              ) : dashboardData.balanceError ? (
+                // Show error state when balance is not available
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-3xl font-bold text-gray-400">
+                      <span>No Data</span>
+                    </div>
+                    <div className="space-y-1">
+                      <Badge variant="outline" className="border-red-300 text-red-600">
+                        {dashboardData.balanceError.requiresConfiguration ? 'NOT CONFIGURED' : 'ERROR'}
+                      </Badge>
+                      <p className="text-sm text-red-600">
+                        {dashboardData.balanceError.requiresConfiguration
+                          ? 'Configure API credentials in System Config'
+                          : dashboardData.balanceError.error}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {dashboardData.balanceError.requiresConfiguration && (
+                      <Button asChild variant="default" size="sm">
+                        <Link href="/admin/shipping/system">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Configure
+                        </Link>
+                      </Button>
+                    )}
+                    <Button onClick={refreshBalance} disabled={refreshing} variant="outline" size="sm">
+                      <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                      Retry
+                    </Button>
                   </div>
                 </div>
-                <Button onClick={refreshBalance} disabled={refreshing} variant="outline" size="sm">
-                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
+              ) : (
+                // Fallback loading state
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">Loading balance...</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

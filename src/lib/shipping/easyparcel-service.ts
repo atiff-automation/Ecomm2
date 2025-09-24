@@ -215,12 +215,13 @@ export class EasyParcelService {
 
       if (credentials) {
         this.isConfigured = true;
-        this.isSandbox = credentials.isSandbox;
+
+        // CRITICAL FIX: Use the actual endpoint from credentials instead of determining URL based on sandbox flag
+        const newBaseURL = credentials.endpoint;
+        this.isSandbox = newBaseURL.includes('demo.connect.easyparcel.my'); // Determine sandbox from URL
+
         this.credentialSource = credentials.source;
         this.lastCredentialCheck = now;
-
-        // CRITICAL FIX: Set the correct baseURL based on environment
-        const newBaseURL = getEasyParcelUrl(this.isSandbox);
 
         // Update baseURL if it changed
         if (this.baseURL !== newBaseURL) {

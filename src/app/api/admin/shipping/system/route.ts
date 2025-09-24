@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
 
 interface SystemConfig {
   easyParcelApiKey?: string;
@@ -16,6 +17,7 @@ interface SystemConfig {
 
 /**
  * GET - Retrieve system configuration
+ * CRITICAL FIX: Read endpoint from database instead of environment variables
  */
 export async function GET() {
   try {
@@ -28,10 +30,21 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // CRITICAL FIX: Get endpoint from database credentials service
+    // This ensures the UI shows the actual stored endpoint, not environment fallback
+    const credentialStatus = await easyParcelCredentialsService.getCredentialStatus();
+    const storedEndpoint = credentialStatus.endpoint || 'https://connect.easyparcel.my/';
+
+    console.log('🔍 System config loading endpoint from database:', {
+      endpoint: storedEndpoint,
+      hasCredentials: credentialStatus.hasCredentials,
+      isUsingEnvFallback: credentialStatus.isUsingEnvFallback,
+    });
+
     // Get system configuration following @CLAUDE.md centralized approach
     const config: SystemConfig = {
-      easyParcelApiKey: undefined, // No longer show environment variable status
-      easyParcelEndpoint: process.env.EASYPARCEL_ENDPOINT || 'https://connect.easyparcel.my/',
+      // easyParcelApiKey omitted - no longer show environment variable status
+      easyParcelEndpoint: storedEndpoint, // Now reads from database
       debugMode: process.env.NODE_ENV === 'development',
       logLevel: (process.env.LOG_LEVEL as any) || 'info',
     };

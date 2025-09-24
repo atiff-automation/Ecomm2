@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
+import { easyParcelCredentialsService } from '@/lib/services/easyparcel-credentials';
 import { UserRole } from '@prisma/client';
 import { handleApiError } from '@/lib/error-handler';
 
@@ -63,9 +64,46 @@ function isCacheValid(): boolean {
 async function getBalanceFromAPI(): Promise<any> {
   try {
     console.log('💳 Fetching EasyParcel balance from API...');
+
+    // CRITICAL FIX: First get actual credentials for validation
+    const credentials = await easyParcelCredentialsService.getCredentialsForService();
+
+    if (!credentials) {
+      console.log('🚫 No credentials configured - clearing balance cache');
+      balanceCache = null; // Clear cache
+      return {
+        balance: 0,
+        currency: 'MYR',
+        wallets: [],
+        noCredentials: true,
+      };
+    }
+
+    // CRITICAL FIX: Validate credentials by making actual API test
+    const validation = await easyParcelCredentialsService.validateCredentials(
+      credentials.apiKey,
+      credentials.endpoint
+    );
+
+    if (!validation.isValid) {
+      console.log('🚫 Invalid credentials detected - clearing balance cache');
+      balanceCache = null; // Clear cache
+      return {
+        balance: 0,
+        currency: 'MYR',
+        wallets: [],
+        invalidCredentials: true,
+        error: validation.error || 'Invalid API credentials',
+      };
+    }
+
+    // CRITICAL FIX: Refresh EasyParcel service credentials to ensure it uses latest credentials
+    console.log('🔄 Refreshing EasyParcel service credentials before balance check');
+    await easyParcelService.refreshCredentials();
+
     const result = await easyParcelService.checkCreditBalance();
 
-    // Cache the result
+    // Cache the result only if credentials are valid
     balanceCache = {
       data: result,
       timestamp: Date.now(),
@@ -75,6 +113,36 @@ async function getBalanceFromAPI(): Promise<any> {
     return result;
   } catch (error) {
     console.error('❌ Error fetching balance from API:', error);
+
+    // CRITICAL FIX: Clear cache on any error to prevent stale data
+    balanceCache = null;
+
+    // Check if error is due to missing or invalid credentials
+    if (error instanceof Error) {
+      if (error.message.includes('credentials not configured')) {
+        console.log('🚫 No credentials configured');
+        return {
+          balance: 0,
+          currency: 'MYR',
+          wallets: [],
+          noCredentials: true,
+        };
+      }
+
+      if (error.message.includes('Credit balance check failed') ||
+          error.message.includes('authentication failed') ||
+          error.message.includes('Invalid API')) {
+        console.log('🚫 Invalid credentials or API failure');
+        return {
+          balance: 0,
+          currency: 'MYR',
+          wallets: [],
+          invalidCredentials: true,
+          error: error.message,
+        };
+      }
+    }
+
     throw error;
   }
 }
@@ -116,6 +184,29 @@ export async function GET(request: NextRequest) {
     const cacheAge = balanceCache
       ? Math.floor((Date.now() - balanceCache.timestamp) / 1000)
       : 0;
+
+    // CRITICAL FIX: Handle "no credentials" or "invalid credentials" state
+    if (balanceData.noCredentials) {
+      return NextResponse.json({
+        success: false,
+        error: 'No EasyParcel API credentials configured',
+        message: 'Please configure API credentials in System Settings to check balance',
+        balance: null,
+        wallets: [],
+        requiresConfiguration: true,
+      });
+    }
+
+    if (balanceData.invalidCredentials) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid EasyParcel API credentials',
+        message: balanceData.error || 'The provided API credentials are invalid. Please check your API key and endpoint URL.',
+        balance: null,
+        wallets: [],
+        requiresConfiguration: true,
+      });
+    }
 
     // Build response
     const balanceInfo: BalanceInfo = {
