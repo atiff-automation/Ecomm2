@@ -31,12 +31,13 @@ export async function GET() {
     }
 
     // CRITICAL FIX: Get endpoint from database credentials service
-    // This ensures the UI shows the actual stored endpoint, not environment fallback
+    // This ensures the UI shows the actual stored endpoint, not hardcoded fallback
     const credentialStatus = await easyParcelCredentialsService.getCredentialStatus();
-    const storedEndpoint = credentialStatus.endpoint || 'https://connect.easyparcel.my/';
+    // Remove hardcoded fallback - only show endpoint if actually stored in database
+    const storedEndpoint = credentialStatus.hasCredentials ? credentialStatus.endpoint : '';
 
     console.log('🔍 System config loading endpoint from database:', {
-      endpoint: storedEndpoint,
+      endpoint: storedEndpoint || '[Empty - no fallback]',
       hasCredentials: credentialStatus.hasCredentials,
       isUsingEnvFallback: credentialStatus.isUsingEnvFallback,
     });

@@ -236,7 +236,12 @@ export class EasyParcelCredentialsService {
       );
 
       const apiKey = this.decryptCredential(encryptedApiKey);
-      const endpoint = endpointConfig?.value || 'https://connect.easyparcel.my';
+      // Remove hardcoded fallback - if no endpoint stored, return null
+      const endpoint = endpointConfig?.value;
+      if (!endpoint) {
+        console.log('❌ No endpoint configured in database');
+        return null;
+      }
 
       console.log(`🔍 Decrypted credentials:`, {
         apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'MISSING',
@@ -289,7 +294,7 @@ export class EasyParcelCredentialsService {
       if (isStrictMode) {
         return {
           hasCredentials: false,
-          endpoint: 'https://connect.easyparcel.my',
+          endpoint: '', // Empty when no credentials configured
           isUsingEnvFallback: false,
         };
       }
@@ -298,7 +303,7 @@ export class EasyParcelCredentialsService {
       const hasEnvCredentials = !!(
         process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
       );
-      const envEndpoint = process.env.EASYPARCEL_ENDPOINT || 'https://connect.easyparcel.my';
+      const envEndpoint = process.env.EASYPARCEL_ENDPOINT || '';
 
       return {
         hasCredentials: hasEnvCredentials,
@@ -312,7 +317,7 @@ export class EasyParcelCredentialsService {
       console.error('Error getting credential status:', error);
       return {
         hasCredentials: false,
-        endpoint: 'https://connect.easyparcel.my',
+        endpoint: '', // Empty when error occurs
         isUsingEnvFallback: false,
       };
     }
@@ -380,7 +385,12 @@ export class EasyParcelCredentialsService {
 
     // Development mode only: fallback to environment variables for developer convenience
     const envApiKey = process.env.EASYPARCEL_API_KEY;
-    const envEndpoint = process.env.EASYPARCEL_ENDPOINT || 'https://connect.easyparcel.my';
+    const envEndpoint = process.env.EASYPARCEL_ENDPOINT;
+
+    if (!envEndpoint && envApiKey) {
+      console.error('⚠️ Environment variable EASYPARCEL_ENDPOINT is required when using EASYPARCEL_API_KEY');
+      return null;
+    }
 
     if (envApiKey) {
       console.warn('⚠️ Development mode: Using environment variable fallback. Configure credentials in System Settings for production.');
