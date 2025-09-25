@@ -39,19 +39,23 @@ app.post('/webhook/chat-integration', (req, res) => {
   setTimeout(() => {
     console.log('🚀 Sending mock response back to chat system...');
 
-    // Create response payload
+    // Create response payload - following WebhookResponseSchema format
     const responsePayload = {
       sessionId: req.body.sessionId,
-      messageId: req.body.messageId,
       response: {
         content: `🤖 Mock n8n Response: I received your message "${req.body.message.content}" and processed it successfully!`,
-        type: 'text',
-        timestamp: new Date().toISOString()
+        type: 'text'
+        // Removed timestamp - not part of response schema
       },
       metadata: {
-        source: 'mock-n8n',
-        processingTime: Math.random() * 1000,
-        processed: true
+        intent: 'product_recommendation',
+        confidence: 0.95,
+        context: {
+          source: 'mock-n8n',
+          processingTime: Math.random() * 1000,
+          processed: true,
+          originalMessageId: req.body.messageId
+        }
       }
     };
 
