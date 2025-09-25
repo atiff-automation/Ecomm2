@@ -114,6 +114,11 @@ export class ProductService {
         queryParams.append('priceMax', params.priceMax.toString());
       }
 
+      // Add features filtering
+      if (params.features && params.features.length > 0) {
+        queryParams.append('features', JSON.stringify(params.features));
+      }
+
       const endpoint = `/api/products?${queryParams.toString()}`;
       const response = await apiClient.get<ProductListResponse>(endpoint);
 

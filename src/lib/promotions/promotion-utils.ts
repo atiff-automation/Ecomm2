@@ -246,7 +246,18 @@ export function getPromotionDisplayText(
   status: PromotionStatus
 ): string | null {
   if (status.isActive) {
-    // Use simple "Promo" text as requested by user instead of time-based text
+    // Show promotional end date information
+    if (status.daysUntilEnd !== undefined) {
+      if (status.daysUntilEnd === 0) {
+        return 'Ends today';
+      } else if (status.daysUntilEnd === 1) {
+        return 'Ends tomorrow';
+      } else if (status.daysUntilEnd <= 7) {
+        return `Ends in ${status.daysUntilEnd} days`;
+      } else {
+        return 'Promo';
+      }
+    }
     return 'Promo';
   } else if (status.isScheduled && status.daysUntilStart !== undefined) {
     if (status.daysUntilStart === 1) {

@@ -62,6 +62,14 @@ const searchProductsSchema = z.object({
   maxPrice: z.string().transform(Number).optional(),
   inStock: z.string().transform(Boolean).optional(),
   featured: z.string().transform(Boolean).optional(),
+  features: z.string().optional().transform((val) => {
+    if (!val) return undefined;
+    try {
+      return JSON.parse(val) as ('featured' | 'promotional' | 'member-qualifying')[];
+    } catch {
+      return undefined;
+    }
+  }),
   sortBy: z.enum(['name', 'price', 'created', 'rating']).default('created'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
@@ -83,6 +91,7 @@ export async function GET(request: NextRequest) {
       maxPrice,
       inStock,
       featured,
+      features,
       sortBy,
       sortOrder,
     } = searchProductsSchema.parse(params);
@@ -126,6 +135,38 @@ export async function GET(request: NextRequest) {
 
     if (featured !== undefined) {
       where.featured = featured;
+    }
+
+    // Handle features filtering
+    if (features && features.length > 0) {
+      const featureConditions: any[] = [];
+
+      features.forEach(feature => {
+        switch (feature) {
+          case 'featured':
+            featureConditions.push({ featured: true });
+            break;
+          case 'promotional':
+            featureConditions.push({ isPromotional: true });
+            break;
+          case 'member-qualifying':
+            featureConditions.push({ isQualifyingForMembership: true });
+            break;
+        }
+      });
+
+      if (featureConditions.length > 0) {
+        if (where.OR) {
+          // If we already have OR conditions from search, create nested structure
+          where.AND = [
+            { OR: where.OR },
+            { OR: featureConditions }
+          ];
+          delete where.OR;
+        } else {
+          where.OR = featureConditions;
+        }
+      }
     }
 
     // Build orderBy

@@ -85,6 +85,7 @@ export interface ProductListParams {
   priceMin?: number;
   priceMax?: number;
   inStock?: boolean;
+  features?: ('featured' | 'promotional' | 'member-qualifying')[];
 }
 
 export interface ProductResponse {
