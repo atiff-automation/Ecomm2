@@ -282,46 +282,144 @@ export class BusinessShippingConfig {
   }
 
   /**
-   * Get pickup address for rate calculations
+   * Get pickup address for EasyParcel rate calculations
+   * Now reads from Business Profile shipping address with explicit validation
    */
   async getPickupAddress(): Promise<AddressStructure> {
-    const profile = await this.getBusinessProfile();
+    const businessProfile = await this.getBusinessProfileFromDatabase();
 
-    if (profile?.pickupAddress) {
-      return profile.pickupAddress;
+    // Explicit validation - no silent fallbacks
+    if (!businessProfile) {
+      throw new Error('BUSINESS_PROFILE_REQUIRED: Please configure your business profile in Admin Settings → Business Profile');
     }
 
-    // Return default pickup address from environment variables
+    if (!businessProfile.shippingAddress) {
+      throw new Error('SHIPPING_ADDRESS_REQUIRED: Please configure shipping address in Admin Settings → Business Profile');
+    }
+
+    // Validate shipping address completeness for EasyParcel compatibility
+    this.validateShippingAddressForEasyParcel(businessProfile.shippingAddress, businessProfile);
+
+    // Map Business Profile shipping address to EasyParcel AddressStructure format
+    return this.mapShippingAddressToEasyParcel(businessProfile.shippingAddress, businessProfile);
+  }
+
+  /**
+   * Get business profile directly from database (not the old shipping config)
+   */
+  private async getBusinessProfileFromDatabase() {
+    try {
+      const profile = await prisma.businessProfile.findFirst();
+      return profile;
+    } catch (error) {
+      console.error('Error fetching business profile:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Validate shipping address for EasyParcel compatibility
+   */
+  private validateShippingAddressForEasyParcel(shippingAddress: any, businessProfile: any): void {
+    // Validate required fields
+    if (!shippingAddress.addressLine1?.trim()) {
+      throw new Error('SHIPPING_ADDRESS_LINE1_REQUIRED: Address Line 1 is required in Business Profile → Shipping Address');
+    }
+
+    if (!shippingAddress.city?.trim()) {
+      throw new Error('SHIPPING_CITY_REQUIRED: City is required in Business Profile → Shipping Address');
+    }
+
+    if (!shippingAddress.state?.trim()) {
+      throw new Error('SHIPPING_STATE_REQUIRED: State is required in Business Profile → Shipping Address');
+    }
+
+    if (!shippingAddress.postalCode?.trim()) {
+      throw new Error('SHIPPING_POSTCODE_REQUIRED: Postal Code is required in Business Profile → Shipping Address');
+    }
+
+    // Validate business contact info for pickup
+    if (!businessProfile.primaryPhone?.trim()) {
+      throw new Error('BUSINESS_PHONE_REQUIRED: Primary Phone is required in Business Profile for EasyParcel pickup contact');
+    }
+
+    if (!businessProfile.legalName?.trim()) {
+      throw new Error('BUSINESS_NAME_REQUIRED: Legal Name is required in Business Profile for EasyParcel pickup');
+    }
+
+    // Validate EasyParcel format compatibility
+    if (!this.validateMalaysianPostcode(shippingAddress.postalCode)) {
+      throw new Error('INVALID_POSTCODE_FORMAT: Postal Code must be 5 digits (e.g., 50000) in Business Profile → Shipping Address');
+    }
+
+    if (!this.validateMalaysianPhone(businessProfile.primaryPhone)) {
+      throw new Error('INVALID_PHONE_FORMAT: Primary Phone must be Malaysian format (+60XXXXXXXXX) in Business Profile');
+    }
+
+    // Validate address line length (EasyParcel limits)
+    if (shippingAddress.addressLine1.length > 100) {
+      throw new Error('ADDRESS_LINE1_TOO_LONG: Address Line 1 must be max 100 characters for EasyParcel compatibility');
+    }
+
+    if (shippingAddress.addressLine2 && shippingAddress.addressLine2.length > 100) {
+      throw new Error('ADDRESS_LINE2_TOO_LONG: Address Line 2 must be max 100 characters for EasyParcel compatibility');
+    }
+
+    if (shippingAddress.city.length > 50) {
+      throw new Error('CITY_TOO_LONG: City must be max 50 characters for EasyParcel compatibility');
+    }
+  }
+
+  /**
+   * Map Business Profile shipping address to EasyParcel AddressStructure format
+   */
+  private mapShippingAddressToEasyParcel(shippingAddress: any, businessProfile: any): AddressStructure {
     return {
-      name: process.env.BUSINESS_NAME || 'EcomJRM Store',
-      phone: process.env.BUSINESS_PHONE || '+60123456789',
-      address_line_1:
-        process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
-      address_line_2: process.env.BUSINESS_ADDRESS_LINE2 || '',
-      city: process.env.BUSINESS_CITY || 'Kuala Lumpur',
-      state: (process.env.BUSINESS_STATE as MalaysianState) || 'KUL',
-      postcode: process.env.BUSINESS_POSTAL_CODE || '50000',
+      name: businessProfile.legalName,
+      company: businessProfile.tradingName || undefined,
+      phone: businessProfile.primaryPhone,
+      email: businessProfile.primaryEmail || undefined,
+      address_line_1: shippingAddress.addressLine1,
+      address_line_2: shippingAddress.addressLine2 || undefined,
+      city: shippingAddress.city,
+      state: shippingAddress.state as MalaysianState,
+      postcode: shippingAddress.postalCode,
       country: 'MY',
     };
   }
 
   /**
-   * Check if business profile is properly configured
+   * Check if business profile is properly configured for EasyParcel
    */
   async isBusinessConfigured(): Promise<boolean> {
-    const profile = await this.getBusinessProfile();
+    try {
+      await this.getPickupAddress();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
 
-    return !!(
-      profile &&
-      profile.businessName &&
-      profile.contactPerson &&
-      profile.contactPhone &&
-      profile.pickupAddress.name &&
-      profile.pickupAddress.address_line_1 &&
-      profile.pickupAddress.city &&
-      profile.pickupAddress.state &&
-      profile.pickupAddress.postcode
-    );
+  /**
+   * Get configuration status with detailed error information
+   */
+  async getConfigurationStatus(): Promise<{
+    configured: boolean;
+    errors: string[];
+    warnings: string[];
+  }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    try {
+      await this.getPickupAddress();
+      return { configured: true, errors: [], warnings: [] };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(errorMessage);
+
+      return { configured: false, errors, warnings };
+    }
   }
 
   /**

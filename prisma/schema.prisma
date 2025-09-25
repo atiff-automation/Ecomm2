@@ -268,14 +268,11 @@ model Order {
   shippingPreferences      Json?
   toyyibpayBillCode        String?
   toyyibpayPaymentUrl      String?
-
-  // Airway Bill Fields
+  airwayBillGenerated      Boolean            @default(false)
+  airwayBillGeneratedAt    DateTime?
   airwayBillNumber         String?
   airwayBillUrl            String?
-  trackingUrl              String?    // ✅ NEW: Public tracking page URL
-  airwayBillGenerated      Boolean             @default(false)
-  airwayBillGeneratedAt    DateTime?
-
+  trackingUrl              String?
   discountUsage            DiscountUsage[]
   orderItems               OrderItem[]
   billingAddress           Address?           @relation("BillingAddress", fields: [billingAddressId], references: [id])
@@ -901,23 +898,23 @@ model MalaysianPostcode {
 }
 
 model AdminTelegramConfig {
-  id                       String   @id @default(cuid())
-  botToken                 String
-  ordersChatId             String
-  inventoryChatId          String?
-  chatManagementChatId     String?
-  systemAlertsChatId       String?
-  ordersEnabled            Boolean  @default(true)
-  inventoryEnabled         Boolean  @default(true)
-  chatManagementEnabled    Boolean  @default(true)
-  systemAlertsEnabled      Boolean  @default(true)
-  dailySummaryEnabled      Boolean  @default(true)
-  timezone                 String   @default("Asia/Kuala_Lumpur")
-  isActive                 Boolean  @unique(map: "unique_active_admin_telegram_config") @default(true)
-  createdBy                String?
-  updatedBy                String?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  botToken              String
+  ordersChatId          String
+  inventoryChatId       String?
+  ordersEnabled         Boolean  @default(true)
+  inventoryEnabled      Boolean  @default(true)
+  dailySummaryEnabled   Boolean  @default(true)
+  timezone              String   @default("Asia/Kuala_Lumpur")
+  isActive              Boolean  @unique(map: "unique_active_admin_telegram_config") @default(true)
+  createdBy             String?
+  updatedBy             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  chatManagementChatId  String?
+  chatManagementEnabled Boolean  @default(true)
+  systemAlertsChatId    String?
+  systemAlertsEnabled   Boolean  @default(true)
 
   @@index([isActive])
   @@index([ordersEnabled])
@@ -1033,8 +1030,8 @@ model ChatSession {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   expiresAt    DateTime?
-  endedAt      DateTime?
   archivedAt   DateTime?
+  endedAt      DateTime?
   guestPhone   String?
   ipAddress    String?
   lastActivity DateTime      @default(now())
@@ -1133,7 +1130,7 @@ model ChatBackup {
   createdAt    DateTime @default(now())
   fileSize     BigInt
   sessionCount Int
-  status       String   // "completed", "failed", "in_progress"
+  status       String
 
   @@unique([month, year])
   @@index([year, month])
@@ -1143,25 +1140,25 @@ model ChatBackup {
 }
 
 model NotificationLog {
-  id                 String   @id @default(cuid())
-  timestamp          DateTime @default(now())
-  level              String
-  event              String
-  channel            String
-  userId             String?
-  notificationId     String?
-  message            String
-  metadata           String?
-  duration           Int?
-  errorName          String?
-  errorMessage       String?
-  errorStack         String?
-  errorCode          String?
-  contextIp          String?
-  contextUserAgent   String?
-  contextEndpoint    String?
-  contextSessionId   String?
-  createdAt          DateTime @default(now())
+  id               String   @id @default(cuid())
+  timestamp        DateTime @default(now())
+  level            String
+  event            String
+  channel          String
+  userId           String?
+  notificationId   String?
+  message          String
+  metadata         String?
+  duration         Int?
+  errorName        String?
+  errorMessage     String?
+  errorStack       String?
+  errorCode        String?
+  contextIp        String?
+  contextUserAgent String?
+  contextEndpoint  String?
+  contextSessionId String?
+  createdAt        DateTime @default(now())
 
   @@index([timestamp])
   @@index([level])
@@ -1174,20 +1171,20 @@ model NotificationLog {
 }
 
 model FailedNotification {
-  id                String    @id @default(cuid())
-  type              String
-  payload           String
-  recipient         String
-  channel           String
-  failureReason     String
-  stackTrace        String?
-  retryCount        Int       @default(0)
-  nextRetryAt       DateTime?
-  metadata          String?
-  createdAt         DateTime  @default(now())
-  lastAttemptAt     DateTime  @default(now())
-  resolvedAt        DateTime?
-  permanentFailure  Boolean   @default(false)
+  id               String    @id @default(cuid())
+  type             String
+  payload          String
+  recipient        String
+  channel          String
+  failureReason    String
+  stackTrace       String?
+  retryCount       Int       @default(0)
+  nextRetryAt      DateTime?
+  metadata         String?
+  createdAt        DateTime  @default(now())
+  lastAttemptAt    DateTime  @default(now())
+  resolvedAt       DateTime?
+  permanentFailure Boolean   @default(false)
 
   @@index([nextRetryAt])
   @@index([retryCount])

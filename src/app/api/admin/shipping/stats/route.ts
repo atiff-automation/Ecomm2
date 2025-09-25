@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       // Pending booking (orders without shipments or draft shipments)
       prisma.order.count({
         where: {
-          status: 'PAID',
+          paymentStatus: 'PAID',
           OR: [{ shipment: null }, { shipment: { status: 'DRAFT' } }],
         },
       }),

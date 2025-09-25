@@ -12,7 +12,7 @@
     "lint:fix": "next lint --fix",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:seed:postcodes": "npx tsx prisma/seed-malaysian-postcodes.ts",
-    "db:reset": "npx prisma migrate reset --force && npm run db:seed",
+    "db:reset": "npx prisma migrate reset --force && npm run db:seed && npm run db:seed:postcodes",
     "db:backup": "./scripts/db-backup.sh",
     "db:restore": "./scripts/db-restore.sh",
     "db:migrate": "./scripts/safe-migrate.sh",
