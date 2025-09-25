@@ -61,7 +61,8 @@ export default function BusinessProfilePage() {
     formState: { errors, isDirty },
     reset,
     setValue,
-    watch
+    watch,
+    getValues
   } = useForm<BusinessProfileFormData>({
     resolver: zodResolver(businessProfileSchema),
     defaultValues: {
@@ -213,46 +214,96 @@ export default function BusinessProfilePage() {
   };
 
   const copyOperationalToShipping = () => {
-    const operational = watchedValues.operationalAddress;
-    if (!operational) {
+    // Hybrid approach: Get DOM values for standard fields, form values for postal code
+    const addressLine1 = (document.querySelector('input[name="operationalAddress.addressLine1"]') as HTMLInputElement)?.value || '';
+    const addressLine2 = (document.querySelector('input[name="operationalAddress.addressLine2"]') as HTMLInputElement)?.value || '';
+    const city = (document.querySelector('input[name="operationalAddress.city"]') as HTMLInputElement)?.value || '';
+    const state = (document.querySelector('select[name="operationalAddress.state"]') as HTMLSelectElement)?.value || '';
+    const operationalAddress = getValues('operationalAddress');
+    const postalCode = operationalAddress.postalCode || '';
+
+    if (!addressLine1 && !city && !state && !postalCode) {
       toast.error('No operational address to copy');
       return;
     }
 
-    setValue('shippingAddress.addressLine1', operational.addressLine1 || '');
-    setValue('shippingAddress.addressLine2', operational.addressLine2 || '');
-    setValue('shippingAddress.city', operational.city || '');
-    setValue('shippingAddress.state', operational.state || '');
-    setValue('shippingAddress.postalCode', operational.postalCode || '');
-    
+    // Update React Hook Form for standard fields
+    setValue('shippingAddress.addressLine1', addressLine1);
+    setValue('shippingAddress.addressLine2', addressLine2);
+    setValue('shippingAddress.city', city);
+    setValue('shippingAddress.state', state);
+
+    // Also directly update DOM inputs to ensure immediate visual feedback for standard fields
+    const shippingAddressLine1 = document.querySelector('input[name="shippingAddress.addressLine1"]') as HTMLInputElement;
+    const shippingAddressLine2 = document.querySelector('input[name="shippingAddress.addressLine2"]') as HTMLInputElement;
+    const shippingCity = document.querySelector('input[name="shippingAddress.city"]') as HTMLInputElement;
+    const shippingState = document.querySelector('select[name="shippingAddress.state"]') as HTMLSelectElement;
+
+    if (shippingAddressLine1) shippingAddressLine1.value = addressLine1;
+    if (shippingAddressLine2) shippingAddressLine2.value = addressLine2;
+    if (shippingCity) shippingCity.value = city;
+    if (shippingState) shippingState.value = state;
+
+    // Use handlePostcodeChange for postal code to properly manage validation
+    if (postalCode) {
+      handlePostcodeChange('shipping', postalCode);
+    } else {
+      setValue('shippingAddress.postalCode', '');
+    }
+
     // Copy postcode validation state
     setPostcodeValidation(prev => ({
       ...prev,
       shipping: { ...prev.operational }
     }));
-    
+
     toast.success('Copied operational address to shipping address');
   };
 
   const copyRegisteredToOperational = () => {
-    const registered = watchedValues.registeredAddress;
-    if (!registered) {
+    // Hybrid approach: Get DOM values for standard fields, form values for postal code
+    const addressLine1 = (document.querySelector('input[name="registeredAddress.addressLine1"]') as HTMLInputElement)?.value || '';
+    const addressLine2 = (document.querySelector('input[name="registeredAddress.addressLine2"]') as HTMLInputElement)?.value || '';
+    const city = (document.querySelector('input[name="registeredAddress.city"]') as HTMLInputElement)?.value || '';
+    const state = (document.querySelector('select[name="registeredAddress.state"]') as HTMLSelectElement)?.value || '';
+    const registeredAddress = getValues('registeredAddress');
+    const postalCode = registeredAddress.postalCode || '';
+
+    if (!addressLine1 && !city && !state && !postalCode) {
       toast.error('No registered address to copy');
       return;
     }
 
-    setValue('operationalAddress.addressLine1', registered.addressLine1 || '');
-    setValue('operationalAddress.addressLine2', registered.addressLine2 || '');
-    setValue('operationalAddress.city', registered.city || '');
-    setValue('operationalAddress.state', registered.state || '');
-    setValue('operationalAddress.postalCode', registered.postalCode || '');
-    
+    // Update React Hook Form for standard fields
+    setValue('operationalAddress.addressLine1', addressLine1);
+    setValue('operationalAddress.addressLine2', addressLine2);
+    setValue('operationalAddress.city', city);
+    setValue('operationalAddress.state', state);
+
+    // Also directly update DOM inputs to ensure immediate visual feedback for standard fields
+    const opAddressLine1 = document.querySelector('input[name="operationalAddress.addressLine1"]') as HTMLInputElement;
+    const opAddressLine2 = document.querySelector('input[name="operationalAddress.addressLine2"]') as HTMLInputElement;
+    const opCity = document.querySelector('input[name="operationalAddress.city"]') as HTMLInputElement;
+    const opState = document.querySelector('select[name="operationalAddress.state"]') as HTMLSelectElement;
+
+    if (opAddressLine1) opAddressLine1.value = addressLine1;
+    if (opAddressLine2) opAddressLine2.value = addressLine2;
+    if (opCity) opCity.value = city;
+    if (opState) opState.value = state;
+
+    // Use handlePostcodeChange for postal code to properly manage validation
+    if (postalCode) {
+      handlePostcodeChange('operational', postalCode);
+    } else {
+      setValue('operationalAddress.postalCode', '');
+    }
+
     // Copy postcode validation state
     setPostcodeValidation(prev => ({
       ...prev,
       operational: { ...prev.registered }
     }));
-    
+
     toast.success('Copied registered address to operational address');
   };
 

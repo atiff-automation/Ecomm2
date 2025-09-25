@@ -192,7 +192,106 @@ export const notificationPreferencesSchema = z.object({
 });
 
 /**
- * Business Profile Schema (Admin)
+ * Address Schema for Business Profile
+ */
+export const businessAddressSchema = z.object({
+  addressLine1: z
+    .string()
+    .min(1, 'Address line 1 is required')
+    .max(100, 'Address line 1 must be less than 100 characters'),
+
+  addressLine2: z
+    .string()
+    .max(100, 'Address line 2 must be less than 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  city: z
+    .string()
+    .min(1, 'City is required')
+    .max(50, 'City must be less than 50 characters'),
+
+  state: z.enum(MalaysianStates, {
+    errorMap: () => ({ message: 'Please select a valid Malaysian state' }),
+  }),
+
+  postalCode: z
+    .string()
+    .regex(
+      MALAYSIAN_POSTCODE_REGEX,
+      'Invalid Malaysian postal code (5 digits)'
+    ),
+
+  country: z.literal('Malaysia'),
+});
+
+/**
+ * Optional Address Schema (for operational and shipping addresses)
+ */
+export const optionalBusinessAddressSchema = z.object({
+  addressLine1: z
+    .string()
+    .max(100, 'Address line 1 must be less than 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  addressLine2: z
+    .string()
+    .max(100, 'Address line 2 must be less than 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  city: z
+    .string()
+    .max(50, 'City must be less than 50 characters')
+    .optional()
+    .or(z.literal('')),
+
+  state: z.enum(MalaysianStates, {
+    errorMap: () => ({ message: 'Please select a valid Malaysian state' }),
+  })
+  .optional()
+  .or(z.literal('')),
+
+  postalCode: z
+    .string()
+    .regex(
+      MALAYSIAN_POSTCODE_REGEX,
+      'Invalid Malaysian postal code (5 digits)'
+    )
+    .optional()
+    .or(z.literal('')),
+
+  country: z.literal('Malaysia'),
+});
+
+/**
+ * Banking Information Schema
+ */
+export const businessBankingSchema = z.object({
+  bankName: z
+    .string()
+    .max(100, 'Bank name must be less than 100 characters')
+    .optional()
+    .or(z.literal('')),
+
+  bankAccountNumber: z
+    .string()
+    .min(10, 'Account number must be at least 10 digits')
+    .max(20, 'Account number must be less than 20 digits')
+    .regex(/^\d+$/, 'Account number must contain only digits')
+    .optional()
+    .or(z.literal('')),
+
+  bankAccountHolder: z
+    .string()
+    .max(200, 'Account holder name must be less than 200 characters')
+    .optional()
+    .or(z.literal('')),
+});
+
+/**
+ * Business Profile Schema (Admin) - Fixed to match form structure
  */
 export const businessProfileSchema = z.object({
   // Company Information
@@ -204,10 +303,12 @@ export const businessProfileSchema = z.object({
   tradingName: z
     .string()
     .max(200, 'Trading name must be less than 200 characters')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 
   registrationNumber: z
     .string()
+    .min(1, 'SSM registration number is required')
     .regex(SSM_REGEX, 'Invalid SSM format (e.g., 123456-X)'),
 
   taxRegistrationNumber: z
@@ -221,8 +322,9 @@ export const businessProfileSchema = z.object({
   establishedDate: z
     .string()
     .optional()
+    .or(z.literal(''))
     .refine(date => {
-      if (!date) {
+      if (!date || date === '') {
         return true;
       }
       const parsedDate = new Date(date);
@@ -232,6 +334,7 @@ export const businessProfileSchema = z.object({
   // Contact Information
   primaryPhone: z
     .string()
+    .min(1, 'Primary phone is required')
     .regex(MALAYSIAN_LANDLINE_REGEX, 'Invalid Malaysian phone number'),
 
   secondaryPhone: z
@@ -242,6 +345,7 @@ export const businessProfileSchema = z.object({
 
   primaryEmail: z
     .string()
+    .min(1, 'Primary email is required')
     .email('Invalid email format')
     .max(100, 'Email must be less than 100 characters'),
 
@@ -260,23 +364,13 @@ export const businessProfileSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  // Banking Information (optional)
-  bankName: z
-    .string()
-    .max(100, 'Bank name must be less than 100 characters')
-    .optional(),
+  // Address Information - Now properly nested
+  registeredAddress: businessAddressSchema,
+  operationalAddress: optionalBusinessAddressSchema,
+  shippingAddress: optionalBusinessAddressSchema,
 
-  bankAccountNumber: z
-    .string()
-    .min(10, 'Account number must be at least 10 digits')
-    .max(20, 'Account number must be less than 20 digits')
-    .regex(/^\d+$/, 'Account number must contain only digits')
-    .optional(),
-
-  bankAccountHolder: z
-    .string()
-    .max(200, 'Account holder name must be less than 200 characters')
-    .optional(),
+  // Banking Information - Now properly nested
+  banking: businessBankingSchema,
 });
 
 /**
@@ -321,6 +415,8 @@ export type NotificationPreferencesData = z.infer<
   typeof notificationPreferencesSchema
 >;
 export type BusinessProfileFormData = z.infer<typeof businessProfileSchema>;
+export type BusinessAddressFormData = z.infer<typeof businessAddressSchema>;
+export type BusinessBankingFormData = z.infer<typeof businessBankingSchema>;
 export type TaxConfigurationFormData = z.infer<typeof taxConfigurationSchema>;
 
 /**
