@@ -20,6 +20,7 @@ import {
   Award,
   ArrowRight,
   TrendingUp,
+  Percent,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -107,6 +108,7 @@ export default function HomePage() {
   const { data: session } = useSession();
   const { addToCart } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [promotionalProducts, setPromotionalProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [siteTheme, setSiteTheme] = useState<SiteTheme | null>(null);
   const [heroSection, setHeroSection] = useState<HeroSection | null>(null);
@@ -122,15 +124,17 @@ export default function HomePage() {
     const fetchHomeData = async () => {
       try {
         // Use service layer for data fetching with built-in error handling and caching
-        const [products, categories, customizationResponse] = await Promise.all(
+        const [products, promotionalProducts, categories, customizationResponse] = await Promise.all(
           [
             productService.getFeaturedProducts(8),
+            productService.getPromotionalProducts(8),
             categoryService.getCategories({ includeProductCount: true }),
             fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
           ]
         );
 
         setFeaturedProducts(products);
+        setPromotionalProducts(promotionalProducts);
         setCategories(categories.slice(0, 6));
 
         if (customizationResponse.ok) {
@@ -160,113 +164,75 @@ export default function HomePage() {
           isLoggedIn={isLoggedIn}
           isMember={isMember}
         />
-        {/* Features Section */}
-        <section className="py-16 bg-gray-50">
+
+        {/* On Promotion Section */}
+        <section className="py-16 bg-gradient-to-br from-red-50 to-orange-50">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">
-                Why Choose JRM E-commerce?
-              </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Experience the best of Malaysian online shopping with features
-                designed for local needs
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <Card className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-blue-600" />
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <Percent className="w-6 h-6 text-red-600" />
                   </div>
-                  <h3 className="font-semibold mb-2">Smart Membership</h3>
-                  <p className="text-sm text-gray-600">
-                    Automatic member pricing when you spend RM 80 or more
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Truck className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h3 className="font-semibold mb-2">Fast Delivery</h3>
-                  <p className="text-sm text-gray-600">
-                    Free shipping nationwide for orders over RM 150
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Shield className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold mb-2">Secure Payment</h3>
-                  <p className="text-sm text-gray-600">
-                    Malaysian payment gateways with bank-level security
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Award className="w-8 h-8 text-yellow-600" />
-                  </div>
-                  <h3 className="font-semibold mb-2">Quality Guarantee</h3>
-                  <p className="text-sm text-gray-600">
-                    1-year warranty on all products with easy returns
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Categories Section */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Shop by Category</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Discover our wide range of products across various categories
-              </p>
+                  <h2 className="text-3xl font-bold text-red-800">On Promotion</h2>
+                </div>
+                <p className="text-gray-600">
+                  Limited time offers with amazing discounts and special deals
+                </p>
+              </div>
+              <Link href="/products?promotional=true">
+                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50">
+                  View All Deals
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {[...Array(6)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
-                    <CardContent className="p-6 text-center">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4" />
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2" />
-                      <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto" />
+                    <div className="aspect-square bg-gray-200" />
+                    <CardContent className="p-4 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                      <div className="h-6 bg-gray-200 rounded w-1/3" />
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {categories.map(category => (
-                  <Link
-                    key={category.id}
-                    href={`/products?category=${category.id}`}
-                  >
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                      <CardContent className="p-6 text-center">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <TrendingUp className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <h3 className="font-semibold mb-2">{category.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {category.productCount || 0} products
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </Link>
+            ) : promotionalProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {promotionalProducts.slice(0, 4).map(product => (
+                  <div key={product.id} className="relative">
+                    <Badge className="absolute top-2 left-2 z-10 bg-red-500 text-white">
+                      ON SALE
+                    </Badge>
+                    <ProductCard
+                      product={product}
+                      onAddToCart={async (productId: string) => {
+                        try {
+                          await addToCart(productId, 1);
+                        } catch (error) {
+                          console.error('Add to cart failed:', error);
+                        }
+                      }}
+                      size="md"
+                      showDescription={false}
+                      showRating={true}
+                    />
+                  </div>
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Percent className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">
+                  No promotional products available at the moment.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Check back soon for amazing deals and discounts!
+                </p>
               </div>
             )}
           </div>

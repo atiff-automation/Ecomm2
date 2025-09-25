@@ -183,6 +183,32 @@ export class ProductService {
   }
 
   /**
+   * Get promotional products
+   */
+  async getPromotionalProducts(limit: number = 8): Promise<ProductResponse[]> {
+    const cacheKey = `promotional-products:${limit}`;
+    const cached = this.getFromCache<ProductResponse[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const result = await this.getProducts({
+        features: ['promotional'],
+        limit,
+        sortBy: 'created',
+        sortOrder: 'desc',
+      });
+
+      this.setCache(cacheKey, result.products, this.DEFAULT_CACHE_TTL);
+      return result.products;
+    } catch (error) {
+      console.error('ProductService.getPromotionalProducts error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Search products with advanced options
    */
   async searchProducts(
