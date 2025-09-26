@@ -21,6 +21,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 
 interface ImportResult {
@@ -115,7 +116,7 @@ export default function ProductImportPage() {
   };
 
   const downloadTemplate = () => {
-    // Create CSV template with sample data
+    // Create CSV template with clean headers for import compatibility
     const headers = [
       'sku',
       'name',
@@ -142,19 +143,19 @@ export default function ProductImportPage() {
 
     const sampleRow = [
       'SAMPLE-001',
-      'Sample Product',
-      'This is a sample product description',
-      'Short description',
-      'Electronics',
+      'Sample Product Name',
+      'This is a detailed product description that explains what the product is and its benefits',
+      'Brief product summary',
+      'JRM HOLISTIK',
       '29.99',
       '24.99',
       '100',
       '10',
       '0.5',
-      '10x10x5cm',
-      'false',
-      'false',
-      'true',
+      '10x10x5',
+      'TRUE',
+      'FALSE',
+      'TRUE',
       '',
       '',
       '',
@@ -164,7 +165,36 @@ export default function ProductImportPage() {
       'Buy Sample Product online at great prices',
     ];
 
-    const csvContent = [headers, sampleRow]
+    // Create explanatory rows
+    const explanationRow = [
+      'Unique product code',
+      'Product display name',
+      'Full product description',
+      'Brief summary (optional)',
+      'Must match existing category',
+      'Price in decimal format',
+      'Member discount price',
+      'Available stock quantity',
+      'Low stock alert level',
+      'Product weight in kg',
+      'Dimensions in cm (LxWxH)',
+      'TRUE/FALSE - featured product',
+      'TRUE/FALSE - on promotion',
+      'TRUE/FALSE - membership eligible',
+      'Promotion price if applicable',
+      'Promotion start date (YYYY-MM-DD)',
+      'Promotion end date (YYYY-MM-DD)',
+      'Member-only until date',
+      'Early access start date',
+      'SEO page title',
+      'SEO description',
+    ];
+
+    const csvContent = [
+      headers,
+      explanationRow,
+      sampleRow
+    ]
       .map(row => row.map(cell => `"${cell}"`).join(','))
       .join('\n');
 
@@ -324,6 +354,44 @@ export default function ProductImportPage() {
                     <li>• Ensure SKUs are unique for new products</li>
                     <li>• Use category names exactly as they appear in your store</li>
                     <li>• Prices should be in decimal format (e.g., 29.99)</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Required vs Optional Fields</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <h5 className="font-medium text-red-600 mb-2">✓ REQUIRED Fields</h5>
+                      <ul className="text-gray-600 space-y-1">
+                        <li>• <span className="font-medium">sku</span> - Unique product code</li>
+                        <li>• <span className="font-medium">name</span> - Product display name</li>
+                        <li>• <span className="font-medium">categoryName</span> - Must match existing category</li>
+                        <li>• <span className="font-medium">regularPrice</span> - Price in decimal format</li>
+                        <li>• <span className="font-medium">stockQuantity</span> - Available stock number</li>
+                        <li>• <span className="font-medium">weight</span> - Product weight in kg (for shipping)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-medium text-blue-600 mb-2">○ OPTIONAL Fields</h5>
+                      <ul className="text-gray-600 space-y-1">
+                        <li>• <span className="font-medium">description</span> - Full product description</li>
+                        <li>• <span className="font-medium">shortDescription</span> - Brief summary</li>
+                        <li>• <span className="font-medium">memberPrice</span> - Member discount price</li>
+                        <li>• <span className="font-medium">dimensions</span> - Product size in cm (e.g., 10x10x5)</li>
+                        <li>• <span className="font-medium">featured</span> - TRUE/FALSE</li>
+                        <li>• All promotional and SEO fields</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">CSV Formatting Guidelines</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Use double quotes for text containing commas or line breaks</li>
+                    <li>• Keep descriptions under 1000 characters for best results</li>
+                    <li>• Boolean fields: use "TRUE" or "FALSE" (case-insensitive)</li>
+                    <li>• Leave optional fields empty rather than using "N/A" or "-"</li>
+                    <li>• Save your file as CSV (UTF-8) to preserve special characters</li>
+                    <li>• Maximum file size: 10MB</li>
                   </ul>
                 </div>
               </div>
@@ -486,16 +554,27 @@ export default function ProductImportPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm">Required Fields</span>
-                  <Badge variant="outline">5</Badge>
+                  <span className="text-sm text-red-600 font-medium">Required Fields</span>
+                  <Badge variant="destructive">6</Badge>
+                </div>
+                <div className="text-xs text-red-600 -mt-1">
+                  sku, name, categoryName, regularPrice, stockQuantity, weight
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Optional Fields</span>
-                  <Badge variant="outline">17</Badge>
+                  <span className="text-sm text-blue-600">Optional Fields</span>
+                  <Badge variant="outline">15</Badge>
+                </div>
+                <div className="text-xs text-blue-600 -mt-1">
+                  description, memberPrice, dimensions, etc.
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Max File Size</span>
                   <Badge variant="outline">10MB</Badge>
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="text-xs text-gray-500">
+                    💡 Template includes field explanations and examples
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -35,7 +35,7 @@ This document outlines the comprehensive implementation plan for sales reporting
 
 ### Product Performance
 - Best selling products by quantity and revenue
-- Profit margin analysis (price - cost price)
+- Revenue analysis by product performance
 - Category performance breakdown
 - Member pricing impact analysis
 - Stock movement analytics
@@ -301,7 +301,7 @@ export class SalesAnalyticsService {
         const [product, memberSales] = await Promise.all([
           prisma.product.findUnique({
             where: { id: stat.productId },
-            select: { name: true, sku: true, costPrice: true }
+            select: { name: true, sku: true }
           }),
           prisma.orderItem.aggregate({
             where: {
@@ -318,7 +318,7 @@ export class SalesAnalyticsService {
 
         const totalRevenue = stat._sum.totalPrice?.toNumber() || 0;
         const memberRevenue = memberSales._sum.totalPrice?.toNumber() || 0;
-        const costPrice = product?.costPrice?.toNumber() || 0;
+        // Cost price calculation removed as not needed for business
         const quantity = stat._sum.quantity || 0;
 
         return {
@@ -327,7 +327,7 @@ export class SalesAnalyticsService {
           sku: product?.sku || 'N/A',
           totalQuantitySold: quantity,
           totalRevenue,
-          profitMargin: totalRevenue - (costPrice * quantity),
+          profitMargin: 0, // Profit calculation removed as cost price is not tracked
           memberSales: memberRevenue,
           nonMemberSales: totalRevenue - memberRevenue
         };

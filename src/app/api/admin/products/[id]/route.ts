@@ -28,7 +28,6 @@ const updateProductSchema = z.object({
     .min(0, 'Member price must be positive')
     .nullable()
     .optional(),
-  costPrice: z.number().min(0, 'Cost price must be positive').optional(),
   stockQuantity: z
     .number()
     .int()
@@ -262,9 +261,6 @@ export async function PUT(
           ...(productData.memberPrice !== undefined && {
             memberPrice:
               productData.memberPrice || productData.regularPrice || 0,
-          }),
-          ...(productData.costPrice !== undefined && {
-            costPrice: productData.costPrice,
           }),
           ...(productData.stockQuantity !== undefined && {
             stockQuantity: productData.stockQuantity,

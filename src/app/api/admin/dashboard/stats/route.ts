@@ -16,6 +16,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get current month dates
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
     // Get total orders and revenue
     const orderStats = await prisma.order.aggregate({
       _count: {
@@ -23,6 +29,31 @@ export async function GET() {
       },
       _sum: {
         total: true,
+      },
+    });
+
+    // Get current month revenue
+    const currentMonthRevenue = await prisma.order.aggregate({
+      _sum: {
+        total: true,
+      },
+      where: {
+        createdAt: {
+          gte: currentMonthStart,
+        },
+      },
+    });
+
+    // Get last month revenue
+    const lastMonthRevenue = await prisma.order.aggregate({
+      _sum: {
+        total: true,
+      },
+      where: {
+        createdAt: {
+          gte: lastMonthStart,
+          lt: currentMonthStart,
+        },
       },
     });
 
@@ -85,6 +116,22 @@ export async function GET() {
         ? Math.round((totalMembers / totalCustomers) * 100)
         : 0;
 
+    // Calculate revenue percentage change
+    const currentRevenue = currentMonthRevenue._sum.total || 0;
+    const previousRevenue = lastMonthRevenue._sum.total || 0;
+
+    let revenuePercentageChange = 0;
+    let revenueChangeDirection: 'increase' | 'decrease' | 'no-change' = 'no-change';
+
+    if (previousRevenue > 0) {
+      revenuePercentageChange = Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100);
+      revenueChangeDirection = currentRevenue > previousRevenue ? 'increase' :
+                              currentRevenue < previousRevenue ? 'decrease' : 'no-change';
+    } else if (currentRevenue > 0) {
+      revenuePercentageChange = 100; // New revenue this month
+      revenueChangeDirection = 'increase';
+    }
+
     // Get average order values for members vs non-members
     const memberOrderStats = await prisma.order.aggregate({
       _avg: {
@@ -115,6 +162,12 @@ export async function GET() {
       totalMembers: totalMembers,
       pendingOrders: pendingOrdersCount || 0,
       lowStockProducts: lowStockCount || 0,
+      revenueMetrics: {
+        currentMonthRevenue: currentRevenue,
+        previousMonthRevenue: previousRevenue,
+        percentageChange: revenuePercentageChange,
+        changeDirection: revenueChangeDirection,
+      },
       recentOrders: recentOrders.map(order => ({
         id: order.id,
         orderNumber: order.orderNumber,

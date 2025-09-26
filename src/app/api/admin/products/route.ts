@@ -45,18 +45,6 @@ const createProductSchema = z.object({
     ])
     .nullable()
     .optional(),
-  costPrice: z
-    .union([
-      z.number().min(0, 'Cost price must be positive'),
-      z
-        .string()
-        .transform(val => (val === '' ? 0 : parseFloat(val)))
-        .refine(
-          val => !isNaN(val) && val >= 0,
-          'Cost price must be a positive number'
-        ),
-    ])
-    .optional(),
   stockQuantity: z
     .union([
       z.number().int().min(0, 'Stock quantity must be non-negative'),
@@ -202,7 +190,6 @@ export async function POST(request: NextRequest) {
           barcode: productData.barcode || null,
           regularPrice: productData.regularPrice,
           memberPrice: productData.memberPrice || productData.regularPrice,
-          costPrice: productData.costPrice || 0,
           stockQuantity: productData.stockQuantity,
           lowStockAlert: productData.lowStockAlert,
           weight: productData.weight || null,

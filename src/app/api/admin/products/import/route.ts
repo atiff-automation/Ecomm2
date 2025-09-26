@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
 
 // Product validation schema
 const productSchema = z.object({
@@ -23,14 +24,13 @@ const productSchema = z.object({
     .positive('Member price must be positive')
     .nullable()
     .optional(),
-  costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z.number().int().min(0, 'Stock quantity cannot be negative'),
   lowStockAlert: z
     .number()
     .int()
     .min(0, 'Low stock alert cannot be negative')
     .default(10),
-  weight: z.number().positive().optional(),
+  weight: z.number().positive('Weight must be a positive number for shipping calculations'),
   dimensions: z.string().optional(),
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
@@ -79,6 +79,59 @@ function parseExcelValue(value: any): any {
   return value;
 }
 
+// Helper function to create user-friendly error messages
+function getUserFriendlyErrorMessage(field: string, issue: string, value?: string): string {
+  const fieldNames: Record<string, string> = {
+    sku: 'Product SKU',
+    name: 'Product Name',
+    categoryName: 'Category Name',
+    regularPrice: 'Regular Price',
+    memberPrice: 'Member Price',
+    stockQuantity: 'Stock Quantity',
+    description: 'Description',
+    shortDescription: 'Short Description',
+    weight: 'Product Weight',
+    dimensions: 'Product Dimensions',
+    featured: 'Featured Status',
+    isPromotional: 'Promotional Status',
+    isQualifyingForMembership: 'Membership Qualification',
+    promotionalPrice: 'Promotional Price',
+    lowStockAlert: 'Low Stock Alert Level',
+  };
+
+  const friendlyFieldName = fieldNames[field] || field;
+
+  if (issue.includes('required') || issue.includes('cannot be empty')) {
+    return `${friendlyFieldName} is required. Please provide a value in this column.`;
+  }
+
+  if (issue.includes('positive')) {
+    return `${friendlyFieldName} must be a positive number greater than 0. Current value: "${value || 'empty'}"`;
+  }
+
+  if (issue.includes('number')) {
+    return `${friendlyFieldName} must be a valid number. Current value: "${value || 'empty'}" is not a valid number.`;
+  }
+
+  if (issue.includes('boolean')) {
+    return `${friendlyFieldName} must be TRUE or FALSE. Current value: "${value || 'empty'}" is not valid. Use "TRUE" or "FALSE".`;
+  }
+
+  if (field === 'categoryName') {
+    return `Category "${value || 'empty'}" does not exist. Please check the category list or use an exact category name.`;
+  }
+
+  if (field === 'sku') {
+    return `Product SKU "${value || 'empty'}" is not valid. SKU must be unique and contain only letters, numbers, and dashes.`;
+  }
+
+  if (issue.includes('min')) {
+    return `${friendlyFieldName} is too short. Please provide more information.`;
+  }
+
+  return `${friendlyFieldName}: ${issue}. Current value: "${value || 'empty'}"`;
+}
+
 function convertToProduct(
   row: any,
   rowIndex: number
@@ -86,118 +139,244 @@ function convertToProduct(
   const errors: ImportError[] = [];
 
   try {
+    console.log(`[Row ${rowIndex}] Processing row:`, JSON.stringify(row, null, 2));
+
     // Ensure row object exists and has basic structure
     if (!row || typeof row !== 'object') {
+      console.log(`[Row ${rowIndex}] Row is not an object:`, typeof row, row);
       errors.push({
         row: rowIndex,
         field: 'general',
-        message: 'Invalid row data',
+        message: 'This row appears to be empty or corrupted. Please check that all required columns have values.',
       });
       return { errors };
     }
 
-    // Convert boolean fields
-    const booleanFields = [
-      'featured',
-      'isPromotional',
-      'isQualifyingForMembership',
-    ];
-    booleanFields.forEach(field => {
-      if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
-        try {
-          const value = String(row[field] || '').toLowerCase();
-          row[field] = value === 'true' || value === '1' || value === 'yes';
-        } catch (e) {
-          // Default to false if conversion fails
-          row[field] = false;
-        }
-      } else {
-        // Set default value for missing boolean fields
-        row[field] = false;
-      }
-    });
+    // Safely check Object.values to avoid undefined error
+    let rowValues;
+    try {
+      rowValues = Object.values(row);
+    } catch (e) {
+      console.log(`[Row ${rowIndex}] Error getting Object.values:`, e);
+      errors.push({
+        row: rowIndex,
+        field: 'general',
+        message: 'Error processing row structure. Please check the CSV format.',
+      });
+      return { errors };
+    }
 
-    // Convert numeric fields
-    const numericFields = [
-      'regularPrice',
-      'memberPrice',
-      'stockQuantity',
-      'lowStockAlert',
-      'weight',
-      'promotionalPrice',
-    ];
-    numericFields.forEach(field => {
-      if (row[field] !== undefined && row[field] !== '') {
-        try {
-          const stringValue = String(row[field] || '');
-          const numValue = parseFloat(stringValue.replace(/[^\d.-]/g, ''));
-          if (!isNaN(numValue)) {
-            row[field] = numValue;
-          }
-        } catch (e) {
-          // Keep original value if conversion fails
-        }
-      }
-    });
+    // Check if row is completely empty using the safely obtained rowValues
+    const hasAnyData = rowValues.some(value =>
+      value !== null && value !== undefined && value !== ''
+    );
 
-    // Convert date fields
-    const dateFields = [
-      'promotionStartDate',
-      'promotionEndDate',
-      'memberOnlyUntil',
-      'earlyAccessStart',
-    ];
-    dateFields.forEach(field => {
-      if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
-        try {
-          const parsedValue = parseExcelValue(row[field]);
-          if (parsedValue) {
-            const date = new Date(parsedValue);
-            if (!isNaN(date.getTime())) {
-              row[field] = date.toISOString();
-            } else {
-              delete row[field];
-            }
-          } else {
-            delete row[field];
-          }
-        } catch (e) {
-          // Remove invalid date fields
-          delete row[field];
-        }
-      } else {
-        delete row[field];
-      }
-    });
+    if (!hasAnyData) {
+      console.log(`[Row ${rowIndex}] Row is completely empty`);
+      errors.push({
+        row: rowIndex,
+        field: 'general',
+        message: 'This row is empty. Please provide product information or remove this row.',
+      });
+      return { errors };
+    }
 
-    // Remove empty fields safely
-    Object.keys(row).forEach(key => {
+    // Create a safe copy and normalize all string fields
+    const safeRow: any = {};
+    let rowKeys;
+    try {
+      rowKeys = Object.keys(row);
+    } catch (e) {
+      console.log(`[Row ${rowIndex}] Error getting Object.keys:`, e);
+      errors.push({
+        row: rowIndex,
+        field: 'general',
+        message: 'Error processing row keys. Please check the CSV format.',
+      });
+      return { errors };
+    }
+
+    rowKeys.forEach(key => {
       const value = row[key];
-      if (value === '' || value === null || value === undefined) {
-        delete row[key];
+
+      // Safely handle all field values
+      if (value === null || value === undefined) {
+        safeRow[key] = '';
+      } else if (typeof value === 'string') {
+        safeRow[key] = value.trim();
+      } else {
+        safeRow[key] = String(value).trim();
       }
     });
 
-    const validatedData = productSchema.parse(row);
-    return { data: validatedData };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      error.errors.forEach(err => {
+    // Pre-validate critical fields before processing
+    const requiredFields = {
+      sku: 'Product SKU',
+      name: 'Product Name',
+      categoryName: 'Category Name',
+      regularPrice: 'Regular Price',
+      stockQuantity: 'Stock Quantity',
+      weight: 'Product Weight'
+    };
+
+    for (const [field, friendlyName] of Object.entries(requiredFields)) {
+      const value = safeRow[field];
+      if (!value || value === '') {
         errors.push({
           row: rowIndex,
-          field: err.path.join('.'),
-          message: err.message,
-          value: row[err.path[0]]?.toString(),
+          field: field,
+          message: `${friendlyName} is required but is missing or empty. Please provide a value for this field.`,
+          value: value || 'empty',
+        });
+      }
+    }
+
+    // If we have critical field errors, return early
+    if (errors.length > 0) {
+      return { errors };
+    }
+
+    // Convert boolean fields with user-friendly error handling
+    const booleanFields = ['featured', 'isPromotional', 'isQualifyingForMembership'];
+    booleanFields.forEach(field => {
+      try {
+        const value = safeRow[field];
+
+        // Check for null, undefined, or empty values first
+        if (value === null || value === undefined || value === '') {
+          safeRow[field] = false; // Default for empty boolean fields
+          return;
+        }
+
+        // Convert to string and check if it's a valid string
+        const stringValue = String(value);
+        if (stringValue && stringValue.length > 0) {
+          const lowerValue = stringValue.toLowerCase().trim();
+          if (['true', '1', 'yes', 'y'].includes(lowerValue)) {
+            safeRow[field] = true;
+          } else if (['false', '0', 'no', 'n'].includes(lowerValue)) {
+            safeRow[field] = false;
+          } else {
+            errors.push({
+              row: rowIndex,
+              field: field,
+              message: getUserFriendlyErrorMessage(field, 'boolean', value),
+              value: value,
+            });
+          }
+        } else {
+          safeRow[field] = false; // Default for empty boolean fields
+        }
+      } catch (e) {
+        console.log(`[Row ${rowIndex}] Error processing boolean field ${field}:`, e);
+        safeRow[field] = false;
+      }
+    });
+
+    // Convert numeric fields with better error messages
+    const numericFields = ['regularPrice', 'memberPrice', 'stockQuantity', 'lowStockAlert', 'weight', 'promotionalPrice'];
+    const requiredNumericFields = ['regularPrice', 'stockQuantity', 'weight'];
+
+    numericFields.forEach(field => {
+      const value = safeRow[field];
+      const isRequired = requiredNumericFields.includes(field);
+
+      if (value && value !== '') {
+        // Remove currency symbols and spaces
+        const cleanValue = String(value).replace(/[RM$\s,]/g, '').replace(/[^\d.-]/g, '');
+        const numValue = parseFloat(cleanValue);
+
+        if (isNaN(numValue)) {
+          errors.push({
+            row: rowIndex,
+            field: field,
+            message: getUserFriendlyErrorMessage(field, 'number', value),
+            value: value,
+          });
+        } else if (numValue <= 0 && ['regularPrice', 'memberPrice', 'stockQuantity', 'weight'].includes(field)) {
+          errors.push({
+            row: rowIndex,
+            field: field,
+            message: getUserFriendlyErrorMessage(field, 'positive', value),
+            value: value,
+          });
+        } else {
+          safeRow[field] = numValue;
+        }
+      } else if (isRequired) {
+        errors.push({
+          row: rowIndex,
+          field: field,
+          message: getUserFriendlyErrorMessage(field, 'required'),
+          value: value || 'empty',
+        });
+      }
+    });
+
+    // Convert date fields (optional)
+    const dateFields = ['promotionStartDate', 'promotionEndDate', 'memberOnlyUntil', 'earlyAccessStart'];
+    dateFields.forEach(field => {
+      const value = safeRow[field];
+      if (value && value !== '') {
+        try {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            safeRow[field] = date.toISOString();
+          } else {
+            errors.push({
+              row: rowIndex,
+              field: field,
+              message: `${field} must be a valid date format (e.g., YYYY-MM-DD or MM/DD/YYYY). Current value: "${value}"`,
+              value: value,
+            });
+            delete safeRow[field];
+          }
+        } catch (e) {
+          delete safeRow[field];
+        }
+      } else {
+        delete safeRow[field];
+      }
+    });
+
+    // Remove truly empty fields
+    Object.keys(safeRow).forEach(key => {
+      const value = safeRow[key];
+      if (value === '' || value === null || value === undefined) {
+        delete safeRow[key];
+      }
+    });
+
+    // If we have validation errors, return them before schema validation
+    if (errors.length > 0) {
+      return { data: undefined, errors };
+    }
+
+    const validatedData = productSchema.parse(safeRow);
+    return { data: validatedData, errors: [] };
+  } catch (error) {
+    console.error(`[Row ${rowIndex}] Validation error:`, error);
+
+    if (error instanceof z.ZodError) {
+      error.errors.forEach(err => {
+        const field = err.path.join('.');
+        const value = row[err.path[0]]?.toString();
+
+        errors.push({
+          row: rowIndex,
+          field: field,
+          message: getUserFriendlyErrorMessage(field, err.message, value),
+          value: value || '',
         });
       });
     } else {
       errors.push({
         row: rowIndex,
         field: 'general',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'There was an unexpected error processing this row. Please check that all fields contain valid data and try again.',
       });
     }
-    return { errors };
+    return { data: undefined, errors };
   }
 }
 
@@ -264,117 +443,40 @@ export async function POST(request: NextRequest) {
 
     try {
       if (fileName.endsWith('.csv')) {
-        // Use simple CSV parsing for better handling of complex content
+        // Use PapaParse for robust CSV parsing
         const text = new TextDecoder().decode(buffer);
         console.log('CSV file size:', text.length, 'characters');
 
-        // Simple CSV parsing that handles quoted fields with newlines
-        const lines = [];
-        let current = '';
-        let inQuotes = false;
-
-        for (let i = 0; i < text.length; i++) {
-          const char = text[i];
-          const nextChar = text[i + 1];
-
-          if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-              // Escaped quote
-              current += '"';
-              i++; // Skip next quote
-            } else {
-              inQuotes = !inQuotes;
+        const parseResult = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: (name) => name.trim(),
+          transform: (value) => {
+            // Handle empty values consistently
+            if (value === null || value === undefined || value === '') {
+              return '';
             }
-          } else if (char === '\n' && !inQuotes) {
-            if (current.trim()) {
-              lines.push(current);
-            }
-            current = '';
-          } else {
-            current += char;
-          }
-        }
+            return String(value).trim();
+          },
+        });
 
-        // Add last line if exists
-        if (current.trim()) {
-          lines.push(current);
-        }
-
-        console.log('Parsed', lines.length, 'lines from CSV');
-
-        if (lines.length < 2) {
+        if (parseResult.errors.length > 0) {
+          console.error('CSV parsing errors:', parseResult.errors);
           return NextResponse.json(
-            { message: 'CSV must have at least headers and one data row' },
+            { message: 'CSV file has parsing errors. Please check the file format.' },
             { status: 400 }
           );
         }
 
-        // Parse header line
-        const headerLine = lines[0];
-        const headers = [];
-        let currentField = '';
-        let inFieldQuotes = false;
+        dataRows = parseResult.data.filter((row: any) => {
+          // Filter out completely empty rows
+          return Object.values(row).some(value => value !== '');
+        });
 
-        for (let i = 0; i < headerLine.length; i++) {
-          const char = headerLine[i];
-          const nextChar = headerLine[i + 1];
-
-          if (char === '"') {
-            if (inFieldQuotes && nextChar === '"') {
-              currentField += '"';
-              i++;
-            } else {
-              inFieldQuotes = !inFieldQuotes;
-            }
-          } else if (char === ',' && !inFieldQuotes) {
-            headers.push(currentField.trim());
-            currentField = '';
-          } else {
-            currentField += char;
-          }
-        }
-        headers.push(currentField.trim());
-
-        console.log('Headers found:', headers.length, 'columns');
-
-        // Parse data lines
-        for (let lineIndex = 1; lineIndex < lines.length; lineIndex++) {
-          const line = lines[lineIndex];
-          const values = [];
-          let currentValue = '';
-          let inValueQuotes = false;
-
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-
-            if (char === '"') {
-              if (inValueQuotes && nextChar === '"') {
-                currentValue += '"';
-                i++;
-              } else {
-                inValueQuotes = !inValueQuotes;
-              }
-            } else if (char === ',' && !inValueQuotes) {
-              values.push(currentValue);
-              currentValue = '';
-            } else {
-              currentValue += char;
-            }
-          }
-          values.push(currentValue);
-
-          // Create row object
-          const row: any = {};
-          headers.forEach((header, i) => {
-            if (header) {
-              row[header] = values[i] || '';
-            }
-          });
-
-          if (Object.keys(row).length > 0) {
-            dataRows.push(row);
-          }
+        console.log('PapaParse results:', dataRows.length, 'rows');
+        if (dataRows.length > 0) {
+          console.log('First row keys:', Object.keys(dataRows[0]));
+          console.log('First row sample:', JSON.stringify(dataRows[0], null, 2));
         }
 
       } else {
@@ -494,12 +596,33 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate category exists and get ID
-        const categoryId = categoryLookup.get(row.categoryName);
-        if (!categoryId) {
+        if (!row.categoryName || typeof row.categoryName !== 'string') {
+          // Safety check for result.errorDetails
+          if (!result || !result.errorDetails) {
+            console.error(`Row ${rowIndex}: result or result.errorDetails is undefined`, { result });
+            return NextResponse.json(
+              { message: `Internal error at row ${rowIndex}: result structure is invalid` },
+              { status: 500 }
+            );
+          }
+
           result.errorDetails.push({
             row: rowIndex,
             field: 'categoryName',
-            message: 'Category does not exist. Use exact category name or slug.',
+            message: `Category name is required but is missing or empty. Please provide a valid category name.`,
+            value: row.categoryName || 'empty',
+          });
+          result.errors++;
+          continue;
+        }
+
+        const categoryId = categoryLookup.get(row.categoryName);
+        if (!categoryId) {
+          const availableCategories = Array.from(categoryLookup.keys()).slice(0, 5).join(', ');
+          result.errorDetails.push({
+            row: rowIndex,
+            field: 'categoryName',
+            message: `Category "${row.categoryName}" does not exist. Please use an exact category name from your store. Available categories include: ${availableCategories}${categoryLookup.size > 5 ? '...' : ''}. Download the category list for all available categories.`,
             value: row.categoryName,
           });
           result.errors++;
@@ -509,6 +632,18 @@ export async function POST(request: NextRequest) {
         console.log(`Row ${rowIndex} about to convert to product, row data:`, JSON.stringify(row, null, 2));
         const { data: productData, errors } = convertToProduct(row, rowIndex);
         console.log(`Row ${rowIndex} conversion result - errors:`, errors, 'data:', productData ? 'exists' : 'null');
+
+        // Safety check for errors array
+        if (!Array.isArray(errors)) {
+          console.error(`Row ${rowIndex}: convertToProduct returned invalid errors:`, errors);
+          result.errorDetails.push({
+            row: rowIndex,
+            field: 'general',
+            message: 'Failed to process row due to internal error',
+          });
+          result.errors++;
+          continue;
+        }
 
         if (errors.length > 0) {
           result.errorDetails.push(...errors);

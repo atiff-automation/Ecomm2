@@ -149,7 +149,6 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
         ...product,
         regularPrice: Number(product.regularPrice),
         memberPrice: Number(product.memberPrice),
-        costPrice: Number(product.costPrice || 0),
         promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
         averageRating: 0, // Calculate if needed
         reviewCount: product.reviews.length,

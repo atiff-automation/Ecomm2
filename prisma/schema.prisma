@@ -145,7 +145,6 @@ model Product {
   status                    ProductStatus     @default(DRAFT)
   regularPrice              Decimal           @db.Decimal(10, 2)
   memberPrice               Decimal           @db.Decimal(10, 2)
-  costPrice                 Decimal           @db.Decimal(10, 2)
   promotionalPrice          Decimal?          @db.Decimal(10, 2)
   promotionStartDate        DateTime?
   promotionEndDate          DateTime?

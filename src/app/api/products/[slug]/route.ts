@@ -24,7 +24,6 @@ const updateProductSchema = z.object({
     .positive('Member price must be positive')
     .nullable()
     .optional(),
-  costPrice: z.number().positive('Cost price must be positive').optional(),
   stockQuantity: z
     .number()
     .int()

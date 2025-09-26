@@ -171,7 +171,7 @@ export class SalesAnalyticsService {
               const [product, memberSales] = await Promise.all([
                 prisma.product.findUnique({
                   where: { id: stat.productId },
-                  select: { name: true, sku: true, costPrice: true }
+                  select: { name: true, sku: true }
                 }),
                 prisma.orderItem.aggregate({
                   where: {
@@ -188,7 +188,6 @@ export class SalesAnalyticsService {
 
               const totalRevenue = stat._sum.totalPrice?.toNumber() || 0;
               const memberRevenue = memberSales._sum.totalPrice?.toNumber() || 0;
-              const costPrice = product?.costPrice?.toNumber() || 0;
               const quantity = stat._sum.quantity || 0;
 
               return {
@@ -197,7 +196,7 @@ export class SalesAnalyticsService {
                 sku: product?.sku || 'N/A',
                 totalQuantitySold: quantity,
                 totalRevenue,
-                profitMargin: totalRevenue - (costPrice * quantity),
+                profitMargin: 0, // Profit calculation removed as costPrice field is no longer available
                 memberSales: memberRevenue,
                 nonMemberSales: totalRevenue - memberRevenue
               };
@@ -210,7 +209,7 @@ export class SalesAnalyticsService {
                 sku: 'N/A',
                 totalQuantitySold: stat._sum.quantity || 0,
                 totalRevenue: stat._sum.totalPrice?.toNumber() || 0,
-                profitMargin: 0,
+                profitMargin: 0, // Profit calculation removed as costPrice field is no longer available
                 memberSales: 0,
                 nonMemberSales: stat._sum.totalPrice?.toNumber() || 0
               };

@@ -22,6 +22,8 @@ import {
   PieChart,
   Activity,
   ArrowUpRight,
+  ArrowDownRight,
+  Minus,
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -50,6 +52,12 @@ interface DashboardStats {
   totalMembers: number;
   pendingOrders: number;
   lowStockProducts: number;
+  revenueMetrics: {
+    currentMonthRevenue: number;
+    previousMonthRevenue: number;
+    percentageChange: number;
+    changeDirection: 'increase' | 'decrease' | 'no-change';
+  };
   recentOrders: Array<{
     id: string;
     orderNumber: string;
@@ -132,6 +140,29 @@ export default function AdminDashboard() {
       style: 'currency',
       currency: 'MYR',
     }).format(amount);
+  };
+
+  const renderPercentageChange = (change: number, direction: 'increase' | 'decrease' | 'no-change') => {
+    if (direction === 'no-change') {
+      return (
+        <span className="text-gray-600 flex items-center gap-1">
+          <Minus className="h-3 w-3" />
+          No change from last month
+        </span>
+      );
+    }
+
+    const isIncrease = direction === 'increase';
+    const colorClass = isIncrease ? 'text-green-600' : 'text-red-600';
+    const IconComponent = isIncrease ? ArrowUpRight : ArrowDownRight;
+    const sign = isIncrease ? '+' : '';
+
+    return (
+      <span className={`${colorClass} flex items-center gap-1`}>
+        <IconComponent className="h-3 w-3" />
+        {sign}{Math.abs(change)}% from last month
+      </span>
+    );
   };
 
   const formatCurrencyCompact = (amount: number) => {
@@ -258,10 +289,13 @@ export default function AdminDashboard() {
                   {formatCurrency(stats.totalRevenue)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-green-600 flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3" />
-                    +12.5% from last month
-                  </span>
+                  {stats.revenueMetrics ?
+                    renderPercentageChange(
+                      stats.revenueMetrics.percentageChange,
+                      stats.revenueMetrics.changeDirection
+                    ) :
+                    <span className="text-gray-600">No comparison data</span>
+                  }
                 </p>
               </CardContent>
             </Card>
