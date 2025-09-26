@@ -41,6 +41,11 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import { useProductBulkSelection } from '@/hooks/useBulkSelection';
+import { BulkSelectionCheckbox, BulkSelectAllCheckbox } from '@/components/admin/BulkSelectionCheckbox';
+import { BulkActionBar, BulkActionContainer } from '@/components/admin/BulkActionBar';
+import { BulkDeleteModal } from '@/components/admin/BulkDeleteModal';
+import { useToast } from '@/hooks/use-toast';
 
 interface Product {
   id: string;
@@ -83,6 +88,22 @@ export default function AdminProductsPage() {
   const [selectedStockLevel, setSelectedStockLevel] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Bulk selection state
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const { toast } = useToast();
+
+  // Initialize bulk selection hook
+  const bulkSelection = useProductBulkSelection(products, {
+    onMaxSelectionExceeded: () => {
+      toast({
+        title: "Selection Limit Reached",
+        description: "You can select a maximum of 100 products at once.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -185,6 +206,69 @@ export default function AdminProductsPage() {
       alert('Failed to delete product');
     }
   };
+
+  // Bulk delete functionality
+  const handleBulkDelete = () => {
+    if (bulkSelection.selectedCount === 0) {
+      toast({
+        title: "No Products Selected",
+        description: "Please select products to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBulkDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = async (productIds: string[]) => {
+    setBulkDeleteLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/products/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productIds,
+          action: 'DELETE',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Products Deleted Successfully",
+          description: result.message,
+        });
+
+        // Clear selection and refresh products
+        bulkSelection.clearSelection();
+        fetchProducts();
+      } else {
+        toast({
+          title: "Bulk Delete Failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast({
+        title: "Bulk Delete Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  // Clear selection when products change (e.g., after filtering)
+  useEffect(() => {
+    bulkSelection.clearSelection();
+  }, [searchTerm, selectedCategory, selectedStatus, selectedStockLevel, currentPage]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -345,14 +429,16 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <AdminPageLayout
-      title="Product Management"
-      subtitle="Manage your product catalog, inventory, and pricing"
-      actions={pageActions}
-      tabs={tabs}
-      filters={filtersComponent}
-      loading={loading}
-    >
+    <>
+      <BulkActionContainer selectedCount={bulkSelection.selectedCount}>
+        <AdminPageLayout
+          title="Product Management"
+          subtitle="Manage your product catalog, inventory, and pricing"
+          actions={pageActions}
+          tabs={tabs}
+          filters={filtersComponent}
+          loading={loading}
+        >
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -422,18 +508,33 @@ export default function AdminProductsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-28">
+                      <BulkSelectAllCheckbox
+                        checked={bulkSelection.isAllSelected}
+                        indeterminate={bulkSelection.isPartiallySelected}
+                        onCheckedChange={bulkSelection.toggleAllAvailable}
+                        selectedCount={bulkSelection.selectedCount}
+                        totalCount={bulkSelection.availableCount}
+                      />
+                    </TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="w-32">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {products.map(product => (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        <BulkSelectionCheckbox
+                          checked={bulkSelection.isSelected(product.id)}
+                          onCheckedChange={(checked) => bulkSelection.toggleItem(product.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
@@ -540,7 +641,7 @@ export default function AdminProductsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Link
                             href={`/products/${product.slug}`}
                             target="_blank"
@@ -550,12 +651,13 @@ export default function AdminProductsPage() {
                               variant="ghost"
                               size="sm"
                               title="Live View Product"
+                              className="h-8 w-8 p-0"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
                           <Link href={`/admin/products/${product.id}/edit`}>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
@@ -563,7 +665,7 @@ export default function AdminProductsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(product.id)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -600,6 +702,25 @@ export default function AdminProductsPage() {
           )}
         </CardContent>
       </Card>
-    </AdminPageLayout>
+        </AdminPageLayout>
+      </BulkActionContainer>
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={bulkSelection.selectedCount}
+        onDelete={handleBulkDelete}
+        onClearSelection={bulkSelection.clearSelection}
+        loading={bulkDeleteLoading}
+      />
+
+      {/* Bulk Delete Modal */}
+      <BulkDeleteModal
+        open={bulkDeleteModalOpen}
+        onOpenChange={setBulkDeleteModalOpen}
+        productIds={Array.from(bulkSelection.selectedItems)}
+        onConfirm={confirmBulkDelete}
+        loading={bulkDeleteLoading}
+      />
+    </>
   );
 }

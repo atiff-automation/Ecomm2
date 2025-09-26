@@ -1,3 +1,0 @@
-sku,name,description,shortDescription,categoryName,regularPrice,memberPrice,stockQuantity,lowStockAlert,weight,dimensions,featured,isPromotional,isQualifyingForMembership,promotionalPrice,promotionStartDate,promotionEndDate,memberOnlyUntil,earlyAccessStart,metaTitle,metaDescription
-TEST-001,Test Product Simple,Simple test description,Short desc,JRM HOLISTIK,25.00,20.00,50,5,0.3,5x5x5,FALSE,FALSE,TRUE,,,,,,,
-TEST-002,Test Product Two,Another test description,Another short,JRM HOLISTIK,35.00,30.00,100,10,0.5,10x8x6,TRUE,FALSE,TRUE,,,,,,,
