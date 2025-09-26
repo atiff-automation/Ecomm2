@@ -97,6 +97,29 @@ interface Product {
   relatedProducts: RelatedProduct[];
 }
 
+// Utility function to format dimensions
+function formatDimensions(dimensionsString: string): string {
+  try {
+    const dimensions = JSON.parse(dimensionsString);
+    const parts = [];
+
+    if (dimensions.length && dimensions.length > 0) {
+      parts.push(`L: ${dimensions.length}cm`);
+    }
+    if (dimensions.width && dimensions.width > 0) {
+      parts.push(`W: ${dimensions.width}cm`);
+    }
+    if (dimensions.height && dimensions.height > 0) {
+      parts.push(`H: ${dimensions.height}cm`);
+    }
+
+    return parts.length > 0 ? parts.join(' × ') : 'Not specified';
+  } catch (error) {
+    // If parsing fails, return the original string or 'Not specified'
+    return dimensionsString || 'Not specified';
+  }
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
   const { data: session } = useSession();
@@ -647,7 +670,7 @@ export default function ProductDetailPage() {
                     {product.dimensions && (
                       <div className="flex justify-between">
                         <span>Dimensions:</span>
-                        <span>{product.dimensions}</span>
+                        <span>{formatDimensions(product.dimensions)}</span>
                       </div>
                     )}
                   </div>

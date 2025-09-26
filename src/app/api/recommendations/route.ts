@@ -56,11 +56,6 @@ export async function GET(request: NextRequest) {
         ...product,
         averageRating: parseFloat(averageRating.toFixed(1)),
         reviewCount: reviews.length,
-        primaryImage:
-          product.images?.find((img: any) => img.isPrimary) ||
-          product.images?.[0] ||
-          null,
-        images: undefined, // Remove images array to keep response clean
         reviews: undefined, // Remove reviews array to keep response clean
       };
     });
@@ -191,8 +186,7 @@ async function getGenericRecommendations(
           },
         },
         images: {
-          where: { isPrimary: true },
-          take: 1,
+          orderBy: { isPrimary: 'desc' },
         },
         reviews: {
           select: { rating: true },
@@ -283,8 +277,7 @@ async function getSimilarProducts(
           },
         },
         images: {
-          where: { isPrimary: true },
-          take: 1,
+          orderBy: { isPrimary: 'desc' },
         },
         reviews: {
           select: { rating: true },
@@ -345,8 +338,7 @@ async function getCategoryRecommendations(
           },
         },
         images: {
-          where: { isPrimary: true },
-          take: 1,
+          orderBy: { isPrimary: 'desc' },
         },
         reviews: {
           select: { rating: true },
@@ -398,8 +390,7 @@ async function getTrendingProducts(limit: number, excludeUserId?: string) {
           },
         },
         images: {
-          where: { isPrimary: true },
-          take: 1,
+          orderBy: { isPrimary: 'desc' },
         },
         reviews: {
           select: { rating: true },
