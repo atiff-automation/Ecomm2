@@ -77,6 +77,43 @@ export default function ProductImportPage() {
     }
   };
 
+  const downloadCategoryList = async () => {
+    try {
+      const response = await fetch('/api/categories?includeProductCount=true');
+      if (response.ok) {
+        const data = await response.json();
+        const categories = data.categories;
+
+        const headers = ['categoryName', 'categorySlug', 'description', 'productCount'];
+        const csvData = categories.map((cat: any) => [
+          cat.name,
+          cat.slug,
+          cat.description || '',
+          cat.productCount || 0
+        ]);
+
+        const csvContent = [headers, ...csvData]
+          .map(row => row.map(cell => `"${cell}"`).join(','))
+          .join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'category_list.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        toast.error('Failed to fetch categories');
+      }
+    } catch (error) {
+      console.error('Error downloading category list:', error);
+      toast.error('Failed to download category list');
+    }
+  };
+
   const downloadTemplate = () => {
     // Create CSV template with sample data
     const headers = [
@@ -84,7 +121,7 @@ export default function ProductImportPage() {
       'name',
       'description',
       'shortDescription',
-      'categoryId',
+      'categoryName',
       'regularPrice',
       'memberPrice',
       'stockQuantity',
@@ -108,7 +145,7 @@ export default function ProductImportPage() {
       'Sample Product',
       'This is a sample product description',
       'Short description',
-      'category-id-here',
+      'Electronics',
       '29.99',
       '24.99',
       '100',
@@ -234,6 +271,10 @@ export default function ProductImportPage() {
   // Extract page actions
   const pageActions = (
     <div className="flex gap-2">
+      <Button onClick={downloadCategoryList} variant="outline" size="sm">
+        <Download className="w-4 h-4 mr-2" />
+        Category List
+      </Button>
       <Button onClick={downloadTemplate} variant="outline" size="sm">
         <Download className="w-4 h-4 mr-2" />
         Download Template
@@ -279,8 +320,9 @@ export default function ProductImportPage() {
                   <h4 className="font-medium mb-2">Before You Start</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• Download the template to see required columns</li>
+                    <li>• Download the category list to see valid category names</li>
                     <li>• Ensure SKUs are unique for new products</li>
-                    <li>• Use valid category IDs from your store</li>
+                    <li>• Use category names exactly as they appear in your store</li>
                     <li>• Prices should be in decimal format (e.g., 29.99)</li>
                   </ul>
                 </div>

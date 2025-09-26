@@ -9,6 +9,25 @@ import { z } from 'zod';
 
 // ==================== TYPE DEFINITIONS ====================
 
+export interface HeroSlide {
+  id: string;
+  imageUrl: string;
+  altText?: string;
+  order: number;
+  isActive: boolean;
+  mediaId?: string; // Track media upload ID for deletion
+}
+
+export interface SliderConfig {
+  enabled: boolean;
+  autoAdvance: boolean;
+  interval: number;
+  showDots: boolean;
+  showArrows: boolean;
+  pauseOnHover: boolean;
+  slides: HeroSlide[];
+}
+
 export interface SiteCustomizationConfig {
   hero: {
     title: string;
@@ -32,6 +51,7 @@ export interface SiteCustomizationConfig {
       showTitle: boolean;
       showCTA: boolean;
     };
+    slider: SliderConfig;
   };
   branding: {
     logo?: {
@@ -83,6 +103,25 @@ export interface SiteCustomizationResponse {
 
 // ==================== VALIDATION SCHEMAS ====================
 
+const HeroSlideValidationSchema = z.object({
+  id: z.string().cuid(),
+  imageUrl: z.string().url('Must be a valid image URL'),
+  altText: z.string().max(200, 'Alt text must be under 200 characters').optional(),
+  order: z.number().int().min(0, 'Order must be a non-negative integer'),
+  isActive: z.boolean(),
+  mediaId: z.string().optional() // Track media upload ID for deletion
+});
+
+const SliderValidationSchema = z.object({
+  enabled: z.boolean(),
+  autoAdvance: z.boolean(),
+  interval: z.number().min(1000, 'Interval must be at least 1 second').max(30000, 'Interval must not exceed 30 seconds'),
+  showDots: z.boolean(),
+  showArrows: z.boolean(),
+  pauseOnHover: z.boolean(),
+  slides: z.array(HeroSlideValidationSchema).max(10, 'Maximum 10 slides allowed')
+});
+
 const ValidationRules = z.object({
   hero: z.object({
     title: z.string().min(1, 'Title is required').max(100, 'Title must be under 100 characters'),
@@ -105,7 +144,8 @@ const ValidationRules = z.object({
       textAlignment: z.enum(['left', 'center', 'right']),
       showTitle: z.boolean(),
       showCTA: z.boolean()
-    })
+    }),
+    slider: SliderValidationSchema
   }),
   branding: z.object({
     logo: z.object({
@@ -163,6 +203,15 @@ export class SiteCustomizationService {
           textAlignment: 'left',
           showTitle: false,  // Default to false when fields are empty
           showCTA: false     // Default to false when CTA fields are empty
+        },
+        slider: {
+          enabled: false,           // Disabled by default (backward compatibility)
+          autoAdvance: true,        // Auto-advance enabled by default
+          interval: 5000,           // 5 second intervals
+          showDots: true,           // Show navigation dots
+          showArrows: true,         // Show navigation arrows
+          pauseOnHover: true,       // Pause on hover
+          slides: []                // Empty slides array
         }
       },
       branding: {
@@ -201,7 +250,7 @@ export class SiteCustomizationService {
       return userId;
     } catch (error) {
       console.error('Authentication validation failed:', error);
-      throw new Error(`Authentication error: ${error.message}`);
+      throw new Error(`Authentication error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -243,6 +292,12 @@ export class SiteCustomizationService {
       if (!config || !config.hero) {
         console.log('Invalid configuration structure, returning default');
         return this.getDefaultConfiguration();
+      }
+
+      // Handle missing slider configuration (backward compatibility)
+      if (!config.hero.slider) {
+        console.log('Missing slider configuration, adding default slider config for backward compatibility');
+        config.hero.slider = this.getDefaultConfiguration().hero.slider;
       }
       
       // Ensure metadata is up to date
@@ -642,7 +697,7 @@ export class SiteCustomizationService {
 
   private migrateLegacyConfig(legacyConfig: any, activeConfig: any): SiteCustomizationConfig {
     const defaultConfig = this.getDefaultConfiguration();
-    
+
     // Migrate legacy config to new format
     const migratedConfig: SiteCustomizationConfig = {
       hero: {
@@ -652,7 +707,8 @@ export class SiteCustomizationService {
         ctaPrimary: defaultConfig.hero.ctaPrimary,
         ctaSecondary: defaultConfig.hero.ctaSecondary,
         background: defaultConfig.hero.background,
-        layout: defaultConfig.hero.layout
+        layout: defaultConfig.hero.layout,
+        slider: defaultConfig.hero.slider  // Add default slider configuration
       },
       branding: {
         colors: {
@@ -679,6 +735,178 @@ export class SiteCustomizationService {
     }
 
     return migratedConfig;
+  }
+
+  // ==================== SLIDER MANAGEMENT METHODS ====================
+
+  /**
+   * Add a new slide to the slider
+   */
+  async addSlide(slideData: Omit<HeroSlide, 'id'>, updatedBy: string): Promise<HeroSlide> {
+    try {
+      const config = await this.getConfiguration();
+
+      // Generate unique ID for the slide
+      const slideId = `slide_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const newSlide: HeroSlide = {
+        id: slideId,
+        imageUrl: slideData.imageUrl,
+        order: slideData.order,
+        isActive: slideData.isActive,
+        ...(slideData.altText && { altText: slideData.altText })
+      };
+
+      // Validate the new slide
+      const slideValidation = HeroSlideValidationSchema.safeParse(newSlide);
+      if (!slideValidation.success) {
+        throw new Error(`Invalid slide data: ${slideValidation.error.message}`);
+      }
+
+      // Add slide to configuration
+      config.hero.slider.slides.push(newSlide);
+
+      // Sort slides by order
+      config.hero.slider.slides.sort((a, b) => a.order - b.order);
+
+      // Update configuration
+      await this.updateConfiguration(config, updatedBy);
+
+      return newSlide;
+    } catch (error) {
+      console.error('Error adding slide:', error);
+      throw new Error(`Failed to add slide: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Update an existing slide
+   */
+  async updateSlide(slideId: string, updates: Partial<HeroSlide>, updatedBy: string): Promise<void> {
+    try {
+      const config = await this.getConfiguration();
+
+      const slideIndex = config.hero.slider.slides.findIndex(slide => slide.id === slideId);
+      if (slideIndex === -1) {
+        throw new Error(`Slide with ID ${slideId} not found`);
+      }
+
+      // Apply updates to the slide
+      const updatedSlide = { ...config.hero.slider.slides[slideIndex], ...updates };
+
+      // Validate the updated slide
+      const slideValidation = HeroSlideValidationSchema.safeParse(updatedSlide);
+      if (!slideValidation.success) {
+        throw new Error(`Invalid slide updates: ${slideValidation.error.message}`);
+      }
+
+      // Update the slide in the array
+      config.hero.slider.slides[slideIndex] = updatedSlide;
+
+      // Resort slides if order was changed
+      if (updates.order !== undefined) {
+        config.hero.slider.slides.sort((a, b) => a.order - b.order);
+      }
+
+      // Update configuration
+      await this.updateConfiguration(config, updatedBy);
+    } catch (error) {
+      console.error('Error updating slide:', error);
+      throw new Error(`Failed to update slide: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Delete a slide
+   */
+  async deleteSlide(slideId: string, updatedBy: string): Promise<void> {
+    try {
+      const config = await this.getConfiguration();
+
+      const slideIndex = config.hero.slider.slides.findIndex(slide => slide.id === slideId);
+      if (slideIndex === -1) {
+        throw new Error(`Slide with ID ${slideId} not found`);
+      }
+
+      // Remove the slide from the array
+      config.hero.slider.slides.splice(slideIndex, 1);
+
+      // Update configuration
+      await this.updateConfiguration(config, updatedBy);
+    } catch (error) {
+      console.error('Error deleting slide:', error);
+      throw new Error(`Failed to delete slide: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Reorder slides
+   */
+  async reorderSlides(slideIds: string[], updatedBy: string): Promise<void> {
+    try {
+      const config = await this.getConfiguration();
+
+      // Validate that all slide IDs exist
+      const existingSlideIds = config.hero.slider.slides.map(slide => slide.id);
+      const missingSlides = slideIds.filter(id => !existingSlideIds.includes(id));
+      if (missingSlides.length > 0) {
+        throw new Error(`Slides not found: ${missingSlides.join(', ')}`);
+      }
+
+      if (slideIds.length !== existingSlideIds.length) {
+        throw new Error('Must provide all slide IDs for reordering');
+      }
+
+      // Reorder slides according to the provided array
+      const reorderedSlides = slideIds.map((slideId, index) => {
+        const slide = config.hero.slider.slides.find(s => s.id === slideId);
+        return { ...slide!, order: index };
+      });
+
+      // Update the slides array
+      config.hero.slider.slides = reorderedSlides;
+
+      // Update configuration
+      await this.updateConfiguration(config, updatedBy);
+    } catch (error) {
+      console.error('Error reordering slides:', error);
+      throw new Error(`Failed to reorder slides: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Update slider configuration
+   */
+  async updateSliderConfig(sliderConfig: Partial<SliderConfig>, updatedBy: string): Promise<void> {
+    try {
+      const config = await this.getConfiguration();
+
+      // Merge with existing slider config
+      const updatedSliderConfig = { ...config.hero.slider, ...sliderConfig };
+
+      // Validate the updated slider configuration
+      const sliderValidation = SliderValidationSchema.safeParse(updatedSliderConfig);
+      if (!sliderValidation.success) {
+        throw new Error(`Invalid slider configuration: ${sliderValidation.error.message}`);
+      }
+
+      // Update slider configuration
+      config.hero.slider = updatedSliderConfig;
+
+      // Update configuration
+      await this.updateConfiguration(config, updatedBy);
+    } catch (error) {
+      console.error('Error updating slider configuration:', error);
+      throw new Error(`Failed to update slider configuration: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Get slider configuration only
+   */
+  async getSliderConfiguration(): Promise<SliderConfig> {
+    const config = await this.getConfiguration();
+    return config.hero.slider;
   }
 
   // ==================== UTILITY METHODS ====================
@@ -756,12 +984,12 @@ export class SiteCustomizationService {
           userId,
           action: `SITE_CUSTOMIZATION_${action}`,
           resource: 'SITE_CUSTOMIZATION',
-          details: {
+          details: JSON.parse(JSON.stringify({
             action,
             version: fullConfig.metadata.version,
             changes,
             timestamp: new Date().toISOString()
-          }
+          }))
         }
       });
     } catch (error) {

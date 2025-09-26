@@ -52,11 +52,15 @@ export async function GET() {
       favicon: config.branding.favicon || null,
     };
 
+    // Extract slider configuration from hero.slider
+    const sliderConfig = config.hero?.slider || null;
+
     // Return without caching for immediate updates
     return NextResponse.json({
       theme,
       heroSection,
       branding,
+      sliderConfig,
       message: 'Site customization retrieved successfully',
     });
   } catch (error) {
@@ -95,6 +99,7 @@ export async function GET() {
         logo: null,
         favicon: null,
       },
+      sliderConfig: null,
       message: 'Using default site customization',
     });
   }

@@ -16,7 +16,7 @@ const productSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
-  categoryId: z.string().min(1, 'Category ID is required'),
+  categoryName: z.string().min(1, 'Category name is required'),
   regularPrice: z.number().positive('Regular price must be positive'),
   memberPrice: z
     .number()
@@ -86,6 +86,16 @@ function convertToProduct(
   const errors: ImportError[] = [];
 
   try {
+    // Ensure row object exists and has basic structure
+    if (!row || typeof row !== 'object') {
+      errors.push({
+        row: rowIndex,
+        field: 'general',
+        message: 'Invalid row data',
+      });
+      return { errors };
+    }
+
     // Convert boolean fields
     const booleanFields = [
       'featured',
@@ -93,9 +103,17 @@ function convertToProduct(
       'isQualifyingForMembership',
     ];
     booleanFields.forEach(field => {
-      if (row[field] !== undefined && row[field] !== '') {
-        const value = String(row[field]).toLowerCase();
-        row[field] = value === 'true' || value === '1' || value === 'yes';
+      if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
+        try {
+          const value = String(row[field] || '').toLowerCase();
+          row[field] = value === 'true' || value === '1' || value === 'yes';
+        } catch (e) {
+          // Default to false if conversion fails
+          row[field] = false;
+        }
+      } else {
+        // Set default value for missing boolean fields
+        row[field] = false;
       }
     });
 
@@ -110,9 +128,14 @@ function convertToProduct(
     ];
     numericFields.forEach(field => {
       if (row[field] !== undefined && row[field] !== '') {
-        const numValue = parseFloat(String(row[field]).replace(/[^\d.-]/g, ''));
-        if (!isNaN(numValue)) {
-          row[field] = numValue;
+        try {
+          const stringValue = String(row[field] || '');
+          const numValue = parseFloat(stringValue.replace(/[^\d.-]/g, ''));
+          if (!isNaN(numValue)) {
+            row[field] = numValue;
+          }
+        } catch (e) {
+          // Keep original value if conversion fails
         }
       }
     });
@@ -125,24 +148,32 @@ function convertToProduct(
       'earlyAccessStart',
     ];
     dateFields.forEach(field => {
-      if (row[field] !== undefined && row[field] !== '') {
-        const parsedValue = parseExcelValue(row[field]);
-        if (parsedValue) {
-          try {
+      if (row[field] !== undefined && row[field] !== null && row[field] !== '') {
+        try {
+          const parsedValue = parseExcelValue(row[field]);
+          if (parsedValue) {
             const date = new Date(parsedValue);
             if (!isNaN(date.getTime())) {
               row[field] = date.toISOString();
+            } else {
+              delete row[field];
             }
-          } catch (e) {
-            // Keep original value, let validation handle it
+          } else {
+            delete row[field];
           }
+        } catch (e) {
+          // Remove invalid date fields
+          delete row[field];
         }
+      } else {
+        delete row[field];
       }
     });
 
-    // Remove empty fields
+    // Remove empty fields safely
     Object.keys(row).forEach(key => {
-      if (row[key] === '' || row[key] === null || row[key] === undefined) {
+      const value = row[key];
+      if (value === '' || value === null || value === undefined) {
         delete row[key];
       }
     });
@@ -229,40 +260,181 @@ export async function POST(request: NextRequest) {
     const buffer = await file.arrayBuffer();
     let workbook: XLSX.WorkBook;
 
+    let dataRows: any[] = [];
+
     try {
       if (fileName.endsWith('.csv')) {
+        // Use simple CSV parsing for better handling of complex content
         const text = new TextDecoder().decode(buffer);
-        workbook = XLSX.read(text, { type: 'string' });
+        console.log('CSV file size:', text.length, 'characters');
+
+        // Simple CSV parsing that handles quoted fields with newlines
+        const lines = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          const nextChar = text[i + 1];
+
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              // Escaped quote
+              current += '"';
+              i++; // Skip next quote
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === '\n' && !inQuotes) {
+            if (current.trim()) {
+              lines.push(current);
+            }
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+
+        // Add last line if exists
+        if (current.trim()) {
+          lines.push(current);
+        }
+
+        console.log('Parsed', lines.length, 'lines from CSV');
+
+        if (lines.length < 2) {
+          return NextResponse.json(
+            { message: 'CSV must have at least headers and one data row' },
+            { status: 400 }
+          );
+        }
+
+        // Parse header line
+        const headerLine = lines[0];
+        const headers = [];
+        let currentField = '';
+        let inFieldQuotes = false;
+
+        for (let i = 0; i < headerLine.length; i++) {
+          const char = headerLine[i];
+          const nextChar = headerLine[i + 1];
+
+          if (char === '"') {
+            if (inFieldQuotes && nextChar === '"') {
+              currentField += '"';
+              i++;
+            } else {
+              inFieldQuotes = !inFieldQuotes;
+            }
+          } else if (char === ',' && !inFieldQuotes) {
+            headers.push(currentField.trim());
+            currentField = '';
+          } else {
+            currentField += char;
+          }
+        }
+        headers.push(currentField.trim());
+
+        console.log('Headers found:', headers.length, 'columns');
+
+        // Parse data lines
+        for (let lineIndex = 1; lineIndex < lines.length; lineIndex++) {
+          const line = lines[lineIndex];
+          const values = [];
+          let currentValue = '';
+          let inValueQuotes = false;
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (char === '"') {
+              if (inValueQuotes && nextChar === '"') {
+                currentValue += '"';
+                i++;
+              } else {
+                inValueQuotes = !inValueQuotes;
+              }
+            } else if (char === ',' && !inValueQuotes) {
+              values.push(currentValue);
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+          values.push(currentValue);
+
+          // Create row object
+          const row: any = {};
+          headers.forEach((header, i) => {
+            if (header) {
+              row[header] = values[i] || '';
+            }
+          });
+
+          if (Object.keys(row).length > 0) {
+            dataRows.push(row);
+          }
+        }
+
       } else {
-        workbook = XLSX.read(buffer, { type: 'array' });
+        // Use XLSX for Excel files
+        const workbook = XLSX.read(buffer, {
+          type: 'array',
+          raw: false,
+          cellText: false,
+          cellHTML: false
+        });
+
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(worksheet, {
+          raw: false,
+          defval: '',
+          blankrows: false
+        });
+
+        dataRows = rawData.filter((row: any) => Object.keys(row).length > 0);
       }
     } catch (error) {
+      console.error('File parsing error:', error);
       return NextResponse.json(
         { message: 'Failed to parse file. Please check file format.' },
         { status: 400 }
       );
     }
 
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const rawData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+    console.log('Final parsed data rows:', dataRows.length);
+    if (dataRows.length > 0) {
+      console.log('First row keys:', Object.keys(dataRows[0]));
+      console.log('First row sample:', JSON.stringify(dataRows[0], null, 2).substring(0, 500));
+    }
 
-    if (rawData.length === 0) {
+    if (dataRows.length === 0) {
       return NextResponse.json(
         { message: 'File is empty or has no valid data' },
         { status: 400 }
       );
     }
 
-    // Validate categories exist
-    const categoryIds = [
-      ...new Set(rawData.map((row: any) => row.categoryId).filter(Boolean)),
+    // Validate categories exist - accept both names and slugs
+    const categoryNames = [
+      ...new Set(dataRows.map((row: any) => row.categoryName).filter(Boolean)),
     ];
     const existingCategories = await prisma.category.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true },
+      where: {
+        OR: [
+          { name: { in: categoryNames } },
+          { slug: { in: categoryNames } },
+        ]
+      },
+      select: { id: true, name: true, slug: true },
     });
-    const validCategoryIds = new Set(existingCategories.map(cat => cat.id));
+    const categoryLookup = new Map();
+    existingCategories.forEach(cat => {
+      categoryLookup.set(cat.name, cat.id);
+      categoryLookup.set(cat.slug, cat.id);
+    });
 
     // Get existing products for duplicate checking
     const existingProducts = await prisma.product.findMany({
@@ -275,30 +447,68 @@ export async function POST(request: NextRequest) {
       success: 0,
       errors: 0,
       warnings: 0,
-      total: rawData.length,
+      total: dataRows.length,
       errorDetails: [],
       successfulProducts: [],
     };
 
+    console.log(`Processing ${dataRows.length} data rows`);
+
     // Process each row
-    for (let i = 0; i < rawData.length; i++) {
-      const row = rawData[i] as any;
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i] as any;
       const rowIndex = i + 2; // +2 because Excel starts at 1 and we have headers
 
       try {
-        // Validate category exists
-        if (!validCategoryIds.has(row.categoryId)) {
+        console.log(`Processing row ${rowIndex}, raw row keys:`, row ? Object.keys(row) : 'row is null/undefined');
+
+        // Skip empty rows
+        if (!row || Object.keys(row).length === 0) {
+          console.log(`Skipping empty row ${rowIndex}`);
+          continue;
+        }
+
+        // Check for required fields first
+        const requiredFields = ['sku', 'name', 'categoryName', 'regularPrice', 'stockQuantity'];
+        let hasRequiredFieldError = false;
+
+        for (const field of requiredFields) {
+          const fieldValue = row[field];
+          console.log(`Row ${rowIndex}, field ${field}:`, fieldValue, typeof fieldValue);
+
+          if (!fieldValue || String(fieldValue).trim() === '') {
+            result.errorDetails.push({
+              row: rowIndex,
+              field: field,
+              message: `${field} is required and cannot be empty`,
+              value: String(fieldValue || ''),
+            });
+            result.errors++;
+            hasRequiredFieldError = true;
+          }
+        }
+
+        if (hasRequiredFieldError) {
+          console.log(`Row ${rowIndex} has required field errors, skipping`);
+          continue;
+        }
+
+        // Validate category exists and get ID
+        const categoryId = categoryLookup.get(row.categoryName);
+        if (!categoryId) {
           result.errorDetails.push({
             row: rowIndex,
-            field: 'categoryId',
-            message: 'Category does not exist',
-            value: row.categoryId,
+            field: 'categoryName',
+            message: 'Category does not exist. Use exact category name or slug.',
+            value: row.categoryName,
           });
           result.errors++;
           continue;
         }
 
+        console.log(`Row ${rowIndex} about to convert to product, row data:`, JSON.stringify(row, null, 2));
         const { data: productData, errors } = convertToProduct(row, rowIndex);
+        console.log(`Row ${rowIndex} conversion result - errors:`, errors, 'data:', productData ? 'exists' : 'null');
 
         if (errors.length > 0) {
           result.errorDetails.push(...errors);
@@ -314,7 +524,7 @@ export async function POST(request: NextRequest) {
 
         if (isUpdate) {
           // Update existing product
-          const { categoryId, ...updateData } = productData;
+          const { categoryName, ...updateData } = productData;
           await prisma.product.update({
             where: { sku: productData.sku },
             data: {
@@ -351,7 +561,7 @@ export async function POST(request: NextRequest) {
           });
         } else {
           // Create new product
-          const { categoryId, ...createData } = productData;
+          const { categoryName, ...createData } = productData;
           await prisma.product.create({
             data: {
               ...createData,

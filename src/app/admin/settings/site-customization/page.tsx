@@ -30,8 +30,27 @@ import {
   FileText
 } from 'lucide-react';
 import Image from 'next/image';
+import { HeroSliderSection } from '@/components/admin/HeroSliderSection';
 
 // ==================== INTERFACES ====================
+
+interface HeroSlide {
+  id: string;
+  imageUrl: string;
+  altText?: string;
+  order: number;
+  isActive: boolean;
+}
+
+interface SliderConfig {
+  enabled: boolean;
+  autoAdvance: boolean;
+  interval: number;
+  showDots: boolean;
+  showArrows: boolean;
+  pauseOnHover: boolean;
+  slides: HeroSlide[];
+}
 
 interface SiteCustomizationConfig {
   hero: {
@@ -56,6 +75,7 @@ interface SiteCustomizationConfig {
       showTitle: boolean;
       showCTA: boolean;
     };
+    slider: SliderConfig;
   };
   branding: {
     logo?: {
@@ -304,6 +324,25 @@ export default function SiteCustomizationSettings() {
     current[keys[keys.length - 1]] = value;
     setConfig(updatedConfig);
   };
+
+  // ==================== SLIDER HANDLER ====================
+
+  const handleSliderChange = useCallback((updates: Partial<SliderConfig>) => {
+    if (!config) return;
+
+    const updatedConfig = {
+      ...config,
+      hero: {
+        ...config.hero,
+        slider: {
+          ...config.hero.slider,
+          ...updates
+        }
+      }
+    };
+
+    setConfig(updatedConfig);
+  }, [config]);
 
   // ==================== RENDER HELPERS ====================
 
@@ -761,6 +800,13 @@ export default function SiteCustomizationSettings() {
       {/* Main Configuration Layout */}
       <div className="space-y-6">
         {renderHeroSection()}
+        {config?.hero.slider && (
+          <HeroSliderSection
+            sliderConfig={config.hero.slider}
+            onChange={handleSliderChange}
+            isLoading={isLoading || isSaving}
+          />
+        )}
         {renderBrandingSection()}
       </div>
 

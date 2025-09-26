@@ -112,6 +112,7 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [siteTheme, setSiteTheme] = useState<SiteTheme | null>(null);
   const [heroSection, setHeroSection] = useState<HeroSection | null>(null);
+  const [sliderConfig, setSliderConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const isLoggedIn = !!session?.user;
@@ -141,6 +142,7 @@ export default function HomePage() {
           const customizationData = await customizationResponse.json();
           setSiteTheme(customizationData.theme);
           setHeroSection(customizationData.heroSection);
+          setSliderConfig(customizationData.sliderConfig);
         }
       } catch (error) {
         console.error('Failed to fetch home data:', error);
@@ -161,6 +163,7 @@ export default function HomePage() {
           key={heroSection?.id || 'default'}
           heroSection={heroSection}
           siteTheme={siteTheme}
+          sliderConfig={sliderConfig}
           isLoggedIn={isLoggedIn}
           isMember={isMember}
         />

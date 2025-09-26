@@ -1,12 +1,11 @@
 import { NextAuthOptions } from 'next-auth';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole, UserStatus } from '@prisma/client';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Remove PrismaAdapter when using JWT strategy to avoid conflicts
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -75,31 +74,40 @@ export const authOptions: NextAuthOptions = {
         token.memberSince = user.memberSince;
       }
 
-      // Refresh user data when session.update() is called
-      if (trigger === 'update' && token.sub) {
-        const freshUser = await prisma.user.findUnique({
+      // Validate that user still exists in database (prevents stale tokens)
+      if (token.sub) {
+        const userExists = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, isMember: true, memberSince: true },
+          select: { id: true, role: true, isMember: true, memberSince: true, status: true },
         });
 
-        if (freshUser) {
-          token.role = freshUser.role;
-          token.isMember = freshUser.isMember;
-          token.memberSince = freshUser.memberSince;
+        if (!userExists || userExists.status !== UserStatus.ACTIVE) {
+          // User doesn't exist or is not active - invalidate token
+          console.warn(`Token validation failed for user ${token.sub}: ${!userExists ? 'User not found' : 'User not active'}`);
+          return {};
+        }
+
+        // Refresh user data when session.update() is called or validate current data
+        if (trigger === 'update' || !token.role) {
+          token.role = userExists.role;
+          token.isMember = userExists.isMember;
+          token.memberSince = userExists.memberSince;
         }
       }
 
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        session.user.id = token.sub!;
+      if (token && token.sub && token.role) {
+        session.user.id = token.sub;
         session.user.role = token.role as UserRole;
         session.user.isMember = token.isMember as boolean;
         session.user.memberSince = token.memberSince as Date | null;
+        return session;
       }
-      return session;
+
+      // Return null if token is invalid to force re-authentication
+      return null;
     },
     async redirect({ url, baseUrl }) {
       // Role-based redirects are handled in the signin page

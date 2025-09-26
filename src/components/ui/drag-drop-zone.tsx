@@ -64,6 +64,7 @@ interface DragDropZoneProps {
   uploadProgress?: number;
   disabled?: boolean;
   className?: string;
+  multiple?: boolean;
 }
 
 export function DragDropZone({
@@ -74,7 +75,8 @@ export function DragDropZone({
   isUploading = false,
   uploadProgress = 0,
   disabled = false,
-  className
+  className,
+  multiple = false
 }: DragDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -271,10 +273,11 @@ export function DragDropZone({
           ref={fileInputRef}
           type="file"
           accept={config.accept}
+          multiple={multiple}
           onChange={handleFileInputChange}
           disabled={disabled || isUploading}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          aria-label={`Upload ${type} file`}
+          aria-label={`Upload ${type} file${multiple ? 's' : ''}`}
         />
 
         {/* Upload icon and text */}
