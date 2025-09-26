@@ -77,11 +77,25 @@ interface Category {
   name: string;
 }
 
+interface ProductMetrics {
+  totalProducts: number;
+  activeProducts: number;
+  lowStockProducts: number;
+  outOfStockProducts: number;
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [metrics, setMetrics] = useState<ProductMetrics>({
+    totalProducts: 0,
+    activeProducts: 0,
+    lowStockProducts: 0,
+    outOfStockProducts: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [metricsLoading, setMetricsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -177,6 +191,31 @@ export default function AdminProductsPage() {
     }
   }, []);
 
+  const fetchMetrics = useCallback(async () => {
+    try {
+      setMetricsLoading(true);
+      const params = new URLSearchParams({
+        ...(searchTerm && { search: searchTerm }),
+        ...(selectedCategory !== 'all' && { category: selectedCategory }),
+        ...(selectedStatus !== 'all' && { status: selectedStatus }),
+        ...(selectedStockLevel !== 'all' && { stockLevel: selectedStockLevel }),
+      });
+
+      const response = await fetch(`/api/admin/products/metrics?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Metrics API Response:', data); // Debug log
+        setMetrics(data);
+      } else {
+        console.error('Failed to fetch metrics:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Failed to fetch metrics:', error);
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, [searchTerm, selectedCategory, selectedStatus, selectedStockLevel]);
+
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -184,6 +223,10 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   const handleDelete = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) {
@@ -197,6 +240,7 @@ export default function AdminProductsPage() {
 
       if (response.ok) {
         fetchProducts(); // Refresh the list
+        fetchMetrics(); // Refresh metrics
       } else {
         const error = await response.json();
         alert(error.message || 'Failed to delete product');
@@ -246,6 +290,7 @@ export default function AdminProductsPage() {
         // Clear selection and refresh products
         bulkSelection.clearSelection();
         fetchProducts();
+        fetchMetrics();
       } else {
         toast({
           title: "Bulk Delete Failed",
@@ -449,7 +494,13 @@ export default function AdminProductsPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">
+              {metricsLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
+              ) : (
+                metrics.totalProducts
+              )}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -461,7 +512,11 @@ export default function AdminProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter(p => p.status === 'ACTIVE').length}
+              {metricsLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
+              ) : (
+                metrics.activeProducts
+              )}
             </div>
           </CardContent>
         </Card>
@@ -472,11 +527,11 @@ export default function AdminProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {
-                products.filter(
-                  p => p.stockQuantity < 10 && p.stockQuantity > 0
-                ).length
-              }
+              {metricsLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
+              ) : (
+                metrics.lowStockProducts
+              )}
             </div>
           </CardContent>
         </Card>
@@ -487,7 +542,11 @@ export default function AdminProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {products.filter(p => p.stockQuantity === 0).length}
+              {metricsLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
+              ) : (
+                metrics.outOfStockProducts
+              )}
             </div>
           </CardContent>
         </Card>
