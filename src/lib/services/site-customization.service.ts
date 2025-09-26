@@ -144,16 +144,16 @@ export class SiteCustomizationService {
   private getDefaultConfiguration(): SiteCustomizationConfig {
     return {
       hero: {
-        title: 'Welcome to JRM E-commerce',
-        subtitle: "Malaysia's premier online marketplace",
-        description: 'Intelligent membership benefits, dual pricing, and local payment integration.',
+        title: '',
+        subtitle: '',
+        description: '',
         ctaPrimary: {
-          text: 'Join as Member',
-          link: '/auth/signup'
+          text: '',
+          link: ''
         },
         ctaSecondary: {
-          text: 'Browse Products',
-          link: '/products'
+          text: '',
+          link: ''
         },
         background: {
           type: 'IMAGE',
@@ -161,8 +161,8 @@ export class SiteCustomizationService {
         },
         layout: {
           textAlignment: 'left',
-          showTitle: true,
-          showCTA: true
+          showTitle: false,  // Default to false when fields are empty
+          showCTA: false     // Default to false when CTA fields are empty
         }
       },
       branding: {
@@ -182,6 +182,28 @@ export class SiteCustomizationService {
   }
 
   // ==================== CORE OPERATIONS ====================
+
+  /**
+   * Validate that the user ID exists in the database
+   * Throws proper error if user is not found (forces re-authentication)
+   */
+  private async validateUserId(userId: string): Promise<string> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true }
+      });
+
+      if (!user) {
+        throw new Error(`User not found in database. Please log out and log back in. (User ID: ${userId})`);
+      }
+
+      return userId;
+    } catch (error) {
+      console.error('Authentication validation failed:', error);
+      throw new Error(`Authentication error: ${error.message}`);
+    }
+  }
 
   /**
    * Get current active site customization configuration
@@ -246,6 +268,9 @@ export class SiteCustomizationService {
     updatedBy: string
   ): Promise<SiteCustomizationResponse> {
     try {
+      // Validate user exists in database (prevents foreign key constraint errors)
+      const validUserId = await this.validateUserId(updatedBy);
+
       // Get current configuration to merge with updates
       const currentConfig = await this.getConfiguration();
       
@@ -285,7 +310,7 @@ export class SiteCustomizationService {
           config: mergedConfig as any,
           version: mergedConfig.metadata.version,
           isActive: true,
-          createdBy: updatedBy
+          createdBy: validUserId
         },
         include: {
           creator: {
@@ -337,28 +362,9 @@ export class SiteCustomizationService {
     const warnings: ValidationWarning[] = [];
 
     try {
-      // Use Zod validation for structure validation
-      const heroValidation = ValidationRules.shape.hero.safeParse(config.hero);
-      if (!heroValidation.success) {
-        heroValidation.error.errors.forEach(err => {
-          errors.push({
-            field: `hero.${err.path.join('.')}`,
-            message: err.message,
-            value: err.path.reduce((obj, key) => obj?.[key], config.hero)
-          });
-        });
-      }
-
-      const brandingValidation = ValidationRules.shape.branding.safeParse(config.branding);
-      if (!brandingValidation.success) {
-        brandingValidation.error.errors.forEach(err => {
-          errors.push({
-            field: `branding.${err.path.join('.')}`,
-            message: err.message,
-            value: err.path.reduce((obj, key) => obj?.[key], config.branding)
-          });
-        });
-      }
+      // Custom validation logic that respects layout toggles
+      this.validateHeroSection(config, errors, warnings);
+      this.validateBrandingSection(config, errors, warnings);
 
       // Additional business logic validations
       this.validateBusinessRules(config, errors, warnings);
@@ -378,16 +384,227 @@ export class SiteCustomizationService {
     };
   }
 
+  private validateHeroSection(
+    config: SiteCustomizationConfig,
+    errors: ValidationError[],
+    warnings: ValidationWarning[]
+  ): void {
+    const hero = config.hero;
+
+    // Validate title-related fields only if showTitle is enabled
+    if (hero.layout.showTitle) {
+      if (!hero.title || hero.title.trim().length === 0) {
+        errors.push({
+          field: 'hero.title',
+          message: 'Title is required when title section is enabled',
+          value: hero.title
+        });
+      } else if (hero.title.length > 100) {
+        errors.push({
+          field: 'hero.title',
+          message: 'Title must be under 100 characters',
+          value: hero.title
+        });
+      }
+
+      if (hero.subtitle && hero.subtitle.length > 150) {
+        errors.push({
+          field: 'hero.subtitle',
+          message: 'Subtitle must be under 150 characters',
+          value: hero.subtitle
+        });
+      }
+
+      if (hero.description && hero.description.length > 500) {
+        errors.push({
+          field: 'hero.description',
+          message: 'Description must be under 500 characters',
+          value: hero.description
+        });
+      }
+    }
+
+    // Validate CTA fields only if showCTA is enabled
+    if (hero.layout.showCTA) {
+      if (!hero.ctaPrimary.text || hero.ctaPrimary.text.trim().length === 0) {
+        errors.push({
+          field: 'hero.ctaPrimary.text',
+          message: 'Primary CTA text is required when CTA buttons are enabled',
+          value: hero.ctaPrimary.text
+        });
+      } else if (hero.ctaPrimary.text.length > 30) {
+        errors.push({
+          field: 'hero.ctaPrimary.text',
+          message: 'CTA text must be under 30 characters',
+          value: hero.ctaPrimary.text
+        });
+      }
+
+      if (!hero.ctaPrimary.link || hero.ctaPrimary.link.trim().length === 0) {
+        errors.push({
+          field: 'hero.ctaPrimary.link',
+          message: 'Primary CTA link is required when CTA buttons are enabled',
+          value: hero.ctaPrimary.link
+        });
+      }
+
+      if (!hero.ctaSecondary.text || hero.ctaSecondary.text.trim().length === 0) {
+        errors.push({
+          field: 'hero.ctaSecondary.text',
+          message: 'Secondary CTA text is required when CTA buttons are enabled',
+          value: hero.ctaSecondary.text
+        });
+      } else if (hero.ctaSecondary.text.length > 30) {
+        errors.push({
+          field: 'hero.ctaSecondary.text',
+          message: 'CTA text must be under 30 characters',
+          value: hero.ctaSecondary.text
+        });
+      }
+
+      if (!hero.ctaSecondary.link || hero.ctaSecondary.link.trim().length === 0) {
+        errors.push({
+          field: 'hero.ctaSecondary.link',
+          message: 'Secondary CTA link is required when CTA buttons are enabled',
+          value: hero.ctaSecondary.link
+        });
+      }
+    }
+
+    // Validate background settings
+    if (!['IMAGE', 'VIDEO'].includes(hero.background.type)) {
+      errors.push({
+        field: 'hero.background.type',
+        message: 'Background type must be IMAGE or VIDEO',
+        value: hero.background.type
+      });
+    }
+
+    if (hero.background.overlayOpacity < 0 || hero.background.overlayOpacity > 1) {
+      errors.push({
+        field: 'hero.background.overlayOpacity',
+        message: 'Overlay opacity must be between 0 and 1',
+        value: hero.background.overlayOpacity
+      });
+    }
+
+    // Validate layout settings
+    if (!['left', 'center', 'right'].includes(hero.layout.textAlignment)) {
+      errors.push({
+        field: 'hero.layout.textAlignment',
+        message: 'Text alignment must be left, center, or right',
+        value: hero.layout.textAlignment
+      });
+    }
+  }
+
+  private validateBrandingSection(
+    config: SiteCustomizationConfig,
+    errors: ValidationError[],
+    warnings: ValidationWarning[]
+  ): void {
+    const branding = config.branding;
+
+    // Validate logo if provided
+    if (branding.logo) {
+      if (!branding.logo.url || branding.logo.url.trim().length === 0) {
+        errors.push({
+          field: 'branding.logo.url',
+          message: 'Logo URL is required when logo is provided',
+          value: branding.logo.url
+        });
+      }
+
+      if (branding.logo.width < 20 || branding.logo.width > 400) {
+        errors.push({
+          field: 'branding.logo.width',
+          message: 'Logo width must be between 20px and 400px',
+          value: branding.logo.width
+        });
+      }
+
+      if (branding.logo.height < 20 || branding.logo.height > 200) {
+        errors.push({
+          field: 'branding.logo.height',
+          message: 'Logo height must be between 20px and 200px',
+          value: branding.logo.height
+        });
+      }
+    }
+
+    // Validate favicon if provided
+    if (branding.favicon) {
+      if (!branding.favicon.url || branding.favicon.url.trim().length === 0) {
+        errors.push({
+          field: 'branding.favicon.url',
+          message: 'Favicon URL is required when favicon is provided',
+          value: branding.favicon.url
+        });
+      }
+    }
+
+    // Validate colors if provided
+    if (branding.colors) {
+      const hexColorRegex = /^#[0-9A-F]{6}$/i;
+
+      if (branding.colors.primary && !hexColorRegex.test(branding.colors.primary)) {
+        errors.push({
+          field: 'branding.colors.primary',
+          message: 'Primary color must be a valid hex color',
+          value: branding.colors.primary
+        });
+      }
+
+      if (branding.colors.secondary && !hexColorRegex.test(branding.colors.secondary)) {
+        errors.push({
+          field: 'branding.colors.secondary',
+          message: 'Secondary color must be a valid hex color',
+          value: branding.colors.secondary
+        });
+      }
+
+      if (branding.colors.background && !hexColorRegex.test(branding.colors.background)) {
+        errors.push({
+          field: 'branding.colors.background',
+          message: 'Background color must be a valid hex color',
+          value: branding.colors.background
+        });
+      }
+
+      if (branding.colors.text && !hexColorRegex.test(branding.colors.text)) {
+        errors.push({
+          field: 'branding.colors.text',
+          message: 'Text color must be a valid hex color',
+          value: branding.colors.text
+        });
+      }
+    }
+  }
+
   private validateBusinessRules(
     config: SiteCustomizationConfig,
     errors: ValidationError[],
     warnings: ValidationWarning[]
   ): void {
-    // Validate CTA links are accessible
-    if (config.hero.ctaPrimary.link.startsWith('/') && 
+    // Validate CTA links are accessible (only if CTA is enabled and link exists)
+    if (config.hero.layout.showCTA &&
+        config.hero.ctaPrimary.link &&
+        config.hero.ctaPrimary.link.startsWith('/') &&
         !this.isValidInternalPath(config.hero.ctaPrimary.link)) {
       warnings.push({
         field: 'hero.ctaPrimary.link',
+        message: 'Internal link may not exist',
+        suggestion: 'Verify that this page exists in your application'
+      });
+    }
+
+    // Validate secondary CTA link if enabled and exists
+    if (config.hero.layout.showCTA &&
+        config.hero.ctaSecondary.link &&
+        config.hero.ctaSecondary.link.startsWith('/') &&
+        !this.isValidInternalPath(config.hero.ctaSecondary.link)) {
+      warnings.push({
+        field: 'hero.ctaSecondary.link',
         message: 'Internal link may not exist',
         suggestion: 'Verify that this page exists in your application'
       });

@@ -52,14 +52,13 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       }
     : {
         id: 'default',
-        title: 'Welcome to JRM E-commerce',
-        subtitle: "Malaysia's premier online marketplace",
-        description:
-          'Intelligent membership benefits, dual pricing, and local payment integration.',
-        ctaPrimaryText: 'Join as Member',
-        ctaPrimaryLink: '/auth/signup',
-        ctaSecondaryText: 'Browse Products',
-        ctaSecondaryLink: '/products',
+        title: '',
+        subtitle: '',
+        description: '',
+        ctaPrimaryText: '',
+        ctaPrimaryLink: '',
+        ctaSecondaryText: '',
+        ctaSecondaryLink: '',
         backgroundType: 'IMAGE' as const,
         backgroundImage: null,
         backgroundVideo: null,
