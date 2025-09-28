@@ -201,11 +201,17 @@ export async function PUT(request: NextRequest) {
       await prisma.businessProfileHistory.create({
         data: {
           businessProfileId: updatedProfile.id,
-          previousData: currentProfile,
+          operation: 'UPDATE',
+          oldValues: currentProfile,
+          newValues: {
+            legalName: validatedData.legalName,
+            registrationNumber: validatedData.registrationNumber,
+            primaryEmail: validatedData.primaryEmail,
+            primaryPhone: validatedData.primaryPhone,
+            registeredAddress: validatedData.registeredAddress
+          },
           changedBy: session.user.id,
-          changeType: 'UPDATE',
-          changeDescription: 'Business profile updated via settings',
-          createdAt: new Date()
+          changeReason: 'Business profile updated via settings'
         }
       });
     }

@@ -76,7 +76,7 @@ interface ProductFormData {
   memberPrice: number | string;
   stockQuantity: number;
   lowStockAlert: number;
-  weight?: number | string;
+  weight: number | string;
   length?: number | string;
   width?: number | string;
   height?: number | string;
@@ -112,7 +112,7 @@ const initialFormData: ProductFormData = {
   memberPrice: '',
   stockQuantity: 0,
   lowStockAlert: 10,
-  weight: '',
+  weight: 0,
   length: '',
   width: '',
   height: '',
@@ -258,6 +258,10 @@ export function ProductForm({
     
     if (formData.stockQuantity < 0) {
       newErrors.stockQuantity = 'Stock quantity cannot be negative';
+    }
+
+    if (!formData.weight || parseFloat(formData.weight.toString()) < 0.01) {
+      newErrors.weight = 'Weight is required and must be at least 0.01 kg';
     }
 
     // Promotional pricing validation
@@ -548,16 +552,21 @@ export function ProductForm({
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Label htmlFor="weight">Weight (kg) *</Label>
                         <Input
                           id="weight"
                           type="number"
                           step="0.01"
-                          min="0"
+                          min="0.01"
                           value={formData.weight}
                           onChange={e => handleInputChange('weight', e.target.value)}
-                          placeholder="0.00"
+                          placeholder="0.01"
+                          className={errors.weight ? 'border-red-500' : ''}
+                          required
                         />
+                        {errors.weight && (
+                          <p className="text-sm text-red-600">{errors.weight}</p>
+                        )}
                       </div>
 
                       <div className="space-y-2">

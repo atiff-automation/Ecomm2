@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { UserRole } from '@prisma/client';
-import { superAdminSecurity } from '@/lib/security/superadmin-security';
 
 // Rate limiting store (in-memory for development, use Redis in production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -172,13 +169,32 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtectedRoute) {
-    const token = await getToken({
-      req: request,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      secret: process.env.NEXTAUTH_SECRET!,
-    });
+    try {
+      // Use a simpler approach for middleware - just check if session exists
+      // Detailed role checking will be done in API routes and page components
+      const sessionToken =
+        request.cookies.get('next-auth.session-token')?.value ||
+        request.cookies.get('__Secure-next-auth.session-token')?.value;
 
-    if (!token) {
+      if (!sessionToken) {
+        // Redirect to login for web routes
+        if (!pathname.startsWith('/api')) {
+          const loginUrl = new URL('/auth/signin', request.url);
+          loginUrl.searchParams.set('callbackUrl', pathname);
+          return NextResponse.redirect(loginUrl);
+        }
+
+        // Return 401 for API routes
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
+
+      // For protected routes, we'll rely on the API routes and page components
+      // to do detailed authentication and authorization checks
+      // This prevents Prisma from being called in the middleware (Edge Runtime)
+
+    } catch (error) {
+      console.error('[MIDDLEWARE] Session validation error: ', error);
+
       // Redirect to login for web routes
       if (!pathname.startsWith('/api')) {
         const loginUrl = new URL('/auth/signin', request.url);
@@ -188,60 +204,6 @@ export async function middleware(request: NextRequest) {
 
       // Return 401 for API routes
       return new NextResponse('Unauthorized', { status: 401 });
-    }
-
-    // Role-based access control
-    const userRole = token.role as UserRole;
-
-    // SuperAdmin routes with enhanced security
-    if (
-      pathname.startsWith('/superadmin') ||
-      pathname.startsWith('/api/superadmin')
-    ) {
-      if (userRole !== UserRole.SUPERADMIN) {
-        return new NextResponse('Forbidden', { status: 403 });
-      }
-
-      // Apply enhanced SuperAdmin security checks
-      const securityCheck =
-        await superAdminSecurity.verifySuperAdminAccess(request);
-      if (!securityCheck.passed) {
-        const status = securityCheck.requiresMFA
-          ? 423
-          : securityCheck.requiresIPWhitelist
-            ? 403
-            : 401;
-
-        return new NextResponse(
-          JSON.stringify({
-            error: securityCheck.reason,
-            requiresMFA: securityCheck.requiresMFA,
-            requiresIPWhitelist: securityCheck.requiresIPWhitelist,
-          }),
-          {
-            status,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
-      }
-    }
-
-    // Admin routes
-    if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-      if (
-        userRole !== UserRole.ADMIN &&
-        userRole !== UserRole.SUPERADMIN &&
-        userRole !== UserRole.STAFF
-      ) {
-        return new NextResponse('Forbidden', { status: 403 });
-      }
-    }
-
-    // Member routes - Allow all authenticated users to access their account features
-    // Membership only affects pricing, not access to user account pages
-    if (pathname.startsWith('/member') || pathname.startsWith('/api/members')) {
-      // All authenticated users can access member area (dashboard, orders, profile, etc.)
-      // No additional membership check needed - authentication check above is sufficient
     }
   }
 

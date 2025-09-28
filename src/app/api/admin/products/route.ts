@@ -70,17 +70,16 @@ const createProductSchema = z.object({
     .default(10),
   weight: z
     .union([
-      z.number().min(0, 'Weight must be positive'),
+      z.number().min(0.01, 'Weight must be at least 0.01 kg'),
       z
         .string()
-        .transform(val => (val === '' ? null : parseFloat(val)))
+        .min(1, 'Weight is required')
+        .transform(val => parseFloat(val))
         .refine(
-          val => val === null || (!isNaN(val) && val >= 0),
-          'Weight must be a positive number'
+          val => !isNaN(val) && val >= 0.01,
+          'Weight must be at least 0.01 kg'
         ),
-    ])
-    .nullable()
-    .optional(),
+    ]),
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).default('DRAFT'),
   featured: z.boolean().default(false),
@@ -192,7 +191,7 @@ export async function POST(request: NextRequest) {
           memberPrice: productData.memberPrice || productData.regularPrice,
           stockQuantity: productData.stockQuantity,
           lowStockAlert: productData.lowStockAlert,
-          weight: productData.weight || null,
+          weight: productData.weight,
           dimensions: productData.dimensions || null,
           status: productData.status,
           featured: productData.featured,

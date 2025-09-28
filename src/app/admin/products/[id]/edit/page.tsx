@@ -22,7 +22,7 @@ interface ProductFormData {
   memberPrice: number | string;
   stockQuantity: number;
   lowStockAlert: number;
-  weight?: number | string;
+  weight: number | string;
   length?: number | string;
   width?: number | string;
   height?: number | string;
@@ -80,7 +80,7 @@ export default function EditProductPage() {
           memberPrice: product.memberPrice || '',
           stockQuantity: product.stockQuantity || 0,
           lowStockAlert: product.lowStockAlert || 10,
-          weight: product.weight || '',
+          weight: product.weight || 0,
           length: product.dimensions?.length || '',
           width: product.dimensions?.width || '',
           height: product.dimensions?.height || '',
@@ -131,7 +131,7 @@ export default function EditProductPage() {
       ...(filteredCategoryIds.length > 0 && { categoryIds: filteredCategoryIds }),
       regularPrice: formData.regularPrice && formData.regularPrice !== '' ? parseFloat(formData.regularPrice.toString()) : 0,
       memberPrice: formData.memberPrice && formData.memberPrice !== '' ? parseFloat(formData.memberPrice.toString()) : null,
-      weight: formData.weight && formData.weight !== '' ? parseFloat(formData.weight.toString()) : null,
+      weight: parseFloat(formData.weight.toString()),
       // Convert dimensions object to JSON string as expected by API
       dimensions: JSON.stringify({
         length: formData.length && formData.length !== '' ? parseFloat(formData.length.toString()) : null,

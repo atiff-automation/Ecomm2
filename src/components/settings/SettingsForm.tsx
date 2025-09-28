@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { AlertCircle, Info } from 'lucide-react';
 
 interface SettingsInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label: React.ReactNode;
   error?: string;
   helperText?: string;
   required?: boolean;
@@ -59,7 +59,7 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
 };
 
 interface SettingsSelectProps {
-  label: string;
+  label: React.ReactNode;
   options: Array<{ value: string; label: string; disabled?: boolean }>;
   placeholder?: string;
   required?: boolean;
@@ -133,7 +133,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
 };
 
 interface SettingsTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label: string;
+  label: React.ReactNode;
   error?: string;
   helperText?: string;
   required?: boolean;
@@ -182,7 +182,7 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
 };
 
 interface SettingsSwitchProps {
-  label: string;
+  label: React.ReactNode;
   description?: string;
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;

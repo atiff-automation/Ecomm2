@@ -62,7 +62,8 @@ export default function BusinessProfilePage() {
     reset,
     setValue,
     watch,
-    getValues
+    getValues,
+    trigger
   } = useForm<BusinessProfileFormData>({
     resolver: zodResolver(businessProfileSchema),
     defaultValues: {
@@ -110,6 +111,11 @@ export default function BusinessProfilePage() {
   });
 
   const watchedValues = watch();
+
+  // Helper function to handle controlled input changes and mark form as dirty
+  const handleFieldChange = (fieldName: keyof BusinessProfileFormData | string, value: any) => {
+    setValue(fieldName as any, value, { shouldDirty: true, shouldValidate: true });
+  };
 
   useEffect(() => {
     loadBusinessProfile();
@@ -486,7 +492,8 @@ export default function BusinessProfilePage() {
                 label="Legal Name"
                 type="text"
                 required
-                {...register('legalName')}
+                value={watchedValues.legalName || ''}
+                onChange={(e) => handleFieldChange('legalName', e.target.value)}
                 error={errors.legalName?.message}
                 placeholder="Enter your company's legal name"
                 helperText="As registered with SSM"
@@ -495,7 +502,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Trading Name"
                 type="text"
-                {...register('tradingName')}
+                value={watchedValues.tradingName || ''}
+                onChange={(e) => setValue('tradingName', e.target.value)}
                 error={errors.tradingName?.message}
                 placeholder="Enter trading name (if different)"
                 helperText="Optional - only if different from legal name"
@@ -507,7 +515,8 @@ export default function BusinessProfilePage() {
                 label="SSM Registration Number"
                 type="text"
                 required
-                {...register('registrationNumber')}
+                value={watchedValues.registrationNumber || ''}
+                onChange={(e) => handleFieldChange('registrationNumber', e.target.value)}
                 error={errors.registrationNumber?.message}
                 placeholder="e.g., 123456-X"
                 helperText="Format: 123456-X (6-8 digits followed by letter)"
@@ -516,7 +525,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="GST Registration Number"
                 type="text"
-                {...register('taxRegistrationNumber')}
+                value={watchedValues.taxRegistrationNumber || ''}
+                onChange={(e) => setValue('taxRegistrationNumber', e.target.value)}
                 error={errors.taxRegistrationNumber?.message}
                 placeholder="e.g., C12345678901"
                 helperText="Optional - GST format: C12345678901"
@@ -536,7 +546,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Established Date"
                 type="date"
-                {...register('establishedDate')}
+                value={watchedValues.establishedDate || ''}
+                onChange={(e) => setValue('establishedDate', e.target.value)}
                 error={errors.establishedDate?.message}
                 helperText="When was your business established"
               />
@@ -555,7 +566,8 @@ export default function BusinessProfilePage() {
                 label="Primary Phone"
                 type="tel"
                 required
-                {...register('primaryPhone')}
+                value={watchedValues.primaryPhone || ''}
+                onChange={(e) => handleFieldChange('primaryPhone', e.target.value)}
                 error={errors.primaryPhone?.message}
                 placeholder="012-3456789"
                 helperText="Malaysian mobile/landline number"
@@ -564,7 +576,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Secondary Phone"
                 type="tel"
-                {...register('secondaryPhone')}
+                value={watchedValues.secondaryPhone || ''}
+                onChange={(e) => setValue('secondaryPhone', e.target.value)}
                 error={errors.secondaryPhone?.message}
                 placeholder="03-12345678"
                 helperText="Optional secondary contact"
@@ -576,7 +589,8 @@ export default function BusinessProfilePage() {
                 label="Primary Email"
                 type="email"
                 required
-                {...register('primaryEmail')}
+                value={watchedValues.primaryEmail || ''}
+                onChange={(e) => handleFieldChange('primaryEmail', e.target.value)}
                 error={errors.primaryEmail?.message}
                 placeholder="contact@company.com"
                 helperText="Main business email address"
@@ -585,7 +599,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Support Email"
                 type="email"
-                {...register('supportEmail')}
+                value={watchedValues.supportEmail || ''}
+                onChange={(e) => setValue('supportEmail', e.target.value)}
                 error={errors.supportEmail?.message}
                 placeholder="support@company.com"
                 helperText="Optional customer support email"
@@ -595,7 +610,8 @@ export default function BusinessProfilePage() {
             <SettingsInput
               label="Website"
               type="url"
-              {...register('website')}
+              value={watchedValues.website || ''}
+              onChange={(e) => setValue('website', e.target.value)}
               error={errors.website?.message}
               placeholder="https://www.company.com"
               helperText="Optional company website"
@@ -604,7 +620,8 @@ export default function BusinessProfilePage() {
             <SettingsInput
               label="Logo URL"
               type="url"
-              {...register('logoUrl')}
+              value={watchedValues.logoUrl || ''}
+              onChange={(e) => setValue('logoUrl', e.target.value)}
               error={errors.logoUrl?.message}
               placeholder="https://www.company.com/logo.png"
               helperText="Optional company logo URL for receipts and invoices"
@@ -624,7 +641,8 @@ export default function BusinessProfilePage() {
                 label="Address Line 1"
                 type="text"
                 required
-                {...register('registeredAddress.addressLine1')}
+                value={watchedValues.registeredAddress?.addressLine1 || ''}
+                onChange={(e) => handleFieldChange('registeredAddress.addressLine1', e.target.value)}
                 error={errors.registeredAddress?.addressLine1?.message}
                 placeholder="Street address, building name, unit number"
               />
@@ -632,7 +650,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Address Line 2"
                 type="text"
-                {...register('registeredAddress.addressLine2')}
+                value={watchedValues.registeredAddress?.addressLine2 || ''}
+                onChange={(e) => setValue('registeredAddress.addressLine2', e.target.value)}
                 error={errors.registeredAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -719,7 +738,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Address Line 1"
                 type="text"
-                {...register('operationalAddress.addressLine1')}
+                value={watchedValues.operationalAddress?.addressLine1 || ''}
+                onChange={(e) => setValue('operationalAddress.addressLine1', e.target.value)}
                 error={errors.operationalAddress?.addressLine1?.message}
                 placeholder="Street address, building name, unit number"
               />
@@ -727,7 +747,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Address Line 2"
                 type="text"
-                {...register('operationalAddress.addressLine2')}
+                value={watchedValues.operationalAddress?.addressLine2 || ''}
+                onChange={(e) => setValue('operationalAddress.addressLine2', e.target.value)}
                 error={errors.operationalAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -811,7 +832,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Address Line 1"
                 type="text"
-                {...register('shippingAddress.addressLine1')}
+                value={watchedValues.shippingAddress?.addressLine1 || ''}
+                onChange={(e) => setValue('shippingAddress.addressLine1', e.target.value)}
                 error={errors.shippingAddress?.addressLine1?.message}
                 placeholder="Street address, building name, unit number"
               />
@@ -819,7 +841,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Address Line 2"
                 type="text"
-                {...register('shippingAddress.addressLine2')}
+                value={watchedValues.shippingAddress?.addressLine2 || ''}
+                onChange={(e) => setValue('shippingAddress.addressLine2', e.target.value)}
                 error={errors.shippingAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -907,7 +930,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Bank Name"
                 type="text"
-                {...register('banking.bankName')}
+                value={watchedValues.banking?.bankName || ''}
+                onChange={(e) => setValue('banking.bankName', e.target.value)}
                 error={errors.banking?.bankName?.message}
                 placeholder="e.g., Maybank, CIMB Bank, Public Bank"
                 helperText="Full name of your bank"
@@ -916,7 +940,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Account Number"
                 type="text"
-                {...register('banking.bankAccountNumber')}
+                value={watchedValues.banking?.bankAccountNumber || ''}
+                onChange={(e) => setValue('banking.bankAccountNumber', e.target.value)}
                 error={errors.banking?.bankAccountNumber?.message}
                 placeholder="Bank account number"
                 helperText="Your business bank account number"
@@ -925,7 +950,8 @@ export default function BusinessProfilePage() {
               <SettingsInput
                 label="Account Holder Name"
                 type="text"
-                {...register('banking.bankAccountHolder')}
+                value={watchedValues.banking?.bankAccountHolder || ''}
+                onChange={(e) => setValue('banking.bankAccountHolder', e.target.value)}
                 error={errors.banking?.bankAccountHolder?.message}
                 placeholder="Account holder name"
                 helperText="Name as registered with the bank"
@@ -944,10 +970,9 @@ export default function BusinessProfilePage() {
           >
             Reset Changes
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!isDirty || isSubmitting}
-            loading={isSubmitting}
           >
             {isSubmitting ? 'Saving...' : 'Save Business Profile'}
           </Button>

@@ -23,7 +23,7 @@ export default function CreateProductPage() {
       ...(filteredCategoryIds.length > 0 && { categoryIds: filteredCategoryIds }),
       regularPrice: formData.regularPrice && formData.regularPrice !== '' ? parseFloat(formData.regularPrice.toString()) : 0,
       memberPrice: formData.memberPrice && formData.memberPrice !== '' ? parseFloat(formData.memberPrice.toString()) : null,
-      weight: formData.weight && formData.weight !== '' ? parseFloat(formData.weight.toString()) : null,
+      weight: parseFloat(formData.weight.toString()),
       // Convert dimensions object to JSON string as expected by API
       dimensions: JSON.stringify({
         length: formData.length && formData.length !== '' ? parseFloat(formData.length.toString()) : null,

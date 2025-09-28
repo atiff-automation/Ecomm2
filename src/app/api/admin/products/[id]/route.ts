@@ -38,7 +38,19 @@ const updateProductSchema = z.object({
     .int()
     .min(0, 'Low stock alert must be non-negative')
     .optional(),
-  weight: z.number().optional(),
+  weight: z
+    .union([
+      z.number().min(0.01, 'Weight must be at least 0.01 kg'),
+      z
+        .string()
+        .min(1, 'Weight is required')
+        .transform(val => parseFloat(val))
+        .refine(
+          val => !isNaN(val) && val >= 0.01,
+          'Weight must be at least 0.01 kg'
+        ),
+    ])
+    .optional(),
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).optional(),
   featured: z.boolean().optional(),

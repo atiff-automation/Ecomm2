@@ -8,44 +8,46 @@ datasource db {
 }
 
 model User {
-  id                        String                   @id @default(cuid())
-  email                     String                   @unique
+  id                        String                      @id @default(cuid())
+  email                     String                      @unique
   password                  String
   firstName                 String
   lastName                  String
   phone                     String?
   dateOfBirth               DateTime?
-  role                      UserRole                 @default(CUSTOMER)
-  status                    UserStatus               @default(PENDING_VERIFICATION)
+  role                      UserRole                    @default(CUSTOMER)
+  status                    UserStatus                  @default(PENDING_VERIFICATION)
   emailVerified             DateTime?
-  isMember                  Boolean                  @default(false)
+  isMember                  Boolean                     @default(false)
   memberSince               DateTime?
-  membershipTotal           Decimal                  @default(0) @db.Decimal(10, 2)
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
+  membershipTotal           Decimal                     @default(0) @db.Decimal(10, 2)
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
   lastLoginAt               DateTime?
   addresses                 Address[]
+  agent_application_reviews agent_application_reviews[]
+  agent_applications        agent_applications[]
   auditLogs                 AuditLog[]
   cartItems                 CartItem[]
   chatSessions              ChatSession[]
   complianceReports         ComplianceReport[]
   discountCodesCreated      DiscountCode[]
   discountUsage             DiscountUsage[]
-  heroSectionsCreated       HeroSection[]            @relation("HeroCreator")
+  heroSectionsCreated       HeroSection[]               @relation("HeroCreator")
   importExportJobs          ImportExportJob[]
-  mediaUploads              MediaUpload[]            @relation("MediaUploader")
-  referralsReceived         MemberReferral[]         @relation("ReferralsReceived")
-  referralsMade             MemberReferral[]         @relation("ReferralsMade")
+  mediaUploads              MediaUpload[]               @relation("MediaUploader")
+  referralsReceived         MemberReferral[]            @relation("ReferralsReceived")
+  referralsMade             MemberReferral[]            @relation("ReferralsMade")
   notificationPreferences   NotificationPreference[]
   orders                    Order[]
   pendingMembership         PendingMembership?
   recentlyViewed            RecentlyViewed[]
-  rewardsProcessed          ReferralReward[]         @relation("RewardsProcessed")
+  rewardsProcessed          ReferralReward[]            @relation("RewardsProcessed")
   referralRewards           ReferralReward[]
   referralSettings          ReferralSetting[]
   reviews                   Review[]
-  siteCustomizationsCreated SiteCustomization[]      @relation("SiteCustomizationCreator")
-  themesCreated             SiteTheme[]              @relation("ThemeCreator")
+  siteCustomizationsCreated SiteCustomization[]         @relation("SiteCustomizationCreator")
+  themesCreated             SiteTheme[]                 @relation("ThemeCreator")
   telegramConfig            TelegramConfig?
   wishlistItems             WishlistItem[]
   agentApplications         AgentApplication[]
@@ -152,7 +154,7 @@ model Product {
   promotionEndDate          DateTime?
   stockQuantity             Int               @default(0)
   lowStockAlert             Int               @default(10)
-  weight                    Decimal?          @db.Decimal(8, 2)
+  weight                    Decimal           @db.Decimal(8, 2)
   metaTitle                 String?
   metaDescription           String?
   featured                  Boolean           @default(false)
@@ -1196,6 +1198,99 @@ model FailedNotification {
   @@map("failed_notifications")
 }
 
+model agent_application_reviews {
+  id                 String                 @id
+  applicationId      String
+  reviewerId         String
+  previousStatus     AgentApplicationStatus
+  newStatus          AgentApplicationStatus
+  comments           String?
+  scoreAdjustments   Json?
+  flagsAdded         String[]               @default([])
+  flagsRemoved       String[]               @default([])
+  actionTaken        String?
+  reviewDate         DateTime               @default(now())
+  agent_applications agent_applications     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  users              User                   @relation(fields: [reviewerId], references: [id])
+
+  @@index([applicationId])
+  @@index([newStatus])
+  @@index([reviewDate])
+  @@index([reviewerId])
+}
+
+model agent_applications {
+  id                         String                         @id
+  applicationId              String                         @unique
+  status                     AgentApplicationStatus         @default(DRAFT)
+  fullName                   String
+  icNumber                   String
+  phoneNumber                String
+  email                      String
+  address                    String
+  age                        Int
+  emergencyContactName       String
+  emergencyContactPhone      String
+  employmentStatus           EmploymentStatus
+  jobTitle                   String?
+  companyName                String?
+  educationLevel             EducationLevel
+  hasSalesExperience         Boolean                        @default(false)
+  salesExperienceDescription String?
+  hasBusinessExperience      Boolean                        @default(false)
+  businessExperienceType     String?
+  instagramHandle            String?
+  instagramFollowersRange    FollowersRange?
+  facebookHandle             String?
+  facebookFollowersRange     FollowersRange?
+  tiktokHandle               String?
+  tiktokFollowersRange       FollowersRange?
+  postingFrequency           PostingFrequency
+  comfortableOnlineMarketing Boolean                        @default(false)
+  opportunityType            OpportunityType
+  hoursPerWeek               HoursRange
+  hasTransportation          Boolean                        @default(false)
+  willingAttendTraining      Boolean                        @default(false)
+  willingTravelEvents        Boolean                        @default(false)
+  availableStartDate         DateTime
+  heardAboutSource           ReferralSource
+  usedJrmProducts            Boolean                        @default(false)
+  jrmProductsUsed            String?
+  knowsJrmAgents             Boolean                        @default(false)
+  jrmAgentReference          String?
+  reasonToJoin               String
+  monthlyIncomeGoal          IncomeGoal
+  expectations               String
+  state                      AgentApplicationMalaysianState
+  preferredWorkingAreas      String
+  canHandleDeliveries        Boolean                        @default(false)
+  willingWorkEvents          Boolean                        @default(false)
+  totalScore                 Int?
+  scoreBreakdown             Json?
+  riskFlags                  String[]                       @default([])
+  acceptTerms                Boolean                        @default(false)
+  finalAgreement             Boolean                        @default(false)
+  submittedAt                DateTime?
+  reviewedAt                 DateTime?
+  reviewedBy                 String?
+  adminNotes                 String?
+  rejectionReason            String?
+  interviewScheduledDate     DateTime?
+  interviewNotes             String?
+  createdAt                  DateTime                       @default(now())
+  updatedAt                  DateTime
+  agent_application_reviews  agent_application_reviews[]
+  users                      User?                          @relation(fields: [reviewedBy], references: [id])
+
+  @@index([applicationId])
+  @@index([email])
+  @@index([reviewedBy])
+  @@index([state])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([totalScore])
+}
+
 enum UserRole {
   CUSTOMER
   STAFF
@@ -1456,12 +1551,32 @@ model AgentApplicationReview {
   @@map("agent_application_reviews")
 }
 
+enum AgentApplicationMalaysianState {
+  JOHOR
+  KEDAH
+  KELANTAN
+  KUALA_LUMPUR
+  LABUAN
+  MELAKA
+  NEGERI_SEMBILAN
+  PAHANG
+  PENANG
+  PERAK
+  PERLIS
+  PUTRAJAYA
+  SABAH
+  SARAWAK
+  SELANGOR
+  TERENGGANU
+}
+
 enum AgentApplicationStatus {
   DRAFT
   SUBMITTED
   UNDER_REVIEW
   APPROVED
   REJECTED
+<<<<<<< HEAD
 }
 
 enum SocialMediaLevel {
@@ -1474,4 +1589,66 @@ enum ApplicationDecision {
   APPROVED
   REJECTED
   NEEDS_MORE_INFO
+=======
+  INTERVIEW_SCHEDULED
+  WITHDRAWN
+}
+
+enum EducationLevel {
+  SPM
+  STPM
+  DIPLOMA
+  DEGREE
+  OTHERS
+}
+
+enum EmploymentStatus {
+  EMPLOYED
+  SELF_EMPLOYED
+  UNEMPLOYED
+  STUDENT
+  RETIRED
+}
+
+enum FollowersRange {
+  RANGE_0_100
+  RANGE_100_1K
+  RANGE_1K_10K
+  RANGE_10K_PLUS
+}
+
+enum HoursRange {
+  RANGE_5_10
+  RANGE_10_20
+  RANGE_20_30
+  RANGE_30_PLUS
+}
+
+enum IncomeGoal {
+  RANGE_500_1000
+  RANGE_1000_3000
+  RANGE_3000_5000
+  RANGE_5000_PLUS
+}
+
+enum OpportunityType {
+  FULL_TIME
+  PART_TIME
+  SIDE_HUSTLE
+}
+
+enum PostingFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  RARELY
+}
+
+enum ReferralSource {
+  SOCIAL_MEDIA
+  FRIEND
+  JRM_AGENT
+  ONLINE_AD
+  OTHERS
+>>>>>>> f3a6e79 (Implement Railway deployment with complete Malaysian e-commerce setup)
 }

@@ -220,20 +220,32 @@ async function validateSeedData(): Promise<void> {
 async function main() {
   console.log('🚀 Starting Malaysian postcode seeding...');
   console.log('📋 Following CLAUDE.md principles: DRY, centralized, no hardcoding');
-  
+
   try {
+    // Check if data already exists (production safety)
+    const existingStates = await prisma.malaysianState.count();
+    const existingPostcodes = await prisma.malaysianPostcode.count();
+
+    if (existingStates > 0 && existingPostcodes > 0) {
+      console.log(`✅ Malaysian postcode data already exists (${existingStates} states, ${existingPostcodes} postcodes)`);
+      console.log('💡 Skipping seeding - data is already available');
+      return;
+    }
+
+    console.log(`📊 Current data: ${existingStates} states, ${existingPostcodes} postcodes - proceeding with seeding...`);
+
     // Read and validate CSV data
     const { states, postcodes } = await readCSVFiles();
-    
+
     // Seed states first (required for foreign key references)
     await seedStates(states);
-    
+
     // Seed postcodes with state references
     await seedPostcodes(postcodes);
-    
+
     // Validate the seeded data
     await validateSeedData();
-    
+
     console.log('🎉 Malaysian postcode seeding completed successfully!');
     console.log('💡 Auto-fill functionality should now work correctly');
     
