@@ -108,8 +108,10 @@ export function AgentApplicationForm({
       stepSchema.parse(getValues());
       return true;
     } catch (error) {
-      // Trigger validation to show errors
-      await trigger(currentStepConfig.fields as any);
+      // Trigger validation to show errors - only if fields exist
+      if (currentStepConfig.fields && currentStepConfig.fields.length > 0) {
+        await trigger(currentStepConfig.fields);
+      }
       return false;
     }
   };
@@ -184,7 +186,7 @@ export function AgentApplicationForm({
       // Success
       clearFormData();
       toast.success(result.message || 'Permohonan berjaya dihantar!');
-      router.push(`/apply/agent/success?id=${result.id}`);
+      router.push(`/apply-agent/success?id=${result.id}`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Ralat tidak dijangka berlaku';

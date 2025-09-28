@@ -32,7 +32,7 @@ export const ApplicationConfirmation = ({
   applicantName,
   applicantEmail,
   submissionDate,
-  trackingUrl = `${process.env.NEXTAUTH_URL}/apply/agent/status?id=${applicationId}`
+  trackingUrl = `${process.env.NEXTAUTH_URL}/apply-agent/status?id=${applicationId}`
 }: ApplicationConfirmationProps) => {
   const formattedDate = submissionDate.toLocaleDateString('ms-MY', {
     year: 'numeric',

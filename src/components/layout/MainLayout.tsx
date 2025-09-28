@@ -8,6 +8,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
+import { Footer } from './Footer';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -16,17 +17,18 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
 
-  // Hide header on admin routes, auth pages, and member dashboard
-  const hideHeaderRoutes = ['/admin', '/auth', '/member', '/superadmin'];
+  // Hide header and footer on admin routes, auth pages, and member dashboard
+  const hideHeaderFooterRoutes = ['/admin', '/auth', '/member', '/superadmin'];
 
-  const shouldHideHeader = hideHeaderRoutes.some(route =>
+  const shouldHideHeaderFooter = hideHeaderFooterRoutes.some(route =>
     pathname.startsWith(route)
   );
 
   return (
     <>
-      {!shouldHideHeader && <Header />}
+      {!shouldHideHeaderFooter && <Header />}
       <main>{children}</main>
+      {!shouldHideHeaderFooter && <Footer />}
     </>
   );
 }

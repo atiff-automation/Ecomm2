@@ -36,40 +36,30 @@ export function DynamicAdminLogo() {
 
   if (loading) {
     return (
-      <Link href="/admin/dashboard" className="flex items-center">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-          <span className="ml-3 text-lg font-semibold text-gray-900">
-            Admin
-          </span>
-        </div>
+      <Link href="/admin/dashboard" className="flex justify-center items-center">
+        <div className="w-16 h-16 bg-gray-200 rounded-lg animate-pulse" />
       </Link>
     );
   }
 
   return (
-    <Link href="/admin/dashboard" className="flex items-center">
-      <div className="flex items-center">
-        {branding?.logo?.url ? (
-          <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-white border border-gray-200">
-            <Image
-              src={branding.logo.url}
-              alt="Business Logo"
-              fill
-              className="object-contain"
-              sizes="32px"
-            />
-          </div>
-        ) : (
-          // Fallback to original JRM logo if no business logo
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">JRM</span>
-          </div>
-        )}
-        <span className="ml-3 text-lg font-semibold text-gray-900">
-          Admin
-        </span>
-      </div>
+    <Link href="/admin/dashboard" className="flex justify-center items-center">
+      {branding?.logo?.url ? (
+        <div className="relative w-16 h-16 rounded-lg overflow-hidden">
+          <Image
+            src={branding.logo.url}
+            alt="Business Logo"
+            fill
+            className="object-contain"
+            sizes="64px"
+          />
+        </div>
+      ) : (
+        // Fallback to original JRM logo if no business logo
+        <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-2xl">JRM</span>
+        </div>
+      )}
     </Link>
   );
 }

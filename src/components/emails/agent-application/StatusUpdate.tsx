@@ -251,7 +251,7 @@ export const StatusUpdate = ({
                   ...actionButton,
                   backgroundColor: statusConfig.color
                 }}
-                href={`${process.env.NEXTAUTH_URL}/apply/agent/status?id=${applicationId}`}
+                href={`${process.env.NEXTAUTH_URL}/apply-agent/status?id=${applicationId}`}
               >
                 {statusConfig.actionText}
               </Button>

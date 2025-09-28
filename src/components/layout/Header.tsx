@@ -99,7 +99,7 @@ export function Header() {
     { href: '/products', label: 'Products' },
     { href: '/deals', label: 'Deals' },
     { href: '/track-order', label: 'Track Order' },
-    { href: '/apply/agent', label: 'Apply as Agent', icon: UserPlus },
+    { href: '/apply-agent', label: 'Apply as Agent', icon: UserPlus },
   ];
 
   return (
