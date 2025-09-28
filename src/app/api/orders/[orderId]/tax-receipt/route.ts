@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { taxReceiptService } from '@/lib/receipts/receipt-service';
+import { businessProfileService } from '@/lib/receipts/business-profile-service';
 import { UserRole } from '@prisma/client';
 
 interface RouteParams {
@@ -144,6 +145,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Get company info from business profile service
+    const companyInfo = await businessProfileService.getLegacyCompanyInfo();
+
     return NextResponse.json({
       success: true,
       receiptData: {
@@ -154,14 +158,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         billingAddress: receiptData.billingAddress,
         taxBreakdown: receiptData.taxBreakdown,
       },
-      companyInfo: {
-        name: process.env.COMPANY_NAME || 'JRM E-commerce Sdn Bhd',
-        address: process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia',
-        phone: process.env.COMPANY_PHONE || '+60 3-1234 5678',
-        email: process.env.COMPANY_EMAIL || 'info@jrmecommerce.com',
-        registrationNo: process.env.COMPANY_REGISTRATION || '202301234567',
-        sstNo: process.env.COMPANY_SST_NO || 'A12-3456-78901234',
-      },
+      companyInfo,
     });
   } catch (error) {
     console.error('Tax receipt data fetch error:', error);

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (format === 'html') {
       // Return HTML receipt for preview
-      const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
+      const htmlReceipt = await invoiceService.generateReceiptHTML(invoiceData);
 
       return new Response(htmlReceipt, {
         headers: {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (format === 'pdf') {
       // Generate PDF using Puppeteer
-      const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
+      const htmlReceipt = await invoiceService.generateReceiptHTML(invoiceData);
 
       let browser;
       try {
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Default: Return JSON with receipt data
-    const htmlReceipt = invoiceService.generateReceiptHTML(invoiceData);
+    const htmlReceipt = await invoiceService.generateReceiptHTML(invoiceData);
 
     return NextResponse.json({
       success: true,

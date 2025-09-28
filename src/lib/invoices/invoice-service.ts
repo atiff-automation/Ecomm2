@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
+import { businessProfileService } from '@/lib/receipts/business-profile-service';
 
 export interface ReceiptData {
   order: {
@@ -69,14 +70,12 @@ export interface ReceiptData {
 }
 
 export class ReceiptService {
-  private readonly COMPANY_INFO = {
-    name: process.env.COMPANY_NAME || 'JRM E-commerce Sdn Bhd',
-    address: process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia',
-    phone: process.env.COMPANY_PHONE || '+60 3-1234 5678',
-    email: process.env.COMPANY_EMAIL || 'info@jrmecommerce.com',
-    registrationNo: process.env.COMPANY_REGISTRATION || '202301234567',
-    sstNo: process.env.COMPANY_SST_NO || 'A12-3456-78901234',
-  };
+  /**
+   * Get company info from business profile service
+   */
+  private async getCompanyInfo() {
+    return await businessProfileService.getLegacyCompanyInfo();
+  }
 
   /**
    * Get receipt data for an order
@@ -234,9 +233,12 @@ export class ReceiptService {
   /**
    * Generate HTML receipt template
    */
-  generateReceiptHTML(receiptData: ReceiptData): string {
+  async generateReceiptHTML(receiptData: ReceiptData): Promise<string> {
     const { order, customer, orderItems, shippingAddress, taxBreakdown } =
       receiptData;
+
+    // Get company info from business profile
+    const companyInfo = await this.getCompanyInfo();
 
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-MY', {
@@ -418,12 +420,12 @@ export class ReceiptService {
       <body>
         <div class="receipt-header">
           <div class="company-info">
-            <h1>${this.COMPANY_INFO.name}</h1>
-            <p>Registration No: ${this.COMPANY_INFO.registrationNo}</p>
-            <p>SST No: ${this.COMPANY_INFO.sstNo}</p>
-            <p>${this.COMPANY_INFO.address}</p>
-            <p>Phone: ${this.COMPANY_INFO.phone}</p>
-            <p>Email: ${this.COMPANY_INFO.email}</p>
+            <h1>${companyInfo.name}</h1>
+            <p>Registration No: ${companyInfo.registrationNo}</p>
+            <p>SST No: ${companyInfo.sstNo}</p>
+            <p>${companyInfo.address}</p>
+            <p>Phone: ${companyInfo.phone}</p>
+            <p>Email: ${companyInfo.email}</p>
           </div>
           <div class="receipt-details">
             <div class="receipt-number">RECEIPT</div>

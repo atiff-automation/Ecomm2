@@ -156,7 +156,7 @@ export async function GET(
 
     if (format === 'pdf') {
       // Generate PDF using Puppeteer (same as invoice route)
-      const htmlReceipt = invoiceService.generateReceiptHTML(receiptData);
+      const htmlReceipt = await invoiceService.generateReceiptHTML(receiptData);
 
       let browser;
       try {
@@ -207,7 +207,7 @@ export async function GET(
       }
     } else {
       // Return HTML receipt
-      const htmlReceipt = invoiceService.generateReceiptHTML(receiptData);
+      const htmlReceipt = await invoiceService.generateReceiptHTML(receiptData);
 
       const responseTime = Date.now() - startTime;
       console.log(

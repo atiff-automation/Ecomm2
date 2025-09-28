@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DynamicAdminLogo } from '@/components/admin/DynamicAdminLogo';
 import {
   LayoutDashboard,
   Package,
@@ -239,16 +240,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         } lg:translate-x-0`}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <Link href="/admin/dashboard" className="flex items-center">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">JRM</span>
-              </div>
-              <span className="ml-3 text-lg font-semibold text-gray-900">
-                Admin
-              </span>
-            </div>
-          </Link>
+          <DynamicAdminLogo />
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
