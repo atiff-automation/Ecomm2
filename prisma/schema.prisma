@@ -48,6 +48,8 @@ model User {
   themesCreated             SiteTheme[]              @relation("ThemeCreator")
   telegramConfig            TelegramConfig?
   wishlistItems             WishlistItem[]
+  agentApplications         AgentApplication[]
+  applicationReviews        AgentApplicationReview[]
 
   @@index([email])
   @@index([role])
@@ -1382,4 +1384,94 @@ enum ReceiptTemplateType {
   BUSINESS_INVOICE
   MINIMAL_RECEIPT
   DETAILED_INVOICE
+}
+
+// Agent Application System Models
+model AgentApplication {
+  id                String                 @id @default(cuid())
+  userId            String?
+  email             String
+  status            AgentApplicationStatus @default(DRAFT)
+
+  // Step 1: Terms accepted
+  acceptTerms       Boolean                @default(false)
+
+  // Step 2: Basic Information
+  fullName          String
+  icNumber          String
+  phoneNumber       String
+  address           String
+  age               Int
+
+  // Business Experience
+  hasBusinessExp    Boolean
+  businessLocation  String?
+  hasTeamLeadExp    Boolean
+  isRegistered      Boolean
+
+  // Step 3: Social Media
+  instagramHandle   String?
+  facebookHandle    String?
+  tiktokHandle      String?
+  instagramLevel    SocialMediaLevel       @default(TIDAK_MAHIR)
+  facebookLevel     SocialMediaLevel       @default(TIDAK_MAHIR)
+  tiktokLevel       SocialMediaLevel       @default(TIDAK_MAHIR)
+
+  // Step 4: Additional Information
+  hasJrmExp         Boolean
+  jrmProducts       String?
+  reasonToJoin      String
+  expectations      String
+
+  // System Fields
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  adminNotes        String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  // Relations
+  user              User?                  @relation(fields: [userId], references: [id])
+  reviews           AgentApplicationReview[]
+
+  @@index([email])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([userId])
+  @@map("agent_applications")
+}
+
+model AgentApplicationReview {
+  id             String              @id @default(cuid())
+  applicationId  String
+  reviewerId     String
+  decision       ApplicationDecision
+  notes          String?
+  createdAt      DateTime            @default(now())
+
+  application    AgentApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer       User               @relation(fields: [reviewerId], references: [id])
+
+  @@map("agent_application_reviews")
+}
+
+enum AgentApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum SocialMediaLevel {
+  TIDAK_MAHIR
+  MAHIR
+  SANGAT_MAHIR
+}
+
+enum ApplicationDecision {
+  APPROVED
+  REJECTED
+  NEEDS_MORE_INFO
 }

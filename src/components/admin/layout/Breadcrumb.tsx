@@ -120,4 +120,10 @@ export const BREADCRUMB_CONFIGS = {
     fulfillment: { label: 'Fulfillment', href: '/admin/orders/fulfillment' },
     analytics: { label: 'Order Analytics', href: '/admin/orders/analytics' },
   },
+  agents: {
+    main: { label: 'Agents', href: '/admin/agents' },
+    applications: { label: 'Agent Applications', href: '/admin/agents/applications' },
+    directory: { label: 'Agent Directory', href: '/admin/agents/directory' },
+    performance: { label: 'Agent Performance', href: '/admin/agents/performance' },
+  },
 };

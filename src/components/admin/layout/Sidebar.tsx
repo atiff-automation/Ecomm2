@@ -27,6 +27,7 @@ import {
   Wrench,
   ChevronDown,
   Menu,
+  UserPlus,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -144,6 +145,12 @@ const navigationItems: NavigationItem[] = [
     ],
   },
   {
+    id: 'agent-applications',
+    label: 'Agent Applications',
+    href: '/admin/agent-applications',
+    icon: UserPlus,
+  },
+  {
     id: 'payments',
     label: 'Payments',
     href: '/admin/payments',
@@ -214,6 +221,12 @@ const navigationItems: NavigationItem[] = [
         icon: BarChart3,
       },
     ],
+  },
+  {
+    id: 'agent-applications',
+    label: 'Agent Applications',
+    href: '/admin/agent-applications',
+    icon: UserPlus,
   },
 ];
 

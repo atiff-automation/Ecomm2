@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,6 +34,7 @@ import {
   Heart,
   Award,
   Search,
+  UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -51,6 +53,12 @@ interface SiteCustomization {
       url: string;
     };
   } | null;
+}
+
+interface NavigationItem {
+  href: string;
+  label: string;
+  icon?: LucideIcon;
 }
 
 export function Header() {
@@ -87,12 +95,11 @@ export function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
-  const navigationItems = [
+  const navigationItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/categories', label: 'Categories' },
     { href: '/deals', label: 'Deals' },
     { href: '/track-order', label: 'Track Order' },
-    { href: '/about', label: 'About' },
+    { href: '/apply/agent', label: 'Apply as Agent', icon: UserPlus },
   ];
 
   return (
@@ -158,8 +165,9 @@ export function Header() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-sm font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm px-2 py-1"
+                    className="text-sm font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm px-2 py-1 flex items-center gap-1"
                   >
+                    {item.icon && <item.icon className="w-4 h-4" />}
                     {item.label}
                   </Link>
                 ))}
@@ -328,8 +336,9 @@ export function Header() {
                           key={item.href}
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                         >
+                          {item.icon && <item.icon className="w-4 h-4" />}
                           {item.label}
                         </Link>
                       ))}

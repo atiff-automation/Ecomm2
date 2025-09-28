@@ -68,6 +68,15 @@ const navigationItems = [
     description: 'Directory, Membership, Referrals',
   },
 
+  // 👤 Agent Applications Section - Agent application management
+  {
+    label: 'Agent Applications',
+    href: '/admin/agent-applications',
+    icon: User,
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
+    description: 'Manage and review agent applications',
+  },
+
   // 💳 Payments Section - New section per standard
   {
     label: 'Payments',
