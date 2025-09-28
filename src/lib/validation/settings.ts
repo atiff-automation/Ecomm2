@@ -265,30 +265,6 @@ export const optionalBusinessAddressSchema = z.object({
   country: z.literal('Malaysia'),
 });
 
-/**
- * Banking Information Schema
- */
-export const businessBankingSchema = z.object({
-  bankName: z
-    .string()
-    .max(100, 'Bank name must be less than 100 characters')
-    .optional()
-    .or(z.literal('')),
-
-  bankAccountNumber: z
-    .string()
-    .min(10, 'Account number must be at least 10 digits')
-    .max(20, 'Account number must be less than 20 digits')
-    .regex(/^\d+$/, 'Account number must contain only digits')
-    .optional()
-    .or(z.literal('')),
-
-  bankAccountHolder: z
-    .string()
-    .max(200, 'Account holder name must be less than 200 characters')
-    .optional()
-    .or(z.literal('')),
-});
 
 /**
  * Business Profile Schema (Admin) - Fixed to match form structure
@@ -368,9 +344,6 @@ export const businessProfileSchema = z.object({
   registeredAddress: businessAddressSchema,
   operationalAddress: optionalBusinessAddressSchema,
   shippingAddress: optionalBusinessAddressSchema,
-
-  // Banking Information - Now properly nested
-  banking: businessBankingSchema,
 });
 
 /**
@@ -416,7 +389,6 @@ export type NotificationPreferencesData = z.infer<
 >;
 export type BusinessProfileFormData = z.infer<typeof businessProfileSchema>;
 export type BusinessAddressFormData = z.infer<typeof businessAddressSchema>;
-export type BusinessBankingFormData = z.infer<typeof businessBankingSchema>;
 export type TaxConfigurationFormData = z.infer<typeof taxConfigurationSchema>;
 
 /**

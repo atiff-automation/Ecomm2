@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 import { businessProfileSchema } from '@/lib/validation/settings';
 import { AuditLogger } from '@/lib/security';
 import { BusinessProfileCache } from '@/lib/cache/business-profile';
-import { EncryptionService } from '@/lib/security/encryption';
 
 /**
  * GET /api/admin/settings/business-profile - Get business profile
@@ -44,31 +43,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Decrypt sensitive banking information if present
-    let decryptedProfile = { ...businessProfile };
-    if (businessProfile.banking && typeof businessProfile.banking === 'object') {
-      const bankingData = businessProfile.banking as any;
-      if (bankingData.bankAccountNumber) {
-        try {
-          decryptedProfile.banking = {
-            ...bankingData,
-            bankAccountNumber: await EncryptionService.decrypt(bankingData.bankAccountNumber)
-          };
-        } catch (error) {
-          console.error('Failed to decrypt banking data:', error);
-          // Return profile without sensitive data if decryption fails
-          decryptedProfile.banking = {
-            bankName: bankingData.bankName || '',
-            bankAccountHolder: bankingData.bankAccountHolder || '',
-            bankAccountNumber: '' // Don't return encrypted data
-          };
-        }
-      }
-    }
 
     return NextResponse.json({
       success: true,
-      data: decryptedProfile
+      data: businessProfile
     });
 
   } catch (error) {
@@ -144,19 +122,6 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date()
     };
 
-    // Handle banking information with encryption
-    if (validatedData.banking?.bankName) {
-      let encryptedAccountNumber = '';
-      if (validatedData.banking.bankAccountNumber) {
-        encryptedAccountNumber = await EncryptionService.encrypt(validatedData.banking.bankAccountNumber);
-      }
-
-      profileData.banking = {
-        bankName: validatedData.banking.bankName,
-        bankAccountNumber: encryptedAccountNumber,
-        bankAccountHolder: validatedData.banking.bankAccountHolder || ''
-      };
-    }
 
     // Upsert business profile (create or update)
     const updatedProfile = await prisma.businessProfile.upsert({

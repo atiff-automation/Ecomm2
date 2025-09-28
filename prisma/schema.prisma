@@ -942,9 +942,6 @@ model BusinessProfile {
   primaryEmail          String
   supportEmail          String?
   website               String?
-  bankName              String?
-  bankAccountNumber     String?
-  bankAccountHolder     String?
   businessLicense       String?
   industryCode          String?
   establishedDate       DateTime?
@@ -1576,7 +1573,8 @@ enum AgentApplicationStatus {
   UNDER_REVIEW
   APPROVED
   REJECTED
-<<<<<<< HEAD
+  INTERVIEW_SCHEDULED
+  WITHDRAWN
 }
 
 enum SocialMediaLevel {
@@ -1589,9 +1587,6 @@ enum ApplicationDecision {
   APPROVED
   REJECTED
   NEEDS_MORE_INFO
-=======
-  INTERVIEW_SCHEDULED
-  WITHDRAWN
 }
 
 enum EducationLevel {
@@ -1650,5 +1645,4 @@ enum ReferralSource {
   JRM_AGENT
   ONLINE_AD
   OTHERS
->>>>>>> f3a6e79 (Implement Railway deployment with complete Malaysian e-commerce setup)
 }

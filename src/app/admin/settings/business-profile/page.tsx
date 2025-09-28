@@ -17,16 +17,14 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { businessProfileSchema, malaysianStatesOptions } from '@/lib/validation/settings';
 import type { BusinessProfileFormData } from '@/lib/validation/settings';
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  CreditCard, 
+import {
+  Building2,
+  MapPin,
+  Phone,
+  Mail,
   AlertCircle,
   CheckCircle,
   Clock,
-  Shield,
   FileText,
   Loader2
 } from 'lucide-react';
@@ -101,11 +99,6 @@ export default function BusinessProfilePage() {
         state: '',
         postalCode: '',
         country: 'Malaysia'
-      },
-      banking: {
-        bankName: '',
-        bankAccountNumber: '',
-        bankAccountHolder: ''
       }
     }
   });
@@ -169,11 +162,6 @@ export default function BusinessProfilePage() {
               state: profileData.shippingAddress?.state || '',
               postalCode: profileData.shippingAddress?.postalCode || '',
               country: 'Malaysia'
-            },
-            banking: {
-              bankName: profileData.banking?.bankName || '',
-              bankAccountNumber: profileData.banking?.bankAccountNumber || '',
-              bankAccountHolder: profileData.banking?.bankAccountHolder || ''
             }
           };
           
@@ -908,57 +896,6 @@ export default function BusinessProfilePage() {
           </SettingsSection>
         </SettingsCard>
 
-        {/* Banking Information */}
-        <SettingsCard
-          title="Banking Information"
-          description="Secure banking details for payments and refunds"
-        >
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-medium text-amber-800">Secure Storage</h4>
-                <p className="text-sm text-amber-700">
-                  Banking information is encrypted and stored securely. Only authorized personnel can access this data.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <SettingsSection title="Bank Account Details">
-            <div className="space-y-4">
-              <SettingsInput
-                label="Bank Name"
-                type="text"
-                value={watchedValues.banking?.bankName || ''}
-                onChange={(e) => setValue('banking.bankName', e.target.value)}
-                error={errors.banking?.bankName?.message}
-                placeholder="e.g., Maybank, CIMB Bank, Public Bank"
-                helperText="Full name of your bank"
-              />
-              
-              <SettingsInput
-                label="Account Number"
-                type="text"
-                value={watchedValues.banking?.bankAccountNumber || ''}
-                onChange={(e) => setValue('banking.bankAccountNumber', e.target.value)}
-                error={errors.banking?.bankAccountNumber?.message}
-                placeholder="Bank account number"
-                helperText="Your business bank account number"
-              />
-              
-              <SettingsInput
-                label="Account Holder Name"
-                type="text"
-                value={watchedValues.banking?.bankAccountHolder || ''}
-                onChange={(e) => setValue('banking.bankAccountHolder', e.target.value)}
-                error={errors.banking?.bankAccountHolder?.message}
-                placeholder="Account holder name"
-                helperText="Name as registered with the bank"
-              />
-            </div>
-          </SettingsSection>
-        </SettingsCard>
 
         {/* Save Actions */}
         <SettingsFormActions>
@@ -1019,12 +956,10 @@ function calculateCompleteness(profile: any): number {
   if (profile.tradingName) totalFields += 0.5;
   if (profile.taxRegistrationNumber) totalFields += 0.5;
   if (profile.operationalAddress?.addressLine1) totalFields += 0.5;
-  if (profile.banking?.bankName) totalFields += 0.5;
 
   if (profile.tradingName && profile.tradingName.trim() !== '') completedFields += 0.5;
   if (profile.taxRegistrationNumber && profile.taxRegistrationNumber.trim() !== '') completedFields += 0.5;
   if (profile.operationalAddress?.addressLine1) completedFields += 0.5;
-  if (profile.banking?.bankName) completedFields += 0.5;
 
   return Math.round((completedFields / totalFields) * 100);
 }
