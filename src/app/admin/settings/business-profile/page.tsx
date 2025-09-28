@@ -208,41 +208,26 @@ export default function BusinessProfilePage() {
   };
 
   const copyOperationalToShipping = () => {
-    // Hybrid approach: Get DOM values for standard fields, form values for postal code
-    const addressLine1 = (document.querySelector('input[name="operationalAddress.addressLine1"]') as HTMLInputElement)?.value || '';
-    const addressLine2 = (document.querySelector('input[name="operationalAddress.addressLine2"]') as HTMLInputElement)?.value || '';
-    const city = (document.querySelector('input[name="operationalAddress.city"]') as HTMLInputElement)?.value || '';
-    const state = (document.querySelector('select[name="operationalAddress.state"]') as HTMLSelectElement)?.value || '';
+    // Get current operational address values from form state
     const operationalAddress = getValues('operationalAddress');
-    const postalCode = operationalAddress.postalCode || '';
+    const { addressLine1, addressLine2, city, state, postalCode } = operationalAddress;
 
     if (!addressLine1 && !city && !state && !postalCode) {
       toast.error('No operational address to copy');
       return;
     }
 
-    // Update React Hook Form for standard fields
-    setValue('shippingAddress.addressLine1', addressLine1);
-    setValue('shippingAddress.addressLine2', addressLine2);
-    setValue('shippingAddress.city', city);
-    setValue('shippingAddress.state', state);
+    // Update React Hook Form using handleFieldChange to mark as dirty
+    handleFieldChange('shippingAddress.addressLine1', addressLine1 || '');
+    handleFieldChange('shippingAddress.addressLine2', addressLine2 || '');
+    handleFieldChange('shippingAddress.city', city || '');
+    handleFieldChange('shippingAddress.state', state || '');
 
-    // Also directly update DOM inputs to ensure immediate visual feedback for standard fields
-    const shippingAddressLine1 = document.querySelector('input[name="shippingAddress.addressLine1"]') as HTMLInputElement;
-    const shippingAddressLine2 = document.querySelector('input[name="shippingAddress.addressLine2"]') as HTMLInputElement;
-    const shippingCity = document.querySelector('input[name="shippingAddress.city"]') as HTMLInputElement;
-    const shippingState = document.querySelector('select[name="shippingAddress.state"]') as HTMLSelectElement;
-
-    if (shippingAddressLine1) shippingAddressLine1.value = addressLine1;
-    if (shippingAddressLine2) shippingAddressLine2.value = addressLine2;
-    if (shippingCity) shippingCity.value = city;
-    if (shippingState) shippingState.value = state;
-
-    // Use handlePostcodeChange for postal code to properly manage validation
+    // Handle postcode with validation
     if (postalCode) {
       handlePostcodeChange('shipping', postalCode);
     } else {
-      setValue('shippingAddress.postalCode', '');
+      handleFieldChange('shippingAddress.postalCode', '');
     }
 
     // Copy postcode validation state
@@ -255,41 +240,26 @@ export default function BusinessProfilePage() {
   };
 
   const copyRegisteredToOperational = () => {
-    // Hybrid approach: Get DOM values for standard fields, form values for postal code
-    const addressLine1 = (document.querySelector('input[name="registeredAddress.addressLine1"]') as HTMLInputElement)?.value || '';
-    const addressLine2 = (document.querySelector('input[name="registeredAddress.addressLine2"]') as HTMLInputElement)?.value || '';
-    const city = (document.querySelector('input[name="registeredAddress.city"]') as HTMLInputElement)?.value || '';
-    const state = (document.querySelector('select[name="registeredAddress.state"]') as HTMLSelectElement)?.value || '';
+    // Get current registered address values from form state
     const registeredAddress = getValues('registeredAddress');
-    const postalCode = registeredAddress.postalCode || '';
+    const { addressLine1, addressLine2, city, state, postalCode } = registeredAddress;
 
     if (!addressLine1 && !city && !state && !postalCode) {
       toast.error('No registered address to copy');
       return;
     }
 
-    // Update React Hook Form for standard fields
-    setValue('operationalAddress.addressLine1', addressLine1);
-    setValue('operationalAddress.addressLine2', addressLine2);
-    setValue('operationalAddress.city', city);
-    setValue('operationalAddress.state', state);
+    // Update React Hook Form using handleFieldChange to mark as dirty
+    handleFieldChange('operationalAddress.addressLine1', addressLine1 || '');
+    handleFieldChange('operationalAddress.addressLine2', addressLine2 || '');
+    handleFieldChange('operationalAddress.city', city || '');
+    handleFieldChange('operationalAddress.state', state || '');
 
-    // Also directly update DOM inputs to ensure immediate visual feedback for standard fields
-    const opAddressLine1 = document.querySelector('input[name="operationalAddress.addressLine1"]') as HTMLInputElement;
-    const opAddressLine2 = document.querySelector('input[name="operationalAddress.addressLine2"]') as HTMLInputElement;
-    const opCity = document.querySelector('input[name="operationalAddress.city"]') as HTMLInputElement;
-    const opState = document.querySelector('select[name="operationalAddress.state"]') as HTMLSelectElement;
-
-    if (opAddressLine1) opAddressLine1.value = addressLine1;
-    if (opAddressLine2) opAddressLine2.value = addressLine2;
-    if (opCity) opCity.value = city;
-    if (opState) opState.value = state;
-
-    // Use handlePostcodeChange for postal code to properly manage validation
+    // Handle postcode with validation
     if (postalCode) {
       handlePostcodeChange('operational', postalCode);
     } else {
-      setValue('operationalAddress.postalCode', '');
+      handleFieldChange('operationalAddress.postalCode', '');
     }
 
     // Copy postcode validation state
@@ -491,7 +461,7 @@ export default function BusinessProfilePage() {
                 label="Trading Name"
                 type="text"
                 value={watchedValues.tradingName || ''}
-                onChange={(e) => setValue('tradingName', e.target.value)}
+                onChange={(e) => handleFieldChange('tradingName', e.target.value)}
                 error={errors.tradingName?.message}
                 placeholder="Enter trading name (if different)"
                 helperText="Optional - only if different from legal name"
@@ -514,7 +484,7 @@ export default function BusinessProfilePage() {
                 label="GST Registration Number"
                 type="text"
                 value={watchedValues.taxRegistrationNumber || ''}
-                onChange={(e) => setValue('taxRegistrationNumber', e.target.value)}
+                onChange={(e) => handleFieldChange('taxRegistrationNumber', e.target.value)}
                 error={errors.taxRegistrationNumber?.message}
                 placeholder="e.g., C12345678901"
                 helperText="Optional - GST format: C12345678901"
@@ -526,7 +496,7 @@ export default function BusinessProfilePage() {
                 label="Business Type"
                 options={businessTypes}
                 value={watchedValues.businessType}
-                onValueChange={(value) => setValue('businessType', value as any)}
+                onValueChange={(value) => handleFieldChange('businessType', value as any)}
                 placeholder="Select business type"
                 helperText="Choose your business entity type"
               />
@@ -535,7 +505,7 @@ export default function BusinessProfilePage() {
                 label="Established Date"
                 type="date"
                 value={watchedValues.establishedDate || ''}
-                onChange={(e) => setValue('establishedDate', e.target.value)}
+                onChange={(e) => handleFieldChange('establishedDate', e.target.value)}
                 error={errors.establishedDate?.message}
                 helperText="When was your business established"
               />
@@ -565,7 +535,7 @@ export default function BusinessProfilePage() {
                 label="Secondary Phone"
                 type="tel"
                 value={watchedValues.secondaryPhone || ''}
-                onChange={(e) => setValue('secondaryPhone', e.target.value)}
+                onChange={(e) => handleFieldChange('secondaryPhone', e.target.value)}
                 error={errors.secondaryPhone?.message}
                 placeholder="03-12345678"
                 helperText="Optional secondary contact"
@@ -588,7 +558,7 @@ export default function BusinessProfilePage() {
                 label="Support Email"
                 type="email"
                 value={watchedValues.supportEmail || ''}
-                onChange={(e) => setValue('supportEmail', e.target.value)}
+                onChange={(e) => handleFieldChange('supportEmail', e.target.value)}
                 error={errors.supportEmail?.message}
                 placeholder="support@company.com"
                 helperText="Optional customer support email"
@@ -599,7 +569,7 @@ export default function BusinessProfilePage() {
               label="Website"
               type="url"
               value={watchedValues.website || ''}
-              onChange={(e) => setValue('website', e.target.value)}
+              onChange={(e) => handleFieldChange('website', e.target.value)}
               error={errors.website?.message}
               placeholder="https://www.company.com"
               helperText="Optional company website"
@@ -609,7 +579,7 @@ export default function BusinessProfilePage() {
               label="Logo URL"
               type="url"
               value={watchedValues.logoUrl || ''}
-              onChange={(e) => setValue('logoUrl', e.target.value)}
+              onChange={(e) => handleFieldChange('logoUrl', e.target.value)}
               error={errors.logoUrl?.message}
               placeholder="https://www.company.com/logo.png"
               helperText="Optional company logo URL for receipts and invoices"
@@ -639,7 +609,7 @@ export default function BusinessProfilePage() {
                 label="Address Line 2"
                 type="text"
                 value={watchedValues.registeredAddress?.addressLine2 || ''}
-                onChange={(e) => setValue('registeredAddress.addressLine2', e.target.value)}
+                onChange={(e) => handleFieldChange('registeredAddress.addressLine2', e.target.value)}
                 error={errors.registeredAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -681,7 +651,7 @@ export default function BusinessProfilePage() {
                   type="text"
                   required
                   value={watchedValues.registeredAddress?.city || ''}
-                  onChange={(e) => setValue('registeredAddress.city', e.target.value)}
+                  onChange={(e) => handleFieldChange('registeredAddress.city', e.target.value)}
                   error={errors.registeredAddress?.city?.message}
                   placeholder="City"
                 />
@@ -692,7 +662,7 @@ export default function BusinessProfilePage() {
                   required
                   options={malaysianStatesOptions}
                   value={watchedValues.registeredAddress?.state || ''}
-                  onValueChange={(value) => setValue('registeredAddress.state', value)}
+                  onValueChange={(value) => handleFieldChange('registeredAddress.state', value)}
                   placeholder="Select state"
                 />
               </div>
@@ -727,7 +697,7 @@ export default function BusinessProfilePage() {
                 label="Address Line 1"
                 type="text"
                 value={watchedValues.operationalAddress?.addressLine1 || ''}
-                onChange={(e) => setValue('operationalAddress.addressLine1', e.target.value)}
+                onChange={(e) => handleFieldChange('operationalAddress.addressLine1', e.target.value)}
                 error={errors.operationalAddress?.addressLine1?.message}
                 placeholder="Street address, building name, unit number"
               />
@@ -736,7 +706,7 @@ export default function BusinessProfilePage() {
                 label="Address Line 2"
                 type="text"
                 value={watchedValues.operationalAddress?.addressLine2 || ''}
-                onChange={(e) => setValue('operationalAddress.addressLine2', e.target.value)}
+                onChange={(e) => handleFieldChange('operationalAddress.addressLine2', e.target.value)}
                 error={errors.operationalAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -776,7 +746,7 @@ export default function BusinessProfilePage() {
                   label="City"
                   type="text"
                   value={watchedValues.operationalAddress?.city || ''}
-                  onChange={(e) => setValue('operationalAddress.city', e.target.value)}
+                  onChange={(e) => handleFieldChange('operationalAddress.city', e.target.value)}
                   error={errors.operationalAddress?.city?.message}
                   placeholder="City"
                 />
@@ -786,7 +756,7 @@ export default function BusinessProfilePage() {
                   label="State"
                   options={malaysianStatesOptions}
                   value={watchedValues.operationalAddress?.state || ''}
-                  onValueChange={(value) => setValue('operationalAddress.state', value)}
+                  onValueChange={(value) => handleFieldChange('operationalAddress.state', value)}
                   placeholder="Select state"
                 />
               </div>
@@ -821,7 +791,7 @@ export default function BusinessProfilePage() {
                 label="Address Line 1"
                 type="text"
                 value={watchedValues.shippingAddress?.addressLine1 || ''}
-                onChange={(e) => setValue('shippingAddress.addressLine1', e.target.value)}
+                onChange={(e) => handleFieldChange('shippingAddress.addressLine1', e.target.value)}
                 error={errors.shippingAddress?.addressLine1?.message}
                 placeholder="Street address, building name, unit number"
               />
@@ -830,7 +800,7 @@ export default function BusinessProfilePage() {
                 label="Address Line 2"
                 type="text"
                 value={watchedValues.shippingAddress?.addressLine2 || ''}
-                onChange={(e) => setValue('shippingAddress.addressLine2', e.target.value)}
+                onChange={(e) => handleFieldChange('shippingAddress.addressLine2', e.target.value)}
                 error={errors.shippingAddress?.addressLine2?.message}
                 placeholder="Additional address details (optional)"
               />
@@ -870,7 +840,7 @@ export default function BusinessProfilePage() {
                   label="City"
                   type="text"
                   value={watchedValues.shippingAddress?.city || ''}
-                  onChange={(e) => setValue('shippingAddress.city', e.target.value)}
+                  onChange={(e) => handleFieldChange('shippingAddress.city', e.target.value)}
                   error={errors.shippingAddress?.city?.message}
                   placeholder="City"
                 />
@@ -880,7 +850,7 @@ export default function BusinessProfilePage() {
                   label="State"
                   options={malaysianStatesOptions}
                   value={watchedValues.shippingAddress?.state || ''}
-                  onValueChange={(value) => setValue('shippingAddress.state', value)}
+                  onValueChange={(value) => handleFieldChange('shippingAddress.state', value)}
                   placeholder="Select state"
                 />
               </div>
