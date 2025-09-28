@@ -1,0 +1,43 @@
+# Railway ignore file - reduce upload size
+node_modules
+.next
+.git
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large data files that can be seeded later
+Malaysia_Postcode-postcodes.csv
+Malaysia_Postcode-postcodes_clean.csv
+product_import_template_cleaned_2 - product_import_template_cleaned.csv
+
+# Test files
+coverage
+.nyc_output
+test-results
+playwright-report
+
+# Build artifacts
+dist
+build
+out
+
+# Backup files
+*.backup
+Dockerfile.backup

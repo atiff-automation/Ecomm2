@@ -15,7 +15,7 @@ function getPrismaClient() {
     prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL,
+          url: process.env.DATABASE_URL || 'postgresql://localhost:5432/jrm_ecommerce_dev',
         },
       },
     });
@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
     // Get JWT token
     const token = await getToken({
       req: request,
-      secret: process.env.NEXTAUTH_SECRET,
+      secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build',
     });
 
     // Skip validation if no token (NextAuth will handle authentication)

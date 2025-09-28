@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Railway deployment configuration
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+
   // TypeScript and ESLint configuration
   typescript: {
     // Disable type checking during build for now (production readiness)
@@ -47,8 +50,10 @@ const nextConfig = {
 
   // Images optimization
   images: {
-    // Only allow localhost for development (internal uploads are served from same domain)
-    domains: ['localhost'],
+    // Railway domain configuration
+    domains: process.env.NODE_ENV === 'production'
+      ? [process.env.RAILWAY_STATIC_URL?.replace('https://', '') || 'localhost']
+      : ['localhost'],
     // Default Next.js image optimization for internal uploads
     formats: ['image/webp', 'image/avif'],
     // Enable image optimization

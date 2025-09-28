@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "postinstall": "npm run db:deploy:production",
     "db:deploy:production": "npx prisma migrate deploy && npm run db:seed:production",
     "db:seed:production": "npm run db:seed:essential && npm run db:seed:postcodes:production && npm run db:seed:shipping:production",
     "db:seed:essential": "NODE_ENV=production npx tsx prisma/seed.ts",
@@ -79,6 +78,8 @@
     "@types/puppeteer": "^5.4.7",
     "@types/speakeasy": "^2.0.10",
     "@types/xlsx": "^0.0.35",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.35.4",
     "archiver": "^7.0.1",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",

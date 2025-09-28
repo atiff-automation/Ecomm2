@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
 export async function validateSessionMiddleware(request: NextRequest) {
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build',
   });
 
   // Skip validation if no token
