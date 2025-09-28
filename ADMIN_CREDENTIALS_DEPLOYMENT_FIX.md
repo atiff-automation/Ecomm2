@@ -3,7 +3,14 @@
 ## Problem
 Admin credentials were not working on Railway deployment because:
 1. Seed script was using wrong password (`password123` instead of `ParitRaja9396#$%`)
-2. Missing `postinstall` script in package.json to run seeding during deployment
+2. Database seeding was running in wrong phase (build vs runtime)
+
+## Railway Build vs Runtime Issue
+Railway deployment has two phases:
+- **Build Phase** (`npm ci`, `npm run build`) → Database NOT accessible
+- **Runtime Phase** (`npm start`) → Database accessible ✅
+
+The `postinstall` script runs during build phase when database isn't available.
 
 ## Solution Applied
 
@@ -13,17 +20,18 @@ Admin credentials were not working on Railway deployment because:
 - Separate password for test users (`password123`)
 - Added console logs to show credentials during seeding
 
-### 2. Added Postinstall Script (`package.json`)
-✅ **Added automatic deployment seeding:**
+### 2. Fixed Runtime Seeding (`package.json`)
+✅ **Moved seeding to runtime phase:**
 ```json
 {
   "scripts": {
-    "postinstall": "npm run db:deploy:production"
+    "start": "npm run db:deploy:production && next start",
+    "start:production": "next start"
   }
 }
 ```
 
-This runs automatically when Railway installs dependencies.
+This runs during startup when database is accessible.
 
 ## Admin Credentials
 
@@ -49,13 +57,16 @@ If not set, it defaults to `ParitRaja9396#$%`.
 
 ## Deployment Process
 
-The seeding now runs automatically when you deploy to Railway:
+The seeding now runs automatically during Railway startup:
 
-1. **Railway installs dependencies** → triggers `postinstall`
-2. **Runs migrations** → `prisma migrate deploy`
-3. **Seeds essential data** → Creates admin users with correct passwords
-4. **Seeds postcodes** → Malaysian postcode system
-5. **Seeds shipping zones** → Courier configurations
+1. **Railway installs dependencies** → `npm ci` (build phase)
+2. **Railway builds application** → `npm run build` (build phase)
+3. **Railway starts application** → `npm start` (runtime phase)
+4. **Runs migrations** → `prisma migrate deploy` ✅
+5. **Seeds essential data** → Creates admin users with correct passwords ✅
+6. **Seeds postcodes** → Malaysian postcode system ✅
+7. **Seeds shipping zones** → Courier configurations ✅
+8. **Starts Next.js** → Application ready ✅
 
 ## Next Steps
 

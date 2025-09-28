@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "postinstall": "npm run db:deploy:production",
+    "start": "npm run db:deploy:production && next start",
+    "start:production": "next start",
     "db:deploy:production": "npx prisma migrate deploy && npm run db:seed:production",
     "db:seed:production": "npm run db:seed:essential && npm run db:seed:postcodes:production && npm run db:seed:shipping:production",
     "db:seed:essential": "NODE_ENV=production npx tsx prisma/seed.ts",
