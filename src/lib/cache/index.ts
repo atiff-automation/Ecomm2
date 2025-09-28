@@ -3,8 +3,8 @@
  * Central export point for all caching functionality
  */
 
-// Core caching
-export { redisClient } from './redis-client';
+// Core caching - Railway deployment ready with fallback
+export { redisClient } from './redis-client-fallback';
 export { cacheManager, CacheManager } from './cache-manager';
 export type { CacheOptions, CacheStats } from './redis-client';
 export type { CacheStrategy } from './cache-manager';
