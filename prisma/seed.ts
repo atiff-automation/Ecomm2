@@ -11,8 +11,18 @@ const prisma = new PrismaClient();
 async function seedUsers() {
   console.log('🌱 Seeding users...');
 
-  // Hash password for all test users
-  const hashedPassword = await bcrypt.hash('password123', 12);
+  // Use production-ready admin password or environment variable
+  const adminPassword = process.env.ADMIN_PASSWORD || 'ParitRaja9396#$%';
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
+
+  // Hash password for test users (keep simple for testing)
+  const testPassword = await bcrypt.hash('password123', 12);
+
+  console.log('📧 Admin credentials will be:');
+  console.log('  Super Admin: superadmin@jrm.com');
+  console.log('  Admin: admin@jrm.com');
+  console.log(`  Password: ${adminPassword}`);
+  console.log('  Test users password: password123');
 
   // Create Super Admin
   await prisma.user.upsert({
@@ -56,7 +66,7 @@ async function seedUsers() {
     update: {},
     create: {
       email: 'staff@jrm.com',
-      password: hashedPassword,
+      password: testPassword,
       firstName: 'Staff',
       lastName: 'Member',
       phone: '+60123456791',
@@ -73,7 +83,7 @@ async function seedUsers() {
     update: {},
     create: {
       email: 'member@test.com',
-      password: hashedPassword,
+      password: testPassword,
       firstName: 'John',
       lastName: 'Member',
       phone: '+60123456792',
@@ -93,7 +103,7 @@ async function seedUsers() {
     update: {},
     create: {
       email: 'customer@test.com',
-      password: hashedPassword,
+      password: testPassword,
       firstName: 'Jane',
       lastName: 'Customer',
       phone: '+60123456793',
@@ -111,7 +121,7 @@ async function seedUsers() {
     update: {},
     create: {
       email: 'pending@test.com',
-      password: hashedPassword,
+      password: testPassword,
       firstName: 'Pending',
       lastName: 'User',
       phone: '+60123456794',
