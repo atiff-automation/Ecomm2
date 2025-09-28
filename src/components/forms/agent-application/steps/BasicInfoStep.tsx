@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Building, MapPin, Phone, Mail, Calendar, IdCard } from 'lucide-react';
-import { FIELD_LABELS, PLACEHOLDERS } from '@/lib/config/agent-application-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { User, Building, MapPin, Phone, Mail, Calendar, IdCard, Store } from 'lucide-react';
+import { FIELD_LABELS, PLACEHOLDERS, BUSINESS_TYPES } from '@/lib/config/agent-application-form';
 
 interface BasicInfoStepProps {
   form: UseFormReturn<AgentApplicationFormData>;
@@ -210,6 +211,32 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             <Label htmlFor="isRegistered" className="text-sm font-medium cursor-pointer">
               {FIELD_LABELS.isRegistered}
             </Label>
+          </div>
+
+          {/* Business Type */}
+          <div>
+            <Label htmlFor="jenis" className="text-sm font-medium flex items-center space-x-1">
+              <Store className="w-4 h-4" />
+              <span>{FIELD_LABELS.jenis} <span className="text-red-500">*</span></span>
+            </Label>
+            <Select
+              value={watch('jenis') || ''}
+              onValueChange={(value) => setValue('jenis', value as any)}
+            >
+              <SelectTrigger className={errors.jenis ? 'border-red-300' : ''}>
+                <SelectValue placeholder="Pilih jenis kedai" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(BUSINESS_TYPES).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.jenis && (
+              <p className="text-sm text-red-600 mt-1">{errors.jenis.message}</p>
+            )}
           </div>
         </CardContent>
       </Card>

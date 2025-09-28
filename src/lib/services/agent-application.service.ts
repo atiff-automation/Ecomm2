@@ -4,7 +4,7 @@
  * Following CLAUDE.md principles: Single source of truth, systematic implementation
  */
 
-import { PrismaClient, AgentApplicationStatus, ApplicationDecision, User } from '@prisma/client';
+import { AgentApplicationStatus, ApplicationDecision, User } from '@prisma/client';
 import {
   AgentApplicationFormData,
   AgentApplicationWithRelations,
@@ -17,8 +17,7 @@ import {
 import { agentApplicationSchema, applicationFiltersSchema } from '@/lib/validation/agent-application';
 import { emailService } from '@/lib/email/email-service';
 import { sanitizeString } from '@/lib/security/input-validation';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export class AgentApplicationService {
   /**
@@ -102,6 +101,7 @@ export class AgentApplicationService {
           businessLocation: validatedData.businessLocation || null,
           hasTeamLeadExp: validatedData.hasTeamLeadExp,
           isRegistered: validatedData.isRegistered,
+          jenis: validatedData.jenis,
 
           // Social Media
           instagramHandle: validatedData.instagramHandle || null,

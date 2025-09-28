@@ -60,6 +60,7 @@ export function AgentApplicationForm({
       businessLocation: '',
       hasTeamLeadExp: false,
       isRegistered: false,
+      jenis: undefined,
       instagramHandle: '',
       facebookHandle: '',
       tiktokHandle: '',
@@ -82,35 +83,65 @@ export function AgentApplicationForm({
   // Auto-save form data
   useAutoSave(formData, currentStep);
 
-  // Load saved data on mount
+  // Load saved data on mount (only once)
   useEffect(() => {
     if (!initialData && hasSavedData()) {
       const saved = loadFormData();
       if (saved) {
         reset(saved.data);
         setCurrentStep(saved.currentStep);
-        toast.success('Data tersimpan telah dipulihkan');
+        toast.success('Saved data has been restored');
       }
     }
-  }, [initialData, hasSavedData, loadFormData, reset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData]); // Only depend on initialData to run once
 
   // Get current step configuration
   const currentStepConfig = FORM_STEPS[currentStep];
 
   // Validate current step
   const validateCurrentStep = async (): Promise<boolean> => {
+    if (!currentStepConfig) return true;
+
     const stepId = currentStepConfig.id as keyof typeof stepSchemas;
     const stepSchema = stepSchemas[stepId];
 
     if (!stepSchema) return true;
 
+    // Get only the current step's field values
+    const allValues = getValues();
+    const stepFields = currentStepConfig.fields || [];
+    const stepValues: any = {};
+
+    // Extract only the fields relevant to the current step
+    stepFields.forEach(field => {
+      if (field && typeof field === 'string') {
+        stepValues[field] = allValues[field as keyof typeof allValues];
+      }
+    });
+
     try {
-      stepSchema.parse(getValues());
+      stepSchema.parse(stepValues);
       return true;
     } catch (error) {
+      console.warn('Validation failed for step:', stepId, 'with values:', stepValues, 'error:', error);
+
       // Trigger validation to show errors - only if fields exist
-      if (currentStepConfig.fields && currentStepConfig.fields.length > 0) {
-        await trigger(currentStepConfig.fields);
+      try {
+        if (currentStepConfig?.fields && Array.isArray(currentStepConfig.fields) && currentStepConfig.fields.length > 0) {
+          const validFields = currentStepConfig.fields.filter(field => field && typeof field === 'string');
+          if (validFields.length > 0) {
+            for (const field of validFields) {
+              try {
+                await trigger(field as any);
+              } catch (fieldError) {
+                console.warn(`Failed to trigger validation for field: ${field}`, fieldError);
+              }
+            }
+          }
+        }
+      } catch (triggerError) {
+        console.warn('Failed to trigger form validation:', triggerError);
       }
       return false;
     }
@@ -121,7 +152,7 @@ export function AgentApplicationForm({
     const isValid = await validateCurrentStep();
 
     if (!isValid) {
-      toast.error('Sila lengkapkan semua medan yang diperlukan');
+      toast.error('Please complete all required fields');
       return;
     }
 
@@ -161,7 +192,7 @@ export function AgentApplicationForm({
       // Final validation
       const isValid = await trigger();
       if (!isValid) {
-        toast.error('Sila lengkapkan semua medan yang diperlukan');
+        toast.error('Please complete all required fields');
         return;
       }
 
@@ -180,16 +211,16 @@ export function AgentApplicationForm({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Ralat semasa menghantar permohonan');
+        throw new Error(result.error || 'Error occurred while submitting application');
       }
 
       // Success
       clearFormData();
-      toast.success(result.message || 'Permohonan berjaya dihantar!');
+      toast.success(result.message || 'Application submitted successfully!');
       router.push(`/apply-agent/success?id=${result.id}`);
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Ralat tidak dijangka berlaku';
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       setSubmitError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -217,6 +248,8 @@ export function AgentApplicationForm({
 
   // Check if current step is valid
   const isCurrentStepValid = async () => {
+    if (!currentStepConfig) return true;
+
     const stepId = currentStepConfig.id as keyof typeof stepSchemas;
     const stepSchema = stepSchemas[stepId];
 
@@ -257,7 +290,7 @@ export function AgentApplicationForm({
             <CardContent className="p-4">
               <div className="flex items-center space-x-2 text-red-700">
                 <AlertTriangle className="w-5 h-5" />
-                <p className="font-medium">Ralat Penghantaran</p>
+                <p className="font-medium">Submission Error</p>
               </div>
               <p className="text-sm text-red-600 mt-1">{submitError}</p>
             </CardContent>
@@ -266,12 +299,12 @@ export function AgentApplicationForm({
 
         {/* Main Form Container */}
         <FormStepContainer
-          title={currentStepConfig.title}
-          subtitle={currentStepConfig.subtitle}
+          title={currentStepConfig?.title || 'Loading...'}
+          subtitle={currentStepConfig?.subtitle || ''}
           onNext={currentStep === FORM_STEPS.length - 1 ? handleSubmit : handleNext}
           onPrevious={currentStep > 0 ? handlePrevious : undefined}
-          nextLabel={currentStep === FORM_STEPS.length - 1 ? 'Hantar Permohonan' : 'Seterusnya'}
-          previousLabel="Kembali"
+          nextLabel={currentStep === FORM_STEPS.length - 1 ? 'Submit Application' : 'Next'}
+          previousLabel="Back"
           isFirst={currentStep === 0}
           isLast={currentStep === FORM_STEPS.length - 1}
           isLoading={isSubmitting}
@@ -285,11 +318,11 @@ export function AgentApplicationForm({
           <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
             <div className="flex items-center space-x-1">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>Data disimpan secara automatik</span>
+              <span>Data saved automatically</span>
             </div>
             <div className="flex items-center space-x-1">
               <Loader2 className="w-4 h-4" />
-              <span>SSL Selamat</span>
+              <span>SSL Secure</span>
             </div>
           </div>
         </div>
@@ -297,9 +330,9 @@ export function AgentApplicationForm({
         {/* Support Information */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="text-center text-sm text-blue-800">
-            <p className="font-medium mb-1">Perlukan Bantuan?</p>
+            <p className="font-medium mb-1">Need Help?</p>
             <p>
-              Hubungi pasukan sokongan kami di{' '}
+              Contact our support team at{' '}
               <span className="font-medium">support@jrm.com.my</span> atau{' '}
               <span className="font-medium">03-1234-5678</span>
             </p>

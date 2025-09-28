@@ -222,12 +222,12 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
         <div className="flex items-start space-x-3">
           <Lightbulb className="w-5 h-5 text-amber-600 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-medium mb-1">Tips Menulis Jawapan yang Baik</p>
+            <p className="font-medium mb-1">Tips for Writing Good Answers</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Tulis dengan jujur dan ikhlas</li>
-              <li>Kongsikan pengalaman peribadi yang relevan</li>
-              <li>Nyatakan matlamat yang realistik dan boleh dicapai</li>
-              <li>Tunjukkan komitmen jangka panjang anda dengan JRM</li>
+              <li>Write honestly and sincerely</li>
+              <li>Share relevant personal experiences</li>
+              <li>State realistic and achievable goals</li>
+              <li>Show your long-term commitment to JRM</li>
             </ul>
           </div>
         </div>

@@ -93,7 +93,7 @@ export function TermsStep({ form }: TermsStepProps) {
                 <div className="flex items-start space-x-2">
                   <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-gray-600">
-                    <strong>Penting:</strong> Dengan menandakan kotak di bawah, anda mengaku telah membaca, memahami, dan bersetuju untuk mematuhi semua syarat dan terma yang dinyatakan di atas.
+                    <strong>Important:</strong> By checking the box below, you acknowledge that you have read, understood, and agree to comply with all the terms and conditions stated above.
                   </p>
                 </div>
               </div>
@@ -136,12 +136,12 @@ export function TermsStep({ form }: TermsStepProps) {
         <div className="flex items-start space-x-3">
           <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">Maklumat Tambahan</p>
+            <p className="font-medium mb-1">Additional Information</p>
             <p>
-              Sekiranya anda mempunyai sebarang pertanyaan mengenai syarat dan terma ini,
-              sila hubungi pasukan sokongan kami di{' '}
+              If you have any questions regarding these terms and conditions,
+              please contact our support team at{' '}
               <span className="font-medium">support@jrm.com.my</span> atau{' '}
-              <span className="font-medium">03-1234-5678</span> sebelum meneruskan permohonan.
+              <span className="font-medium">03-1234-5678</span> before proceeding with your application.
             </p>
           </div>
         </div>

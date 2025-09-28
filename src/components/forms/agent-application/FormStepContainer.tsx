@@ -31,8 +31,8 @@ export function FormStepContainer({
   children,
   onNext,
   onPrevious,
-  nextLabel = 'Seterusnya',
-  previousLabel = 'Kembali',
+  nextLabel = 'Next',
+  previousLabel = 'Back',
   isFirst = false,
   isLast = false,
   isLoading = false,
@@ -115,11 +115,11 @@ export function FormStepContainer({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Memproses...</span>
+                <span>Processing...</span>
               </>
             ) : (
               <>
-                <span>{isLast ? 'Hantar Permohonan' : nextLabel}</span>
+                <span>{isLast ? 'Submit Application' : nextLabel}</span>
                 {!isLast && <ArrowRight className="w-4 h-4" />}
               </>
             )}

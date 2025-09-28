@@ -4,7 +4,10 @@
  * Following CLAUDE.md principles: Single source of truth for types
  */
 
-import { AgentApplication, AgentApplicationReview, User, AgentApplicationStatus, SocialMediaLevel, ApplicationDecision } from '@prisma/client';
+import { AgentApplication, AgentApplicationReview, User, AgentApplicationStatus, ApplicationDecision } from '@prisma/client';
+
+// Local type definition for SocialMediaLevel to avoid Prisma client-side issues
+export type SocialMediaLevel = 'TIDAK_MAHIR' | 'MAHIR' | 'SANGAT_MAHIR';
 
 // Core application types
 export interface AgentApplicationWithRelations extends AgentApplication {

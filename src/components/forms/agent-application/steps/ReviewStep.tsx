@@ -168,7 +168,7 @@ export function ReviewStep({ form }: ReviewStepProps) {
               <div>
                 <p className="font-medium">Instagram</p>
                 <p className="text-sm text-gray-600">
-                  {formData.instagramHandle ? `@${formData.instagramHandle}` : 'Tidak dinyatakan'}
+                  {formData.instagramHandle ? `@${formData.instagramHandle}` : 'Not specified'}
                 </p>
               </div>
             </div>
@@ -184,7 +184,7 @@ export function ReviewStep({ form }: ReviewStepProps) {
               <div>
                 <p className="font-medium">Facebook</p>
                 <p className="text-sm text-gray-600">
-                  {formData.facebookHandle || 'Tidak dinyatakan'}
+                  {formData.facebookHandle || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -200,7 +200,7 @@ export function ReviewStep({ form }: ReviewStepProps) {
               <div>
                 <p className="font-medium">TikTok</p>
                 <p className="text-sm text-gray-600">
-                  {formData.tiktokHandle ? `@${formData.tiktokHandle}` : 'Tidak dinyatakan'}
+                  {formData.tiktokHandle ? `@${formData.tiktokHandle}` : 'Not specified'}
                 </p>
               </div>
             </div>
@@ -216,7 +216,7 @@ export function ReviewStep({ form }: ReviewStepProps) {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Heart className="w-5 h-5 text-red-600" />
-            <span>Maklumat Tambahan</span>
+            <span>Additional Information</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -288,7 +288,7 @@ export function ReviewStep({ form }: ReviewStepProps) {
               {errors.finalAgreement && (
                 <p className="text-sm text-red-600 mt-2 flex items-center space-x-1">
                   <AlertTriangle className="w-4 h-4" />
-                  <span>Anda perlu mengesahkan maklumat untuk menghantar permohonan</span>
+                  <span>You must confirm the information to submit the application</span>
                 </p>
               )}
             </div>
@@ -301,12 +301,12 @@ export function ReviewStep({ form }: ReviewStepProps) {
         <div className="flex items-start space-x-3">
           <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-medium mb-2">Langkah Seterusnya</p>
+            <p className="font-medium mb-2">Next Steps</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Permohonan anda akan disemak dalam tempoh 3-5 hari bekerja</li>
-              <li>Kami akan menghubungi anda melalui email dan telefon</li>
-              <li>Jika diterima, anda akan dijemput untuk sesi orientasi</li>
-              <li>Latihan komprehensif akan disediakan untuk ejen baru</li>
+              <li>Your application will be reviewed within 3-5 working days</li>
+              <li>We will contact you via email and phone</li>
+              <li>If accepted, you will be invited for an orientation session</li>
+              <li>Comprehensive training will be provided for new agents</li>
             </ul>
           </div>
         </div>

@@ -1,0 +1,74 @@
+{
+  "name": "Simple Chat Test Workflow",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat-test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "chat-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simple echo bot with user context awareness\nconst payload = $input.first().json;\n\n// Extract user information\nconst isAuthenticated = payload.userContext?.isAuthenticated || false;\nconst membershipLevel = payload.userContext?.membershipLevel || 'guest';\nconst userMessage = payload.message?.content || '';\n\n// Generate response based on user context\nlet responseContent;\nlet quickReplies = [];\n\nif (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {\n  if (isAuthenticated) {\n    responseContent = `Hello ${payload.userContext.userInfo?.name || 'valued customer'}! How can I help you today?`;\n    quickReplies = ['Check Orders', 'Browse Products', 'Account Settings'];\n  } else {\n    responseContent = 'Hello! Welcome to our store. How can I assist you today?';\n    quickReplies = ['Browse Products', 'Create Account', 'Contact Support'];\n  }\n} else if (userMessage.toLowerCase().includes('order')) {\n  responseContent = 'I can help you with order inquiries. Please provide your order number or let me know what you need.';\n  quickReplies = ['Track Order', 'Order Status', 'Contact Support'];\n} else if (userMessage.toLowerCase().includes('product')) {\n  if (membershipLevel === 'member') {\n    responseContent = 'As a member, you have access to exclusive products! What are you looking for?';\n    quickReplies = ['Member Deals', 'New Arrivals', 'Recommendations'];\n  } else {\n    responseContent = 'I can help you find products. What are you looking for?';\n    quickReplies = ['Browse Catalog', 'Featured Items', 'Join for Deals'];\n  }\n} else {\n  // Echo the message with context\n  responseContent = `I received: \"${userMessage}\". I'm a test bot. How can I help you further?`;\n  quickReplies = ['Help', 'Contact Support', 'Browse Products'];\n}\n\n// Return the response in the required format\nreturn {\n  sessionId: payload.sessionId,\n  response: {\n    content: responseContent,\n    type: 'text',\n    quickReplies: quickReplies\n  },\n  metadata: {\n    intent: 'test_response',\n    confidence: 0.95,\n    context: {\n      userType: membershipLevel,\n      authenticated: isAuthenticated,\n      originalMessage: userMessage\n    }\n  }\n};"
+      },
+      "id": "process-message",
+      "name": "Process Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Process Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

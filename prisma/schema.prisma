@@ -25,8 +25,6 @@ model User {
   updatedAt                 DateTime                    @updatedAt
   lastLoginAt               DateTime?
   addresses                 Address[]
-  agent_application_reviews agent_application_reviews[]
-  agent_applications        agent_applications[]
   auditLogs                 AuditLog[]
   cartItems                 CartItem[]
   chatSessions              ChatSession[]
@@ -1195,98 +1193,6 @@ model FailedNotification {
   @@map("failed_notifications")
 }
 
-model agent_application_reviews {
-  id                 String                 @id
-  applicationId      String
-  reviewerId         String
-  previousStatus     AgentApplicationStatus
-  newStatus          AgentApplicationStatus
-  comments           String?
-  scoreAdjustments   Json?
-  flagsAdded         String[]               @default([])
-  flagsRemoved       String[]               @default([])
-  actionTaken        String?
-  reviewDate         DateTime               @default(now())
-  agent_applications agent_applications     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  users              User                   @relation(fields: [reviewerId], references: [id])
-
-  @@index([applicationId])
-  @@index([newStatus])
-  @@index([reviewDate])
-  @@index([reviewerId])
-}
-
-model agent_applications {
-  id                         String                         @id
-  applicationId              String                         @unique
-  status                     AgentApplicationStatus         @default(DRAFT)
-  fullName                   String
-  icNumber                   String
-  phoneNumber                String
-  email                      String
-  address                    String
-  age                        Int
-  emergencyContactName       String
-  emergencyContactPhone      String
-  employmentStatus           EmploymentStatus
-  jobTitle                   String?
-  companyName                String?
-  educationLevel             EducationLevel
-  hasSalesExperience         Boolean                        @default(false)
-  salesExperienceDescription String?
-  hasBusinessExperience      Boolean                        @default(false)
-  businessExperienceType     String?
-  instagramHandle            String?
-  instagramFollowersRange    FollowersRange?
-  facebookHandle             String?
-  facebookFollowersRange     FollowersRange?
-  tiktokHandle               String?
-  tiktokFollowersRange       FollowersRange?
-  postingFrequency           PostingFrequency
-  comfortableOnlineMarketing Boolean                        @default(false)
-  opportunityType            OpportunityType
-  hoursPerWeek               HoursRange
-  hasTransportation          Boolean                        @default(false)
-  willingAttendTraining      Boolean                        @default(false)
-  willingTravelEvents        Boolean                        @default(false)
-  availableStartDate         DateTime
-  heardAboutSource           ReferralSource
-  usedJrmProducts            Boolean                        @default(false)
-  jrmProductsUsed            String?
-  knowsJrmAgents             Boolean                        @default(false)
-  jrmAgentReference          String?
-  reasonToJoin               String
-  monthlyIncomeGoal          IncomeGoal
-  expectations               String
-  state                      AgentApplicationMalaysianState
-  preferredWorkingAreas      String
-  canHandleDeliveries        Boolean                        @default(false)
-  willingWorkEvents          Boolean                        @default(false)
-  totalScore                 Int?
-  scoreBreakdown             Json?
-  riskFlags                  String[]                       @default([])
-  acceptTerms                Boolean                        @default(false)
-  finalAgreement             Boolean                        @default(false)
-  submittedAt                DateTime?
-  reviewedAt                 DateTime?
-  reviewedBy                 String?
-  adminNotes                 String?
-  rejectionReason            String?
-  interviewScheduledDate     DateTime?
-  interviewNotes             String?
-  createdAt                  DateTime                       @default(now())
-  updatedAt                  DateTime
-  agent_application_reviews  agent_application_reviews[]
-  users                      User?                          @relation(fields: [reviewedBy], references: [id])
-
-  @@index([applicationId])
-  @@index([email])
-  @@index([reviewedBy])
-  @@index([state])
-  @@index([status])
-  @@index([submittedAt])
-  @@index([totalScore])
-}
 
 enum UserRole {
   CUSTOMER
@@ -1500,6 +1406,7 @@ model AgentApplication {
   businessLocation  String?
   hasTeamLeadExp    Boolean
   isRegistered      Boolean
+  jenis             BusinessType
 
   // Step 3: Social Media
   instagramHandle   String?
@@ -1645,4 +1552,11 @@ enum ReferralSource {
   JRM_AGENT
   ONLINE_AD
   OTHERS
+}
+
+enum BusinessType {
+  KEDAI
+  MUDAH
+  TIDAK_BERKAITAN
+  LAIN_LAIN
 }

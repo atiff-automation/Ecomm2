@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { SocialMediaLevel, AgentApplicationStatus, ApplicationDecision } from '@prisma/client';
+import { AgentApplicationStatus, ApplicationDecision } from '@prisma/client';
 
 // IC Number validation for Malaysian format
 const icNumberRegex = /^\d{6}-\d{2}-\d{4}$/;
@@ -15,6 +15,9 @@ const phoneRegex = /^(\+?6?01)[0-46-9]-?[0-9]{7,8}$/;
 
 // Email validation
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Social Media Level enum as string literals
+const SocialMediaLevelEnum = z.enum(['TIDAK_MAHIR', 'MAHIR', 'SANGAT_MAHIR']);
 
 // Step 1: Terms validation
 export const termsSchema = z.object({
@@ -113,16 +116,16 @@ export const socialMediaSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  instagramLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran Instagram' })
+  instagramLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran Instagram'
   }),
 
-  facebookLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran Facebook' })
+  facebookLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran Facebook'
   }),
 
-  tiktokLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran TikTok' })
+  tiktokLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran TikTok'
   })
 });
 
@@ -240,16 +243,16 @@ export const agentApplicationSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  instagramLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran Instagram' })
+  instagramLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran Instagram'
   }),
 
-  facebookLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran Facebook' })
+  facebookLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran Facebook'
   }),
 
-  tiktokLevel: z.nativeEnum(SocialMediaLevel, {
-    errorMap: () => ({ message: 'Sila pilih tahap kemahiran TikTok' })
+  tiktokLevel: SocialMediaLevelEnum.refine(() => true, {
+    message: 'Sila pilih tahap kemahiran TikTok'
   }),
 
   // Step 4: Additional Information
@@ -319,7 +322,7 @@ export const applicationFiltersSchema = z.object({
   status: z.nativeEnum(AgentApplicationStatus).optional(),
   search: z.string().max(100).optional(),
   hasJrmExp: z.boolean().optional(),
-  socialMediaLevel: z.nativeEnum(SocialMediaLevel).optional(),
+  socialMediaLevel: SocialMediaLevelEnum.optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
   page: z.number().min(1).default(1),
