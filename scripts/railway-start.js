@@ -119,8 +119,34 @@ async function startApplication() {
     }
     console.log();
 
-    // Step 2: Start the server FIRST (for health checks)
-    console.log('🚀 Step 2: Starting Next.js standalone server');
+    // Step 2: Copy static assets (fix for Railway standalone build)
+    console.log('📁 Step 2: Setting up static assets for standalone build');
+
+    const publicPath = path.join(process.cwd(), 'public');
+    const staticPath = path.join(process.cwd(), '.next', 'static');
+    const standalonePublicPath = path.join(process.cwd(), '.next', 'standalone', 'public');
+    const standaloneStaticPath = path.join(process.cwd(), '.next', 'standalone', '.next', 'static');
+
+    try {
+      // Copy public assets to standalone directory
+      if (require('fs').existsSync(publicPath)) {
+        await runCommand('cp', ['-r', publicPath, path.join(process.cwd(), '.next', 'standalone')], 'Copy public assets');
+      }
+
+      // Copy static assets to standalone directory
+      if (require('fs').existsSync(staticPath)) {
+        await runCommand('mkdir', ['-p', path.dirname(standaloneStaticPath)], 'Create static directory');
+        await runCommand('cp', ['-r', staticPath, path.dirname(standaloneStaticPath)], 'Copy static assets');
+      }
+
+      console.log('✅ Static assets copied successfully');
+    } catch (error) {
+      console.warn('⚠️ Static asset copy failed, continuing anyway:', error.message);
+    }
+    console.log();
+
+    // Step 3: Start the server FIRST (for health checks)
+    console.log('🚀 Step 3: Starting Next.js standalone server');
     console.log(`Listening on PORT: ${process.env.PORT}`);
     console.log(`Binding to HOSTNAME: ${process.env.HOSTNAME}`);
     console.log();
@@ -145,9 +171,9 @@ async function startApplication() {
       process.exit(code);
     });
 
-    // Step 3: Run seeding in background after server starts (only if DATABASE_URL is available)
+    // Step 4: Run seeding in background after server starts (only if DATABASE_URL is available)
     if (process.env.DATABASE_URL) {
-      console.log('🌱 Step 3: Starting database seeding in background');
+      console.log('🌱 Step 4: Starting database seeding in background');
       setTimeout(() => {
         console.log('⏰ Starting delayed background seeding...');
 
@@ -155,7 +181,7 @@ async function startApplication() {
         runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
       }, 5000); // Wait 5 seconds for server to fully start
     } else {
-      console.log('⏭️ Step 3: Skipping database seeding - DATABASE_URL not available');
+      console.log('⏭️ Step 4: Skipping database seeding - DATABASE_URL not available');
     }
 
     // Handle graceful shutdown
