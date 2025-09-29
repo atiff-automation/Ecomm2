@@ -1,4 +1,4 @@
 1. Review product doc
-2. Register 2 number chatbot - cancel TW Mya - DONE
+2. Register 2 number chatbot - cancel TW Mya - DONE. Pending to do a stage filter ai to save token
 3. Register blaster media social
 4. 
