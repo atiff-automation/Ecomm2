@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { SendMessageSchema, CHAT_CONFIG } from '@/lib/chat/validation';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
 import { handleChatError, createSuccessResponse, createChatError } from '@/lib/chat/errors';
 import { webhookService } from '@/lib/chat/webhook-service';
 import { withRateLimit, RateLimitPresets } from '@/lib/middleware/rate-limit';

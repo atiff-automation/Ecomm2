@@ -7,6 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
 import { UserRole } from '@prisma/client';
 // import { ProductStatus } from '@prisma/client'; // Not currently used
 import { z } from 'zod';
