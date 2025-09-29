@@ -97,13 +97,17 @@ async function readCSVFiles(): Promise<{
   // Read state mapping CSV
   const statesPath = path.join(projectRoot, 'Malaysia_Postcode-states.csv');
   if (!fs.existsSync(statesPath)) {
-    throw new Error(`States CSV file not found at: ${statesPath}`);
+    console.warn(`⚠️ States CSV file not found at: ${statesPath}`);
+    console.log('💡 Skipping postcode seeding - CSV files not available');
+    return { states: [], postcodes: [] };
   }
   
   // Read postcode data CSV  
   const postcodesPath = path.join(projectRoot, 'Malaysia_Postcode-postcodes - Malaysia_Postcode-postcodes_clean.csv');
   if (!fs.existsSync(postcodesPath)) {
-    throw new Error(`Postcodes CSV file not found at: ${postcodesPath}`);
+    console.warn(`⚠️ Postcodes CSV file not found at: ${postcodesPath}`);
+    console.log('💡 Skipping postcode seeding - CSV files not available');
+    return { states: [], postcodes: [] };
   }
   
   console.log('📁 Reading CSV files...');
@@ -236,6 +240,13 @@ async function main() {
 
     // Read and validate CSV data
     const { states, postcodes } = await readCSVFiles();
+
+    // Check if CSV files were found
+    if (states.length === 0 && postcodes.length === 0) {
+      console.log('📝 CSV files not found - postcode seeding skipped');
+      console.log('💡 Manual postcode import will be needed later');
+      return;
+    }
 
     // Seed states first (required for foreign key references)
     await seedStates(states);
