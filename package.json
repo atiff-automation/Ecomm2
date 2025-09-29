@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "npm run db:deploy:production && node .next/standalone/server.js",
+    "start": "npm run db:deploy:production && node scripts/start-server.js",
     "start:production": "next start",
     "db:deploy:production": "npx prisma migrate deploy && npm run db:seed:production",
     "db:seed:production": "npm run db:seed:essential && npm run db:seed:postcodes:production",
