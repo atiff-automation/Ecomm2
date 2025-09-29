@@ -13,7 +13,6 @@
     "db:seed:essential": "NODE_ENV=production npx tsx prisma/seed.ts",
     "db:seed:postcodes:production": "NODE_ENV=production npx tsx prisma/seed-malaysian-postcodes.ts",
     "db:seed:shipping:production": "NODE_ENV=production npx tsx prisma/seed-shipping-zones.ts",
-    "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "lint:fix": "next lint --fix",
