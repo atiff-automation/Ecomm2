@@ -16,7 +16,8 @@ const nextConfig = {
   
   // Enable instrumentation for server-side initialization
   experimental: {
-    instrumentationHook: true,
+    // Temporarily disable instrumentationHook for Railway deployment stability
+    instrumentationHook: false,
     // Enable server components for better performance
     serverComponentsExternalPackages: [
       'ioredis', 
