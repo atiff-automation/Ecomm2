@@ -18,6 +18,27 @@ console.log(`NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
 console.log(`PORT: ${process.env.PORT || 'undefined'}`);
 console.log(`DATABASE_URL: ${process.env.DATABASE_URL ? '[CONFIGURED]' : 'undefined'}`);
 console.log(`REDIS_URL: ${process.env.REDIS_URL ? '[CONFIGURED]' : 'undefined'}`);
+
+// Enhanced DATABASE_URL diagnostics
+if (!process.env.DATABASE_URL) {
+  console.log('🚨 DATABASE_URL DIAGNOSTICS:');
+  console.log('- DATABASE_URL is not set in environment');
+  console.log('- This might be a Railway variable resolution issue');
+  console.log('- All environment variables:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('POSTGRES')));
+
+  // Check if we can find any postgres-related variables
+  const postgresVars = Object.keys(process.env).filter(k =>
+    k.toLowerCase().includes('postgres') ||
+    k.toLowerCase().includes('database') ||
+    k.toLowerCase().includes('pg')
+  );
+
+  if (postgresVars.length > 0) {
+    console.log('- Found postgres-related vars:', postgresVars);
+  }
+} else {
+  console.log('✅ DATABASE_URL is properly configured');
+}
 console.log();
 
 // Set required environment variables
@@ -86,9 +107,16 @@ async function runBackgroundCommand(command, args, description) {
 
 async function startApplication() {
   try {
-    // Step 1: Only run database migration (fast operation)
+    // Step 1: Only run database migration (fast operation) - but check DATABASE_URL first
     console.log('📦 Step 1: Database migration (fast)');
-    await runCommand('npx', ['prisma', 'migrate', 'deploy'], 'Database migration');
+
+    if (!process.env.DATABASE_URL) {
+      console.log('⚠️ Skipping database migration - DATABASE_URL not available');
+      console.log('💡 This might be a Railway variable resolution timing issue');
+      console.log('🔄 The app will start anyway and may retry later');
+    } else {
+      await runCommand('npx', ['prisma', 'migrate', 'deploy'], 'Database migration');
+    }
     console.log();
 
     // Step 2: Start the server FIRST (for health checks)
@@ -117,14 +145,18 @@ async function startApplication() {
       process.exit(code);
     });
 
-    // Step 3: Run seeding in background after server starts
-    console.log('🌱 Step 3: Starting database seeding in background');
-    setTimeout(() => {
-      console.log('⏰ Starting delayed background seeding...');
-      
-      // Run essential seeding (admin users) only
-      runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
-    }, 5000); // Wait 5 seconds for server to fully start
+    // Step 3: Run seeding in background after server starts (only if DATABASE_URL is available)
+    if (process.env.DATABASE_URL) {
+      console.log('🌱 Step 3: Starting database seeding in background');
+      setTimeout(() => {
+        console.log('⏰ Starting delayed background seeding...');
+
+        // Run essential seeding (admin users) only
+        runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
+      }, 5000); // Wait 5 seconds for server to fully start
+    } else {
+      console.log('⏭️ Step 3: Skipping database seeding - DATABASE_URL not available');
+    }
 
     // Handle graceful shutdown
     process.on('SIGTERM', () => {
