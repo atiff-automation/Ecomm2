@@ -122,13 +122,8 @@ async function startApplication() {
     setTimeout(() => {
       console.log('⏰ Starting delayed background seeding...');
       
-      // Run essential seeding (admin users) first
-      runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding')
-        .then(() => {
-          // Then run postcode seeding (can take time)
-          console.log('📮 Starting postcode seeding in background...');
-          runBackgroundCommand('npm', ['run', 'db:seed:postcodes:production'], 'Postcode seeding');
-        });
+      // Run essential seeding (admin users) only
+      runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
     }, 5000); // Wait 5 seconds for server to fully start
 
     // Handle graceful shutdown
