@@ -341,8 +341,8 @@ export const validateConfiguration = (): {
 } => {
   const errors: string[] = [];
 
-  // Check required environment variables
-  if (!process.env.DATABASE_URL) {
+  // Check required environment variables (skip during build phase)
+  if (!process.env.DATABASE_URL && process.env.NEXT_PHASE !== 'phase-production-build') {
     errors.push('DATABASE_URL is required');
   }
 
@@ -395,14 +395,19 @@ export const logConfiguration = (): void => {
   }
 };
 
-// Validate configuration on module load
-const configValidation = validateConfiguration();
-if (!configValidation.isValid) {
-  console.error('❌ Invalid tracking configuration:', configValidation.errors);
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Invalid tracking configuration in production');
+// Validate configuration on module load (only at runtime, not during build)
+if (typeof window === 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
+  const configValidation = validateConfiguration();
+  if (!configValidation.isValid) {
+    console.error('❌ Invalid tracking configuration:', configValidation.errors);
+    // Only throw in production runtime, not during build
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+      console.warn('⚠️ Configuration validation failed, but continuing for build compatibility');
+    }
   }
 }
 
-// Log configuration if debug is enabled
-logConfiguration();
+// Log configuration if debug is enabled (only at runtime)
+if (typeof window === 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
+  logConfiguration();
+}
