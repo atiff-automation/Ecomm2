@@ -324,12 +324,13 @@ async function seedAddresses() {
 
 async function main() {
   console.log('🚀 Starting database seeding...');
-  
+
   await seedUsers();
   await seedCategories();
-  await seedProducts();
+  // Skip product seeding for Railway deployment
+  // await seedProducts();
   await seedAddresses();
-  
+
   console.log('🎉 Database seeding completed!');
 }
 
