@@ -42,8 +42,7 @@
     "optimize:images": "npx next-optimized-images",
     "check:deps": "npx depcheck",
     "check:unused": "npx unimported",
-    "stats": "npm run build -- --profile --json > bundle-stats.json",
-
+    "stats": "npm run build -- --profile --json > bundle-stats.json"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
