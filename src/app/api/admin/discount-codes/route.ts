@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Discount Codes API - JRM E-commerce Platform
  * API for managing all discount codes and coupons
  */

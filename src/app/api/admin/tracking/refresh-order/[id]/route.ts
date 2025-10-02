@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Manual Tracking Refresh API
  * Allows admin to manually trigger tracking updates for specific orders
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md

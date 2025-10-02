@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Member Promotions API - JRM E-commerce Platform
  * Handles creation and management of member-exclusive promotions
  */

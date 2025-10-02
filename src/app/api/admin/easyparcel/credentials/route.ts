@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Credentials Management API
  * Secure endpoint for managing EasyParcel API credentials
  */

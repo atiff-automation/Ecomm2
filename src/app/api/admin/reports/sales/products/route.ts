@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Performance API Endpoint
  * GET /api/admin/reports/sales/products
  * Returns product performance analytics

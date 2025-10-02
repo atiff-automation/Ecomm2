@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Airway Bill Download API - JRM E-commerce Platform
  * Secure endpoint for downloading airway bills by order ID
  * Features: Admin authentication, order validation, file streaming

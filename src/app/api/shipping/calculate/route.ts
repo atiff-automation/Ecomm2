@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipping Calculation API
  * Enhanced shipping rates calculation with real-time EasyParcel Individual API v1.4.0
  * Reference: Official Malaysia_Individual_1.4.0.0.pdf documentation

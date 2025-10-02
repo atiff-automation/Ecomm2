@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Bulk Refresh API
  * Allows admin to trigger bulk tracking updates
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md

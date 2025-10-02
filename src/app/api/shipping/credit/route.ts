@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Credit Balance Check API
  * Test endpoint for checking EasyParcel demo account credit balance
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping System Configuration API
  * Manages system-level shipping configuration and credentials
  */

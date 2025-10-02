@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Wishlist API - Malaysian E-commerce Platform
  * Handles user wishlist operations with membership integration
  */

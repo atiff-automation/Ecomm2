@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Performance Benchmark API
  * Performance testing and benchmarking for EasyParcel integration
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.2

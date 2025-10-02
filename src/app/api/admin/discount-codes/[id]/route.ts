@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Discount Code API - JRM E-commerce Platform
  * API for managing individual discount codes (view, update, delete)
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Current Branding API - Serves current logo/favicon information from database
  */
 

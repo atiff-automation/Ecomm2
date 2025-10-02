@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipping Mode Configuration API
  * Toggle between EasyParcel API mode and CSV export mode
  */

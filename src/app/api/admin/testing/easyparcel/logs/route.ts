@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Testing Logs API
  * Real-time test execution logs and historical results
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.2

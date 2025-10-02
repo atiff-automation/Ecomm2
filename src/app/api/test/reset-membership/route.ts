@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * TEST ONLY - Reset Membership Status API
  * Allows resetting membership status for testing purposes
  * Remove this in production

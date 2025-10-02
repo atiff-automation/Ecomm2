@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel CSV Export API
  * Export orders in EasyParcel bulk upload CSV format
  * Fallback solution when EasyParcel API is unavailable

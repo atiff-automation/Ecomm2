@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Referrals API Route - Malaysian E-commerce Platform
  * Admin management of referral system
  */

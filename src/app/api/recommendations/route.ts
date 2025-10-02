@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Recommendations API - Malaysian E-commerce Platform
  * Provides personalized product recommendations based on user behavior
  */

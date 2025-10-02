@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Simplified Admin Telegram Configuration API - Malaysian E-commerce Platform
  * CENTRALIZED admin telegram configuration management
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH | CENTRALIZED

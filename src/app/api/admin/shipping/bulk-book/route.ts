@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping - Bulk Shipment Booking API
  * Books multiple shipments with EasyParcel in batch
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 5.3

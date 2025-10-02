@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Development User Creation API - JRM E-commerce Platform
  * DEVELOPMENT ONLY - Creates users with specified roles
  * This endpoint should be removed in production

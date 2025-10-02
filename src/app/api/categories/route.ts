@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Categories API Routes - Malaysian E-commerce Platform
  * Handles category listing and management operations with hierarchy support
  */

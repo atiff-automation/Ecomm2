@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Data Cleanup API
  * Manual and preview cleanup operations
  */

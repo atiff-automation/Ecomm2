@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Bot Icon Upload API - JRM E-commerce Platform
  * Handles secure bot icon uploads for chat configuration
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Category by ID API Routes - Malaysian E-commerce Platform
  * Handles individual category operations (GET, PUT, DELETE)
  */

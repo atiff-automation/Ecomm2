@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Customer Order Tracking API
  * Provides secure tracking access for logged-in customers
  * Based on CUSTOMER_TRACKING_IMPLEMENTATION_PLAN.md

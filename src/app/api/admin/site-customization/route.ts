@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Unified Site Customization API - Malaysian E-commerce Platform
  * Single endpoint for all site customization operations (hero + branding)
  * Following CLAUDE.md principles: No hardcoding, DRY, centralized approach

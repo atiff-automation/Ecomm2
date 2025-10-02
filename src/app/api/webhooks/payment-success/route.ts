@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Payment Success Webhook - Malaysian E-commerce Platform
  * Handles payment gateway webhooks for successful payments
  * Manages order status updates and membership activation

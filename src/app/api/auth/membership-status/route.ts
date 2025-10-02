@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Membership Status API - Get Fresh Membership Status
  * Returns current membership status from database (not session)
  */

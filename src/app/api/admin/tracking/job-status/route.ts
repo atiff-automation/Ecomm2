@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Job Status API
  * Provides job queue monitoring and statistics
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md

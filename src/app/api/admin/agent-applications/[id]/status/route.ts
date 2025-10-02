@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Agent Application Status Update API Route
  * Handle status updates for agent applications
  * Following CLAUDE.md principles: Systematic implementation, audit logging

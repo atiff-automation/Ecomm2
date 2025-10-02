@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Payment Test Simulator - Development Only
  * Simulates payment success/failure for testing membership flow
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Address Book Management API
  * Handles CRUD operations for user addresses
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Image Upload API - JRM E-commerce Platform
  * Handles secure image uploads for products
  */

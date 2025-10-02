@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Courier Assignment API
  * Assigns main and alternative couriers to orders
  */

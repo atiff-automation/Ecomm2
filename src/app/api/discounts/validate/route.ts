@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Discount Code Validation API
  * Validates discount codes during checkout
  */

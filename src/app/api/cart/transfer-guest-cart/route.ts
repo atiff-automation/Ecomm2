@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Transfer Guest Cart API - Malaysian E-commerce Platform
  * Transfers guest cart items to authenticated user's cart
  */

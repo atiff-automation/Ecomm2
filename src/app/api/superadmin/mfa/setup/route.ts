@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * SuperAdmin MFA Setup API
  * Allows SuperAdmin users to setup multi-factor authentication
  */

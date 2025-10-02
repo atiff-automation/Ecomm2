@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Public Receipt Download API - Malaysian E-commerce Platform
  * Allows receipt download by order number for thank-you pages
  * Public endpoint with enhanced security measures (similar to order lookup)

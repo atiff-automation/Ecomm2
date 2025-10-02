@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Similar Products API
  * Returns similar products for comparison suggestions
  */

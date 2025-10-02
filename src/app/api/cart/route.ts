@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shopping Cart API - Malaysian E-commerce Platform
  * Handles cart operations with membership eligibility calculation
  * Supports both authenticated users and guest checkout

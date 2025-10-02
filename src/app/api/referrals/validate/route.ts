@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Referral Validation API Route - Malaysian E-commerce Platform
  * Public endpoint to validate referral codes
  */

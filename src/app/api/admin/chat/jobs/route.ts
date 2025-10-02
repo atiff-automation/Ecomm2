@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Data Management Jobs API
  * Control and monitor background jobs
  */

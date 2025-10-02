@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin API Usage Stats API
  * Provides EasyParcel API usage monitoring and statistics
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md

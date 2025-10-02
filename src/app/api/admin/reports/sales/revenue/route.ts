@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Revenue Analytics API Endpoint
  * GET /api/admin/reports/sales/revenue
  * Returns detailed revenue analytics with trends

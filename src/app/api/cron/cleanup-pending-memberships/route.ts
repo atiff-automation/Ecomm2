@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Cron Job: Cleanup Expired Pending Memberships
  * This endpoint should be called periodically to clean up expired pending memberships
  * Can be triggered by external cron services like GitHub Actions, Vercel Cron, or server cron

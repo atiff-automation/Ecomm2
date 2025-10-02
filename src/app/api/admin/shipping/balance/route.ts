@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Credit Balance API
  * Provides account balance with smart caching
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Payment Statistics API
  * Provides centralized payment metrics and analytics
  */

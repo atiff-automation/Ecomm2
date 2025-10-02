@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Profile API - Malaysian E-commerce Platform
  * Handles member profile retrieval and updates
  */

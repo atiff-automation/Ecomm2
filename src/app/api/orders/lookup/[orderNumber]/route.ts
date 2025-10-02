@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Secure Order Lookup API - Malaysian E-commerce Platform
  * Allows order details lookup by order number for thank-you pages
  * Public endpoint with enhanced security measures

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipping Label Generation API
  * Downloads and serves shipping labels from EasyParcel
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 4

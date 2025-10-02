@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Discount Codes Management API
  * Create, read, update, delete discount codes
  */

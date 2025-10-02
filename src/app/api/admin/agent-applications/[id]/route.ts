@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Individual Agent Application API Routes
  * Handle individual application operations for admins
  * Following CLAUDE.md principles: Systematic implementation, proper security

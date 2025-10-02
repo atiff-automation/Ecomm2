@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Media Upload API - Malaysian E-commerce Platform
  * Handles image and video uploads for hero section backgrounds
  */

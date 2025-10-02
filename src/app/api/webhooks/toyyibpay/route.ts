@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * toyyibPay Payment Webhook Handler
  * Processes payment status updates from toyyibPay
  * Following the same pattern as the Billplz webhook handler

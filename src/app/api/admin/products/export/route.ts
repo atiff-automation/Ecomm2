@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Export API Route - Malaysian E-commerce Platform
  * Exports products in CSV format for fulfillment and analysis
  */

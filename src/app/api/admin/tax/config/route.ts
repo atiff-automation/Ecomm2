@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Tax Configuration API
  * Enhanced Malaysian tax settings with EasyParcel integration
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.1

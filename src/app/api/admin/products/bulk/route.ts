@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Bulk Products API - JRM E-commerce Platform
  * Handles bulk operations on products following CLAUDE.md principles
  */

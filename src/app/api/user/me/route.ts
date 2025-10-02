@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * User Profile API - Get current user data
  * Returns fresh user data from database
  */

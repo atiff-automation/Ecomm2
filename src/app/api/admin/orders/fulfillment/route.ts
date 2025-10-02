@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Order Fulfillment API
  * Manages bulk order processing and fulfillment workflow
  */

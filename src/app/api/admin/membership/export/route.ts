@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Membership Export API - Malaysian E-commerce Platform
  * Exports comprehensive membership analytics data as CSV
  */

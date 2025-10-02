@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Credentials Clear API
  * Allows administrators to clear stored EasyParcel API credentials
  */

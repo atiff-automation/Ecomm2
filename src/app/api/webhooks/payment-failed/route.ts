@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * TEST Payment Failed Webhook - Malaysian E-commerce Platform
  * Simulates payment gateway webhook for failed payments
  */

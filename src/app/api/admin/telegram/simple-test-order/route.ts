@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Simplified Test Order Notification API - Malaysian E-commerce Platform
  * CENTRALIZED test functionality using simplified service
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH

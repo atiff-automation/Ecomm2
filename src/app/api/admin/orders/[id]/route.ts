@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Order Details API - JRM E-commerce Platform
  * API for admin to view and manage individual orders
  */

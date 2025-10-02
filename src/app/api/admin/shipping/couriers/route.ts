@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Courier Preferences API
  * Manages courier preferences and fetches available couriers from EasyParcel API
  */

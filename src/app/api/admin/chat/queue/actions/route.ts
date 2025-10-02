@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/db/prisma';
 import { webhookService } from '@/lib/chat/webhook-service';
 

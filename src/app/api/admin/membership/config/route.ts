@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Membership Configuration API - Malaysian E-commerce Platform
  * Handles admin membership configuration management
  */

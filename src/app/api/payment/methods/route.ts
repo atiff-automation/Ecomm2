@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Payment Methods API
  * Returns available payment methods for customer selection
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Order Export API - Malaysian E-commerce Platform
  * Export orders for fulfillment and accounting purposes
  */

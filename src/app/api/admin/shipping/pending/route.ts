@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping - Pending Shipments API
  * Returns pending shipments for fulfillment dashboard
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 5.3

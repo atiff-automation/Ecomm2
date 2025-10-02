@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Stats API - Malaysian E-commerce Platform
  * Provides member statistics including savings, orders, and analytics
  */

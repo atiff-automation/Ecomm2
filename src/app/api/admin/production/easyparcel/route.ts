@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin EasyParcel Production Management API
  * Handles production deployment, credential migration, and readiness checks
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.3

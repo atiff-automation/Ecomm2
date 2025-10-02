@@ -1,4 +1,7 @@
 import { NextRequest } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { createSuccessResponse } from '@/lib/chat/errors';
 
 /**

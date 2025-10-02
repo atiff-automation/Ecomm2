@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin EasyParcel Monitoring API
  * Real-time monitoring, alerts, and performance analytics
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 7.2

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Simplified Telegram Health Status API - Malaysian E-commerce Platform
  * CENTRALIZED health status for admin telegram configuration
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH

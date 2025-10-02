@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Dynamic Sitemap Generation - JRM E-commerce Platform
  * Generates XML sitemap with all public pages
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Payment Gateway Configuration API
  * Provides centralized payment gateway management
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Receipt Generation API
  * Generates PDF receipts for orders with Malaysian tax compliance
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Sales Export API Endpoint
  * GET /api/admin/reports/sales/export
  * Exports sales data in CSV or PDF format

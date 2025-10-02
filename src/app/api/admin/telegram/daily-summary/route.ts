@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Daily Summary Test API - Malaysian E-commerce Platform
  * CENTRALIZED admin telegram daily summary testing
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH | CENTRALIZED

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Membership Stats API - Malaysian E-commerce Platform
  * Provides membership analytics and statistics for admin dashboard
  */

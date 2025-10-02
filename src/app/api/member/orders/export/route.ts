@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Orders Export API - Malaysian E-commerce Platform
  * Provides CSV export of member order history
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * User Addresses API - Malaysian E-commerce Platform
  * Manage user's address book with deduplication and default setting
  */

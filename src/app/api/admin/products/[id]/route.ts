@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Single Product API - JRM E-commerce Platform
  * Handles fetching, updating, and deleting individual products
  */

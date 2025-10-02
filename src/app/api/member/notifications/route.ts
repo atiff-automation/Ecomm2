@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * User Notification Preferences API
  * Manages customer notification settings and preferences
  * CENTRALIZED SECURITY: Rate limiting and validation applied systematically

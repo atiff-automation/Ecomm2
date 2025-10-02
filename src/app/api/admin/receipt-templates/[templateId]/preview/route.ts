@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Receipt Template Preview API
  * Generate preview HTML for a specific template
  */

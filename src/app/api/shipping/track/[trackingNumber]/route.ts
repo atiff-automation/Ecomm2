@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipment Tracking API
  * Provides real-time tracking information from EasyParcel
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 4

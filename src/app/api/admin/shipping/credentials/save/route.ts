@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Credentials Save API
  * Handles storing EasyParcel API credentials with endpoint URL
  */

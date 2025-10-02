@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Metrics API - JRM E-commerce Platform
  * Provides database-wide product metrics for admin dashboard
  */

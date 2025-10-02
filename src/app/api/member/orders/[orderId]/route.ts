@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Order Detail API - Malaysian E-commerce Platform
  * Get specific order details for authenticated members
  */

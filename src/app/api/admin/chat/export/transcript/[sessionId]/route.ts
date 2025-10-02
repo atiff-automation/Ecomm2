@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Session Transcript Export API
  * Export single session with complete chat transcript
  * Following @CLAUDE.md approach with systematic validation

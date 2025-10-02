@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping System Health Check API
  * Monitors system health for database, EasyParcel API, and authentication
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Tracking Webhook Handler
  * Handles real-time tracking updates from EasyParcel
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 2.6 - Webhook Setup

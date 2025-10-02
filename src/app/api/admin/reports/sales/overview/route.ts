@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Sales Overview API Endpoint
  * GET /api/admin/reports/sales/overview
  * Returns comprehensive sales overview data

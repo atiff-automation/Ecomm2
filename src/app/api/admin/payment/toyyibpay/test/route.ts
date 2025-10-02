@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * toyyibPay Connection Test API
  * Admin endpoint for testing toyyibPay API connectivity and credentials
  */

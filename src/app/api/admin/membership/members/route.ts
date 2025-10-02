@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Member Management API - Malaysian E-commerce Platform
  * Provides member details and management for admin dashboard
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Address Management API
  * Handles update and delete operations for specific addresses
  */

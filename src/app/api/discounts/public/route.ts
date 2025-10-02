@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Public Discount Codes API
  * Returns active public discount codes for display
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * User Default Address API - Malaysian E-commerce Platform
  * Get user's default address for checkout auto-fill
  */

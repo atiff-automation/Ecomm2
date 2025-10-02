@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Notification Test API
  * Test notification system functionality
  * CENTRALIZED SECURITY: Rate limiting for Telegram test operations

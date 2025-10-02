@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Clear NextAuth Session API Route
  * Systematically clears stale JWT session cookies to force re-authentication
  */

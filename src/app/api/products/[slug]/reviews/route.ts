@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Reviews API Routes - Malaysian E-commerce Platform
  * Handles product review submission and retrieval
  */

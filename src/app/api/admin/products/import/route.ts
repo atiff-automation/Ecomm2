@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Import API Route - Malaysian E-commerce Platform
  * Handles bulk product import from CSV/Excel files
  */

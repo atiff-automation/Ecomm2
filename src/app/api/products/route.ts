@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Products API Routes - Malaysian E-commerce Platform
  * Handles product listing, creation, and management operations
  */

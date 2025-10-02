@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin EasyParcel Testing API
  * Comprehensive testing endpoints for sandbox environment
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.2

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Pending Memberships API - JRM E-commerce Platform
  * Get all pending membership registrations waiting for payment
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipment Booking API
  * Books shipments using admin-selected main and alternative couriers
  */

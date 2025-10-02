@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Product API Routes - Malaysian E-commerce Platform
  * Handles specific product operations by slug
  */

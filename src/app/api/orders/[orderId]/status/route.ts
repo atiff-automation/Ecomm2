@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Order Status Update API - Malaysian E-commerce Platform
  * Generic endpoint to update order status - works with ANY payment method
  * Can be called by webhooks, admin actions, or manual processes

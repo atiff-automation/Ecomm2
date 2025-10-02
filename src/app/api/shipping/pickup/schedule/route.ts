@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Pickup Scheduling API
  * Schedules package pickup with EasyParcel
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 4

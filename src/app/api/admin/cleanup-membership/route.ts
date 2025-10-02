@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Cleanup Endpoint - Fix Membership Inconsistencies
  * Remove orphaned pending membership records for users who are already approved members
  */

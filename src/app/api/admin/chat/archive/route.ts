@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Archive API
  * Handles archived session data retrieval and management
  */

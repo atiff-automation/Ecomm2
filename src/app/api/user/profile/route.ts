@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { requireAuth } from '@/lib/auth/protect';
 import { prisma } from '@/lib/db/prisma';
 import { sanitizeInput } from '@/lib/auth/utils';

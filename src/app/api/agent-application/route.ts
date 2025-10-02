@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Agent Application Public API Routes
  * Handle public form submissions and status checks
  * Following CLAUDE.md principles: Systematic implementation, proper error handling

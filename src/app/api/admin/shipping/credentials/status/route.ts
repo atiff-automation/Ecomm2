@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Credentials Status API
  * Production-ready credential status endpoint following @CLAUDE.md principles
  */

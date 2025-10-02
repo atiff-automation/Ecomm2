@@ -1,4 +1,7 @@
 import { NextRequest } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/db/prisma';
 import { CreateSessionSchema, CHAT_CONFIG } from '@/lib/chat/validation';
 import { handleChatError, createSuccessResponse, createChatError } from '@/lib/chat/errors';

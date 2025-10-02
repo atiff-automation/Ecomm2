@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Payment Bill Creation API
  * Creates payment bills for existing orders using the multi-gateway payment router system
  */

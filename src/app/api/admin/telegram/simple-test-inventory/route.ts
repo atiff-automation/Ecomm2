@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Simplified Test Inventory Notification API - Malaysian E-commerce Platform
  * CENTRALIZED inventory test functionality using simplified service
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH

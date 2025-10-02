@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Orders API - Malaysian E-commerce Platform
  * Provides member order history with savings tracking
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Membership Registration API - Malaysian E-commerce Platform
  * Handle membership activation during checkout process
  */

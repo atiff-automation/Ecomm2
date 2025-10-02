@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * TEST ONLY - Payment Success Simulation API
  * Simulates successful payment and membership activation
  * Remove this in production

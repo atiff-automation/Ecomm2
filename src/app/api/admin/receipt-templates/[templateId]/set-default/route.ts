@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Set Default Template API
  * Set a specific template as the default
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Error Monitoring API - Malaysian E-commerce Platform
  * Endpoint for receiving and processing error reports
  */

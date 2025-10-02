@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Archive Stats API
  * Provides statistics about archived chat sessions
  */

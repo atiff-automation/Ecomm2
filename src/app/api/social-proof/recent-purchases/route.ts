@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Recent Purchases Social Proof API
  * Returns recent purchases for social proof display
  */

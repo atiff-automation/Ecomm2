@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Credentials Validation API
  * Tests EasyParcel API credentials without saving to database
  */

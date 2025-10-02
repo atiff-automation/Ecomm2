@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Backup Management API
  * CRUD operations for backup files
  */

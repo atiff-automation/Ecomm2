@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipping Rates API
  * Calculate shipping rates for orders using EasyParcel
  */

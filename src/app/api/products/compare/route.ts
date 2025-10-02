@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Product Comparison API
  * Handles product comparison functionality
  */

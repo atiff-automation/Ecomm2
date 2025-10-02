@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Dynamic Favicon API - Malaysian E-commerce Platform
  * Serves custom favicon from site customization or default
  */

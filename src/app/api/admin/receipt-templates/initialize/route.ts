@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Initialize Default Templates API
  * Create default receipt templates in the system
  */

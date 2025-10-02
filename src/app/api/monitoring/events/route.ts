@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Event Monitoring API - Malaysian E-commerce Platform
  * Endpoint for receiving and processing user events and analytics
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipment Booking API
  * Creates EasyParcel shipments after successful payment
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 4

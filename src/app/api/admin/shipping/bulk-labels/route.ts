@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping - Bulk Label Generation API
  * Generates shipping labels in bulk and creates ZIP download
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 5.3

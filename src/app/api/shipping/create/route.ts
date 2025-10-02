@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Shipment Creation API
  * Create shipments with EasyParcel for order fulfillment
  */

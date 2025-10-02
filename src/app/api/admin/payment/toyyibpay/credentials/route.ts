@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * toyyibPay Credentials Management API
  * Admin endpoints for managing toyyibPay API credentials
  * Following the same pattern as EasyParcel credentials API

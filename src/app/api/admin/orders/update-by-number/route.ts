@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Update Order Status by Order Number API
  * Used for payment return URL processing when webhooks can't reach localhost
  */

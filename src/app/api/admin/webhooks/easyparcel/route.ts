@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Webhook Management API
  * Admin interface for webhook configuration and monitoring
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 2.6

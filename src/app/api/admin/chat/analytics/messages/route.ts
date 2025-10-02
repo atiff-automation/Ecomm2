@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Messages Analytics API Endpoint
  * Provides message count data aggregated by time periods for chart visualization
  * Following @CLAUDE.md DRY principles with centralized architecture

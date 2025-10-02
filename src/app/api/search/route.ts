@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Advanced Search API - Malaysian E-commerce Platform
  * Full-text search with intelligent suggestions and analytics
  */

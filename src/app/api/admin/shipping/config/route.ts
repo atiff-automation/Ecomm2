@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Configuration API
  * Manages business shipping profile and settings
  */

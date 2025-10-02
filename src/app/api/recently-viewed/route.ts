@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Recently Viewed Products API - Malaysian E-commerce Platform
  * Tracks and retrieves user's recently viewed products for personalization
  */

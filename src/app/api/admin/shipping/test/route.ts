@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Test API
  * Tests shipping configuration and courier selection
  */

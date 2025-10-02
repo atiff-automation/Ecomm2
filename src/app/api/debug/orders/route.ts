@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Debug Orders API - Check what orders exist in database
  */
 

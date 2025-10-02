@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Guest Order Tracking API (Database-First Architecture)
  * Provides secure tracking lookup using cached tracking data
  * Based on TRACKING_ARCHITECTURE_REFACTOR_PLAN.md

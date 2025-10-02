@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Dashboard Analytics API - Malaysian E-commerce Platform
  * Enhanced analytics data for interactive charts and visualizations
  */

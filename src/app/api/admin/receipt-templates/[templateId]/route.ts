@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Receipt Template Management API
  * Admin endpoints for specific template operations
  */

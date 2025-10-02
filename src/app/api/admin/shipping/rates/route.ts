@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping Rates API
  * Get courier rates for admin selection interface
  */

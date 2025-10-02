@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Receipt Template Logo Upload API - Malaysian E-commerce Platform
  * Handles logo uploads specifically for receipt templates
  */

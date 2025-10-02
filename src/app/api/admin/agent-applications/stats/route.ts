@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Agent Application Statistics API Route
  * Provide dashboard statistics for admin
  * Following CLAUDE.md principles: Centralized data aggregation

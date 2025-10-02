@@ -50,10 +50,5 @@ export const config = {
     // Match only critical admin routes (narrow scope)
     '/admin/:path*',
     '/api/admin/:path*',
-    // Explicitly exclude health check and other public endpoints
-    '!(\/api\/health)',
-    '!(_next/static)',
-    '!(_next/image)',
-    '!(favicon.ico)',
   ],
 };

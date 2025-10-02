@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Purchase Count API for Social Proof
  * Returns recent purchase counts for products
  */

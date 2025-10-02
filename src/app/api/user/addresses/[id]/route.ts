@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Individual Address Management API - Malaysian E-commerce Platform
  * Update, delete, and set default addresses
  */

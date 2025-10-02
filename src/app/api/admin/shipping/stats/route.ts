@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Shipping - Statistics API
  * Returns shipping performance statistics for admin dashboard
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 5.3

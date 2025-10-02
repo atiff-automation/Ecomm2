@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Member Referral Rewards API Route - Malaysian E-commerce Platform
  * Handles referral rewards management
  */

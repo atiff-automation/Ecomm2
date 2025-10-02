@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin Business Shipping Configuration API
  * Manages business profile and courier preferences
  * Reference: Malaysia_Individual_1.4.0.0.pdf Section 2 - Account Setup

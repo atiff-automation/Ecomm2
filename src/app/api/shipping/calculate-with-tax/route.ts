@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Tax-Inclusive Shipping Calculation API
  * Returns shipping rates with Malaysian tax calculations
  * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 6.1

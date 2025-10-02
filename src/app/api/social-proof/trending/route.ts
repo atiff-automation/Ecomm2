@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Trending Products Social Proof API
  * Returns trending products based on recent purchases
  */

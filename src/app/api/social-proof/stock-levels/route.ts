@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Stock Levels Social Proof API
  * Returns stock levels and social proof messages
  */

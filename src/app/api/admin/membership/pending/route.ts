@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Admin API - Pending Memberships Management
  * View and manage pending membership registrations
  */

@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Customer Insights API Endpoint
  * GET /api/admin/reports/sales/customers
  * Returns customer analytics and insights

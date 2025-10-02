@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Chat Date Range Export API
  * Enhanced export endpoint for date-based exports
  */

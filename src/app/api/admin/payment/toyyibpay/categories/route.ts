@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * toyyibPay Category Management API
  * Admin endpoints for managing toyyibPay categories
  */

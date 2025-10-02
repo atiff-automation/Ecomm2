@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * Tax Receipt Generation API
  * Generates official tax receipts for orders with Malaysian tax compliance
  */

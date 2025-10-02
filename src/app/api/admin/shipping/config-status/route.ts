@@ -1,4 +1,7 @@
 /**
+
+export const dynamic = 'force-dynamic';
+
  * EasyParcel Configuration Status API
  * Returns detailed status about Business Profile shipping address configuration
  */
