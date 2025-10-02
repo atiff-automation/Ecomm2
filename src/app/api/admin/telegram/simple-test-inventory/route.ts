@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }

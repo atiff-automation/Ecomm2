@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -226,7 +226,7 @@ export async function PATCH(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -259,7 +259,7 @@ export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
