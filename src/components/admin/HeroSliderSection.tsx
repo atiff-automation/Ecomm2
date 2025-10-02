@@ -95,18 +95,32 @@ export function HeroSliderSection({
     setUploadProgress(0);
 
     try {
+      // Get CSRF token from cookie for NextAuth protection
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('__Host-next-auth.csrf-token=') || row.startsWith('next-auth.csrf-token='))
+        ?.split('=')[1]
+        ?.split('%')[0]; // Extract token before URL encoding
+
       const uploadPromises = files.map(async (file, index) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('usage', 'hero_background');
 
+        // Add CSRF token if available
+        if (csrfToken) {
+          formData.append('csrfToken', csrfToken);
+        }
+
         const response = await fetch('/api/admin/site-customization/media/upload', {
           method: 'POST',
           body: formData,
+          credentials: 'include', // Include cookies
         });
 
         if (!response.ok) {
-          throw new Error(`Upload failed for ${file.name}`);
+          const errorText = await response.text();
+          throw new Error(`Upload failed for ${file.name}: ${errorText}`);
         }
 
         const result = await response.json();
