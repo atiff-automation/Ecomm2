@@ -78,7 +78,8 @@ export class ToyyibPayService {
   private categoryCode: string | null = null;
 
   private constructor() {
-    this.initializeService();
+    // DO NOT initialize service here - it will be done lazily on first use
+    // This prevents database queries during Next.js build phase
   }
 
   public static getInstance(): ToyyibPayService {

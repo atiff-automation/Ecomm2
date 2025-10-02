@@ -191,8 +191,8 @@ export class EasyParcelService {
     // Initialize with default sandbox URL from config
     this.baseURL = easyParcelConfig.urls.sandbox; // Default to sandbox for safety
 
-    // Initialize with credentials (async initialization will be handled per request)
-    this.initializeCredentials();
+    // DO NOT initialize credentials here - it will be done lazily on first use
+    // This prevents database queries during Next.js build phase
   }
 
   /**

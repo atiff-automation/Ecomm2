@@ -55,9 +55,8 @@ export async function GET(request: NextRequest) {
     console.error('🚨 Sales overview API error:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('Date range:', { startDate: startDate.toISOString(), endDate: endDate.toISOString() });
     return NextResponse.json(
-      { 
+      {
         message: 'Failed to fetch sales overview',
         error: error instanceof Error ? error.message : 'Unknown error'
       },
