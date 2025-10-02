@@ -91,7 +91,6 @@ class RedisManager {
   }
 }
 
-// Export singleton instance
-// Use this throughout the application
-export const redis = RedisManager.getInstance();
+// Export RedisManager class for conditional usage
+// DO NOT export a pre-initialized instance to avoid build-time errors
 export { RedisManager };
