@@ -22,6 +22,12 @@ class RateLimiter {
   }
 
   async check(limit: number, token: string): Promise<void> {
+    // TEMPORARY: Disable rate limiting in production until properly configured
+    // Railway deployment is triggering false positives
+    if (process.env.NODE_ENV === 'production') {
+      return; // Skip rate limiting in production
+    }
+
     const now = Date.now();
     const key = token;
 
@@ -38,11 +44,8 @@ class RateLimiter {
       current.lastReset = now;
     }
 
-    // TEMPORARY: Increase limits significantly in production to prevent blocking
-    const effectiveLimit = process.env.NODE_ENV === 'production' ? limit * 10 : limit;
-
     // Check if limit exceeded
-    if (current.count >= effectiveLimit) {
+    if (current.count >= limit) {
       throw new Error('Rate limit exceeded');
     }
 
