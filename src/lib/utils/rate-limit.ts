@@ -38,8 +38,11 @@ class RateLimiter {
       current.lastReset = now;
     }
 
+    // TEMPORARY: Increase limits significantly in production to prevent blocking
+    const effectiveLimit = process.env.NODE_ENV === 'production' ? limit * 10 : limit;
+
     // Check if limit exceeded
-    if (current.count >= limit) {
+    if (current.count >= effectiveLimit) {
       throw new Error('Rate limit exceeded');
     }
 
@@ -51,6 +54,11 @@ class RateLimiter {
     if (this.hits.size > this.config.uniqueTokenPerInterval) {
       this.cleanup(now);
     }
+  }
+
+  // Method to clear all rate limits (for debugging)
+  clear(): void {
+    this.hits.clear();
   }
 
   private cleanup(now: number): void {
