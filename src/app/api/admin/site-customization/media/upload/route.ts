@@ -85,8 +85,13 @@ export async function POST(request: NextRequest) {
     const uniqueId = uuidv4();
     const filename = `${uniqueId}${fileExtension}`;
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'hero');
+    // Create upload directory - use /tmp in production (Railway)
+    // Railway has ephemeral filesystem, so files go to /tmp
+    const isProduction = process.env.NODE_ENV === 'production';
+    const uploadDir = isProduction
+      ? path.join('/tmp', 'uploads', 'hero')
+      : path.join(process.cwd(), 'public', 'uploads', 'hero');
+
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true });
     }
@@ -112,13 +117,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create media upload record in database
+    // In production, files are served from /api/media/[filename]
+    const fileUrl = isProduction
+      ? `/api/media/${filename}`
+      : `/uploads/hero/${filename}`;
+
     const mediaUpload = await prisma.mediaUpload.create({
       data: {
         filename,
         originalName: file.name,
         mimeType: file.type,
         size: file.size,
-        url: `/uploads/hero/${filename}`,
+        url: fileUrl,
         mediaType,
         usage,
         uploadedBy: uploaderId,
