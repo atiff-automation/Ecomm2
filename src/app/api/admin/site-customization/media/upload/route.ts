@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -241,7 +241,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
