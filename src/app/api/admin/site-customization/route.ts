@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -132,7 +132,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
