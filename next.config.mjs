@@ -16,8 +16,8 @@ const nextConfig = {
   
   // Enable instrumentation for server-side initialization
   experimental: {
-    // Temporarily disable instrumentationHook for Railway deployment stability
-    instrumentationHook: false,
+    // Enable instrumentation for observability
+    instrumentationHook: true,
     // Enable server components for better performance
     serverComponentsExternalPackages: [
       'ioredis', 
@@ -43,8 +43,10 @@ const nextConfig = {
   
   // Bundle size optimization
   compiler: {
-    // Remove console.log in production
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Keep strategic logging (error, warn, info) for production debugging
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn', 'info'] }
+      : false,
     // Enable React optimizations
     reactRemoveProperties: process.env.NODE_ENV === 'production',
   },

@@ -1,37 +1,19 @@
 /**
- * Next.js Middleware - Production-Ready Session Validation
- * Automatically validates JWT sessions against database to prevent stale session issues
+ * Next.js Middleware - Optimized Session Validation
+ * Trust JWT validation - database validation handled by NextAuth JWT callback
+ * NO DATABASE QUERIES to prevent connection exhaustion
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { PrismaClient } from '@prisma/client';
-
-// Global Prisma instance with connection management
-let prisma: PrismaClient | null = null;
-
-function getPrismaClient() {
-  if (!prisma) {
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL || 'postgresql://localhost:5432/jrm_ecommerce_dev',
-        },
-      },
-    });
-  }
-  return prisma;
-}
 
 export async function middleware(request: NextRequest) {
-  // Only validate sessions for critical admin and API routes
+  // Only protect critical admin routes
   const { pathname } = request.nextUrl;
 
   const protectedPaths = [
     '/admin',
     '/api/admin',
-    '/api/site-customization',
-    '/api/upload'
   ];
 
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
@@ -41,71 +23,37 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Get JWT token
+    // Get and validate JWT token (NO DATABASE QUERY)
     const token = await getToken({
       req: request,
-      secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build',
+      secret: process.env.NEXTAUTH_SECRET,
     });
 
-    // Skip validation if no token (NextAuth will handle authentication)
-    if (!token?.sub) {
+    // If no token or token is invalid (empty object from NextAuth callback)
+    // NextAuth will handle authentication redirect
+    if (!token || !token.sub || !token.role) {
       return NextResponse.next();
     }
 
-    // Validate user exists in database
-    const client = getPrismaClient();
-    const user = await client.user.findUnique({
-      where: { id: token.sub },
-      select: { id: true, email: true },
-    });
-
-    // If user doesn't exist, clear stale session and redirect
-    if (!user) {
-      console.warn(`[MIDDLEWARE] Stale session detected for user ID: ${token.sub}`);
-
-      const response = NextResponse.redirect(
-        new URL('/auth/signin?error=stale-session', request.url)
-      );
-
-      // Clear all NextAuth cookies
-      const cookiesToClear = [
-        'next-auth.session-token',
-        '__Secure-next-auth.session-token',
-        'next-auth.csrf-token',
-        '__Host-next-auth.csrf-token',
-      ];
-
-      cookiesToClear.forEach(cookieName => {
-        response.cookies.delete(cookieName);
-        response.cookies.set(cookieName, '', {
-          maxAge: 0,
-          path: '/',
-          httpOnly: true
-        });
-      });
-
-      return response;
-    }
-
-    // Session is valid, proceed
+    // JWT is valid and user was validated in NextAuth JWT callback
+    // Trust the JWT - proceed with request
     return NextResponse.next();
 
   } catch (error) {
-    // Log error but don't break the request flow
-    console.error('[MIDDLEWARE] Session validation error:', error);
+    console.error('[MIDDLEWARE] Token validation error:', error);
     return NextResponse.next();
   }
 }
 
 export const config = {
   matcher: [
-    // Match all admin routes
+    // Match only critical admin routes (narrow scope)
     '/admin/:path*',
-    // Match critical API routes that require authentication
     '/api/admin/:path*',
-    '/api/site-customization/:path*',
-    '/api/upload/:path*',
-    // Exclude static files and internal Next.js routes
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    // Explicitly exclude health check and other public endpoints
+    '!(\/api\/health)',
+    '!(_next/static)',
+    '!(_next/image)',
+    '!(favicon.ico)',
   ],
 };

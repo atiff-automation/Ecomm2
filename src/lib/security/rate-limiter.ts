@@ -6,7 +6,7 @@
 
 import { NextRequest } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { redis } from '@/lib/cache/redis-config';
 
 // CENTRALIZED CONFIGURATION - Single source of truth
 const RATE_LIMIT_CONFIG = {
@@ -47,38 +47,21 @@ interface RateLimitOptions {
  * CENTRALIZED Rate Limiter Class - Single Source of Truth
  */
 export class RateLimiter {
-  private static redis: Redis | null = null;
   private static limiters: Map<string, Ratelimit> = new Map();
 
   /**
-   * Initialize Redis connection - SINGLE SOURCE OF TRUTH
-   */
-  private static getRedis(): Redis {
-    if (!this.redis) {
-      if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-        throw new Error('Redis configuration missing. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
-      }
-
-      this.redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      });
-    }
-    return this.redis;
-  }
-
-  /**
    * Get or create rate limiter for specific type - DRY PRINCIPLE
+   * Uses centralized Redis configuration
    */
   private static getRateLimiter(type: RateLimitType): Ratelimit {
     const key = `limiter_${type}`;
 
     if (!this.limiters.has(key)) {
       const config = RATE_LIMIT_CONFIG[type];
-      const redis = this.getRedis();
 
+      // Use centralized Redis instance
       const limiter = new Ratelimit({
-        redis,
+        redis, // From centralized redis-config
         limiter: Ratelimit.slidingWindow(config.MAX_REQUESTS, `${config.WINDOW}ms`),
         analytics: true,
         prefix: `ratelimit:${type.toLowerCase()}`,
