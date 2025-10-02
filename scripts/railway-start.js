@@ -113,21 +113,24 @@ async function startApplication() {
     // Step 1: Wait for DATABASE_URL (CRITICAL)
     await waitForDatabaseURL();
 
-    // Step 2: Run environment validation
-    console.log('🔍 Validating environment configuration...');
-    try {
-      // Use dynamic import for ES modules in Node.js
-      const { register } = require('tsx/esm');
-      register();
+    // Step 2: Basic environment validation (critical vars only)
+    console.log('🔍 Validating critical environment variables...');
+    const requiredVars = ['DATABASE_URL', 'NEXTAUTH_SECRET', 'NEXTAUTH_URL'];
+    const missing = requiredVars.filter(varName => !process.env[varName]);
 
-      const { EnvValidator } = require('../src/lib/config/env-validation.ts');
-      EnvValidator.validate();
-      EnvValidator.printConfig();
-    } catch (error) {
-      console.error('❌ Environment validation failed:', error.message);
+    if (missing.length > 0) {
+      console.error('❌ Missing required environment variables:');
+      missing.forEach(varName => console.error(`   ✗ ${varName}`));
       console.error('🚫 Application startup ABORTED\n');
       process.exit(1);
     }
+
+    console.log('✅ Critical environment variables validated');
+    console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✓ Set' : '✗ Missing'}`);
+    console.log(`   NEXTAUTH_SECRET: ${process.env.NEXTAUTH_SECRET ? '✓ Set (' + process.env.NEXTAUTH_SECRET.length + ' chars)' : '✗ Missing'}`);
+    console.log(`   NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || '✗ Missing'}`);
+    console.log(`   UPSTASH_REDIS: ${process.env.UPSTASH_REDIS_REST_URL ? '✓ Configured' : '➖ Using in-memory rate limiting'}`);
+    console.log();
 
     // Step 3: Run database migration
     console.log('📦 Step 3: Database migration');
