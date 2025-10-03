@@ -160,5 +160,8 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-// Apply rate limiting to the POST endpoint - disabled for testing
-export const POST = handlePOST; // Temporarily disable rate limiting for testing
+// Apply rate limiting to the POST endpoint
+// Allow disabling in development via environment variable for testing
+export const POST = process.env.DISABLE_RATE_LIMITING === 'true'
+  ? handlePOST
+  : withRateLimit(handlePOST, RateLimitPresets.CHAT_API);

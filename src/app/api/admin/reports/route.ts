@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminRole } from '@/lib/auth/authorization';
 
 export const dynamic = 'force-dynamic';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const period = parseInt(searchParams.get('period') || '30', 10);

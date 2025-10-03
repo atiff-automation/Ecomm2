@@ -1,51 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-// Rate limiting store (in-memory for development, use Redis in production)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-// Rate limiting configuration
-const RATE_LIMIT_CONFIG = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: process.env.NODE_ENV === 'development' ? 1000 : 100, // More generous in dev
-  apiMaxRequests: process.env.NODE_ENV === 'development' ? 500 : 50, // More generous in dev
-};
-
-/**
- * Rate limiting function
- */
-function checkRateLimit(
-  ip: string,
-  maxRequests: number,
-  windowMs: number
-): boolean {
-  const now = Date.now();
-  const key = `${ip}:${Math.floor(now / windowMs)}`;
-
-  const current = rateLimitStore.get(key) || {
-    count: 0,
-    resetTime: now + windowMs,
-  };
-
-  if (now > current.resetTime) {
-    // Reset the counter
-    current.count = 1;
-    current.resetTime = now + windowMs;
-  } else {
-    current.count++;
-  }
-
-  rateLimitStore.set(key, current);
-
-  // Clean up old entries
-  Array.from(rateLimitStore.entries()).forEach(([storeKey, value]) => {
-    if (now > value.resetTime) {
-      rateLimitStore.delete(storeKey);
-    }
-  });
-
-  return current.count <= maxRequests;
-}
+import { protectApiEndpoint, protectionConfigs } from '@/lib/middleware/api-protection';
 
 /**
  * Security headers
@@ -87,7 +42,7 @@ function setSecurityHeaders(response: NextResponse): void {
 }
 
 /**
- * CSRF Token generation and validation
+ * CSRF Token generation
  */
 function generateCSRFToken(): string {
   return (
@@ -97,8 +52,57 @@ function generateCSRFToken(): string {
   );
 }
 
+/**
+ * Determine API protection level based on pathname
+ */
+function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenticated' | 'admin' | 'sensitive' {
+  // Admin routes - highest protection
+  if (pathname.startsWith('/api/admin') || pathname.startsWith('/api/superadmin')) {
+    return 'admin';
+  }
+
+  // Sensitive operations - payment, webhooks, uploads
+  if (
+    pathname.startsWith('/api/payment') ||
+    pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/upload') ||
+    pathname.startsWith('/api/site-customization')
+  ) {
+    return 'sensitive';
+  }
+
+  // Authenticated user routes
+  if (
+    pathname.startsWith('/api/member') ||
+    pathname.startsWith('/api/user') ||
+    pathname.startsWith('/api/settings') ||
+    pathname.startsWith('/api/orders') ||
+    pathname.startsWith('/api/wishlist') ||
+    pathname.startsWith('/api/chat/send')
+  ) {
+    return 'authenticated';
+  }
+
+  // Cart operations - standard protection
+  if (pathname.startsWith('/api/cart')) {
+    return 'standard';
+  }
+
+  // Public routes - minimal protection (auth, products, health checks)
+  if (
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/products') ||
+    pathname.startsWith('/api/categories') ||
+    pathname.startsWith('/api/health')
+  ) {
+    return 'public';
+  }
+
+  // Default to standard protection for unknown routes
+  return 'standard';
+}
+
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
   const { pathname } = request.nextUrl;
 
   // Get client IP
@@ -107,103 +111,63 @@ export async function middleware(request: NextRequest) {
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     'unknown';
 
-  // Set security headers
+  // CRITICAL: Block all test and debug endpoints in production
+  if ((pathname.startsWith('/api/test') || pathname.startsWith('/api/debug')) &&
+      process.env.NODE_ENV === 'production') {
+    console.warn(`🚫 Blocked test endpoint access in production: ${pathname} from IP: ${ip}`);
+    return NextResponse.json(
+      { message: 'Not found' },
+      { status: 404 }
+    );
+  }
+
+  // Apply API protection middleware for all API routes
+  const isApiRoute = pathname.startsWith('/api');
+
+  if (isApiRoute) {
+    // Determine protection level based on route
+    const protectionLevel = getProtectionLevel(pathname);
+    const config = protectionConfigs[protectionLevel];
+
+    // Apply API protection
+    const protection = await protectApiEndpoint(request, config);
+
+    if (!protection.allowed) {
+      // Return the protection middleware's response
+      return protection.response!;
+    }
+  }
+
+  // Continue with response
+  const response = NextResponse.next();
+
+  // Set security headers for all responses
   setSecurityHeaders(response);
 
-  // Rate limiting (skip for auth routes in development)
-  const isApiRoute = pathname.startsWith('/api');
-  const isAuthRoute = pathname.startsWith('/api/auth');
-  const shouldSkipRateLimit =
-    process.env.NODE_ENV === 'development' && isAuthRoute;
-
-  if (!shouldSkipRateLimit) {
-    const maxRequests = isApiRoute
-      ? RATE_LIMIT_CONFIG.apiMaxRequests
-      : RATE_LIMIT_CONFIG.maxRequests;
-
-    if (!checkRateLimit(ip, maxRequests, RATE_LIMIT_CONFIG.windowMs)) {
-      return new NextResponse('Too Many Requests', {
-        status: 429,
-        headers: {
-          'Retry-After': Math.ceil(
-            RATE_LIMIT_CONFIG.windowMs / 1000
-          ).toString(),
-        },
-      });
-    }
-  }
-
-  // CSRF protection for API routes (except auth routes)
-  // Skip CSRF in development for easier testing
-  if (
-    process.env.NODE_ENV === 'production' &&
-    isApiRoute &&
-    !pathname.startsWith('/api/auth') &&
-    request.method !== 'GET'
-  ) {
-    const csrfToken = request.headers.get('x-csrf-token');
-    const sessionToken =
-      request.headers.get('authorization') ||
-      request.cookies.get('next-auth.session-token')?.value;
-
-    if (!csrfToken || !sessionToken) {
-      return new NextResponse('CSRF token missing', { status: 403 });
-    }
-
-    // In production, implement proper CSRF token validation
-    // For now, just check if token exists
-  }
-
-  // Protected routes
-  const protectedRoutes = [
-    '/admin',
-    '/superadmin',
-    '/member',
-    '/api/admin',
-    '/api/superadmin',
-    '/api/members',
-  ];
-
-  const isProtectedRoute = protectedRoutes.some(route =>
+  // Protected UI routes (non-API)
+  const protectedUIRoutes = ['/admin', '/superadmin', '/member'];
+  const isProtectedUIRoute = protectedUIRoutes.some(route =>
     pathname.startsWith(route)
   );
 
-  if (isProtectedRoute) {
+  if (isProtectedUIRoute) {
     try {
-      // Use a simpler approach for middleware - just check if session exists
-      // Detailed role checking will be done in API routes and page components
+      // Check if session exists for UI routes
       const sessionToken =
         request.cookies.get('next-auth.session-token')?.value ||
         request.cookies.get('__Secure-next-auth.session-token')?.value;
 
       if (!sessionToken) {
         // Redirect to login for web routes
-        if (!pathname.startsWith('/api')) {
-          const loginUrl = new URL('/auth/signin', request.url);
-          loginUrl.searchParams.set('callbackUrl', pathname);
-          return NextResponse.redirect(loginUrl);
-        }
-
-        // Return 401 for API routes
-        return new NextResponse('Unauthorized', { status: 401 });
-      }
-
-      // For protected routes, we'll rely on the API routes and page components
-      // to do detailed authentication and authorization checks
-      // This prevents Prisma from being called in the middleware (Edge Runtime)
-
-    } catch (error) {
-      console.error('[MIDDLEWARE] Session validation error: ', error);
-
-      // Redirect to login for web routes
-      if (!pathname.startsWith('/api')) {
         const loginUrl = new URL('/auth/signin', request.url);
         loginUrl.searchParams.set('callbackUrl', pathname);
         return NextResponse.redirect(loginUrl);
       }
-
-      // Return 401 for API routes
-      return new NextResponse('Unauthorized', { status: 401 });
+    } catch (error) {
+      console.error('[MIDDLEWARE] Session validation error: ', error);
+      const loginUrl = new URL('/auth/signin', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
@@ -225,5 +189,8 @@ export const config = {
      * - public (public files)
      */
     '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    // Explicitly match test/debug routes to ensure blocking
+    '/api/test/:path*',
+    '/api/debug/:path*',
   ],
 };

@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
+import { logAudit } from '@/lib/audit/logger';
 import { handleApiError } from '@/lib/error-handler';
 import { emailService } from '@/lib/email/email-service';
 import { UserRole } from '@prisma/client';
@@ -25,18 +25,9 @@ const fulfillmentSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'CONFIRMED';
@@ -141,18 +132,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const validatedData = fulfillmentSchema.parse(body);

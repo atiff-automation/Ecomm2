@@ -14,14 +14,20 @@ import { BusinessProfileCache } from '@/lib/cache/business-profile';
  */
 export async function GET(request: NextRequest) {
   try {
+    console.log('[API Business Profile GET] Request received');
+    console.log('[API Business Profile GET] Headers:', Object.fromEntries(request.headers.entries()));
+
     const session = await getServerSession(authOptions);
-    
+    console.log('[API Business Profile GET] Session:', session ? { userId: session.user?.id, role: session.user?.role } : null);
+
     if (!session?.user?.id) {
+      console.log('[API Business Profile GET] Unauthorized - no session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Only admins and superadmins can access business profile
     if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+      console.log('[API Business Profile GET] Forbidden - role:', session.user.role);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -66,18 +72,25 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
+    console.log('[API Business Profile PUT] Request received');
+    console.log('[API Business Profile PUT] Headers:', Object.fromEntries(request.headers.entries()));
+
     const session = await getServerSession(authOptions);
-    
+    console.log('[API Business Profile PUT] Session:', session ? { userId: session.user?.id, role: session.user?.role } : null);
+
     if (!session?.user?.id) {
+      console.log('[API Business Profile PUT] Unauthorized - no session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Only admins and superadmins can update business profile
     if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+      console.log('[API Business Profile PUT] Forbidden - role:', session.user.role);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
+    console.log('[API Business Profile PUT] Request body keys:', Object.keys(body));
     
     // Validate request body
     const validatedData = businessProfileSchema.parse(body);

@@ -4,9 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
+import { logAudit } from '@/lib/audit/logger';
+import { requireAdminRole } from '@/lib/auth/authorization';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -117,18 +117,9 @@ const createProductSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     console.log('🔍 Received request body:', JSON.stringify(body, null, 2));
@@ -288,18 +279,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);

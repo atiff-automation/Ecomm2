@@ -7,8 +7,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { UserRole } from '@prisma/client';
 import { memberPromotionService } from '@/lib/member/member-promotion-service';
 import { z } from 'zod';
@@ -32,18 +31,9 @@ const createSeasonalPromotionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const { searchParams } = new URL(request.url);
@@ -108,18 +98,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     // This would return member promotion statistics and active promotions
     // For now, return a simple success response

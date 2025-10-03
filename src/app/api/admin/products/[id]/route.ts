@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
+import { logAudit } from '@/lib/audit/logger';
 import { UserRole } from '@prisma/client';
 // import { ProductStatus } from '@prisma/client'; // Not currently used
 import { z } from 'zod';
@@ -102,19 +102,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const product = await prisma.product.findUnique({
       where: { id: params.id },
@@ -167,19 +157,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const productData = updateProductSchema.parse(body);
@@ -420,18 +400,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     // Check if product exists
     const product = await prisma.product.findUnique({

@@ -60,10 +60,19 @@ export async function validateSessionMiddleware(request: NextRequest) {
 
 /**
  * Middleware matcher for admin routes and API routes that require authentication
+ * Extended to cover all authenticated user endpoints
  */
 export const sessionValidationPaths = [
   '/admin/:path*',
   '/api/admin/:path*',
+  '/api/superadmin/:path*',
+  '/api/member/:path*',
+  '/api/user/:path*',
+  '/api/settings/:path*',
+  '/api/cart/:path*',
+  '/api/orders/:path*',
+  '/api/wishlist/:path*',
   '/api/site-customization/:path*',
   '/api/upload/:path*',
+  '/api/chat/send/:path*',
 ];

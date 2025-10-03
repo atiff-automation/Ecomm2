@@ -125,9 +125,15 @@ export default function BusinessProfilePage() {
 
   const loadBusinessProfile = async () => {
     try {
+      console.log('[Business Profile] Loading profile...');
+
       const response = await fetch('/api/admin/settings/business-profile', {
         credentials: 'include',
       });
+
+      console.log('[Business Profile] Load response status:', response.status);
+      console.log('[Business Profile] Load response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
         const data = await response.json();
         if (data.data) {
@@ -195,6 +201,9 @@ export default function BusinessProfilePage() {
 
     setIsSubmitting(true);
     try {
+      console.log('[Business Profile] Starting save request...');
+      console.log('[Business Profile] Data:', data);
+
       const response = await fetch('/api/admin/settings/business-profile', {
         method: 'PUT',
         headers: {
@@ -204,12 +213,28 @@ export default function BusinessProfilePage() {
         body: JSON.stringify(data),
       });
 
+      console.log('[Business Profile] Response status:', response.status);
+      console.log('[Business Profile] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Get response text first to debug
+      const responseText = await response.text();
+      console.log('[Business Profile] Response text:', responseText);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to save business profile');
+        // Try to parse as JSON, fallback to text
+        let errorMessage = responseText;
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorMessage = errorJson.message || errorJson.error || responseText;
+        } catch (e) {
+          // Response is not JSON, use text directly
+          console.log('[Business Profile] Response is not JSON, using text');
+        }
+        throw new Error(errorMessage || 'Failed to save business profile');
       }
 
-      const result = await response.json();
+      // Parse successful response
+      const result = JSON.parse(responseText);
       toast.success('Business profile saved successfully');
 
       // Reload the profile to get updated data

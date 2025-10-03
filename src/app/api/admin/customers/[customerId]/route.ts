@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminRole } from '@/lib/auth/authorization';
 
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
@@ -23,18 +23,9 @@ export async function GET(
   { params }: { params: { customerId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const customer = await prisma.user.findUnique({
       where: {
@@ -135,18 +126,9 @@ export async function PUT(
   { params }: { params: { customerId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.STAFF)
-    ) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
 

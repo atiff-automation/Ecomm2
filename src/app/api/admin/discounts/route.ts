@@ -7,8 +7,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
 import { discountService } from '@/lib/discounts/discount-service';
 import { UserRole, DiscountType, DiscountStatus } from '@prisma/client';
@@ -38,18 +37,9 @@ const createDiscountSchema = z.object({
 // GET - List all discount codes
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const status = (searchParams.get('status') as DiscountStatus) || undefined;
@@ -109,18 +99,9 @@ export async function GET(request: NextRequest) {
 // POST - Create new discount code
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const validatedData = createDiscountSchema.parse(body);

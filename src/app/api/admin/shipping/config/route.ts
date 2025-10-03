@@ -7,11 +7,11 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { handleApiError } from '@/lib/error-handler';
 import { prisma } from '@/lib/db/prisma';
+import { logAudit } from '@/lib/audit/logger';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 import { easyParcelService } from '@/lib/shipping/easyparcel-service';
@@ -271,18 +271,9 @@ const shippingConfigSchema = z.object({
 // GET shipping configuration
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const profile = await businessShippingConfig.getBusinessProfile();
     const isConfigured = await businessShippingConfig.isBusinessConfigured();
@@ -366,18 +357,9 @@ export async function GET() {
 // PUT update shipping configuration
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const validatedData = shippingConfigSchema.parse(body);
@@ -500,18 +482,9 @@ export async function PUT(request: NextRequest) {
 // POST test EasyParcel connection
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (
-      !session?.user ||
-      (session.user.role !== UserRole.ADMIN &&
-        session.user.role !== UserRole.SUPERADMIN)
-    ) {
-      return NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
 
     const body = await request.json();
     const { action } = body;

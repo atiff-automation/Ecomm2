@@ -12,13 +12,11 @@
     "db:deploy:production": "npx prisma migrate deploy && npm run db:seed:production",
     "db:seed:production": "npm run db:seed:essential",
     "db:seed:essential": "NODE_ENV=production npx tsx prisma/seed.ts",
-
     "db:seed:shipping:production": "NODE_ENV=production npx tsx prisma/seed-shipping-zones.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "lint:fix": "next lint --fix",
     "db:seed": "npx tsx prisma/seed.ts && node scripts/post-seed-cleanup.js",
-
     "db:reset": "npx prisma migrate reset --force && npm run db:seed",
     "session:clear": "curl -X POST http://localhost:3000/api/auth/clear-session",
     "db:backup": "./scripts/db-backup.sh",
@@ -92,6 +90,7 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
+    "lru-cache": "^11.2.2",
     "lucide-react": "^0.536.0",
     "next": "14.2.31",
     "next-auth": "^4.24.11",

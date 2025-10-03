@@ -12,6 +12,7 @@ import { authOptions } from '@/lib/auth/config';
 import { smartBookingService } from '@/lib/shipping/smart-booking-service';
 import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 import { prisma } from '@/lib/db/prisma';
+import { logAudit } from '@/lib/audit/logger';
 import { z } from 'zod';
 
 const bookingRequestSchema = z.object({

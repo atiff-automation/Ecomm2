@@ -3,6 +3,12 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole, UserStatus } from '@prisma/client';
+import {
+  getCachedUserValidation,
+  setCachedUserValidation,
+  getCachedSessionData,
+  setCachedSessionData
+} from './cache';
 
 export const authOptions: NextAuthOptions = {
   // Remove PrismaAdapter when using JWT strategy to avoid conflicts
@@ -76,16 +82,46 @@ export const authOptions: NextAuthOptions = {
 
       // Validate that user still exists in database (prevents stale tokens)
       if (token.sub) {
+        // Check cache first to avoid database query
+        const cachedValid = getCachedUserValidation(token.sub);
+
+        if (cachedValid !== undefined) {
+          if (!cachedValid) {
+            console.warn(`Cached invalid user: ${token.sub}`);
+            return {};
+          }
+
+          // Use cached session data if available and not forcing update
+          const cachedData = getCachedSessionData(token.sub);
+          if (cachedData && trigger !== 'update') {
+            token.role = cachedData.role as any;
+            token.isMember = cachedData.isMember;
+            token.memberSince = cachedData.memberSince;
+            return token;
+          }
+        }
+
+        // Cache miss - query database
         const userExists = await prisma.user.findUnique({
           where: { id: token.sub },
           select: { id: true, role: true, isMember: true, memberSince: true, status: true },
         });
 
         if (!userExists || userExists.status !== UserStatus.ACTIVE) {
-          // User doesn't exist or is not active - invalidate token
+          // Cache invalid user to prevent repeated DB queries
+          setCachedUserValidation(token.sub, false);
           console.warn(`Token validation failed for user ${token.sub}: ${!userExists ? 'User not found' : 'User not active'}`);
           return {};
         }
+
+        // Cache valid user and session data
+        setCachedUserValidation(token.sub, true);
+        setCachedSessionData(token.sub, {
+          role: userExists.role,
+          isMember: userExists.isMember,
+          memberSince: userExists.memberSince,
+          status: userExists.status,
+        });
 
         // Refresh user data when session.update() is called or validate current data
         if (trigger === 'update' || !token.role) {

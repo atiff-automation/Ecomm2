@@ -8,8 +8,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { requireAdminRole } from '@/lib/auth/authorization';
 import { UserRole } from '@prisma/client';
 import { AgentApplicationService } from '@/lib/services/agent-application.service';
 

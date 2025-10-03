@@ -27,10 +27,6 @@ import {
   getBestPrice,
   productQualifiesForMembership,
 } from '@/lib/promotions/promotion-utils';
-import {
-  withApiProtection,
-  protectionConfigs,
-} from '@/lib/middleware/api-protection';
 import config from '@/lib/config/app-config';
 
 interface CartItemWithProduct {
@@ -1060,11 +1056,8 @@ async function calculateCartSummary(
   return result;
 }
 
-// Protected API exports with security middleware
-export const GET = withApiProtection(handleGET, protectionConfigs.standard);
-export const POST = withApiProtection(handlePOST, protectionConfigs.standard);
-export const PUT = withApiProtection(handlePUT, protectionConfigs.standard);
-export const DELETE = withApiProtection(
-  handleDELETE,
-  protectionConfigs.standard
-);
+// API exports - protection now handled by centralized middleware
+export const GET = handleGET;
+export const POST = handlePOST;
+export const PUT = handlePUT;
+export const DELETE = handleDELETE;
