@@ -12,6 +12,35 @@ import {
 } from '@/lib/utils/security';
 import { rateLimit } from '@/lib/utils/rate-limit';
 
+/**
+ * Railway-specific adjustments
+ * Railway's container architecture requires higher limits due to:
+ * - Container restarts (rate limit state reset)
+ * - Multiple instances (no shared state)
+ * - Load balancer behavior
+ */
+const isRailway =
+  process.env.RAILWAY_ENVIRONMENT ||
+  process.env.RAILWAY_SERVICE_NAME ||
+  process.env.RAILWAY_PROJECT_ID;
+
+// Multiply rate limits by 2 on Railway for safety margin
+const RATE_LIMIT_MULTIPLIER = isRailway ? 2 : 1;
+
+/**
+ * Helper function to adjust rate limits for Railway environment
+ */
+function getRateLimit(baseLimit: number): number {
+  const adjusted = Math.floor(baseLimit * RATE_LIMIT_MULTIPLIER);
+
+  // Log adjustment in development
+  if (process.env.NODE_ENV === 'development' && isRailway) {
+    console.log(`🔧 Railway detected: Rate limit ${baseLimit} → ${adjusted}`);
+  }
+
+  return adjusted;
+}
+
 export interface ApiProtectionConfig {
   rateLimiting?: {
     enabled: boolean;
@@ -106,6 +135,24 @@ export async function protectApiEndpoint(
   const method = request.method;
   const url = request.url;
 
+  // Extract pathname for health check detection
+  const pathname = new URL(url).pathname;
+
+  // Skip rate limiting for health check endpoints
+  if (
+    pathname === '/api/health' ||
+    pathname === '/health' ||
+    pathname === '/api/healthcheck' ||
+    pathname === '/_health'
+  ) {
+    return { allowed: true };
+  }
+
+  // Skip rate limiting for Railway infrastructure
+  if (userAgent.includes('Railway') || userAgent.includes('railway')) {
+    return { allowed: true };
+  }
+
   // Log request if enabled
   if (mergedConfig.logging?.logRequests) {
     console.log(`🛡️ API Protection Check: ${method} ${url} from ${clientIP}`);
@@ -148,7 +195,13 @@ export async function protectApiEndpoint(
       } catch {
         if (mergedConfig.logging?.logErrors) {
           console.warn(
-            `🚫 Rate limit exceeded for ${clientIP} on ${method} ${url}`
+            `🚫 RATE_LIMIT_HIT | ` +
+              `IP: ${clientIP} | ` +
+              `Path: ${pathname} | ` +
+              `Method: ${method} | ` +
+              `UserAgent: ${userAgent.substring(0, 60)} | ` +
+              `Limit: ${mergedConfig.rateLimiting?.requestsPerMinute || 'N/A'} | ` +
+              `Time: ${new Date().toISOString()}`
           );
         }
 
@@ -294,17 +347,25 @@ export async function protectApiEndpoint(
  * Predefined protection configurations for common use cases
  */
 export const protectionConfigs = {
-  // Public endpoints (minimal protection)
+  // Public endpoints (auth, products, categories)
   public: {
-    rateLimiting: { enabled: true, requestsPerMinute: 100 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(300), // Railway: 600 req/min
+      uniqueTokenPerInterval: 2000,
+    },
     corsProtection: { enabled: true, allowedOrigins: ['*'] },
     userAgentValidation: { enabled: false },
     requireAuth: false,
   } as Partial<ApiProtectionConfig>,
 
-  // Standard API endpoints
+  // Standard API endpoints (cart)
   standard: {
-    rateLimiting: { enabled: true, requestsPerMinute: 60 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(150), // Railway: 300 req/min
+      uniqueTokenPerInterval: 1500,
+    },
     corsProtection: {
       enabled: true,
       allowedOrigins: [
@@ -312,15 +373,25 @@ export const protectionConfigs = {
         'https://localhost:3000',
         process.env.NEXTAUTH_URL || '',
         process.env.NEXT_PUBLIC_APP_URL || '',
+        // Railway public domain
+        process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : '',
+        // Wildcard for Railway preview deployments (non-production only)
+        process.env.RAILWAY_ENVIRONMENT !== 'production' ? '*' : '',
       ].filter(Boolean),
     },
-    userAgentValidation: { enabled: false, blockSuspicious: false }, // Allow all user agents for cart operations
+    userAgentValidation: { enabled: false, blockSuspicious: false },
     requireAuth: false,
   } as Partial<ApiProtectionConfig>,
 
-  // Authenticated endpoints
+  // Authenticated endpoints (orders, wishlist, user)
   authenticated: {
-    rateLimiting: { enabled: true, requestsPerMinute: 30 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(120), // Railway: 240 req/min
+      uniqueTokenPerInterval: 1000,
+    },
     corsProtection: { enabled: true, allowedOrigins: [] },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
@@ -328,25 +399,37 @@ export const protectionConfigs = {
 
   // Admin-only endpoints
   admin: {
-    rateLimiting: { enabled: true, requestsPerMinute: 20 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(100), // Railway: 200 req/min
+      uniqueTokenPerInterval: 500,
+    },
     corsProtection: { enabled: true, allowedOrigins: [] },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
     adminOnly: true,
   } as Partial<ApiProtectionConfig>,
 
-  // Sensitive operations
+  // Sensitive operations (payments, uploads)
   sensitive: {
-    rateLimiting: { enabled: true, requestsPerMinute: 10 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(30), // Railway: 60 req/min
+      uniqueTokenPerInterval: 200,
+    },
     corsProtection: { enabled: true, allowedOrigins: [] },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
     productionOnly: { enabled: true, blockInDevelopment: false },
   } as Partial<ApiProtectionConfig>,
 
-  // Critical operations (strict protection)
+  // Critical operations (no changes needed)
   critical: {
-    rateLimiting: { enabled: true, requestsPerMinute: 5 },
+    rateLimiting: {
+      enabled: true,
+      requestsPerMinute: getRateLimit(5), // Railway: 10 req/min
+      uniqueTokenPerInterval: 50,
+    },
     corsProtection: { enabled: true, allowedOrigins: [] },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,

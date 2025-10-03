@@ -10,25 +10,51 @@ import crypto from 'crypto';
  * Extract client IP address from request
  */
 export function getClientIP(request: NextRequest): string {
-  // Check various headers for the real IP
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
-  const clientIP = request.headers.get('x-client-ip');
+  // Priority 1: Railway-specific header (most reliable)
+  const railwayIP = request.headers.get('x-real-ip');
+  if (railwayIP && railwayIP !== '127.0.0.1') {
+    return railwayIP;
+  }
 
-  // Handle X-Forwarded-For which can contain multiple IPs
+  // Priority 2: Parse x-forwarded-for (handle proxy chain)
+  const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     const ips = forwarded.split(',').map(ip => ip.trim());
-    return ips[0]; // First IP is usually the original client
+
+    // Filter out internal/proxy IPs to find real client IP
+    const clientIP = ips.find(ip => {
+      // Exclude private network ranges
+      return (
+        !ip.startsWith('10.') && // Private Class A
+        !ip.startsWith('172.') && // Private Class B (172.16-31.x.x)
+        !ip.startsWith('192.168.') && // Private Class C
+        !ip.startsWith('127.') && // Loopback
+        ip !== '::1' && // IPv6 loopback
+        !ip.startsWith('fc00:') && // IPv6 private
+        !ip.startsWith('fd00:')
+      ); // IPv6 private
+    });
+
+    if (clientIP) {
+      return clientIP;
+    }
+
+    // Fallback to first IP if no public IP found
+    return ips[0];
   }
 
-  if (realIP) {
+  // Priority 3: Other proxy headers
+  const realIP = request.headers.get('x-real-ip');
+  const clientIPHeader = request.headers.get('x-client-ip');
+
+  if (realIP && realIP !== '127.0.0.1') {
     return realIP;
   }
-  if (clientIP) {
-    return clientIP;
+  if (clientIPHeader && clientIPHeader !== '127.0.0.1') {
+    return clientIPHeader;
   }
 
-  // Fallback to connection remote address
+  // Fallback: Use request.ip or localhost
   return request.ip || '127.0.0.1';
 }
 
@@ -236,17 +262,25 @@ export function generateWebhookSignature(
  * Detect suspicious user agent patterns
  */
 export function isSuspiciousUserAgent(userAgent: string): boolean {
+  // Only block obvious malicious patterns
+  // IMPORTANT: Don't block legitimate tools, monitoring, or mobile browsers
   const suspiciousPatterns = [
-    /bot/i,
-    /crawler/i,
-    /spider/i,
-    /scraper/i,
-    /curl/i,
-    /wget/i,
-    /python/i,
-    /php/i,
-    /java/i,
-    /^$/,
+    /^$/, // Empty user agent
+    /sqlmap/i, // SQL injection tool
+    /nikto/i, // Security scanner
+    /masscan/i, // Port scanner
+    /nmap/i, // Network mapper
+    /scrapy/i, // Python scraping framework
+
+    // REMOVED PATTERNS (were too aggressive):
+    // /bot/i          - Blocks Uptime Robot, Pingdom, legitimate monitoring
+    // /crawler/i      - Blocks SEO tools, legitimate crawlers
+    // /spider/i       - Same as crawler
+    // /curl/i         - Blocks legitimate API testing
+    // /wget/i         - Blocks legitimate downloads
+    // /python/i       - Blocks Python SDKs, legitimate clients
+    // /php/i          - Blocks PHP clients
+    // /java/i         - Blocks Java-based monitoring tools
   ];
 
   return suspiciousPatterns.some(pattern => pattern.test(userAgent));
