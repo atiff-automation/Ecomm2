@@ -8,9 +8,16 @@ import { requireAdminRole } from '@/lib/auth/authorization';
 
 export async function GET() {
   try {
+    console.log('[Dashboard Stats] Request received');
+
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    console.log('[Dashboard Stats] Auth check:', { hasError: !!error, hasSession: !!session });
+
+    if (error) {
+      console.log('[Dashboard Stats] Auth error, returning:', error);
+      return error;
+    }
 
     // Get current month dates
     const now = new Date();
@@ -181,11 +188,15 @@ export async function GET() {
       },
     };
 
+    console.log('[Dashboard Stats] Success, returning data');
     return NextResponse.json(dashboardStats);
   } catch (error) {
-    console.error('Dashboard stats error:', error);
+    console.error('[Dashboard Stats] ERROR:', error);
+    console.error('[Dashboard Stats] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('[Dashboard Stats] Error message:', error instanceof Error ? error.message : String(error));
+
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard statistics' },
+      { error: 'Failed to fetch dashboard statistics', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
