@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { requireAdminRole } from '@/lib/auth/authorization';
 
