@@ -404,7 +404,21 @@ export const protectionConfigs = {
       requestsPerMinute: getRateLimit(100), // Railway: 200 req/min
       uniqueTokenPerInterval: 500,
     },
-    corsProtection: { enabled: true, allowedOrigins: [] },
+    corsProtection: {
+      enabled: true,
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXTAUTH_URL || '',
+        process.env.NEXT_PUBLIC_APP_URL || '',
+        // Railway public domain
+        process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : '',
+        // Wildcard for Railway preview deployments (non-production only)
+        process.env.RAILWAY_ENVIRONMENT !== 'production' ? '*' : '',
+      ].filter(Boolean),
+    },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
     adminOnly: true,
@@ -417,7 +431,21 @@ export const protectionConfigs = {
       requestsPerMinute: getRateLimit(30), // Railway: 60 req/min
       uniqueTokenPerInterval: 200,
     },
-    corsProtection: { enabled: true, allowedOrigins: [] },
+    corsProtection: {
+      enabled: true,
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXTAUTH_URL || '',
+        process.env.NEXT_PUBLIC_APP_URL || '',
+        // Railway public domain
+        process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : '',
+        // Wildcard for Railway preview deployments (non-production only)
+        process.env.RAILWAY_ENVIRONMENT !== 'production' ? '*' : '',
+      ].filter(Boolean),
+    },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
     productionOnly: { enabled: true, blockInDevelopment: false },
