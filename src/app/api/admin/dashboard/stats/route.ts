@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
+import { requireAdminRole } from '@/lib/auth/authorization';
 
 export async function GET() {
   try {

@@ -1,14 +1,15 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Dashboard Analytics API - Malaysian E-commerce Platform
  * Enhanced analytics data for interactive charts and visualizations
  */
 
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
+import { requireAdminRole } from '@/lib/auth/authorization';
 
 export async function GET() {
   try {
