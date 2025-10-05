@@ -1,41 +1,14 @@
 /**
- * Chat Components Barrel Export
- * Centralized exports following DRY principles
+ * Chat Components - Simplified n8n Integration
+ *
+ * This module provides a simple chat widget powered by n8n.
  */
 
-export { default as MetricsCards, DetailedMetricsCards } from './MetricsCards';
-export { ChatWidget } from './ChatWidget';
-export { SessionFilters } from './SessionFilters';
-export { SessionsTable } from './SessionsTable';
-export { ExportDialog } from './ExportDialog';
+// Main chat widget component
+export { N8nChatWidget } from './N8nChatWidget';
 
-// Export all chat-related types for convenience
-export type {
-  ChatSession,
-  ChatMetrics,
-  FilterState,
-  SortConfig,
-  PaginationConfig,
-  ExportOptions,
-  ExportProgress,
-  ExportJob,
-} from '@/types/chat';
+// Chat bubble toggle button (reused from previous implementation)
+export { ChatBubble } from './ChatBubble';
 
-// Export commonly used utilities
-export {
-  formatDuration,
-  formatTimestamp,
-  formatDate,
-  formatDateTime,
-  getRelativeTime,
-  getStatusColor,
-  getStatusIcon,
-  getUserTypeLabel,
-  getDurationCategory,
-  getMessageCountCategory,
-  cn,
-} from '@/utils/chat';
-
-// TODO: Re-enable hooks once server/client context issues are resolved
-// export { useSessionData } from '@/hooks/useSessionData';
-// export { useExport } from '@/hooks/useExport';
+// Type definitions (minimal, only for ChatBubble compatibility)
+export type { ChatConfig } from './types';

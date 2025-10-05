@@ -105,15 +105,6 @@ const navigationItems = [
     description: 'Sales Analytics, Performance Reports',
   },
 
-  // 💬 Chat Management Section - Chat monitoring and analytics
-  {
-    label: 'Chat Management',
-    href: '/admin/chat',
-    icon: MessageCircle,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Chat Sessions, Analytics, Support',
-  },
-
   // Additional sections that exist but don't fit main categories
   {
     label: 'Notifications',
@@ -121,6 +112,13 @@ const navigationItems = [
     icon: Bell,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'System Notifications',
+  },
+  {
+    label: 'Chat Config',
+    href: '/admin/chat-config',
+    icon: MessageCircle,
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
+    description: 'n8n Chat Widget Configuration',
   },
   {
     label: 'Settings',

@@ -8,7 +8,7 @@ import { Toaster } from 'sonner';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
 import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
-import { ChatWidget } from '@/components/chat/ChatWidget';
+import { N8nChatWidget } from '@/components/chat/N8nChatWidget';
 import './globals.css';
 
 const geistSans = localFont({
@@ -158,7 +158,7 @@ export default function RootLayout({
                   descriptionClassName: 'group-[.toast]:text-muted-foreground',
                 }}
               />
-              <ChatWidget
+              <N8nChatWidget
                 config={{
                   position: 'bottom-right',
                   primaryColor: '#2563eb',

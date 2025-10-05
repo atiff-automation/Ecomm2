@@ -1,0 +1,869 @@
+{
+  "backup_date": "2025-10-05T14:41:34.444Z",
+  "chat_sessions": [
+    {
+      "id": "cmfw0z3u1000001i5h3avseyw",
+      "userId": null,
+      "guestEmail": "test@example.com",
+      "status": "ended",
+      "metadata": {
+        "clientId": "::1",
+        "initSource": "ui-widget"
+      },
+      "createdAt": "2025-09-23T03:58:20.712Z",
+      "updatedAt": "2025-09-23T04:12:17.622Z",
+      "expiresAt": "2025-09-23T04:28:20.698Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T04:12:17.602Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T03:59:17.270Z",
+      "sessionId": "cmfw0z3u2000101i51x5las2f",
+      "userAgent": null
+    },
+    {
+      "id": "cmfw1l7df000g01i5awk7fb3e",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T04:15:30.170Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T04:15:31.711Z",
+      "updatedAt": "2025-09-23T04:58:14.497Z",
+      "expiresAt": "2025-09-23T04:34:31.646Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T04:58:12.622Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T04:15:31.711Z",
+      "sessionId": "cmfw1l7df000h01i5mdkbfgwf",
+      "userAgent": null
+    },
+    {
+      "id": "cmfw1l7ev000k01i5ovhh822a",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T04:15:31.568Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T04:15:31.783Z",
+      "updatedAt": "2025-09-23T04:58:14.497Z",
+      "expiresAt": "2025-09-23T04:34:31.771Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T04:58:12.622Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T04:15:31.783Z",
+      "sessionId": "cmfw1l7ev000l01i5jk34dzly",
+      "userAgent": null
+    },
+    {
+      "id": "cmfw1f1r4000a01i51368nxuh",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T04:10:43.955Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T04:10:44.512Z",
+      "updatedAt": "2025-09-23T04:58:14.497Z",
+      "expiresAt": "2025-09-23T04:29:44.369Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T04:58:12.622Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T04:20:31.971Z",
+      "sessionId": "cmfw1f1r4000b01i5i5aftnm7",
+      "userAgent": null
+    },
+    {
+      "id": "cmfw9hp9d000v01i5kawv4bft",
+      "userId": null,
+      "guestEmail": "guest@example.com",
+      "status": "expired",
+      "metadata": {
+        "source": "chat-widget-guest",
+        "timestamp": "2025-09-23T07:56:44.956Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+      },
+      "createdAt": "2025-09-23T07:56:45.208Z",
+      "updatedAt": "2025-09-23T08:23:23.971Z",
+      "expiresAt": "2025-09-23T08:09:45.173Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T08:23:23.932Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T08:04:47.939Z",
+      "sessionId": "cmfw9hp9e000w01i5o33wtjcg",
+      "userAgent": null
+    },
+    {
+      "id": "cmfw9rtth000z01i5smdkf5vn",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "expired",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T08:04:35.522Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T08:04:37.684Z",
+      "updatedAt": "2025-09-23T08:38:23.959Z",
+      "expiresAt": "2025-09-23T08:23:37.671Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T08:38:23.926Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T08:04:37.684Z",
+      "sessionId": "cmfw9rtth001001i5uska8edj",
+      "userAgent": null
+    },
+    {
+      "id": "cmfwbfloi001v01i5qlvs8hrk",
+      "userId": null,
+      "guestEmail": "guest@example.com",
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-guest",
+        "timestamp": "2025-09-23T08:51:04.860Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+      },
+      "createdAt": "2025-09-23T08:51:06.499Z",
+      "updatedAt": "2025-09-23T09:08:24.155Z",
+      "expiresAt": "2025-09-23T09:04:06.496Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T09:08:23.965Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T08:54:56.730Z",
+      "sessionId": "cmfwbfloi001w01i5boogc37s",
+      "userAgent": null
+    },
+    {
+      "id": "cmfwc53wi003y01i5t7nhp7d8",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T09:10:56.210Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T09:10:56.514Z",
+      "updatedAt": "2025-09-23T09:45:44.570Z",
+      "expiresAt": "2025-09-23T09:29:56.508Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T09:45:42.086Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T09:10:56.514Z",
+      "sessionId": "cmfwc53wi003z01i5jajesgpy",
+      "userAgent": null
+    },
+    {
+      "id": "cmfwc53vo003u01i5qdvzjobq",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-23T09:10:53.798Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-23T09:10:56.484Z",
+      "updatedAt": "2025-09-23T09:45:44.570Z",
+      "expiresAt": "2025-09-23T09:29:56.412Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-23T09:45:42.086Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-23T09:11:10.872Z",
+      "sessionId": "cmfwc53vo003v01i5vg9rfixz",
+      "userAgent": null
+    },
+    {
+      "id": "cmfx94yra0002gre2meegrcwz",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-24T00:34:33.415Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-24T00:34:37.168Z",
+      "updatedAt": "2025-09-24T01:11:02.047Z",
+      "expiresAt": "2025-09-24T00:53:36.988Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-24T01:11:01.990Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-24T00:34:54.484Z",
+      "sessionId": "cmfx94yra0003gre2e6qilihf",
+      "userAgent": null
+    },
+    {
+      "id": "cmfy3r04b001kgrsyaairb5tl",
+      "userId": "cmfw1e1qh0000017p2uxmcpi7",
+      "guestEmail": null,
+      "status": "ended",
+      "metadata": {
+        "source": "chat-widget-authenticated",
+        "timestamp": "2025-09-24T14:51:33.690Z",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+        "authenticationType": "session-based"
+      },
+      "createdAt": "2025-09-24T14:51:33.849Z",
+      "updatedAt": "2025-09-24T15:22:35.755Z",
+      "expiresAt": "2025-09-24T15:10:33.770Z",
+      "archivedAt": null,
+      "endedAt": "2025-09-24T15:22:35.251Z",
+      "guestPhone": null,
+      "ipAddress": null,
+      "lastActivity": "2025-09-24T14:51:49.093Z",
+      "sessionId": "cmfy3r04b001lgrsyc9s5fq75",
+      "userAgent": null
+    }
+  ],
+  "chat_messages": [
+    {
+      "id": "cmfw0zd6y000301i5e75j3q04",
+      "sessionId": "cmfw0z3u1000001i5h3avseyw",
+      "senderType": "user",
+      "content": "Hello, this is a test message",
+      "messageType": "text",
+      "metadata": null,
+      "status": "pending",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T03:58:32.841Z",
+      "updatedAt": "2025-09-23T03:58:32.841Z"
+    },
+    {
+      "id": "cmfw10bgy000501i53bxtnb7r",
+      "sessionId": "cmfw0z3u1000001i5h3avseyw",
+      "senderType": "user",
+      "content": "Hello, this is a test message",
+      "messageType": "text",
+      "metadata": null,
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T03:59:17.266Z",
+      "updatedAt": "2025-09-23T03:59:17.281Z"
+    },
+    {
+      "id": "cmfw1ritb000n01i5jona8o6o",
+      "sessionId": "cmfw1f1r4000a01i51368nxuh",
+      "senderType": "user",
+      "content": "terbaik",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T04:20:22.296Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T04:20:26.488Z",
+      "updatedAt": "2025-09-23T04:20:26.694Z"
+    },
+    {
+      "id": "cmfw1rn0k000r01i5i8xvt6rc",
+      "sessionId": "cmfw1f1r4000a01i51368nxuh",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"terbaik\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T04:20:31.940Z",
+      "updatedAt": "2025-09-23T04:20:31.940Z"
+    },
+    {
+      "id": "cmfw9ryiq001201i5mrmqa2gp",
+      "sessionId": "cmfw9hp9d000v01i5kawv4bft",
+      "senderType": "user",
+      "content": "hahahaha",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T08:04:41.522Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:04:43.777Z",
+      "updatedAt": "2025-09-23T08:04:44.220Z"
+    },
+    {
+      "id": "cmfw9s1p4001601i51jrfcpf7",
+      "sessionId": "cmfw9hp9d000v01i5kawv4bft",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"hahahaha\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:04:47.896Z",
+      "updatedAt": "2025-09-23T08:04:47.896Z"
+    },
+    {
+      "id": "cmfwbjbbv001y01i5w59otwj5",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "user",
+      "content": "weiiii",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T08:53:59.249Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:53:59.706Z",
+      "updatedAt": "2025-09-23T08:54:00.020Z"
+    },
+    {
+      "id": "cmfwbjd8u002201i5ne5nvxcr",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "user",
+      "content": "awat tak leh",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T08:54:01.760Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:02.190Z",
+      "updatedAt": "2025-09-23T08:54:02.344Z"
+    },
+    {
+      "id": "cmfwbjiov002601i5qolz3e0n",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"awat tak leh\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:09.248Z",
+      "updatedAt": "2025-09-23T08:54:09.248Z"
+    },
+    {
+      "id": "cmfwbjipj002801i5rnmghtf8",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"weiiii\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:09.271Z",
+      "updatedAt": "2025-09-23T08:54:09.271Z"
+    },
+    {
+      "id": "cmfwbk5km002a01i5go6fh8lx",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "user",
+      "content": "mamu hg ok dak?",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T08:54:38.444Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:38.903Z",
+      "updatedAt": "2025-09-23T08:54:38.974Z"
+    },
+    {
+      "id": "cmfwbk7pj002e01i5lcif4stb",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"mamu hg ok dak?\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:41.672Z",
+      "updatedAt": "2025-09-23T08:54:41.672Z"
+    },
+    {
+      "id": "cmfwbkftl002g01i5ktrgetqb",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "user",
+      "content": "pasai pa ni",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T08:54:51.743Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:52.176Z",
+      "updatedAt": "2025-09-23T08:54:52.327Z"
+    },
+    {
+      "id": "cmfwbkjbs002k01i5i40eqjsz",
+      "sessionId": "cmfwbfloi001v01i5qlvs8hrk",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"pasai pa ni\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T08:54:56.729Z",
+      "updatedAt": "2025-09-23T08:54:56.729Z"
+    },
+    {
+      "id": "cmfwc58bw004101i598v1twmu",
+      "sessionId": "cmfwc53vo003u01i5qdvzjobq",
+      "senderType": "user",
+      "content": "kokok",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-23T09:10:59.942Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T09:11:02.252Z",
+      "updatedAt": "2025-09-23T09:11:02.905Z"
+    },
+    {
+      "id": "cmfwc5eub004501i50m9bajdy",
+      "sessionId": "cmfwc53vo003u01i5qdvzjobq",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"kokok\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-23T09:11:10.691Z",
+      "updatedAt": "2025-09-23T09:11:10.691Z"
+    },
+    {
+      "id": "cmfx956pu0005gre2g2v6vy9c",
+      "sessionId": "cmfx94yra0002gre2meegrcwz",
+      "senderType": "user",
+      "content": "buat pa tu",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-24T00:34:44.585Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-24T00:34:47.489Z",
+      "updatedAt": "2025-09-24T00:34:47.755Z"
+    },
+    {
+      "id": "cmfx95c1u0009gre2scbq8orx",
+      "sessionId": "cmfx94yra0002gre2meegrcwz",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"buat pa tu\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-24T00:34:54.403Z",
+      "updatedAt": "2025-09-24T00:34:54.403Z"
+    },
+    {
+      "id": "cmfy3r5so001ngrsy4rbnb9wz",
+      "sessionId": "cmfy3r04b001kgrsyaairb5tl",
+      "senderType": "user",
+      "content": "seman",
+      "messageType": "text",
+      "metadata": {
+        "timestamp": "2025-09-24T14:51:38.576Z"
+      },
+      "status": "sent",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-24T14:51:41.208Z",
+      "updatedAt": "2025-09-24T14:51:41.443Z"
+    },
+    {
+      "id": "cmfy3rbrz001rgrsykj17biwd",
+      "sessionId": "cmfy3r04b001kgrsyaairb5tl",
+      "senderType": "bot",
+      "content": "🤖 Mock n8n Response: I received your message \"seman\" and processed it successfully!",
+      "messageType": "text",
+      "metadata": {},
+      "status": "delivered",
+      "webhookAttempts": 0,
+      "createdAt": "2025-09-24T14:51:48.959Z",
+      "updatedAt": "2025-09-24T14:51:48.959Z"
+    }
+  ],
+  "chat_webhook_queue": [
+    {
+      "id": "cmfw10bh8000701i58ef1k1sq",
+      "messageId": "cmfw10bgy000501i53bxtnb7r",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "Hello, this is a test message",
+          "timestamp": "2025-09-23T03:59:17.266Z"
+        },
+        "messageId": "cmfw10bgy000501i53bxtnb7r",
+        "sessionId": "cmfw0z3u2000101i51x5las2f",
+        "guestEmail": "test@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "clientId": "::1",
+          "initSource": "ui-widget"
+        }
+      },
+      "status": "failed",
+      "attempts": 3,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T03:59:29.059Z",
+      "lastError": "Max attempts reached: API key not configured in chat config",
+      "createdAt": "2025-09-23T03:59:17.276Z",
+      "updatedAt": "2025-09-23T03:59:30.434Z"
+    },
+    {
+      "id": "cmfw1rixg000p01i5fbr9se7l",
+      "messageId": "cmfw1ritb000n01i5jona8o6o",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": "cmfw1e1qh0000017p2uxmcpi7",
+        "message": {
+          "type": "text",
+          "content": "terbaik",
+          "timestamp": "2025-09-23T04:20:26.488Z"
+        },
+        "messageId": "cmfw1ritb000n01i5jona8o6o",
+        "sessionId": "cmfw1f1r4000b01i5i5aftnm7",
+        "guestEmail": null,
+        "userContext": {
+          "userInfo": {
+            "id": "cmfw1e1qh0000017p2uxmcpi7",
+            "name": "Admin User",
+            "email": "admin@jrm.com"
+          },
+          "isAuthenticated": true,
+          "membershipLevel": "guest",
+          "membershipTotal": 0
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-authenticated",
+          "timestamp": "2025-09-23T04:10:43.955Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+          "authenticationType": "session-based"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T04:20:26.641Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T04:20:26.641Z",
+      "updatedAt": "2025-09-23T04:20:30.961Z"
+    },
+    {
+      "id": "cmfw9ryu6001401i5rzpo9l1x",
+      "messageId": "cmfw9ryiq001201i5mrmqa2gp",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "hahahaha",
+          "timestamp": "2025-09-23T08:04:43.777Z"
+        },
+        "messageId": "cmfw9ryiq001201i5mrmqa2gp",
+        "sessionId": "cmfw9hp9e000w01i5o33wtjcg",
+        "guestEmail": "guest@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-guest",
+          "timestamp": "2025-09-23T07:56:44.956Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T08:04:44.191Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T08:04:44.191Z",
+      "updatedAt": "2025-09-23T08:04:45.224Z"
+    },
+    {
+      "id": "cmfwbjbjz002001i5s52ozg3h",
+      "messageId": "cmfwbjbbv001y01i5w59otwj5",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "weiiii",
+          "timestamp": "2025-09-23T08:53:59.706Z"
+        },
+        "messageId": "cmfwbjbbv001y01i5w59otwj5",
+        "sessionId": "cmfwbfloi001w01i5boogc37s",
+        "guestEmail": "guest@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-guest",
+          "timestamp": "2025-09-23T08:51:04.860Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T08:53:59.999Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T08:53:59.999Z",
+      "updatedAt": "2025-09-23T08:54:01.233Z"
+    },
+    {
+      "id": "cmfwbjdaz002401i5kc9uy7bv",
+      "messageId": "cmfwbjd8u002201i5ne5nvxcr",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "awat tak leh",
+          "timestamp": "2025-09-23T08:54:02.190Z"
+        },
+        "messageId": "cmfwbjd8u002201i5ne5nvxcr",
+        "sessionId": "cmfwbfloi001w01i5boogc37s",
+        "guestEmail": "guest@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-guest",
+          "timestamp": "2025-09-23T08:51:04.860Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T08:54:02.268Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T08:54:02.268Z",
+      "updatedAt": "2025-09-23T08:54:06.221Z"
+    },
+    {
+      "id": "cmfwbk5lu002c01i509x2z42m",
+      "messageId": "cmfwbk5km002a01i5go6fh8lx",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "mamu hg ok dak?",
+          "timestamp": "2025-09-23T08:54:38.903Z"
+        },
+        "messageId": "cmfwbk5km002a01i5go6fh8lx",
+        "sessionId": "cmfwbfloi001w01i5boogc37s",
+        "guestEmail": "guest@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-guest",
+          "timestamp": "2025-09-23T08:51:04.860Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T08:54:38.946Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T08:54:38.946Z",
+      "updatedAt": "2025-09-23T08:54:41.010Z"
+    },
+    {
+      "id": "cmfwbkfwa002i01i5ipsppdvz",
+      "messageId": "cmfwbkftl002g01i5ktrgetqb",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": null,
+        "message": {
+          "type": "text",
+          "content": "pasai pa ni",
+          "timestamp": "2025-09-23T08:54:52.176Z"
+        },
+        "messageId": "cmfwbkftl002g01i5ktrgetqb",
+        "sessionId": "cmfwbfloi001w01i5boogc37s",
+        "guestEmail": "guest@example.com",
+        "userContext": {
+          "userInfo": null,
+          "isAuthenticated": false,
+          "membershipLevel": "guest",
+          "membershipTotal": null
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-guest",
+          "timestamp": "2025-09-23T08:51:04.860Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T08:54:52.282Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T08:54:52.282Z",
+      "updatedAt": "2025-09-23T08:54:56.013Z"
+    },
+    {
+      "id": "cmfwc58ss004301i5mb4z1ogy",
+      "messageId": "cmfwc58bw004101i598v1twmu",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": "cmfw1e1qh0000017p2uxmcpi7",
+        "message": {
+          "type": "text",
+          "content": "kokok",
+          "timestamp": "2025-09-23T09:11:02.252Z"
+        },
+        "messageId": "cmfwc58bw004101i598v1twmu",
+        "sessionId": "cmfwc53vo003v01i5vg9rfixz",
+        "guestEmail": null,
+        "userContext": {
+          "userInfo": {
+            "id": "cmfw1e1qh0000017p2uxmcpi7",
+            "name": "Admin User",
+            "email": "admin@jrm.com"
+          },
+          "isAuthenticated": true,
+          "membershipLevel": "guest",
+          "membershipTotal": 0
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-authenticated",
+          "timestamp": "2025-09-23T09:10:53.798Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+          "authenticationType": "session-based"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-23T09:11:02.860Z",
+      "lastError": null,
+      "createdAt": "2025-09-23T09:11:02.860Z",
+      "updatedAt": "2025-09-23T09:11:06.746Z"
+    },
+    {
+      "id": "cmfx956wm0007gre2o41e4n92",
+      "messageId": "cmfx956pu0005gre2g2v6vy9c",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": "cmfw1e1qh0000017p2uxmcpi7",
+        "message": {
+          "type": "text",
+          "content": "buat pa tu",
+          "timestamp": "2025-09-24T00:34:47.489Z"
+        },
+        "messageId": "cmfx956pu0005gre2g2v6vy9c",
+        "sessionId": "cmfx94yra0003gre2e6qilihf",
+        "guestEmail": null,
+        "userContext": {
+          "userInfo": {
+            "id": "cmfw1e1qh0000017p2uxmcpi7",
+            "name": "Admin User",
+            "email": "admin@jrm.com"
+          },
+          "isAuthenticated": true,
+          "membershipLevel": "guest",
+          "membershipTotal": 0
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-authenticated",
+          "timestamp": "2025-09-24T00:34:33.415Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+          "authenticationType": "session-based"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-24T00:34:47.734Z",
+      "lastError": null,
+      "createdAt": "2025-09-24T00:34:47.734Z",
+      "updatedAt": "2025-09-24T00:34:52.785Z"
+    },
+    {
+      "id": "cmfy3r5xi001pgrsyswkp834c",
+      "messageId": "cmfy3r5so001ngrsy4rbnb9wz",
+      "webhookUrl": "http://localhost:3001/webhook/chat-integration",
+      "payload": {
+        "userId": "cmfw1e1qh0000017p2uxmcpi7",
+        "message": {
+          "type": "text",
+          "content": "seman",
+          "timestamp": "2025-09-24T14:51:41.208Z"
+        },
+        "messageId": "cmfy3r5so001ngrsy4rbnb9wz",
+        "sessionId": "cmfy3r04b001lgrsyc9s5fq75",
+        "guestEmail": null,
+        "userContext": {
+          "userInfo": {
+            "id": "cmfw1e1qh0000017p2uxmcpi7",
+            "name": "Admin User",
+            "email": "admin@jrm.com"
+          },
+          "isAuthenticated": true,
+          "membershipLevel": "guest",
+          "membershipTotal": 0
+        },
+        "sessionMetadata": {
+          "source": "chat-widget-authenticated",
+          "timestamp": "2025-09-24T14:51:33.690Z",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+          "authenticationType": "session-based"
+        }
+      },
+      "status": "completed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "nextRetryAt": "2025-09-24T14:51:41.382Z",
+      "lastError": null,
+      "createdAt": "2025-09-24T14:51:41.382Z",
+      "updatedAt": "2025-09-24T14:51:45.843Z"
+    }
+  ],
+  "stats": {
+    "total_sessions": 11,
+    "total_messages": 20,
+    "total_webhook_queue": 10
+  }
+}

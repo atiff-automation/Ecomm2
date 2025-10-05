@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Menu,
   UserPlus,
+  MessageSquare,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -145,12 +146,6 @@ const navigationItems: NavigationItem[] = [
     ],
   },
   {
-    id: 'agent-applications',
-    label: 'Agent Applications',
-    href: '/admin/agent-applications',
-    icon: UserPlus,
-  },
-  {
     id: 'payments',
     label: 'Payments',
     href: '/admin/payments',
@@ -227,6 +222,12 @@ const navigationItems: NavigationItem[] = [
     label: 'Agent Applications',
     href: '/admin/agent-applications',
     icon: UserPlus,
+  },
+  {
+    id: 'chat-config',
+    label: 'Chat Config',
+    href: '/admin/chat-config',
+    icon: MessageSquare,
   },
 ];
 

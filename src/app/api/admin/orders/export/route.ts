@@ -10,8 +10,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { formatDateForFilename } from '@/lib/chat/data-management';
 import { z } from 'zod';
+
+// Utility function for filename formatting
+const formatDateForFilename = (date: Date = new Date()): string => {
+  return date.toISOString().split('T')[0].replace(/-/g, '');
+};
 
 const exportSchema = z.object({
   format: z.enum(['csv', 'json']).default('csv'),

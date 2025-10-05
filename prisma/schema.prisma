@@ -27,7 +27,6 @@ model User {
   addresses                 Address[]
   auditLogs                 AuditLog[]
   cartItems                 CartItem[]
-  chatSessions              ChatSession[]
   complianceReports         ComplianceReport[]
   discountCodesCreated      DiscountCode[]
   discountUsage             DiscountUsage[]
@@ -1019,123 +1018,6 @@ model ReceiptTemplate {
   @@map("receipt_templates")
 }
 
-model ChatSession {
-  id           String        @id @default(cuid())
-  userId       String?
-  guestEmail   String?
-  status       String        @default("active")
-  metadata     Json?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  expiresAt    DateTime?
-  archivedAt   DateTime?
-  endedAt      DateTime?
-  guestPhone   String?
-  ipAddress    String?
-  lastActivity DateTime      @default(now())
-  sessionId    String        @unique @default(cuid())
-  userAgent    String?
-  messages     ChatMessage[]
-  user         User?         @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([sessionId])
-  @@index([status])
-  @@index([lastActivity])
-  @@index([expiresAt])
-  @@index([guestPhone])
-  @@map("chat_sessions")
-}
-
-model ChatMessage {
-  id              String             @id @default(cuid())
-  sessionId       String
-  senderType      String
-  content         String
-  messageType     String             @default("text")
-  metadata        Json?
-  status          String             @default("delivered")
-  webhookAttempts Int                @default(0)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  session         ChatSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  webhookQueue    ChatWebhookQueue[]
-
-  @@index([sessionId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("chat_messages")
-}
-
-model ChatWebhookQueue {
-  id          String      @id @default(cuid())
-  messageId   String
-  webhookUrl  String
-  payload     Json
-  status      String      @default("pending")
-  attempts    Int         @default(0)
-  maxAttempts Int         @default(3)
-  nextRetryAt DateTime    @default(now())
-  lastError   String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@index([status])
-  @@index([nextRetryAt])
-  @@index([messageId])
-  @@map("chat_webhook_queue")
-}
-
-model ChatConfig {
-  id                                 String    @id @default(cuid())
-  webhookUrl                         String?
-  webhookSecret                      String?
-  apiKey                             String?
-  sessionTimeoutMinutes              Int       @default(30)
-  guestSessionTimeoutMinutes         Int       @default(13)
-  authenticatedSessionTimeoutMinutes Int       @default(19)
-  maxMessageLength                   Int       @default(4000)
-  rateLimitMessages                  Int       @default(20)
-  rateLimitWindowMs                  Int       @default(60000)
-  queueEnabled                       Boolean   @default(true)
-  queueMaxRetries                    Int       @default(3)
-  queueRetryDelayMs                  Int       @default(5000)
-  queueBatchSize                     Int       @default(10)
-  welcomeMessage                     String?   @default("Hi! How can we help you today?")
-  agentName                          String?   @default("Customer Support")
-  botIconUrl                         String?
-  isActive                           Boolean   @unique(map: "unique_active_chat_config") @default(true)
-  verified                           Boolean   @default(false)
-  lastHealthCheck                    DateTime?
-  healthStatus                       String    @default("UNKNOWN")
-  createdBy                          String?
-  updatedBy                          String?
-  createdAt                          DateTime  @default(now())
-  updatedAt                          DateTime  @updatedAt
-
-  @@index([isActive])
-  @@index([verified])
-  @@index([healthStatus])
-  @@map("chat_config")
-}
-
-model ChatBackup {
-  id           String   @id @default(cuid())
-  filename     String   @unique
-  month        Int
-  year         Int
-  createdAt    DateTime @default(now())
-  fileSize     BigInt
-  sessionCount Int
-  status       String
-
-  @@unique([month, year])
-  @@index([year, month])
-  @@index([status])
-  @@index([createdAt])
-  @@map("chat_backups")
-}
 
 model NotificationLog {
   id               String   @id @default(cuid())

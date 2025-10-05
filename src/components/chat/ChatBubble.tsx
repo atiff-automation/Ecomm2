@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { chatUtils } from './utils/chat-utils';
 import type { ChatConfig } from './types';
 
 interface ChatBubbleProps {
@@ -19,8 +18,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   config,
   onClick,
 }) => {
-  const themeClasses = chatUtils.getThemeClasses(config);
-  const themeStyles = chatUtils.generateThemeStyles(config);
+  const themeStyles = {
+    '--chat-primary': config.primaryColor || '#10b981',
+  } as React.CSSProperties;
 
   const bubbleClasses = [
     'chat-bubble',

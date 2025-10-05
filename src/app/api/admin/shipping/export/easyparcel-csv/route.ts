@@ -10,7 +10,10 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { formatDateForFilename } from '@/lib/chat/data-management';
+// Utility function for filename formatting
+const formatDateForFilename = (date: Date = new Date()): string => {
+  return date.toISOString().split('T')[0].replace(/-/g, '');
+};
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 import {
