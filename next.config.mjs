@@ -51,21 +51,16 @@ const nextConfig = {
     reactRemoveProperties: process.env.NODE_ENV === 'production',
   },
 
-  // Images optimization
+  // Images - COMPLETELY DISABLE ALL OPTIMIZATION
   images: {
     // Railway domain configuration
     domains: process.env.NODE_ENV === 'production'
       ? [process.env.RAILWAY_STATIC_URL?.replace('https://', '') || 'localhost']
       : ['localhost'],
-    // Default Next.js image optimization for internal uploads
-    formats: ['image/webp', 'image/avif'],
-    // Enable image optimization
-    minimumCacheTTL: 60,
+    // DISABLE all Next.js image optimization - serve originals only
+    unoptimized: true, // Disable optimization in ALL environments
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    // Allow loading images from API routes (Railway Volume)
-    loader: 'default',
-    unoptimized: process.env.NODE_ENV === 'production', // Disable Next.js optimization in production (use our API routes)
   },
 
   // Webpack optimizations
