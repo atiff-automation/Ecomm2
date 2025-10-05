@@ -5,6 +5,7 @@
  */
 
 import { writeFile, mkdir } from 'fs/promises';
+import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import sharp from 'sharp';
@@ -59,6 +60,13 @@ const UPLOAD_DIR = isProduction
 const TEMP_DIR = isProduction
   ? path.join('/data', 'uploads', 'temp')
   : path.join(process.cwd(), IMAGE_CONFIG.upload.tempPath);
+
+/**
+ * Get upload directory path
+ */
+function getUploadDirectory(): string {
+  return UPLOAD_DIR;
+}
 
 /**
  * Ensure upload directories exist
@@ -378,7 +386,7 @@ export async function uploadProductImageLegacy(
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
       const ext = file.name.split('.').pop() || 'jpg';
-      const uuid = generateUUID();
+      const uuid = uuidv4().substring(0, 8);
       const sanitizedName = file.name
         .replace(/\.[^/.]+$/, '') // Remove extension
         .replace(/[^a-zA-Z0-9-_]/g, '-')
