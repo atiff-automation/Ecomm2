@@ -1438,6 +1438,8 @@ export default function CheckoutPage() {
                           }
                           width={48}
                           height={48}
+                          quality={100}
+                          unoptimized={true}
                           className="object-cover w-full h-full"
                         />
                       ) : (

@@ -196,6 +196,8 @@ export default function WishlistPage() {
               src={item.product.primaryImage.url}
               alt={item.product.primaryImage.altText || item.product.name}
               fill
+              quality={100}
+              unoptimized={true}
               className="object-cover group-hover:scale-105 transition-transform duration-200"
             />
           ) : (

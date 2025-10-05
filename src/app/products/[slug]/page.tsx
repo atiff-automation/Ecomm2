@@ -326,6 +326,8 @@ export default function ProductDetailPage() {
                   product.images[selectedImageIndex]?.altText || product.name
                 }
                 fill
+                quality={100}
+                unoptimized={true}
                 className="object-cover"
                 priority
               />
@@ -383,6 +385,8 @@ export default function ProductDetailPage() {
                     src={image.url}
                     alt={image.altText || product.name}
                     fill
+                    quality={100}
+                    unoptimized={true}
                     className="object-cover"
                   />
                 </button>
@@ -787,6 +791,8 @@ export default function ProductDetailPage() {
                         src={primaryImage.url}
                         alt={relatedProduct.name}
                         fill
+                        quality={100}
+                        unoptimized={true}
                         className="object-cover group-hover:scale-105 transition-transform"
                       />
                     ) : (

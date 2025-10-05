@@ -212,6 +212,8 @@ export default function CartPage() {
                           item.product.primaryImage.altText || item.product.name
                         }
                         fill
+                        quality={100}
+                        unoptimized={true}
                         className="object-cover"
                       />
                     ) : (

@@ -177,6 +177,8 @@ export default function ComparisonPage() {
                         src={product.images[0]}
                         alt={product.name}
                         fill
+                        quality={100}
+                        unoptimized={true}
                         className="object-cover"
                       />
                     ) : (

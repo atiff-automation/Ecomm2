@@ -291,6 +291,8 @@ export default function ProductsPage() {
               src={primaryImage.url}
               alt={primaryImage.altText || product.name}
               fill
+              quality={100}
+              unoptimized={true}
               className="object-cover group-hover:scale-105 transition-transform duration-200"
             />
           ) : (

@@ -368,7 +368,8 @@ export default function ImageUpload({
                   width={200}
                   height={200}
                   className="w-full h-full object-cover"
-                  unoptimized={false}
+                  quality={100}
+                  unoptimized={true}
                 />
               </div>
 
