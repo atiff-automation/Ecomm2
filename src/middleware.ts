@@ -66,7 +66,7 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     pathname.startsWith('/api/payment') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/upload') ||
-    pathname.startsWith('/api/site-customization')
+    (pathname.startsWith('/api/site-customization') && pathname !== '/api/site-customization/current')
   ) {
     return 'sensitive';
   }
