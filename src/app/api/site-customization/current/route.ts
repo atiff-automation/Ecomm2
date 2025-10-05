@@ -15,8 +15,16 @@ import { siteCustomizationService } from '@/lib/services/site-customization.serv
  */
 export async function GET() {
   try {
+    console.log('🔍 GET /api/site-customization/current - Starting...');
+
     // Get current configuration from unified system
     const config = await siteCustomizationService.getConfiguration();
+
+    console.log('✅ Configuration retrieved:', {
+      hasHero: !!config.hero,
+      heroTitle: config.hero?.title,
+      heroBackground: config.hero?.background
+    });
 
     // Extract theme configuration from branding
     const theme = {
@@ -75,7 +83,11 @@ export async function GET() {
       message: 'Site customization retrieved successfully',
     });
   } catch (error) {
-    console.error('Error fetching site customization:', error);
+    console.error('❌ ERROR in /api/site-customization/current:', error);
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
 
     // Return defaults in case of error
     return NextResponse.json({
