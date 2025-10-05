@@ -49,11 +49,12 @@ export interface ImageProcessingConfig {
  */
 export const IMAGE_CONFIG: ImageProcessingConfig = {
   // Standardized image sizes for e-commerce
+  // All sizes use 95% quality for maximum clarity (no optimization)
   sizes: {
     micro: {
       width: 50,
       height: 50,
-      quality: 60,
+      quality: 95,
       suffix: 'micro',
       fit: 'cover',
       description: 'Grid previews and micro thumbnails',
@@ -61,7 +62,7 @@ export const IMAGE_CONFIG: ImageProcessingConfig = {
     small: {
       width: 150,
       height: 150,
-      quality: 70,
+      quality: 95,
       suffix: 'sm',
       fit: 'cover',
       description: 'Product list thumbnails',
@@ -69,7 +70,7 @@ export const IMAGE_CONFIG: ImageProcessingConfig = {
     medium: {
       width: 300,
       height: 300,
-      quality: 80,
+      quality: 95,
       suffix: 'md',
       fit: 'cover',
       description: 'Product card images',
@@ -77,7 +78,7 @@ export const IMAGE_CONFIG: ImageProcessingConfig = {
     large: {
       width: 600,
       height: 600,
-      quality: 85,
+      quality: 95,
       suffix: 'lg',
       fit: 'inside',
       description: 'Product detail preview',
@@ -85,7 +86,7 @@ export const IMAGE_CONFIG: ImageProcessingConfig = {
     hero: {
       width: 1200,
       height: 1200,
-      quality: 90,
+      quality: 95,
       suffix: 'hero',
       fit: 'inside',
       description: 'Main product hero image',
