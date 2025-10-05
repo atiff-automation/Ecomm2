@@ -373,6 +373,58 @@ export async function uploadProductImageLegacy(
   file: File,
   options: any = {}
 ): Promise<{ success: boolean; url?: string; filename?: string; error?: string; width?: number; height?: number; size?: number }> {
+  // If preserveOriginal is true, skip all processing and store the original file
+  if (options.preserveOriginal === true) {
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const ext = file.name.split('.').pop() || 'jpg';
+      const uuid = generateUUID();
+      const sanitizedName = file.name
+        .replace(/\.[^/.]+$/, '') // Remove extension
+        .replace(/[^a-zA-Z0-9-_]/g, '-')
+        .substring(0, 20);
+
+      const filename = `${sanitizedName}-${uuid}-original.${ext}`;
+      const uploadDir = getUploadDirectory();
+      const fullPath = path.join(uploadDir, filename);
+
+      // Ensure upload directory exists
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      // Write original file directly - NO PROCESSING
+      await fs.writeFile(fullPath, buffer);
+
+      const stats = await fs.stat(fullPath);
+
+      // Try to get image dimensions if it's an image
+      let width, height;
+      try {
+        const metadata = await sharp(buffer).metadata();
+        width = metadata.width;
+        height = metadata.height;
+      } catch {
+        // Not an image or can't read metadata
+        width = 0;
+        height = 0;
+      }
+
+      return {
+        success: true,
+        url: getImageUrl(filename),
+        filename: filename,
+        width: width,
+        height: height,
+        size: stats.size,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+      };
+    }
+  }
+
+  // Default legacy behavior - create medium size
   const result = await uploadProductImage(file, {
     sizes: ['medium'], // Single size for compatibility
     formats: ['webp', 'jpeg'], // Modern formats with fallback

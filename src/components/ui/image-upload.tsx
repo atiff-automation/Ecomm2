@@ -152,11 +152,10 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
 
-      // Use new optimized mode to generate all size variants
-      // This will create: small, medium, large, hero sizes
-      formData.append('legacy', 'false');
-      formData.append('sizes', 'small,medium,large,hero');
-      formData.append('formats', 'webp,jpeg');
+      // Use legacy mode but with preserveOriginal to store ORIGINAL files
+      // No resizing, no compression - just store the original uploaded file
+      formData.append('legacy', 'true');
+      formData.append('preserveOriginal', 'true');
 
       const response = await fetch(uploadPath || '/api/upload/image', {
         method: 'POST',
@@ -170,19 +169,8 @@ export default function ImageUpload({
 
       const result = await response.json();
 
-      // Return hero size URL for product detail pages (1200x1200 @ 90% quality)
-      // The API returns: { uuid, images: [{url, size, format}], metadata }
-      const heroImage = result.data.images?.find((img: any) =>
-        img.url.includes('-hero.webp')
-      );
-
-      return {
-        url: heroImage?.url || result.data.images?.[0]?.url,
-        filename: result.data.uuid,
-        width: 1200,
-        height: 1200,
-        size: heroImage?.fileSize
-      };
+      // Return the original file URL - no processing, no compression
+      return result.data;
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
