@@ -328,9 +328,15 @@ export class SiteCustomizationService {
 
       // Get current configuration to merge with updates
       const currentConfig = await this.getConfiguration();
-      
+
+      // Debug logging
+      console.log('🔧 Service - Incoming config update:', JSON.stringify(config, null, 2));
+      console.log('🔧 Service - Current config hero.background:', currentConfig.hero.background);
+
       // Deep merge configurations
       const mergedConfig = this.deepMerge(currentConfig, config);
+
+      console.log('🔧 Service - Merged config hero.background:', mergedConfig.hero.background);
       
       // Validate the merged configuration
       const validation = this.validateConfiguration(mergedConfig);
