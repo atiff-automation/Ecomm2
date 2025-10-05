@@ -296,7 +296,7 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6 text-sm">
               <Link
-                href="/products/new"
+                href="/products?sort=newest"
                 onClick={handleCategoryClick}
                 className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
               >
@@ -304,7 +304,7 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
                 New Arrivals
               </Link>
               <Link
-                href="/deals"
+                href="/products?promotional=true"
                 onClick={handleCategoryClick}
                 className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
               >
@@ -312,7 +312,7 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
                 Special Deals
               </Link>
               <Link
-                href="/products/bestsellers"
+                href="/products?sort=popular"
                 onClick={handleCategoryClick}
                 className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
               >

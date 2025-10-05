@@ -104,17 +104,15 @@ export function Footer({ className }: FooterProps) {
         { label: 'On Sale', href: '/products?promotional=true' },
         { label: 'New Arrivals', href: '/products?sort=newest' },
         { label: 'Best Sellers', href: '/products?sort=popular' },
-        { label: 'All Categories', href: '/categories' },
+        { label: 'All Products', href: '/products' },
       ]
     },
     {
       title: 'Customer Service',
       links: [
-        { label: 'Contact Us', href: '/contact' },
-        { label: 'Help Center', href: '/help' },
-        { label: 'Track Your Order', href: '/track' },
-        { label: 'Returns & Exchanges', href: '/returns' },
-        { label: 'Shipping Information', href: '/shipping' },
+        { label: 'Track Your Order', href: '/track-order' },
+        { label: 'Wishlist', href: '/wishlist' },
+        { label: 'FAQs', href: '/legal/terms' },
       ]
     },
     {
@@ -122,19 +120,16 @@ export function Footer({ className }: FooterProps) {
       links: [
         { label: 'My Account', href: '/member/profile' },
         { label: 'Order History', href: '/member/orders' },
-        { label: 'Wishlist', href: '/wishlist' },
-        { label: 'Membership Benefits', href: '/membership' },
+        { label: 'Membership Benefits', href: '/join' },
         { label: 'Sign Up', href: '/auth/signup' },
       ]
     },
     {
       title: 'Company',
       links: [
-        { label: 'About Us', href: '/about' },
-        { label: 'Careers', href: '/careers' },
         { label: 'Agent Program', href: '/apply-agent' },
-        { label: 'Press', href: '/press' },
-        { label: 'Blog', href: '/blog' },
+        { label: 'Privacy Policy', href: '/legal/privacy' },
+        { label: 'Terms of Service', href: '/legal/terms' },
       ]
     }
   ];

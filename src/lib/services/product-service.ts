@@ -466,18 +466,18 @@ export class ProductService {
   }
 
   /**
-   * Track product view for analytics and recommendations
+   * Track product view for recently viewed feature
    */
   async trackProductView(productId: string): Promise<void> {
     try {
       // Fire and forget - don't wait for response
       apiClient
-        .post('/api/analytics/product-view', { productId })
+        .post('/api/recently-viewed', { productId })
         .catch(error => {
           console.warn('Failed to track product view:', error);
         });
     } catch (error) {
-      // Silently fail - analytics shouldn't break user experience
+      // Silently fail - tracking shouldn't break user experience
       console.warn('ProductService.trackProductView error:', error);
     }
   }
