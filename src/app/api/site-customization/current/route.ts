@@ -92,7 +92,7 @@ export async function GET() {
       stack: error instanceof Error ? error.stack : undefined
     });
 
-    // Return defaults in case of error
+    // Return defaults in case of error WITH ERROR INFO
     return NextResponse.json({
       theme: {
         id: 'default',
@@ -127,6 +127,11 @@ export async function GET() {
       },
       sliderConfig: null,
       message: 'Using default site customization',
+      _error: {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        type: error instanceof Error ? error.constructor.name : typeof error
+      }
     });
   }
 }
