@@ -140,6 +140,8 @@ export default function HomePage() {
 
         if (customizationResponse.ok) {
           const customizationData = await customizationResponse.json();
+          console.log('🎨 Hero Section Data:', customizationData.heroSection);
+          console.log('🖼️ Background Image URL:', customizationData.heroSection?.backgroundImage);
           setSiteTheme(customizationData.theme);
           setHeroSection(customizationData.heroSection);
           setSliderConfig(customizationData.sliderConfig);

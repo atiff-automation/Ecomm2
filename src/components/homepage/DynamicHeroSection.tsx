@@ -170,6 +170,15 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
     }
   }, [currentSlide, activeSlides.length]);
 
+  // Debug logging
+  React.useEffect(() => {
+    if (heroSection) {
+      console.log('🎭 DynamicHeroSection - heroSection prop:', heroSection);
+      console.log('🖼️ DynamicHeroSection - backgroundImage:', heroSection.backgroundImage);
+      console.log('🎬 DynamicHeroSection - backgroundType:', heroSection.backgroundType);
+    }
+  }, [heroSection]);
+
   // Use defaults if no data, but preserve backgroundImage if provided
   const hero = heroSection
     ? {
