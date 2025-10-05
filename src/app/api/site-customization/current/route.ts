@@ -1,11 +1,10 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Public Site Customization API - Malaysian E-commerce Platform
  * Provides current active theme and hero section for frontend
  * Updated to use unified site customization system
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { siteCustomizationService } from '@/lib/services/site-customization.service';
