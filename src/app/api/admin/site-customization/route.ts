@@ -213,17 +213,22 @@ export async function PATCH(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+
+    console.log('🚀 POST /api/admin/site-customization - action:', action);
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+      console.log('❌ POST - Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
+    console.log('✅ POST - Authenticated as:', session.user.email, 'role:', session.user.role);
 
     if (action === 'reset') {
       console.log('🔄 Admin resetting site customization to defaults');
