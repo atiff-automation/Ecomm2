@@ -49,6 +49,14 @@ export async function GET() {
       isActive: true,
     };
 
+    // Debug logging
+    console.log('🔍 API - config.hero.background:', config.hero.background);
+    console.log('🔍 API - Transformed heroSection:', {
+      backgroundType: heroSection.backgroundType,
+      backgroundImage: heroSection.backgroundImage,
+      backgroundVideo: heroSection.backgroundVideo,
+    });
+
     // Extract branding configuration
     const branding = {
       logo: config.branding.logo || null,

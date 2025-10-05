@@ -176,6 +176,13 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       console.log('🎭 DynamicHeroSection - heroSection prop:', heroSection);
       console.log('🖼️ DynamicHeroSection - backgroundImage:', heroSection.backgroundImage);
       console.log('🎬 DynamicHeroSection - backgroundType:', heroSection.backgroundType);
+      console.log('✅ DynamicHeroSection - Condition check:', {
+        hasBackgroundImage: !!heroSection.backgroundImage,
+        isImageType: heroSection.backgroundType === 'IMAGE',
+        bothTrue: !!heroSection.backgroundImage && heroSection.backgroundType === 'IMAGE',
+      });
+    } else {
+      console.log('⚠️ DynamicHeroSection - heroSection is null/undefined');
     }
   }, [heroSection]);
 
