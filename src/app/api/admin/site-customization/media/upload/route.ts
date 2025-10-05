@@ -86,11 +86,11 @@ export async function POST(request: NextRequest) {
     const uniqueId = uuidv4();
     const filename = `${uniqueId}${fileExtension}`;
 
-    // Create upload directory - use /tmp in production (Railway)
-    // Railway has ephemeral filesystem, so files go to /tmp
+    // Create upload directory - use Railway Volume in production
+    // Railway Volume mounted at /data provides persistent storage
     const isProduction = process.env.NODE_ENV === 'production';
     const uploadDir = isProduction
-      ? path.join('/tmp', 'uploads', 'hero')
+      ? path.join('/data', 'uploads', 'hero')
       : path.join(process.cwd(), 'public', 'uploads', 'hero');
 
     if (!existsSync(uploadDir)) {

@@ -25,16 +25,16 @@ export async function GET(
       );
     }
 
-    // Try to read from /tmp first (production), fallback to public/uploads
-    const tmpPath = path.join('/tmp', 'uploads', 'hero', filename);
+    // Try to read from Railway Volume first (production), fallback to public/uploads
+    const volumePath = path.join('/data', 'uploads', 'hero', filename);
     const publicPath = path.join(process.cwd(), 'public', 'uploads', 'hero', filename);
 
     let filePath: string;
     let fileBuffer: Buffer;
 
-    if (existsSync(tmpPath)) {
-      filePath = tmpPath;
-      fileBuffer = await readFile(tmpPath);
+    if (existsSync(volumePath)) {
+      filePath = volumePath;
+      fileBuffer = await readFile(volumePath);
     } else if (existsSync(publicPath)) {
       filePath = publicPath;
       fileBuffer = await readFile(publicPath);

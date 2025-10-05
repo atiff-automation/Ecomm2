@@ -333,10 +333,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create product
+    // Create product with many-to-many category relationship
+    const { categoryId, ...productFields } = productData;
     const product = await prisma.product.create({
       data: {
-        ...productData,
+        ...productFields,
+        memberPrice: productData.memberPrice || productData.regularPrice,
         status: 'ACTIVE',
         description: productData.description || null,
         shortDescription: productData.shortDescription || null,
@@ -351,13 +353,22 @@ export async function POST(request: NextRequest) {
         promotionEndDate: productData.promotionEndDate
           ? new Date(productData.promotionEndDate)
           : null,
+        categories: {
+          create: {
+            categoryId: categoryId,
+          },
+        },
       },
       include: {
-        category: {
+        categories: {
           select: {
-            id: true,
-            name: true,
-            slug: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         images: true,
