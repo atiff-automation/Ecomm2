@@ -275,6 +275,8 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
     const type = formData.get('type') as string; // 'hero_background', 'logo', 'favicon'
     const section = formData.get('section') as string; // 'hero' or 'branding'
 
+    console.log('📤 Upload Handler - type:', type, 'section:', section, 'file:', file?.name);
+
     if (!file) {
       return NextResponse.json(
         { success: false, error: 'No file provided' },
@@ -331,13 +333,20 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       ? `/api/media/site-customization/${filename}`
       : `/uploads/site-customization/${filename}`;
 
+    console.log('📤 Upload Handler - File saved to:', filePath);
+    console.log('📤 Upload Handler - Public URL:', fileUrl);
+
     // Update configuration with new file URL
     const updateConfig = buildUpdateConfigForUpload(type, section, fileUrl, formData);
-    
+
+    console.log('📤 Upload Handler - Update config:', JSON.stringify(updateConfig, null, 2));
+
     const result = await siteCustomizationService.updateConfiguration(
       updateConfig,
       userId
     );
+
+    console.log('📤 Upload Handler - Service result config.hero.background:', result.config.hero?.background);
 
     return NextResponse.json({
       success: true,
