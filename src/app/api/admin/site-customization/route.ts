@@ -305,8 +305,12 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       );
     }
 
-    // Create upload directory
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'site-customization');
+    // Create upload directory - use Railway Volume in production
+    const isProduction = process.env.NODE_ENV === 'production';
+    const uploadDir = isProduction
+      ? path.join('/data', 'uploads', 'site-customization')
+      : path.join(process.cwd(), 'public', 'uploads', 'site-customization');
+
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true });
     }
@@ -322,8 +326,10 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    // Generate public URL
-    const fileUrl = `/uploads/site-customization/${filename}`;
+    // Generate public URL - use API route in production for Railway Volume
+    const fileUrl = isProduction
+      ? `/api/media/site-customization/${filename}`
+      : `/uploads/site-customization/${filename}`;
 
     // Update configuration with new file URL
     const updateConfig = buildUpdateConfigForUpload(type, section, fileUrl, formData);

@@ -1,6 +1,6 @@
 /**
- * Media File Serving API - For Railway Production
- * Serves uploaded files from /tmp directory
+ * Media File Serving API - Site Customization Files
+ * Serves uploaded site customization files from Railway Volume
  */
 
 export const dynamic = 'force-dynamic';
@@ -25,29 +25,19 @@ export async function GET(
       );
     }
 
-    // Try to read from Railway Volume first (production), fallback to public/uploads
-    // Check both hero and site-customization directories
-    const volumeHeroPath = path.join('/data', 'uploads', 'hero', filename);
-    const volumeSitePath = path.join('/data', 'uploads', 'site-customization', filename);
-    const publicHeroPath = path.join(process.cwd(), 'public', 'uploads', 'hero', filename);
-    const publicSitePath = path.join(process.cwd(), 'public', 'uploads', 'site-customization', filename);
+    // Try to read from /data first (production), fallback to public/uploads
+    const volumePath = path.join('/data', 'uploads', 'site-customization', filename);
+    const publicPath = path.join(process.cwd(), 'public', 'uploads', 'site-customization', filename);
 
     let filePath: string;
     let fileBuffer: Buffer;
 
-    // Try all possible paths in order
-    if (existsSync(volumeHeroPath)) {
-      filePath = volumeHeroPath;
-      fileBuffer = await readFile(volumeHeroPath);
-    } else if (existsSync(volumeSitePath)) {
-      filePath = volumeSitePath;
-      fileBuffer = await readFile(volumeSitePath);
-    } else if (existsSync(publicHeroPath)) {
-      filePath = publicHeroPath;
-      fileBuffer = await readFile(publicHeroPath);
-    } else if (existsSync(publicSitePath)) {
-      filePath = publicSitePath;
-      fileBuffer = await readFile(publicSitePath);
+    if (existsSync(volumePath)) {
+      filePath = volumePath;
+      fileBuffer = await readFile(volumePath);
+    } else if (existsSync(publicPath)) {
+      filePath = publicPath;
+      fileBuffer = await readFile(publicPath);
     } else {
       return NextResponse.json(
         { message: 'File not found' },
@@ -63,10 +53,10 @@ export async function GET(
       '.png': 'image/png',
       '.gif': 'image/gif',
       '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
       '.mp4': 'video/mp4',
       '.webm': 'video/webm',
-      '.avi': 'video/avi',
-      '.mov': 'video/quicktime',
     };
 
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
@@ -79,7 +69,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error serving media file:', error);
+    console.error('Error serving site customization file:', error);
     return NextResponse.json(
       { message: 'Failed to serve file' },
       { status: 500 }
