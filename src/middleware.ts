@@ -77,14 +77,16 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     pathname.startsWith('/api/user') ||
     pathname.startsWith('/api/settings') ||
     pathname.startsWith('/api/orders') ||
-    pathname.startsWith('/api/wishlist') ||
-    pathname.startsWith('/api/chat/send')
+    pathname.startsWith('/api/wishlist')
   ) {
     return 'authenticated';
   }
 
-  // Cart operations - standard protection
-  if (pathname.startsWith('/api/cart')) {
+  // Standard protection - allows both guest and authenticated users
+  if (
+    pathname.startsWith('/api/cart') ||
+    pathname.startsWith('/api/chat/send')
+  ) {
     return 'standard';
   }
 
