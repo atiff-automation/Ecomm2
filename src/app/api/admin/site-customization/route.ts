@@ -11,10 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { siteCustomizationService } from '@/lib/services/site-customization.service';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { uploadHeroImage } from '@/lib/upload/hero-image-upload';
 
 // ==================== CONFIGURATION ENDPOINTS ====================
 
@@ -280,7 +277,13 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
     const type = formData.get('type') as string; // 'hero_background', 'logo', 'favicon'
     const section = formData.get('section') as string; // 'hero' or 'branding'
 
-    console.log('📤 Upload Handler - type:', type, 'section:', section, 'file:', file?.name);
+    console.log('📤 Upload Handler - Starting upload:', {
+      type,
+      section,
+      filename: file?.name,
+      size: file?.size,
+      mimeType: file?.type
+    });
 
     if (!file) {
       return NextResponse.json(
@@ -291,8 +294,8 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
 
     if (!type || !section) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Missing required parameters',
           details: 'Both "type" and "section" are required'
         },
@@ -300,62 +303,49 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       );
     }
 
-    // Validate file based on type
-    const validation = validateUploadedFile(file, type);
-    if (!validation.isValid) {
+    // Upload file using centralized utility (follows product image pattern)
+    const uploadResult = await uploadHeroImage(
+      file,
+      type as 'hero_background' | 'logo' | 'favicon'
+    );
+
+    if (!uploadResult.success) {
+      console.error('❌ Upload failed:', uploadResult.error);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: validation.error 
+        {
+          success: false,
+          error: uploadResult.error || 'Upload failed'
         },
         { status: 400 }
       );
     }
 
-    // Create upload directory - use Railway Volume in production
-    const isProduction = process.env.NODE_ENV === 'production';
-    const uploadDir = isProduction
-      ? path.join('/data', 'uploads', 'site-customization')
-      : path.join(process.cwd(), 'public', 'uploads', 'site-customization');
+    const { url: fileUrl, filename } = uploadResult;
 
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
+    console.log('✅ File uploaded successfully:', {
+      filename,
+      url: fileUrl
+    });
 
-    // Generate unique filename
-    const fileExtension = path.extname(file.name);
-    const uniqueId = uuidv4();
-    const filename = `${type}-${uniqueId}${fileExtension}`;
-    const filePath = path.join(uploadDir, filename);
+    // Build configuration update
+    const updateConfig = buildUpdateConfigForUpload(type, section, fileUrl!, formData);
 
-    // Write file to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    console.log('🔧 Updating configuration:', JSON.stringify(updateConfig, null, 2));
 
-    // Generate public URL - use API route in production for Railway Volume
-    const fileUrl = isProduction
-      ? `/api/media/site-customization/${filename}`
-      : `/uploads/site-customization/${filename}`;
-
-    console.log('📤 Upload Handler - File saved to:', filePath);
-    console.log('📤 Upload Handler - Public URL:', fileUrl);
-
-    // Update configuration with new file URL
-    const updateConfig = buildUpdateConfigForUpload(type, section, fileUrl, formData);
-
-    console.log('📤 Upload Handler - Update config:', JSON.stringify(updateConfig, null, 2));
-
+    // Update configuration through service
     const result = await siteCustomizationService.updateConfiguration(
       updateConfig,
       userId
     );
 
-    console.log('📤 Upload Handler - Service result config.hero.background:', result.config.hero?.background);
+    console.log('✅ Configuration updated:', {
+      heroBackground: result.config.hero?.background
+    });
 
     return NextResponse.json({
       success: true,
       fileUrl,
+      filename,
       config: result.config,
       validation: result.validation,
       preview: result.preview,
@@ -363,7 +353,7 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
     });
 
   } catch (error) {
-    console.error('Error handling media upload:', error);
+    console.error('❌ Media upload error:', error);
     return NextResponse.json(
       {
         success: false,
@@ -373,51 +363,6 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       { status: 500 }
     );
   }
-}
-
-function validateUploadedFile(file: File, type: string): { isValid: boolean; error?: string } {
-  const validations: Record<string, { 
-    maxSize: number; 
-    allowedTypes: string[];
-    name: string;
-  }> = {
-    hero_background: {
-      maxSize: 10 * 1024 * 1024, // 10MB
-      allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'],
-      name: 'Hero background'
-    },
-    logo: {
-      maxSize: 5 * 1024 * 1024, // 5MB
-      allowedTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'],
-      name: 'Logo'
-    },
-    favicon: {
-      maxSize: 1 * 1024 * 1024, // 1MB
-      allowedTypes: ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'],
-      name: 'Favicon'
-    }
-  };
-
-  const rules = validations[type];
-  if (!rules) {
-    return { isValid: false, error: `Invalid upload type: ${type}` };
-  }
-
-  if (file.size > rules.maxSize) {
-    return { 
-      isValid: false, 
-      error: `${rules.name} file size too large. Maximum: ${rules.maxSize / 1024 / 1024}MB` 
-    };
-  }
-
-  if (!rules.allowedTypes.includes(file.type)) {
-    return { 
-      isValid: false, 
-      error: `Invalid ${rules.name} file type. Allowed: ${rules.allowedTypes.join(', ')}` 
-    };
-  }
-
-  return { isValid: true };
 }
 
 function buildUpdateConfigForUpload(
