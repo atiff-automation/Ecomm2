@@ -152,16 +152,11 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
 
-      // Use legacy mode for backward compatibility with existing ProductForm
-      formData.append('legacy', 'true');
-
-      // These parameters are now handled by the centralized configuration
-      // but we still include them for compatibility
-      formData.append('maxWidth', '1200');
-      formData.append('maxHeight', '1200');
-      formData.append('quality', '85');
-      formData.append('format', 'webp');
-      formData.append('thumbnail', 'true');
+      // Use new optimized mode to generate all size variants
+      // This will create: small, medium, large, hero sizes
+      formData.append('legacy', 'false');
+      formData.append('sizes', 'small,medium,large,hero');
+      formData.append('formats', 'webp,jpeg');
 
       const response = await fetch(uploadPath || '/api/upload/image', {
         method: 'POST',
@@ -174,7 +169,20 @@ export default function ImageUpload({
       }
 
       const result = await response.json();
-      return result.data;
+
+      // Return hero size URL for product detail pages (1200x1200 @ 90% quality)
+      // The API returns: { uuid, images: [{url, size, format}], metadata }
+      const heroImage = result.data.images?.find((img: any) =>
+        img.url.includes('-hero.webp')
+      );
+
+      return {
+        url: heroImage?.url || result.data.images?.[0]?.url,
+        filename: result.data.uuid,
+        width: 1200,
+        height: 1200,
+        size: heroImage?.fileSize
+      };
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
