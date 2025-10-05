@@ -15,16 +15,17 @@ import { siteCustomizationService } from '@/lib/services/site-customization.serv
  */
 export async function GET() {
   try {
-    console.log('🔍 GET /api/site-customization/current - Starting...');
+    console.error('🔍 GET /api/site-customization/current - Starting...');
 
     // Get current configuration from unified system
     const config = await siteCustomizationService.getConfiguration();
 
-    console.log('✅ Configuration retrieved:', {
+    console.error('✅ Configuration retrieved:', JSON.stringify({
       hasHero: !!config.hero,
       heroTitle: config.hero?.title,
-      heroBackground: config.hero?.background
-    });
+      heroBackground: config.hero?.background,
+      fullHero: config.hero
+    }, null, 2));
 
     // Extract theme configuration from branding
     const theme = {
@@ -57,13 +58,15 @@ export async function GET() {
       isActive: true,
     };
 
-    // Debug logging
-    console.log('🔍 API - config.hero.background:', config.hero.background);
-    console.log('🔍 API - Transformed heroSection:', {
+    // Debug logging (using console.error so it appears in Railway logs)
+    console.error('🔍 API - config.hero.background:', JSON.stringify(config.hero.background));
+    console.error('🔍 API - Transformed heroSection:', JSON.stringify({
       backgroundType: heroSection.backgroundType,
       backgroundImage: heroSection.backgroundImage,
       backgroundVideo: heroSection.backgroundVideo,
-    });
+      title: heroSection.title,
+      subtitle: heroSection.subtitle
+    }));
 
     // Extract branding configuration
     const branding = {
