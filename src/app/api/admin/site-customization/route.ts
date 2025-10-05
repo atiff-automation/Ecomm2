@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { siteCustomizationService } from '@/lib/services/site-customization.service';
-import { uploadHeroImage } from '@/lib/upload/hero-image-upload';
+import { uploadHeroImage, deleteHeroImage } from '@/lib/upload/hero-image-upload';
 
 // ==================== CONFIGURATION ENDPOINTS ====================
 
@@ -402,4 +402,71 @@ function buildUpdateConfigForUpload(
   }
 
   return config;
+}
+
+// ==================== FILE DELETION ====================
+
+/**
+ * DELETE /api/admin/site-customization - Delete uploaded media file from volume
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const filename = searchParams.get('filename');
+
+    if (!filename) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Filename is required',
+          details: 'Provide filename query parameter'
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log('🗑️ Admin deleting site customization file:', filename);
+
+    // Delete file from volume
+    const success = await deleteHeroImage(filename);
+
+    if (!success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'File not found or already deleted',
+          details: `File ${filename} does not exist in volume`
+        },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ File deleted successfully from volume:', filename);
+
+    return NextResponse.json({
+      success: true,
+      message: 'File deleted successfully from volume',
+      filename
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting site customization file:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to delete file',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
 }

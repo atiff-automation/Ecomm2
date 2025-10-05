@@ -248,7 +248,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
 
   return (
     <section
-      className="relative text-white min-h-[700px] flex items-center group"
+      className="relative text-white min-h-[500px] sm:min-h-[600px] md:min-h-[650px] lg:min-h-[700px] xl:min-h-[750px] flex items-center group"
       style={backgroundStyle}
       onTouchStart={isSliderMode ? onTouchStart : undefined}
       onTouchMove={isSliderMode ? onTouchMove : undefined}
@@ -317,9 +317,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       />
 
       {/* Hero Content */}
-      <div className="relative z-10 container mx-auto px-4">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <div
-          className={`max-w-4xl ${
+          className={`max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl ${
             hero.textAlignment === 'center'
               ? 'mx-auto text-center'
               : hero.textAlignment === 'right'
@@ -330,15 +330,15 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
           {/* Title Section - Only show if enabled */}
           {hero.showTitle && (
             <>
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl font-bold mb-3 sm:mb-4 leading-tight">
                 {hero.title}
               </h1>
 
-              <p className="text-xl md:text-2xl mb-6 text-blue-100">
+              <p className="text-lg sm:text-xl md:text-xl lg:text-2xl mb-4 sm:mb-6 text-blue-100">
                 {hero.subtitle}
               </p>
 
-              <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl">
+              <p className="text-base sm:text-lg md:text-lg lg:text-xl mb-6 sm:mb-8 text-gray-200 max-w-2xl">
                 {hero.description}
               </p>
             </>
@@ -347,7 +347,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
           {/* CTA Buttons - Only show if enabled */}
           {hero.showCTA && (
             <div
-              className={`flex flex-col sm:flex-row gap-4 ${
+              className={`flex flex-col sm:flex-row gap-3 sm:gap-4 ${
                 hero.textAlignment === 'center'
                   ? 'justify-center'
                   : hero.textAlignment === 'right'
@@ -358,7 +358,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
               {hero.ctaPrimaryText && (
                 <a
                   href={hero.ctaPrimaryLink}
-                  className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-3 text-base sm:text-lg font-semibold rounded-lg transition-colors min-h-[48px] sm:min-h-[44px]"
                   style={{
                     backgroundColor: theme.secondaryColor,
                     color: theme.textColor,
@@ -385,7 +385,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
               {hero.ctaSecondaryText && (
                 <a
                   href={hero.ctaSecondaryLink}
-                  className="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-blue-900 transition-colors"
+                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-3 text-base sm:text-lg font-semibold rounded-lg border-2 border-white text-white hover:bg-white hover:text-blue-900 transition-colors min-h-[48px] sm:min-h-[44px]"
                 >
                   {hero.ctaSecondaryText}
                 </a>
@@ -398,35 +398,35 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       {/* Slider Navigation Controls */}
       {isSliderMode && activeSlides.length > 1 && (
         <>
-          {/* Navigation Arrows */}
+          {/* Navigation Arrows - Larger on mobile */}
           {sliderConfig?.showArrows && (
             <>
               <button
                 onClick={goToPrevious}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-14 h-14 sm:w-12 sm:h-12 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Previous slide"
               >
-                <ChevronLeft className="h-6 w-6" />
+                <ChevronLeft className="h-7 w-7 sm:h-6 sm:w-6" />
               </button>
 
               <button
                 onClick={goToNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-14 h-14 sm:w-12 sm:h-12 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Next slide"
               >
-                <ChevronRight className="h-6 w-6" />
+                <ChevronRight className="h-7 w-7 sm:h-6 sm:w-6" />
               </button>
             </>
           )}
 
-          {/* Navigation Dots */}
+          {/* Navigation Dots - Larger for touch */}
           {sliderConfig?.showDots && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-2">
               {activeSlides.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => goToSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50 ${
+                  className={`w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50 ${
                     index === currentSlide
                       ? "bg-white scale-125"
                       : "bg-white/50 hover:bg-white/75"
@@ -437,17 +437,17 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
             </div>
           )}
 
-          {/* Play/Pause Control */}
+          {/* Play/Pause Control - Proper touch size */}
           {sliderConfig?.autoAdvance && (
             <button
               onClick={toggleAutoAdvance}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="absolute top-4 right-4 w-12 h-12 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
               aria-label={isPlaying && !isPaused ? "Pause slideshow" : "Play slideshow"}
             >
               {isPlaying && !isPaused ? (
-                <Pause className="h-5 w-5" />
+                <Pause className="h-5 w-5 sm:h-5 sm:w-5" />
               ) : (
-                <Play className="h-5 w-5" />
+                <Play className="h-5 w-5 sm:h-5 sm:w-5" />
               )}
             </button>
           )}

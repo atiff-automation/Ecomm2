@@ -249,6 +249,61 @@ export default function SiteCustomizationSettings() {
     }
   };
 
+  // ==================== FILE DELETION ====================
+
+  const handleFileRemove = async (
+    type: 'hero_background' | 'logo' | 'favicon',
+    section: 'hero' | 'branding'
+  ) => {
+    if (!config) return;
+
+    try {
+      // Get current file URL to extract filename
+      let currentUrl: string | undefined;
+
+      if (section === 'hero' && type === 'hero_background') {
+        currentUrl = config.hero.background.url;
+      } else if (section === 'branding') {
+        if (type === 'logo') {
+          currentUrl = config.branding.logo?.url;
+        } else if (type === 'favicon') {
+          currentUrl = config.branding.favicon?.url;
+        }
+      }
+
+      // Extract filename from URL
+      if (currentUrl) {
+        const filename = currentUrl.split('/').pop();
+
+        if (filename) {
+          console.log('🗑️ Deleting file from volume:', filename);
+
+          // Delete from volume
+          await fetch(`/api/admin/site-customization?filename=${filename}`, {
+            method: 'DELETE',
+          });
+
+          console.log('✅ File deleted from volume');
+        }
+      }
+
+      // Update config to remove URL
+      if (section === 'hero' && type === 'hero_background') {
+        updateConfig('hero.background.url', undefined);
+      } else if (section === 'branding' && type === 'logo') {
+        updateConfig('branding.logo', undefined);
+      } else if (section === 'branding' && type === 'favicon') {
+        updateConfig('branding.favicon', undefined);
+      }
+
+      toast.success('File removed successfully');
+
+    } catch (error) {
+      console.error('Error removing file:', error);
+      toast.error('Failed to remove file from volume');
+    }
+  };
+
   // ==================== FILE UPLOAD ====================
 
   const handleFileUpload = async (
@@ -262,6 +317,31 @@ export default function SiteCustomizationSettings() {
     try {
       setIsUploading(true);
       setUploadProgress(0);
+
+      // Delete old file from volume before uploading new one
+      let oldFilename: string | undefined;
+
+      if (section === 'hero' && type === 'hero_background') {
+        oldFilename = config.hero.background.url?.split('/').pop();
+      } else if (section === 'branding') {
+        if (type === 'logo') {
+          oldFilename = config.branding.logo?.url?.split('/').pop();
+        } else if (type === 'favicon') {
+          oldFilename = config.branding.favicon?.url?.split('/').pop();
+        }
+      }
+
+      if (oldFilename) {
+        console.log('🗑️ Deleting old file before upload:', oldFilename);
+        try {
+          await fetch(`/api/admin/site-customization?filename=${oldFilename}`, {
+            method: 'DELETE',
+          });
+          console.log('✅ Old file deleted from volume');
+        } catch (error) {
+          console.warn('⚠️ Failed to delete old file (may not exist):', error);
+        }
+      }
 
       const formData = new FormData();
       formData.append('file', file);
@@ -526,7 +606,7 @@ export default function SiteCustomizationSettings() {
               url: config.hero.background.url
             } : null}
             onUpload={(e) => handleFileUpload(e, 'hero_background', 'hero')}
-            onRemove={() => updateConfig('hero.background.url', undefined)}
+            onRemove={() => handleFileRemove('hero_background', 'hero')}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
             disabled={isUploading}
@@ -597,7 +677,7 @@ export default function SiteCustomizationSettings() {
                 height: config.branding.logo.height
               } : null}
               onUpload={(e) => handleFileUpload(e, 'logo', 'branding')}
-              onRemove={() => updateConfig('branding.logo', undefined)}
+              onRemove={() => handleFileRemove('logo', 'branding')}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               disabled={isUploading}
@@ -641,7 +721,7 @@ export default function SiteCustomizationSettings() {
                 url: config.branding.favicon.url
               } : null}
               onUpload={(e) => handleFileUpload(e, 'favicon', 'branding')}
-              onRemove={() => updateConfig('branding.favicon', undefined)}
+              onRemove={() => handleFileRemove('favicon', 'branding')}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               disabled={isUploading}

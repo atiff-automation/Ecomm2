@@ -952,7 +952,7 @@ export default function CheckoutPage() {
               </Alert>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="shippingFirstName">First Name *</Label>
                   <Input
@@ -966,6 +966,7 @@ export default function CheckoutPage() {
                       )
                     }
                     required
+                    className="h-12 sm:h-10"
                   />
                 </div>
                 <div>
@@ -981,11 +982,12 @@ export default function CheckoutPage() {
                       )
                     }
                     required
+                    className="h-12 sm:h-10"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="shippingEmail">Email *</Label>
                   <Input
@@ -996,6 +998,7 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'email', e.target.value)
                     }
                     required
+                    className="h-12 sm:h-10"
                   />
                 </div>
                 <div>
@@ -1009,11 +1012,11 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'phone', e.target.value)
                     }
                     required
-                    className={
+                    className={`h-12 sm:h-10 ${
                       fieldErrors['shippingAddress.phone']
                         ? 'border-red-300 focus:border-red-500'
                         : ''
-                    }
+                    }`}
                   />
                   {renderFieldError('shippingAddress.phone')}
                 </div>
@@ -1051,7 +1054,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Address fields ordered for optimal auto-fill workflow: Postcode → City → State */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Postal Code - First position for auto-fill workflow */}
                 <div>
                   <Label htmlFor="shippingPostcode">
@@ -1072,13 +1075,13 @@ export default function CheckoutPage() {
                     placeholder="e.g. 50000"
                     maxLength={5}
                     required
-                    className={
+                    className={`h-12 md:h-10 ${
                       !postcodeValidation.shipping.valid
                         ? 'border-red-300 focus:border-red-500'
                         : postcodeValidation.shipping.loading
                           ? 'border-blue-300 focus:border-blue-500'
                           : ''
-                    }
+                    }`}
                   />
                   {!postcodeValidation.shipping.valid &&
                     postcodeValidation.shipping.error && (
@@ -1110,7 +1113,7 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'city', e.target.value)
                     }
                     placeholder={postcodeValidation.shipping.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
-                    className={postcodeValidation.shipping.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}
+                    className={`h-12 md:h-10 ${postcodeValidation.shipping.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}`}
                     required
                   />
                 </div>
@@ -1130,7 +1133,7 @@ export default function CheckoutPage() {
                       handleAddressChange('shipping', 'state', value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 md:h-10">
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1201,7 +1204,7 @@ export default function CheckoutPage() {
             </CardHeader>
             {!useSameAddress && (
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="billingFirstName">First Name *</Label>
                     <Input
@@ -1215,6 +1218,7 @@ export default function CheckoutPage() {
                         )
                       }
                       required
+                      className="h-12 sm:h-10"
                     />
                   </div>
                   <div>
@@ -1230,11 +1234,12 @@ export default function CheckoutPage() {
                         )
                       }
                       required
+                      className="h-12 sm:h-10"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="billingEmail">Email *</Label>
                     <Input
@@ -1245,6 +1250,7 @@ export default function CheckoutPage() {
                         handleAddressChange('billing', 'email', e.target.value)
                       }
                       required
+                      className="h-12 sm:h-10"
                     />
                   </div>
                   <div>
@@ -1258,6 +1264,7 @@ export default function CheckoutPage() {
                         handleAddressChange('billing', 'phone', e.target.value)
                       }
                       required
+                      className="h-12 sm:h-10"
                     />
                   </div>
                 </div>
@@ -1288,7 +1295,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Address fields ordered for optimal auto-fill workflow: Postcode → City → State */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Postal Code - First position for auto-fill workflow */}
                   <div>
                     <Label htmlFor="billingPostcode">
@@ -1309,13 +1316,13 @@ export default function CheckoutPage() {
                       placeholder="e.g. 50000"
                       maxLength={5}
                       required
-                      className={
+                      className={`h-12 md:h-10 ${
                         !postcodeValidation.billing.valid
                           ? 'border-red-300 focus:border-red-500'
                           : postcodeValidation.billing.loading
                             ? 'border-blue-300 focus:border-blue-500'
                             : ''
-                      }
+                      }`}
                     />
                     {!postcodeValidation.billing.valid &&
                       postcodeValidation.billing.error && (
@@ -1347,7 +1354,7 @@ export default function CheckoutPage() {
                         handleAddressChange('billing', 'city', e.target.value)
                       }
                       placeholder={postcodeValidation.billing.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
-                      className={postcodeValidation.billing.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}
+                      className={`h-12 md:h-10 ${postcodeValidation.billing.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}`}
                       required
                     />
                   </div>
@@ -1367,7 +1374,7 @@ export default function CheckoutPage() {
                         handleAddressChange('billing', 'state', value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12 md:h-10">
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>

@@ -135,20 +135,20 @@ export function Header() {
                     alt="JRM E-commerce Logo"
                     width={siteCustomization.branding.logo.width}
                     height={siteCustomization.branding.logo.height}
-                    className="max-h-10 w-auto"
+                    className="max-h-8 sm:max-h-10 w-auto"
                     priority
                   />
                 ) : (
                   <>
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                       <span
-                        className="text-white font-bold text-sm"
+                        className="text-white font-bold text-xs sm:text-sm"
                         aria-hidden="true"
                       >
                         JRM
                       </span>
                     </div>
-                    <span className="hidden sm:inline-block font-bold text-xl">
+                    <span className="hidden sm:inline-block font-bold text-lg sm:text-xl">
                       E-commerce
                     </span>
                   </>

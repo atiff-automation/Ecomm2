@@ -204,7 +204,7 @@ export default function CartPage() {
               <CardContent className="p-6">
                 <div className="flex gap-4">
                   {/* Product Image */}
-                  <div className="relative w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                     {item.product.primaryImage ? (
                       <Image
                         src={item.product.primaryImage.url}
@@ -266,7 +266,7 @@ export default function CartPage() {
                         size="sm"
                         onClick={() => handleRemoveItem(item.id)}
                         disabled={updatingItem === item.id}
-                        className="text-red-600 hover:text-red-700 flex-shrink-0"
+                        className="text-red-600 hover:text-red-700 flex-shrink-0 w-11 h-11 sm:w-auto sm:h-auto p-2"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -384,7 +384,7 @@ export default function CartPage() {
                             disabled={
                               updatingItem === item.id || item.quantity <= 1
                             }
-                            className="w-10 h-10 p-0"
+                            className="w-11 h-11 sm:w-10 sm:h-10 p-0"
                           >
                             <Minus className="w-4 h-4" />
                           </Button>
@@ -411,7 +411,7 @@ export default function CartPage() {
                               updatingItem === item.id ||
                               item.quantity >= item.product.stockQuantity
                             }
-                            className="w-10 h-10 p-0"
+                            className="w-11 h-11 sm:w-10 sm:h-10 p-0"
                           >
                             <Plus className="w-4 h-4" />
                           </Button>

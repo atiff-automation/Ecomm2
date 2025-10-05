@@ -235,15 +235,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out flex flex-col ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 md:w-56 lg:w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        } md:translate-x-0`}
       >
         <div className="flex items-center justify-center h-20 px-6 border-b border-gray-200 relative">
           <DynamicAdminLogo />
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden absolute right-6 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            className="md:hidden absolute right-6 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
           >
             <X className="h-6 w-6" />
           </button>
@@ -313,16 +313,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      {/* Sidebar overlay for mobile */}
+      {/* Sidebar overlay for mobile/tablet */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="md:pl-56 lg:pl-64">
         {/* Top navigation */}
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
@@ -330,7 +330,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               {/* Mobile menu button */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
               >
                 <Menu className="h-6 w-6" />
               </button>

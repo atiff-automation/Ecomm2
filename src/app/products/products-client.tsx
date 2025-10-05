@@ -21,6 +21,13 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductsFilters } from './components/ProductsFilters';
 import { ProductsPagination } from './components/ProductsPagination';
@@ -29,6 +36,7 @@ import { ProductsLoading } from './components/ProductsLoading';
 import { useCart } from '@/hooks/use-cart';
 import { productService } from '@/lib/services/product-service';
 import { toast } from 'sonner';
+import { Filter } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -261,8 +269,8 @@ export function ProductsClient({
 
   return (
     <>
-      {/* Filters Sidebar */}
-      <div className="lg:w-80 space-y-6">
+      {/* Desktop Filters Sidebar - Hidden on mobile */}
+      <div className="hidden lg:block lg:w-80 space-y-6">
         <ProductsFilters
           categories={categories}
           currentSearch={currentParams.search}
@@ -278,6 +286,39 @@ export function ProductsClient({
 
       {/* Products Grid */}
       <div className="flex-1">
+        {/* Mobile Filter Button */}
+        <div className="lg:hidden mb-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full h-12 text-base"
+              >
+                <Filter className="mr-2 h-5 w-5" />
+                Filters & Sort
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <ProductsFilters
+                  categories={categories}
+                  currentSearch={currentParams.search}
+                  currentCategory={currentParams.category}
+                  currentSort={currentParams.sortBy}
+                  onSearchChange={handleSearchChange}
+                  onCategoryChange={handleCategoryChange}
+                  onSortChange={handleSortChange}
+                  onClearFilters={handleClearFilters}
+                  disabled={isLoading}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
         {error ? (
           <ProductsError
             message={error}
@@ -297,7 +338,7 @@ export function ProductsClient({
                   <Button onClick={handleClearFilters}>Clear Filters</Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {products.map(product => (
                     <ProductCard
                       key={product.id}

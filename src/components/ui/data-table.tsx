@@ -111,61 +111,73 @@ export function DataTable<T extends Record<string, any>>({
       {sortedData.length === 0 ? (
         <EmptyState title="No Results" description={emptyMessage} />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {columns.map(column => (
-                  <th
-                    key={String(column.key)}
-                    className={cn(
-                      'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
-                      column.sortable && 'cursor-pointer hover:bg-gray-100',
-                      column.width && `w-${column.width}`
-                    )}
-                    onClick={() => column.sortable && handleSort(column.key)}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>{column.header}</span>
-                      {column.sortable && (
-                        <span className="text-gray-400">
-                          {sortConfig?.key === column.key
-                            ? sortConfig.direction === 'asc'
-                              ? '↑'
-                              : '↓'
-                            : '↕'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedData.map((item, index) => (
-                <tr
-                  key={index}
-                  className={cn(
-                    'hover:bg-gray-50',
-                    onRowClick && 'cursor-pointer'
-                  )}
-                  onClick={() => onRowClick?.(item)}
-                >
-                  {columns.map(column => (
-                    <td
-                      key={String(column.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                    >
-                      {column.render
-                        ? column.render(item[column.key], item)
-                        : String(item[column.key] || '')}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Scroll wrapper */}
+          <div className="w-full overflow-x-auto">
+            <div className="inline-block min-w-full align-middle">
+              <div className="overflow-hidden border rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {columns.map(column => (
+                        <th
+                          key={String(column.key)}
+                          className={cn(
+                            'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap',
+                            column.sortable && 'cursor-pointer hover:bg-gray-100',
+                            column.width && `w-${column.width}`
+                          )}
+                          onClick={() => column.sortable && handleSort(column.key)}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>{column.header}</span>
+                            {column.sortable && (
+                              <span className="text-gray-400">
+                                {sortConfig?.key === column.key
+                                  ? sortConfig.direction === 'asc'
+                                    ? '↑'
+                                    : '↓'
+                                  : '↕'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedData.map((item, index) => (
+                      <tr
+                        key={index}
+                        className={cn(
+                          'hover:bg-gray-50',
+                          onRowClick && 'cursor-pointer'
+                        )}
+                        onClick={() => onRowClick?.(item)}
+                      >
+                        {columns.map(column => (
+                          <td
+                            key={String(column.key)}
+                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {column.render
+                              ? column.render(item[column.key], item)
+                              : String(item[column.key] || '')}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile scroll indicator */}
+          <div className="md:hidden text-xs text-muted-foreground text-center mt-2">
+            ← Scroll horizontally to view more →
+          </div>
+        </>
       )}
     </div>
   );

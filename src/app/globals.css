@@ -62,4 +62,22 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Touch Target Utilities - iOS/Android Standards */
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px];
+  }
+
+  .touch-target-sm {
+    @apply min-w-[40px] min-h-[40px];
+  }
+
+  .touch-target-lg {
+    @apply min-w-[48px] min-h-[48px];
+  }
+
+  /* Responsive Touch Targets */
+  .touch-target-responsive {
+    @apply min-w-[48px] min-h-[48px] sm:min-w-[44px] sm:min-h-[44px];
+  }
 }

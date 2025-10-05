@@ -121,12 +121,12 @@ export function ProductCard({
               productId={product.id}
               size="sm"
               variant="secondary"
-              className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+              className="w-8 h-8 sm:w-9 sm:h-9 p-0 bg-white/90 hover:bg-white"
             />
           </div>
         </div>
 
-        <CardContent className="p-4 flex-1 flex flex-col">
+        <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
           <div className="flex flex-col h-full">
             {/* Top Section - Category, Name, Description, Rating */}
             <div className="flex-1 space-y-2 mb-4">
@@ -137,7 +137,7 @@ export function ProductCard({
 
               {/* Product Name */}
               <h3
-                className={`font-semibold line-clamp-1 hover:text-primary transition-colors ${sizeClasses[size]} min-h-[1.5rem]`}
+                className={`font-semibold line-clamp-1 hover:text-primary transition-colors text-sm sm:text-base min-h-[1.5rem]`}
                 title={product.name}
               >
                 {product.name}
@@ -178,7 +178,7 @@ export function ProductCard({
               <div className="space-y-1" aria-label={pricing.priceDescription}>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`font-bold ${sizeClasses[size]} ${pricing.displayClasses.priceColor}`}
+                    className={`font-bold text-base sm:text-lg ${pricing.displayClasses.priceColor}`}
                   >
                     {pricing.formattedPrice}
                   </span>
@@ -221,7 +221,7 @@ export function ProductCard({
 
               {/* Add to Cart Button */}
               <Button
-                className="w-full"
+                className="w-full h-11 sm:h-10"
                 disabled={product.stockQuantity === 0}
                 onClick={async e => {
                   e.preventDefault();
