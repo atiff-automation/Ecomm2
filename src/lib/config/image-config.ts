@@ -251,6 +251,13 @@ export function getImageUrl(fileName: string): string {
   if (IMAGE_CONFIG.cdn.enabled && IMAGE_CONFIG.cdn.baseUrl) {
     return `${IMAGE_CONFIG.cdn.baseUrl}/products/${fileName}`;
   }
+
+  // In production (Railway), use API route to serve from volume
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    return `/api/media/products/${fileName}`;
+  }
+
   return `/uploads/products/${fileName}`;
 }
 

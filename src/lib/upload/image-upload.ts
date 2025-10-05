@@ -51,8 +51,14 @@ export interface ImageProcessingOptions {
   preserveOriginal?: boolean;
 }
 
-const UPLOAD_DIR = path.join(process.cwd(), IMAGE_CONFIG.upload.uploadPath);
-const TEMP_DIR = path.join(process.cwd(), IMAGE_CONFIG.upload.tempPath);
+// Use Railway Volume in production, local filesystem in development
+const isProduction = process.env.NODE_ENV === 'production';
+const UPLOAD_DIR = isProduction
+  ? path.join('/data', 'uploads', 'products')
+  : path.join(process.cwd(), IMAGE_CONFIG.upload.uploadPath);
+const TEMP_DIR = isProduction
+  ? path.join('/data', 'uploads', 'temp')
+  : path.join(process.cwd(), IMAGE_CONFIG.upload.tempPath);
 
 /**
  * Ensure upload directories exist

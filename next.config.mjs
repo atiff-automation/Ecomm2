@@ -63,6 +63,9 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
+    // Allow loading images from API routes (Railway Volume)
+    loader: 'default',
+    unoptimized: process.env.NODE_ENV === 'production', // Disable Next.js optimization in production (use our API routes)
   },
 
   // Webpack optimizations
