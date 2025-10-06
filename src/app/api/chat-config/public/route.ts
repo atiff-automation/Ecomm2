@@ -47,6 +47,13 @@ export async function GET(request: NextRequest) {
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
       welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! 👋\nHow can I help you today?',
       inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
+      // TEMPORARY DEBUG INFO
+      _debug: {
+        totalConfigsFound: configs.length,
+        configKeys: configs.map(c => c.key),
+        rawEnabled: configMap['n8n_chat_enabled'],
+        hasWebhookUrl: !!configMap['n8n_chat_webhook_url'],
+      },
     };
 
     console.log('✅ [Chat Config Public API] Returning response:', JSON.stringify(response, null, 2));

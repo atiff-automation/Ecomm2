@@ -81,12 +81,37 @@ export default function AdminPaymentsPage() {
       // Handle gateways response
       if (gatewaysResponse.ok) {
         const { success, data, error } = await gatewaysResponse.json();
-        if (success) {
+        if (success && data?.gateways) {
           setGateways(data.gateways);
         } else {
           console.error('Failed to fetch gateways:', error);
-          setGateways([]); // Use empty array as fallback
+          // Use fallback gateway definition
+          setGateways([
+            {
+              id: 'toyyibpay',
+              name: 'toyyibPay',
+              type: 'toyyibpay',
+              status: 'pending',
+              description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+              configPath: '/admin/payments/toyyibpay',
+              features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+            },
+          ]);
         }
+      } else {
+        console.error('Gateway API returned error:', gatewaysResponse.status);
+        // Use fallback gateway definition
+        setGateways([
+          {
+            id: 'toyyibpay',
+            name: 'toyyibPay',
+            type: 'toyyibpay',
+            status: 'pending',
+            description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+            configPath: '/admin/payments/toyyibpay',
+            features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+          },
+        ]);
       }
       
     } catch (error) {
@@ -102,7 +127,18 @@ export default function AdminPaymentsPage() {
         partiallyRefundedAmount: 0,
         averageOrderValue: 0,
       });
-      setGateways([]);
+      // Use fallback gateway definition
+      setGateways([
+        {
+          id: 'toyyibpay',
+          name: 'toyyibPay',
+          type: 'toyyibpay',
+          status: 'pending',
+          description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+          configPath: '/admin/payments/toyyibpay',
+          features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -150,12 +186,10 @@ export default function AdminPaymentsPage() {
   const tabs: TabConfig[] = [
     { id: 'overview', label: 'Payment Overview', href: '/admin/payments' },
     {
-      id: 'transactions',
-      label: 'Transactions',
-      href: '/admin/payments/transactions',
+      id: 'gateway-config',
+      label: 'Gateway Config',
+      href: '/admin/payments/toyyibpay',
     },
-    { id: 'refunds', label: 'Refunds', href: '/admin/payments/refunds' },
-    { id: 'analytics', label: 'Analytics', href: '/admin/payments/analytics' },
   ];
 
   // Define breadcrumbs
