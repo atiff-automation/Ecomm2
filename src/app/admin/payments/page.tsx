@@ -373,7 +373,7 @@ export default function AdminPaymentsPage() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -387,40 +387,6 @@ export default function AdminPaymentsPage() {
             </p>
             <Button asChild className="w-full">
               <Link href="/admin/payments/transactions">View Transactions</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Refund Requests
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Process customer refund requests
-            </p>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/payments/refunds">Manage Refunds</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Payment Analytics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Detailed payment performance and trends
-            </p>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/payments/analytics">View Analytics</Link>
             </Button>
           </CardContent>
         </Card>

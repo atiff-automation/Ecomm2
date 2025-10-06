@@ -154,7 +154,7 @@ const navigationItems: NavigationItem[] = [
       {
         id: 'gateways',
         label: 'Gateways',
-        href: '/admin/payments/gateways',
+        href: '/admin/payments/toyyibpay',
         icon: Building2,
       },
       {
@@ -162,12 +162,6 @@ const navigationItems: NavigationItem[] = [
         label: 'Transactions',
         href: '/admin/payments/transactions',
         icon: Banknote,
-      },
-      {
-        id: 'refunds',
-        label: 'Refunds',
-        href: '/admin/payments/refunds',
-        icon: RotateCcw,
       },
     ],
   },

@@ -448,6 +448,7 @@ export default function ToyyibPayConfigPage() {
       tabs={tabs}
       breadcrumbs={breadcrumbs}
       parentSection={{ label: 'Payments', href: '/admin/payments' }}
+      showBackButton={true}
       loading={loading}
     >
       <Tabs defaultValue="credentials" className="space-y-6">
