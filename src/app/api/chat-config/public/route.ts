@@ -8,6 +8,8 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 [Chat Config Public API] Fetching chat configuration...');
+
     // Read all config fields from database (public endpoint - no auth required)
     const configs = await prisma.systemConfig.findMany({
       where: {
@@ -26,12 +28,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('🔍 [Chat Config Public API] Database configs found:', configs.length);
+    console.log('🔍 [Chat Config Public API] Raw configs:', JSON.stringify(configs, null, 2));
+
     const configMap = configs.reduce((acc, config) => {
       acc[config.key] = config.value;
       return acc;
     }, {} as Record<string, string>);
 
-    return NextResponse.json({
+    console.log('🔍 [Chat Config Public API] Config map:', JSON.stringify(configMap, null, 2));
+
+    const response = {
       webhookUrl: configMap['n8n_chat_webhook_url'] || '',
       isEnabled: configMap['n8n_chat_enabled'] !== 'false',
       position: configMap['n8n_chat_position'] || 'bottom-right',
@@ -40,9 +47,13 @@ export async function GET(request: NextRequest) {
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
       welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! 👋\nHow can I help you today?',
       inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
-    });
+    };
+
+    console.log('✅ [Chat Config Public API] Returning response:', JSON.stringify(response, null, 2));
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error getting public chat config:', error);
+    console.error('❌ [Chat Config Public API] Error getting public chat config:', error);
     return NextResponse.json(
       {
         webhookUrl: '',

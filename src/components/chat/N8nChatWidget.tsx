@@ -35,16 +35,23 @@ export function N8nChatWidget({ config: propConfig }: N8nChatWidgetProps) {
   useEffect(() => {
     const loadConfig = async () => {
       try {
+        console.log('🔍 [N8nChatWidget] Loading chat configuration...');
         setIsLoading(true);
         const response = await fetch('/api/chat-config/public');
+        console.log('🔍 [N8nChatWidget] API response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('🔍 [N8nChatWidget] Config received:', JSON.stringify(data, null, 2));
           setConfig(data);
+        } else {
+          console.error('❌ [N8nChatWidget] Failed to load config, status:', response.status);
         }
       } catch (error) {
-        console.error('Failed to load chat config:', error);
+        console.error('❌ [N8nChatWidget] Failed to load chat config:', error);
       } finally {
         setIsLoading(false);
+        console.log('🔍 [N8nChatWidget] Loading complete');
       }
     };
 
@@ -93,8 +100,20 @@ export function N8nChatWidget({ config: propConfig }: N8nChatWidgetProps) {
 
   // Don't render if chat is disabled, still loading, or no webhook URL configured
   if (isLoading || !config?.isEnabled || !config?.webhookUrl) {
+    console.log('🚫 [N8nChatWidget] Not rendering chat widget:', {
+      isLoading,
+      isEnabled: config?.isEnabled,
+      hasWebhookUrl: !!config?.webhookUrl,
+      webhookUrl: config?.webhookUrl,
+    });
     return null;
   }
+
+  console.log('✅ [N8nChatWidget] Rendering chat widget with config:', {
+    isEnabled: config.isEnabled,
+    webhookUrl: config.webhookUrl,
+    position,
+  });
 
   const position = (propConfig?.position || config.position || 'bottom-right') as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   const primaryColor = propConfig?.primaryColor || config.primaryColor || '#2563eb';

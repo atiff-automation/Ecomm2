@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+      console.log('❌ [Chat Config Admin API] Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -21,6 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('🔍 [Chat Config Admin API] Request body:', JSON.stringify(body, null, 2));
+
     const {
       webhookUrl,
       isEnabled,
@@ -35,6 +38,7 @@ export async function POST(request: NextRequest) {
     // Allow empty webhook URL for clearing configuration
     // But if provided, it must be a valid URL
     if (webhookUrl && !webhookUrl.startsWith('http')) {
+      console.log('❌ [Chat Config Admin API] Invalid webhook URL:', webhookUrl);
       return NextResponse.json(
         { error: 'Invalid webhook URL. Must start with http:// or https://' },
         { status: 400 }
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Save webhook URL to database
     if (webhookUrl) {
+      console.log('💾 [Chat Config Admin API] Saving webhook URL:', webhookUrl);
       await prisma.systemConfig.upsert({
         where: { key: 'n8n_chat_webhook_url' },
         create: {
@@ -54,11 +59,14 @@ export async function POST(request: NextRequest) {
           value: webhookUrl,
         },
       });
+      console.log('✅ [Chat Config Admin API] Webhook URL saved');
     } else {
       // Delete webhook URL if empty (clear configuration)
+      console.log('🗑️  [Chat Config Admin API] Deleting webhook URL');
       await prisma.systemConfig.deleteMany({
         where: { key: 'n8n_chat_webhook_url' },
       });
+      console.log('✅ [Chat Config Admin API] Webhook URL deleted');
     }
 
     // Save all configuration fields
@@ -72,6 +80,8 @@ export async function POST(request: NextRequest) {
       { key: 'n8n_chat_input_placeholder', value: inputPlaceholder || 'Type your message...', type: 'string' },
     ];
 
+    console.log('💾 [Chat Config Admin API] Saving config fields:', JSON.stringify(configFields, null, 2));
+
     await Promise.all(
       configFields.map(({ key, value, type }) =>
         prisma.systemConfig.upsert({
@@ -82,6 +92,8 @@ export async function POST(request: NextRequest) {
       )
     );
 
+    console.log('✅ [Chat Config Admin API] All config fields saved successfully');
+
     return NextResponse.json({
       success: true,
       message: webhookUrl
@@ -89,7 +101,7 @@ export async function POST(request: NextRequest) {
         : 'Configuration cleared successfully.',
     });
   } catch (error) {
-    console.error('Error saving chat config:', error);
+    console.error('❌ [Chat Config Admin API] Error saving chat config:', error);
     return NextResponse.json(
       { error: 'Failed to save configuration' },
       { status: 500 }
