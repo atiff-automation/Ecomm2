@@ -6,6 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 [Chat Config Public API] Fetching chat configuration...');
@@ -58,7 +62,14 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ [Chat Config Public API] Returning response:', JSON.stringify(response, null, 2));
 
-    return NextResponse.json(response);
+    // Return with no-cache headers to prevent stale data
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('❌ [Chat Config Public API] Error getting public chat config:', error);
     return NextResponse.json(

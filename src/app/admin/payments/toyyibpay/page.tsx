@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -32,27 +31,14 @@ import {
 } from '@/components/ui/select';
 import {
   CreditCard,
-  CheckCircle,
-  XCircle,
   AlertTriangle,
   RefreshCw,
-  Settings,
-  Shield,
-  Clock,
   Save,
-  TestTube,
   Info,
-  Activity,
   Key,
   Eye,
   EyeOff,
-  Lock,
-  Unlock,
-  Globe,
-  Banknote,
   Building,
-  Database,
-  Zap,
   Trash2,
   Plus,
 } from 'lucide-react';
@@ -73,40 +59,6 @@ interface ToyyibPayCredentialStatus {
   isConfigured: boolean;
 }
 
-interface ConnectionTestResult {
-  success: boolean;
-  results?: {
-    overallSuccess: boolean;
-    basicTest: {
-      isValid: boolean;
-      responseTime?: number;
-      endpoint?: string;
-      error?: string;
-    };
-    categoryTest: {
-      success: boolean;
-      categoryCode?: string;
-      error?: string;
-    };
-    serviceTest: {
-      success: boolean;
-      environment?: string;
-      baseURL?: string;
-      hasCategoryCode?: boolean;
-      error?: string;
-    };
-    summary: {
-      totalTests: number;
-      passedTests: number;
-      failedTests: number;
-      totalTime: number;
-      environment: string;
-      endpoint?: string;
-    };
-  };
-  error?: string;
-}
-
 interface CategoryInfo {
   categoryCode?: string;
   categoryName?: string;
@@ -117,7 +69,6 @@ export default function ToyyibPayConfigPage() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
 
   // State for credentials
@@ -134,11 +85,6 @@ export default function ToyyibPayConfigPage() {
     environment: 'sandbox' as 'sandbox' | 'production',
     categoryCode: '',
   });
-
-  // Test results
-  const [testResults, setTestResults] = useState<ConnectionTestResult | null>(
-    null
-  );
 
   // Category management
   const [categories, setCategories] = useState<CategoryInfo>({});
@@ -272,37 +218,6 @@ export default function ToyyibPayConfigPage() {
     }
   };
 
-  const handleTestConnection = async () => {
-    try {
-      setTesting(true);
-      setTestResults(null);
-
-      const response = await fetch('/api/admin/payment/toyyibpay/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          useStoredCredentials: true,
-        }),
-      });
-
-      const data = await response.json();
-      setTestResults(data);
-
-      if (data.success && data.results?.overallSuccess) {
-        toast.success('Connection test passed successfully!');
-      } else {
-        toast.error('Connection test failed');
-      }
-    } catch (error) {
-      console.error('Error testing connection:', error);
-      toast.error('Failed to test connection');
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const handleClearCredentials = async () => {
     if (
       !confirm(
@@ -328,7 +243,6 @@ export default function ToyyibPayConfigPage() {
           environment: 'sandbox',
           categoryCode: '',
         });
-        setTestResults(null);
       } else {
         toast.error(data.error || 'Failed to clear credentials');
       }
@@ -376,18 +290,6 @@ export default function ToyyibPayConfigPage() {
     }
   };
 
-  const getStatusColor = (isConfigured: boolean) => {
-    return isConfigured ? 'text-green-600' : 'text-red-600';
-  };
-
-  const getStatusIcon = (isConfigured: boolean) => {
-    return isConfigured ? (
-      <CheckCircle className="w-5 h-5" />
-    ) : (
-      <XCircle className="w-5 h-5" />
-    );
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto py-6">
@@ -402,23 +304,8 @@ export default function ToyyibPayConfigPage() {
   }
 
   // Define contextual tabs for toyyibPay gateway configuration
-  const tabs: TabConfig[] = [
-    {
-      id: 'configuration',
-      label: 'Configuration',
-      href: '/admin/payments/toyyibpay',
-    },
-    {
-      id: 'testing',
-      label: 'Test Connection',
-      href: '/admin/payments/toyyibpay#testing',
-    },
-    {
-      id: 'webhooks',
-      label: 'Webhooks',
-      href: '/admin/payments/toyyibpay#webhooks',
-    },
-  ];
+  // Note: Using internal Tabs component for content switching, not top navigation tabs
+  const tabs: TabConfig[] = [];
 
   // Extract page actions
   const pageActions = (
@@ -451,15 +338,7 @@ export default function ToyyibPayConfigPage() {
       showBackButton={true}
       loading={loading}
     >
-      <Tabs defaultValue="credentials" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="credentials">Credentials</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="testing">Testing</TabsTrigger>
-          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="credentials" className="space-y-6">
+      <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -629,9 +508,8 @@ export default function ToyyibPayConfigPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="categories" className="space-y-6">
+          {/* Category Management Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -724,225 +602,7 @@ export default function ToyyibPayConfigPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="testing" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TestTube className="w-5 h-5" />
-                <span>Connection Testing</span>
-              </CardTitle>
-              <CardDescription>
-                Test your toyyibPay API connection and validate configuration.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!credentialStatus.hasCredentials ? (
-                <Alert>
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription>
-                    Please configure your API credentials first before testing
-                    the connection.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <>
-                  <Button
-                    onClick={handleTestConnection}
-                    disabled={testing}
-                    className="flex items-center space-x-2"
-                  >
-                    {testing ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <TestTube className="w-4 h-4" />
-                    )}
-                    <span>Test Connection</span>
-                  </Button>
-
-                  {testResults && (
-                    <div className="space-y-4">
-                      <Alert
-                        className={
-                          testResults.success
-                            ? 'border-green-200 bg-green-50'
-                            : 'border-red-200 bg-red-50'
-                        }
-                      >
-                        {testResults.success ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-600" />
-                        )}
-                        <AlertDescription>
-                          <p className="font-medium">
-                            {testResults.success
-                              ? 'Connection Test Successful'
-                              : 'Connection Test Failed'}
-                          </p>
-                          {testResults.results?.summary && (
-                            <div className="mt-2 space-y-1 text-sm">
-                              <p>
-                                Tests Passed:{' '}
-                                {testResults.results.summary.passedTests}/
-                                {testResults.results.summary.totalTests}
-                              </p>
-                              <p>
-                                Environment:{' '}
-                                {testResults.results.summary.environment}
-                              </p>
-                              <p>
-                                Response Time:{' '}
-                                {testResults.results.summary.totalTime}ms
-                              </p>
-                            </div>
-                          )}
-                        </AlertDescription>
-                      </Alert>
-
-                      {testResults.results && (
-                        <div className="space-y-3">
-                          <h4 className="font-medium">
-                            Detailed Test Results:
-                          </h4>
-
-                          <div className="space-y-2">
-                            <div
-                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.basicTest.isValid ? 'bg-green-50' : 'bg-red-50'}`}
-                            >
-                              {testResults.results.basicTest.isValid ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-600" />
-                              )}
-                              <span className="text-sm">
-                                <strong>Basic API Test:</strong>{' '}
-                                {testResults.results.basicTest.isValid
-                                  ? 'Passed'
-                                  : 'Failed'}
-                                {testResults.results.basicTest.error &&
-                                  ` - ${testResults.results.basicTest.error}`}
-                              </span>
-                            </div>
-
-                            <div
-                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.categoryTest.success ? 'bg-green-50' : 'bg-red-50'}`}
-                            >
-                              {testResults.results.categoryTest.success ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-600" />
-                              )}
-                              <span className="text-sm">
-                                <strong>Category Test:</strong>{' '}
-                                {testResults.results.categoryTest.success
-                                  ? 'Passed'
-                                  : 'Failed'}
-                                {testResults.results.categoryTest.error &&
-                                  ` - ${testResults.results.categoryTest.error}`}
-                              </span>
-                            </div>
-
-                            <div
-                              className={`flex items-center space-x-2 p-2 rounded ${testResults.results.serviceTest.success ? 'bg-green-50' : 'bg-red-50'}`}
-                            >
-                              {testResults.results.serviceTest.success ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-600" />
-                              )}
-                              <span className="text-sm">
-                                <strong>Service Test:</strong>{' '}
-                                {testResults.results.serviceTest.success
-                                  ? 'Passed'
-                                  : 'Failed'}
-                                {testResults.results.serviceTest.error &&
-                                  ` - ${testResults.results.serviceTest.error}`}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="monitoring" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Activity className="w-5 h-5" />
-                <span>Service Monitoring</span>
-              </CardTitle>
-              <CardDescription>
-                Monitor toyyibPay service status and performance metrics.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Configuration Status</Label>
-                  <div
-                    className={`flex items-center space-x-2 ${getStatusColor(credentialStatus.isConfigured)}`}
-                  >
-                    {getStatusIcon(credentialStatus.isConfigured)}
-                    <span className="font-medium">
-                      {credentialStatus.isConfigured
-                        ? 'Configured'
-                        : 'Not Configured'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Environment</Label>
-                  <div className="flex items-center space-x-2">
-                    <Globe className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium capitalize">
-                      {credentialStatus.environment}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Category Status</Label>
-                  <div
-                    className={`flex items-center space-x-2 ${categories.categoryCode ? 'text-green-600' : 'text-yellow-600'}`}
-                  >
-                    {categories.categoryCode ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4" />
-                    )}
-                    <span className="font-medium">
-                      {categories.categoryCode ? 'Category Set' : 'No Category'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Last Updated</Label>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">
-                      {credentialStatus.lastUpdated
-                        ? new Date(
-                            credentialStatus.lastUpdated
-                          ).toLocaleString()
-                        : 'Never'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </div>
     </AdminPageLayout>
   );
 }
