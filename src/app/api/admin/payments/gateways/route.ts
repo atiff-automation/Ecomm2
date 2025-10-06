@@ -1,14 +1,14 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Payment Gateway Configuration API
  * Provides centralized payment gateway management
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth/config';
 import { PaymentGatewayService } from '@/lib/services/payment-gateway.service';
 import { UserRole } from '@prisma/client';
 
