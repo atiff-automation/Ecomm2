@@ -54,7 +54,7 @@ export function SimpleN8nChatLoader() {
 
       console.log('✅ n8n chat initialized');
 
-      // Inject dynamic CSS for colors
+      // Inject dynamic CSS for colors and styling
       const styleElement = document.createElement('style');
       styleElement.id = 'n8n-chat-custom-styles';
       styleElement.textContent = `
@@ -63,6 +63,25 @@ export function SimpleN8nChatLoader() {
           --chat--color-primary-shade-50: ${adjustColor(config.primaryColor, -10)};
           --chat--color-primary-shade-100: ${adjustColor(config.primaryColor, -20)};
           --chat--header--background: ${config.primaryColor};
+        }
+
+        /* Ensure rounded corners for chat window */
+        [class*="chat-window"],
+        [class*="ChatWindow"] {
+          border-radius: 16px !important;
+          overflow: hidden !important;
+        }
+
+        /* Rounded header */
+        [class*="chat-header"],
+        [class*="ChatHeader"] {
+          border-radius: 16px 16px 0 0 !important;
+        }
+
+        /* Rounded message bubbles */
+        [class*="chat-message"],
+        [class*="ChatMessage"] {
+          border-radius: 12px !important;
         }
       `;
       document.head.appendChild(styleElement);

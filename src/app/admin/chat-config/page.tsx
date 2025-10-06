@@ -270,7 +270,7 @@ export default function ChatConfigPage() {
             <CardHeader>
               <CardTitle>UI Customization</CardTitle>
               <CardDescription>
-                Customize the appearance and position of the chat widget
+                Customize the appearance and position of the chat widget. Click "Save Configuration" above to apply changes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -366,7 +366,7 @@ export default function ChatConfigPage() {
             <CardHeader>
               <CardTitle>Bot Avatar</CardTitle>
               <CardDescription>
-                Upload a bot avatar image (recommended: 80×80px, max 2MB)
+                Upload a bot avatar image (recommended: 80×80px, max 2MB). Click "Save Configuration" above to apply changes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
