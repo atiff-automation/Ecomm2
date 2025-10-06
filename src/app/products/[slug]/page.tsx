@@ -781,52 +781,52 @@ export default function ProductDetailPage() {
                 relatedProduct.images[0];
 
               return (
-                <Card
+                <Link
                   key={relatedProduct.id}
-                  className="group hover:shadow-lg transition-shadow"
+                  href={`/products/${relatedProduct.slug}`}
                 >
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    {primaryImage ? (
-                      <Image
-                        src={primaryImage.url}
-                        alt={relatedProduct.name}
-                        fill
-                        quality={100}
-                        unoptimized={true}
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400">No Image</span>
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <Link href={`/products/${relatedProduct.slug}`}>
-                      <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
-                        {relatedProduct.name}
-                      </h3>
-                    </Link>
-                    <div className="mt-2">
-                      <span className="font-bold">
-                        {new Intl.NumberFormat('en-MY', {
-                          style: 'currency',
-                          currency: 'MYR',
-                        }).format(relatedProduct.regularPrice)}
-                      </span>
-                      {relatedProduct.memberPrice <
-                        relatedProduct.regularPrice && (
-                        <div className="text-xs text-muted-foreground">
-                          Member:{' '}
-                          {new Intl.NumberFormat('en-MY', {
-                            style: 'currency',
-                            currency: 'MYR',
-                          }).format(relatedProduct.memberPrice)}
+                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="aspect-square relative overflow-hidden rounded-t-lg">
+                      {primaryImage ? (
+                        <Image
+                          src={primaryImage.url}
+                          alt={relatedProduct.name}
+                          fill
+                          quality={100}
+                          unoptimized={true}
+                          className="object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400">No Image</span>
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                        {relatedProduct.name}
+                      </h3>
+                      <div className="mt-2">
+                        <span className="font-bold">
+                          {new Intl.NumberFormat('en-MY', {
+                            style: 'currency',
+                            currency: 'MYR',
+                          }).format(relatedProduct.regularPrice)}
+                        </span>
+                        {relatedProduct.memberPrice <
+                          relatedProduct.regularPrice && (
+                          <div className="text-xs text-muted-foreground">
+                            Member:{' '}
+                            {new Intl.NumberFormat('en-MY', {
+                              style: 'currency',
+                              currency: 'MYR',
+                            }).format(relatedProduct.memberPrice)}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>
