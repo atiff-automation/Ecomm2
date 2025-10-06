@@ -1,44 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import '@n8n/chat/style.css';
 
 export function SimpleN8nChatLoader() {
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [config, setConfig] = useState<any>(null);
 
   useEffect(() => {
     // Load config from API
     fetch('/api/chat-config/public')
       .then(res => res.json())
-      .then(config => {
-        console.log('📡 Chat config loaded:', config);
-        if (config.isEnabled && config.webhookUrl) {
-          setWebhookUrl(config.webhookUrl);
-          setIsEnabled(true);
+      .then(data => {
+        console.log('📡 Chat config loaded:', data);
+        if (data.isEnabled && data.webhookUrl) {
+          setConfig(data);
         }
       })
       .catch(err => console.error('❌ Failed to load chat config:', err));
   }, []);
 
   useEffect(() => {
-    if (!isEnabled || !webhookUrl) return;
+    if (!config) return;
 
-    console.log('🚀 Initializing n8n chat with webhook:', webhookUrl);
+    console.log('🚀 Initializing n8n chat with webhook:', config.webhookUrl);
 
-    // Load CSS
-    const link = document.createElement('link');
-    link.href = 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-
-    // Load and initialize chat - exactly as per official docs
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.textContent = `
-      import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
-
+    // Import and initialize using the installed package
+    import('@n8n/chat').then(({ createChat }) => {
       createChat({
-        webhookUrl: '${webhookUrl}',
+        webhookUrl: config.webhookUrl,
         mode: 'window',
         showWelcomeScreen: false,
         initialMessages: [
@@ -48,7 +37,7 @@ export function SimpleN8nChatLoader() {
         i18n: {
           en: {
             title: 'Hi there! 👋',
-            subtitle: 'Start a chat. We\\'re here to help you 24/7.',
+            subtitle: 'Start a chat. We\'re here to help you 24/7.',
             footer: '',
             getStarted: 'New Conversation',
             inputPlaceholder: 'Type your question..',
@@ -61,14 +50,10 @@ export function SimpleN8nChatLoader() {
       });
 
       console.log('✅ n8n chat initialized');
-    `;
-    document.body.appendChild(script);
-
-    return () => {
-      link.remove();
-      script.remove();
-    };
-  }, [isEnabled, webhookUrl]);
+    }).catch(err => {
+      console.error('❌ Failed to load @n8n/chat:', err);
+    });
+  }, [config]);
 
   return null;
 }

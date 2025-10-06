@@ -12,7 +12,6 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
@@ -38,9 +37,7 @@ import {
   Key,
   Eye,
   EyeOff,
-  Building,
   Trash2,
-  Plus,
 } from 'lucide-react';
 import {
   AdminPageLayout,
@@ -57,12 +54,6 @@ interface ToyyibPayCredentialStatus {
   lastUpdated?: string;
   updatedBy?: string;
   isConfigured: boolean;
-}
-
-interface CategoryInfo {
-  categoryCode?: string;
-  categoryName?: string;
-  categoryDescription?: string;
 }
 
 export default function ToyyibPayConfigPage() {
@@ -86,13 +77,6 @@ export default function ToyyibPayConfigPage() {
     categoryCode: '',
   });
 
-  // Category management
-  const [categories, setCategories] = useState<CategoryInfo>({});
-  const [newCategory, setNewCategory] = useState({
-    name: '',
-    description: '',
-  });
-  const [creatingCategory, setCreatingCategory] = useState(false);
 
   // Authentication check
   if (status === 'loading') {
@@ -106,7 +90,6 @@ export default function ToyyibPayConfigPage() {
   // Load initial data
   useEffect(() => {
     loadCredentialStatus();
-    loadCurrentCategory();
   }, []);
 
   const loadCredentialStatus = async () => {
@@ -130,21 +113,6 @@ export default function ToyyibPayConfigPage() {
       toast.error('Failed to load credential status');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadCurrentCategory = async () => {
-    try {
-      const response = await fetch('/api/admin/payment/toyyibpay/categories');
-      const data = await response.json();
-
-      if (data.success) {
-        setCategories({
-          categoryCode: data.currentCategory,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading category info:', error);
     }
   };
 
@@ -174,7 +142,6 @@ export default function ToyyibPayConfigPage() {
         toast.success('Credentials saved and validated successfully!');
         setCredentialStatus(data.status);
         setFormData(prev => ({ ...prev, userSecretKey: '' })); // Clear the input
-        loadCurrentCategory(); // Reload category info
       } else {
         toast.error(data.error || 'Failed to save credentials');
       }
@@ -251,42 +218,6 @@ export default function ToyyibPayConfigPage() {
       toast.error('Failed to clear credentials');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleCreateCategory = async () => {
-    if (!newCategory.name.trim() || !newCategory.description.trim()) {
-      toast.error('Please enter category name and description');
-      return;
-    }
-
-    try {
-      setCreatingCategory(true);
-      const response = await fetch('/api/admin/payment/toyyibpay/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          categoryName: newCategory.name,
-          categoryDescription: newCategory.description,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(`Category created: ${data.categoryCode}`);
-        setNewCategory({ name: '', description: '' });
-        loadCurrentCategory();
-      } else {
-        toast.error(data.error || 'Failed to create category');
-      }
-    } catch (error) {
-      console.error('Error creating category:', error);
-      toast.error('Failed to create category');
-    } finally {
-      setCreatingCategory(false);
     }
   };
 
@@ -506,100 +437,6 @@ export default function ToyyibPayConfigPage() {
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Category Management Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Building className="w-5 h-5" />
-                <span>Category Management</span>
-              </CardTitle>
-              <CardDescription>
-                Manage toyyibPay categories for organizing your bills and
-                payments.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!credentialStatus.hasCredentials ? (
-                <Alert>
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription>
-                    Please configure your API credentials first before managing
-                    categories.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <>
-                  {categories.categoryCode && (
-                    <Alert>
-                      <Info className="w-4 h-4" />
-                      <AlertDescription>
-                        <p>
-                          <strong>Current Default Category:</strong>{' '}
-                          {categories.categoryCode}
-                        </p>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Create New Category</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label htmlFor="categoryName">Category Name</Label>
-                        <Input
-                          id="categoryName"
-                          value={newCategory.name}
-                          onChange={e =>
-                            setNewCategory(prev => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g., JRM Ecommerce Payments"
-                          maxLength={50}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="categoryDescription">
-                          Category Description
-                        </Label>
-                        <Textarea
-                          id="categoryDescription"
-                          value={newCategory.description}
-                          onChange={e =>
-                            setNewCategory(prev => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                          placeholder="Description for this payment category"
-                          maxLength={100}
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleCreateCategory}
-                      disabled={
-                        creatingCategory ||
-                        !newCategory.name.trim() ||
-                        !newCategory.description.trim()
-                      }
-                      className="flex items-center space-x-2"
-                    >
-                      {creatingCategory ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )}
-                      <span>Create Category</span>
-                    </Button>
-                  </div>
-                </>
-              )}
             </CardContent>
           </Card>
       </div>

@@ -184,11 +184,11 @@ export default function AdminPaymentsPage() {
 
   // Define contextual tabs for Payments section
   const tabs: TabConfig[] = [
-    { id: 'overview', label: 'Payment Overview', href: '/admin/payments' },
+    { id: 'overview', label: 'Overview', href: '/admin/payments' },
     {
-      id: 'gateway-config',
-      label: 'Gateway Config',
-      href: '/admin/payments/toyyibpay',
+      id: 'gateways',
+      label: 'Gateways',
+      href: '/admin/payments/gateways',
     },
   ];
 
@@ -199,18 +199,10 @@ export default function AdminPaymentsPage() {
 
   // Page actions
   const pageActions = (
-    <div className="flex gap-2">
-      <Button variant="outline" onClick={fetchPaymentData}>
-        <Activity className="h-4 w-4 mr-2" />
-        Refresh
-      </Button>
-      <Button asChild>
-        <Link href="/admin/payments/transactions">
-          <ExternalLink className="h-4 w-4 mr-2" />
-          View All Transactions
-        </Link>
-      </Button>
-    </div>
+    <Button variant="outline" onClick={fetchPaymentData}>
+      <Activity className="h-4 w-4 mr-2" />
+      Refresh
+    </Button>
   );
 
   return (
@@ -223,7 +215,7 @@ export default function AdminPaymentsPage() {
       loading={loading}
     >
       {/* Payment Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -288,109 +280,8 @@ export default function AdminPaymentsPage() {
             <p className="text-xs text-muted-foreground">Pending payments</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Refunded</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {stats ? formatCurrency(stats.refundedAmount) : '---'}
-            </div>
-            <p className="text-xs text-muted-foreground">Total refunds</p>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Payment Gateways */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Payment Gateways</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Configure and manage your payment processing options
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {gateways.map(gateway => {
-              // Handle icon mapping since functions can't be serialized in API responses
-              const getIcon = (type: string) => {
-                switch (type) {
-                  case 'toyyibpay': return Smartphone;
-                  default: return Smartphone;
-                }
-              };
-              const IconComponent = getIcon(gateway.type);
-              return (
-                <div
-                  key={gateway.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{gateway.name}</h3>
-                        <Badge className={getStatusColor(gateway.status)}>
-                          {getStatusIcon(gateway.status)}
-                          <span className="ml-1 capitalize">
-                            {gateway.status}
-                          </span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {gateway.description}
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {gateway.features.map((feature, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {feature}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={gateway.configPath}>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Configure
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Recent Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              View and manage recent payment transactions
-            </p>
-            <Button asChild className="w-full">
-              <Link href="/admin/payments/transactions">View Transactions</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
     </AdminPageLayout>
   );
 }

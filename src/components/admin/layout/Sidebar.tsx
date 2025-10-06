@@ -154,14 +154,8 @@ const navigationItems: NavigationItem[] = [
       {
         id: 'gateways',
         label: 'Gateways',
-        href: '/admin/payments/toyyibpay',
+        href: '/admin/payments/gateways',
         icon: Building2,
-      },
-      {
-        id: 'transactions',
-        label: 'Transactions',
-        href: '/admin/payments/transactions',
-        icon: Banknote,
       },
     ],
   },
