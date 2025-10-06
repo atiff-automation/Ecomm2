@@ -109,14 +109,14 @@ export function N8nChatWidget({ config: propConfig }: N8nChatWidgetProps) {
     return null;
   }
 
+  const position = (propConfig?.position || config.position || 'bottom-right') as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  const primaryColor = propConfig?.primaryColor || config.primaryColor || '#2563eb';
+
   console.log('✅ [N8nChatWidget] Rendering chat widget with config:', {
     isEnabled: config.isEnabled,
     webhookUrl: config.webhookUrl,
     position,
   });
-
-  const position = (propConfig?.position || config.position || 'bottom-right') as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  const primaryColor = propConfig?.primaryColor || config.primaryColor || '#2563eb';
 
   return (
     <>
