@@ -180,7 +180,7 @@ export function TrendingProducts({
 
             {/* Trending Stats */}
             {showTrendingMetrics && displayProducts.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <Card className="p-4 text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Eye className="h-4 w-4 text-blue-500" />
@@ -268,7 +268,7 @@ export function TrendingProducts({
                     This product has seen exceptional growth with a 45% increase in sales
                     and overwhelmingly positive customer feedback.
                   </p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-green-500" />
                       <span className="text-sm">+45% Sales</span>
