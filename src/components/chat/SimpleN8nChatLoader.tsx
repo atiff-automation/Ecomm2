@@ -35,32 +35,95 @@ export function SimpleN8nChatLoader() {
         webhookUrl: config.webhookUrl,
         mode: 'window',
         showWelcomeScreen: false,
-        initialMessages: [
-          'Hi there! 👋',
-          'My name is Nathan. How can I assist you today?'
-        ],
+        initialMessages: config.welcomeMessage.split('\n'),
         i18n: {
           en: {
-            title: 'Hi there! 👋',
-            subtitle: 'Start a chat. We\'re here to help you 24/7.',
+            title: config.title,
+            subtitle: config.subtitle,
             footer: '',
             getStarted: 'New Conversation',
-            inputPlaceholder: 'Type your question..',
+            inputPlaceholder: config.inputPlaceholder,
           }
         },
         chatInputKey: 'chatInput',
         chatSessionKey: 'sessionId',
         loadPreviousSession: false,
         defaultLanguage: 'en',
-        // Add target element explicitly
         target: '#n8n-chat'
       });
 
       console.log('✅ n8n chat initialized');
+
+      // Inject dynamic CSS for colors
+      const styleElement = document.createElement('style');
+      styleElement.id = 'n8n-chat-custom-styles';
+      styleElement.textContent = `
+        :root {
+          --chat--color-primary: ${config.primaryColor};
+          --chat--color-primary-shade-50: ${adjustColor(config.primaryColor, -10)};
+          --chat--color-primary-shade-100: ${adjustColor(config.primaryColor, -20)};
+          --chat--header--background: ${config.primaryColor};
+        }
+      `;
+      document.head.appendChild(styleElement);
+
+      // Inject bot avatar if configured
+      if (config.botAvatarUrl) {
+        const observer = new MutationObserver(() => {
+          const chatHeader = document.querySelector('[class*="chat-header"]');
+          if (chatHeader && !chatHeader.querySelector('.bot-avatar')) {
+            const avatar = document.createElement('img');
+            avatar.src = config.botAvatarUrl;
+            avatar.alt = 'Chat Bot';
+            avatar.className = 'bot-avatar';
+            avatar.style.cssText = `
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              position: absolute;
+              left: 12px;
+              top: 50%;
+              transform: translateY(-50%);
+              object-fit: cover;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            `;
+
+            chatHeader.style.position = 'relative';
+            chatHeader.style.paddingLeft = '60px';
+            chatHeader.prepend(avatar);
+            observer.disconnect();
+          }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Cleanup on unmount
+        return () => {
+          observer.disconnect();
+          const styleEl = document.getElementById('n8n-chat-custom-styles');
+          if (styleEl) styleEl.remove();
+        };
+      }
     }).catch(err => {
       console.error('❌ Failed to load @n8n/chat:', err);
     });
   }, [config]);
+
+  // Color adjustment helper function
+  const adjustColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return '#' + (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    ).toString(16).slice(1);
+  };
 
   return <div id="n8n-chat" />;
 }

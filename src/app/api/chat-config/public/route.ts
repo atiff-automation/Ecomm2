@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
             'n8n_chat_subtitle',
             'n8n_chat_welcome_message',
             'n8n_chat_input_placeholder',
+            'n8n_chat_bot_avatar_url',
           ],
         },
       },
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
       welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! 👋\nHow can I help you today?',
       inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
+      botAvatarUrl: configMap['n8n_chat_bot_avatar_url'] || '',
       // TEMPORARY DEBUG INFO
       _debug: {
         totalConfigsFound: configs.length,

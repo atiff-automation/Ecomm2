@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       subtitle,
       welcomeMessage,
       inputPlaceholder,
+      botAvatarUrl,
     } = body;
 
     // Allow empty webhook URL for clearing configuration
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
       { key: 'n8n_chat_subtitle', value: subtitle || "We're here to help", type: 'string' },
       { key: 'n8n_chat_welcome_message', value: welcomeMessage || 'Hello! 👋\nHow can I help you today?', type: 'string' },
       { key: 'n8n_chat_input_placeholder', value: inputPlaceholder || 'Type your message...', type: 'string' },
+      { key: 'n8n_chat_bot_avatar_url', value: botAvatarUrl || '', type: 'string' },
     ];
 
     console.log('💾 [Chat Config Admin API] Saving config fields:', JSON.stringify(configFields, null, 2));
@@ -134,6 +136,7 @@ export async function GET(request: NextRequest) {
             'n8n_chat_subtitle',
             'n8n_chat_welcome_message',
             'n8n_chat_input_placeholder',
+            'n8n_chat_bot_avatar_url',
           ],
         },
       },
@@ -153,6 +156,7 @@ export async function GET(request: NextRequest) {
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
       welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! 👋\nHow can I help you today?',
       inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
+      botAvatarUrl: configMap['n8n_chat_bot_avatar_url'] || '',
     });
   } catch (error) {
     console.error('Error getting chat config:', error);

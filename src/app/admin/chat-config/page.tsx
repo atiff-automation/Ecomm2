@@ -19,6 +19,8 @@ export default function ChatConfigPage() {
   const [subtitle, setSubtitle] = useState("We're here to help");
   const [welcomeMessage, setWelcomeMessage] = useState('Hello! 👋\nHow can I help you today?');
   const [inputPlaceholder, setInputPlaceholder] = useState('Type your message...');
+  const [botAvatarUrl, setBotAvatarUrl] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
@@ -43,6 +45,7 @@ export default function ChatConfigPage() {
         setSubtitle(data.subtitle || "We're here to help");
         setWelcomeMessage(data.welcomeMessage || 'Hello! 👋\nHow can I help you today?');
         setInputPlaceholder(data.inputPlaceholder || 'Type your message...');
+        setBotAvatarUrl(data.botAvatarUrl || '');
       }
     } catch (error) {
       console.error('Error loading config:', error);
@@ -68,6 +71,7 @@ export default function ChatConfigPage() {
           subtitle,
           welcomeMessage,
           inputPlaceholder,
+          botAvatarUrl,
         }),
       });
 
@@ -119,6 +123,52 @@ export default function ChatConfigPage() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size must be less than 2MB');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('usage', 'chat_avatar');
+
+      const response = await fetch('/api/admin/site-customization/media/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Failed to upload avatar');
+
+      const data = await response.json();
+      setBotAvatarUrl(data.mediaUpload.url);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarRemove = () => {
+    if (confirm('Are you sure you want to remove the bot avatar?')) {
+      setBotAvatarUrl('');
+    }
   };
 
   return (
@@ -307,6 +357,67 @@ export default function ChatConfigPage() {
                   onChange={(e) => setInputPlaceholder(e.target.value)}
                   placeholder="Type your message..."
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bot Avatar Upload */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Bot Avatar</CardTitle>
+              <CardDescription>
+                Upload a bot avatar image (recommended: 80×80px, max 2MB)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Avatar Preview */}
+              {botAvatarUrl && (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100">
+                    <img
+                      src={botAvatarUrl}
+                      alt="Bot Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Avatar</p>
+                    <p className="text-xs text-muted-foreground">{botAvatarUrl}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAvatarRemove}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                />
+                <Button
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  disabled={isUploadingAvatar}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isUploadingAvatar ? 'Uploading...' : botAvatarUrl ? 'Change Avatar' : 'Upload Avatar'}
+                </Button>
+                {!botAvatarUrl && (
+                  <p className="text-xs text-muted-foreground">
+                    JPEG, PNG, or WebP (max 2MB)
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

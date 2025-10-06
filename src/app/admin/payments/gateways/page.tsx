@@ -124,8 +124,6 @@ export default function PaymentGatewaysPage() {
       tabs={tabs}
       breadcrumbs={breadcrumbs}
       loading={loading}
-      parentSection={{ label: 'Payments', href: '/admin/payments' }}
-      showBackButton={true}
     >
       <div className="grid grid-cols-1 gap-6">
         {loading ? (
