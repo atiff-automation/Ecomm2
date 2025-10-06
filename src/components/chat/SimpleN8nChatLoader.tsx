@@ -31,7 +31,7 @@ export function SimpleN8nChatLoader() {
     link.rel = 'stylesheet';
     document.head.appendChild(link);
 
-    // Load and initialize chat
+    // Load and initialize chat - exactly as per official docs
     const script = document.createElement('script');
     script.type = 'module';
     script.textContent = `
@@ -40,20 +40,24 @@ export function SimpleN8nChatLoader() {
       createChat({
         webhookUrl: '${webhookUrl}',
         mode: 'window',
-        showWelcomeScreen: true,
+        showWelcomeScreen: false,
         initialMessages: [
-          'Hello! 👋',
-          'How can I help you today?'
+          'Hi there! 👋',
+          'My name is Nathan. How can I assist you today?'
         ],
         i18n: {
           en: {
-            title: 'Chat Support',
-            subtitle: "We're here to help",
+            title: 'Hi there! 👋',
+            subtitle: 'Start a chat. We\\'re here to help you 24/7.',
             footer: '',
             getStarted: 'New Conversation',
-            inputPlaceholder: 'Type your message...',
+            inputPlaceholder: 'Type your question..',
           }
-        }
+        },
+        chatInputKey: 'chatInput',
+        chatSessionKey: 'sessionId',
+        loadPreviousSession: true,
+        defaultLanguage: 'en'
       });
 
       console.log('✅ n8n chat initialized');
