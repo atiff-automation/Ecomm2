@@ -26,6 +26,11 @@ export function SimpleN8nChatLoader() {
 
     // Import and initialize using the installed package
     import('@n8n/chat').then(({ createChat }) => {
+      console.log('📦 @n8n/chat loaded, creating chat with config:', {
+        webhookUrl: config.webhookUrl,
+        mode: 'window'
+      });
+
       createChat({
         webhookUrl: config.webhookUrl,
         mode: 'window',
@@ -45,8 +50,10 @@ export function SimpleN8nChatLoader() {
         },
         chatInputKey: 'chatInput',
         chatSessionKey: 'sessionId',
-        loadPreviousSession: true,
-        defaultLanguage: 'en'
+        loadPreviousSession: false,
+        defaultLanguage: 'en',
+        // Add target element explicitly
+        target: '#n8n-chat'
       });
 
       console.log('✅ n8n chat initialized');
@@ -55,5 +62,5 @@ export function SimpleN8nChatLoader() {
     });
   }, [config]);
 
-  return null;
+  return <div id="n8n-chat" />;
 }
