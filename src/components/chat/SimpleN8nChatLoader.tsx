@@ -78,16 +78,8 @@ export function SimpleN8nChatLoader() {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
           max-width: 400px !important;
           max-height: 600px !important;
-          display: none !important;
-          flex-direction: column !important;
-        }
-
-        /* Show chat when open class is present */
-        [class*="chat-window"][class*="open"],
-        [class*="ChatWindow"][class*="open"],
-        [class*="chat-window"].open,
-        [class*="ChatWindow"].open {
           display: flex !important;
+          flex-direction: column !important;
         }
 
         /* ===== HEADER ===== */
