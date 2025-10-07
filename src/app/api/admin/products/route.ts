@@ -24,17 +24,16 @@ const createProductSchema = z.object({
   categoryIds: z
     .array(z.string().min(1, 'Category ID is required'))
     .min(1, 'At least one category is required'),
-  regularPrice: z
-    .union([
-      z.number().min(0, 'Regular price must be positive'),
-      z
-        .string()
-        .transform(val => (val === '' ? 0 : parseFloat(val)))
-        .refine(
-          val => !isNaN(val) && val >= 0,
-          'Regular price must be a positive number'
-        ),
-    ]),
+  regularPrice: z.union([
+    z.number().min(0, 'Regular price must be positive'),
+    z
+      .string()
+      .transform(val => (val === '' ? 0 : parseFloat(val)))
+      .refine(
+        val => !isNaN(val) && val >= 0,
+        'Regular price must be a positive number'
+      ),
+  ]),
   memberPrice: z
     .union([
       z.number().min(0, 'Member price must be positive'),
@@ -48,17 +47,16 @@ const createProductSchema = z.object({
     ])
     .nullable()
     .optional(),
-  stockQuantity: z
-    .union([
-      z.number().int().min(0, 'Stock quantity must be non-negative'),
-      z
-        .string()
-        .transform(val => (val === '' ? 0 : parseInt(val)))
-        .refine(
-          val => !isNaN(val) && val >= 0 && Number.isInteger(val),
-          'Stock quantity must be a non-negative integer'
-        ),
-    ]),
+  stockQuantity: z.union([
+    z.number().int().min(0, 'Stock quantity must be non-negative'),
+    z
+      .string()
+      .transform(val => (val === '' ? 0 : parseInt(val)))
+      .refine(
+        val => !isNaN(val) && val >= 0 && Number.isInteger(val),
+        'Stock quantity must be a non-negative integer'
+      ),
+  ]),
   lowStockAlert: z
     .union([
       z.number().int().min(0, 'Low stock alert must be non-negative'),
@@ -71,18 +69,17 @@ const createProductSchema = z.object({
         ),
     ])
     .default(10),
-  weight: z
-    .union([
-      z.number().min(0.01, 'Weight must be at least 0.01 kg'),
-      z
-        .string()
-        .min(1, 'Weight is required')
-        .transform(val => parseFloat(val))
-        .refine(
-          val => !isNaN(val) && val >= 0.01,
-          'Weight must be at least 0.01 kg'
-        ),
-    ]),
+  weight: z.union([
+    z.number().min(0.01, 'Weight must be at least 0.01 kg'),
+    z
+      .string()
+      .min(1, 'Weight is required')
+      .transform(val => parseFloat(val))
+      .refine(
+        val => !isNaN(val) && val >= 0.01,
+        'Weight must be at least 0.01 kg'
+      ),
+  ]),
   dimensions: z.string().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).default('DRAFT'),
   featured: z.boolean().default(false),
@@ -119,7 +116,9 @@ export async function POST(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
     console.log('🔍 Received request body:', JSON.stringify(body, null, 2));
@@ -263,7 +262,10 @@ export async function POST(request: NextRequest) {
     console.error('Error creating product:', error);
 
     if (error instanceof z.ZodError) {
-      console.error('🔍 Zod validation errors:', JSON.stringify(error.issues, null, 2));
+      console.error(
+        '🔍 Zod validation errors:',
+        JSON.stringify(error.issues, null, 2)
+      );
       return NextResponse.json(
         { message: 'Invalid product data', errors: error.issues },
         { status: 400 }
@@ -281,7 +283,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -290,6 +294,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const status = searchParams.get('status');
     const stockLevel = searchParams.get('stockLevel');
+    const promotionStatus = searchParams.get('promotionStatus');
 
     const where: any = {};
 
@@ -326,6 +331,25 @@ export async function GET(request: NextRequest) {
           break;
         case 'in-stock':
           where.stockQuantity = { gt: 10 }; // Above low stock threshold
+          break;
+      }
+    }
+
+    if (promotionStatus && promotionStatus !== 'all') {
+      const now = new Date();
+
+      switch (promotionStatus) {
+        case 'active':
+          where.isPromotional = true;
+          where.promotionStartDate = { lte: now };
+          where.promotionEndDate = { gte: now };
+          break;
+        case 'scheduled':
+          where.isPromotional = true;
+          where.promotionStartDate = { gt: now };
+          break;
+        case 'none':
+          where.isPromotional = false;
           break;
       }
     }

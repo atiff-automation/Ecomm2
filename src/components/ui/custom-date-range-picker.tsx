@@ -1,6 +1,12 @@
 /**
  * Custom Date Range Picker Component - Malaysian E-commerce Platform
  * Matches the desired design with proper alignment and highlighting
+ *
+ * Date Handling:
+ * - Start dates are set to 00:00:00.000 (start of day)
+ * - End dates are set to 23:59:59.999 (end of day)
+ * - This ensures that promotions/events that "end on Oct 5" actually end at 23:59:59 on Oct 5,
+ *   not at midnight (which would be the start of Oct 6 in the user's timezone)
  */
 
 'use client';
@@ -90,17 +96,23 @@ export function CustomDateRangePicker({
 
   const handleDateClick = (date: Date) => {
     if (!startDate || (startDate && endDate)) {
-      // Start new selection
-      onStartDateChange(date);
+      // Start new selection - set to start of day (00:00:00)
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      onStartDateChange(startOfDay);
       onEndDateChange(undefined);
     } else if (startDate && !endDate) {
-      // Set end date
+      // Set end date - set to end of day (23:59:59.999)
       if (date >= startDate) {
-        onEndDateChange(date);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        onEndDateChange(endOfDay);
         // Keep calendar open after selecting end date for user review
       } else {
         // If selected date is before start date, make it the new start date
-        onStartDateChange(date);
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        onStartDateChange(startOfDay);
         onEndDateChange(undefined);
       }
     }

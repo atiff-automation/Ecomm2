@@ -1,6 +1,18 @@
 /**
  * Promotional Pricing Utilities - Malaysian E-commerce Platform
  * Handles promotional pricing calculations and membership qualification overrides
+ *
+ * Date Handling (Fixed):
+ * - End dates are set to 23:59:59.999 (end of day) by CustomDateRangePicker
+ * - Countdown uses calendar days, not time-based Math.ceil()
+ * - "Ends today" now correctly shows on the final day of promotion
+ * - Day counts are accurate to user expectations
+ *
+ * Example: Promotion ends Oct 5, 2025 at 23:59:59
+ * - Oct 3 at any time → "Ends in 2 days" (Oct 4, 5)
+ * - Oct 4 at any time → "Ends tomorrow"
+ * - Oct 5 at any time → "Ends today"
+ * - Oct 6 onwards → Promotion expired
  */
 
 import {
@@ -31,6 +43,46 @@ export interface PromotionStatus {
   effectivePrice: number;
   qualifiesForMembership: boolean;
   overridesQualification: boolean;
+}
+
+/**
+ * Calculate the number of complete calendar days between two dates
+ * Returns 0 if dates are on the same day, 1 if one day apart, etc.
+ *
+ * Example:
+ * - Oct 3, 10:00 AM → Oct 5, 11:59 PM = 2 days (Oct 4, Oct 5)
+ * - Oct 3, 10:00 AM → Oct 3, 11:00 PM = 0 days (same day)
+ *
+ * Note: Uses floor() not ceil() to count complete calendar days
+ */
+function getCalendarDaysDifference(fromDate: Date, toDate: Date): number {
+  // Normalize both dates to midnight to compare calendar days, not time
+  const from = new Date(fromDate);
+  from.setHours(0, 0, 0, 0);
+
+  const to = new Date(toDate);
+  to.setHours(0, 0, 0, 0);
+
+  const diffTime = to.getTime() - from.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}
+
+/**
+ * Check if two dates are on the same calendar day
+ * Ignores time component - only compares year, month, and day
+ *
+ * Example:
+ * - Oct 5, 1:00 AM vs Oct 5, 11:00 PM = true (same day)
+ * - Oct 5, 11:59 PM vs Oct 6, 12:00 AM = false (different days)
+ */
+function isSameCalendarDay(date1: Date, date2: Date): boolean {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
 }
 
 /**
@@ -86,23 +138,31 @@ export function calculatePromotionStatus(
     hasValidDates &&
     new Date(product.promotionEndDate!) < now;
 
-  // Calculate days until start/end
+  // Calculate days until start/end using calendar days
   let daysUntilStart: number | undefined;
   let daysUntilEnd: number | undefined;
 
   if (product.promotionStartDate) {
     const startDate = new Date(product.promotionStartDate);
-    const diffStart = startDate.getTime() - now.getTime();
-    if (diffStart > 0) {
-      daysUntilStart = Math.ceil(diffStart / (1000 * 60 * 60 * 24));
+    if (startDate > now) {
+      // Promotion hasn't started yet
+      if (isSameCalendarDay(now, startDate)) {
+        daysUntilStart = 0; // Starts today (later in the day)
+      } else {
+        daysUntilStart = getCalendarDaysDifference(now, startDate);
+      }
     }
   }
 
   if (product.promotionEndDate) {
     const endDate = new Date(product.promotionEndDate);
-    const diffEnd = endDate.getTime() - now.getTime();
-    if (diffEnd > 0) {
-      daysUntilEnd = Math.ceil(diffEnd / (1000 * 60 * 60 * 24));
+    if (endDate >= now) {
+      // Promotion is still active or ends today
+      if (isSameCalendarDay(now, endDate)) {
+        daysUntilEnd = 0; // Ends today
+      } else {
+        daysUntilEnd = getCalendarDaysDifference(now, endDate);
+      }
     }
   }
 
@@ -241,6 +301,7 @@ export function getBestPrice(
 
 /**
  * Format promotion display text for UI
+ * Now uses calendar-day based calculations for accurate countdowns
  */
 export function getPromotionDisplayText(
   status: PromotionStatus
@@ -260,16 +321,17 @@ export function getPromotionDisplayText(
     }
     return 'Promo';
   } else if (status.isScheduled && status.daysUntilStart !== undefined) {
-    if (status.daysUntilStart === 1) {
+    if (status.daysUntilStart === 0) {
+      return 'Sale starts today';
+    } else if (status.daysUntilStart === 1) {
       return 'Sale starts tomorrow';
     } else if (status.daysUntilStart <= 7) {
       return `Sale starts in ${status.daysUntilStart} days`;
     } else {
       return 'Coming soon';
     }
-  } else if (status.isExpired) {
-    return 'Sale ended';
   }
+  // No label for expired promotions - they will be auto-cleaned
 
   return null;
 }
@@ -294,4 +356,43 @@ export function productQualifiesForMembership(
   });
 
   return promotionStatus.qualifiesForMembership;
+}
+
+/**
+ * Check if a product has expired promotion data that needs cleanup
+ * Returns true if promotional data should be deleted
+ */
+export function shouldCleanupPromotion(
+  promotionStartDate?: Date | string | null,
+  promotionEndDate?: Date | string | null,
+  isPromotional?: boolean
+): boolean {
+  // Only cleanup if product is marked as promotional
+  if (!isPromotional) {
+    return false;
+  }
+
+  // Must have an end date to determine expiry
+  if (!promotionEndDate) {
+    return false;
+  }
+
+  const now = new Date();
+  const endDate = new Date(promotionEndDate);
+
+  // Cleanup if promotion has expired (past 23:59:59 of end date)
+  return now > endDate;
+}
+
+/**
+ * Get the data update object to clean promotional fields
+ * Returns object ready for Prisma update operation
+ */
+export function getPromotionCleanupData() {
+  return {
+    isPromotional: false,
+    promotionalPrice: null,
+    promotionStartDate: null,
+    promotionEndDate: null,
+  };
 }

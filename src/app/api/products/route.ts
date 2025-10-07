@@ -11,6 +11,10 @@ import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { z } from 'zod';
+import {
+  shouldCleanupPromotion,
+  getPromotionCleanupData,
+} from '@/lib/promotions/promotion-utils';
 
 const createProductSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -50,28 +54,29 @@ const createProductSchema = z.object({
 });
 
 const searchProductsSchema = z.object({
-  page: z
-    .string()
-    .default('1')
-    .transform(Number),
-  limit: z
-    .string()
-    .default('20')
-    .transform(Number),
+  page: z.string().default('1').transform(Number),
+  limit: z.string().default('20').transform(Number),
   search: z.string().optional(),
   category: z.string().optional(),
   minPrice: z.string().transform(Number).optional(),
   maxPrice: z.string().transform(Number).optional(),
   inStock: z.string().transform(Boolean).optional(),
   featured: z.string().transform(Boolean).optional(),
-  features: z.string().optional().transform((val) => {
-    if (!val) return undefined;
-    try {
-      return JSON.parse(val) as ('featured' | 'promotional' | 'member-qualifying')[];
-    } catch {
-      return undefined;
-    }
-  }),
+  features: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val) return undefined;
+      try {
+        return JSON.parse(val) as (
+          | 'featured'
+          | 'promotional'
+          | 'member-qualifying'
+        )[];
+      } catch {
+        return undefined;
+      }
+    }),
   sortBy: z.enum(['name', 'price', 'created', 'rating']).default('created'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
@@ -160,10 +165,7 @@ export async function GET(request: NextRequest) {
       if (featureConditions.length > 0) {
         if (where.OR) {
           // If we already have OR conditions from search, create nested structure
-          where.AND = [
-            { OR: where.OR },
-            { OR: featureConditions }
-          ];
+          where.AND = [{ OR: where.OR }, { OR: featureConditions }];
           delete where.OR;
         } else {
           where.OR = featureConditions;
@@ -228,6 +230,29 @@ export async function GET(request: NextRequest) {
       }),
       prisma.product.count({ where }),
     ]);
+
+    // Lazy cleanup: Remove expired promotional data
+    const cleanupPromises = products
+      .filter(product =>
+        shouldCleanupPromotion(
+          product.promotionStartDate,
+          product.promotionEndDate,
+          product.isPromotional
+        )
+      )
+      .map(product =>
+        prisma.product.update({
+          where: { id: product.id },
+          data: getPromotionCleanupData(),
+        })
+      );
+
+    // Execute cleanup in background (don't await to avoid blocking response)
+    if (cleanupPromises.length > 0) {
+      Promise.all(cleanupPromises).catch(err =>
+        console.error('Failed to cleanup expired promotions:', err)
+      );
+    }
 
     // Calculate average ratings
     const productsWithRatings = products.map(product => {

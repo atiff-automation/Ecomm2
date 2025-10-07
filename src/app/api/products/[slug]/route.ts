@@ -11,6 +11,10 @@ import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { z } from 'zod';
+import {
+  shouldCleanupPromotion,
+  getPromotionCleanupData,
+} from '@/lib/promotions/promotion-utils';
 
 const updateProductSchema = z.object({
   name: z.string().min(1, 'Product name is required').optional(),
@@ -118,6 +122,24 @@ export async function GET(
         { message: 'Product not found' },
         { status: 404 }
       );
+    }
+
+    // Lazy cleanup: Remove expired promotional data
+    if (
+      shouldCleanupPromotion(
+        product.promotionStartDate,
+        product.promotionEndDate,
+        product.isPromotional
+      )
+    ) {
+      prisma.product
+        .update({
+          where: { id: product.id },
+          data: getPromotionCleanupData(),
+        })
+        .catch(err =>
+          console.error('Failed to cleanup expired promotion:', err)
+        );
     }
 
     // Calculate average rating
