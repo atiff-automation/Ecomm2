@@ -5,11 +5,28 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { encryptData, decryptData } from '@/lib/utils/security';
-import {
-  easyParcelConfig,
-  getEasyParcelUrl,
-} from '@/lib/config/easyparcel-config';
+// TODO: Restore easyparcel-config import after new simple implementation
+// import {
+//   easyParcelConfig,
+//   getEasyParcelUrl,
+// } from '@/lib/config/easyparcel-config';
 import crypto from 'crypto';
+
+// Temporary inline config until new system is implemented
+const easyParcelConfig = {
+  production: {
+    url: process.env.EASYPARCEL_PRODUCTION_URL || 'https://connect.easyparcel.my',
+    timeout: parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000')
+  },
+  sandbox: {
+    url: process.env.EASYPARCEL_SANDBOX_URL || 'http://demo.connect.easyparcel.my',
+    timeout: parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '8000')
+  }
+};
+
+const getEasyParcelUrl = (isSandbox: boolean) => {
+  return isSandbox ? easyParcelConfig.sandbox.url : easyParcelConfig.production.url;
+};
 
 export interface EasyParcelCredentials {
   apiKey: string;

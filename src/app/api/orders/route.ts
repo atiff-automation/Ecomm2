@@ -16,7 +16,8 @@ import { z } from 'zod';
 import { getGuestCart, clearGuestCart } from '@/lib/cart/guest-cart';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 // import { MalaysianTaxService, ServiceTaxCategory } from '@/lib/tax/malaysian-tax-service'; // Disabled - tax not configured yet
-import { businessShippingConfig } from '@/lib/config/business-shipping-config';
+// TODO: Restore shipping config after new simple implementation
+// import { businessShippingConfig } from '@/lib/config/business-shipping-config';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -300,12 +301,11 @@ export async function POST(request: NextRequest) {
         `🚚 Using selected shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`
       );
     } else {
-      // Fallback to business configuration
-      const businessProfile = await businessShippingConfig.getBusinessProfile();
-      const freeShippingThreshold =
-        businessProfile?.shippingPolicies.freeShippingThreshold || 150;
+      // TODO: Restore shipping calculation after new simple implementation
+      // Temporary fallback: flat rate shipping
+      const freeShippingThreshold = 150;
       shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
-      console.log(`🚚 Using fallback shipping calculation: RM${shippingCost}`);
+      console.log(`🚚 Using temporary fallback shipping calculation: RM${shippingCost}`);
     }
 
     // No tax calculation for now - tax system not configured
