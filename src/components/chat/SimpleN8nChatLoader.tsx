@@ -34,6 +34,7 @@ export function SimpleN8nChatLoader() {
       createChat({
         webhookUrl: config.webhookUrl,
         mode: 'window',
+        initialOpen: false,
         showWelcomeScreen: false,
         initialMessages: config.welcomeMessage.split('\n'),
         i18n: {
@@ -86,12 +87,14 @@ export function SimpleN8nChatLoader() {
         [class*="chat-header"],
         [class*="ChatHeader"] {
           background: linear-gradient(135deg, var(--chat--color-primary) 0%, var(--chat--color-primary-shade-50) 100%) !important;
-          padding: 24px 20px !important;
+          padding: 20px !important;
           border-radius: 16px 16px 0 0 !important;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-          position: relative !important;
           flex-shrink: 0 !important;
           min-height: auto !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 12px !important;
         }
 
         /* Avatar styling with enhanced size */
@@ -102,10 +105,9 @@ export function SimpleN8nChatLoader() {
           border: 3px solid rgba(255, 255, 255, 0.95) !important;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
           object-fit: cover !important;
-          position: absolute !important;
-          left: 20px !important;
-          top: 50% !important;
-          transform: translateY(-50%) !important;
+          flex-shrink: 0 !important;
+          position: static !important;
+          transform: none !important;
           animation: avatarPulse 3s ease-in-out infinite !important;
         }
 
@@ -115,6 +117,8 @@ export function SimpleN8nChatLoader() {
           display: flex !important;
           flex-direction: column !important;
           gap: 4px !important;
+          flex: 1 !important;
+          min-width: 0 !important;
         }
 
         /* ===== TYPOGRAPHY ===== */
@@ -365,21 +369,21 @@ export function SimpleN8nChatLoader() {
 
           [class*="chat-header"],
           [class*="ChatHeader"] {
-            padding: 20px 16px !important;
+            padding: 16px !important;
             border-radius: 0 !important;
+            gap: 10px !important;
           }
 
           .bot-avatar {
             width: 44px !important;
             height: 44px !important;
-            left: 16px !important;
           }
 
           [class*="chat-heading"] h1,
           [class*="chat-heading"] [class*="title"],
           [class*="ChatHeading"] h1,
           [class*="ChatHeading"] [class*="title"] {
-            font-size: 17px !important;
+            font-size: 16px !important;
           }
 
           [class*="chat-header"] p,
@@ -435,26 +439,26 @@ export function SimpleN8nChatLoader() {
         const observer = new MutationObserver(() => {
           const chatHeader = document.querySelector('[class*="chat-header"]');
           if (chatHeader && !chatHeader.querySelector('.bot-avatar')) {
+            // Convert header to flexbox layout
+            chatHeader.style.display = 'flex';
+            chatHeader.style.alignItems = 'center';
+            chatHeader.style.gap = '12px';
+            chatHeader.style.padding = '20px';
+
+            // Create avatar element
             const avatar = document.createElement('img');
             avatar.src = config.botAvatarUrl;
             avatar.alt = 'Chat Bot';
             avatar.className = 'bot-avatar';
-            avatar.style.cssText = `
-              width: 50px;
-              height: 50px;
-              border-radius: 50%;
-              position: absolute;
-              left: 20px;
-              top: 50%;
-              transform: translateY(-50%);
-              object-fit: cover;
-              border: 3px solid rgba(255, 255, 255, 0.95);
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-              animation: avatarPulse 3s ease-in-out infinite;
-            `;
+            // No inline positioning styles - let CSS handle it
 
-            chatHeader.style.position = 'relative';
-            chatHeader.style.paddingLeft = '80px';
+            // Create text container for title and subtitle
+            const textContainer = chatHeader.querySelector('[class*="chat-heading"]');
+            if (textContainer) {
+              textContainer.style.flex = '1';
+              textContainer.style.minWidth = '0';
+            }
+
             chatHeader.prepend(avatar);
             observer.disconnect();
           }
