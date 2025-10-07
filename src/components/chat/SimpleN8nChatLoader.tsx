@@ -78,6 +78,11 @@ export function SimpleN8nChatLoader() {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
           max-width: 400px !important;
           max-height: 600px !important;
+        }
+
+        /* Only apply flexbox when chat is visible (let n8n control display) */
+        [class*="chat-window"]:not([style*="display: none"]),
+        [class*="ChatWindow"]:not([style*="display: none"]) {
           display: flex !important;
           flex-direction: column !important;
         }
