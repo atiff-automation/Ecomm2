@@ -91,7 +91,7 @@ export function SimpleN8nChatLoader() {
         [class*="chat-header"],
         [class*="ChatHeader"] {
           background: linear-gradient(135deg, var(--chat--color-primary) 0%, var(--chat--color-primary-shade-50) 100%) !important;
-          padding: 20px !important;
+          padding: 16px !important;
           border-radius: 16px 16px 0 0 !important;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
           flex-shrink: 0 !important;
@@ -222,7 +222,7 @@ export function SimpleN8nChatLoader() {
         [class*="ChatFooter"],
         [class*="chat-input-container"],
         [class*="ChatInputContainer"] {
-          padding: 16px !important;
+          padding: 12px !important;
           background: white !important;
           border-top: 1px solid #e5e7eb !important;
           flex-shrink: 0 !important;
@@ -233,12 +233,12 @@ export function SimpleN8nChatLoader() {
         [class*="ChatInput"] input,
         [class*="ChatInput"] textarea {
           border: 1px solid #e5e7eb !important;
-          border-radius: 28px !important;
+          border-radius: 24px !important;
           background: #f9fafb !important;
-          padding: 14px 20px !important;
+          padding: 12px 16px !important;
           font-size: 15px !important;
           line-height: 1.5 !important;
-          min-height: 52px !important;
+          min-height: 44px !important;
           transition: all 0.2s ease !important;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         }
@@ -264,8 +264,8 @@ export function SimpleN8nChatLoader() {
         [class*="ChatInputSendButton"] {
           background: var(--chat--color-primary) !important;
           border-radius: 50% !important;
-          width: 40px !important;
-          height: 40px !important;
+          width: 36px !important;
+          height: 36px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
@@ -373,7 +373,7 @@ export function SimpleN8nChatLoader() {
 
           [class*="chat-header"],
           [class*="ChatHeader"] {
-            padding: 16px !important;
+            padding: 12px !important;
             border-radius: 0 !important;
             gap: 10px !important;
           }
@@ -403,11 +403,26 @@ export function SimpleN8nChatLoader() {
             max-width: 80% !important;
           }
 
+          [class*="chat-footer"],
+          [class*="ChatFooter"],
+          [class*="chat-input-container"],
+          [class*="ChatInputContainer"] {
+            padding: 10px !important;
+          }
+
           [class*="chat-input"],
           [class*="ChatInput"] input,
           [class*="ChatInput"] textarea {
             font-size: 14px !important;
-            min-height: 48px !important;
+            min-height: 40px !important;
+            padding: 10px 14px !important;
+            border-radius: 20px !important;
+          }
+
+          [class*="chat-input-send-button"],
+          [class*="ChatInputSendButton"] {
+            width: 32px !important;
+            height: 32px !important;
           }
         }
 
@@ -447,7 +462,7 @@ export function SimpleN8nChatLoader() {
             chatHeader.style.display = 'flex';
             chatHeader.style.alignItems = 'center';
             chatHeader.style.gap = '12px';
-            chatHeader.style.padding = '20px';
+            chatHeader.style.padding = '16px';
 
             // Create avatar element
             const avatar = document.createElement('img');
