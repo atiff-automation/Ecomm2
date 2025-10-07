@@ -44,7 +44,8 @@ import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import { malaysianStatesOptions } from '@/lib/validation/settings';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
-import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
+// TODO: Restore shipping component after new simple implementation
+// import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
 import PaymentMethodSelection from '@/components/checkout/PaymentMethodSelection';
 // API endpoints for postcode validation (client-safe)
 
@@ -1149,7 +1150,8 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
-          {/* Admin-Controlled Shipping */}
+          {/* TODO: Admin-Controlled Shipping - Restore after new simple implementation */}
+          {/*
           <AdminControlledShippingComponent
             cartItems={
               cart?.items.map(item => ({
@@ -1179,6 +1181,7 @@ export default function CheckoutPage() {
             shippingAddress={shippingAddress}
             onShippingChange={handleShippingChange}
           />
+          */}
 
           {/* Billing Address */}
           <Card>
