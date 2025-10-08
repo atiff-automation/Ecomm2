@@ -150,6 +150,7 @@ export interface ShippingCalculationResult {
     strategy: CourierSelectionStrategy;
     freeShippingApplied: boolean;
     cartSubtotal: number;
+    totalWeight: number; // Total calculated weight in kg
   };
   error?: ShippingErrorCode;
   message?: string;

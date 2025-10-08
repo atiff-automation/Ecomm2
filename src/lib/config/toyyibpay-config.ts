@@ -173,14 +173,19 @@ export function isValidBillCode(billCode: string): boolean {
 
 /**
  * Get webhook URLs for different environments
+ *
+ * ToyyibPay will redirect users to returnUrl with these query parameters:
+ * - status_id: 1 (success), 2 (pending), 3 (fail)
+ * - billcode: The bill's permanent link
+ * - order_id: External payment reference number (order number)
  */
 export function getWebhookUrls(environment: 'sandbox' | 'production') {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   return {
-    returnUrl: `${baseUrl}/checkout/success`,
+    returnUrl: `${baseUrl}/thank-you`,
     callbackUrl: `${baseUrl}/api/webhooks/toyyibpay`,
-    failedUrl: `${baseUrl}/checkout/failed`,
+    failedUrl: `${baseUrl}/thank-you`, // Same page handles all cases based on status_id
   };
 }
 

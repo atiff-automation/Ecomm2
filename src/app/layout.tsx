@@ -9,6 +9,7 @@ import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
 import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
 import { SimpleN8nChatLoader } from '@/components/chat/SimpleN8nChatLoader';
+import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider';
 import './globals.css';
 
 const geistSans = localFont({
@@ -134,32 +135,34 @@ export default function RootLayout({
               sampleRate: 0,
             }}
           >
-            <AuthProvider>
-              <DynamicFavicon />
-              <Suspense fallback={<PageLoading />}>
-                <MainLayout>{children}</MainLayout>
-              </Suspense>
-              <TelegramHealthCheck />
-              <Toaster
-                position="top-right"
-                duration={3000}
-                pauseWhenPageIsHidden
-                closeButton
-                richColors
-                expand={false}
-                visibleToasts={4}
-                toastOptions={{
-                  style: {
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    color: '#374151',
-                  },
-                  className: 'group',
-                  descriptionClassName: 'group-[.toast]:text-muted-foreground',
-                }}
-              />
-              <SimpleN8nChatLoader />
-            </AuthProvider>
+            <ReactQueryProvider>
+              <AuthProvider>
+                <DynamicFavicon />
+                <Suspense fallback={<PageLoading />}>
+                  <MainLayout>{children}</MainLayout>
+                </Suspense>
+                <TelegramHealthCheck />
+                <Toaster
+                  position="top-right"
+                  duration={3000}
+                  pauseWhenPageIsHidden
+                  closeButton
+                  richColors
+                  expand={false}
+                  visibleToasts={4}
+                  toastOptions={{
+                    style: {
+                      background: 'white',
+                      border: '1px solid #e5e7eb',
+                      color: '#374151',
+                    },
+                    className: 'group',
+                    descriptionClassName: 'group-[.toast]:text-muted-foreground',
+                  }}
+                />
+                <SimpleN8nChatLoader />
+              </AuthProvider>
+            </ReactQueryProvider>
           </MonitoringProvider>
         </GlobalErrorBoundary>
 

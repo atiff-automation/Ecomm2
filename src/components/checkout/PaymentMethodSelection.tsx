@@ -1,12 +1,12 @@
 /**
  * Payment Method Selection Component
- * Dynamically fetches and displays available payment methods
+ * Uses React Query for automatic caching and deduplication
  * Integrates with the multi-gateway payment router system
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -19,30 +19,7 @@ import {
   CheckCircle,
   Clock,
 } from 'lucide-react';
-
-interface PaymentMethod {
-  id: string;
-  name: string;
-  description: string;
-  features: string[];
-  processingTime: string;
-  available: boolean;
-}
-
-interface PaymentMethodsResponse {
-  success: boolean;
-  methods: PaymentMethod[];
-  activeMethods: PaymentMethod[];
-  defaultMethod: string | null;
-  availability: {
-    toyyibpay: {
-      available: boolean;
-      configured: boolean;
-      error?: string;
-    };
-  };
-  hasAvailableGateways: boolean;
-}
+import { usePaymentMethods } from '@/hooks/queries/use-payment-methods';
 
 interface PaymentMethodSelectionProps {
   selectedMethod: string;
@@ -55,72 +32,21 @@ export default function PaymentMethodSelection({
   onMethodChange,
   onMethodsLoaded,
 }: PaymentMethodSelectionProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [activeMethods, setActiveMethods] = useState<PaymentMethod[]>([]);
-  const [hasAvailableGateways, setHasAvailableGateways] = useState(false);
-  const [availability, setAvailability] = useState<
-    PaymentMethodsResponse['availability'] | null
-  >(null);
+  // Use React Query hook - automatic caching and deduplication
+  const { data, isLoading, error } = usePaymentMethods();
 
-  // Fetch available payment methods
+  // Auto-select default method and notify parent when data loads
   useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      try {
-        setLoading(true);
-        setError('');
+    if (!data) return;
 
-        const response = await fetch('/api/payment/methods');
+    // Auto-select default method if available and no method selected
+    if (!selectedMethod && data.defaultMethod) {
+      onMethodChange(data.defaultMethod);
+    }
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data: PaymentMethodsResponse = await response.json();
-
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch payment methods');
-        }
-
-        console.log('💳 Payment methods loaded:', {
-          total: data.methods.length,
-          active: data.activeMethods.length,
-          hasGateways: data.hasAvailableGateways,
-          default: data.defaultMethod,
-        });
-
-        setPaymentMethods(data.methods);
-        setActiveMethods(data.activeMethods);
-        setHasAvailableGateways(data.hasAvailableGateways);
-        setAvailability(data.availability);
-
-        // Auto-select default method if available and no method selected
-        if (!selectedMethod && data.defaultMethod) {
-          onMethodChange(data.defaultMethod);
-        }
-
-        // Notify parent about gateway availability
-        if (onMethodsLoaded) {
-          onMethodsLoaded(data.hasAvailableGateways);
-        }
-      } catch (err) {
-        console.error('Error fetching payment methods:', err);
-        setError(
-          err instanceof Error ? err.message : 'Failed to load payment methods'
-        );
-        setHasAvailableGateways(false);
-
-        if (onMethodsLoaded) {
-          onMethodsLoaded(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPaymentMethods();
-  }, [selectedMethod, onMethodChange, onMethodsLoaded]);
+    // Notify parent about gateway availability
+    onMethodsLoaded?.(data.hasAvailableGateways);
+  }, [data, selectedMethod]); // Remove callbacks from dependencies
 
   const getMethodIcon = (methodId: string) => {
     switch (methodId.toUpperCase()) {
@@ -143,7 +69,7 @@ export default function PaymentMethodSelection({
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -177,13 +103,18 @@ export default function PaymentMethodSelection({
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              <strong>Payment System Error:</strong> {error}
+              <strong>Payment System Error:</strong> {error.message}
             </AlertDescription>
           </Alert>
         </CardContent>
       </Card>
     );
   }
+
+  // Safely access data properties
+  const paymentMethods = data?.methods || [];
+  const hasAvailableGateways = data?.hasAvailableGateways || false;
+  const availability = data?.availability;
 
   return (
     <Card>

@@ -28,7 +28,7 @@ interface ShippingSelectorProps {
     quantity: number;
   }>;
   orderValue: number; // Cart subtotal for free shipping calculation
-  onShippingSelected: (option: ShippingOption | null) => void;
+  onShippingSelected: (option: ShippingOption | null, weight?: number) => void;
 }
 
 interface ShippingState {
@@ -37,6 +37,7 @@ interface ShippingState {
   options: ShippingOption[];
   selected: ShippingOption | null;
   strategy: 'cheapest' | 'all' | 'selected';
+  totalWeight: number; // Calculated weight from API
 }
 
 export default function ShippingSelector({
@@ -51,6 +52,7 @@ export default function ShippingSelector({
     options: [],
     selected: null,
     strategy: 'cheapest',
+    totalWeight: 0,
   });
 
   // Debounced address validation
@@ -88,7 +90,7 @@ export default function ShippingSelector({
       const data = await response.json();
 
       if (data.success && data.shipping) {
-        const { options, strategy } = data.shipping;
+        const { options, strategy, totalWeight } = data.shipping;
 
         // Auto-select if only one option OR cheapest strategy
         const autoSelect = options.length === 1 || strategy === 'cheapest';
@@ -100,10 +102,11 @@ export default function ShippingSelector({
           options,
           selected: selectedOption,
           strategy,
+          totalWeight: totalWeight || 0,
         });
 
-        // CRITICAL: Notify parent component of selection
-        onShippingSelected(selectedOption);
+        // CRITICAL: Notify parent component of selection AND weight
+        onShippingSelected(selectedOption, totalWeight);
       } else {
         setState((prev) => ({
           ...prev,
@@ -141,8 +144,8 @@ export default function ShippingSelector({
     const selectedOption = state.options.find((opt) => opt.serviceId === serviceId);
     if (selectedOption) {
       setState((prev) => ({ ...prev, selected: selectedOption }));
-      // CRITICAL: Notify parent of selection change
-      onShippingSelected(selectedOption);
+      // CRITICAL: Notify parent of selection change AND weight
+      onShippingSelected(selectedOption, state.totalWeight);
     }
   };
 

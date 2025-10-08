@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
         strategy: settings.courierSelectionMode,
         freeShippingApplied,
         cartSubtotal: orderValue,
+        totalWeight, // Include calculated weight for checkout
       },
     };
 

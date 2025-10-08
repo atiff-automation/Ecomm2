@@ -103,10 +103,18 @@ function ThankYouContent() {
   const [initialSessionState, setInitialSessionState] = useState<
     'loading' | 'authenticated' | 'guest'
   >('loading');
+  const [pollCount, setPollCount] = useState(0);
 
-  const orderRef = searchParams.get('orderRef');
+  // Extract order reference from multiple possible sources
+  // 1. Direct orderRef parameter (from test gateway or direct navigation)
+  // 2. ToyyibPay order_id parameter (from payment gateway redirect)
+  const orderRef = searchParams.get('orderRef') || searchParams.get('order_id');
   const amount = searchParams.get('amount');
   const membershipEligible = searchParams.get('membership') === 'true';
+
+  // ToyyibPay return parameters
+  const toyyibPayStatusId = searchParams.get('status_id'); // 1=success, 2=pending, 3=fail
+  const toyyibPayBillCode = searchParams.get('billcode');
 
   // Clear cart immediately when thank-you page loads (after successful payment)
   const clearCartAfterPayment = async () => {
@@ -167,8 +175,33 @@ function ThankYouContent() {
       return;
     }
 
+    // Log ToyyibPay return parameters for debugging
+    if (toyyibPayStatusId || toyyibPayBillCode) {
+      console.log('💳 ToyyibPay return parameters:', {
+        statusId: toyyibPayStatusId,
+        billCode: toyyibPayBillCode,
+        orderId: orderRef,
+        statusDescription:
+          toyyibPayStatusId === '1'
+            ? 'Success'
+            : toyyibPayStatusId === '2'
+              ? 'Pending'
+              : toyyibPayStatusId === '3'
+                ? 'Failed'
+                : 'Unknown',
+      });
+    }
+
     fetchOrderData();
-  }, [orderRef]);
+  }, [orderRef, toyyibPayStatusId, toyyibPayBillCode]);
+
+  // Poll for order status updates if payment was successful but webhook hasn't fired yet
+  useEffect(() => {
+    if (pollCount > 0 && orderRef) {
+      console.log(`🔄 Polling order status (attempt ${pollCount}/10)...`);
+      fetchOrderData();
+    }
+  }, [pollCount]);
 
   // Handle membership activation if eligible
   useEffect(() => {
@@ -235,8 +268,34 @@ function ThankYouContent() {
         throw new Error('Invalid order data received');
       }
 
-      console.log('✅ Secure order data received:', apiResponse.data);
+      console.log('✅ Secure order data received:', {
+        orderNumber: apiResponse.data.orderNumber,
+        status: apiResponse.data.status,
+        paymentStatus: apiResponse.data.paymentStatus,
+      });
+
       setOrderData(apiResponse.data);
+
+      // If payment was successful (status_id=1) but order is still PENDING,
+      // webhook may not have fired yet - poll for updates
+      if (
+        toyyibPayStatusId === '1' &&
+        apiResponse.data.paymentStatus === 'PENDING' &&
+        pollCount < 10 // Max 10 polls (30 seconds)
+      ) {
+        console.log('⏳ Payment successful but order pending, polling for webhook update...', {
+          pollCount: pollCount + 1,
+          maxPolls: 10,
+        });
+
+        // Poll again after 3 seconds
+        setTimeout(() => {
+          setPollCount(prev => prev + 1);
+        }, 3000);
+      } else if (apiResponse.data.paymentStatus === 'PAID') {
+        console.log('✅ Order payment confirmed:', apiResponse.data.orderNumber);
+        setPollCount(0); // Reset poll count
+      }
     } catch (error) {
       console.error('Error fetching order:', error);
       setError('Failed to load order details');

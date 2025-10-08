@@ -447,10 +447,16 @@ export default function CheckoutPage() {
   };
 
   // Handle shipping selection from ShippingSelector component
-  const handleShippingSelected = useCallback((option: ShippingOption | null) => {
+  const handleShippingSelected = useCallback((option: ShippingOption | null, weight?: number) => {
     setSelectedShipping(option);
     setShippingCost(option?.cost || 0);
     setFreeShippingApplied(option?.freeShipping || false);
+
+    // CRITICAL: Update calculated weight from API response
+    if (weight !== undefined) {
+      setCalculatedWeight(weight);
+      console.log('✅ Weight updated from shipping calculation:', weight);
+    }
 
     // Clear shipping error if exists
     if (fieldErrors['shipping']) {
@@ -483,21 +489,19 @@ export default function CheckoutPage() {
     shippingAddress.postcode,
   ]);
 
-  // Handle payment method change
-  const handlePaymentMethodChange = (method: string) => {
+  // Handle payment method change - wrapped in useCallback to prevent re-renders
+  const handlePaymentMethodChange = useCallback((method: string) => {
     console.log('💳 Payment method selected:', method);
     setPaymentMethod(method);
     // Clear any previous payment-related errors
-    if (orderError) {
-      setOrderError('');
-    }
-  };
+    setOrderError('');
+  }, []);
 
-  // Handle payment methods loaded callback
-  const handlePaymentMethodsLoaded = (hasGateways: boolean) => {
+  // Handle payment methods loaded callback - wrapped in useCallback
+  const handlePaymentMethodsLoaded = useCallback((hasGateways: boolean) => {
     console.log('💳 Payment gateways availability:', { hasGateways });
     setHasAvailableGateways(hasGateways);
-  };
+  }, []);
 
   // Submit order
   const handleSubmitOrder = async () => {
