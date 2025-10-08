@@ -162,7 +162,7 @@ const navigationItems: NavigationItem[] = [
   {
     id: 'shipping',
     label: 'Shipping',
-    href: '/admin/shipping',
+    href: '/admin/shipping-settings',
     icon: Truck,
     children: [
       {
