@@ -335,6 +335,15 @@ export default function BusinessProfilePage() {
       `${addressType}Address.postalCode` as keyof BusinessProfileFormData;
     setValue(fieldPath, postcode);
 
+    // TEMPORARY: Disable postcode validation/autofill until API endpoint is created
+    // Just mark as valid so users can manually enter city and state
+    console.log(`⏭️ Postcode validation disabled - marking as valid`);
+    setPostcodeValidation(prev => ({
+      ...prev,
+      [addressType]: { valid: true, loading: false },
+    }));
+
+    /* DISABLED - Postcode validation API not yet implemented
     // Only proceed with validation if postcode is exactly 5 digits
     if (!/^\d{5}$/.test(postcode)) {
       console.log(
@@ -433,6 +442,7 @@ export default function BusinessProfilePage() {
         }));
       }
     }, 500); // 500ms debounce
+    */
   };
 
   if (isLoading) {

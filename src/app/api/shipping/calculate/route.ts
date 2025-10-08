@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { getShippingSettingsOrThrow } from '@/lib/shipping/shipping-settings';
+import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
 import { createEasyParcelService, EasyParcelError } from '@/lib/shipping/easyparcel-service';
 import { calculateTotalWeight } from '@/lib/shipping/utils/weight-utils';
 import {
@@ -56,6 +57,9 @@ export async function POST(request: NextRequest) {
     // Check if shipping is configured
     const settings = await getShippingSettingsOrThrow();
 
+    // Get pickup address from business profile
+    const pickupAddress = await getPickupAddressOrThrow();
+
     // Fetch product details to get weights
     const productIds = items.map((item) => item.productId);
     const products = await prisma.product.findMany({
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest) {
     let rates;
 
     try {
-      rates = await easyParcel.getRates(settings, deliveryAddress, totalWeight);
+      rates = await easyParcel.getRates(pickupAddress, deliveryAddress, totalWeight);
     } catch (error) {
       console.error('[ShippingCalculate] Rate fetch error:', error);
 

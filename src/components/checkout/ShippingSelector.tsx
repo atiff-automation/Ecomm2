@@ -221,8 +221,8 @@ export default function ShippingSelector({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Cheapest strategy: Single option (auto-selected) */}
-        {state.strategy === 'cheapest' && state.selected && (
+        {/* Cheapest and Priority strategies: Single option (auto-selected) */}
+        {(state.strategy === 'cheapest' || state.strategy === 'priority') && state.selected && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -253,7 +253,9 @@ export default function ShippingSelector({
                       Delivery: {state.selected.estimatedDays}
                     </p>
                     <p className="text-sm text-gray-500">
-                      (Cheapest option automatically selected)
+                      {state.strategy === 'cheapest'
+                        ? '(Cheapest option automatically selected)'
+                        : '(Priority courier automatically selected)'}
                     </p>
                   </>
                 )}

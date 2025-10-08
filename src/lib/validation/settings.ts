@@ -6,22 +6,24 @@ import { z } from 'zod';
  */
 
 // Malaysian state codes enum
+// IMPORTANT: Using lowercase codes to match EasyParcel API and shipping system
 export const MalaysianStates = [
-  'JOH',
-  'KDH',
-  'KTN',
-  'MLK',
-  'NSN',
-  'PHG',
-  'PRK',
-  'PLS',
-  'PNG',
-  'KUL',
-  'TRG',
-  'SEL',
-  'SBH',
-  'SWK',
-  'LBN',
+  'jhr',
+  'kdh',
+  'ktn',
+  'mlk',
+  'nsn',
+  'phg',
+  'prk',
+  'pls',
+  'png',
+  'sgr',
+  'trg',
+  'kul',
+  'pjy',
+  'srw',
+  'sbh',
+  'lbn',
 ] as const;
 
 // Alias for backward compatibility
@@ -405,24 +407,25 @@ export type TaxConfigurationFormData = z.infer<typeof taxConfigurationSchema>;
 
 /**
  * Malaysian states with display names
+ * IMPORTANT: Using lowercase codes to match EasyParcel API and shipping system
  */
 export const malaysianStatesOptions = [
-  { value: 'JOH', label: 'Johor' },
-  { value: 'KDH', label: 'Kedah' },
-  { value: 'KTN', label: 'Kelantan' },
-  { value: 'MLK', label: 'Melaka' },
-  { value: 'NSN', label: 'Negeri Sembilan' },
-  { value: 'PHG', label: 'Pahang' },
-  { value: 'PRK', label: 'Perak' },
-  { value: 'PLS', label: 'Perlis' },
-  { value: 'PNG', label: 'Pulau Pinang' },
-  { value: 'KUL', label: 'Kuala Lumpur' },
-  { value: 'PJY', label: 'Putrajaya' },
-  { value: 'TRG', label: 'Terengganu' },
-  { value: 'SEL', label: 'Selangor' },
-  { value: 'SBH', label: 'Sabah' },
-  { value: 'SWK', label: 'Sarawak' },
-  { value: 'LBN', label: 'Labuan' },
+  { value: 'jhr', label: 'Johor' },
+  { value: 'kdh', label: 'Kedah' },
+  { value: 'ktn', label: 'Kelantan' },
+  { value: 'mlk', label: 'Melaka' },
+  { value: 'nsn', label: 'Negeri Sembilan' },
+  { value: 'phg', label: 'Pahang' },
+  { value: 'prk', label: 'Perak' },
+  { value: 'pls', label: 'Perlis' },
+  { value: 'png', label: 'Penang' },
+  { value: 'sgr', label: 'Selangor' },
+  { value: 'trg', label: 'Terengganu' },
+  { value: 'kul', label: 'Kuala Lumpur' },
+  { value: 'pjy', label: 'Putrajaya' },
+  { value: 'srw', label: 'Sarawak' },
+  { value: 'sbh', label: 'Sabah' },
+  { value: 'lbn', label: 'Labuan' },
 ];
 
 /**

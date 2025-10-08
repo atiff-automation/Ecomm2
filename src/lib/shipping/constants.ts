@@ -163,7 +163,7 @@ export const WEIGHT_LIMITS = {
 export const EASYPARCEL_CONFIG = {
   SANDBOX_URL: 'https://demo.connect.easyparcel.my',
   PRODUCTION_URL: 'https://connect.easyparcel.my',
-  DEFAULT_TIMEOUT: 10000, // milliseconds (increased for slow networks)
+  DEFAULT_TIMEOUT: 30000, // 30 seconds - EasyParcel production API can be slow
   MAX_RETRIES: 3,
 } as const;
 

@@ -363,74 +363,11 @@ export default function CheckoutPage() {
       addressType === 'shipping' ? setShippingAddress : setBillingAddress;
     addressSetter(prev => ({ ...prev, postcode }));
 
-    // Set loading state
+    // TEMPORARY: Disable postcode validation/autofill until API endpoint is created
     setPostcodeValidation(prev => ({
       ...prev,
-      [addressType]: { valid: true, loading: true },
+      [addressType]: { valid: true, loading: false },
     }));
-
-    // Debounce the validation and auto-fill with API call
-    setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/postcode/validate?postcode=${encodeURIComponent(postcode)}`);
-        
-        if (response.ok) {
-          const validation = await response.json();
-
-          if (validation.valid && validation.location) {
-            // Auto-fill state and city using database data - use state code for consistency
-            addressSetter(prev => ({
-              ...prev,
-              postcode: validation.formatted || postcode,
-              state: validation.location.stateCode, // Use stateCode instead of stateName
-              city: validation.location.city,
-            }));
-
-            setPostcodeValidation(prev => ({
-              ...prev,
-              [addressType]: { valid: true, loading: false },
-            }));
-
-            console.log(`✅ Auto-filled ${addressType} address from database:`, {
-              postcode: validation.formatted,
-              stateCode: validation.location.stateCode,
-              stateName: validation.location.stateName,
-              city: validation.location.city,
-              zone: validation.location.zone,
-            });
-          } else if (postcode.length === 5) {
-            // Invalid postcode from database - enable manual entry
-            setPostcodeValidation(prev => ({
-              ...prev,
-              [addressType]: {
-                valid: false,
-                error: `${validation.error || 'Invalid Malaysian postcode'}. Please enter city and state manually to proceed.`,
-                loading: false,
-                manualEntry: true,
-              },
-            }));
-          } else {
-            // Still typing
-            setPostcodeValidation(prev => ({
-              ...prev,
-              [addressType]: { valid: true, loading: false },
-            }));
-          }
-        } else {
-          throw new Error('API request failed');
-        }
-      } catch (error) {
-        console.error(`Error validating postcode ${postcode}:`, error);
-        setPostcodeValidation(prev => ({
-          ...prev,
-          [addressType]: {
-            valid: false,
-            error: 'Postcode validation service temporarily unavailable',
-            loading: false,
-          },
-        }));
-      }
-    }, 500); // 500ms debounce
   };
 
   // Handle address input change
@@ -510,15 +447,7 @@ export default function CheckoutPage() {
   };
 
   // Handle shipping selection from ShippingSelector component
-  const handleShippingSelected = (option: ShippingOption | null) => {
-    console.log('🚚 Shipping option selected:', {
-      courierName: option?.courierName,
-      serviceType: option?.serviceType,
-      cost: option?.cost,
-      freeShipping: option?.freeShipping,
-      estimatedDays: option?.estimatedDays,
-    });
-
+  const handleShippingSelected = useCallback((option: ShippingOption | null) => {
     setSelectedShipping(option);
     setShippingCost(option?.cost || 0);
     setFreeShippingApplied(option?.freeShipping || false);
@@ -531,7 +460,28 @@ export default function CheckoutPage() {
         return newErrors;
       });
     }
-  };
+  }, [fieldErrors]);
+
+  // Memoize deliveryAddress to prevent recreation on every render
+  const memoizedDeliveryAddress = useMemo(() => ({
+    name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+    phone: shippingAddress.phone,
+    addressLine1: shippingAddress.address,
+    addressLine2: shippingAddress.address2 || '',
+    city: shippingAddress.city,
+    state: shippingAddress.state as DeliveryAddress['state'],
+    postalCode: shippingAddress.postcode,
+    country: 'MY' as const,
+  }), [
+    shippingAddress.firstName,
+    shippingAddress.lastName,
+    shippingAddress.phone,
+    shippingAddress.address,
+    shippingAddress.address2,
+    shippingAddress.city,
+    shippingAddress.state,
+    shippingAddress.postcode,
+  ]);
 
   // Handle payment method change
   const handlePaymentMethodChange = (method: string) => {
@@ -1179,22 +1129,8 @@ export default function CheckoutPage() {
           {/* Shipping Method Selection - New Simple Implementation */}
           {isAddressComplete(shippingAddress) && (
             <ShippingSelector
-              deliveryAddress={{
-                name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-                phone: shippingAddress.phone,
-                addressLine1: shippingAddress.address,
-                addressLine2: shippingAddress.address2 || '',
-                city: shippingAddress.city,
-                state: shippingAddress.state as DeliveryAddress['state'],
-                postalCode: shippingAddress.postcode,
-                country: 'MY',
-              }}
-              items={
-                cart?.items.map(item => ({
-                  productId: item.product.id,
-                  quantity: item.quantity,
-                })) || []
-              }
+              deliveryAddress={memoizedDeliveryAddress}
+              items={memoizedCartItems}
               orderValue={subtotal}
               onShippingSelected={handleShippingSelected}
             />
