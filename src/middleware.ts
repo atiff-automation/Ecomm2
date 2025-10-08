@@ -89,7 +89,6 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     pathname.startsWith('/api/member') ||
     pathname.startsWith('/api/user') ||
     pathname.startsWith('/api/settings') ||
-    pathname.startsWith('/api/orders') ||
     pathname.startsWith('/api/wishlist')
   ) {
     return 'authenticated';
@@ -99,7 +98,8 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
   if (
     pathname.startsWith('/api/cart') ||
     pathname.startsWith('/api/chat/send') ||
-    pathname.startsWith('/api/recently-viewed')
+    pathname.startsWith('/api/recently-viewed') ||
+    pathname.startsWith('/api/orders') // Allow guest checkout
   ) {
     return 'standard';
   }
