@@ -297,38 +297,6 @@ export interface TrackingUpdateResponse {
 // ============================================================================
 
 /**
- * EasyParcel API rate calculation request
- */
-export interface EasyParcelRateRequest {
-  pickup: {
-    name: string;
-    phone: string;
-    address: string;
-    address2?: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-  };
-  delivery: {
-    name: string;
-    phone: string;
-    address: string;
-    address2?: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-  };
-  parcel: {
-    weight: number; // in kg
-    width?: number; // in cm
-    height?: number; // in cm
-    length?: number; // in cm
-  };
-}
-
-/**
  * EasyParcel API rate calculation response (single service)
  */
 export interface EasyParcelRateService {

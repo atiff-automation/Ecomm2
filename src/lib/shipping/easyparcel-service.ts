@@ -10,7 +10,6 @@
 import { EASYPARCEL_CONFIG, SHIPPING_ERROR_CODES } from './constants';
 import type {
   DeliveryAddress,
-  EasyParcelRateRequest,
   EasyParcelRateService,
   EasyParcelShipmentRequest,
   EasyParcelShipmentResponse,
@@ -338,75 +337,6 @@ export class EasyParcelService {
       throw new EasyParcelError(
         SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
         'Failed to fetch account balance',
-        { originalError: error }
-      );
-    }
-  }
-
-  /**
-   * Get list of available couriers
-   *
-   * Calls EasyParcel EPCourierList API action to retrieve all available couriers.
-   * This provides admin with courier options for "Selected Couriers" strategy.
-   *
-   * @returns Array of unique couriers with their IDs and names
-   * @throws EasyParcelError if API call fails
-   */
-  async getCourierList(): Promise<Array<{ courierId: string; name: string }>> {
-    try {
-      console.log('[EasyParcel] Fetching courier list via EPCourierList');
-
-      // Call EPCourierList API action (no additional params needed, just API key)
-      const response = await this.makeRequest<{
-        api_status: string;
-        error_code: string;
-        error_remark: string;
-        result: Array<{
-          courier_id: string;
-          courier_name: string;
-          courier_display_name: string;
-        }>;
-      }>('EPCourierList', {});
-
-      // Check for API errors
-      if (response.api_status !== 'Success' || response.error_code !== '0') {
-        throw new EasyParcelError(
-          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          response.error_remark || 'Failed to fetch courier list',
-          { response }
-        );
-      }
-
-      // Check if result exists and is an array
-      if (!response.result || !Array.isArray(response.result)) {
-        throw new EasyParcelError(
-          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          'Invalid courier list response format',
-          { response }
-        );
-      }
-
-      // Map EasyParcel response to our courier format (name only, no logo)
-      const couriers = response.result.map((courier) => ({
-        courierId: courier.courier_id,
-        name: courier.courier_display_name || courier.courier_name,
-      }));
-
-      console.log('[EasyParcel] Courier list fetched successfully:', {
-        count: couriers.length,
-        couriers: couriers.map((c) => c.name),
-      });
-
-      return couriers;
-    } catch (error) {
-      if (error instanceof EasyParcelError) {
-        throw error;
-      }
-
-      console.error('[EasyParcel] Courier list fetch failed:', error);
-      throw new EasyParcelError(
-        SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
-        'Failed to fetch courier list',
         { originalError: error }
       );
     }
