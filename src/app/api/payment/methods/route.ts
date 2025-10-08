@@ -1,10 +1,9 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Payment Methods API
  * Returns available payment methods for customer selection
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentRouter } from '@/lib/payments/payment-router';
