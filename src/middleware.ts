@@ -61,9 +61,22 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     return 'admin';
   }
 
-  // Sensitive operations - payment, webhooks, uploads
+  // Public routes - minimal protection (auth, products, health checks, public configs)
   if (
-    pathname.startsWith('/api/payment') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/products') ||
+    pathname.startsWith('/api/categories') ||
+    pathname.startsWith('/api/health') ||
+    pathname === '/api/payment/methods' || // Public endpoint for payment method display
+    pathname === '/api/chat-config/public' || // Public chat configuration
+    pathname === '/api/business-profile/public' // Public business profile
+  ) {
+    return 'public';
+  }
+
+  // Sensitive operations - payment mutations, webhooks, uploads
+  if (
+    (pathname.startsWith('/api/payment') && pathname !== '/api/payment/methods') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/upload') ||
     (pathname.startsWith('/api/site-customization') && pathname !== '/api/site-customization/current')
@@ -88,16 +101,6 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     pathname.startsWith('/api/chat/send')
   ) {
     return 'standard';
-  }
-
-  // Public routes - minimal protection (auth, products, health checks)
-  if (
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/products') ||
-    pathname.startsWith('/api/categories') ||
-    pathname.startsWith('/api/health')
-  ) {
-    return 'public';
   }
 
   // Default to standard protection for unknown routes
