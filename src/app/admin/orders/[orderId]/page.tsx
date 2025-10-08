@@ -44,6 +44,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import FulfillmentWidget from '@/components/admin/FulfillmentWidget';
 
 interface OrderItem {
   id: string;
@@ -135,6 +136,16 @@ interface OrderDetails {
     createdAt: string;
     updatedAt: string;
   };
+
+  // NEW: Simplified shipping fields for fulfillment
+  selectedCourierServiceId?: string;
+  courierName?: string;
+  courierServiceType?: string;
+  estimatedDelivery?: string;
+  shippingWeight?: number;
+  trackingNumber?: string;
+  airwayBillNumber?: string;
+  airwayBillUrl?: string;
 }
 
 export default function AdminOrderDetailsPage() {
@@ -151,7 +162,7 @@ export default function AdminOrderDetailsPage() {
   const [refreshingTracking, setRefreshingTracking] = useState(false);
   const [trackingError, setTrackingError] = useState<string>('');
 
-  const orderId = params.id as string;
+  const orderId = params.orderId as string;
 
   useEffect(() => {
     if (status === 'loading') {
@@ -772,6 +783,36 @@ export default function AdminOrderDetailsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* NEW: Fulfillment Widget for PAID orders */}
+          {order.status === 'PAID' && (
+            <FulfillmentWidget
+              orderId={order.id}
+              orderStatus={order.status}
+              customerSelectedCourier={
+                order.selectedCourierServiceId && order.courierName
+                  ? {
+                      serviceId: order.selectedCourierServiceId,
+                      courierName: order.courierName,
+                      cost: order.shippingCost,
+                    }
+                  : undefined
+              }
+              shippingAddress={{
+                city: order.shippingAddress.city,
+                state: order.shippingAddress.state,
+                postalCode: order.shippingAddress.postcode,
+              }}
+              shippingWeight={order.shippingWeight}
+              trackingNumber={order.trackingNumber}
+              awbNumber={order.airwayBillNumber}
+              courierName={order.courierName}
+              onFulfillmentComplete={() => {
+                // Refresh order data after fulfillment
+                fetchOrder();
+              }}
+            />
+          )}
 
           {/* NEW: Shipping & Tracking Section */}
           {order.shipment && (

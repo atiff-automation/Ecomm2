@@ -227,7 +227,8 @@ interface RateCalculationResponse {
 interface CourierRate {
   courier_company: string;          // 'Poslaju', 'CityLink', 'J&T Express'
   service_name: string;            // 'Standard', 'Express', 'Overnight'
-  service_type: string;            // 'STANDARD', 'EXPRESS', 'OVERNIGHT'
+  service_type: string;            // 'parcel', 'document' - NOT pickup/dropoff
+  service_detail: string;          // 'pickup', 'dropoff', 'dropoff or pickup'
   service_code: string;            // Internal service code
   
   // Pricing breakdown
@@ -242,6 +243,8 @@ interface CourierRate {
   // Service details
   estimated_delivery_days: number; // 1-7 days
   pickup_available: boolean;
+  dropoff_point?: DropoffPoint[];  // Array of dropoff locations (if service_detail includes 'dropoff')
+  pickup_point?: PickupPoint[];    // Array of pickup locations
   cod_available: boolean;
   insurance_available: boolean;
   tracking_available: boolean;
@@ -259,6 +262,39 @@ interface CourierRate {
   // Internal references
   rate_id: string;                // EasyParcel rate reference
   valid_until: string;            // ISO 8601 timestamp
+}
+
+/**
+ * Dropoff point location details
+ */
+interface DropoffPoint {
+  point_id: string;              // Unique dropoff point identifier
+  point_name: string;            // e.g., "City-Link Drop-Off - Mid Valley"
+  point_addr1: string;           // Address line 1
+  point_addr2?: string;          // Address line 2
+  point_city: string;            // City name
+  point_state: string;           // State code
+  point_postcode: string;        // Postal code
+  start_time: string;            // Opening time (HH:mm format)
+  end_time: string;              // Closing time (HH:mm format)
+  latitude?: number;             // GPS coordinates
+  longitude?: number;            // GPS coordinates
+  price_difference?: number;     // Cost difference from pickup (usually negative = cheaper)
+}
+
+/**
+ * Pickup point location details
+ */
+interface PickupPoint {
+  point_id: string;
+  point_name: string;
+  point_addr1: string;
+  point_addr2?: string;
+  point_city: string;
+  point_state: string;
+  point_postcode: string;
+  operating_hours: string;
+  contact_number?: string;
 }
 ```
 

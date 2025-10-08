@@ -13,7 +13,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 
 /**
- * GET /api/customer/orders/[id]/tracking
+ * GET /api/customer/orders/[orderId]/tracking
  * Get tracking information for a customer's order
  *
  * Security:
@@ -23,7 +23,7 @@ import { authOptions } from '@/lib/auth/config';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { orderId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,7 +35,7 @@ export async function GET(
       );
     }
 
-    const orderId = params.id;
+    const orderId = params.orderId;
 
     // Fetch order with shipment data - ensure user owns the order
     const order = await prisma.order.findFirst({
@@ -109,7 +109,7 @@ export async function GET(
 }
 
 /**
- * POST /api/customer/orders/[id]/tracking/refresh
+ * POST /api/customer/orders/[orderId]/tracking/refresh
  * Refresh tracking data from EasyParcel API
  *
  * Security:
@@ -119,7 +119,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { orderId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -131,7 +131,7 @@ export async function POST(
       );
     }
 
-    const orderId = params.id;
+    const orderId = params.orderId;
 
     // Check if user owns the order and has shipment
     const order = await prisma.order.findFirst({

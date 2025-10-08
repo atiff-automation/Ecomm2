@@ -49,6 +49,19 @@ const createOrderSchema = z.object({
   membershipActivated: z.boolean().optional(),
   isGuest: z.boolean().optional(), // To indicate guest checkout
   guestEmail: z.string().email().optional(), // Guest email for order tracking
+  // New simplified shipping implementation
+  selectedShipping: z.object({
+    serviceId: z.string(),
+    courierName: z.string(),
+    serviceType: z.string(),
+    cost: z.number(),
+    originalCost: z.number(),
+    freeShipping: z.boolean(),
+    estimatedDays: z.string(),
+    savedAmount: z.number().optional(),
+  }).optional(),
+  calculatedWeight: z.number().positive().optional(),
+  // Old shipping rate (deprecated, keep for backward compatibility)
   shippingRate: z
     .object({
       courierName: z.string(),
@@ -88,7 +101,7 @@ const createOrderSchema = z.object({
           return isNaN(num) ? null : num;
         }),
     })
-    .optional(), // Selected shipping rate from admin-controlled shipping
+    .optional(), // Selected shipping rate from admin-controlled shipping (deprecated)
 });
 
 /**
@@ -293,16 +306,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Use selected shipping rate from checkout, fallback to business configuration
+    // Use selected shipping from new implementation, fallback to old shippingRate
     let shippingCost = 0;
-    if (orderData.shippingRate && orderData.shippingRate.price) {
-      shippingCost = orderData.shippingRate.price;
+    let selectedCourierServiceId: string | null = null;
+    let courierName: string | null = null;
+    let courierServiceType: string | null = null;
+    let estimatedDelivery: string | null = null;
+    let shippingWeight: number | null = null;
+
+    if (orderData.selectedShipping) {
+      // New simplified shipping implementation
+      shippingCost = orderData.selectedShipping.cost;
+      selectedCourierServiceId = orderData.selectedShipping.serviceId;
+      courierName = orderData.selectedShipping.courierName;
+      courierServiceType = orderData.selectedShipping.serviceType;
+      estimatedDelivery = orderData.selectedShipping.estimatedDays;
+      shippingWeight = orderData.calculatedWeight || null;
+
       console.log(
-        `🚚 Using selected shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`
+        `🚚 Using new shipping implementation: ${courierName} (${courierServiceType}) - RM${shippingCost}`,
+        orderData.selectedShipping.freeShipping ? '(FREE SHIPPING)' : ''
+      );
+    } else if (orderData.shippingRate && orderData.shippingRate.price) {
+      // Old admin-controlled shipping (backward compatibility)
+      shippingCost = orderData.shippingRate.price;
+      courierName = orderData.shippingRate.courierName;
+      courierServiceType = orderData.shippingRate.serviceName;
+
+      console.log(
+        `🚚 Using old shipping rate: ${orderData.shippingRate.courierName} - ${orderData.shippingRate.serviceName} - RM${shippingCost}`
       );
     } else {
-      // TODO: Restore shipping calculation after new simple implementation
-      // Temporary fallback: flat rate shipping
+      // Fallback: flat rate shipping
       const freeShippingThreshold = 150;
       shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
       console.log(`🚚 Using temporary fallback shipping calculation: RM${shippingCost}`);
@@ -431,7 +466,12 @@ export async function POST(request: NextRequest) {
             orderData.membershipActivated &&
               qualifyingTotal >= membershipConfig.membershipThreshold
           ),
-          // Note: shippingCourier and shippingService fields don't exist in schema
+          // ✅ CRITICAL: Include new shipping fields
+          selectedCourierServiceId: selectedCourierServiceId,
+          courierName: courierName,
+          courierServiceType: courierServiceType,
+          estimatedDelivery: estimatedDelivery,
+          shippingWeight: shippingWeight,
           shippingAddress: { connect: { id: shippingAddr.id } },
           billingAddress: { connect: { id: billingAddr.id } },
           orderItems: {

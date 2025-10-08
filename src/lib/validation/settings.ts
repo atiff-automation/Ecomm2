@@ -29,6 +29,12 @@ export const MALAYSIAN_STATES = MalaysianStates;
 
 export type MalaysianState = (typeof MalaysianStates)[number];
 
+// Country codes enum (v1: Malaysia only, expandable for future)
+// Using ISO 3166-1 alpha-2 codes as values for API compatibility
+export const Countries = ['MY'] as const;
+
+export type Country = (typeof Countries)[number];
+
 // Malaysian phone number regex
 const MALAYSIAN_PHONE_REGEX = /^(\+?6?01)[02-46-9]\d{7,8}$/;
 const MALAYSIAN_LANDLINE_REGEX = /^(\+?6?0)[1-9]\d{8,9}$/;
@@ -132,7 +138,9 @@ export const addressSchema = z.object({
       'Invalid Malaysian postal code (5 digits)'
     ),
 
-  country: z.literal('Malaysia'),
+  country: z.enum(Countries, {
+    errorMap: () => ({ message: 'Please select a valid country' }),
+  }),
 
   phone: z
     .string()
@@ -222,7 +230,9 @@ export const businessAddressSchema = z.object({
       'Invalid Malaysian postal code (5 digits)'
     ),
 
-  country: z.literal('Malaysia'),
+  country: z.enum(Countries, {
+    errorMap: () => ({ message: 'Please select a valid country' }),
+  }),
 });
 
 /**
@@ -262,7 +272,9 @@ export const optionalBusinessAddressSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  country: z.literal('Malaysia'),
+  country: z.enum(Countries, {
+    errorMap: () => ({ message: 'Please select a valid country' }),
+  }),
 });
 
 
@@ -411,4 +423,14 @@ export const malaysianStatesOptions = [
   { value: 'SBH', label: 'Sabah' },
   { value: 'SWK', label: 'Sarawak' },
   { value: 'LBN', label: 'Labuan' },
+];
+
+/**
+ * Countries with display names
+ * v1: Malaysia only, expandable for future countries
+ *
+ * IMPORTANT: Values use ISO 3166-1 alpha-2 codes for EasyParcel API compatibility
+ */
+export const countryOptions = [
+  { value: 'MY', label: 'Malaysia' },
 ];

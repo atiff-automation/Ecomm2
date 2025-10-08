@@ -273,6 +273,19 @@ model Order {
   airwayBillNumber         String?
   airwayBillUrl            String?
   trackingUrl              String?
+  selectedCourierServiceId String?
+  courierName              String?
+  courierServiceType       String?            // 'parcel' or 'document'
+  courierServiceDetail     String?            // 'pickup', 'dropoff', 'dropoff or pickup'
+  selectedDropoffPointId   String?            // Dropoff point ID if applicable
+  estimatedDelivery        String?
+  shippingWeight           Decimal?           @db.Decimal(8, 2)
+  scheduledPickupDate      DateTime?          @db.Date
+  overriddenByAdmin        Boolean            @default(false)
+  adminOverrideReason      String?            @db.Text
+  failedBookingAttempts    Int                @default(0)
+  lastBookingError         String?            @db.Text
+  autoStatusUpdate         Boolean            @default(true)
   discountUsage            DiscountUsage[]
   orderItems               OrderItem[]
   billingAddress           Address?           @relation("BillingAddress", fields: [billingAddressId], references: [id])
@@ -287,6 +300,8 @@ model Order {
   @@index([paymentStatus])
   @@index([orderNumber])
   @@index([createdAt])
+  @@index([selectedCourierServiceId])
+  @@index([trackingNumber])
   @@map("orders")
 }
 
@@ -298,7 +313,9 @@ model Shipment {
   courierId            String
   courierName          String
   serviceName          String
-  serviceType          String
+  serviceType          String             // 'parcel' or 'document'
+  serviceDetail        String             // 'pickup', 'dropoff', 'dropoff or pickup'
+  selectedDropoffPoint Json?              // Dropoff point details if serviceDetail includes 'dropoff'
   pickupAddress        Json
   deliveryAddress      Json
   parcelDetails        Json
@@ -1106,9 +1123,10 @@ enum ShippingClass {
 
 enum OrderStatus {
   PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPED
+  PAID
+  READY_TO_SHIP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED

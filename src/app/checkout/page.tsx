@@ -44,9 +44,9 @@ import { useFreshMembership } from '@/hooks/use-fresh-membership';
 import { getBestPrice } from '@/lib/promotions/promotion-utils';
 import { malaysianStatesOptions } from '@/lib/validation/settings';
 import MembershipCheckoutBanner from '@/components/membership/MembershipCheckoutBanner';
-// TODO: Restore shipping component after new simple implementation
-// import AdminControlledShippingComponent from '@/components/checkout/AdminControlledShippingComponent';
+import ShippingSelector from '@/components/checkout/ShippingSelector';
 import PaymentMethodSelection from '@/components/checkout/PaymentMethodSelection';
+import type { ShippingOption, DeliveryAddress } from '@/lib/shipping/types';
 // API endpoints for postcode validation (client-safe)
 
 interface CheckoutItem {
@@ -167,8 +167,9 @@ export default function CheckoutPage() {
     return false;
   });
 
-  // Shipping state
-  const [selectedShippingRate, setSelectedShippingRate] = useState<any>(null);
+  // Shipping state (new simplified implementation)
+  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
+  const [calculatedWeight, setCalculatedWeight] = useState<number>(0);
   const [shippingCost, setShippingCost] = useState(0);
   const [freeShippingApplied, setFreeShippingApplied] = useState(false);
 
@@ -494,21 +495,42 @@ export default function CheckoutPage() {
     }
   };
 
-  // Handle shipping change (admin-controlled)
-  const handleShippingChange = (shippingData: any) => {
-    console.log('🚚 Admin-controlled shipping selected:', {
-      courierName: shippingData.courierName,
-      serviceName: shippingData.serviceName,
-      price: shippingData.price,
-      insurance: shippingData.insurance,
-      cod: shippingData.cod,
-      codAmount: shippingData.codAmount,
+  // Check if shipping address is complete for shipping calculation
+  const isAddressComplete = (address: ShippingAddress): boolean => {
+    return !!(
+      address.firstName &&
+      address.lastName &&
+      address.phone &&
+      address.address &&
+      address.city &&
+      address.state &&
+      address.postcode &&
+      address.postcode.length === 5
+    );
+  };
+
+  // Handle shipping selection from ShippingSelector component
+  const handleShippingSelected = (option: ShippingOption | null) => {
+    console.log('🚚 Shipping option selected:', {
+      courierName: option?.courierName,
+      serviceType: option?.serviceType,
+      cost: option?.cost,
+      freeShipping: option?.freeShipping,
+      estimatedDays: option?.estimatedDays,
     });
 
-    setSelectedShippingRate(shippingData);
-    setShippingCost(shippingData.price);
-    // Admin-controlled shipping doesn't use customer-facing free shipping thresholds
-    setFreeShippingApplied(false);
+    setSelectedShipping(option);
+    setShippingCost(option?.cost || 0);
+    setFreeShippingApplied(option?.freeShipping || false);
+
+    // Clear shipping error if exists
+    if (fieldErrors['shipping']) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors['shipping'];
+        return newErrors;
+      });
+    }
   };
 
   // Handle payment method change
@@ -601,8 +623,8 @@ export default function CheckoutPage() {
         }
       }
 
-      // Admin-controlled shipping should be automatically selected
-      if (!selectedShippingRate) {
+      // Validate shipping selection
+      if (!selectedShipping) {
         errors['shipping'] =
           'Shipping method not available. Please check your address.';
       }
@@ -634,7 +656,9 @@ export default function CheckoutPage() {
           })),
           shippingAddress,
           billingAddress: useSameAddress ? shippingAddress : billingAddress,
-          shippingRate: selectedShippingRate,
+          // CRITICAL: Include shipping data from ShippingSelector
+          selectedShipping: selectedShipping,
+          calculatedWeight: calculatedWeight,
           paymentMethod,
           orderNotes,
           membershipActivated: membershipActivated || membershipPending, // Include pending memberships
@@ -687,7 +711,9 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         billingAddress: useSameAddress ? shippingAddress : billingAddress,
-        shippingRate: selectedShippingRate,
+        // CRITICAL: Include shipping data from ShippingSelector
+        selectedShipping: selectedShipping,
+        calculatedWeight: calculatedWeight,
         paymentMethod,
         orderNotes,
         membershipActivated: membershipActivated || membershipPending, // Include pending memberships
@@ -1150,38 +1176,39 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
-          {/* TODO: Admin-Controlled Shipping - Restore after new simple implementation */}
-          {/*
-          <AdminControlledShippingComponent
-            cartItems={
-              cart?.items.map(item => ({
-                id: item.id,
-                quantity: item.quantity,
-                product: {
-                  id: item.product.id,
-                  name: item.product.name,
-                  regularPrice: Number(item.product.regularPrice),
-                  weight: Number(item.product.weight) || undefined,
-                  dimensions: item.product.dimensions
-                    ? {
-                        length:
-                          Number(item.product.dimensions.split('x')[0]) ||
-                          undefined,
-                        width:
-                          Number(item.product.dimensions.split('x')[1]) ||
-                          undefined,
-                        height:
-                          Number(item.product.dimensions.split('x')[2]) ||
-                          undefined,
-                      }
-                    : undefined,
-                },
-              })) || []
-            }
-            shippingAddress={shippingAddress}
-            onShippingChange={handleShippingChange}
-          />
-          */}
+          {/* Shipping Method Selection - New Simple Implementation */}
+          {isAddressComplete(shippingAddress) && (
+            <ShippingSelector
+              deliveryAddress={{
+                name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+                phone: shippingAddress.phone,
+                addressLine1: shippingAddress.address,
+                addressLine2: shippingAddress.address2 || '',
+                city: shippingAddress.city,
+                state: shippingAddress.state as DeliveryAddress['state'],
+                postalCode: shippingAddress.postcode,
+                country: 'MY',
+              }}
+              items={
+                cart?.items.map(item => ({
+                  productId: item.product.id,
+                  quantity: item.quantity,
+                })) || []
+              }
+              orderValue={subtotal}
+              onShippingSelected={handleShippingSelected}
+            />
+          )}
+
+          {/* Shipping validation error display */}
+          {fieldErrors['shipping'] && (
+            <Alert className="border-red-200 bg-red-50 -mt-4">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                {fieldErrors['shipping']}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Billing Address */}
           <Card>

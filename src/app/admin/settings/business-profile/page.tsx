@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   businessProfileSchema,
   malaysianStatesOptions,
+  countryOptions,
 } from '@/lib/validation/settings';
 import type { BusinessProfileFormData } from '@/lib/validation/settings';
 import {
@@ -85,7 +86,7 @@ export default function BusinessProfilePage() {
         city: '',
         state: '',
         postalCode: '',
-        country: 'Malaysia',
+        country: 'MY',
       },
       operationalAddress: {
         addressLine1: '',
@@ -93,7 +94,7 @@ export default function BusinessProfilePage() {
         city: '',
         state: '',
         postalCode: '',
-        country: 'Malaysia',
+        country: 'MY',
       },
       shippingAddress: {
         addressLine1: '',
@@ -101,7 +102,7 @@ export default function BusinessProfilePage() {
         city: '',
         state: '',
         postalCode: '',
-        country: 'Malaysia',
+        country: 'MY',
       },
     },
   });
@@ -164,7 +165,7 @@ export default function BusinessProfilePage() {
               city: profileData.registeredAddress?.city || '',
               state: profileData.registeredAddress?.state || '',
               postalCode: profileData.registeredAddress?.postalCode || '',
-              country: 'Malaysia',
+              country: profileData.registeredAddress?.country || 'MY',
             },
             operationalAddress: {
               addressLine1: profileData.operationalAddress?.addressLine1 || '',
@@ -172,7 +173,7 @@ export default function BusinessProfilePage() {
               city: profileData.operationalAddress?.city || '',
               state: profileData.operationalAddress?.state || '',
               postalCode: profileData.operationalAddress?.postalCode || '',
-              country: 'Malaysia',
+              country: profileData.operationalAddress?.country || 'MY',
             },
             shippingAddress: {
               addressLine1: profileData.shippingAddress?.addressLine1 || '',
@@ -180,7 +181,7 @@ export default function BusinessProfilePage() {
               city: profileData.shippingAddress?.city || '',
               state: profileData.shippingAddress?.state || '',
               postalCode: profileData.shippingAddress?.postalCode || '',
-              country: 'Malaysia',
+              country: profileData.shippingAddress?.country || 'MY',
             },
           };
 
@@ -254,7 +255,7 @@ export default function BusinessProfilePage() {
   const copyOperationalToShipping = () => {
     // Get current operational address values from form state
     const operationalAddress = getValues('operationalAddress');
-    const { addressLine1, addressLine2, city, state, postalCode } =
+    const { addressLine1, addressLine2, city, state, postalCode, country } =
       operationalAddress;
 
     if (!addressLine1 && !city && !state && !postalCode) {
@@ -267,6 +268,7 @@ export default function BusinessProfilePage() {
     handleFieldChange('shippingAddress.addressLine2', addressLine2 || '');
     handleFieldChange('shippingAddress.city', city || '');
     handleFieldChange('shippingAddress.state', state || '');
+    handleFieldChange('shippingAddress.country', country || 'MY');
 
     // Handle postcode with validation
     if (postalCode) {
@@ -287,7 +289,7 @@ export default function BusinessProfilePage() {
   const copyRegisteredToOperational = () => {
     // Get current registered address values from form state
     const registeredAddress = getValues('registeredAddress');
-    const { addressLine1, addressLine2, city, state, postalCode } =
+    const { addressLine1, addressLine2, city, state, postalCode, country } =
       registeredAddress;
 
     if (!addressLine1 && !city && !state && !postalCode) {
@@ -300,6 +302,7 @@ export default function BusinessProfilePage() {
     handleFieldChange('operationalAddress.addressLine2', addressLine2 || '');
     handleFieldChange('operationalAddress.city', city || '');
     handleFieldChange('operationalAddress.state', state || '');
+    handleFieldChange('operationalAddress.country', country || 'MY');
 
     // Handle postcode with validation
     if (postalCode) {
@@ -701,7 +704,7 @@ export default function BusinessProfilePage() {
                 placeholder="Additional address details (optional)"
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Postal Code - First position for auto-fill workflow */}
                 <SettingsInput
                   label={
@@ -761,6 +764,18 @@ export default function BusinessProfilePage() {
                   }
                   placeholder="Select state"
                 />
+
+                {/* Country - Fourth position */}
+                <SettingsSelect
+                  label="Country"
+                  required
+                  options={countryOptions}
+                  value={watchedValues.registeredAddress?.country || 'MY'}
+                  onValueChange={value =>
+                    handleFieldChange('registeredAddress.country', value)
+                  }
+                  placeholder="Select country"
+                />
               </div>
 
               {/* Postcode validation success message */}
@@ -817,7 +832,7 @@ export default function BusinessProfilePage() {
                 placeholder="Additional address details (optional)"
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Postal Code - First position for auto-fill workflow */}
                 <SettingsInput
                   label={
@@ -873,6 +888,17 @@ export default function BusinessProfilePage() {
                     handleFieldChange('operationalAddress.state', value)
                   }
                   placeholder="Select state"
+                />
+
+                {/* Country - Fourth position */}
+                <SettingsSelect
+                  label="Country"
+                  options={countryOptions}
+                  value={watchedValues.operationalAddress?.country || 'MY'}
+                  onValueChange={value =>
+                    handleFieldChange('operationalAddress.country', value)
+                  }
+                  placeholder="Select country"
                 />
               </div>
 
@@ -930,7 +956,7 @@ export default function BusinessProfilePage() {
                 placeholder="Additional address details (optional)"
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Postal Code - First position for auto-fill workflow */}
                 <SettingsInput
                   label={
@@ -986,6 +1012,17 @@ export default function BusinessProfilePage() {
                     handleFieldChange('shippingAddress.state', value)
                   }
                   placeholder="Select state"
+                />
+
+                {/* Country - Fourth position */}
+                <SettingsSelect
+                  label="Country"
+                  options={countryOptions}
+                  value={watchedValues.shippingAddress?.country || 'MY'}
+                  onValueChange={value =>
+                    handleFieldChange('shippingAddress.country', value)
+                  }
+                  placeholder="Select country"
                 />
               </div>
 

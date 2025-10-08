@@ -19,6 +19,7 @@ import {
   ApiIntegrationError,
   EasyParcelTrackingResponse,
   TrackingEvent,
+  TrackingCacheWithRelations,
 } from '../types/tracking-refactor';
 import {
   TRACKING_REFACTOR_CONFIG,
@@ -26,7 +27,8 @@ import {
   getRetryDelay,
   isDebugMode,
 } from '../config/tracking-refactor';
-import { easyParcelService } from '../shipping/easyparcel-service';
+import { createEasyParcelService } from '../shipping/easyparcel-service';
+import { getShippingSettingsOrThrow } from '../shipping/shipping-settings';
 
 class TrackingJobProcessor {
   private isProcessing: boolean = false;
@@ -181,7 +183,7 @@ class TrackingJobProcessor {
    */
   private async processJob(
     context: JobProcessingContext,
-    trackingCache: any
+    trackingCache: TrackingCacheWithRelations
   ): Promise<JobProcessingResult> {
     const startTime = Date.now();
 
@@ -231,11 +233,15 @@ class TrackingJobProcessor {
    */
   private async processUpdateJob(
     context: JobProcessingContext,
-    trackingCache: any
+    trackingCache: TrackingCacheWithRelations
   ): Promise<JobProcessingResult> {
     const apiStartTime = Date.now();
 
     try {
+      // Get shipping settings and create EasyParcel service instance
+      const settings = await getShippingSettingsOrThrow();
+      const easyParcelService = createEasyParcelService(settings);
+
       // Call EasyParcel API
       const trackingResult = await easyParcelService.trackShipment(
         trackingCache.courierTrackingNumber
@@ -311,10 +317,10 @@ class TrackingJobProcessor {
 
       // Check for new events
       const existingEvents = Array.isArray(trackingCache.trackingEvents)
-        ? trackingCache.trackingEvents
+        ? (trackingCache.trackingEvents as TrackingEvent[])
         : [];
       const existingEventIds = new Set(
-        existingEvents.map((e: any) => `${e.timestamp}-${e.eventName}`)
+        existingEvents.map((e: TrackingEvent) => `${e.timestamp}-${e.eventName}`)
       );
       const eventsToAdd = newEvents.filter(
         event => !existingEventIds.has(`${event.timestamp}-${event.eventName}`)
@@ -386,7 +392,7 @@ class TrackingJobProcessor {
    */
   private async processManualJob(
     context: JobProcessingContext,
-    trackingCache: any
+    trackingCache: TrackingCacheWithRelations
   ): Promise<JobProcessingResult> {
     // Manual jobs are essentially update jobs with higher priority
     return await this.processUpdateJob(context, trackingCache);
@@ -397,7 +403,7 @@ class TrackingJobProcessor {
    */
   private async processCleanupJob(
     context: JobProcessingContext,
-    trackingCache: any
+    trackingCache: TrackingCacheWithRelations
   ): Promise<JobProcessingResult> {
     try {
       // For now, cleanup jobs just mark inactive tracking as archived
@@ -430,11 +436,11 @@ class TrackingJobProcessor {
   /**
    * Generate hash for API response to detect changes
    */
-  private generateResponseHash(apiData: any): string {
+  private generateResponseHash(apiData: EasyParcelTrackingResponse['data']): string {
     const str = JSON.stringify({
-      status: apiData.status,
-      events: apiData.events?.map((e: any) => `${e.timestamp}-${e.eventName}`),
-      estimatedDelivery: apiData.estimatedDelivery,
+      status: apiData?.status,
+      events: apiData?.events?.map((e: TrackingEvent) => `${e.timestamp}-${e.eventName}`),
+      estimatedDelivery: apiData?.estimatedDelivery,
     });
 
     // Simple hash function

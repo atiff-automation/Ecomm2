@@ -206,6 +206,44 @@ export class EmailService {
   }
 
   /**
+   * Send order ready to ship notification
+   * Called when admin books shipment with EasyParcel
+   */
+  async sendOrderReadyToShipNotification(
+    orderData: OrderEmailData
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!orderData.trackingNumber) {
+      return {
+        success: false,
+        error: 'Tracking number is required for ready to ship notifications',
+      };
+    }
+
+    try {
+      const subject = `Order Ready to Ship - ${orderData.orderNumber}`;
+
+      const html = this.generateReadyToShipNotificationHTML(orderData);
+
+      const result = await this.sendEmail({
+        to: orderData.customerEmail,
+        subject,
+        html,
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Ready to ship notification email error:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send ready to ship notification',
+      };
+    }
+  }
+
+  /**
    * Send member welcome email
    */
   async sendMemberWelcome(
@@ -428,6 +466,83 @@ export class EmailService {
         
         <div class="footer">
           <p>&copy; 2024 JRM E-commerce. All rights reserved.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate HTML for ready to ship notification email
+   */
+  private generateReadyToShipNotificationHTML(orderData: OrderEmailData): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Ready to Ship</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background-color: #0ea5e9; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; }
+          .tracking-box { background-color: #f0f9ff; border: 2px solid #0ea5e9; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
+          .tracking-number { font-size: 24px; font-weight: bold; color: #0ea5e9; font-family: monospace; letter-spacing: 2px; }
+          .info-box { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { background-color: #f8f9fa; padding: 20px; text-align: center; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📦 Your Order is Ready to Ship!</h1>
+        </div>
+
+        <div class="content">
+          <p>Dear ${orderData.customerName},</p>
+          <p>Great news! Your order <strong>${orderData.orderNumber}</strong> has been processed and is ready to be shipped.</p>
+
+          <div class="tracking-box">
+            <h3>Tracking Information</h3>
+            <p style="margin: 10px 0;">Your tracking number is:</p>
+            <div class="tracking-number">${orderData.trackingNumber}</div>
+            ${orderData.estimatedDelivery ? `<p style="margin-top: 15px;"><strong>Estimated Delivery:</strong> ${orderData.estimatedDelivery}</p>` : ''}
+            <p style="margin-top: 15px; font-size: 14px; color: #666;">
+              You can track your package using this number once it's picked up by the courier.
+            </p>
+          </div>
+
+          <div class="info-box">
+            <h3>What happens next?</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li>Our courier partner will pick up your package within 1-2 business days</li>
+              <li>You'll receive another email once your package is in transit</li>
+              <li>Tracking information will be updated regularly</li>
+              <li>Expected delivery within ${orderData.estimatedDelivery || '3-5 business days'}</li>
+            </ul>
+          </div>
+
+          <p><strong>Delivery Address:</strong></p>
+          ${
+            orderData.shippingAddress
+              ? `
+            <div class="info-box">
+              ${orderData.shippingAddress.firstName} ${orderData.shippingAddress.lastName}<br>
+              ${orderData.shippingAddress.addressLine1}<br>
+              ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state} ${orderData.shippingAddress.postalCode}
+            </div>
+          `
+              : ''
+          }
+
+          <p>Thank you for shopping with us! If you have any questions, please don't hesitate to contact us.</p>
+        </div>
+
+        <div class="footer">
+          <p>&copy; 2024 JRM E-commerce. All rights reserved.</p>
+          <p style="font-size: 12px; color: #666; margin-top: 10px;">
+            This is an automated email notification. Please do not reply to this email.
+          </p>
         </div>
       </body>
       </html>
