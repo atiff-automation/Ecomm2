@@ -98,7 +98,8 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
   // Standard protection - allows both guest and authenticated users
   if (
     pathname.startsWith('/api/cart') ||
-    pathname.startsWith('/api/chat/send')
+    pathname.startsWith('/api/chat/send') ||
+    pathname.startsWith('/api/recently-viewed')
   ) {
     return 'standard';
   }

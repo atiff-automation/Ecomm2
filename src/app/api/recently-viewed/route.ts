@@ -1,10 +1,9 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Recently Viewed Products API - Malaysian E-commerce Platform
  * Tracks and retrieves user's recently viewed products for personalization
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
@@ -25,11 +24,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
 
+    // Return empty array for guests (not an error)
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        items: [],
+        totalCount: 0,
+      });
     }
 
     const recentlyViewedItems = await prisma.recentlyViewed.findMany({
@@ -109,10 +109,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
+    // Silently ignore for guests (optional feature)
     if (!session?.user) {
       return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
+        { message: 'Recently viewed tracking requires authentication' },
+        { status: 200 }
       );
     }
 
@@ -199,11 +200,11 @@ export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
 
+    // Nothing to delete for guests
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        message: 'No recently viewed items to clear',
+      });
     }
 
     await prisma.recentlyViewed.deleteMany({
