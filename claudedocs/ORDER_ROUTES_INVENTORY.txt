@@ -1,0 +1,9 @@
+Current order routes inventory (before cleanup):
+
+Frontend Pages:
+- src/app/admin/orders/page.tsx (main order list - ~700 lines)
+- src/app/admin/orders/[orderId]/page.tsx (order details - ~1120 lines)
+- src/app/admin/orders/fulfillment/page.tsx (fulfillment queue - ~850 lines)
+- src/app/admin/orders/export/page.tsx (export page - ~460 lines)
+
+Timestamp: $(date)
