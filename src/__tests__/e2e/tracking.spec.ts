@@ -260,11 +260,11 @@ test.describe('Tracking System E2E Tests', () => {
     await expect(externalLink).toHaveAttribute('target', '_blank');
   });
 
-  test('Admin can use fulfillment page for bulk operations', async ({
+  test('Admin can use processing tab for bulk operations', async ({
     page,
   }) => {
-    // Mock fulfillment page data
-    await page.route('**/api/admin/orders/fulfillment*', async route => {
+    // Mock orders with processing status
+    await page.route('**/api/admin/orders*', async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -287,14 +287,16 @@ test.describe('Tracking System E2E Tests', () => {
               },
             },
           ],
+          totalCount: 2,
+          totalPages: 1,
         }),
       });
     });
 
-    await page.goto('/admin/orders/fulfillment');
+    await page.goto('/admin/orders?tab=processing');
 
-    // Wait for fulfillment page to load
-    await expect(page.locator('text=Order Fulfillment')).toBeVisible();
+    // Wait for orders page to load with processing tab
+    await expect(page.locator('text=Orders')).toBeVisible();
 
     // Check orders are displayed
     await expect(page.locator('text=' + testOrder.orderNumber)).toBeVisible();
