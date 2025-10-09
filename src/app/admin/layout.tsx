@@ -1,133 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DynamicAdminLogo } from '@/components/admin/DynamicAdminLogo';
+import { Sidebar } from '@/components/admin/layout/Sidebar';
 import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
-  Settings,
-  Truck,
-  Palette,
   Menu,
   X,
   LogOut,
   User,
   Bell,
   ExternalLink,
-  MessageCircle,
-  CreditCard,
-  Monitor,
-  BarChart3,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
-
-const navigationItems = [
-  // 🏠 Dashboard Section
-  {
-    label: 'Dashboard',
-    href: '/admin/dashboard',
-    icon: LayoutDashboard,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Overview & Alerts',
-  },
-
-  // 📦 Orders Section - Flat structure, contextual tabs handle sub-sections
-  {
-    label: 'Orders',
-    href: '/admin/orders',
-    icon: ShoppingCart,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'All Orders, Shipping, Fulfillment, Analytics',
-  },
-
-  // 🛍️ Products Section - Flat structure, contextual tabs handle sub-sections
-  {
-    label: 'Products',
-    href: '/admin/products',
-    icon: Package,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Catalog, Categories, Inventory',
-  },
-
-  // 👥 Customers Section - Flat structure, contextual tabs handle sub-sections
-  {
-    label: 'Customers',
-    href: '/admin/customers',
-    icon: Users,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Directory, Membership, Referrals',
-  },
-
-  // 👤 Agent Applications Section - Agent application management
-  {
-    label: 'Agent Applications',
-    href: '/admin/agent-applications',
-    icon: User,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Manage and review agent applications',
-  },
-
-  // 💳 Payments Section - New section per standard
-  {
-    label: 'Payments',
-    href: '/admin/payments',
-    icon: CreditCard,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Gateways, Transactions, Refunds',
-  },
-
-  // 🚚 Shipping Section - Contextual tabs handle Configuration, Couriers, Tracking
-  {
-    label: 'Shipping',
-    href: '/admin/shipping',
-    icon: Truck,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Configuration, Couriers, Tracking',
-  },
-
-  // 📊 Reports Section - Sales analytics and reporting
-  {
-    label: 'Reports',
-    href: '/admin/reports',
-    icon: BarChart3,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-    description: 'Sales Analytics, Performance Reports',
-  },
-
-  // Additional sections that exist but don't fit main categories
-  {
-    label: 'Notifications',
-    href: '/admin/notifications',
-    icon: Bell,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'System Notifications',
-  },
-  {
-    label: 'Chat Config',
-    href: '/admin/chat-config',
-    icon: MessageCircle,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'n8n Chat Widget Configuration',
-  },
-  {
-    label: 'Settings',
-    href: '/admin/settings',
-    icon: Settings,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'Business Profile, Tax Config, Site Customization',
-  },
-];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -216,19 +108,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     signOut({ callbackUrl: '/' });
   };
 
-  // Removed toggleSubmenu - no longer needed for flat structure
-
-  const isActiveRoute = (href: string) => {
-    if (href === '/admin/dashboard') {
-      return pathname === '/admin/dashboard' || pathname === '/admin';
-    }
-    return pathname.startsWith(href);
-  };
-
-  const filteredNavigationItems = navigationItems.filter(item => {
-    return item.roles.some(role => role === session.user.role);
-  });
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -248,36 +127,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         <div className="flex flex-col flex-1">
-          <nav className="mt-6 px-3 flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              {filteredNavigationItems.map(item => {
-                const Icon = item.icon;
-                const isActive = isActiveRoute(item.href);
-
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    title={item.description}
-                  >
-                    <Icon
-                      className={`mr-3 h-5 w-5 ${
-                        isActive
-                          ? 'text-blue-500'
-                          : 'text-gray-400 group-hover:text-gray-500'
-                      }`}
-                    />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
+          <Sidebar userRole={session.user.role as any} />
 
           {/* User Profile Section at Bottom */}
           <div className="border-t border-gray-200 p-3">
