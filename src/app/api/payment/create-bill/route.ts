@@ -126,12 +126,7 @@ export async function GET(request: NextRequest) {
     );
     console.log(`🔗 Payment URL: ${paymentResult.paymentUrl}`);
 
-    // Redirect to payment URL
-    if (paymentResult.paymentUrl) {
-      return NextResponse.redirect(paymentResult.paymentUrl);
-    }
-
-    // Fallback JSON response
+    // Return JSON response with payment URL for frontend redirect
     return NextResponse.json({
       success: true,
       order: {

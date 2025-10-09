@@ -714,38 +714,38 @@ export default function CheckoutPage() {
         orderNumber: paymentData.orderNumber,
       });
 
-      const paymentResponse = await fetch('/api/payment/create-bill', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentData),
-      });
+      console.log('💳 Creating payment bill...');
 
-      if (paymentResponse.ok) {
-        const paymentResult = await paymentResponse.json();
-        console.log('✅ Payment bill created successfully:', {
-          method: paymentResult.paymentMethod,
-          billId: paymentResult.billId || paymentResult.billCode,
-          hasPaymentUrl: !!paymentResult.paymentUrl,
-        });
-
-        // Redirect to payment gateway
-        if (paymentResult.success && paymentResult.paymentUrl) {
-          console.log('🔄 Redirecting to payment gateway...');
-          window.location.href = paymentResult.paymentUrl;
-        } else {
-          setOrderError(
-            paymentResult.error || 'Failed to create payment. Please try again.'
-          );
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+      const paymentResponse = await fetch(
+        `/api/payment/create-bill?orderId=${encodeURIComponent(orderResult.orderId)}`,
+        {
+          method: 'GET',
         }
-      } else {
+      );
+
+      if (!paymentResponse.ok) {
         const paymentError = await paymentResponse.json();
         console.error('❌ Payment creation failed:', paymentError);
         setOrderError(
-          paymentError.error || 'Failed to create payment. Please try again.'
+          paymentError.message || 'Failed to create payment. Please try again.'
         );
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      const paymentResult = await paymentResponse.json();
+      console.log('✅ Payment bill created successfully:', {
+        method: paymentResult.payment?.method,
+        billId: paymentResult.payment?.billId || paymentResult.payment?.billCode,
+        hasPaymentUrl: !!paymentResult.payment?.paymentUrl,
+      });
+
+      // Redirect to payment gateway
+      if (paymentResult.success && paymentResult.payment?.paymentUrl) {
+        console.log('🔄 Redirecting to payment gateway...');
+        window.location.href = paymentResult.payment.paymentUrl;
+      } else {
+        setOrderError('Failed to create payment. Please try again.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
