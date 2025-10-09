@@ -4,6 +4,8 @@
  * Following the same pattern as EasyParcel config to maintain consistency
  */
 
+import { getAppUrl } from './app-url';
+
 // Environment-based URL configuration
 export const toyyibPayConfig = {
   urls: {
@@ -20,17 +22,8 @@ export const toyyibPayConfig = {
     callback: parseInt(process.env.TOYYIBPAY_CALLBACK_TIMEOUT || '30000', 10), // 30 seconds
   },
 
-  webhooks: {
-    returnUrl:
-      process.env.TOYYIBPAY_RETURN_URL ||
-      `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
-    callbackUrl:
-      process.env.TOYYIBPAY_WEBHOOK_URL ||
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/toyyibpay`,
-    failedUrl:
-      process.env.TOYYIBPAY_FAILED_URL ||
-      `${process.env.NEXT_PUBLIC_APP_URL}/checkout/failed`,
-  },
+  // Note: Webhook URLs are now generated dynamically via getWebhookUrls()
+  // to ensure they always use the correct base URL from NEXT_PUBLIC_APP_URL
 
   billSettings: {
     // Bill name constraints (toyyibPay limit: 30 characters, alphanumeric + space + underscore only)
@@ -180,13 +173,24 @@ export function isValidBillCode(billCode: string): boolean {
  * - order_id: External payment reference number (order number)
  */
 export function getWebhookUrls(environment: 'sandbox' | 'production') {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // Use centralized app URL helper (no hardcoded fallback)
+  const baseUrl = getAppUrl();
 
-  return {
+  const webhookUrls = {
     returnUrl: `${baseUrl}/thank-you`,
     callbackUrl: `${baseUrl}/api/webhooks/toyyibpay`,
     failedUrl: `${baseUrl}/thank-you`, // Same page handles all cases based on status_id
   };
+
+  // Debug logging to track URL generation
+  console.log('🔍 ToyyibPay Webhook URLs generated:', {
+    environment,
+    baseUrl,
+    returnUrl: webhookUrls.returnUrl,
+    callbackUrl: webhookUrls.callbackUrl,
+  });
+
+  return webhookUrls;
 }
 
 /**

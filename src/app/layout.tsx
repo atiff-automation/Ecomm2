@@ -8,6 +8,7 @@ import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
 import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
 import { SimpleN8nChatLoader } from '@/components/chat/SimpleN8nChatLoader';
+import { getAppUrl } from '@/lib/config/app-url';
 import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider';
 import './globals.css';
 
@@ -47,9 +48,8 @@ export const metadata: Metadata = {
   authors: [{ name: 'JRM E-commerce Team' }],
   creator: 'JRM E-commerce',
   publisher: 'JRM E-commerce',
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  ),
+  // Use centralized helper with localhost fallback for metadata
+  metadataBase: new URL(getAppUrl(true)),
   alternates: {
     canonical: '/',
   },

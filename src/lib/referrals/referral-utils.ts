@@ -10,6 +10,7 @@ import {
   ReferralRewardType,
   RewardStatus,
 } from '@prisma/client';
+import { getAppUrl } from '@/lib/config/app-url';
 
 interface ReferralCode {
   code: string;
@@ -391,9 +392,11 @@ export async function updateReferralSettings(
  */
 export function generateReferralUrl(
   referralCode: string,
-  baseUrl: string = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  baseUrl?: string
 ): string {
-  return `${baseUrl}/join?ref=${referralCode}`;
+  // Use centralized helper if baseUrl not provided
+  const appUrl = baseUrl || getAppUrl(true);
+  return `${appUrl}/join?ref=${referralCode}`;
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   CacheTagUtils,
   CacheTagGenerators,
 } from './tag-strategy';
+import { getApiUrl } from '@/lib/config/app-url';
 
 /**
  * Cache Operation Results
@@ -63,10 +64,8 @@ export async function cacheFetch<T = unknown>(
   };
 
   // Convert relative URLs to absolute URLs for fetch
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.API_URL ||
-    'http://localhost:3000';
+  // Use centralized helper for API URL
+  const baseUrl = getApiUrl(true);
   const fullUrl = url.startsWith('/') ? `${baseUrl}${url}` : url;
 
   try {

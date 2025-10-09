@@ -11,6 +11,7 @@ import {
   SECURITY_HEADERS,
 } from '@/lib/utils/security';
 import { rateLimit } from '@/lib/utils/rate-limit';
+import { getAppUrl } from '@/lib/config/app-url';
 
 /**
  * Railway-specific adjustments
@@ -80,7 +81,7 @@ const defaultConfig: ApiProtectionConfig = {
       'http://localhost:3000',
       'https://localhost:3000',
       process.env.NEXTAUTH_URL || '',
-      process.env.NEXT_PUBLIC_APP_URL || '',
+      getAppUrl(true), // Use centralized helper
     ].filter(Boolean),
   },
   userAgentValidation: {
@@ -372,7 +373,7 @@ export const protectionConfigs = {
         'http://localhost:3000',
         'https://localhost:3000',
         process.env.NEXTAUTH_URL || '',
-        process.env.NEXT_PUBLIC_APP_URL || '',
+        getAppUrl(true), // Use centralized helper
         // Railway public domain
         process.env.RAILWAY_PUBLIC_DOMAIN
           ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
@@ -410,7 +411,7 @@ export const protectionConfigs = {
         'http://localhost:3000',
         'https://localhost:3000',
         process.env.NEXTAUTH_URL || '',
-        process.env.NEXT_PUBLIC_APP_URL || '',
+        getAppUrl(true), // Use centralized helper
         // Railway public domain
         process.env.RAILWAY_PUBLIC_DOMAIN
           ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
@@ -437,7 +438,7 @@ export const protectionConfigs = {
         'http://localhost:3000',
         'https://localhost:3000',
         process.env.NEXTAUTH_URL || '',
-        process.env.NEXT_PUBLIC_APP_URL || '',
+        getAppUrl(true), // Use centralized helper
         // Railway public domain
         process.env.RAILWAY_PUBLIC_DOMAIN
           ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`

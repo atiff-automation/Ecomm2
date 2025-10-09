@@ -6,6 +6,7 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { encryptData, decryptData } from '@/lib/utils/security';
+import { getAppUrl } from '@/lib/config/app-url';
 
 export interface ProductionCredentials {
   apiKey: string;
@@ -368,7 +369,8 @@ export class EasyParcelProductionConfig {
     }
 
     const isProduction = process.env.NODE_ENV === 'production';
-    const isHTTPS = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://');
+    const appUrl = getAppUrl(true); // Use centralized helper
+    const isHTTPS = appUrl.startsWith('https://');
 
     if (!isProduction) {
       return {
@@ -384,7 +386,7 @@ export class EasyParcelProductionConfig {
         component: 'Environment Configuration',
         status: 'warning',
         message: 'App URL should use HTTPS in production',
-        details: { appUrl: process.env.NEXT_PUBLIC_APP_URL },
+        details: { appUrl },
       };
     }
 
@@ -400,8 +402,9 @@ export class EasyParcelProductionConfig {
    */
   private async validateWebhookConfig(): Promise<ProductionConfigCheck> {
     try {
+      // Use centralized helper for webhook URL
       const webhookUrl =
-        process.env.NEXT_PUBLIC_APP_URL + '/api/webhooks/easyparcel-tracking';
+        getAppUrl(true) + '/api/webhooks/easyparcel-tracking';
       const isHTTPS = webhookUrl.startsWith('https://');
 
       if (!isHTTPS) {
@@ -465,9 +468,10 @@ export class EasyParcelProductionConfig {
    */
   private async validateSSLCertificate(): Promise<ProductionConfigCheck> {
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      // Use centralized helper
+      const appUrl = getAppUrl(true);
 
-      if (!appUrl || !appUrl.startsWith('https://')) {
+      if (!appUrl.startsWith('https://')) {
         return {
           component: 'SSL Certificate',
           status: 'failed',
@@ -594,15 +598,13 @@ export class EasyParcelProductionConfig {
   }> {
     const config = await this.getStoredProductionConfig();
 
+    const appUrl = getAppUrl(true); // Use centralized helper
+
     return {
       environment: process.env.NODE_ENV || 'development',
       apiEndpoint: process.env.EASYPARCEL_BASE_URL || 'Not configured',
-      webhookUrl:
-        (process.env.NEXT_PUBLIC_APP_URL || '') +
-        '/api/webhooks/easyparcel-tracking',
-      sslEnabled: (process.env.NEXT_PUBLIC_APP_URL || '').startsWith(
-        'https://'
-      ),
+      webhookUrl: appUrl + '/api/webhooks/easyparcel-tracking',
+      sslEnabled: appUrl.startsWith('https://'),
       credentialsConfigured: !!(
         process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
       ),

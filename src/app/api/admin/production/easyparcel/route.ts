@@ -15,6 +15,7 @@ import {
   ProductionCredentials,
 } from '@/lib/production/easyparcel-production-config';
 import { z } from 'zod';
+import { getAppUrl } from '@/lib/config/app-url';
 
 const productionCredentialsSchema = z.object({
   apiKey: z.string().min(10),
@@ -237,16 +238,17 @@ export async function GET(request: NextRequest) {
       productionConfig.validateProductionReadiness(),
     ]);
 
+    // Use centralized helper with fallback for status check
+    const appUrl = getAppUrl(true);
+
     const productionStatus = {
       isProduction: process.env.NODE_ENV === 'production',
       isSandbox: process.env.EASYPARCEL_SANDBOX === 'true',
       hasCredentials: !!(
         process.env.EASYPARCEL_API_KEY && process.env.EASYPARCEL_API_SECRET
       ),
-      sslConfigured: (process.env.NEXT_PUBLIC_APP_URL || '').startsWith(
-        'https://'
-      ),
-      webhookConfigured: !!process.env.NEXT_PUBLIC_APP_URL,
+      sslConfigured: appUrl.startsWith('https://'),
+      webhookConfigured: !!appUrl,
       databaseConnected: true, // Simplified check
     };
 

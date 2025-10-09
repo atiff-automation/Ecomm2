@@ -3,6 +3,8 @@
  * Single source of truth for all configurable values across the application
  */
 
+import { getAppUrl, getApiUrl } from './app-url';
+
 /**
  * Environment variable validation and defaults
  */
@@ -71,8 +73,9 @@ export const appConfig = {
     version: '1.0.0',
     description: 'Malaysian E-commerce Platform with Membership System',
     environment: getEnvVar('NODE_ENV', 'development'),
-    baseUrl: getEnvVar('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
-    apiUrl: getEnvVar('NEXT_PUBLIC_API_URL', 'http://localhost:3000/api'),
+    // Use centralized helper with localhost fallback only in development
+    baseUrl: getAppUrl(true),
+    apiUrl: getApiUrl(true),
   },
 
   // Database (server-only)
@@ -167,7 +170,8 @@ export const appConfig = {
         'http://localhost:3000',
         'https://localhost:3000',
         getEnvVar('NEXTAUTH_URL', ''),
-        getEnvVar('NEXT_PUBLIC_APP_URL', ''),
+        // Use centralized helper with fallback for CORS configuration
+        getAppUrl(true),
       ].filter(Boolean),
       allowCredentials: true,
     },
