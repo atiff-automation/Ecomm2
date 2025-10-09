@@ -562,9 +562,9 @@ export default function AdminDashboard() {
                   className="w-full justify-start"
                   asChild
                 >
-                  <Link href="/admin/orders/export">
+                  <Link href="/admin/orders">
                     <FileText className="h-4 w-4 mr-2" />
-                    Export Orders
+                    View Orders
                   </Link>
                 </Button>
                 <Button

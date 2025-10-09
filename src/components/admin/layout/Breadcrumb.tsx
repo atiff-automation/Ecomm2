@@ -117,7 +117,6 @@ export const BREADCRUMB_CONFIGS = {
     main: { label: 'Orders', href: '/admin/orders' },
     all: { label: 'All Orders', href: '/admin/orders' },
     shipping: { label: 'Shipping', href: '/admin/orders/shipping' },
-    fulfillment: { label: 'Fulfillment', href: '/admin/orders/fulfillment' },
     analytics: { label: 'Order Analytics', href: '/admin/orders/analytics' },
   },
   agents: {
