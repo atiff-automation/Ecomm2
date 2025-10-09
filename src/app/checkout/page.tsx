@@ -697,7 +697,7 @@ export default function CheckoutPage() {
 
       // Now create payment bill using the multi-gateway API
       const paymentData = {
-        orderNumber: orderResult.orderNumber,
+        orderId: orderResult.orderId, // Use orderId instead of orderNumber
         amount: total + shippingCost,
         customerInfo: {
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
