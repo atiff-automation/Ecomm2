@@ -3,7 +3,6 @@ import localFont from 'next/font/local';
 import React, { Suspense } from 'react';
 import AuthProvider from '@/components/auth/AuthProvider';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { TelegramHealthCheck } from '@/components/system/TelegramHealthCheck';
 import { Toaster } from 'sonner';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { MonitoringProvider } from '@/lib/monitoring/monitoring-provider';
@@ -141,7 +140,6 @@ export default function RootLayout({
                 <Suspense fallback={<PageLoading />}>
                   <MainLayout>{children}</MainLayout>
                 </Suspense>
-                <TelegramHealthCheck />
                 <Toaster
                   position="top-right"
                   duration={3000}

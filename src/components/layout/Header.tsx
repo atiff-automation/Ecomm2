@@ -97,7 +97,6 @@ export function Header() {
 
   const navigationItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/deals', label: 'Deals' },
     { href: '/track-order', label: 'Track Order' },
     { href: '/apply-agent', label: 'Apply as Agent', icon: UserPlus },
   ];

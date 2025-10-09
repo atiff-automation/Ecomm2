@@ -266,13 +266,6 @@ export const defaultNavigationItems: NavigationItem[] = [
     ]
   },
   {
-    label: 'Deals',
-    href: '/deals',
-    icon: Gift,
-    badge: { text: 'Hot', variant: 'destructive' },
-    featured: true
-  },
-  {
     label: 'Track Order',
     href: '/track-order',
     icon: Truck
