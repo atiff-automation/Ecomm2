@@ -1135,7 +1135,7 @@ export default function CheckoutPage() {
             <ShippingSelector
               deliveryAddress={memoizedDeliveryAddress}
               items={memoizedCartItems}
-              orderValue={subtotal}
+              orderValue={total}
               onShippingSelected={handleShippingSelected}
             />
           )}

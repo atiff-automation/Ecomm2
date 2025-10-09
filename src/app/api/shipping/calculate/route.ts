@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for free shipping eligibility
+    // orderValue should be cart total (after discounts, before tax/shipping)
     const freeShippingApplied =
       settings.freeShippingEnabled &&
       settings.freeShippingThreshold &&

@@ -27,7 +27,7 @@ interface ShippingSelectorProps {
     productId: string;
     quantity: number;
   }>;
-  orderValue: number; // Cart subtotal for free shipping calculation
+  orderValue: number; // Cart total (after discounts, before tax/shipping) for free shipping calculation
   onShippingSelected: (option: ShippingOption | null, weight?: number) => void;
 }
 

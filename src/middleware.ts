@@ -74,14 +74,20 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     return 'public';
   }
 
-  // Sensitive operations - payment mutations, webhooks, uploads
+  // Sensitive operations - webhooks, uploads, site customization
+  // Note: Payment routes moved to standard to support guest checkout
   if (
-    (pathname.startsWith('/api/payment') && pathname !== '/api/payment/methods') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/upload') ||
     (pathname.startsWith('/api/site-customization') && pathname !== '/api/site-customization/current')
   ) {
     return 'sensitive';
+  }
+
+  // Payment operations - standard protection to allow guest checkout
+  // Individual payment routes handle their own auth checks when needed
+  if (pathname.startsWith('/api/payment')) {
+    return 'standard';
   }
 
   // Authenticated user routes
