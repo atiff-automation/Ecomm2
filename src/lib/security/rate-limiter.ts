@@ -2,12 +2,10 @@
  * Centralized Rate Limiting Service
  * SINGLE SOURCE OF TRUTH for all rate limiting across the application
  * NO HARDCODE - All limits configurable via environment variables
- * FALLBACK: Uses in-memory rate limiting if Redis not configured
+ * PURE IN-MEMORY IMPLEMENTATION - No external dependencies
  */
 
 import { NextRequest } from 'next/server';
-import { Ratelimit } from '@upstash/ratelimit';
-import { RedisManager } from '@/lib/cache/redis-config';
 import { rateLimit as inMemoryRateLimit } from '@/lib/rate-limit';
 
 // CENTRALIZED CONFIGURATION - Single source of truth
@@ -47,49 +45,12 @@ interface RateLimitOptions {
 
 /**
  * CENTRALIZED Rate Limiter Class - Single Source of Truth
+ * Pure in-memory implementation using Map-based storage
  */
 export class RateLimiter {
-  private static limiters: Map<string, Ratelimit> = new Map();
-
-  /**
-   * Get or create rate limiter for specific type - DRY PRINCIPLE
-   * Uses centralized Redis configuration if available, falls back to in-memory
-   */
-  private static getRateLimiter(type: RateLimitType): Ratelimit | null {
-    // If Redis not configured, return null to use in-memory fallback
-    if (!RedisManager.isConfigured()) {
-      return null;
-    }
-
-    const key = `limiter_${type}`;
-
-    if (!this.limiters.has(key)) {
-      const config = RATE_LIMIT_CONFIG[type];
-
-      try {
-        const redis = RedisManager.getInstance();
-
-        // Use centralized Redis instance
-        const limiter = new Ratelimit({
-          redis,
-          limiter: Ratelimit.slidingWindow(config.MAX_REQUESTS, `${config.WINDOW}ms`),
-          analytics: true,
-          prefix: `ratelimit:${type.toLowerCase()}`,
-        });
-
-        this.limiters.set(key, limiter);
-      } catch (error) {
-        console.warn(`Failed to create Redis rate limiter for ${type}, will use in-memory fallback`);
-        return null;
-      }
-    }
-
-    return this.limiters.get(key) || null;
-  }
-
   /**
    * CENTRALIZED rate limiting check - Single source of truth for all rate limiting logic
-   * Uses Redis if configured, falls back to in-memory rate limiting
+   * Pure in-memory implementation
    */
   static async checkRateLimit(
     request: NextRequest,
@@ -98,24 +59,10 @@ export class RateLimiter {
     options: RateLimitOptions = {}
   ): Promise<RateLimitResult> {
     try {
-      const limiter = this.getRateLimiter(type);
       const identifier = this.generateIdentifier(request, type, userId, options);
-
-      // Use Redis-based rate limiting if available
-      if (limiter) {
-        const result = await limiter.limit(identifier);
-
-        return {
-          success: result.success,
-          remaining: result.remaining,
-          reset: result.reset,
-          identifier,
-        };
-      }
-
-      // Fallback to in-memory rate limiting
       const config = RATE_LIMIT_CONFIG[type];
       const windowSeconds = Math.floor(config.WINDOW / 1000);
+
       const result = await inMemoryRateLimit.limit(identifier, {
         limit: config.MAX_REQUESTS,
         window: `${windowSeconds}s`,

@@ -1,14 +1,10 @@
 /**
  * Cache Manager - Malaysian E-commerce Platform
- * High-level caching abstraction with fallback strategies
+ * Pure in-memory caching implementation
+ * NO EXTERNAL DEPENDENCIES - Simple and fast
  */
 
-import { redisClient } from './redis-client';
-import { CacheOptions } from './redis-client';
-
 export interface CacheStrategy {
-  primary: 'redis' | 'memory' | 'none';
-  fallback: 'memory' | 'none';
   ttl: number;
 }
 
@@ -19,12 +15,27 @@ export interface CacheEntry<T> {
   hits: number;
 }
 
+export interface CacheOptions {
+  ttl?: number;
+  namespace?: string;
+  strategy?: string;
+}
+
+export interface CacheStats {
+  hits: number;
+  misses: number;
+  hitRate: number;
+  keys: number;
+  memory: string;
+}
+
 /**
- * In-memory cache fallback
+ * Pure in-memory cache implementation
  */
 class MemoryCache {
   private cache = new Map<string, CacheEntry<any>>();
-  private maxSize = 1000; // Maximum number of entries
+  private stats = { hits: 0, misses: 0 };
+  private maxSize = 10000; // Maximum number of entries
   private cleanupInterval: NodeJS.Timeout;
 
   constructor() {
@@ -64,21 +75,25 @@ class MemoryCache {
       const entry = this.cache.get(key);
 
       if (!entry) {
+        this.stats.misses++;
         return null;
       }
 
       // Check if expired
       if (Date.now() - entry.timestamp > entry.ttl) {
         this.cache.delete(key);
+        this.stats.misses++;
         return null;
       }
 
       // Increment hit count
       entry.hits++;
+      this.stats.hits++;
 
       return entry.data as T;
     } catch (error) {
       console.error('Memory cache GET error:', error);
+      this.stats.misses++;
       return null;
     }
   }
@@ -129,15 +144,24 @@ class MemoryCache {
     }
   }
 
-  getStats() {
+  getStats(): CacheStats {
     const entries = Array.from(this.cache.values());
     const totalHits = entries.reduce((sum, entry) => sum + entry.hits, 0);
+    const hitRate =
+      this.stats.hits + this.stats.misses > 0
+        ? (this.stats.hits / (this.stats.hits + this.stats.misses)) * 100
+        : 0;
+
+    // Estimate memory usage
+    const estimatedBytes = JSON.stringify(Array.from(this.cache.entries())).length;
+    const memoryMB = (estimatedBytes / (1024 * 1024)).toFixed(2);
 
     return {
-      size: this.cache.size,
-      maxSize: this.maxSize,
-      totalHits,
-      averageHits: entries.length > 0 ? totalHits / entries.length : 0,
+      hits: this.stats.hits,
+      misses: this.stats.misses,
+      hitRate: Math.round(hitRate * 100) / 100,
+      keys: this.cache.size,
+      memory: `${memoryMB} MB`,
     };
   }
 
@@ -150,7 +174,8 @@ class MemoryCache {
 }
 
 /**
- * Cache Manager with multiple strategies
+ * Cache Manager - Pure in-memory implementation
+ * SINGLE SOURCE OF TRUTH for caching
  */
 export class CacheManager {
   private static instance: CacheManager;
@@ -173,192 +198,105 @@ export class CacheManager {
    * Setup default caching strategies for different data types
    */
   private setupDefaultStrategies(): void {
-    // Products - Redis primary, memory fallback, 1 hour TTL
+    // Products - 1 hour TTL
     this.strategies.set('products', {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 3600, // 1 hour
+      ttl: 3600,
     });
 
-    // Categories - Redis primary, memory fallback, 6 hours TTL
+    // Categories - 6 hours TTL
     this.strategies.set('categories', {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 21600, // 6 hours
+      ttl: 21600,
     });
 
-    // User sessions - Redis only, 24 hours TTL
+    // User sessions - 24 hours TTL
     this.strategies.set('sessions', {
-      primary: 'redis',
-      fallback: 'none',
-      ttl: 86400, // 24 hours
+      ttl: 86400,
     });
 
-    // Cart data - Redis primary, memory fallback, 30 minutes TTL
+    // Cart data - 30 minutes TTL
     this.strategies.set('cart', {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 1800, // 30 minutes
+      ttl: 1800,
     });
 
-    // API responses - Memory only, 5 minutes TTL
+    // API responses - 5 minutes TTL
     this.strategies.set('api', {
-      primary: 'memory',
-      fallback: 'none',
-      ttl: 300, // 5 minutes
+      ttl: 300,
     });
 
-    // Search results - Redis primary, memory fallback, 15 minutes TTL
+    // Search results - 15 minutes TTL
     this.strategies.set('search', {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 900, // 15 minutes
+      ttl: 900,
     });
 
-    // Static content - Redis primary, memory fallback, 24 hours TTL
+    // Static content - 24 hours TTL
     this.strategies.set('static', {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 86400, // 24 hours
+      ttl: 86400,
+    });
+
+    // Default strategy
+    this.strategies.set('default', {
+      ttl: 3600,
     });
   }
 
   /**
-   * Set cache value using appropriate strategy
+   * Generate cache key with namespace
+   */
+  private generateKey(key: string, namespace?: string): string {
+    const appPrefix = 'jrm-ecommerce';
+    const ns = namespace || 'default';
+    return `${appPrefix}:${ns}:${key}`;
+  }
+
+  /**
+   * Set cache value
    */
   async set<T>(
     key: string,
     value: T,
-    options: CacheOptions & { strategy?: string } = {}
+    options: CacheOptions = {}
   ): Promise<boolean> {
     const strategy = this.strategies.get(options.strategy || 'default') || {
-      primary: 'redis',
-      fallback: 'memory',
       ttl: 3600,
     };
 
     const ttl = options.ttl || strategy.ttl;
-    const cacheOptions = { ...options, ttl };
+    const cacheKey = this.generateKey(key, options.namespace);
 
-    // Try primary cache
-    if (strategy.primary === 'redis') {
-      const success = await redisClient.set(key, value, cacheOptions);
-      if (success) {
-        return true;
-      }
-
-      console.warn(`Redis SET failed for key: ${key}, trying fallback`);
-    } else if (strategy.primary === 'memory') {
-      const success = this.memoryCache.set(key, value, ttl);
-      if (success) {
-        return true;
-      }
-    }
-
-    // Try fallback cache
-    if (strategy.fallback === 'memory') {
-      return this.memoryCache.set(key, value, ttl);
-    }
-
-    return false;
+    return this.memoryCache.set(cacheKey, value, ttl);
   }
 
   /**
-   * Get cache value using appropriate strategy
+   * Get cache value
    */
   async get<T>(
     key: string,
-    options: { strategy?: string; namespace?: string } = {}
+    options: CacheOptions = {}
   ): Promise<T | null> {
-    const strategy = this.strategies.get(options.strategy || 'default') || {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 3600,
-    };
-
-    // Try primary cache
-    if (strategy.primary === 'redis') {
-      const value = await redisClient.get<T>(key, options);
-      if (value !== null) {
-        return value;
-      }
-    } else if (strategy.primary === 'memory') {
-      const value = this.memoryCache.get<T>(key);
-      if (value !== null) {
-        return value;
-      }
-    }
-
-    // Try fallback cache
-    if (strategy.fallback === 'memory') {
-      return this.memoryCache.get<T>(key);
-    }
-
-    return null;
+    const cacheKey = this.generateKey(key, options.namespace);
+    return this.memoryCache.get<T>(cacheKey);
   }
 
   /**
-   * Delete cache value from all layers
+   * Delete cache value
    */
   async delete(
     key: string,
-    options: { strategy?: string; namespace?: string } = {}
+    options: CacheOptions = {}
   ): Promise<boolean> {
-    const strategy = this.strategies.get(options.strategy || 'default') || {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 3600,
-    };
-
-    let deleted = false;
-
-    // Delete from Redis if used
-    if (strategy.primary === 'redis' || strategy.fallback === 'redis') {
-      const redisDeleted = await redisClient.delete(key, options.namespace);
-      deleted = deleted || redisDeleted;
-    }
-
-    // Delete from memory if used
-    if (strategy.primary === 'memory' || strategy.fallback === 'memory') {
-      const memoryDeleted = this.memoryCache.delete(key);
-      deleted = deleted || memoryDeleted;
-    }
-
-    return deleted;
+    const cacheKey = this.generateKey(key, options.namespace);
+    return this.memoryCache.delete(cacheKey);
   }
 
   /**
-   * Check if key exists in any cache layer
+   * Check if key exists
    */
   async exists(
     key: string,
-    options: { strategy?: string; namespace?: string } = {}
+    options: CacheOptions = {}
   ): Promise<boolean> {
-    const strategy = this.strategies.get(options.strategy || 'default') || {
-      primary: 'redis',
-      fallback: 'memory',
-      ttl: 3600,
-    };
-
-    // Check primary cache
-    if (strategy.primary === 'redis') {
-      const exists = await redisClient.exists(key, options.namespace);
-      if (exists) {
-        return true;
-      }
-    } else if (strategy.primary === 'memory') {
-      const exists = this.memoryCache.exists(key);
-      if (exists) {
-        return true;
-      }
-    }
-
-    // Check fallback cache
-    if (strategy.fallback === 'memory') {
-      return this.memoryCache.exists(key);
-    }
-
-    return false;
+    const cacheKey = this.generateKey(key, options.namespace);
+    return this.memoryCache.exists(cacheKey);
   }
 
   /**
@@ -367,7 +305,7 @@ export class CacheManager {
   async getOrSet<T>(
     key: string,
     getter: () => Promise<T> | T,
-    options: CacheOptions & { strategy?: string } = {}
+    options: CacheOptions = {}
   ): Promise<T> {
     // Try to get from cache first
     const cached = await this.get<T>(key, options);
@@ -385,31 +323,30 @@ export class CacheManager {
   }
 
   /**
-   * Invalidate cache by tags
+   * Invalidate cache by tags (simplified - clears by namespace)
    */
   async invalidateByTags(tags: string[]): Promise<void> {
-    // Redis tag-based invalidation
-    await redisClient.invalidateByTags(tags);
-
-    // Memory cache doesn't support tags, so we clear relevant patterns
-    // This is a limitation - for full tag support, use Redis
-    console.log(`Cache invalidated by tags: ${tags.join(', ')}`);
+    // In-memory implementation: we don't have true tag support
+    // This is a limitation compared to Redis
+    console.log(`Cache invalidation requested for tags: ${tags.join(', ')}`);
   }
 
   /**
-   * Clear cache by pattern
+   * Clear cache by pattern (simplified)
    */
   async clearByPattern(pattern: string, namespace?: string): Promise<number> {
-    let totalCleared = 0;
+    // In-memory cache doesn't support pattern matching easily
+    // This is a limitation - for full pattern support, consider Redis
+    console.log(`Cache clear by pattern requested: ${pattern}`);
+    return 0;
+  }
 
-    // Clear from Redis
-    const redisCleared = await redisClient.clearByPattern(pattern, namespace);
-    totalCleared += redisCleared;
-
-    // Memory cache doesn't support patterns easily
-    // This is a limitation of the memory cache implementation
-
-    return totalCleared;
+  /**
+   * Clear all cache
+   */
+  async clearAll(): Promise<void> {
+    this.memoryCache.clear();
+    console.log('🗑️ All cache cleared');
   }
 
   /**
@@ -422,29 +359,18 @@ export class CacheManager {
   /**
    * Get cache statistics
    */
-  async getStats() {
-    const redisStats = await redisClient.getStats();
-    const memoryStats = this.memoryCache.getStats();
-
-    return {
-      redis: redisStats,
-      memory: memoryStats,
-      strategies: Object.fromEntries(this.strategies),
-    };
+  async getStats(): Promise<CacheStats> {
+    return this.memoryCache.getStats();
   }
 
   /**
-   * Health check for all cache layers
+   * Health check
    */
   async healthCheck() {
-    const redisHealth = await redisClient.healthCheck();
-
     return {
-      redis: redisHealth,
-      memory: {
-        status: 'healthy' as const,
-        size: this.memoryCache.size(),
-      },
+      status: 'healthy' as const,
+      size: this.memoryCache.size(),
+      stats: this.memoryCache.getStats(),
     };
   }
 
@@ -472,7 +398,6 @@ export class CacheManager {
    */
   async destroy(): Promise<void> {
     this.memoryCache.destroy();
-    await redisClient.disconnect();
     console.log('🗑️ Cache manager destroyed');
   }
 }

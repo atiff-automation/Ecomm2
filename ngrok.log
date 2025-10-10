@@ -38,3 +38,4 @@ t=2025-10-10T21:52:15+0800 lvl=eror msg="session closed, starting reconnect loop
 t=2025-10-10T21:52:16+0800 lvl=info msg="client session established" obj=tunnels.session
 t=2025-10-10T21:52:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
 t=2025-10-10T21:52:32+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=0542771be5a5 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-11T02:48:09+0800 lvl=warn msg="failed to check for update" obj=updater err="Post \"https://update.equinox.io/check\": context deadline exceeded"

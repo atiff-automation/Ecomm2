@@ -23,15 +23,6 @@ interface OptionalEnvVars {
   TOYYIBPAY_CATEGORY_CODE?: string;
   TOYYIBPAY_SANDBOX?: string;
 
-  // Rate Limiting (Upstash Redis - Optional, uses in-memory fallback)
-  UPSTASH_REDIS_REST_URL?: string;
-  UPSTASH_REDIS_REST_TOKEN?: string;
-
-  // Traditional Redis (deprecated - not used)
-  REDIS_HOST?: string;
-  REDIS_PORT?: string;
-  REDIS_PASSWORD?: string;
-
   // Telegram
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_ORDERS_CHAT_ID?: string;
@@ -161,7 +152,7 @@ export class EnvValidator {
 
     // Optional services
     console.log('\n   Optional Services:');
-    console.log(`   Rate Limiting (Upstash): ${process.env.UPSTASH_REDIS_REST_URL ? '✅ Configured' : '➖ Using in-memory'}`);
+    console.log(`   Rate Limiting: ➖ In-memory only`);
     console.log(`   Email (Resend): ${process.env.RESEND_API_KEY ? '✅ Configured' : '➖ Not configured'}`);
     console.log(`   Payment (ToyyibPay): ${process.env.TOYYIBPAY_SECRET_KEY ? '✅ Configured' : '➖ Not configured'}`);
     console.log(`   Telegram Notifications: ${process.env.TELEGRAM_BOT_TOKEN ? '✅ Configured' : '➖ Not configured'}`);

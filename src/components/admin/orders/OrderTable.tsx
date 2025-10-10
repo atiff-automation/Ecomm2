@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderInlineActions } from './OrderInlineActions';
+import { FulfillmentConfirmDialog } from './FulfillmentConfirmDialog';
 import {
   formatCurrency,
   formatOrderDate,
@@ -20,6 +21,8 @@ import {
 } from '@/lib/utils/order';
 import { OrderStatus } from '@prisma/client';
 import type { OrderTableData, OrderTableProps, ActionResult } from './types';
+import { getNextBusinessDay } from '@/lib/shipping/utils/date-utils';
+import { format } from 'date-fns';
 
 export function OrderTable({
   orders,
@@ -31,6 +34,11 @@ export function OrderTable({
   sortDirection = 'desc',
   isLoading = false,
 }: OrderTableProps) {
+  // Fulfillment dialog state
+  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
+  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] = useState<OrderTableData | null>(null);
+  const [isFulfilling, setIsFulfilling] = useState(false);
+
   const allSelected =
     orders.length > 0 && selectedOrderIds.length === orders.length;
   const someSelected =
@@ -86,59 +94,59 @@ export function OrderTable({
       };
     }
 
-    // Check if this is a pickup service (requires pickup date)
-    const isPickupService =
-      orderToFulfill.courierServiceDetail &&
-      orderToFulfill.courierServiceDetail.toLowerCase().includes('pickup');
+    // Open confirmation dialog instead of immediate fulfillment
+    setSelectedOrderForFulfillment(orderToFulfill);
+    setFulfillmentDialogOpen(true);
 
-    // Only set pickup date for pickup services
-    let pickupDate: string | undefined;
-    if (isPickupService) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      pickupDate = tomorrow.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    // Return success to prevent error toast
+    // Actual fulfillment happens in handleConfirmFulfillment
+    return {
+      success: true,
+      message: 'Opening fulfillment dialog...',
+    };
+  };
+
+  const handleConfirmFulfillment = async (pickupDate: string) => {
+    if (!selectedOrderForFulfillment) {
+      throw new Error('No order selected for fulfillment');
     }
 
+    setIsFulfilling(true);
+
     try {
-      const requestBody: {
-        serviceId: string;
-        pickupDate?: string;
-        overriddenByAdmin: boolean;
-      } = {
-        serviceId: orderToFulfill.selectedCourierServiceId,
-        overriddenByAdmin: false,
-      };
-
-      // Only include pickupDate for pickup services
-      if (pickupDate) {
-        requestBody.pickupDate = pickupDate;
-      }
-
-      const response = await fetch(`/api/admin/orders/${orderId}/fulfill`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await fetch(
+        `/api/admin/orders/${selectedOrderForFulfillment.id}/fulfill`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceId: selectedOrderForFulfillment.selectedCourierServiceId,
+            pickupDate: pickupDate,
+            overriddenByAdmin: false,
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        return {
-          success: true,
-          message: data.message || 'Order fulfilled successfully',
-        };
+
+        // Close dialog
+        setFulfillmentDialogOpen(false);
+        setSelectedOrderForFulfillment(null);
+
+        // Refresh page to show updated order status
+        // Alternative: use router.refresh() or refetch data
+        window.location.reload();
       } else {
         const error = await response.json();
-        return {
-          success: false,
-          error: error.message || 'Failed to fulfill order',
-        };
+        throw new Error(error.message || 'Failed to fulfill order');
       }
     } catch (error) {
-      console.error('Fulfillment error:', error);
-      return {
-        success: false,
-        error: 'Network error. Please try again.',
-      };
+      console.error('[OrderTable] Fulfillment error:', error);
+      // Re-throw to be caught by dialog component
+      throw error;
+    } finally {
+      setIsFulfilling(false);
     }
   };
 
@@ -171,154 +179,172 @@ export function OrderTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {/* Checkbox Column */}
-            <TableHead className="w-12">
-              {onSelectAll && (
-                <Checkbox
-                  checked={allSelected}
-                  {...(someSelected ? { indeterminate: true } : {})}
-                  onCheckedChange={checked => onSelectAll(!!checked)}
-                  aria-label={
-                    allSelected ? 'Deselect all orders' : 'Select all orders'
-                  }
-                />
-              )}
-            </TableHead>
-
-            {/* Order Number */}
-            <TableHead className="min-w-[150px]">Order #</TableHead>
-
-            {/* Date - Hidden on mobile */}
-            <TableHead className="hidden md:table-cell min-w-[120px]">
-              Date
-            </TableHead>
-
-            {/* Customer */}
-            <TableHead className="min-w-[180px]">Customer</TableHead>
-
-            {/* Items - Hidden on mobile and tablet */}
-            <TableHead className="hidden lg:table-cell text-center w-20">
-              Items
-            </TableHead>
-
-            {/* Total */}
-            <TableHead className="text-right min-w-[100px]">Total</TableHead>
-
-            {/* Status */}
-            <TableHead className="min-w-[120px]">Status</TableHead>
-
-            {/* Payment - Hidden on mobile */}
-            <TableHead className="hidden md:table-cell min-w-[120px]">
-              Payment
-            </TableHead>
-
-            {/* Actions */}
-            <TableHead className="text-right min-w-[200px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {orders.map(order => (
-            <TableRow key={order.id}>
-              {/* Checkbox */}
-              <TableCell>
-                {onSelectOrder && (
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {/* Checkbox Column */}
+              <TableHead className="w-12">
+                {onSelectAll && (
                   <Checkbox
-                    checked={selectedOrderIds.includes(order.id)}
-                    onCheckedChange={checked =>
-                      onSelectOrder(order.id, !!checked)
+                    checked={allSelected}
+                    {...(someSelected ? { indeterminate: true } : {})}
+                    onCheckedChange={checked => onSelectAll(!!checked)}
+                    aria-label={
+                      allSelected ? 'Deselect all orders' : 'Select all orders'
                     }
-                    aria-label={`Select order ${order.orderNumber}`}
                   />
                 )}
-              </TableCell>
+              </TableHead>
 
               {/* Order Number */}
-              <TableCell className="font-medium font-mono text-sm">
-                {order.orderNumber}
-              </TableCell>
+              <TableHead className="min-w-[150px]">Order #</TableHead>
 
-              {/* Date */}
-              <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                {formatOrderDate(order.createdAt)}
-              </TableCell>
+              {/* Date - Hidden on mobile */}
+              <TableHead className="hidden md:table-cell min-w-[120px]">
+                Date
+              </TableHead>
 
               {/* Customer */}
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-medium text-sm">
-                    {getCustomerName(order)}
-                  </span>
-                  {order.user?.email && (
-                    <span className="text-xs text-gray-500">
-                      {order.user.email}
-                    </span>
-                  )}
-                  {order.guestEmail && (
-                    <span className="text-xs text-gray-500">
-                      {order.guestEmail}
-                    </span>
-                  )}
-                </div>
-              </TableCell>
+              <TableHead className="min-w-[180px]">Customer</TableHead>
 
-              {/* Items Count */}
-              <TableCell className="hidden lg:table-cell text-center">
-                <span
-                  className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 text-xs font-medium"
-                  aria-label={`${getTotalItemsCount(order.orderItems)} items`}
-                >
-                  {getTotalItemsCount(order.orderItems)}
-                </span>
-              </TableCell>
+              {/* Items - Hidden on mobile and tablet */}
+              <TableHead className="hidden lg:table-cell text-center w-20">
+                Items
+              </TableHead>
 
               {/* Total */}
-              <TableCell className="text-right font-semibold">
-                {formatCurrency(order.total)}
-              </TableCell>
+              <TableHead className="text-right min-w-[100px]">Total</TableHead>
 
-              {/* Order Status */}
-              <TableCell>
-                <OrderStatusBadge
-                  status={order.status}
-                  type="order"
-                  size="sm"
-                />
-              </TableCell>
+              {/* Status */}
+              <TableHead className="min-w-[120px]">Status</TableHead>
 
-              {/* Payment Status */}
-              <TableCell className="hidden md:table-cell">
-                <OrderStatusBadge
-                  status={order.paymentStatus}
-                  type="payment"
-                  size="sm"
-                />
-              </TableCell>
+              {/* Payment - Hidden on mobile */}
+              <TableHead className="hidden md:table-cell min-w-[120px]">
+                Payment
+              </TableHead>
 
-              {/* Inline Actions */}
-              <TableCell className="text-right">
-                <OrderInlineActions
-                  order={{
-                    id: order.id,
-                    orderNumber: order.orderNumber,
-                    status: order.status,
-                    paymentStatus: order.paymentStatus,
-                    shipment: order.shipment
-                      ? { trackingNumber: order.shipment.trackingNumber || '' }
-                      : null,
-                  }}
-                  onStatusUpdate={handleStatusUpdate}
-                  onFulfill={handleFulfill}
-                />
-              </TableCell>
+              {/* Actions */}
+              <TableHead className="text-right min-w-[200px]">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+
+          <TableBody>
+            {orders.map(order => (
+              <TableRow key={order.id}>
+                {/* Checkbox */}
+                <TableCell>
+                  {onSelectOrder && (
+                    <Checkbox
+                      checked={selectedOrderIds.includes(order.id)}
+                      onCheckedChange={checked =>
+                        onSelectOrder(order.id, !!checked)
+                      }
+                      aria-label={`Select order ${order.orderNumber}`}
+                    />
+                  )}
+                </TableCell>
+
+                {/* Order Number */}
+                <TableCell className="font-medium font-mono text-sm">
+                  {order.orderNumber}
+                </TableCell>
+
+                {/* Date */}
+                <TableCell className="hidden md:table-cell text-sm text-gray-600">
+                  {formatOrderDate(order.createdAt)}
+                </TableCell>
+
+                {/* Customer */}
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">
+                      {getCustomerName(order)}
+                    </span>
+                    {order.user?.email && (
+                      <span className="text-xs text-gray-500">
+                        {order.user.email}
+                      </span>
+                    )}
+                    {order.guestEmail && (
+                      <span className="text-xs text-gray-500">
+                        {order.guestEmail}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* Items Count */}
+                <TableCell className="hidden lg:table-cell text-center">
+                  <span
+                    className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 text-xs font-medium"
+                    aria-label={`${getTotalItemsCount(order.orderItems)} items`}
+                  >
+                    {getTotalItemsCount(order.orderItems)}
+                  </span>
+                </TableCell>
+
+                {/* Total */}
+                <TableCell className="text-right font-semibold">
+                  {formatCurrency(order.total)}
+                </TableCell>
+
+                {/* Order Status */}
+                <TableCell>
+                  <OrderStatusBadge
+                    status={order.status}
+                    type="order"
+                    size="sm"
+                  />
+                </TableCell>
+
+                {/* Payment Status */}
+                <TableCell className="hidden md:table-cell">
+                  <OrderStatusBadge
+                    status={order.paymentStatus}
+                    type="payment"
+                    size="sm"
+                  />
+                </TableCell>
+
+                {/* Inline Actions */}
+                <TableCell className="text-right">
+                  <OrderInlineActions
+                    order={{
+                      id: order.id,
+                      orderNumber: order.orderNumber,
+                      status: order.status,
+                      paymentStatus: order.paymentStatus,
+                      shipment: order.shipment
+                        ? { trackingNumber: order.shipment.trackingNumber || '' }
+                        : null,
+                    }}
+                    onStatusUpdate={handleStatusUpdate}
+                    onFulfill={handleFulfill}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Fulfillment Confirmation Dialog */}
+      {selectedOrderForFulfillment && (
+        <FulfillmentConfirmDialog
+          open={fulfillmentDialogOpen}
+          onOpenChange={setFulfillmentDialogOpen}
+          order={{
+            id: selectedOrderForFulfillment.id,
+            orderNumber: selectedOrderForFulfillment.orderNumber,
+            courierName: selectedOrderForFulfillment.courierName,
+            selectedCourierServiceId: selectedOrderForFulfillment.selectedCourierServiceId,
+          }}
+          onConfirm={handleConfirmFulfillment}
+          isLoading={isFulfilling}
+        />
+      )}
+    </>
   );
 }

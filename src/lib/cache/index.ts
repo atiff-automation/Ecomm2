@@ -1,13 +1,12 @@
 /**
  * Cache Module Exports - Malaysian E-commerce Platform
  * Central export point for all caching functionality
+ * PURE IN-MEMORY IMPLEMENTATION - No external dependencies
  */
 
-// Core caching - Railway deployment ready with fallback
-export { redisClient } from './redis-client-fallback';
+// Core caching - Pure in-memory implementation
 export { cacheManager, CacheManager } from './cache-manager';
-export type { CacheOptions, CacheStats } from './redis-client';
-export type { CacheStrategy } from './cache-manager';
+export type { CacheOptions, CacheStats, CacheStrategy } from './cache-manager';
 
 // Decorators and utilities
 export {
