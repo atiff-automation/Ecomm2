@@ -14,7 +14,7 @@ import { UserRole } from '@prisma/client';
 
 interface RouteParams {
   params: {
-    id: string;
+    orderId: string;
   };
 }
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { error, session } = await requireAdminRole();
     if (error) return error;
 
-    const orderId = params.id;
+    const orderId = params.orderId;
 
     // Fetch order with all related data
     const order = await prisma.order.findUnique({
@@ -166,7 +166,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { error, session } = await requireAdminRole();
     if (error) return error;
 
-    const orderId = params.id;
+    const orderId = params.orderId;
     const body = await request.json();
     const { status } = body;
 
@@ -336,6 +336,72 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     console.error('Error updating order:', error);
     return NextResponse.json(
       { message: 'Failed to update order' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    // Authorization check - only admin can delete orders
+    const { error, session } = await requireAdminRole();
+    if (error) return error;
+
+    const orderId = params.orderId;
+
+    // First, fetch the order to get details for audit log
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        paymentStatus: true,
+        total: true,
+        userId: true,
+        guestEmail: true,
+      },
+    });
+
+    if (!order) {
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+    }
+
+    // Delete the order - cascade will automatically delete related OrderItems
+    await prisma.order.delete({
+      where: { id: orderId },
+    });
+
+    // Create audit log for the deletion
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: 'DELETE',
+        resource: 'order',
+        resourceId: orderId,
+        details: {
+          orderNumber: order.orderNumber,
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          total: Number(order.total),
+          deletedBy: session.user.name || session.user.email,
+          customerUserId: order.userId,
+          customerEmail: order.guestEmail,
+        },
+        ipAddress:
+          request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      },
+    });
+
+    return NextResponse.json({
+      message: 'Order deleted successfully',
+      orderNumber: order.orderNumber,
+    });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    return NextResponse.json(
+      { message: 'Failed to delete order' },
       { status: 500 }
     );
   }

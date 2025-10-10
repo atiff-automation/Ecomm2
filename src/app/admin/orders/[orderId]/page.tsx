@@ -22,6 +22,7 @@ import {
   User,
   MapPin,
   CreditCard,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
@@ -46,6 +47,8 @@ export default function OrderDetailsPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isFulfilling, setIsFulfilling] = useState(false);
   const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -212,6 +215,42 @@ export default function OrderDetailsPage() {
         `/api/orders/${order.id}/packing-slip?download=true`,
         '_blank'
       );
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Success',
+          description: `Order ${data.orderNumber} has been permanently deleted`,
+        });
+        router.push('/admin/orders');
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to delete order',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete order',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -522,6 +561,32 @@ export default function OrderDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Danger Zone */}
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="text-sm text-red-600">Danger Zone</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+                className="w-full justify-start"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Delete Order
+              </Button>
+              <p className="text-xs text-gray-500 mt-2">
+                Permanently delete this order and all related data. This action cannot be undone.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Tracking Card */}
           {order.shipment && (
             <TrackingCard
@@ -532,6 +597,56 @@ export default function OrderDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Are you absolutely sure?
+                </h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  This will permanently delete order{' '}
+                  <span className="font-semibold text-red-600">
+                    {order.orderNumber}
+                  </span>{' '}
+                  and all its associated data including order items, addresses,
+                  and payment records.
+                </p>
+                <p className="text-sm font-semibold text-gray-900 mt-2">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteOrder}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Order'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
