@@ -131,12 +131,22 @@ export default function OrderDetailsPage() {
   };
 
   const handleFulfill = () => {
+    console.log('[OrderDetailsPage] handleFulfill called');
+
     if (!order) {
+      console.log('[OrderDetailsPage] No order, returning');
       return;
     }
 
+    console.log('[OrderDetailsPage] Order:', {
+      id: order.id,
+      selectedCourierServiceId: order.selectedCourierServiceId,
+      courierName: order.courierName
+    });
+
     // Check if courier service was selected during checkout
     if (!order.selectedCourierServiceId) {
+      console.log('[OrderDetailsPage] No courier service selected, showing error');
       toast({
         title: 'Error',
         description: 'No courier service selected. Please select a courier from the order settings.',
@@ -146,6 +156,7 @@ export default function OrderDetailsPage() {
     }
 
     // Open fulfillment confirmation dialog
+    console.log('[OrderDetailsPage] Opening fulfillment dialog');
     setFulfillmentDialogOpen(true);
   };
 
@@ -571,6 +582,7 @@ export default function OrderDetailsPage() {
               </Button>
               {canFulfill && (
                 <Button
+                  type="button"
                   size="sm"
                   onClick={handleFulfill}
                   disabled={isFulfilling}
