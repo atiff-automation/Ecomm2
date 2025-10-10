@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
 import { TrackingCard } from '@/components/admin/orders/TrackingCard';
+import { FulfillmentConfirmDialog } from '@/components/admin/orders/FulfillmentConfirmDialog';
 import {
   formatCurrency,
   formatOrderDateTime,
@@ -49,6 +50,7 @@ export default function OrderDetailsPage() {
   const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -128,16 +130,41 @@ export default function OrderDetailsPage() {
     }
   };
 
-  const handleFulfill = async () => {
+  const handleFulfill = () => {
     if (!order) {
       return;
     }
 
+    // Check if courier service was selected during checkout
+    if (!order.selectedCourierServiceId) {
+      toast({
+        title: 'Error',
+        description: 'No courier service selected. Please select a courier from the order settings.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Open fulfillment confirmation dialog
+    setFulfillmentDialogOpen(true);
+  };
+
+  const handleConfirmFulfillment = async (pickupDate: string) => {
+    if (!order) {
+      throw new Error('No order available for fulfillment');
+    }
+
     setIsFulfilling(true);
+
     try {
       const response = await fetch(`/api/admin/orders/${order.id}/fulfill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: order.selectedCourierServiceId,
+          pickupDate: pickupDate,
+          overriddenByAdmin: false,
+        }),
       });
 
       if (response.ok) {
@@ -145,21 +172,20 @@ export default function OrderDetailsPage() {
           title: 'Success',
           description: 'Order fulfilled successfully',
         });
-        fetchOrder(); // Refresh order data
+
+        // Close dialog
+        setFulfillmentDialogOpen(false);
+
+        // Refresh order data
+        fetchOrder();
       } else {
         const error = await response.json();
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to fulfill order',
-          variant: 'destructive',
-        });
+        throw new Error(error.message || 'Failed to fulfill order');
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fulfill order',
-        variant: 'destructive',
-      });
+      console.error('[OrderDetailsPage] Fulfillment error:', error);
+      // Re-throw to be caught by dialog component
+      throw error;
     } finally {
       setIsFulfilling(false);
     }
@@ -597,6 +623,22 @@ export default function OrderDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Fulfillment Confirmation Dialog */}
+      {order && (
+        <FulfillmentConfirmDialog
+          open={fulfillmentDialogOpen}
+          onOpenChange={setFulfillmentDialogOpen}
+          order={{
+            id: order.id,
+            orderNumber: order.orderNumber,
+            courierName: order.courierName,
+            selectedCourierServiceId: order.selectedCourierServiceId || '',
+          }}
+          onConfirm={handleConfirmFulfillment}
+          isLoading={isFulfilling}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
