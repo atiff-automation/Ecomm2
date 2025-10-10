@@ -12,7 +12,6 @@
     "db:deploy:production": "npx prisma migrate deploy && npm run db:seed:production",
     "db:seed:production": "npm run db:seed:essential",
     "db:seed:essential": "NODE_ENV=production npx tsx prisma/seed.ts",
-    "db:seed:shipping:production": "NODE_ENV=production npx tsx prisma/seed-shipping-zones.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "lint:fix": "next lint --fix",
@@ -40,7 +39,10 @@
     "optimize:images": "npx next-optimized-images",
     "check:deps": "npx depcheck",
     "check:unused": "npx unimported",
-    "stats": "npm run build -- --profile --json > bundle-stats.json"
+    "stats": "npm run build -- --profile --json > bundle-stats.json",
+    "logs:watch": "node scripts/view-logs.js",
+    "logs:analyze": "node scripts/analyze-logs.js",
+    "easyparcel:balance": "node scripts/check-easyparcel-balance.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -77,8 +79,6 @@
     "@types/puppeteer": "^5.4.7",
     "@types/speakeasy": "^2.0.10",
     "@types/xlsx": "^0.0.35",
-    "@upstash/ratelimit": "^2.0.6",
-    "@upstash/redis": "^1.35.4",
     "archiver": "^7.0.1",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
@@ -88,7 +88,6 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "express": "^5.1.0",
-    "ioredis": "^5.8.0",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
