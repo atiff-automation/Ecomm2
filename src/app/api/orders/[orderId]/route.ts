@@ -115,6 +115,15 @@ export async function GET(
       shippedAt: order.shippedAt?.toISOString() || null,
       deliveredAt: order.deliveredAt?.toISOString() || null,
 
+      // Courier/shipping information
+      selectedCourierServiceId: order.selectedCourierServiceId,
+      courierName: order.courierName,
+      courierServiceType: order.courierServiceType,
+      courierServiceDetail: order.courierServiceDetail,
+      selectedDropoffPointId: order.selectedDropoffPointId,
+      estimatedDelivery: order.estimatedDelivery,
+      shippingWeight: order.shippingWeight ? Number(order.shippingWeight) : null,
+
       // User information
       user: order.user
         ? {

@@ -5,6 +5,7 @@
  *
  * Books shipment with EasyParcel and updates order status to READY_TO_SHIP.
  * Handles courier override, pickup date scheduling, and error scenarios.
+ * Pickup address is sourced from BusinessProfile (single source of truth).
  *
  * @route POST /api/admin/orders/[orderId]/fulfill
  */
@@ -22,6 +23,7 @@ import {
 import { SHIPPING_ERROR_CODES } from '@/lib/shipping/constants';
 import type { EasyParcelShipmentRequest } from '@/lib/shipping/types';
 import { emailService } from '@/lib/email/email-service';
+import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
 
 /**
  * Zod schema for fulfillment request
@@ -40,14 +42,18 @@ const fulfillmentSchema = z.object({
  *
  * Steps:
  * 1. Validate admin authentication
- * 2. Fetch order with all necessary data
- * 3. Validate order status (must be PAID)
- * 4. Get shipping settings
- * 5. Build EasyParcel shipment request
- * 6. Create shipment with EasyParcel API
- * 7. Update order status to READY_TO_SHIP
- * 8. Store tracking number and AWB
- * 9. Return success with tracking details
+ * 2. Parse and validate request body
+ * 3. Fetch order with all necessary data
+ * 4. Validate order status (must be PAID)
+ * 5. Validate shipping address
+ * 6. Get shipping settings
+ * 7. Get pickup address from BusinessProfile (with validation)
+ * 8. Validate shipping weight
+ * 9. Build EasyParcel shipment request
+ * 10. Create shipment with EasyParcel API
+ * 11. Update order status to READY_TO_SHIP
+ * 12. Send email notification to customer
+ * 13. Return success with tracking details
  */
 export async function POST(
   request: NextRequest,
@@ -160,7 +166,30 @@ export async function POST(
       );
     }
 
-    // Step 7: Validate shipping weight
+    // Step 7: Get pickup address from BusinessProfile
+    let pickupAddress;
+    try {
+      pickupAddress = await getPickupAddressOrThrow();
+      console.log('[Fulfillment] Pickup address retrieved from BusinessProfile:', {
+        businessName: pickupAddress.businessName,
+        phone: pickupAddress.phone,
+        city: pickupAddress.city,
+        state: pickupAddress.state,
+        postalCode: pickupAddress.postalCode,
+      });
+    } catch (error) {
+      console.error('[Fulfillment] Failed to get pickup address:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          message: error instanceof Error ? error.message : 'Failed to retrieve pickup address from Business Profile',
+          code: SHIPPING_ERROR_CODES.INVALID_ADDRESS,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Step 8: Validate shipping weight
     const shippingWeight = order.shippingWeight
       ? parseFloat(order.shippingWeight.toString())
       : null;
@@ -177,19 +206,19 @@ export async function POST(
       );
     }
 
-    // Step 8: Build EasyParcel shipment request
+    // Step 9: Build EasyParcel shipment request with pickup address from BusinessProfile
     const shipmentRequest: EasyParcelShipmentRequest = {
       service_id: validatedData.serviceId,
       reference: order.orderNumber,
       pickup: {
-        name: settings.businessName,
-        phone: settings.phone,
-        address: settings.addressLine1,
-        address2: settings.addressLine2 || '',
-        city: settings.city,
-        state: settings.state,
-        postcode: settings.postalCode,
-        country: settings.country,
+        name: pickupAddress.businessName,
+        phone: pickupAddress.phone,
+        address: pickupAddress.addressLine1,
+        address2: pickupAddress.addressLine2 || '',
+        city: pickupAddress.city,
+        state: pickupAddress.state,
+        postcode: pickupAddress.postalCode,
+        country: pickupAddress.country,
         pickup_date: validatedData.pickupDate,
       },
       delivery: {
@@ -224,7 +253,7 @@ export async function POST(
       whatsappParam: shipmentRequest.addon_whatsapp_tracking_enabled,
     });
 
-    // Step 9: Create shipment with EasyParcel API
+    // Step 10: Create shipment with EasyParcel API
     const easyParcelService = createEasyParcelService(settings);
 
     let shipmentResponse;
@@ -297,7 +326,7 @@ export async function POST(
       );
     }
 
-    // Step 10: Update order with tracking information
+    // Step 11: Update order with tracking information
     const updatedOrder = await prisma.order.update({
       where: { id: params.orderId },
       data: {
@@ -342,7 +371,7 @@ export async function POST(
       awbNumber: updatedOrder.airwayBillNumber,
     });
 
-    // Step 11: Send email notification to customer
+    // Step 12: Send email notification to customer
     try {
       const customerEmail = order.user?.email || order.guestEmail;
 
@@ -383,7 +412,7 @@ export async function POST(
       );
     }
 
-    // Step 12: Return success response
+    // Step 13: Return success response
     return NextResponse.json({
       success: true,
       message: 'Shipment booked successfully',

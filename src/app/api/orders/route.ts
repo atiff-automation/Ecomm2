@@ -53,7 +53,8 @@ const createOrderSchema = z.object({
   selectedShipping: z.object({
     serviceId: z.string(),
     courierName: z.string(),
-    serviceType: z.string(),
+    serviceType: z.string(), // 'parcel' or 'document'
+    serviceDetail: z.string(), // 'pickup', 'dropoff', or 'dropoff or pickup'
     cost: z.number(),
     originalCost: z.number(),
     freeShipping: z.boolean(),
@@ -311,6 +312,7 @@ export async function POST(request: NextRequest) {
     let selectedCourierServiceId: string | null = null;
     let courierName: string | null = null;
     let courierServiceType: string | null = null;
+    let courierServiceDetail: string | null = null;
     let estimatedDelivery: string | null = null;
     let shippingWeight: number | null = null;
 
@@ -319,12 +321,13 @@ export async function POST(request: NextRequest) {
       shippingCost = orderData.selectedShipping.cost;
       selectedCourierServiceId = orderData.selectedShipping.serviceId;
       courierName = orderData.selectedShipping.courierName;
-      courierServiceType = orderData.selectedShipping.serviceType;
+      courierServiceType = orderData.selectedShipping.serviceType; // 'parcel' or 'document'
+      courierServiceDetail = orderData.selectedShipping.serviceDetail; // 'pickup', 'dropoff', or 'dropoff or pickup'
       estimatedDelivery = orderData.selectedShipping.estimatedDays;
       shippingWeight = orderData.calculatedWeight || null;
 
       console.log(
-        `🚚 Using new shipping implementation: ${courierName} (${courierServiceType}) - RM${shippingCost}`,
+        `🚚 Using new shipping implementation: ${courierName} (${courierServiceType} - ${courierServiceDetail}) - RM${shippingCost}`,
         orderData.selectedShipping.freeShipping ? '(FREE SHIPPING)' : ''
       );
     } else if (orderData.shippingRate && orderData.shippingRate.price) {
@@ -469,7 +472,8 @@ export async function POST(request: NextRequest) {
           // ✅ CRITICAL: Include new shipping fields
           selectedCourierServiceId: selectedCourierServiceId,
           courierName: courierName,
-          courierServiceType: courierServiceType,
+          courierServiceType: courierServiceType, // 'parcel' or 'document'
+          courierServiceDetail: courierServiceDetail, // 'pickup', 'dropoff', or 'dropoff or pickup'
           estimatedDelivery: estimatedDelivery,
           shippingWeight: shippingWeight,
           shippingAddress: { connect: { id: shippingAddr.id } },

@@ -182,3 +182,113 @@ export interface OrderInlineActionsProps {
   isUpdating?: boolean;
   compact?: boolean; // For mobile view
 }
+
+/**
+ * Order details data returned from API
+ */
+export interface OrderDetailsData {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  taxAmount: number;
+  shippingCost: number;
+  discountAmount: number;
+  total: number;
+  memberDiscount: number;
+  paymentMethod: string | null;
+  paymentId: string | null;
+  trackingNumber: string | null;
+  customerNotes: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  paidAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+
+  // Courier/shipping information
+  selectedCourierServiceId: string | null;
+  courierName: string | null;
+  courierServiceType: string | null;
+  courierServiceDetail: string | null;
+  selectedDropoffPointId: string | null;
+  estimatedDelivery: string | null;
+  shippingWeight: number | null;
+
+  // Relations
+  user?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+    isMember: boolean;
+    memberSince: string | null;
+  } | null;
+  guestEmail: string | null;
+  orderItems: Array<{
+    id: string;
+    productId: string;
+    quantity: number;
+    regularPrice: number;
+    memberPrice: number;
+    appliedPrice: number;
+    totalPrice: number;
+    productName: string;
+    productSku: string | null;
+    product: {
+      id: string;
+      name: string;
+      sku: string | null;
+      images: Array<{
+        url: string;
+        altText: string | null;
+      }>;
+    } | null;
+  }>;
+  shippingAddress: {
+    id: string;
+    recipientName: string;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phoneNumber: string | null;
+    phone: string | null;
+  } | null;
+  billingAddress: {
+    id: string;
+    recipientName: string;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2: string | null;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phoneNumber: string | null;
+    phone: string | null;
+  } | null;
+  shipment: {
+    id: string;
+    trackingNumber: string;
+    status: ShipmentStatus;
+    courierName: string;
+    serviceName: string;
+    estimatedDelivery: string | null;
+    actualDelivery: string | null;
+    trackingEvents: Array<{
+      eventName: string;
+      description: string | null;
+      timestamp: string;
+      location: string | null;
+    }>;
+  } | null;
+}

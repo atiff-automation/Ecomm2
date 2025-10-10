@@ -23,6 +23,7 @@ interface FulfillmentConfirmDialogProps {
     id: string;
     orderNumber: string;
     courierName?: string;
+    courierServiceDetail?: string; // 'pickup', 'dropoff', or 'dropoff or pickup'
     selectedCourierServiceId: string;
   };
   onConfirm: (pickupDate: string) => Promise<void>;
@@ -107,7 +108,12 @@ export function FulfillmentConfirmDialog({
           {/* Courier Service */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Courier Service</Label>
-            <p className="text-sm">{order.courierName || 'Selected at checkout'}</p>
+            <p className="text-sm font-semibold">{order.courierName || 'Selected at checkout'}</p>
+            {order.courierServiceDetail && (
+              <p className="text-sm text-gray-700 capitalize">
+                <span className="font-medium">Service Type:</span> {order.courierServiceDetail}
+              </p>
+            )}
             <p className="text-xs text-gray-500">
               Go to order detail page to change courier
             </p>
@@ -127,7 +133,6 @@ export function FulfillmentConfirmDialog({
               min={minDate}
               max={maxDate}
               disabled={isLoading}
-              required
             />
             <p className="text-xs text-gray-600">
               Default: Next business day. Can schedule up to 7 days ahead.
@@ -160,14 +165,22 @@ export function FulfillmentConfirmDialog({
 
         <DialogFooter>
           <Button
+            type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenChange(false);
+            }}
             disabled={isLoading}
           >
             Cancel
           </Button>
           <Button
-            onClick={handleConfirm}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              handleConfirm();
+            }}
             disabled={isLoading || !!dateError || !pickupDate}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

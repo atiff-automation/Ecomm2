@@ -161,6 +161,34 @@ export class EasyParcelService {
   }
 
   /**
+   * Format phone number for EasyParcel API
+   * EasyParcel expects Malaysian phone numbers without the '+' prefix
+   * @param phone - Phone number in various formats
+   * @returns Formatted phone number
+   * @private
+   */
+  private formatPhoneNumber(phone: string | null | undefined): string {
+    // Handle null/undefined phone numbers
+    if (!phone) {
+      return '';
+    }
+
+    // Remove all non-digit characters
+    let cleaned = phone.replace(/\D/g, '');
+
+    // If starts with '60' (Malaysia country code), keep it
+    // If starts with '0', keep it (local format)
+    // Otherwise, assume it's missing the country code and prepend '60'
+    if (cleaned.startsWith('60')) {
+      return cleaned;
+    } else if (cleaned.startsWith('0')) {
+      return cleaned;
+    } else {
+      return '60' + cleaned;
+    }
+  }
+
+  /**
    * Create shipment booking with EasyParcel
    *
    * @param request - Shipment creation request payload
@@ -178,28 +206,135 @@ export class EasyParcelService {
         whatsappTracking: request.addon_whatsapp_tracking_enabled,
       });
 
-      const response = await this.makeRequest<EasyParcelShipmentResponse['data']>(
-        '/shipments',
-        'POST',
-        request
-      );
+      // Format phone numbers for EasyParcel API
+      const pickupPhone = this.formatPhoneNumber(request.pickup.phone);
+      const deliveryPhone = this.formatPhoneNumber(request.delivery.phone);
 
-      if (!response.shipment_id || !response.tracking_number) {
+      console.log('[EasyParcel] Formatted phone numbers:', {
+        pickup: { original: request.pickup.phone, formatted: pickupPhone },
+        delivery: { original: request.delivery.phone, formatted: deliveryPhone },
+      });
+
+      // Build bulk array parameter for EPSubmitOrderBulk
+      const bulkParams: Record<string, unknown> = {
+        'bulk[0][service_id]': request.service_id,
+        'bulk[0][weight]': request.parcel.weight,
+        'bulk[0][content]': request.parcel.content || 'General Merchandise',
+        'bulk[0][value]': request.parcel.value || request.parcel.weight * 100,
+
+        // Pickup details
+        'bulk[0][pick_name]': request.pickup.name,
+        'bulk[0][pick_contact]': pickupPhone,
+        'bulk[0][pick_addr1]': request.pickup.address,
+        'bulk[0][pick_addr2]': request.pickup.address2 || '',
+        'bulk[0][pick_city]': request.pickup.city,
+        'bulk[0][pick_state]': request.pickup.state,
+        'bulk[0][pick_code]': request.pickup.postcode,
+        'bulk[0][pick_country]': request.pickup.country,
+
+        // Delivery details
+        'bulk[0][send_name]': request.delivery.name,
+        'bulk[0][send_contact]': deliveryPhone,
+        'bulk[0][send_addr1]': request.delivery.address,
+        'bulk[0][send_addr2]': request.delivery.address2 || '',
+        'bulk[0][send_city]': request.delivery.city,
+        'bulk[0][send_state]': request.delivery.state,
+        'bulk[0][send_code]': request.delivery.postcode,
+        'bulk[0][send_country]': request.delivery.country,
+
+        // Pickup date
+        'bulk[0][collect_date]': request.pickup.pickup_date,
+      };
+
+      // Add optional parcel dimensions if provided
+      if (request.parcel.width) {
+        bulkParams['bulk[0][width]'] = request.parcel.width;
+      }
+      if (request.parcel.height) {
+        bulkParams['bulk[0][height]'] = request.parcel.height;
+      }
+      if (request.parcel.length) {
+        bulkParams['bulk[0][length]'] = request.parcel.length;
+      }
+
+      // Add reference (order number)
+      if (request.reference) {
+        bulkParams['bulk[0][reference]'] = request.reference;
+      }
+
+      // Add WhatsApp tracking if enabled
+      if (request.addon_whatsapp_tracking_enabled) {
+        bulkParams['bulk[0][addon_whatsapp_tracking_enabled]'] = request.addon_whatsapp_tracking_enabled;
+      }
+
+      // DEBUG: Log complete request payload
+      console.log('[EasyParcel] Complete bulkParams being sent:', JSON.stringify(bulkParams, null, 2));
+
+      const response = await this.makeRequest<{
+        api_status: string;
+        error_code: string;
+        error_remark: string;
+        result: Array<{
+          status: string;
+          remarks: string;
+          order_id?: string;
+          tracking_no?: string;
+          awb_number?: string;
+          label_url?: string;
+          tracking_url?: string;
+        }>;
+      }>('EPSubmitOrderBulk', bulkParams);
+
+      // Check for API errors
+      if (response.api_status !== 'Success' || response.error_code !== '0') {
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          'Invalid response from EasyParcel API',
+          response.error_remark || 'Failed to create shipment',
+          { response }
+        );
+      }
+
+      // Extract shipment details from bulk response
+      const bulkResult = response.result?.[0];
+
+      // DEBUG: Log complete response and bulkResult
+      console.log('[EasyParcel] ===== COMPLETE API RESPONSE =====');
+      console.log(JSON.stringify(response, null, 2));
+      console.log('[EasyParcel] ===== BULK RESULT =====');
+      console.log(JSON.stringify(bulkResult, null, 2));
+      console.log('[EasyParcel] ===== END DEBUG =====');
+
+      if (!bulkResult || bulkResult.status !== 'Success') {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          bulkResult?.remarks || 'Failed to create shipment',
+          { response }
+        );
+      }
+
+      if (!bulkResult.order_id || !bulkResult.tracking_no) {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          'Invalid response from EasyParcel API - missing shipment details',
           { response }
         );
       }
 
       console.log('[EasyParcel] Shipment created successfully:', {
-        shipmentId: response.shipment_id,
-        trackingNumber: response.tracking_number,
+        shipmentId: bulkResult.order_id,
+        trackingNumber: bulkResult.tracking_no,
+        awbNumber: bulkResult.awb_number,
       });
 
       return {
         success: true,
-        data: response,
+        data: {
+          shipment_id: bulkResult.order_id,
+          tracking_number: bulkResult.tracking_no,
+          awb_number: bulkResult.awb_number || '',
+          label_url: bulkResult.label_url || '',
+          tracking_url: bulkResult.tracking_url || '',
+        },
       };
     } catch (error) {
       if (error instanceof EasyParcelError) {
@@ -236,7 +371,7 @@ export class EasyParcelService {
   /**
    * Fetch tracking information for a shipment
    *
-   * @param trackingNumber - EasyParcel tracking number
+   * @param trackingNumber - EasyParcel tracking number (AWB number)
    * @returns Tracking events and current status
    * @throws EasyParcelError if tracking fetch fails
    */
@@ -244,28 +379,78 @@ export class EasyParcelService {
     try {
       console.log('[EasyParcel] Fetching tracking:', trackingNumber);
 
-      const response = await this.makeRequest<EasyParcelTrackingResponse['data']>(
-        `/tracking/${trackingNumber}`,
-        'GET'
-      );
+      // Build bulk array parameter for EPTrackingBulk
+      const bulkParams: Record<string, unknown> = {
+        'bulk[0][awb_no]': trackingNumber,
+      };
 
-      if (!response.tracking_number) {
+      const response = await this.makeRequest<{
+        api_status: string;
+        error_code: string;
+        error_remark: string;
+        result: Array<{
+          status: string;
+          remarks: string;
+          awb_no?: string;
+          current_status?: string;
+          latest_update?: string;
+          sender_name?: string;
+          sender_contact?: string;
+          receiver_name?: string;
+          receiver_contact?: string;
+          events?: Array<{
+            date: string;
+            time: string;
+            status: string;
+            location: string;
+            description: string;
+          }>;
+        }>;
+      }>('EPTrackingBulk', bulkParams);
+
+      // Check for API errors
+      if (response.api_status !== 'Success' || response.error_code !== '0') {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          response.error_remark || 'Failed to fetch tracking information',
+          { response }
+        );
+      }
+
+      // Extract tracking details from bulk response
+      const bulkResult = response.result?.[0];
+      if (!bulkResult || bulkResult.status !== 'Success') {
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.TRACKING_NOT_FOUND,
-          'Tracking information not found',
+          bulkResult?.remarks || 'Tracking information not found',
           { trackingNumber }
         );
       }
 
       console.log('[EasyParcel] Tracking fetched successfully:', {
         trackingNumber,
-        eventsCount: response.events?.length || 0,
-        currentStatus: response.current_status,
+        eventsCount: bulkResult.events?.length || 0,
+        currentStatus: bulkResult.current_status,
       });
 
       return {
         success: true,
-        data: response,
+        data: {
+          tracking_number: bulkResult.awb_no || trackingNumber,
+          current_status: bulkResult.current_status || '',
+          latest_update: bulkResult.latest_update || '',
+          sender_name: bulkResult.sender_name,
+          sender_contact: bulkResult.sender_contact,
+          receiver_name: bulkResult.receiver_name,
+          receiver_contact: bulkResult.receiver_contact,
+          events: bulkResult.events?.map(event => ({
+            date: event.date,
+            time: event.time,
+            status: event.status,
+            location: event.location,
+            description: event.description,
+          })) || [],
+        },
       };
     } catch (error) {
       if (error instanceof EasyParcelError) {

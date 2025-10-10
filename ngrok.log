@@ -39,3 +39,7 @@ t=2025-10-10T21:52:16+0800 lvl=info msg="client session established" obj=tunnels
 t=2025-10-10T21:52:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
 t=2025-10-10T21:52:32+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=0542771be5a5 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
 t=2025-10-11T02:48:09+0800 lvl=warn msg="failed to check for update" obj=updater err="Post \"https://update.equinox.io/check\": context deadline exceeded"
+t=2025-10-11T06:48:19+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62729->[2406:da18:27f:c801:9c7a:b0fd:8a8d:bc5]:443: read: connection reset by peer"
+t=2025-10-11T06:48:23+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-11T06:48:23+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-11T06:48:34+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=673b130f4863 clientid=9bb83fbf6fc443a3e19e4215d84a51f8

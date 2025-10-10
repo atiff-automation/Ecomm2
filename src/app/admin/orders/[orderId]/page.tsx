@@ -584,7 +584,11 @@ export default function OrderDetailsPage() {
                 <Button
                   type="button"
                   size="sm"
-                  onClick={handleFulfill}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleFulfill();
+                  }}
                   disabled={isFulfilling}
                   className="w-full justify-start"
                 >
@@ -645,6 +649,7 @@ export default function OrderDetailsPage() {
             id: order.id,
             orderNumber: order.orderNumber,
             courierName: order.courierName,
+            courierServiceDetail: order.courierServiceDetail, // 'pickup', 'dropoff', or 'dropoff or pickup'
             selectedCourierServiceId: order.selectedCourierServiceId || '',
           }}
           onConfirm={handleConfirmFulfillment}
