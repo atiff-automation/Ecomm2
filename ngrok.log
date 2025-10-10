@@ -1,0 +1,40 @@
+t=2025-10-10T18:09:25+0800 lvl=info msg="no configuration paths supplied"
+t=2025-10-10T18:09:25+0800 lvl=info msg="using configuration at default config path" path="/Users/atiffriduan/Library/Application Support/ngrok/ngrok.yml"
+t=2025-10-10T18:09:25+0800 lvl=info msg="open config file" path="/Users/atiffriduan/Library/Application Support/ngrok/ngrok.yml" err=nil
+t=2025-10-10T18:09:26+0800 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2025-10-10T18:09:26+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T18:09:26+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T18:09:26+0800 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://localhost:3000 url=https://578c549fe8a2.ngrok-free.app
+t=2025-10-10T18:09:27+0800 lvl=info msg="update available" obj=updater
+t=2025-10-10T19:35:39+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:57717->[2406:da18:27f:c802:9def:504c:a7bb:2751]:443: read: connection reset by peer"
+t=2025-10-10T19:35:40+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T19:35:40+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T19:35:54+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=42cfce5f2c28 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T19:51:53+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62651->[2406:da18:27f:c802:9def:504c:a7bb:2751]:443: read: connection reset by peer"
+t=2025-10-10T19:51:56+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T19:51:56+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T19:52:08+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=a348a946dd49 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T20:10:35+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62658->[2406:da18:27f:c801:488c:fa92:14cb:d5c3]:443: read: connection reset by peer"
+t=2025-10-10T20:10:38+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T20:10:38+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T20:10:57+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=44222b086fc1 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T20:27:22+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62674->[2406:da18:27f:c802:9def:504c:a7bb:2751]:443: read: connection reset by peer"
+t=2025-10-10T20:27:23+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T20:27:23+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T20:27:37+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=870abf35fd77 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T20:45:59+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62686->[2406:da18:27f:c800:c5b4:5952:cc7b:66fa]:443: read: connection reset by peer"
+t=2025-10-10T20:45:59+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T20:45:59+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T20:46:14+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d2c9582f44c6 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T21:02:34+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62698->[2406:da18:27f:c802:9def:504c:a7bb:2751]:443: read: connection reset by peer"
+t=2025-10-10T21:02:35+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T21:02:35+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T21:02:49+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=f0e795d8cb31 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T21:25:38+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62710->[2406:da18:27f:c800:c5b4:5952:cc7b:66fa]:443: read: connection reset by peer"
+t=2025-10-10T21:25:39+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T21:25:39+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T21:25:53+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=c4777cc4d389 clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-10T21:52:15+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=48e883c4ebbc err="read tcp [2001:e68:5471:9035:d82a:d467:1706:982f]:62720->[2406:da18:27f:c801:488c:fa92:14cb:d5c3]:443: read: connection reset by peer"
+t=2025-10-10T21:52:16+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-10T21:52:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-10T21:52:32+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=0542771be5a5 clientid=9bb83fbf6fc443a3e19e4215d84a51f8

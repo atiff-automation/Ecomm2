@@ -1,0 +1,167 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "JRM E-commerce - Go to homepage" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "JRM E-commerce Logo" [ref=e9] [cursor=pointer]
+        - generic [ref=e10]:
+          - link "Search products" [ref=e11] [cursor=pointer]:
+            - /url: /search
+            - button "Search products" [active] [ref=e12] [cursor=pointer]:
+              - img
+              - generic [ref=e13] [cursor=pointer]: Search
+          - button [ref=e15] [cursor=pointer]:
+            - img
+          - generic [ref=e16]:
+            - link "Sign In" [ref=e17] [cursor=pointer]:
+              - /url: /auth/signin
+              - button "Sign In" [ref=e18] [cursor=pointer]
+            - link "Sign Up" [ref=e19] [cursor=pointer]:
+              - /url: /auth/signup
+              - button "Sign Up" [ref=e20] [cursor=pointer]
+          - button "Toggle menu" [ref=e21] [cursor=pointer]:
+            - img
+            - generic [ref=e22] [cursor=pointer]: Toggle menu
+  - main [ref=e23]:
+    - generic [ref=e27]:
+      - img [ref=e28]
+      - searchbox "Search products, brands, categories..." [ref=e31]
+      - button "Search" [ref=e32] [cursor=pointer]
+  - contentinfo [ref=e33]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - link "Atiff Automation" [ref=e38] [cursor=pointer]:
+          - /url: /
+          - img [ref=e39] [cursor=pointer]
+          - generic [ref=e42] [cursor=pointer]: Atiff Automation
+        - paragraph [ref=e43]: Your trusted Malaysian e-commerce platform offering quality products with intelligent membership benefits and local payment solutions.
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - link "atiff.automation@gmail.com" [ref=e49] [cursor=pointer]:
+              - /url: mailto:atiff.automation@gmail.com
+          - generic [ref=e50]:
+            - img [ref=e51]
+            - link "+60134374717" [ref=e53] [cursor=pointer]:
+              - /url: tel:+60134374717
+          - generic [ref=e54]:
+            - img [ref=e55]
+            - generic [ref=e58]: Kota Sarang Semut, KDH, MY
+        - generic [ref=e59]:
+          - heading "Follow Us" [level=4] [ref=e60]
+          - generic [ref=e61]:
+            - link "Facebook" [ref=e62] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e63] [cursor=pointer]
+            - link "Instagram" [ref=e66] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e67] [cursor=pointer]
+            - link "Twitter" [ref=e69] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e70] [cursor=pointer]
+            - link "YouTube" [ref=e72] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e73] [cursor=pointer]
+            - link "TikTok" [ref=e76] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e77] [cursor=pointer]
+            - link "WhatsApp" [ref=e81] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e82] [cursor=pointer]
+            - link "LinkedIn" [ref=e85] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e86] [cursor=pointer]
+      - generic [ref=e88]:
+        - heading "Shop" [level=4] [ref=e89]
+        - list [ref=e90]:
+          - listitem [ref=e91]:
+            - link "Featured Products" [ref=e92] [cursor=pointer]:
+              - /url: /products?featured=true
+          - listitem [ref=e93]:
+            - link "On Sale" [ref=e94] [cursor=pointer]:
+              - /url: /products?promotional=true
+          - listitem [ref=e95]:
+            - link "New Arrivals" [ref=e96] [cursor=pointer]:
+              - /url: /products?sort=newest
+          - listitem [ref=e97]:
+            - link "Best Sellers" [ref=e98] [cursor=pointer]:
+              - /url: /products?sort=popular
+          - listitem [ref=e99]:
+            - link "All Products" [ref=e100] [cursor=pointer]:
+              - /url: /products
+      - generic [ref=e101]:
+        - heading "Customer Service" [level=4] [ref=e102]
+        - list [ref=e103]:
+          - listitem [ref=e104]:
+            - link "Track Your Order" [ref=e105] [cursor=pointer]:
+              - /url: /track-order
+          - listitem [ref=e106]:
+            - link "Wishlist" [ref=e107] [cursor=pointer]:
+              - /url: /wishlist
+          - listitem [ref=e108]:
+            - link "FAQs" [ref=e109] [cursor=pointer]:
+              - /url: /legal/terms
+      - generic [ref=e110]:
+        - heading "Account" [level=4] [ref=e111]
+        - list [ref=e112]:
+          - listitem [ref=e113]:
+            - link "My Account" [ref=e114] [cursor=pointer]:
+              - /url: /member/profile
+          - listitem [ref=e115]:
+            - link "Order History" [ref=e116] [cursor=pointer]:
+              - /url: /member/orders
+          - listitem [ref=e117]:
+            - link "Membership Benefits" [ref=e118] [cursor=pointer]:
+              - /url: /join
+          - listitem [ref=e119]:
+            - link "Sign Up" [ref=e120] [cursor=pointer]:
+              - /url: /auth/signup
+      - generic [ref=e121]:
+        - heading "Company" [level=4] [ref=e122]
+        - list [ref=e123]:
+          - listitem [ref=e124]:
+            - link "Agent Program" [ref=e125] [cursor=pointer]:
+              - /url: /apply-agent
+          - listitem [ref=e126]:
+            - link "Privacy Policy" [ref=e127] [cursor=pointer]:
+              - /url: /legal/privacy
+          - listitem [ref=e128]:
+            - link "Terms of Service" [ref=e129] [cursor=pointer]:
+              - /url: /legal/terms
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - generic [ref=e134]:
+          - img [ref=e135]
+          - heading "Stay Updated" [level=4] [ref=e137]
+        - paragraph [ref=e138]: Subscribe to our newsletter for exclusive deals and new product updates.
+      - generic [ref=e139]:
+        - textbox "Enter your email address" [ref=e140]
+        - button "Subscribe" [ref=e141] [cursor=pointer]
+    - generic [ref=e144]:
+      - generic [ref=e145]:
+        - paragraph [ref=e146]: © 2025 Atiff Automation. All rights reserved.
+        - generic [ref=e147]:
+          - link "Privacy Policy" [ref=e148] [cursor=pointer]:
+            - /url: /legal/privacy
+          - generic [ref=e149]: •
+          - link "Terms of Service" [ref=e150] [cursor=pointer]:
+            - /url: /legal/terms
+          - generic [ref=e151]: •
+          - link "Cookie Policy" [ref=e152] [cursor=pointer]:
+            - /url: /legal/cookies
+      - button "Back to top" [ref=e153] [cursor=pointer]:
+        - generic [ref=e154] [cursor=pointer]: Back to top
+        - img [ref=e155] [cursor=pointer]
+  - region "Notifications alt+T"
+  - generic [ref=e157]:
+    - img [ref=e159]
+    - button "Open Tanstack query devtools" [ref=e207] [cursor=pointer]:
+      - img [ref=e208] [cursor=pointer]
+  - alert [ref=e256]
+```

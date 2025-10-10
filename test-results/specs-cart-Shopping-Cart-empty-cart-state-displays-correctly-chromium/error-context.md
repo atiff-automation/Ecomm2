@@ -1,0 +1,180 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "JRM E-commerce - Go to homepage" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - img "JRM E-commerce Logo" [ref=e9] [cursor=pointer]
+          - navigation "Main navigation" [ref=e10]:
+            - link "Products" [ref=e11] [cursor=pointer]:
+              - /url: /products
+            - link "Track Order" [ref=e12] [cursor=pointer]:
+              - /url: /track-order
+            - link "Apply as Agent" [ref=e13] [cursor=pointer]:
+              - /url: /apply-agent
+              - img [ref=e14] [cursor=pointer]
+              - text: Apply as Agent
+        - generic [ref=e19]:
+          - img [ref=e20]
+          - searchbox "Search products..." [ref=e23]
+          - button [ref=e25] [cursor=pointer]:
+            - img
+        - generic [ref=e26]:
+          - button "Cart" [ref=e28] [cursor=pointer]:
+            - img
+            - generic [ref=e29] [cursor=pointer]: Cart
+          - generic [ref=e30]:
+            - link "Sign In" [ref=e31] [cursor=pointer]:
+              - /url: /auth/signin
+              - button "Sign In" [ref=e32] [cursor=pointer]
+            - link "Sign Up" [ref=e33] [cursor=pointer]:
+              - /url: /auth/signup
+              - button "Sign Up" [ref=e34] [cursor=pointer]
+  - main [ref=e35]:
+    - generic [ref=e37]:
+      - img [ref=e38]
+      - heading "Your Cart is Empty" [level=1] [ref=e42]
+      - paragraph [ref=e43]: Looks like you haven't added anything to your cart yet
+      - link "Continue Shopping" [ref=e44] [cursor=pointer]:
+        - /url: /products
+        - button "Continue Shopping" [ref=e45] [cursor=pointer]:
+          - img
+          - text: Continue Shopping
+  - contentinfo [ref=e46]:
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - link "JRM E-commerce" [ref=e51] [cursor=pointer]:
+          - /url: /
+          - img [ref=e52] [cursor=pointer]
+          - generic [ref=e55] [cursor=pointer]: JRM E-commerce
+        - paragraph [ref=e56]: Your trusted Malaysian e-commerce platform offering quality products with intelligent membership benefits and local payment solutions.
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - img [ref=e59]
+            - link "support@jrm-ecommerce.com" [ref=e62] [cursor=pointer]:
+              - /url: mailto:support@jrm-ecommerce.com
+          - generic [ref=e63]:
+            - img [ref=e64]
+            - link "+60 12-345 6789" [ref=e66] [cursor=pointer]:
+              - /url: tel:+60123456789
+          - generic [ref=e67]:
+            - img [ref=e68]
+            - generic [ref=e71]: Kuala Lumpur, Malaysia
+        - generic [ref=e72]:
+          - heading "Follow Us" [level=4] [ref=e73]
+          - generic [ref=e74]:
+            - link "Facebook" [ref=e75] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e76] [cursor=pointer]
+            - link "Instagram" [ref=e79] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e80] [cursor=pointer]
+            - link "Twitter" [ref=e82] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e83] [cursor=pointer]
+            - link "YouTube" [ref=e85] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e86] [cursor=pointer]
+            - link "TikTok" [ref=e89] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e90] [cursor=pointer]
+            - link "WhatsApp" [ref=e94] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e95] [cursor=pointer]
+            - link "LinkedIn" [ref=e98] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e99] [cursor=pointer]
+      - generic [ref=e101]:
+        - heading "Shop" [level=4] [ref=e102]
+        - list [ref=e103]:
+          - listitem [ref=e104]:
+            - link "Featured Products" [ref=e105] [cursor=pointer]:
+              - /url: /products?featured=true
+          - listitem [ref=e106]:
+            - link "On Sale" [ref=e107] [cursor=pointer]:
+              - /url: /products?promotional=true
+          - listitem [ref=e108]:
+            - link "New Arrivals" [ref=e109] [cursor=pointer]:
+              - /url: /products?sort=newest
+          - listitem [ref=e110]:
+            - link "Best Sellers" [ref=e111] [cursor=pointer]:
+              - /url: /products?sort=popular
+          - listitem [ref=e112]:
+            - link "All Products" [ref=e113] [cursor=pointer]:
+              - /url: /products
+      - generic [ref=e114]:
+        - heading "Customer Service" [level=4] [ref=e115]
+        - list [ref=e116]:
+          - listitem [ref=e117]:
+            - link "Track Your Order" [ref=e118] [cursor=pointer]:
+              - /url: /track-order
+          - listitem [ref=e119]:
+            - link "Wishlist" [ref=e120] [cursor=pointer]:
+              - /url: /wishlist
+          - listitem [ref=e121]:
+            - link "FAQs" [ref=e122] [cursor=pointer]:
+              - /url: /legal/terms
+      - generic [ref=e123]:
+        - heading "Account" [level=4] [ref=e124]
+        - list [ref=e125]:
+          - listitem [ref=e126]:
+            - link "My Account" [ref=e127] [cursor=pointer]:
+              - /url: /member/profile
+          - listitem [ref=e128]:
+            - link "Order History" [ref=e129] [cursor=pointer]:
+              - /url: /member/orders
+          - listitem [ref=e130]:
+            - link "Membership Benefits" [ref=e131] [cursor=pointer]:
+              - /url: /join
+          - listitem [ref=e132]:
+            - link "Sign Up" [ref=e133] [cursor=pointer]:
+              - /url: /auth/signup
+      - generic [ref=e134]:
+        - heading "Company" [level=4] [ref=e135]
+        - list [ref=e136]:
+          - listitem [ref=e137]:
+            - link "Agent Program" [ref=e138] [cursor=pointer]:
+              - /url: /apply-agent
+          - listitem [ref=e139]:
+            - link "Privacy Policy" [ref=e140] [cursor=pointer]:
+              - /url: /legal/privacy
+          - listitem [ref=e141]:
+            - link "Terms of Service" [ref=e142] [cursor=pointer]:
+              - /url: /legal/terms
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - img [ref=e148]
+          - heading "Stay Updated" [level=4] [ref=e150]
+        - paragraph [ref=e151]: Subscribe to our newsletter for exclusive deals and new product updates.
+      - generic [ref=e152]:
+        - textbox "Enter your email address" [ref=e153]
+        - button "Subscribe" [ref=e154] [cursor=pointer]
+    - generic [ref=e157]:
+      - generic [ref=e158]:
+        - paragraph [ref=e159]: © 2025 JRM E-commerce. All rights reserved.
+        - generic [ref=e160]:
+          - link "Privacy Policy" [ref=e161] [cursor=pointer]:
+            - /url: /legal/privacy
+          - generic [ref=e162]: •
+          - link "Terms of Service" [ref=e163] [cursor=pointer]:
+            - /url: /legal/terms
+          - generic [ref=e164]: •
+          - link "Cookie Policy" [ref=e165] [cursor=pointer]:
+            - /url: /legal/cookies
+      - button "Back to top" [ref=e166] [cursor=pointer]:
+        - generic [ref=e167] [cursor=pointer]: Back to top
+        - img [ref=e168] [cursor=pointer]
+  - region "Notifications alt+T"
+  - generic [ref=e170]:
+    - img [ref=e172]
+    - button "Open Tanstack query devtools" [ref=e220] [cursor=pointer]:
+      - img [ref=e221] [cursor=pointer]
+  - alert [ref=e269]
+```

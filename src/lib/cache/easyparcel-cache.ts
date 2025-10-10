@@ -1,17 +1,13 @@
 /**
- * EasyParcel Caching Service
- * Implementation of intelligent caching for rate calculations and API responses
- * Reference: EASYPARCEL_IMPLEMENTATION_GUIDE.md Phase 7.1
+ * EasyParcel Caching Service (Memory-Only)
+ * Simplified in-memory caching for rate calculations and API responses
+ * No external dependencies (Redis removed)
  */
-
-import { Redis } from 'ioredis';
 
 interface CacheConfig {
   rateCacheTTL: number; // 30 minutes for rates
   validationCacheTTL: number; // 24 hours for validation
   serviceCacheTTL: number; // 4 hours for service lists
-  maxRetries: number;
-  retryDelay: number;
 }
 
 interface CachedRate {
@@ -36,7 +32,6 @@ interface CachedServiceList {
 }
 
 export class EasyParcelCache {
-  private redis: Redis | null = null;
   private memoryCache: Map<string, any> = new Map();
   private config: CacheConfig;
 
@@ -45,45 +40,8 @@ export class EasyParcelCache {
       rateCacheTTL: 30 * 60, // 30 minutes
       validationCacheTTL: 24 * 60 * 60, // 24 hours
       serviceCacheTTL: 4 * 60 * 60, // 4 hours
-      maxRetries: 3,
-      retryDelay: 1000,
       ...config,
     };
-
-    this.initializeRedis();
-  }
-
-  /**
-   * Initialize Redis connection if available
-   */
-  private initializeRedis(): void {
-    try {
-      if (process.env.REDIS_URL) {
-        this.redis = new Redis(process.env.REDIS_URL, {
-          retryDelayOnFailover: this.config.retryDelay,
-          maxRetriesPerRequest: this.config.maxRetries,
-          lazyConnect: true,
-        });
-
-        this.redis.on('error', error => {
-          console.warn(
-            '[EasyParcel Cache] Redis connection error, falling back to memory cache:',
-            error.message
-          );
-          this.redis = null;
-        });
-
-        this.redis.on('connect', () => {
-          console.log('[EasyParcel Cache] Redis connected successfully');
-        });
-      }
-    } catch (error) {
-      console.warn(
-        '[EasyParcel Cache] Redis initialization failed, using memory cache only:',
-        error
-      );
-      this.redis = null;
-    }
   }
 
   /**
@@ -265,23 +223,16 @@ export class EasyParcelCache {
   async invalidateCache(pattern: string): Promise<number> {
     try {
       let deletedCount = 0;
+      const keysToDelete: string[] = [];
 
-      if (this.redis) {
-        const keys = await this.redis.keys(`easyparcel:${pattern}`);
-        if (keys.length > 0) {
-          deletedCount = await this.redis.del(...keys);
+      for (const key of this.memoryCache.keys()) {
+        if (key.includes(pattern)) {
+          keysToDelete.push(key);
         }
-      } else {
-        // Memory cache invalidation
-        const keysToDelete: string[] = [];
-        for (const key of this.memoryCache.keys()) {
-          if (key.includes(pattern)) {
-            keysToDelete.push(key);
-          }
-        }
-        keysToDelete.forEach(key => this.memoryCache.delete(key));
-        deletedCount = keysToDelete.length;
       }
+
+      keysToDelete.forEach(key => this.memoryCache.delete(key));
+      deletedCount = keysToDelete.length;
 
       console.log(
         `[EasyParcel Cache] Invalidated ${deletedCount} cache entries matching: ${pattern}`
@@ -298,15 +249,7 @@ export class EasyParcelCache {
    */
   async clearCache(): Promise<void> {
     try {
-      if (this.redis) {
-        const keys = await this.redis.keys('easyparcel:*');
-        if (keys.length > 0) {
-          await this.redis.del(...keys);
-        }
-      } else {
-        this.memoryCache.clear();
-      }
-
+      this.memoryCache.clear();
       console.log('[EasyParcel Cache] All cache cleared');
     } catch (error) {
       console.error('[EasyParcel Cache] Error clearing cache:', error);
@@ -317,7 +260,7 @@ export class EasyParcelCache {
    * Get cache statistics
    */
   async getCacheStats(): Promise<{
-    type: 'redis' | 'memory';
+    type: 'memory';
     totalKeys: number;
     rateKeys: number;
     validationKeys: number;
@@ -325,40 +268,25 @@ export class EasyParcelCache {
     memoryUsage?: number;
   }> {
     try {
-      if (this.redis) {
-        const allKeys = await this.redis.keys('easyparcel:*');
-        const rateKeys = await this.redis.keys('easyparcel:rate:*');
-        const validationKeys = await this.redis.keys('easyparcel:validation:*');
-        const serviceKeys = await this.redis.keys('easyparcel:services:*');
+      const allKeys = Array.from(this.memoryCache.keys());
+      const rateKeys = allKeys.filter(key => key.includes('rate:'));
+      const validationKeys = allKeys.filter(key =>
+        key.includes('validation:')
+      );
+      const serviceKeys = allKeys.filter(key => key.includes('services:'));
 
-        return {
-          type: 'redis',
-          totalKeys: allKeys.length,
-          rateKeys: rateKeys.length,
-          validationKeys: validationKeys.length,
-          serviceKeys: serviceKeys.length,
-        };
-      } else {
-        const allKeys = Array.from(this.memoryCache.keys());
-        const rateKeys = allKeys.filter(key => key.includes('rate:'));
-        const validationKeys = allKeys.filter(key =>
-          key.includes('validation:')
-        );
-        const serviceKeys = allKeys.filter(key => key.includes('services:'));
-
-        return {
-          type: 'memory',
-          totalKeys: allKeys.length,
-          rateKeys: rateKeys.length,
-          validationKeys: validationKeys.length,
-          serviceKeys: serviceKeys.length,
-          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        };
-      }
+      return {
+        type: 'memory',
+        totalKeys: allKeys.length,
+        rateKeys: rateKeys.length,
+        validationKeys: validationKeys.length,
+        serviceKeys: serviceKeys.length,
+        memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      };
     } catch (error) {
       console.error('[EasyParcel Cache] Error getting cache stats:', error);
       return {
-        type: this.redis ? 'redis' : 'memory',
+        type: 'memory',
         totalKeys: 0,
         rateKeys: 0,
         validationKeys: 0,
@@ -435,39 +363,24 @@ export class EasyParcelCache {
   }
 
   /**
-   * Set cache entry (Redis or memory)
+   * Set cache entry in memory
    */
   private async setCache(key: string, data: any, ttl: number): Promise<void> {
     const fullKey = `easyparcel:${key}`;
+    this.memoryCache.set(fullKey, data);
 
-    if (this.redis) {
-      await this.redis.setex(fullKey, ttl, JSON.stringify(data));
-    } else {
-      this.memoryCache.set(fullKey, data);
-      // Simple TTL implementation for memory cache
-      setTimeout(() => {
-        this.memoryCache.delete(fullKey);
-      }, ttl * 1000);
-    }
+    // Simple TTL implementation for memory cache
+    setTimeout(() => {
+      this.memoryCache.delete(fullKey);
+    }, ttl * 1000);
   }
 
   /**
-   * Get cache entry (Redis or memory)
+   * Get cache entry from memory
    */
   private async getCache<T>(key: string): Promise<T | null> {
     const fullKey = `easyparcel:${key}`;
-
-    try {
-      if (this.redis) {
-        const data = await this.redis.get(fullKey);
-        return data ? JSON.parse(data) : null;
-      } else {
-        return this.memoryCache.get(fullKey) || null;
-      }
-    } catch (error) {
-      console.error('[EasyParcel Cache] Error parsing cache data:', error);
-      return null;
-    }
+    return this.memoryCache.get(fullKey) || null;
   }
 
   /**
@@ -475,22 +388,13 @@ export class EasyParcelCache {
    */
   private async deleteCache(key: string): Promise<void> {
     const fullKey = `easyparcel:${key}`;
-
-    if (this.redis) {
-      await this.redis.del(fullKey);
-    } else {
-      this.memoryCache.delete(fullKey);
-    }
+    this.memoryCache.delete(fullKey);
   }
 
   /**
    * Cleanup expired memory cache entries
    */
   cleanupMemoryCache(): void {
-    if (this.redis) {
-      return;
-    } // Redis handles TTL automatically
-
     let cleanedCount = 0;
     for (const [key, data] of this.memoryCache.entries()) {
       if (data.expiresAt && Date.now() > data.expiresAt) {
@@ -507,13 +411,10 @@ export class EasyParcelCache {
   }
 
   /**
-   * Close Redis connection
+   * Close/cleanup (no-op for memory cache)
    */
   async disconnect(): Promise<void> {
-    if (this.redis) {
-      await this.redis.disconnect();
-      this.redis = null;
-    }
+    // No-op: Memory cache doesn't need disconnection
   }
 }
 

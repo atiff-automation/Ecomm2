@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "JRM E-commerce" [level=1] [ref=e6]
+        - paragraph [ref=e7]: Join our membership program and save on every purchase
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - generic [ref=e10]: Create Your Account
+          - generic [ref=e11]: Sign up to access member prices and exclusive deals
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - generic [ref=e14]:
+              - generic [ref=e15]:
+                - generic [ref=e16]: First Name
+                - textbox "First Name" [ref=e17]
+              - generic [ref=e18]:
+                - generic [ref=e19]: Last Name
+                - textbox "Last Name" [ref=e20]
+            - generic [ref=e21]:
+              - generic [ref=e22]: Email Address
+              - textbox "Email Address" [ref=e23]
+            - generic [ref=e24]:
+              - generic [ref=e25]: Phone Number (Optional)
+              - textbox "Phone Number (Optional)" [ref=e26]
+            - generic [ref=e27]:
+              - generic [ref=e28]: Password
+              - textbox "Password" [ref=e29]
+              - paragraph [ref=e30]: Must be 8+ characters with uppercase, lowercase, number, and special character
+            - generic [ref=e31]:
+              - generic [ref=e32]: Confirm Password
+              - textbox "Confirm Password" [ref=e33]
+            - generic [ref=e34]:
+              - heading "Member Benefits" [level=4] [ref=e35]
+              - list [ref=e36]:
+                - listitem [ref=e37]: • Exclusive member pricing on all products
+                - listitem [ref=e38]: • Free shipping on orders above RM80
+                - listitem [ref=e39]: • Early access to sales and new products
+                - listitem [ref=e40]: • Special birthday discounts
+            - button "Create Account" [ref=e41] [cursor=pointer]
+          - paragraph [ref=e43]:
+            - text: Already have an account?
+            - link "Sign in here" [ref=e44] [cursor=pointer]:
+              - /url: /auth/signin
+      - paragraph [ref=e46]: By creating an account, you agree to our Terms of Service and Privacy Policy
+  - region "Notifications alt+T"
+  - generic [ref=e47]:
+    - img [ref=e49]
+    - button "Open Tanstack query devtools" [ref=e97] [cursor=pointer]:
+      - img [ref=e98] [cursor=pointer]
+  - alert [ref=e146]
+```

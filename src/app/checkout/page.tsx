@@ -714,40 +714,11 @@ export default function CheckoutPage() {
         orderNumber: paymentData.orderNumber,
       });
 
-      console.log('💳 Creating payment bill...');
+      console.log('💳 Redirecting to payment gateway...');
 
-      const paymentResponse = await fetch(
-        `/api/payment/create-bill?orderId=${encodeURIComponent(orderResult.orderId)}`,
-        {
-          method: 'GET',
-        }
-      );
-
-      if (!paymentResponse.ok) {
-        const paymentError = await paymentResponse.json();
-        console.error('❌ Payment creation failed:', paymentError);
-        setOrderError(
-          paymentError.message || 'Failed to create payment. Please try again.'
-        );
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      const paymentResult = await paymentResponse.json();
-      console.log('✅ Payment bill created successfully:', {
-        method: paymentResult.payment?.method,
-        billId: paymentResult.payment?.billId || paymentResult.payment?.billCode,
-        hasPaymentUrl: !!paymentResult.payment?.paymentUrl,
-      });
-
-      // Redirect to payment gateway
-      if (paymentResult.success && paymentResult.payment?.paymentUrl) {
-        console.log('🔄 Redirecting to payment gateway...');
-        window.location.href = paymentResult.payment.paymentUrl;
-      } else {
-        setOrderError('Failed to create payment. Please try again.');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      // Use window.location to navigate to the API endpoint
+      // The API will perform a server-side redirect to the payment gateway
+      window.location.href = `/api/payment/create-bill?orderId=${encodeURIComponent(orderResult.orderId)}`;
     } catch (error) {
       console.error('Order submission error:', error);
       setOrderError(

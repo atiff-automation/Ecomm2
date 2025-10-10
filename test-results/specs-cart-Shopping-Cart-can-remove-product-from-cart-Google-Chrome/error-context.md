@@ -1,0 +1,629 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "JRM E-commerce - Go to homepage" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e10] [cursor=pointer]: JRM
+            - generic [ref=e11] [cursor=pointer]: E-commerce
+          - navigation "Main navigation" [ref=e12]:
+            - link "Products" [ref=e13] [cursor=pointer]:
+              - /url: /products
+            - link "Track Order" [ref=e14] [cursor=pointer]:
+              - /url: /track-order
+            - link "Apply as Agent" [ref=e15] [cursor=pointer]:
+              - /url: /apply-agent
+              - img [ref=e16] [cursor=pointer]
+              - text: Apply as Agent
+        - generic [ref=e21]:
+          - img [ref=e22]
+          - searchbox "Search products..." [ref=e25]
+          - button [ref=e27] [cursor=pointer]:
+            - img
+        - generic [ref=e28]:
+          - button "Cart" [ref=e30] [cursor=pointer]:
+            - img
+            - generic [ref=e31] [cursor=pointer]: Cart
+          - generic [ref=e32]:
+            - link "Sign In" [ref=e34] [cursor=pointer]:
+              - /url: /auth/signin
+              - button "Sign In" [ref=e35] [cursor=pointer]
+            - link "Sign Up" [ref=e36] [cursor=pointer]:
+              - /url: /auth/signup
+              - button "Sign Up" [ref=e37] [cursor=pointer]
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e41]:
+        - heading "Products" [level=1] [ref=e42]
+        - paragraph [ref=e43]: 36 products available
+      - generic [ref=e44]:
+        - generic [ref=e47]:
+          - heading "Filters" [level=3] [ref=e49]
+          - generic [ref=e50]:
+            - generic [ref=e51]: Search
+            - generic [ref=e52]:
+              - img [ref=e53]
+              - textbox "Search products..." [ref=e56]
+          - generic [ref=e57]:
+            - generic [ref=e58]: Category
+            - combobox [ref=e59] [cursor=pointer]:
+              - img [ref=e60] [cursor=pointer]
+            - combobox [ref=e62]
+          - generic [ref=e63]:
+            - generic [ref=e64]: Sort By
+            - combobox [ref=e65] [cursor=pointer]:
+              - img [ref=e66] [cursor=pointer]
+            - combobox [ref=e68]
+        - generic [ref=e69]:
+          - generic [ref=e71]:
+            - 'link "testing Featured Membership Qualifying Electronics testing Price: RM 1.00 Add to Cart" [ref=e72] [cursor=pointer]':
+              - /url: /products/testing
+              - generic [ref=e73] [cursor=pointer]:
+                - generic [ref=e74] [cursor=pointer]:
+                  - img "testing" [ref=e75] [cursor=pointer]
+                  - generic [ref=e76] [cursor=pointer]:
+                    - generic [ref=e77] [cursor=pointer]: Featured
+                    - generic [ref=e78] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e80] [cursor=pointer]:
+                    - img
+                - generic [ref=e82] [cursor=pointer]:
+                  - generic [ref=e83] [cursor=pointer]:
+                    - generic [ref=e84] [cursor=pointer]: Electronics
+                    - heading "testing" [level=3] [ref=e85] [cursor=pointer]
+                  - generic [ref=e86] [cursor=pointer]:
+                    - generic [ref=e89] [cursor=pointer]: RM 1.00
+                    - button "Add to Cart" [ref=e90] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "Minyak Floral Aromatherapy Featured RUMAH HUTAN Minyak Floral Aromatherapy Minyak Urutan Badan JRM Holistik Price: RM 70.00 Add to Cart" [ref=e91] [cursor=pointer]':
+              - /url: /products/minyak-floral-aromatherapy
+              - generic [ref=e92] [cursor=pointer]:
+                - generic [ref=e93] [cursor=pointer]:
+                  - img "Minyak Floral Aromatherapy" [ref=e94] [cursor=pointer]
+                  - generic [ref=e96] [cursor=pointer]: Featured
+                  - button "Add to wishlist" [ref=e98] [cursor=pointer]:
+                    - img
+                - generic [ref=e100] [cursor=pointer]:
+                  - generic [ref=e101] [cursor=pointer]:
+                    - generic [ref=e102] [cursor=pointer]: RUMAH HUTAN
+                    - heading "Minyak Floral Aromatherapy" [level=3] [ref=e103] [cursor=pointer]
+                    - paragraph [ref=e104] [cursor=pointer]: Minyak Urutan Badan JRM Holistik
+                  - generic [ref=e105] [cursor=pointer]:
+                    - generic [ref=e108] [cursor=pointer]: RM 70.00
+                    - button "Add to Cart" [ref=e109] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Cream Bio Miracle Action Krim anti-aging untuk kecantikan wajah Price: RM 49.00 Add to Cart" [ref=e110] [cursor=pointer]':
+              - /url: /products/cream-bio-miracle-action
+              - generic [ref=e111] [cursor=pointer]:
+                - generic [ref=e112] [cursor=pointer]:
+                  - generic [ref=e114] [cursor=pointer]: No Image
+                  - generic [ref=e115] [cursor=pointer]:
+                    - generic [ref=e116] [cursor=pointer]: Featured
+                    - generic [ref=e117] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e119] [cursor=pointer]:
+                    - img
+                - generic [ref=e121] [cursor=pointer]:
+                  - generic [ref=e122] [cursor=pointer]:
+                    - generic [ref=e123] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Cream Bio Miracle Action" [level=3] [ref=e124] [cursor=pointer]
+                    - paragraph [ref=e125] [cursor=pointer]: Krim anti-aging untuk kecantikan wajah
+                  - generic [ref=e126] [cursor=pointer]:
+                    - 'generic "Price: RM 49.00" [ref=e127] [cursor=pointer]':
+                      - generic [ref=e129] [cursor=pointer]: RM 49.00
+                      - generic [ref=e130] [cursor=pointer]: "Member price: RM 45.55"
+                    - button "Add to Cart" [ref=e131] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Serum Bio Miracle Action Serum anti-aging untuk kecantikan wajah Price: RM 39.00 Add to Cart" [ref=e132] [cursor=pointer]':
+              - /url: /products/serum-bio-miracle-action
+              - generic [ref=e133] [cursor=pointer]:
+                - generic [ref=e134] [cursor=pointer]:
+                  - generic [ref=e136] [cursor=pointer]: No Image
+                  - generic [ref=e137] [cursor=pointer]:
+                    - generic [ref=e138] [cursor=pointer]: Featured
+                    - generic [ref=e139] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e141] [cursor=pointer]:
+                    - img
+                - generic [ref=e143] [cursor=pointer]:
+                  - generic [ref=e144] [cursor=pointer]:
+                    - generic [ref=e145] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Serum Bio Miracle Action" [level=3] [ref=e146] [cursor=pointer]
+                    - paragraph [ref=e147] [cursor=pointer]: Serum anti-aging untuk kecantikan wajah
+                  - generic [ref=e148] [cursor=pointer]:
+                    - 'generic "Price: RM 39.00" [ref=e149] [cursor=pointer]':
+                      - generic [ref=e151] [cursor=pointer]: RM 39.00
+                      - generic [ref=e152] [cursor=pointer]: "Member price: RM 36.25"
+                    - button "Add to Cart" [ref=e153] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Bio10 Herbs Botanic Hair Treatment Oil Minyak rawatan rambut 12 herba untuk keguguran rambut Price: RM 60.00 Add to Cart" [ref=e154] [cursor=pointer]':
+              - /url: /products/bio10-herbs-botanic-hair-treatment-oil
+              - generic [ref=e155] [cursor=pointer]:
+                - generic [ref=e156] [cursor=pointer]:
+                  - generic [ref=e158] [cursor=pointer]: No Image
+                  - generic [ref=e159] [cursor=pointer]:
+                    - generic [ref=e160] [cursor=pointer]: Featured
+                    - generic [ref=e161] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e163] [cursor=pointer]:
+                    - img
+                - generic [ref=e165] [cursor=pointer]:
+                  - generic [ref=e166] [cursor=pointer]:
+                    - generic [ref=e167] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Bio10 Herbs Botanic Hair Treatment Oil" [level=3] [ref=e168] [cursor=pointer]
+                    - paragraph [ref=e169] [cursor=pointer]: Minyak rawatan rambut 12 herba untuk keguguran rambut
+                  - generic [ref=e170] [cursor=pointer]:
+                    - generic [ref=e173] [cursor=pointer]: RM 60.00
+                    - button "Add to Cart" [ref=e174] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Mellia Water Pembersih wajah dan makeup remover dengan Aloe Vera Price: RM 30.00 Add to Cart" [ref=e175] [cursor=pointer]':
+              - /url: /products/mellia-water
+              - generic [ref=e176] [cursor=pointer]:
+                - generic [ref=e177] [cursor=pointer]:
+                  - generic [ref=e179] [cursor=pointer]: No Image
+                  - generic [ref=e180] [cursor=pointer]:
+                    - generic [ref=e181] [cursor=pointer]: Featured
+                    - generic [ref=e182] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e184] [cursor=pointer]:
+                    - img
+                - generic [ref=e186] [cursor=pointer]:
+                  - generic [ref=e187] [cursor=pointer]:
+                    - generic [ref=e188] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Mellia Water" [level=3] [ref=e189] [cursor=pointer]
+                    - paragraph [ref=e190] [cursor=pointer]: Pembersih wajah dan makeup remover dengan Aloe Vera
+                  - generic [ref=e191] [cursor=pointer]:
+                    - 'generic "Price: RM 30.00" [ref=e192] [cursor=pointer]':
+                      - generic [ref=e194] [cursor=pointer]: RM 30.00
+                      - generic [ref=e195] [cursor=pointer]: "Member price: RM 27.00"
+                    - button "Add to Cart" [ref=e196] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Le''merra Face Scrub Skrub wajah walnut organik untuk kulit bersih Price: RM 39.00 Add to Cart" [ref=e197] [cursor=pointer]':
+              - /url: /products/lemerra-face-scrub
+              - generic [ref=e198] [cursor=pointer]:
+                - generic [ref=e199] [cursor=pointer]:
+                  - generic [ref=e201] [cursor=pointer]: No Image
+                  - generic [ref=e202] [cursor=pointer]:
+                    - generic [ref=e203] [cursor=pointer]: Featured
+                    - generic [ref=e204] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e206] [cursor=pointer]:
+                    - img
+                - generic [ref=e208] [cursor=pointer]:
+                  - generic [ref=e209] [cursor=pointer]:
+                    - generic [ref=e210] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Le'merra Face Scrub" [level=3] [ref=e211] [cursor=pointer]
+                    - paragraph [ref=e212] [cursor=pointer]: Skrub wajah walnut organik untuk kulit bersih
+                  - generic [ref=e213] [cursor=pointer]:
+                    - 'generic "Price: RM 39.00" [ref=e214] [cursor=pointer]':
+                      - generic [ref=e216] [cursor=pointer]: RM 39.00
+                      - generic [ref=e217] [cursor=pointer]: "Member price: RM 37.05"
+                    - button "Add to Cart" [ref=e218] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK JRM Rose Water Air mawar dengan vitamin A, E dan C Price: RM 38.00 Add to Cart" [ref=e219] [cursor=pointer]':
+              - /url: /products/jrm-rose-water
+              - generic [ref=e220] [cursor=pointer]:
+                - generic [ref=e221] [cursor=pointer]:
+                  - generic [ref=e223] [cursor=pointer]: No Image
+                  - generic [ref=e224] [cursor=pointer]:
+                    - generic [ref=e225] [cursor=pointer]: Featured
+                    - generic [ref=e226] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e228] [cursor=pointer]:
+                    - img
+                - generic [ref=e230] [cursor=pointer]:
+                  - generic [ref=e231] [cursor=pointer]:
+                    - generic [ref=e232] [cursor=pointer]: JRM HOLISTIK
+                    - heading "JRM Rose Water" [level=3] [ref=e233] [cursor=pointer]
+                    - paragraph [ref=e234] [cursor=pointer]: Air mawar dengan vitamin A, E dan C
+                  - generic [ref=e235] [cursor=pointer]:
+                    - 'generic "Price: RM 38.00" [ref=e236] [cursor=pointer]':
+                      - generic [ref=e238] [cursor=pointer]: RM 38.00
+                      - generic [ref=e239] [cursor=pointer]: "Member price: RM 34.20"
+                    - button "Add to Cart" [ref=e240] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK JRM Javanica Oil Losyen panas dengan susu kambing, buah pala dan herba Price: RM 49.00 Add to Cart" [ref=e241] [cursor=pointer]':
+              - /url: /products/jrm-javanica-oil
+              - generic [ref=e242] [cursor=pointer]:
+                - generic [ref=e243] [cursor=pointer]:
+                  - generic [ref=e245] [cursor=pointer]: No Image
+                  - generic [ref=e246] [cursor=pointer]:
+                    - generic [ref=e247] [cursor=pointer]: Featured
+                    - generic [ref=e248] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e250] [cursor=pointer]:
+                    - img
+                - generic [ref=e252] [cursor=pointer]:
+                  - generic [ref=e253] [cursor=pointer]:
+                    - generic [ref=e254] [cursor=pointer]: JRM HOLISTIK
+                    - heading "JRM Javanica Oil" [level=3] [ref=e255] [cursor=pointer]
+                    - paragraph [ref=e256] [cursor=pointer]: Losyen panas dengan susu kambing, buah pala dan herba
+                  - generic [ref=e257] [cursor=pointer]:
+                    - 'generic "Price: RM 49.00" [ref=e258] [cursor=pointer]':
+                      - generic [ref=e260] [cursor=pointer]: RM 49.00
+                      - generic [ref=e261] [cursor=pointer]: "Member price: RM 46.55"
+                    - button "Add to Cart" [ref=e262] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK JRM Silky Sunscreen Sunscreen sutera untuk semua jenis kulit Price: RM 43.00 Add to Cart" [ref=e263] [cursor=pointer]':
+              - /url: /products/jrm-silky-sunscreen
+              - generic [ref=e264] [cursor=pointer]:
+                - generic [ref=e265] [cursor=pointer]:
+                  - generic [ref=e267] [cursor=pointer]: No Image
+                  - generic [ref=e268] [cursor=pointer]:
+                    - generic [ref=e269] [cursor=pointer]: Featured
+                    - generic [ref=e270] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e272] [cursor=pointer]:
+                    - img
+                - generic [ref=e274] [cursor=pointer]:
+                  - generic [ref=e275] [cursor=pointer]:
+                    - generic [ref=e276] [cursor=pointer]: JRM HOLISTIK
+                    - heading "JRM Silky Sunscreen" [level=3] [ref=e277] [cursor=pointer]
+                    - paragraph [ref=e278] [cursor=pointer]: Sunscreen sutera untuk semua jenis kulit
+                  - generic [ref=e279] [cursor=pointer]:
+                    - 'generic "Price: RM 43.00" [ref=e280] [cursor=pointer]':
+                      - generic [ref=e282] [cursor=pointer]: RM 43.00
+                      - generic [ref=e283] [cursor=pointer]: "Member price: RM 39.00"
+                    - button "Add to Cart" [ref=e284] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Vinifera CC Cover CC Cover SPF48+ dengan herba premium Price: RM 65.00 Add to Cart" [ref=e285] [cursor=pointer]':
+              - /url: /products/vinifera-cc-cover
+              - generic [ref=e286] [cursor=pointer]:
+                - generic [ref=e287] [cursor=pointer]:
+                  - generic [ref=e289] [cursor=pointer]: No Image
+                  - generic [ref=e290] [cursor=pointer]:
+                    - generic [ref=e291] [cursor=pointer]: Featured
+                    - generic [ref=e292] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e294] [cursor=pointer]:
+                    - img
+                - generic [ref=e296] [cursor=pointer]:
+                  - generic [ref=e297] [cursor=pointer]:
+                    - generic [ref=e298] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Vinifera CC Cover" [level=3] [ref=e299] [cursor=pointer]
+                    - paragraph [ref=e300] [cursor=pointer]: CC Cover SPF48+ dengan herba premium
+                  - generic [ref=e301] [cursor=pointer]:
+                    - 'generic "Price: RM 65.00" [ref=e302] [cursor=pointer]':
+                      - generic [ref=e304] [cursor=pointer]: RM 65.00
+                      - generic [ref=e305] [cursor=pointer]: "Member price: RM 58.50"
+                    - button "Add to Cart" [ref=e306] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK JRM Zinnia Magenta Gel pencuci muka herba untuk semua jenis kulit Price: RM 35.00 Add to Cart" [ref=e307] [cursor=pointer]':
+              - /url: /products/jrm-zinnia-magenta
+              - generic [ref=e308] [cursor=pointer]:
+                - generic [ref=e309] [cursor=pointer]:
+                  - generic [ref=e311] [cursor=pointer]: No Image
+                  - generic [ref=e312] [cursor=pointer]:
+                    - generic [ref=e313] [cursor=pointer]: Featured
+                    - generic [ref=e314] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e316] [cursor=pointer]:
+                    - img
+                - generic [ref=e318] [cursor=pointer]:
+                  - generic [ref=e319] [cursor=pointer]:
+                    - generic [ref=e320] [cursor=pointer]: JRM HOLISTIK
+                    - heading "JRM Zinnia Magenta" [level=3] [ref=e321] [cursor=pointer]
+                    - paragraph [ref=e322] [cursor=pointer]: Gel pencuci muka herba untuk semua jenis kulit
+                  - generic [ref=e323] [cursor=pointer]:
+                    - 'generic "Price: RM 35.00" [ref=e324] [cursor=pointer]':
+                      - generic [ref=e326] [cursor=pointer]: RM 35.00
+                      - generic [ref=e327] [cursor=pointer]: "Member price: RM 31.50"
+                    - button "Add to Cart" [ref=e328] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Marjane Oil Minyak wajah organik dengan antioksidan Price: RM 50.00 Add to Cart" [ref=e329] [cursor=pointer]':
+              - /url: /products/marjane-oil
+              - generic [ref=e330] [cursor=pointer]:
+                - generic [ref=e331] [cursor=pointer]:
+                  - generic [ref=e333] [cursor=pointer]: No Image
+                  - generic [ref=e334] [cursor=pointer]:
+                    - generic [ref=e335] [cursor=pointer]: Featured
+                    - generic [ref=e336] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e338] [cursor=pointer]:
+                    - img
+                - generic [ref=e340] [cursor=pointer]:
+                  - generic [ref=e341] [cursor=pointer]:
+                    - generic [ref=e342] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Marjane Oil" [level=3] [ref=e343] [cursor=pointer]
+                    - paragraph [ref=e344] [cursor=pointer]: Minyak wajah organik dengan antioksidan
+                  - generic [ref=e345] [cursor=pointer]:
+                    - 'generic "Price: RM 50.00" [ref=e346] [cursor=pointer]':
+                      - generic [ref=e348] [cursor=pointer]: RM 50.00
+                      - generic [ref=e349] [cursor=pointer]: "Member price: RM 42.50"
+                    - button "Add to Cart" [ref=e350] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Eu Kalypto Soap Sabun mandi dengan ekstrak eucalyptus Price: RM 23.00 Add to Cart" [ref=e351] [cursor=pointer]':
+              - /url: /products/eu-kalypto-soap
+              - generic [ref=e352] [cursor=pointer]:
+                - generic [ref=e353] [cursor=pointer]:
+                  - generic [ref=e355] [cursor=pointer]: No Image
+                  - generic [ref=e356] [cursor=pointer]:
+                    - generic [ref=e357] [cursor=pointer]: Featured
+                    - generic [ref=e358] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e360] [cursor=pointer]:
+                    - img
+                - generic [ref=e362] [cursor=pointer]:
+                  - generic [ref=e363] [cursor=pointer]:
+                    - generic [ref=e364] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Eu Kalypto Soap" [level=3] [ref=e365] [cursor=pointer]
+                    - paragraph [ref=e366] [cursor=pointer]: Sabun mandi dengan ekstrak eucalyptus
+                  - generic [ref=e367] [cursor=pointer]:
+                    - 'generic "Price: RM 23.00" [ref=e368] [cursor=pointer]':
+                      - generic [ref=e370] [cursor=pointer]: RM 23.00
+                      - generic [ref=e371] [cursor=pointer]: "Member price: RM 20.70"
+                    - button "Add to Cart" [ref=e372] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Cenanga Oil Minyak Urutan Badan JRM Holistik Price: RM 17.00 Add to Cart" [ref=e373] [cursor=pointer]':
+              - /url: /products/cenanga-oil
+              - generic [ref=e374] [cursor=pointer]:
+                - generic [ref=e375] [cursor=pointer]:
+                  - generic [ref=e377] [cursor=pointer]: No Image
+                  - generic [ref=e378] [cursor=pointer]:
+                    - generic [ref=e379] [cursor=pointer]: Featured
+                    - generic [ref=e380] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e382] [cursor=pointer]:
+                    - img
+                - generic [ref=e384] [cursor=pointer]:
+                  - generic [ref=e385] [cursor=pointer]:
+                    - generic [ref=e386] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Cenanga Oil" [level=3] [ref=e387] [cursor=pointer]
+                    - paragraph [ref=e388] [cursor=pointer]: Minyak Urutan Badan JRM Holistik
+                  - generic [ref=e389] [cursor=pointer]:
+                    - 'generic "Price: RM 17.00" [ref=e390] [cursor=pointer]':
+                      - generic [ref=e392] [cursor=pointer]: RM 17.00
+                      - generic [ref=e393] [cursor=pointer]: "Member price: RM 15.30"
+                    - button "Add to Cart" [ref=e394] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Gel Mandian Bidara Gel mandian dengan ekstrak bidara Price: RM 55.00 Add to Cart" [ref=e395] [cursor=pointer]':
+              - /url: /products/gel-mandian-bidara
+              - generic [ref=e396] [cursor=pointer]:
+                - generic [ref=e397] [cursor=pointer]:
+                  - generic [ref=e399] [cursor=pointer]: No Image
+                  - generic [ref=e400] [cursor=pointer]:
+                    - generic [ref=e401] [cursor=pointer]: Featured
+                    - generic [ref=e402] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e404] [cursor=pointer]:
+                    - img
+                - generic [ref=e406] [cursor=pointer]:
+                  - generic [ref=e407] [cursor=pointer]:
+                    - generic [ref=e408] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Gel Mandian Bidara" [level=3] [ref=e409] [cursor=pointer]
+                    - paragraph [ref=e410] [cursor=pointer]: Gel mandian dengan ekstrak bidara
+                  - generic [ref=e411] [cursor=pointer]:
+                    - 'generic "Price: RM 55.00" [ref=e412] [cursor=pointer]':
+                      - generic [ref=e414] [cursor=pointer]: RM 55.00
+                      - generic [ref=e415] [cursor=pointer]: "Member price: RM 51.15"
+                    - button "Add to Cart" [ref=e416] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Akasia Honey Gentle Cleanser Pembersih wajah madu akasia untuk kulit sensitif Price: RM 35.00 Add to Cart" [ref=e417] [cursor=pointer]':
+              - /url: /products/akasia-honey-gentle-cleanser
+              - generic [ref=e418] [cursor=pointer]:
+                - generic [ref=e419] [cursor=pointer]:
+                  - generic [ref=e421] [cursor=pointer]: No Image
+                  - generic [ref=e422] [cursor=pointer]:
+                    - generic [ref=e423] [cursor=pointer]: Featured
+                    - generic [ref=e424] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e426] [cursor=pointer]:
+                    - img
+                - generic [ref=e428] [cursor=pointer]:
+                  - generic [ref=e429] [cursor=pointer]:
+                    - generic [ref=e430] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Akasia Honey Gentle Cleanser" [level=3] [ref=e431] [cursor=pointer]
+                    - paragraph [ref=e432] [cursor=pointer]: Pembersih wajah madu akasia untuk kulit sensitif
+                  - generic [ref=e433] [cursor=pointer]:
+                    - 'generic "Price: RM 35.00" [ref=e434] [cursor=pointer]':
+                      - generic [ref=e436] [cursor=pointer]: RM 35.00
+                      - generic [ref=e437] [cursor=pointer]: "Member price: RM 33.25"
+                    - button "Add to Cart" [ref=e438] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured RUMAH HUTAN Minyak Khelin Myrha Massage Oil Minyak urutan untuk masalah saraf Price: RM 110.00 Add to Cart" [ref=e439] [cursor=pointer]':
+              - /url: /products/minyak-khelin-myrha-massage-oil
+              - generic [ref=e440] [cursor=pointer]:
+                - generic [ref=e441] [cursor=pointer]:
+                  - generic [ref=e443] [cursor=pointer]: No Image
+                  - generic [ref=e445] [cursor=pointer]: Featured
+                  - button "Add to wishlist" [ref=e447] [cursor=pointer]:
+                    - img
+                - generic [ref=e449] [cursor=pointer]:
+                  - generic [ref=e450] [cursor=pointer]:
+                    - generic [ref=e451] [cursor=pointer]: RUMAH HUTAN
+                    - heading "Minyak Khelin Myrha Massage Oil" [level=3] [ref=e452] [cursor=pointer]
+                    - paragraph [ref=e453] [cursor=pointer]: Minyak urutan untuk masalah saraf
+                  - generic [ref=e454] [cursor=pointer]:
+                    - generic [ref=e457] [cursor=pointer]: RM 110.00
+                    - button "Add to Cart" [ref=e458] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Herbal Cyro Spray Spray herba untuk sakit lutut dan gigitan Price: RM 39.00 Add to Cart" [ref=e459] [cursor=pointer]':
+              - /url: /products/herbal-cyro-spray
+              - generic [ref=e460] [cursor=pointer]:
+                - generic [ref=e461] [cursor=pointer]:
+                  - generic [ref=e463] [cursor=pointer]: No Image
+                  - generic [ref=e464] [cursor=pointer]:
+                    - generic [ref=e465] [cursor=pointer]: Featured
+                    - generic [ref=e466] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e468] [cursor=pointer]:
+                    - img
+                - generic [ref=e470] [cursor=pointer]:
+                  - generic [ref=e471] [cursor=pointer]:
+                    - generic [ref=e472] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Herbal Cyro Spray" [level=3] [ref=e473] [cursor=pointer]
+                    - paragraph [ref=e474] [cursor=pointer]: Spray herba untuk sakit lutut dan gigitan
+                  - generic [ref=e475] [cursor=pointer]:
+                    - 'generic "Price: RM 39.00" [ref=e476] [cursor=pointer]':
+                      - generic [ref=e478] [cursor=pointer]: RM 39.00
+                      - generic [ref=e479] [cursor=pointer]: "Member price: RM 37.10"
+                    - button "Add to Cart" [ref=e480] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+            - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Skinzen Face Oil Minyak wajah untuk anti-aging dan jeragat Price: RM 150.00 Add to Cart" [ref=e481] [cursor=pointer]':
+              - /url: /products/skinzen-face-oil
+              - generic [ref=e482] [cursor=pointer]:
+                - generic [ref=e483] [cursor=pointer]:
+                  - generic [ref=e485] [cursor=pointer]: No Image
+                  - generic [ref=e486] [cursor=pointer]:
+                    - generic [ref=e487] [cursor=pointer]: Featured
+                    - generic [ref=e488] [cursor=pointer]: Membership Qualifying
+                  - button "Add to wishlist" [ref=e490] [cursor=pointer]:
+                    - img
+                - generic [ref=e492] [cursor=pointer]:
+                  - generic [ref=e493] [cursor=pointer]:
+                    - generic [ref=e494] [cursor=pointer]: JRM HOLISTIK
+                    - heading "Skinzen Face Oil" [level=3] [ref=e495] [cursor=pointer]
+                    - paragraph [ref=e496] [cursor=pointer]: Minyak wajah untuk anti-aging dan jeragat
+                  - generic [ref=e497] [cursor=pointer]:
+                    - 'generic "Price: RM 150.00" [ref=e498] [cursor=pointer]':
+                      - generic [ref=e500] [cursor=pointer]: RM 150.00
+                      - generic [ref=e501] [cursor=pointer]: "Member price: RM 142.50"
+                    - button "Add to Cart" [ref=e502] [cursor=pointer]:
+                      - img
+                      - text: Add to Cart
+          - generic [ref=e503]:
+            - button "Previous" [ref=e504] [cursor=pointer]:
+              - img
+              - generic [ref=e505] [cursor=pointer]: Previous
+            - generic [ref=e506]:
+              - button "Go to page 1" [ref=e507] [cursor=pointer]: "1"
+              - button "Go to page 2" [ref=e508] [cursor=pointer]: "2"
+            - button "Next" [ref=e509] [cursor=pointer]:
+              - generic [ref=e510] [cursor=pointer]: Next
+              - img
+            - status [ref=e511]: Page of 2
+  - contentinfo [ref=e512]:
+    - generic [ref=e514]:
+      - generic [ref=e515]:
+        - link "JRM E-commerce" [ref=e517] [cursor=pointer]:
+          - /url: /
+          - img [ref=e518] [cursor=pointer]
+          - generic [ref=e521] [cursor=pointer]: JRM E-commerce
+        - paragraph [ref=e522]: Your trusted Malaysian e-commerce platform offering quality products with intelligent membership benefits and local payment solutions.
+        - generic [ref=e523]:
+          - generic [ref=e524]:
+            - img [ref=e525]
+            - link "support@jrm-ecommerce.com" [ref=e528] [cursor=pointer]:
+              - /url: mailto:support@jrm-ecommerce.com
+          - generic [ref=e529]:
+            - img [ref=e530]
+            - link "+60 12-345 6789" [ref=e532] [cursor=pointer]:
+              - /url: tel:+60123456789
+          - generic [ref=e533]:
+            - img [ref=e534]
+            - generic [ref=e537]: Kuala Lumpur, Malaysia
+        - generic [ref=e538]:
+          - heading "Follow Us" [level=4] [ref=e539]
+          - generic [ref=e540]:
+            - link "Facebook" [ref=e541] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e542] [cursor=pointer]
+            - link "Instagram" [ref=e545] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e546] [cursor=pointer]
+            - link "Twitter" [ref=e548] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e549] [cursor=pointer]
+            - link "YouTube" [ref=e551] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e552] [cursor=pointer]
+            - link "TikTok" [ref=e555] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e556] [cursor=pointer]
+            - link "WhatsApp" [ref=e560] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e561] [cursor=pointer]
+            - link "LinkedIn" [ref=e564] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e565] [cursor=pointer]
+      - generic [ref=e567]:
+        - heading "Shop" [level=4] [ref=e568]
+        - list [ref=e569]:
+          - listitem [ref=e570]:
+            - link "Featured Products" [ref=e571] [cursor=pointer]:
+              - /url: /products?featured=true
+          - listitem [ref=e572]:
+            - link "On Sale" [ref=e573] [cursor=pointer]:
+              - /url: /products?promotional=true
+          - listitem [ref=e574]:
+            - link "New Arrivals" [ref=e575] [cursor=pointer]:
+              - /url: /products?sort=newest
+          - listitem [ref=e576]:
+            - link "Best Sellers" [ref=e577] [cursor=pointer]:
+              - /url: /products?sort=popular
+          - listitem [ref=e578]:
+            - link "All Products" [ref=e579] [cursor=pointer]:
+              - /url: /products
+      - generic [ref=e580]:
+        - heading "Customer Service" [level=4] [ref=e581]
+        - list [ref=e582]:
+          - listitem [ref=e583]:
+            - link "Track Your Order" [ref=e584] [cursor=pointer]:
+              - /url: /track-order
+          - listitem [ref=e585]:
+            - link "Wishlist" [ref=e586] [cursor=pointer]:
+              - /url: /wishlist
+          - listitem [ref=e587]:
+            - link "FAQs" [ref=e588] [cursor=pointer]:
+              - /url: /legal/terms
+      - generic [ref=e589]:
+        - heading "Account" [level=4] [ref=e590]
+        - list [ref=e591]:
+          - listitem [ref=e592]:
+            - link "My Account" [ref=e593] [cursor=pointer]:
+              - /url: /member/profile
+          - listitem [ref=e594]:
+            - link "Order History" [ref=e595] [cursor=pointer]:
+              - /url: /member/orders
+          - listitem [ref=e596]:
+            - link "Membership Benefits" [ref=e597] [cursor=pointer]:
+              - /url: /join
+          - listitem [ref=e598]:
+            - link "Sign Up" [ref=e599] [cursor=pointer]:
+              - /url: /auth/signup
+      - generic [ref=e600]:
+        - heading "Company" [level=4] [ref=e601]
+        - list [ref=e602]:
+          - listitem [ref=e603]:
+            - link "Agent Program" [ref=e604] [cursor=pointer]:
+              - /url: /apply-agent
+          - listitem [ref=e605]:
+            - link "Privacy Policy" [ref=e606] [cursor=pointer]:
+              - /url: /legal/privacy
+          - listitem [ref=e607]:
+            - link "Terms of Service" [ref=e608] [cursor=pointer]:
+              - /url: /legal/terms
+    - generic [ref=e611]:
+      - generic [ref=e612]:
+        - generic [ref=e613]:
+          - img [ref=e614]
+          - heading "Stay Updated" [level=4] [ref=e616]
+        - paragraph [ref=e617]: Subscribe to our newsletter for exclusive deals and new product updates.
+      - generic [ref=e618]:
+        - textbox "Enter your email address" [ref=e619]
+        - button "Subscribe" [ref=e620] [cursor=pointer]
+    - generic [ref=e623]:
+      - generic [ref=e624]:
+        - paragraph [ref=e625]: © 2025 JRM E-commerce. All rights reserved.
+        - generic [ref=e626]:
+          - link "Privacy Policy" [ref=e627] [cursor=pointer]:
+            - /url: /legal/privacy
+          - generic [ref=e628]: •
+          - link "Terms of Service" [ref=e629] [cursor=pointer]:
+            - /url: /legal/terms
+          - generic [ref=e630]: •
+          - link "Cookie Policy" [ref=e631] [cursor=pointer]:
+            - /url: /legal/cookies
+      - button "Back to top" [ref=e632] [cursor=pointer]:
+        - generic [ref=e633] [cursor=pointer]: Back to top
+        - img [ref=e634] [cursor=pointer]
+  - region "Notifications alt+T"
+```

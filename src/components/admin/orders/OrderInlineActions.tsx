@@ -1,0 +1,238 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Eye,
+  Printer,
+  Truck,
+  Package,
+  MoreVertical,
+  Loader2,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { OrderStatus } from '@prisma/client';
+import { ORDER_STATUSES } from '@/lib/constants/order';
+import type { OrderInlineActionsProps } from './types';
+
+export function OrderInlineActions({
+  order,
+  onStatusUpdate,
+  onFulfill,
+  isUpdating = false,
+  compact = false,
+}: OrderInlineActionsProps) {
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [isFulfilling, setIsFulfilling] = useState(false);
+  const { toast } = useToast();
+
+  const handleStatusChange = async (newStatus: string) => {
+    setIsChangingStatus(true);
+    try {
+      const result = await onStatusUpdate(order.id, newStatus as OrderStatus);
+
+      if (result.success) {
+        toast({
+          title: 'Success',
+          description: result.message || 'Order status updated',
+        });
+        // Refresh page to show updated data
+        window.location.reload();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to update status',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update order status',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsChangingStatus(false);
+    }
+  };
+
+  const handleFulfill = async () => {
+    setIsFulfilling(true);
+    try {
+      const result = await onFulfill(order.id);
+
+      if (result.success) {
+        toast({
+          title: 'Success',
+          description: result.message || 'Order fulfilled successfully',
+        });
+        // Refresh page to show updated data
+        window.location.reload();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to fulfill order',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fulfill order',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsFulfilling(false);
+    }
+  };
+
+  const handlePrintInvoice = () => {
+    window.open(`/api/orders/${order.id}/invoice?download=true`, '_blank');
+  };
+
+  const handleTrackShipment = () => {
+    if (order.shipment?.trackingNumber) {
+      window.open(
+        `https://track.easyparcel.my/${order.shipment.trackingNumber}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    }
+  };
+
+  const canFulfill = order.paymentStatus === 'PAID' && !order.shipment;
+  const hasTracking = order.shipment?.trackingNumber;
+
+  // Compact view (for mobile)
+  if (compact) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/orders/${order.id}`}>
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handlePrintInvoice}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Invoice
+          </DropdownMenuItem>
+          {canFulfill && (
+            <DropdownMenuItem onClick={handleFulfill} disabled={isFulfilling}>
+              {isFulfilling && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {!isFulfilling && <Truck className="mr-2 h-4 w-4" />}
+              Fulfill Order
+            </DropdownMenuItem>
+          )}
+          {hasTracking && (
+            <DropdownMenuItem onClick={handleTrackShipment}>
+              <Package className="mr-2 h-4 w-4" />
+              Track Shipment
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Full view (for desktop)
+  return (
+    <div className="flex items-center gap-1 justify-end">
+      {/* View Order */}
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+        <Link href={`/admin/orders/${order.id}`} title="View order details">
+          <Eye className="h-4 w-4" />
+        </Link>
+      </Button>
+
+      {/* Print Invoice */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={handlePrintInvoice}
+        title="Print invoice"
+      >
+        <Printer className="h-4 w-4" />
+      </Button>
+
+      {/* Quick Fulfill (if eligible) */}
+      {canFulfill && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={handleFulfill}
+          disabled={isFulfilling}
+          title="Fulfill order"
+        >
+          {isFulfilling ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Truck className="h-4 w-4" />
+          )}
+        </Button>
+      )}
+
+      {/* Track Shipment (if has tracking) */}
+      {hasTracking && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={handleTrackShipment}
+          title="Track shipment"
+        >
+          <Package className="h-4 w-4" />
+        </Button>
+      )}
+
+      {/* Quick Status Update Dropdown */}
+      <Select
+        value={order.status}
+        onValueChange={handleStatusChange}
+        disabled={isChangingStatus}
+      >
+        <SelectTrigger className="h-8 w-32 text-xs">
+          {isChangingStatus ? (
+            <Loader2 className="h-3 w-3 animate-spin mr-2" />
+          ) : null}
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.values(ORDER_STATUSES).map(status => (
+            <SelectItem
+              key={status.value}
+              value={status.value}
+              className="text-xs"
+            >
+              {status.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

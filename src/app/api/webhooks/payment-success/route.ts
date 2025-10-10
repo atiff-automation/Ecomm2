@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       where: { id: order.id },
       data: {
         paymentStatus: 'PAID',
-        status: 'CONFIRMED',
+        status: 'PAID', // Fixed: Use PAID instead of non-existent CONFIRMED
         paymentId: transactionId,
       },
     });
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       await OrderStatusHandler.handleOrderStatusChange({
         orderId: order.id,
         previousStatus,
-        newStatus: 'CONFIRMED',
+        newStatus: 'PAID', // Fixed: Use PAID instead of non-existent CONFIRMED
         previousPaymentStatus,
         newPaymentStatus: 'PAID',
         triggeredBy: 'webhook_payment_gateway',

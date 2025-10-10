@@ -175,9 +175,10 @@ export async function POST(request: NextRequest) {
       'PENDING';
     let newOrderStatus:
       | 'PENDING'
-      | 'CONFIRMED'
-      | 'PROCESSING'
-      | 'SHIPPED'
+      | 'PAID'
+      | 'READY_TO_SHIP'
+      | 'IN_TRANSIT'
+      | 'OUT_FOR_DELIVERY'
       | 'DELIVERED'
       | 'CANCELLED'
       | 'REFUNDED' = 'PENDING';
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
     if (callback.status === '1') {
       // Success
       newPaymentStatus = 'PAID';
-      newOrderStatus = 'CONFIRMED';
+      newOrderStatus = 'PAID'; // Fixed: Use PAID instead of non-existent CONFIRMED
 
       // Reserve inventory
       for (const item of order.orderItems) {
@@ -362,32 +363,23 @@ export async function POST(request: NextRequest) {
 
     // For webhook errors, we should return 200 to prevent retries
     // but log the error for investigation
-    await prisma.auditLog.create({
-      data: {
-        userId: null,
-        action: 'TOYYIBPAY_WEBHOOK_ERROR',
-        resource: 'PAYMENT',
-        details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          webhookData: await request
-            .clone()
-            .formData()
-            .then(fd => {
-              const entries = Object.fromEntries(fd.entries());
-              // Convert FormDataEntryValue to string to ensure JSON compatibility
-              const sanitizedEntries: Record<string, any> = {};
-              for (const [key, value] of Object.entries(entries)) {
-                sanitizedEntries[key] =
-                  typeof value === 'string' ? value : value.toString();
-              }
-              return sanitizedEntries;
-            })
-            .catch(() => ({})),
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: null,
+          action: 'TOYYIBPAY_WEBHOOK_ERROR',
+          resource: 'PAYMENT',
+          details: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            errorStack: error instanceof Error ? error.stack : undefined,
+          },
+          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      },
-    });
+      });
+    } catch (auditError) {
+      console.error('Failed to create audit log:', auditError);
+    }
 
     return NextResponse.json(
       { message: 'Webhook processing failed' },

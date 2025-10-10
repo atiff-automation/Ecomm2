@@ -1,0 +1,12 @@
+
+> jrm-ecommerce@0.1.0 test:e2e
+> playwright test --reporter=json
+
+🚀 Starting global E2E test setup...
+🔗 Checking application readiness at http://localhost:3000
+✅ Application is ready for testing
+📊 Setting up test data...
+✅ Test data setup completed
+🔐 Setting up authentication states...
+✅ Authentication states setup completed
+✅ Global E2E test setup completed

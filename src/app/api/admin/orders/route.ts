@@ -149,12 +149,36 @@ export async function GET(request: NextRequest) {
             postcode: order.shippingAddress.postalCode,
           }
         : null,
+
+      // Courier service fields (for fulfillment)
+      selectedCourierServiceId: order.selectedCourierServiceId,
+      courierServiceDetail: order.courierServiceDetail,
+
+      // Order items (matching frontend interface OrderTableData)
+      orderItems: order.orderItems.map(item => ({
+        id: item.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        appliedPrice: item.appliedPrice,
+      })),
+
+      // Legacy items field for backward compatibility
       items: order.orderItems.map(item => ({
         id: item.id,
         name: item.product.name,
         quantity: item.quantity,
         weight: item.product.weight || 0.5,
       })),
+
+      // User information (matching frontend interface)
+      user: order.user
+        ? {
+            firstName: order.user.firstName,
+            lastName: order.user.lastName,
+            email: order.user.email,
+          }
+        : null,
+      guestEmail: order.guestEmail,
     }));
 
     return NextResponse.json({

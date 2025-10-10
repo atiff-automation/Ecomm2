@@ -1,0 +1,202 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "JRM E-commerce - Go to homepage" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e10] [cursor=pointer]: JRM
+        - generic [ref=e11]:
+          - link "Search products" [ref=e12] [cursor=pointer]:
+            - /url: /search
+            - button "Search products" [ref=e13] [cursor=pointer]:
+              - img
+              - generic [ref=e14] [cursor=pointer]: Search
+          - button [ref=e16] [cursor=pointer]:
+            - img
+          - generic [ref=e17]:
+            - link "Sign In" [ref=e18] [cursor=pointer]:
+              - /url: /auth/signin
+              - button "Sign In" [ref=e19] [cursor=pointer]
+            - link "Sign Up" [ref=e20] [cursor=pointer]:
+              - /url: /auth/signup
+              - button "Sign Up" [ref=e21] [cursor=pointer]
+          - button "Toggle menu" [ref=e22] [cursor=pointer]:
+            - img
+            - generic [ref=e23] [cursor=pointer]: Toggle menu
+  - main [ref=e24]:
+    - generic [ref=e26]:
+      - generic [ref=e29]:
+        - generic:
+          - heading [level=1]
+          - paragraph
+          - paragraph
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - img [ref=e36]
+            - heading "On Promotion" [level=2] [ref=e40]
+          - paragraph [ref=e41]: Limited time offers with amazing discounts and special deals
+        - link "View All Deals" [ref=e42] [cursor=pointer]:
+          - /url: /products?promotional=true
+          - button "View All Deals" [ref=e43] [cursor=pointer]:
+            - text: View All Deals
+            - img
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - heading "Featured Products" [level=2] [ref=e73]
+          - paragraph [ref=e74]: Handpicked products with the best value and quality
+        - link "View All" [ref=e75] [cursor=pointer]:
+          - /url: /products?featured=true
+          - button "View All" [ref=e76] [cursor=pointer]:
+            - text: View All
+            - img
+      - generic [ref=e104]:
+        - heading "Unlock Member Benefits Today!" [level=2] [ref=e105]
+        - paragraph [ref=e106]: Spend RM 80 or more and automatically enjoy member pricing on all future purchases. Save up to 15% on every order!
+        - generic [ref=e107]:
+          - link "Sign Up Now" [ref=e108] [cursor=pointer]:
+            - /url: /auth/signup
+            - button "Sign Up Now" [ref=e109] [cursor=pointer]
+          - link "Sign In" [ref=e110] [cursor=pointer]:
+            - /url: /auth/signin
+            - button "Sign In" [ref=e111] [cursor=pointer]
+      - generic [ref=e116]:
+        - img [ref=e117]
+        - generic [ref=e122]: Loading recommendations...
+  - contentinfo [ref=e123]:
+    - generic [ref=e125]:
+      - generic [ref=e126]:
+        - link "JRM E-commerce" [ref=e128] [cursor=pointer]:
+          - /url: /
+          - img [ref=e129] [cursor=pointer]
+          - generic [ref=e132] [cursor=pointer]: JRM E-commerce
+        - paragraph [ref=e133]: Your trusted Malaysian e-commerce platform offering quality products with intelligent membership benefits and local payment solutions.
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - img [ref=e136]
+            - link "support@jrm-ecommerce.com" [ref=e139] [cursor=pointer]:
+              - /url: mailto:support@jrm-ecommerce.com
+          - generic [ref=e140]:
+            - img [ref=e141]
+            - link "+60 12-345 6789" [ref=e143] [cursor=pointer]:
+              - /url: tel:+60123456789
+          - generic [ref=e144]:
+            - img [ref=e145]
+            - generic [ref=e148]: Kuala Lumpur, Malaysia
+        - generic [ref=e149]:
+          - heading "Follow Us" [level=4] [ref=e150]
+          - generic [ref=e151]:
+            - link "Facebook" [ref=e152] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e153] [cursor=pointer]
+            - link "Instagram" [ref=e156] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e157] [cursor=pointer]
+            - link "Twitter" [ref=e159] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e160] [cursor=pointer]
+            - link "YouTube" [ref=e162] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e163] [cursor=pointer]
+            - link "TikTok" [ref=e166] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e167] [cursor=pointer]
+            - link "WhatsApp" [ref=e171] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e172] [cursor=pointer]
+            - link "LinkedIn" [ref=e175] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e176] [cursor=pointer]
+      - generic [ref=e178]:
+        - heading "Shop" [level=4] [ref=e179]
+        - list [ref=e180]:
+          - listitem [ref=e181]:
+            - link "Featured Products" [ref=e182] [cursor=pointer]:
+              - /url: /products?featured=true
+          - listitem [ref=e183]:
+            - link "On Sale" [ref=e184] [cursor=pointer]:
+              - /url: /products?promotional=true
+          - listitem [ref=e185]:
+            - link "New Arrivals" [ref=e186] [cursor=pointer]:
+              - /url: /products?sort=newest
+          - listitem [ref=e187]:
+            - link "Best Sellers" [ref=e188] [cursor=pointer]:
+              - /url: /products?sort=popular
+          - listitem [ref=e189]:
+            - link "All Products" [ref=e190] [cursor=pointer]:
+              - /url: /products
+      - generic [ref=e191]:
+        - heading "Customer Service" [level=4] [ref=e192]
+        - list [ref=e193]:
+          - listitem [ref=e194]:
+            - link "Track Your Order" [ref=e195] [cursor=pointer]:
+              - /url: /track-order
+          - listitem [ref=e196]:
+            - link "Wishlist" [ref=e197] [cursor=pointer]:
+              - /url: /wishlist
+          - listitem [ref=e198]:
+            - link "FAQs" [ref=e199] [cursor=pointer]:
+              - /url: /legal/terms
+      - generic [ref=e200]:
+        - heading "Account" [level=4] [ref=e201]
+        - list [ref=e202]:
+          - listitem [ref=e203]:
+            - link "My Account" [ref=e204] [cursor=pointer]:
+              - /url: /member/profile
+          - listitem [ref=e205]:
+            - link "Order History" [ref=e206] [cursor=pointer]:
+              - /url: /member/orders
+          - listitem [ref=e207]:
+            - link "Membership Benefits" [ref=e208] [cursor=pointer]:
+              - /url: /join
+          - listitem [ref=e209]:
+            - link "Sign Up" [ref=e210] [cursor=pointer]:
+              - /url: /auth/signup
+      - generic [ref=e211]:
+        - heading "Company" [level=4] [ref=e212]
+        - list [ref=e213]:
+          - listitem [ref=e214]:
+            - link "Agent Program" [ref=e215] [cursor=pointer]:
+              - /url: /apply-agent
+          - listitem [ref=e216]:
+            - link "Privacy Policy" [ref=e217] [cursor=pointer]:
+              - /url: /legal/privacy
+          - listitem [ref=e218]:
+            - link "Terms of Service" [ref=e219] [cursor=pointer]:
+              - /url: /legal/terms
+    - generic [ref=e222]:
+      - generic [ref=e223]:
+        - generic [ref=e224]:
+          - img [ref=e225]
+          - heading "Stay Updated" [level=4] [ref=e227]
+        - paragraph [ref=e228]: Subscribe to our newsletter for exclusive deals and new product updates.
+      - generic [ref=e229]:
+        - textbox "Enter your email address" [ref=e230]
+        - button "Subscribe" [ref=e231] [cursor=pointer]
+    - generic [ref=e234]:
+      - generic [ref=e235]:
+        - paragraph [ref=e236]: © 2025 JRM E-commerce. All rights reserved.
+        - generic [ref=e237]:
+          - link "Privacy Policy" [ref=e238] [cursor=pointer]:
+            - /url: /legal/privacy
+          - generic [ref=e239]: •
+          - link "Terms of Service" [ref=e240] [cursor=pointer]:
+            - /url: /legal/terms
+          - generic [ref=e241]: •
+          - link "Cookie Policy" [ref=e242] [cursor=pointer]:
+            - /url: /legal/cookies
+      - button "Back to top" [ref=e243] [cursor=pointer]:
+        - generic [ref=e244] [cursor=pointer]: Back to top
+        - img [ref=e245] [cursor=pointer]
+  - region "Notifications alt+T"
+  - generic [ref=e247]:
+    - img [ref=e249]
+    - button "Open Tanstack query devtools" [ref=e297] [cursor=pointer]:
+      - img [ref=e298] [cursor=pointer]
+  - alert [ref=e346]
+```

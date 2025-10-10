@@ -126,22 +126,9 @@ export async function GET(request: NextRequest) {
     );
     console.log(`🔗 Payment URL: ${paymentResult.paymentUrl}`);
 
-    // Return JSON response with payment URL for frontend redirect
-    return NextResponse.json({
-      success: true,
-      order: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        total: Number(order.total),
-      },
-      payment: {
-        method: paymentResult.paymentMethod,
-        billId: paymentResult.billId,
-        billCode: paymentResult.billCode,
-        paymentUrl: paymentResult.paymentUrl,
-        externalReference: paymentResult.externalReference,
-      },
-    });
+    // Perform server-side redirect to payment gateway
+    // This ensures the browser navigates to the payment URL directly
+    return NextResponse.redirect(paymentResult.paymentUrl);
   } catch (error) {
     console.error('❌ Payment bill creation error:', error);
     return handleApiError(error);

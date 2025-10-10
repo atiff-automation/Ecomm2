@@ -1,0 +1,381 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "JRM E-commerce - Go to homepage" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e10] [cursor=pointer]: JRM
+            - generic [ref=e11] [cursor=pointer]: E-commerce
+          - navigation "Main navigation" [ref=e12]:
+            - link "Products" [ref=e13] [cursor=pointer]:
+              - /url: /products
+            - link "Track Order" [ref=e14] [cursor=pointer]:
+              - /url: /track-order
+            - link "Apply as Agent" [ref=e15] [cursor=pointer]:
+              - /url: /apply-agent
+              - img [ref=e16] [cursor=pointer]
+              - text: Apply as Agent
+        - generic [ref=e21]:
+          - img [ref=e22]
+          - searchbox "Search products..." [ref=e25]: test product
+          - generic [ref=e26]:
+            - button [ref=e27] [cursor=pointer]:
+              - img
+            - img [ref=e28]
+        - generic [ref=e30]:
+          - button "Cart" [ref=e32] [cursor=pointer]:
+            - img
+            - generic [ref=e33] [cursor=pointer]: Cart
+          - generic [ref=e34]:
+            - link "Sign In" [ref=e35] [cursor=pointer]:
+              - /url: /auth/signin
+              - button "Sign In" [ref=e36] [cursor=pointer]
+            - link "Sign Up" [ref=e37] [cursor=pointer]:
+              - /url: /auth/signup
+              - button "Sign Up" [ref=e38] [cursor=pointer]
+  - main [ref=e39]:
+    - generic [ref=e41]:
+      - generic [ref=e44]:
+        - generic:
+          - heading [level=1]
+          - paragraph
+          - paragraph
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - img [ref=e51]
+            - heading "On Promotion" [level=2] [ref=e55]
+          - paragraph [ref=e56]: Limited time offers with amazing discounts and special deals
+        - link "View All Deals" [ref=e57] [cursor=pointer]:
+          - /url: /products?promotional=true
+          - button "View All Deals" [ref=e58] [cursor=pointer]:
+            - text: View All Deals
+            - img
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - heading "Featured Products" [level=2] [ref=e88]
+          - paragraph [ref=e89]: Handpicked products with the best value and quality
+        - link "View All" [ref=e90] [cursor=pointer]:
+          - /url: /products?featured=true
+          - button "View All" [ref=e91] [cursor=pointer]:
+            - text: View All
+            - img
+      - generic [ref=e119]:
+        - heading "Unlock Member Benefits Today!" [level=2] [ref=e120]
+        - paragraph [ref=e121]: Spend RM 80 or more and automatically enjoy member pricing on all future purchases. Save up to 15% on every order!
+        - generic [ref=e122]:
+          - link "Sign Up Now" [ref=e123] [cursor=pointer]:
+            - /url: /auth/signup
+            - button "Sign Up Now" [ref=e124] [cursor=pointer]
+          - link "Sign In" [ref=e125] [cursor=pointer]:
+            - /url: /auth/signin
+            - button "Sign In" [ref=e126] [cursor=pointer]
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - img [ref=e134]
+              - heading "Featured Products" [level=2] [ref=e137]
+            - paragraph [ref=e138]: Handpicked products just for you
+          - button "Refresh" [ref=e140] [cursor=pointer]:
+            - img
+            - text: Refresh
+        - generic [ref=e141]:
+          - 'link "testing Featured Membership Qualifying Electronics testing Price: RM 1.00 Add to Cart" [ref=e142] [cursor=pointer]':
+            - /url: /products/testing
+            - generic [ref=e143] [cursor=pointer]:
+              - generic [ref=e144] [cursor=pointer]:
+                - img "testing" [ref=e145] [cursor=pointer]
+                - generic [ref=e146] [cursor=pointer]:
+                  - generic [ref=e147] [cursor=pointer]: Featured
+                  - generic [ref=e148] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e150] [cursor=pointer]:
+                  - img
+              - generic [ref=e152] [cursor=pointer]:
+                - generic [ref=e153] [cursor=pointer]:
+                  - generic [ref=e154] [cursor=pointer]: Electronics
+                  - heading "testing" [level=3] [ref=e155] [cursor=pointer]
+                - generic [ref=e156] [cursor=pointer]:
+                  - generic [ref=e159] [cursor=pointer]: RM 1.00
+                  - button "Add to Cart" [ref=e160] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "Minyak Floral Aromatherapy Featured RUMAH HUTAN Minyak Floral Aromatherapy Price: RM 70.00 Add to Cart" [ref=e161] [cursor=pointer]':
+            - /url: /products/minyak-floral-aromatherapy
+            - generic [ref=e162] [cursor=pointer]:
+              - generic [ref=e163] [cursor=pointer]:
+                - img "Minyak Floral Aromatherapy" [ref=e164] [cursor=pointer]
+                - generic [ref=e166] [cursor=pointer]: Featured
+                - button "Add to wishlist" [ref=e168] [cursor=pointer]:
+                  - img
+              - generic [ref=e170] [cursor=pointer]:
+                - generic [ref=e171] [cursor=pointer]:
+                  - generic [ref=e172] [cursor=pointer]: RUMAH HUTAN
+                  - heading "Minyak Floral Aromatherapy" [level=3] [ref=e173] [cursor=pointer]
+                - generic [ref=e174] [cursor=pointer]:
+                  - generic [ref=e177] [cursor=pointer]: RM 70.00
+                  - button "Add to Cart" [ref=e178] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Cream Bio Miracle Action Price: RM 49.00 Add to Cart" [ref=e179] [cursor=pointer]':
+            - /url: /products/cream-bio-miracle-action
+            - generic [ref=e180] [cursor=pointer]:
+              - generic [ref=e181] [cursor=pointer]:
+                - generic [ref=e183] [cursor=pointer]: No Image
+                - generic [ref=e184] [cursor=pointer]:
+                  - generic [ref=e185] [cursor=pointer]: Featured
+                  - generic [ref=e186] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e188] [cursor=pointer]:
+                  - img
+              - generic [ref=e190] [cursor=pointer]:
+                - generic [ref=e191] [cursor=pointer]:
+                  - generic [ref=e192] [cursor=pointer]: JRM HOLISTIK
+                  - heading "Cream Bio Miracle Action" [level=3] [ref=e193] [cursor=pointer]
+                - generic [ref=e194] [cursor=pointer]:
+                  - 'generic "Price: RM 49.00" [ref=e195] [cursor=pointer]':
+                    - generic [ref=e197] [cursor=pointer]: RM 49.00
+                    - generic [ref=e198] [cursor=pointer]: "Member price: RM 45.55"
+                  - button "Add to Cart" [ref=e199] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Serum Bio Miracle Action Price: RM 39.00 Add to Cart" [ref=e200] [cursor=pointer]':
+            - /url: /products/serum-bio-miracle-action
+            - generic [ref=e201] [cursor=pointer]:
+              - generic [ref=e202] [cursor=pointer]:
+                - generic [ref=e204] [cursor=pointer]: No Image
+                - generic [ref=e205] [cursor=pointer]:
+                  - generic [ref=e206] [cursor=pointer]: Featured
+                  - generic [ref=e207] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e209] [cursor=pointer]:
+                  - img
+              - generic [ref=e211] [cursor=pointer]:
+                - generic [ref=e212] [cursor=pointer]:
+                  - generic [ref=e213] [cursor=pointer]: JRM HOLISTIK
+                  - heading "Serum Bio Miracle Action" [level=3] [ref=e214] [cursor=pointer]
+                - generic [ref=e215] [cursor=pointer]:
+                  - 'generic "Price: RM 39.00" [ref=e216] [cursor=pointer]':
+                    - generic [ref=e218] [cursor=pointer]: RM 39.00
+                    - generic [ref=e219] [cursor=pointer]: "Member price: RM 36.25"
+                  - button "Add to Cart" [ref=e220] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Bio10 Herbs Botanic Hair Treatment Oil Price: RM 60.00 Add to Cart" [ref=e221] [cursor=pointer]':
+            - /url: /products/bio10-herbs-botanic-hair-treatment-oil
+            - generic [ref=e222] [cursor=pointer]:
+              - generic [ref=e223] [cursor=pointer]:
+                - generic [ref=e225] [cursor=pointer]: No Image
+                - generic [ref=e226] [cursor=pointer]:
+                  - generic [ref=e227] [cursor=pointer]: Featured
+                  - generic [ref=e228] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e230] [cursor=pointer]:
+                  - img
+              - generic [ref=e232] [cursor=pointer]:
+                - generic [ref=e233] [cursor=pointer]:
+                  - generic [ref=e234] [cursor=pointer]: JRM HOLISTIK
+                  - heading "Bio10 Herbs Botanic Hair Treatment Oil" [level=3] [ref=e235] [cursor=pointer]
+                - generic [ref=e236] [cursor=pointer]:
+                  - generic [ref=e239] [cursor=pointer]: RM 60.00
+                  - button "Add to Cart" [ref=e240] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Mellia Water Price: RM 30.00 Add to Cart" [ref=e241] [cursor=pointer]':
+            - /url: /products/mellia-water
+            - generic [ref=e242] [cursor=pointer]:
+              - generic [ref=e243] [cursor=pointer]:
+                - generic [ref=e245] [cursor=pointer]: No Image
+                - generic [ref=e246] [cursor=pointer]:
+                  - generic [ref=e247] [cursor=pointer]: Featured
+                  - generic [ref=e248] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e250] [cursor=pointer]:
+                  - img
+              - generic [ref=e252] [cursor=pointer]:
+                - generic [ref=e253] [cursor=pointer]:
+                  - generic [ref=e254] [cursor=pointer]: JRM HOLISTIK
+                  - heading "Mellia Water" [level=3] [ref=e255] [cursor=pointer]
+                - generic [ref=e256] [cursor=pointer]:
+                  - 'generic "Price: RM 30.00" [ref=e257] [cursor=pointer]':
+                    - generic [ref=e259] [cursor=pointer]: RM 30.00
+                    - generic [ref=e260] [cursor=pointer]: "Member price: RM 27.00"
+                  - button "Add to Cart" [ref=e261] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK Le''merra Face Scrub Price: RM 39.00 Add to Cart" [ref=e262] [cursor=pointer]':
+            - /url: /products/lemerra-face-scrub
+            - generic [ref=e263] [cursor=pointer]:
+              - generic [ref=e264] [cursor=pointer]:
+                - generic [ref=e266] [cursor=pointer]: No Image
+                - generic [ref=e267] [cursor=pointer]:
+                  - generic [ref=e268] [cursor=pointer]: Featured
+                  - generic [ref=e269] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e271] [cursor=pointer]:
+                  - img
+              - generic [ref=e273] [cursor=pointer]:
+                - generic [ref=e274] [cursor=pointer]:
+                  - generic [ref=e275] [cursor=pointer]: JRM HOLISTIK
+                  - heading "Le'merra Face Scrub" [level=3] [ref=e276] [cursor=pointer]
+                - generic [ref=e277] [cursor=pointer]:
+                  - 'generic "Price: RM 39.00" [ref=e278] [cursor=pointer]':
+                    - generic [ref=e280] [cursor=pointer]: RM 39.00
+                    - generic [ref=e281] [cursor=pointer]: "Member price: RM 37.05"
+                  - button "Add to Cart" [ref=e282] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+          - 'link "No Image Featured Membership Qualifying JRM HOLISTIK JRM Rose Water Price: RM 38.00 Add to Cart" [ref=e283] [cursor=pointer]':
+            - /url: /products/jrm-rose-water
+            - generic [ref=e284] [cursor=pointer]:
+              - generic [ref=e285] [cursor=pointer]:
+                - generic [ref=e287] [cursor=pointer]: No Image
+                - generic [ref=e288] [cursor=pointer]:
+                  - generic [ref=e289] [cursor=pointer]: Featured
+                  - generic [ref=e290] [cursor=pointer]: Membership Qualifying
+                - button "Add to wishlist" [ref=e292] [cursor=pointer]:
+                  - img
+              - generic [ref=e294] [cursor=pointer]:
+                - generic [ref=e295] [cursor=pointer]:
+                  - generic [ref=e296] [cursor=pointer]: JRM HOLISTIK
+                  - heading "JRM Rose Water" [level=3] [ref=e297] [cursor=pointer]
+                - generic [ref=e298] [cursor=pointer]:
+                  - 'generic "Price: RM 38.00" [ref=e299] [cursor=pointer]':
+                    - generic [ref=e301] [cursor=pointer]: RM 38.00
+                    - generic [ref=e302] [cursor=pointer]: "Member price: RM 34.20"
+                  - button "Add to Cart" [ref=e303] [cursor=pointer]:
+                    - img
+                    - text: Add to Cart
+  - contentinfo [ref=e304]:
+    - generic [ref=e306]:
+      - generic [ref=e307]:
+        - link "JRM E-commerce" [ref=e309] [cursor=pointer]:
+          - /url: /
+          - img [ref=e310] [cursor=pointer]
+          - generic [ref=e313] [cursor=pointer]: JRM E-commerce
+        - paragraph [ref=e314]: Your trusted Malaysian e-commerce platform offering quality products with intelligent membership benefits and local payment solutions.
+        - generic [ref=e315]:
+          - generic [ref=e316]:
+            - img [ref=e317]
+            - link "support@jrm-ecommerce.com" [ref=e320] [cursor=pointer]:
+              - /url: mailto:support@jrm-ecommerce.com
+          - generic [ref=e321]:
+            - img [ref=e322]
+            - link "+60 12-345 6789" [ref=e324] [cursor=pointer]:
+              - /url: tel:+60123456789
+          - generic [ref=e325]:
+            - img [ref=e326]
+            - generic [ref=e329]: Kuala Lumpur, Malaysia
+        - generic [ref=e330]:
+          - heading "Follow Us" [level=4] [ref=e331]
+          - generic [ref=e332]:
+            - link "Facebook" [ref=e333] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e334] [cursor=pointer]
+            - link "Instagram" [ref=e337] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e338] [cursor=pointer]
+            - link "Twitter" [ref=e340] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e341] [cursor=pointer]
+            - link "YouTube" [ref=e343] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e344] [cursor=pointer]
+            - link "TikTok" [ref=e347] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e348] [cursor=pointer]
+            - link "WhatsApp" [ref=e352] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e353] [cursor=pointer]
+            - link "LinkedIn" [ref=e356] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e357] [cursor=pointer]
+      - generic [ref=e359]:
+        - heading "Shop" [level=4] [ref=e360]
+        - list [ref=e361]:
+          - listitem [ref=e362]:
+            - link "Featured Products" [ref=e363] [cursor=pointer]:
+              - /url: /products?featured=true
+          - listitem [ref=e364]:
+            - link "On Sale" [ref=e365] [cursor=pointer]:
+              - /url: /products?promotional=true
+          - listitem [ref=e366]:
+            - link "New Arrivals" [ref=e367] [cursor=pointer]:
+              - /url: /products?sort=newest
+          - listitem [ref=e368]:
+            - link "Best Sellers" [ref=e369] [cursor=pointer]:
+              - /url: /products?sort=popular
+          - listitem [ref=e370]:
+            - link "All Products" [ref=e371] [cursor=pointer]:
+              - /url: /products
+      - generic [ref=e372]:
+        - heading "Customer Service" [level=4] [ref=e373]
+        - list [ref=e374]:
+          - listitem [ref=e375]:
+            - link "Track Your Order" [ref=e376] [cursor=pointer]:
+              - /url: /track-order
+          - listitem [ref=e377]:
+            - link "Wishlist" [ref=e378] [cursor=pointer]:
+              - /url: /wishlist
+          - listitem [ref=e379]:
+            - link "FAQs" [ref=e380] [cursor=pointer]:
+              - /url: /legal/terms
+      - generic [ref=e381]:
+        - heading "Account" [level=4] [ref=e382]
+        - list [ref=e383]:
+          - listitem [ref=e384]:
+            - link "My Account" [ref=e385] [cursor=pointer]:
+              - /url: /member/profile
+          - listitem [ref=e386]:
+            - link "Order History" [ref=e387] [cursor=pointer]:
+              - /url: /member/orders
+          - listitem [ref=e388]:
+            - link "Membership Benefits" [ref=e389] [cursor=pointer]:
+              - /url: /join
+          - listitem [ref=e390]:
+            - link "Sign Up" [ref=e391] [cursor=pointer]:
+              - /url: /auth/signup
+      - generic [ref=e392]:
+        - heading "Company" [level=4] [ref=e393]
+        - list [ref=e394]:
+          - listitem [ref=e395]:
+            - link "Agent Program" [ref=e396] [cursor=pointer]:
+              - /url: /apply-agent
+          - listitem [ref=e397]:
+            - link "Privacy Policy" [ref=e398] [cursor=pointer]:
+              - /url: /legal/privacy
+          - listitem [ref=e399]:
+            - link "Terms of Service" [ref=e400] [cursor=pointer]:
+              - /url: /legal/terms
+    - generic [ref=e403]:
+      - generic [ref=e404]:
+        - generic [ref=e405]:
+          - img [ref=e406]
+          - heading "Stay Updated" [level=4] [ref=e408]
+        - paragraph [ref=e409]: Subscribe to our newsletter for exclusive deals and new product updates.
+      - generic [ref=e410]:
+        - textbox "Enter your email address" [ref=e411]
+        - button "Subscribe" [ref=e412] [cursor=pointer]
+    - generic [ref=e415]:
+      - generic [ref=e416]:
+        - paragraph [ref=e417]: © 2025 JRM E-commerce. All rights reserved.
+        - generic [ref=e418]:
+          - link "Privacy Policy" [ref=e419] [cursor=pointer]:
+            - /url: /legal/privacy
+          - generic [ref=e420]: •
+          - link "Terms of Service" [ref=e421] [cursor=pointer]:
+            - /url: /legal/terms
+          - generic [ref=e422]: •
+          - link "Cookie Policy" [ref=e423] [cursor=pointer]:
+            - /url: /legal/cookies
+      - button "Back to top" [ref=e424] [cursor=pointer]:
+        - generic [ref=e425] [cursor=pointer]: Back to top
+        - img [ref=e426] [cursor=pointer]
+  - region "Notifications alt+T"
+  - generic [ref=e428]:
+    - img [ref=e430]
+    - button "Open Tanstack query devtools" [ref=e478] [cursor=pointer]:
+      - img [ref=e479] [cursor=pointer]
+  - alert [ref=e527]
+```
