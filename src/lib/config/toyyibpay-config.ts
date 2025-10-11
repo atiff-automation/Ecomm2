@@ -173,8 +173,9 @@ export function isValidBillCode(billCode: string): boolean {
  * - order_id: External payment reference number (order number)
  */
 export function getWebhookUrls(environment: 'sandbox' | 'production') {
-  // Use centralized app URL helper (no hardcoded fallback)
-  const baseUrl = getAppUrl();
+  // Use centralized app URL helper with localhost fallback for development
+  // Consistent with EasyParcel and other config files
+  const baseUrl = getAppUrl(true);
 
   const webhookUrls = {
     returnUrl: `${baseUrl}/thank-you`,
