@@ -208,6 +208,19 @@ export interface OrderDetailsData {
   shippedAt: string | null;
   deliveredAt: string | null;
 
+  // AWB (Airway Bill) Information
+  airwayBillGenerated: boolean;
+  airwayBillGeneratedAt: string | null;
+  airwayBillNumber: string | null;
+  airwayBillUrl: string | null;
+  trackingUrl: string | null;
+
+  // EasyParcel Fields
+  easyparcelOrderNumber: string | null;
+  easyparcelPaymentStatus: string | null;
+  easyparcelParcelNumber: string | null;
+  shippingCostCharged: number | null;
+
   // Courier/shipping information
   selectedCourierServiceId: string | null;
   courierName: string | null;
@@ -216,6 +229,7 @@ export interface OrderDetailsData {
   selectedDropoffPointId: string | null;
   estimatedDelivery: string | null;
   shippingWeight: number | null;
+  scheduledPickupDate: string | null;
 
   // Relations
   user?: {

@@ -362,6 +362,43 @@ export interface EasyParcelShipmentResponse {
     awb_number: string;
     label_url: string;
     tracking_url: string;
+    courier_name?: string;
+    service_name?: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+/**
+ * EasyParcel API order payment request
+ */
+export interface EasyParcelPaymentRequest {
+  order_number: string; // Order number from EPSubmitOrderBulk response
+}
+
+/**
+ * Single parcel details from payment response
+ */
+export interface EasyParcelParcelDetails {
+  parcelno: string; // Parcel number (e.g., "EP-PQKTE")
+  awb: string; // Airway bill number (e.g., "238770015234")
+  awb_id_link: string; // AWB PDF download link
+  tracking_url: string; // Tracking page URL
+}
+
+/**
+ * EasyParcel API order payment response
+ */
+export interface EasyParcelPaymentResponse {
+  success: boolean;
+  data?: {
+    order_number: string; // Order number that was paid
+    payment_status: string; // "Fully Paid" or error message
+    parcels: EasyParcelParcelDetails[]; // Array of parcels in this order
+    total_amount?: number; // Total amount charged
+    balance_remaining?: number; // Remaining EasyParcel credit balance
   };
   error?: {
     code: string;

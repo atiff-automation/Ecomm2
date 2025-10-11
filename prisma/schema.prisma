@@ -273,6 +273,10 @@ model Order {
   airwayBillNumber         String?
   airwayBillUrl            String?
   trackingUrl              String?
+  easyparcelOrderNumber    String?            // EasyParcel order number (e.g., "EI-12345")
+  easyparcelPaymentStatus  String?            // Payment status (e.g., "Fully Paid")
+  easyparcelParcelNumber   String?            // Parcel number (e.g., "EP-PQKTE")
+  shippingCostCharged      Decimal?           @db.Decimal(10, 2) // Actual cost charged
   selectedCourierServiceId String?
   courierName              String?
   courierServiceType       String?            // 'parcel' or 'document'

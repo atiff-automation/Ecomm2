@@ -50,8 +50,9 @@ const fulfillmentSchema = z.object({
  * 7. Get pickup address from BusinessProfile (with validation)
  * 8. Validate shipping weight
  * 9. Build EasyParcel shipment request
- * 10. Create shipment with EasyParcel API
- * 11. Update order status to READY_TO_SHIP
+ * 10. Create shipment with EasyParcel API (EPSubmitOrderBulk)
+ * 10.5. Pay for the order (EPPayOrderBulk) to get AWB and tracking details
+ * 11. Update order status to READY_TO_SHIP with AWB details
  * 12. Send email notification to customer
  * 13. Return success with tracking details
  */
@@ -326,21 +327,123 @@ export async function POST(
       );
     }
 
-    // Step 11: Update order with tracking information
+    // Step 10.5: Pay for the order to get AWB and tracking details
+    let paymentResponse;
+    try {
+      console.log('[Fulfillment] Shipment created, now processing payment for order:', shipmentResponse.data.shipment_id);
+
+      paymentResponse = await easyParcelService.payOrder(shipmentResponse.data.shipment_id);
+
+      if (!paymentResponse.success || !paymentResponse.data) {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          'Payment response missing data',
+          { paymentResponse }
+        );
+      }
+
+      console.log('[Fulfillment] Payment successful, AWB details received');
+    } catch (error) {
+      console.error('[Fulfillment] Payment error:', error);
+
+      // Track failed payment attempt
+      const currentAttempts = order.failedBookingAttempts || 0;
+      const newAttempts = currentAttempts + 1;
+      const errorMessage =
+        error instanceof EasyParcelError ? error.message : 'Payment failed';
+
+      await prisma.order.update({
+        where: { id: params.orderId },
+        data: {
+          failedBookingAttempts: newAttempts,
+          lastBookingError: `Payment failed: ${errorMessage}`,
+        },
+      });
+
+      // Handle specific payment error codes
+      if (error instanceof EasyParcelError) {
+        // Check for insufficient balance
+        if (error.code === SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE) {
+          const balanceResponse = await easyParcelService
+            .getBalance()
+            .catch(() => null);
+
+          return NextResponse.json(
+            {
+              success: false,
+              message: `${error.message}. Order created but not paid. Order ID: ${shipmentResponse.data.shipment_id}`,
+              code: error.code,
+              balance: balanceResponse?.data.balance || null,
+              failedAttempts: newAttempts,
+              easyParcelOrderId: shipmentResponse.data.shipment_id,
+            },
+            { status: 402 }
+          );
+        }
+
+        // Handle other known errors
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Payment failed: ${error.message}. Order ID: ${shipmentResponse.data.shipment_id}`,
+            code: error.code,
+            details: error.details,
+            failedAttempts: newAttempts,
+            easyParcelOrderId: shipmentResponse.data.shipment_id,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Unknown payment error
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Payment failed. Order created but not paid. Order ID: ${shipmentResponse.data.shipment_id}`,
+          code: SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
+          failedAttempts: newAttempts,
+          easyParcelOrderId: shipmentResponse.data.shipment_id,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Step 11: Update order with tracking information from payment response
+    // Extract AWB details from the first parcel (most orders have 1 parcel)
+    const parcelDetails = paymentResponse.data.parcels[0];
+
+    // Extract actual shipping cost from shipment response (EPSubmitOrderBulk)
+    const actualShippingCost = shipmentResponse.data.price || null;
+
+    console.log('[Fulfillment] Parcel details from payment:', {
+      parcelno: parcelDetails.parcelno,    // EasyParcel internal reference (EP-xxxxx)
+      awb: parcelDetails.awb,              // Actual courier tracking number
+      awbLink: parcelDetails.awb_id_link,  // AWB PDF link
+      trackingUrl: parcelDetails.tracking_url, // Tracking page URL
+    });
+
+    console.log('[Fulfillment] EasyParcel order details:', {
+      easyparcelOrderNumber: paymentResponse.data.easyparcel_order_id,
+      easyparcelPaymentStatus: paymentResponse.data.payment_status,
+      easyparcelParcelNumber: parcelDetails.parcelno,
+      shippingCostCharged: actualShippingCost,
+    });
+
     const updatedOrder = await prisma.order.update({
       where: { id: params.orderId },
       data: {
         status: 'READY_TO_SHIP',
-        trackingNumber: shipmentResponse.data.tracking_number,
-        airwayBillNumber:
-          shipmentResponse.data.awb_number ||
-          shipmentResponse.data.tracking_number,
-        airwayBillUrl: shipmentResponse.data.label_url || null,
-        airwayBillGenerated: !!shipmentResponse.data.label_url,
-        airwayBillGeneratedAt: shipmentResponse.data.label_url
-          ? new Date()
-          : null,
-        trackingUrl: shipmentResponse.data.tracking_url || null,
+        trackingNumber: parcelDetails.awb, // ✅ FIXED: Use AWB as tracking number (the real courier tracking number)
+        airwayBillNumber: parcelDetails.awb, // AWB from payment response (same as tracking number)
+        airwayBillUrl: parcelDetails.awb_id_link, // AWB PDF link from payment response
+        airwayBillGenerated: true, // Always true after successful payment
+        airwayBillGeneratedAt: new Date(), // Set generation timestamp
+        trackingUrl: parcelDetails.tracking_url, // Tracking URL from payment response
+        // ✅ NEW EASYPARCEL FIELDS
+        easyparcelOrderNumber: paymentResponse.data.easyparcel_order_id || null, // EasyParcel order number
+        easyparcelPaymentStatus: paymentResponse.data.payment_status || null, // Payment status (e.g., "Fully Paid")
+        easyparcelParcelNumber: parcelDetails.parcelno || null, // Parcel number (EP-xxxxx)
+        shippingCostCharged: actualShippingCost, // Actual cost charged (from EPSubmitOrderBulk)
         // Update courier name if admin overrode the selection
         courierName: validatedData.overriddenByAdmin
           ? shipmentResponse.data.courier_name || order.courierName
@@ -349,16 +452,16 @@ export async function POST(
           ? shipmentResponse.data.service_name || order.courierServiceType
           : order.courierServiceType,
         selectedCourierServiceId: validatedData.serviceId,
-        // NEW: Scheduled pickup date
+        // Scheduled pickup date
         scheduledPickupDate: new Date(validatedData.pickupDate),
-        // NEW: Admin override tracking
+        // Admin override tracking
         overriddenByAdmin: validatedData.overriddenByAdmin,
         adminOverrideReason: validatedData.adminOverrideReason || null,
         // Clear any previous booking errors on successful fulfillment
         failedBookingAttempts: 0,
         lastBookingError: null,
         adminNotes: validatedData.overriddenByAdmin
-          ? `Admin overrode courier selection. Original: ${order.courierName}. New: ${shipmentResponse.data.courier_name}${validatedData.adminOverrideReason ? `. Reason: ${validatedData.adminOverrideReason}` : ''}`
+          ? `Admin overrode courier selection. Original: ${order.courierName}. New: ${shipmentResponse.data.courier_name || 'N/A'}${validatedData.adminOverrideReason ? `. Reason: ${validatedData.adminOverrideReason}` : ''}`
           : order.adminNotes,
       },
     });

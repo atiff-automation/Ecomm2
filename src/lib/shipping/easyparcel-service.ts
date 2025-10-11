@@ -13,6 +13,8 @@ import type {
   EasyParcelRateService,
   EasyParcelShipmentRequest,
   EasyParcelShipmentResponse,
+  EasyParcelPaymentRequest,
+  EasyParcelPaymentResponse,
   EasyParcelTrackingResponse,
   EasyParcelBalanceResponse,
   ShippingSettings,
@@ -267,9 +269,6 @@ export class EasyParcelService {
         bulkParams['bulk[0][addon_whatsapp_tracking_enabled]'] = request.addon_whatsapp_tracking_enabled;
       }
 
-      // DEBUG: Log complete request payload
-      console.log('[EasyParcel] Complete bulkParams being sent:', JSON.stringify(bulkParams, null, 2));
-
       const response = await this.makeRequest<{
         api_status: string;
         error_code: string;
@@ -277,9 +276,14 @@ export class EasyParcelService {
         result: Array<{
           status: string;
           remarks: string;
-          order_id?: string;
-          tracking_no?: string;
-          awb_number?: string;
+          order_number?: string; // EasyParcel uses order_number (not order_id)
+          parcel_number?: string; // EasyParcel uses parcel_number (not tracking_no)
+          courier?: string;
+          collect_date?: string;
+          price?: string;
+          addon_price?: string;
+          shipment_price?: string;
+          shipment_tax?: string;
           label_url?: string;
           tracking_url?: string;
         }>;
@@ -294,17 +298,34 @@ export class EasyParcelService {
         );
       }
 
+      // DEBUG: Log complete response FIRST before any processing
+      console.log('[EasyParcel] ===== RAW API RESPONSE =====');
+      console.log('Full response:', JSON.stringify(response, null, 2));
+      console.log('[EasyParcel] ===== END RAW RESPONSE =====');
+
+      // Write to file for detailed inspection
+      const fs = require('fs');
+      try {
+        fs.writeFileSync('/tmp/easyparcel-response.json', JSON.stringify(response, null, 2));
+        console.log('[EasyParcel] Response written to /tmp/easyparcel-response.json');
+      } catch (e) {
+        console.log('[EasyParcel] Could not write response file:', e);
+      }
+
       // Extract shipment details from bulk response
       const bulkResult = response.result?.[0];
 
-      // DEBUG: Log complete response and bulkResult
-      console.log('[EasyParcel] ===== COMPLETE API RESPONSE =====');
-      console.log(JSON.stringify(response, null, 2));
-      console.log('[EasyParcel] ===== BULK RESULT =====');
-      console.log(JSON.stringify(bulkResult, null, 2));
-      console.log('[EasyParcel] ===== END DEBUG =====');
+      // DEBUG: Log bulkResult details
+      console.log('[EasyParcel] ===== BULK RESULT DETAILS =====');
+      console.log('bulkResult exists?:', !!bulkResult);
+      console.log('bulkResult.status:', bulkResult?.status);
+      console.log('bulkResult keys:', Object.keys(bulkResult || {}));
+      console.log('bulkResult.order_number:', bulkResult?.order_number);
+      console.log('bulkResult.parcel_number:', bulkResult?.parcel_number);
+      console.log('[EasyParcel] ===== END BULK RESULT =====');
 
       if (!bulkResult || bulkResult.status !== 'Success') {
+        console.log('[EasyParcel] ❌ Bulk result failed status check');
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
           bulkResult?.remarks || 'Failed to create shipment',
@@ -312,28 +333,49 @@ export class EasyParcelService {
         );
       }
 
-      if (!bulkResult.order_id || !bulkResult.tracking_no) {
+      // EasyParcel API returns order_number and parcel_number (not order_id and tracking_no)
+      // Access fields directly without type checking since TypeScript types might not match exactly
+      const orderNumber = (bulkResult as any).order_number;
+      const parcelNumber = (bulkResult as any).parcel_number;
+
+      console.log('[EasyParcel] 🔍 Extracted values:', {
+        orderNumber,
+        parcelNumber,
+        hasOrderNumber: !!orderNumber,
+        hasParcelNumber: !!parcelNumber,
+        typeOfOrderNumber: typeof orderNumber,
+        typeOfParcelNumber: typeof parcelNumber,
+      });
+
+      if (!orderNumber || !parcelNumber) {
+        console.error('[EasyParcel] ❌ Missing shipment details:', {
+          orderNumber,
+          parcelNumber,
+          bulkResultKeys: Object.keys(bulkResult || {}),
+          bulkResult: JSON.stringify(bulkResult, null, 2),
+        });
+
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
           'Invalid response from EasyParcel API - missing shipment details',
-          { response }
+          { response, orderNumber, parcelNumber }
         );
       }
 
-      console.log('[EasyParcel] Shipment created successfully:', {
-        shipmentId: bulkResult.order_id,
-        trackingNumber: bulkResult.tracking_no,
-        awbNumber: bulkResult.awb_number,
+      console.log('[EasyParcel] ✅ Shipment created successfully:', {
+        orderNumber,
+        parcelNumber,
+        courier: (bulkResult as any).courier,
       });
 
       return {
         success: true,
         data: {
-          shipment_id: bulkResult.order_id,
-          tracking_number: bulkResult.tracking_no,
-          awb_number: bulkResult.awb_number || '',
-          label_url: bulkResult.label_url || '',
-          tracking_url: bulkResult.tracking_url || '',
+          shipment_id: orderNumber,
+          tracking_number: parcelNumber,
+          awb_number: parcelNumber, // Use parcel_number as AWB
+          label_url: (bulkResult as any).label_url || '',
+          tracking_url: (bulkResult as any).tracking_url || '',
         },
       };
     } catch (error) {
@@ -363,6 +405,167 @@ export class EasyParcelService {
       throw new EasyParcelError(
         SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
         'Failed to create shipment',
+        { originalError: error }
+      );
+    }
+  }
+
+  /**
+   * Pay for an order with EasyParcel
+   *
+   * This method processes payment for a previously created order.
+   * It deducts from your EasyParcel credit balance and generates:
+   * - AWB (Airway Bill) number
+   * - AWB PDF label link
+   * - Tracking URL
+   *
+   * @param orderNumber - EasyParcel order number from createShipment response
+   * @returns Payment details including AWB and tracking information
+   * @throws EasyParcelError if payment fails
+   */
+  async payOrder(orderNumber: string): Promise<EasyParcelPaymentResponse> {
+    try {
+      console.log('[EasyParcel] Processing payment for order:', orderNumber);
+
+      // Build bulk array parameter for EPPayOrderBulk
+      const bulkParams: Record<string, unknown> = {
+        'bulk[0][order_no]': orderNumber,
+      };
+
+      const response = await this.makeRequest<{
+        api_status: string;
+        error_code: string;
+        error_remark: string;
+        result: Array<{
+          status: string;
+          remarks: string;
+          orderno?: string;
+          messagenow?: string; // "Fully Paid" or error message
+          parcel?: Array<{
+            parcelno: string;
+            awb: string;
+            awb_id_link: string;
+            tracking_url: string;
+          }>;
+        }>;
+      }>('EPPayOrderBulk', bulkParams);
+
+      // Check for API errors
+      if (response.api_status !== 'Success' || response.error_code !== '0') {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          response.error_remark || 'Failed to process order payment',
+          { response }
+        );
+      }
+
+      // DEBUG: Log complete payment response FIRST before any processing
+      console.log('[EasyParcel] ===== RAW PAYMENT API RESPONSE =====');
+      console.log('Full response:', JSON.stringify(response, null, 2));
+      console.log('[EasyParcel] ===== END RAW PAYMENT RESPONSE =====');
+
+      // Write payment response to file for detailed inspection
+      const fs = require('fs');
+      try {
+        fs.writeFileSync('/tmp/easyparcel-payment-response.json', JSON.stringify(response, null, 2));
+        console.log('[EasyParcel] Payment response written to /tmp/easyparcel-payment-response.json');
+      } catch (e) {
+        console.log('[EasyParcel] Could not write payment response file:', e);
+      }
+
+      // Extract payment details from bulk response
+      const bulkResult = response.result?.[0];
+
+      // DEBUG: Log payment response details
+      console.log('[EasyParcel] ===== PAYMENT RESPONSE DETAILS =====');
+      console.log('bulkResult exists?:', !!bulkResult);
+      console.log('bulkResult.status:', bulkResult?.status);
+      console.log('bulkResult.messagenow:', bulkResult?.messagenow);
+      console.log('bulkResult.parcel count:', bulkResult?.parcel?.length || 0);
+      console.log('[EasyParcel] ===== END PAYMENT RESPONSE =====');
+
+      if (!bulkResult || bulkResult.status !== 'Success') {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          bulkResult?.remarks || 'Failed to process order payment',
+          { response }
+        );
+      }
+
+      // Check payment status
+      if (bulkResult.messagenow !== 'Fully Paid') {
+        // Handle insufficient balance or other payment issues
+        const errorMessage = bulkResult.messagenow || 'Payment failed';
+
+        if (errorMessage.toLowerCase().includes('insufficient')) {
+          throw new EasyParcelError(
+            SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE,
+            errorMessage,
+            { orderNumber, response }
+          );
+        }
+
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          errorMessage,
+          { orderNumber, response }
+        );
+      }
+
+      // Extract parcel details
+      const parcels = bulkResult.parcel || [];
+      if (parcels.length === 0) {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          'No parcel details returned after payment',
+          { orderNumber, response }
+        );
+      }
+
+      console.log('[EasyParcel] Payment successful:', {
+        orderNumber: bulkResult.orderno,
+        paymentStatus: bulkResult.messagenow,
+        parcelCount: parcels.length,
+        parcels: parcels.map(p => ({
+          parcelNo: p.parcelno,
+          awb: p.awb,
+          hasAwbLink: !!p.awb_id_link,
+          hasTrackingUrl: !!p.tracking_url,
+        })),
+      });
+
+      return {
+        success: true,
+        data: {
+          order_number: bulkResult.orderno || orderNumber,
+          payment_status: bulkResult.messagenow,
+          parcels: parcels.map(p => ({
+            parcelno: p.parcelno,
+            awb: p.awb,
+            awb_id_link: p.awb_id_link,
+            tracking_url: p.tracking_url,
+          })),
+        },
+      };
+    } catch (error) {
+      if (error instanceof EasyParcelError) {
+        throw error;
+      }
+
+      console.error('[EasyParcel] Payment failed:', error);
+
+      // Handle common error scenarios
+      if (this.isInsufficientBalanceError(error)) {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE,
+          'Insufficient EasyParcel credit balance to complete payment',
+          { originalError: error }
+        );
+      }
+
+      throw new EasyParcelError(
+        SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
+        'Failed to process order payment',
         { originalError: error }
       );
     }

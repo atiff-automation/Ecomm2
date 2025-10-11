@@ -115,6 +115,19 @@ export async function GET(
       shippedAt: order.shippedAt?.toISOString() || null,
       deliveredAt: order.deliveredAt?.toISOString() || null,
 
+      // AWB (Airway Bill) Information
+      airwayBillGenerated: order.airwayBillGenerated,
+      airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString() || null,
+      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
+      trackingUrl: order.trackingUrl,
+
+      // EasyParcel Fields
+      easyparcelOrderNumber: order.easyparcelOrderNumber,
+      easyparcelPaymentStatus: order.easyparcelPaymentStatus,
+      easyparcelParcelNumber: order.easyparcelParcelNumber,
+      shippingCostCharged: order.shippingCostCharged ? Number(order.shippingCostCharged) : null,
+
       // Courier/shipping information
       selectedCourierServiceId: order.selectedCourierServiceId,
       courierName: order.courierName,
@@ -123,6 +136,7 @@ export async function GET(
       selectedDropoffPointId: order.selectedDropoffPointId,
       estimatedDelivery: order.estimatedDelivery,
       shippingWeight: order.shippingWeight ? Number(order.shippingWeight) : null,
+      scheduledPickupDate: order.scheduledPickupDate?.toISOString() || null,
 
       // User information
       user: order.user

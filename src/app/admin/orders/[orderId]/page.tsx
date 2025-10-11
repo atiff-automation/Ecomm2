@@ -247,11 +247,27 @@ export default function OrderDetailsPage() {
   };
 
   const handlePrintPackingSlip = () => {
-    if (order) {
-      window.open(
-        `/api/orders/${order.id}/packing-slip?download=true`,
-        '_blank'
-      );
+    console.log('[PrintPackingSlip] Button clicked');
+    console.log('[PrintPackingSlip] Order:', order);
+    console.log('[PrintPackingSlip] AWB URL:', order?.airwayBillUrl);
+
+    if (!order) {
+      console.log('[PrintPackingSlip] No order, returning');
+      return;
+    }
+
+    if (order.airwayBillUrl) {
+      console.log('[PrintPackingSlip] Opening AWB URL:', order.airwayBillUrl);
+      // Open EasyParcel AWB PDF directly
+      window.open(order.airwayBillUrl, '_blank');
+      console.log('[PrintPackingSlip] window.open called');
+    } else {
+      console.log('[PrintPackingSlip] No AWB URL, showing toast');
+      toast({
+        title: 'AWB Not Available',
+        description: 'Airway bill has not been generated yet. Please fulfill the order first.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -629,13 +645,112 @@ export default function OrderDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Tracking Card */}
+          {/* Tracking/AWB Information Card */}
           {order.shipment && (
             <TrackingCard
               shipment={order.shipment}
               onRefreshTracking={handleRefreshTracking}
               isRefreshing={isRefreshingTracking}
             />
+          )}
+
+          {/* EasyParcel Shipping Information */}
+          {order.airwayBillGenerated && order.trackingNumber && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">EasyParcel Shipping</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                {/* Tracking & AWB */}
+                <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1.5">
+                  <span className="text-gray-500">Tracking:</span>
+                  <span className="font-semibold">{order.trackingNumber}</span>
+
+                  {order.easyparcelOrderNumber && (
+                    <>
+                      <span className="text-gray-500">Order No:</span>
+                      <span>{order.easyparcelOrderNumber}</span>
+                    </>
+                  )}
+
+                  {order.easyparcelParcelNumber && (
+                    <>
+                      <span className="text-gray-500">Parcel No:</span>
+                      <span>{order.easyparcelParcelNumber}</span>
+                    </>
+                  )}
+
+                  {order.courierName && (
+                    <>
+                      <span className="text-gray-500">Courier:</span>
+                      <span className="font-semibold">{order.courierName}</span>
+                    </>
+                  )}
+
+                  {order.courierServiceDetail && (
+                    <>
+                      <span className="text-gray-500">Method:</span>
+                      <span className="capitalize font-semibold">{order.courierServiceDetail}</span>
+                    </>
+                  )}
+
+                  {order.scheduledPickupDate && order.courierServiceDetail?.includes('pickup') && (
+                    <>
+                      <span className="text-gray-500">Pickup Date:</span>
+                      <span className="font-semibold">{new Date(order.scheduledPickupDate).toLocaleDateString('en-MY', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}</span>
+                    </>
+                  )}
+
+                  {order.shippingCostCharged && (
+                    <>
+                      <span className="text-gray-500">Cost:</span>
+                      <span>RM {Number(order.shippingCostCharged).toFixed(2)}</span>
+                    </>
+                  )}
+
+                  {order.easyparcelPaymentStatus && (
+                    <>
+                      <span className="text-gray-500">Status:</span>
+                      <span>{order.easyparcelPaymentStatus}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="pt-2 space-y-1.5">
+                  {order.trackingUrl && (
+                    <a
+                      href={order.trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs underline hover:no-underline block"
+                    >
+                      Track Shipment →
+                    </a>
+                  )}
+                  {order.airwayBillUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(order.airwayBillUrl || '', '_blank')}
+                      className="w-full h-7 text-xs"
+                    >
+                      View Airway Bill
+                    </Button>
+                  )}
+                </div>
+
+                {order.airwayBillGeneratedAt && (
+                  <p className="text-xs text-gray-400 pt-1">
+                    Generated {new Date(order.airwayBillGeneratedAt).toLocaleDateString('en-MY')}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
