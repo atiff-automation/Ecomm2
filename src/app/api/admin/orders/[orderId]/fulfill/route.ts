@@ -423,7 +423,7 @@ export async function POST(
     });
 
     console.log('[Fulfillment] EasyParcel order details:', {
-      easyparcelOrderNumber: paymentResponse.data.easyparcel_order_id,
+      easyparcelOrderNumber: paymentResponse.data.order_number,
       easyparcelPaymentStatus: paymentResponse.data.payment_status,
       easyparcelParcelNumber: parcelDetails.parcelno,
       shippingCostCharged: actualShippingCost,
@@ -440,7 +440,7 @@ export async function POST(
         airwayBillGeneratedAt: new Date(), // Set generation timestamp
         trackingUrl: parcelDetails.tracking_url, // Tracking URL from payment response
         // ✅ NEW EASYPARCEL FIELDS
-        easyparcelOrderNumber: paymentResponse.data.easyparcel_order_id || null, // EasyParcel order number
+        easyparcelOrderNumber: paymentResponse.data.order_number || null, // EasyParcel order number (FIXED: was easyparcel_order_id)
         easyparcelPaymentStatus: paymentResponse.data.payment_status || null, // Payment status (e.g., "Fully Paid")
         easyparcelParcelNumber: parcelDetails.parcelno || null, // Parcel number (EP-xxxxx)
         shippingCostCharged: actualShippingCost, // Actual cost charged (from EPSubmitOrderBulk)

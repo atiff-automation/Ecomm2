@@ -15,6 +15,7 @@ import { processReferralOrderCompletion } from '@/lib/referrals/referral-utils';
 import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 import { toyyibPayConfig } from '@/lib/config/toyyibpay-config';
 import { verifyWebhookSignature, getClientIP } from '@/lib/utils/security';
+import { logWebhookRequest } from '@/lib/utils/webhook-logger';
 
 // toyyibPay callback parameters
 interface ToyyibPayCallback {
@@ -28,9 +29,11 @@ interface ToyyibPayCallback {
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const clientIP = getClientIP(request);
+
   try {
     // Security: Log client IP and basic request info
-    const clientIP = getClientIP(request);
     console.log('🔍 toyyibPay webhook received from IP:', clientIP);
 
     // Parse form data from webhook
@@ -349,6 +352,23 @@ export async function POST(request: NextRequest) {
       paymentStatus: newPaymentStatus,
       orderStatus: newOrderStatus,
       billCode: callback.billcode,
+    });
+
+    // Log webhook to file for evidence
+    logWebhookRequest({
+      timestamp: new Date().toISOString(),
+      method: 'POST',
+      url: request.url,
+      headers: Object.fromEntries(request.headers.entries()),
+      body: webhookData,
+      clientIp: clientIP,
+      processed: true,
+      result: {
+        success: true,
+        orderNumber: order.orderNumber,
+        billCode: callback.billcode,
+        status: callback.status,
+      },
     });
 
     return NextResponse.json({
