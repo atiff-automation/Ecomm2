@@ -20,10 +20,12 @@ import {
   createEasyParcelService,
   EasyParcelError,
 } from '@/lib/shipping/easyparcel-service';
+import { createLoggedEasyParcelService } from '@/lib/monitoring/easyparcel-logger';
 import { SHIPPING_ERROR_CODES } from '@/lib/shipping/constants';
 import type { EasyParcelShipmentRequest } from '@/lib/shipping/types';
 import { emailService } from '@/lib/email/email-service';
 import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
+import { orderFlowLogger } from '@/lib/monitoring/order-flow-logger';
 
 /**
  * Zod schema for fulfillment request
@@ -254,8 +256,22 @@ export async function POST(
       whatsappParam: shipmentRequest.addon_whatsapp_tracking_enabled,
     });
 
-    // Step 10: Create shipment with EasyParcel API
-    const easyParcelService = createEasyParcelService(settings);
+    // Step 10: Create shipment with EasyParcel API (with comprehensive logging)
+    const easyParcelService = createLoggedEasyParcelService(settings);
+
+    // Log fulfillment initiation
+    orderFlowLogger.logInfo(
+      'Fulfillment: Starting',
+      `🚀 Initiating fulfillment for order ${order.orderNumber}`,
+      {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        serviceId: validatedData.serviceId,
+        pickupDate: validatedData.pickupDate,
+        weight: shippingWeight,
+        whatsappEnabled: settings.whatsappNotificationsEnabled,
+      }
+    );
 
     let shipmentResponse;
     try {
@@ -473,6 +489,22 @@ export async function POST(
       trackingNumber: updatedOrder.trackingNumber,
       awbNumber: updatedOrder.airwayBillNumber,
     });
+
+    // Log fulfillment completion
+    orderFlowLogger.logInfo(
+      'Fulfillment: Complete',
+      `✅ Fulfillment completed successfully for order ${order.orderNumber}`,
+      {
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.orderNumber,
+        status: updatedOrder.status,
+        trackingNumber: updatedOrder.trackingNumber,
+        awbNumber: updatedOrder.airwayBillNumber,
+        easyparcelOrderNumber: updatedOrder.easyparcelOrderNumber,
+        easyparcelPaymentStatus: updatedOrder.easyparcelPaymentStatus,
+        shippingCostCharged: actualShippingCost,
+      }
+    );
 
     // Step 12: Send email notification to customer
     try {

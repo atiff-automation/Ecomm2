@@ -492,27 +492,7 @@ export class EasyParcelService {
         );
       }
 
-      // Check payment status
-      if (bulkResult.messagenow !== 'Fully Paid') {
-        // Handle insufficient balance or other payment issues
-        const errorMessage = bulkResult.messagenow || 'Payment failed';
-
-        if (errorMessage.toLowerCase().includes('insufficient')) {
-          throw new EasyParcelError(
-            SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE,
-            errorMessage,
-            { orderNumber, response }
-          );
-        }
-
-        throw new EasyParcelError(
-          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          errorMessage,
-          { orderNumber, response }
-        );
-      }
-
-      // Extract parcel details
+      // Extract parcel details first
       const parcels = bulkResult.parcel || [];
       if (parcels.length === 0) {
         throw new EasyParcelError(
@@ -520,6 +500,21 @@ export class EasyParcelService {
           'No parcel details returned after payment',
           { orderNumber, response }
         );
+      }
+
+      // IMPORTANT: If we got here with parcels, payment succeeded
+      // The messagenow field is informational and can vary ("Fully Paid", "paid", etc.)
+      // EasyParcel API docs don't guarantee exact string match
+      // Only check for actual payment failures (insufficient balance)
+      if (bulkResult.messagenow) {
+        const message = bulkResult.messagenow.toLowerCase();
+        if (message.includes('insufficient') || message.includes('not enough credit')) {
+          throw new EasyParcelError(
+            SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE,
+            bulkResult.messagenow,
+            { orderNumber, response }
+          );
+        }
       }
 
       console.log('[EasyParcel] Payment successful:', {

@@ -140,6 +140,75 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
       }
     },
 
+    async payOrder(orderNumber: string) {
+      orderFlowLogger.logInfo(
+        'EasyParcel: Payment Processing',
+        '💳 CRITICAL OPERATION - Processing payment for shipment',
+        {
+          easyparcelOrderNumber: orderNumber,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      orderFlowLogger.logRequest('EasyParcel: Payment Request', 'EPPayOrderBulk', {
+        orderNumber,
+        operation: 'PAYMENT_DEDUCTION',
+        note: 'This will deduct from EasyParcel credit balance'
+      });
+
+      try {
+        const result = await service.payOrder(orderNumber);
+
+        // Log the EXACT response from EasyParcel
+        orderFlowLogger.logResponse(
+          'EasyParcel: Payment Response (EXACT FROM API)',
+          'EPPayOrderBulk',
+          {
+            success: result.success,
+            rawResponse: result, // Capture entire response
+            orderNumber: result.data.order_number,
+            paymentStatus: result.data.payment_status,
+            parcelCount: result.data.parcels.length,
+            parcels: result.data.parcels.map((p: any) => ({
+              parcelno: p.parcelno,
+              awb: p.awb,
+              awb_id_link: p.awb_id_link,
+              tracking_url: p.tracking_url,
+              hasAwb: !!p.awb,
+              hasAwbLink: !!p.awb_id_link,
+              hasTrackingUrl: !!p.tracking_url
+            }))
+          }
+        );
+
+        orderFlowLogger.logInfo(
+          'EasyParcel: Payment Successful',
+          '✅ Payment processed - AWB generated',
+          {
+            orderNumber: result.data.order_number,
+            paymentStatus: result.data.payment_status,
+            awbGenerated: result.data.parcels.length > 0,
+            firstParcelAwb: result.data.parcels[0]?.awb || 'N/A'
+          }
+        );
+
+        return result;
+      } catch (error) {
+        orderFlowLogger.logError(
+          'EasyParcel: Payment Processing Failed',
+          error,
+          {
+            orderNumber,
+            timestamp: new Date().toISOString(),
+            errorType: error instanceof Error ? error.name : 'Unknown',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            errorDetails: error
+          }
+        );
+        throw error;
+      }
+    },
+
     async getTracking(trackingNumber: string) {
       orderFlowLogger.logInfo('EasyParcel: Tracking', 'Fetching tracking information', {
         trackingNumber
