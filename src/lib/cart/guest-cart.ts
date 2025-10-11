@@ -27,33 +27,39 @@ const GUEST_CART_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
  * Get guest cart from cookies
  */
 export function getGuestCart(): GuestCart {
-  const cookieStore = cookies();
-  const cartCookie = cookieStore.get(GUEST_CART_COOKIE_NAME);
-
-  if (!cartCookie?.value) {
-    return { items: [], updatedAt: new Date().toISOString() };
-  }
-
   try {
-    const cart = JSON.parse(cartCookie.value);
+    const cookieStore = cookies();
+    const cartCookie = cookieStore.get(GUEST_CART_COOKIE_NAME);
 
-    // Validate cart structure
-    if (!cart.items || !Array.isArray(cart.items)) {
+    if (!cartCookie?.value) {
       return { items: [], updatedAt: new Date().toISOString() };
     }
 
-    // Filter out invalid items
-    const validItems = cart.items.filter(
-      (item: any) =>
-        item.productId && typeof item.quantity === 'number' && item.quantity > 0
-    );
+    try {
+      const cart = JSON.parse(cartCookie.value);
 
-    return {
-      items: validItems,
-      updatedAt: cart.updatedAt || new Date().toISOString(),
-    };
-  } catch (error) {
-    console.warn('Invalid guest cart cookie:', error);
+      // Validate cart structure
+      if (!cart.items || !Array.isArray(cart.items)) {
+        return { items: [], updatedAt: new Date().toISOString() };
+      }
+
+      // Filter out invalid items
+      const validItems = cart.items.filter(
+        (item: any) =>
+          item.productId && typeof item.quantity === 'number' && item.quantity > 0
+      );
+
+      return {
+        items: validItems,
+        updatedAt: cart.updatedAt || new Date().toISOString(),
+      };
+    } catch (error) {
+      console.warn('Invalid guest cart cookie:', error);
+      return { items: [], updatedAt: new Date().toISOString() };
+    }
+  } catch (cookieError) {
+    // Handle production async context issues with cookies()
+    console.error('Failed to access cookies in getGuestCart:', cookieError);
     return { items: [], updatedAt: new Date().toISOString() };
   }
 }
@@ -62,15 +68,20 @@ export function getGuestCart(): GuestCart {
  * Set guest cart in cookies
  */
 export function setGuestCart(cart: GuestCart): void {
-  const cookieStore = cookies();
+  try {
+    const cookieStore = cookies();
 
-  cookieStore.set(GUEST_CART_COOKIE_NAME, JSON.stringify(cart), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: GUEST_CART_MAX_AGE,
-    path: '/',
-  });
+    cookieStore.set(GUEST_CART_COOKIE_NAME, JSON.stringify(cart), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: GUEST_CART_MAX_AGE,
+      path: '/',
+    });
+  } catch (error) {
+    // Handle production async context issues with cookies()
+    console.error('Failed to set guest cart cookie:', error);
+  }
 }
 
 /**
@@ -145,8 +156,13 @@ export function removeFromGuestCart(productId: string): GuestCart {
  * Clear guest cart
  */
 export function clearGuestCart(): void {
-  const cookieStore = cookies();
-  cookieStore.delete(GUEST_CART_COOKIE_NAME);
+  try {
+    const cookieStore = cookies();
+    cookieStore.delete(GUEST_CART_COOKIE_NAME);
+  } catch (error) {
+    // Handle production async context issues with cookies()
+    console.error('Failed to clear guest cart cookie:', error);
+  }
 }
 
 /**

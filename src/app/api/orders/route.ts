@@ -624,7 +624,14 @@ export async function POST(request: NextRequest) {
         qualifyingTotal >= membershipConfig.membershipThreshold,
     });
   } catch (error) {
-    console.error('Error creating order:', error);
+    // Enhanced error logging for production debugging
+    console.error('❌ Error creating order:', error);
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
 
     if (error instanceof z.ZodError) {
       // Create user-friendly error messages
@@ -683,8 +690,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Return more detailed error message in development
+    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
+      ? `Failed to create order: ${error.message}`
+      : 'Failed to create order';
+
     return NextResponse.json(
-      { message: 'Failed to create order' },
+      { message: errorMessage },
       { status: 500 }
     );
   }
