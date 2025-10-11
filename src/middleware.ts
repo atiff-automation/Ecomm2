@@ -61,7 +61,7 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     return 'admin';
   }
 
-  // Public routes - minimal protection (auth, products, health checks, public configs)
+  // Public routes - minimal protection (auth, products, health checks, public configs, webhooks)
   if (
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/products') ||
@@ -69,15 +69,16 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
     pathname.startsWith('/api/health') ||
     pathname === '/api/payment/methods' || // Public endpoint for payment method display
     pathname === '/api/chat-config/public' || // Public chat configuration
-    pathname === '/api/business-profile/public' // Public business profile
+    pathname === '/api/business-profile/public' || // Public business profile
+    pathname.startsWith('/api/webhooks') // Payment gateway webhooks (ToyyibPay, etc.)
   ) {
     return 'public';
   }
 
-  // Sensitive operations - webhooks, uploads, site customization
+  // Sensitive operations - uploads, site customization
   // Note: Payment routes moved to standard to support guest checkout
+  // Note: Webhooks moved to public to allow payment gateway callbacks
   if (
-    pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/upload') ||
     (pathname.startsWith('/api/site-customization') && pathname !== '/api/site-customization/current')
   ) {
