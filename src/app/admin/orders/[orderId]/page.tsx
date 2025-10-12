@@ -655,7 +655,7 @@ export default function OrderDetailsPage() {
           )}
 
           {/* EasyParcel Shipping Information */}
-          {order.airwayBillGenerated && order.trackingNumber && (
+          {(order.trackingNumber || order.easyparcelParcelNumber) && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">EasyParcel Shipping</CardTitle>

@@ -432,10 +432,10 @@ export async function POST(
     const actualShippingCost = shipmentResponse.data.price || null;
 
     console.log('[Fulfillment] Parcel details from payment:', {
-      parcelno: parcelDetails.parcelno,    // EasyParcel internal reference (EP-xxxxx)
-      awb: parcelDetails.awb,              // Actual courier tracking number
-      awbLink: parcelDetails.awb_id_link,  // AWB PDF link
-      trackingUrl: parcelDetails.tracking_url, // Tracking page URL
+      parcelno: parcelDetails.parcelno,
+      awb: parcelDetails.awb,
+      awbLink: parcelDetails.awb_id_link,
+      trackingUrl: parcelDetails.tracking_url,
     });
 
     console.log('[Fulfillment] EasyParcel order details:', {
@@ -449,12 +449,12 @@ export async function POST(
       where: { id: params.orderId },
       data: {
         status: 'READY_TO_SHIP',
-        trackingNumber: parcelDetails.awb, // ✅ FIXED: Use AWB as tracking number (the real courier tracking number)
-        airwayBillNumber: parcelDetails.awb, // AWB from payment response (same as tracking number)
-        airwayBillUrl: parcelDetails.awb_id_link, // AWB PDF link from payment response
-        airwayBillGenerated: true, // Always true after successful payment
-        airwayBillGeneratedAt: new Date(), // Set generation timestamp
-        trackingUrl: parcelDetails.tracking_url, // Tracking URL from payment response
+        trackingNumber: parcelDetails.awb || null,
+        airwayBillNumber: parcelDetails.awb || null,
+        airwayBillUrl: parcelDetails.awb_id_link || null,
+        airwayBillGenerated: !!parcelDetails.awb_id_link,
+        airwayBillGeneratedAt: parcelDetails.awb_id_link ? new Date() : null,
+        trackingUrl: parcelDetails.tracking_url || null,
         // ✅ NEW EASYPARCEL FIELDS
         easyparcelOrderNumber: paymentResponse.data.order_number || null, // EasyParcel order number (FIXED: was easyparcel_order_id)
         easyparcelPaymentStatus: paymentResponse.data.payment_status || null, // Payment status (e.g., "Fully Paid")
