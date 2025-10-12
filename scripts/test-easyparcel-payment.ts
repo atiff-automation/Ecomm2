@@ -32,6 +32,9 @@ interface EasyParcelPaymentResponse {
 // ============================================================================
 // PASTE YOUR CAPTURED RESPONSE HERE
 // ============================================================================
+// REAL RESPONSE FROM PRODUCTION (2025-10-12)
+// Order: ORD-20251012-NJCX
+// EasyParcel Order: EI-ZQ932
 const mockResponse: EasyParcelPaymentResponse = {
   api_status: 'Success',
   error_code: '0',
@@ -39,15 +42,15 @@ const mockResponse: EasyParcelPaymentResponse = {
   result: [
     {
       status: 'Success',
-      orderno: 'EI-12345',
-      messagenow: 'Fully Paid',  // Change this to test different scenarios
+      orderno: 'EI-ZQ932',
+      messagenow: 'Payment Done',  // ⚠️ NOT "Fully Paid" - this caused the failure!
       remarks: '',
       parcel: [
         {
-          parcelno: 'EP-12345',
-          awb: 'JT123456789',
-          awb_id_link: 'https://example.com/awb.pdf',
-          tracking_url: 'https://example.com/track',
+          parcelno: 'EP-A2V7KE',
+          awb: '631875892940',
+          awb_id_link: 'https://connect.easyparcel.my/?ac=AWBLabel&id=RVAtMTBGcWlpNVpQIzI2OTY0ODA1OA%3D%3D',
+          tracking_url: 'https://app.easyparcel.com/my/en/track/details/?courier=JnT-Express&awb=631875892940',
         },
       ],
     },

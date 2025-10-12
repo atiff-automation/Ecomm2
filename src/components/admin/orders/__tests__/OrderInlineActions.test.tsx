@@ -217,7 +217,7 @@ describe('OrderInlineActions', () => {
       fireEvent.click(printButton);
 
       expect(mockWindowOpen).toHaveBeenCalledWith(
-        '/api/orders/order-1/invoice?download=true',
+        '/api/orders/order-1/invoice?format=pdf&download=true',
         '_blank'
       );
     });

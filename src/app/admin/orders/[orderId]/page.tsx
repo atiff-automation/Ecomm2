@@ -242,7 +242,7 @@ export default function OrderDetailsPage() {
 
   const handlePrintInvoice = () => {
     if (order) {
-      window.open(`/api/orders/${order.id}/invoice?download=true`, '_blank');
+      window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`, '_blank');
     }
   };
 

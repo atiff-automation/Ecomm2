@@ -101,7 +101,7 @@ export function OrderInlineActions({
   };
 
   const handlePrintInvoice = () => {
-    window.open(`/api/orders/${order.id}/invoice?download=true`, '_blank');
+    window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`, '_blank');
   };
 
   const handleTrackShipment = () => {
