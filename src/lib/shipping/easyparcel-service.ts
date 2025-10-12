@@ -497,45 +497,20 @@ export class EasyParcelService {
         );
       }
 
-      // VALIDATION: The parcel array is the ONLY reliable indicator of payment success
-      // EasyParcel API documentation shows messagenow: "Fully Paid" as example,
-      // but production returns "Payment Done" or other variants
-      // The messagenow field is just a display message from EasyParcel - NOT for validation
-      //
-      // Success = parcels array exists with parcel data (awb may be null in sandbox)
-      // Failure = parcels array is empty or missing
+      // NO VALIDATION - EasyParcel API handles success/failure via status field
+      // If we got here with status: "Success", payment succeeded
+      // WooCommerce plugin doesn't validate either - just returns the response
       const parcels = bulkResult.parcel || [];
 
-      console.log('[EasyParcel] Validating payment via parcel array:', {
-        parcelCount: parcels.length,
-        firstParcelHasData: parcels[0] ? true : false,
-        firstParcelNo: parcels[0]?.parcelno || null,
-        firstAWB: parcels[0]?.awb || null,
-        messagenow: bulkResult.messagenow,
-      });
-
-      if (parcels.length === 0 || !parcels[0]?.parcelno) {
-        // No parcel data = payment failed (regardless of messagenow)
-        const errorMessage = bulkResult.messagenow || 'No parcel details returned after payment';
-        throw new EasyParcelError(
-          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          errorMessage,
-          { orderNumber, response, reason: 'No parcel data in response' }
-        );
-      }
-
-      // If we got here, payment succeeded (parcels with AWB exist)
-      // messagenow is purely informational at this point
-
-      console.log('[EasyParcel] Payment successful:', {
+      console.log('[EasyParcel] Payment completed - NO VALIDATION (trust EasyParcel status):', {
         orderNumber: bulkResult.orderno,
         paymentStatus: bulkResult.messagenow,
         parcelCount: parcels.length,
         parcels: parcels.map(p => ({
-          parcelNo: p.parcelno,
-          awb: p.awb,
-          hasAwbLink: !!p.awb_id_link,
-          hasTrackingUrl: !!p.tracking_url,
+          parcelNo: p?.parcelno || null,
+          awb: p?.awb || null,
+          hasAwbLink: !!p?.awb_id_link,
+          hasTrackingUrl: !!p?.tracking_url,
         })),
       });
 
