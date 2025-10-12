@@ -135,6 +135,26 @@ export default function OrderDetailsPage() {
       return;
     }
 
+    // Prevent fulfillment if order is already fulfilled
+    if (order.shipment) {
+      toast({
+        title: 'Already Fulfilled',
+        description: 'This order has already been fulfilled.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Prevent fulfillment if payment not completed
+    if (order.paymentStatus !== 'PAID') {
+      toast({
+        title: 'Payment Required',
+        description: 'Order must be paid before fulfillment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!order.selectedCourierServiceId) {
       toast({
         title: 'Error',

@@ -73,19 +73,14 @@ export function OrderInlineActions({
     try {
       const result = await onFulfill(order.id);
 
-      if (result.success) {
-        toast({
-          title: 'Success',
-          description: result.message || 'Order fulfilled successfully',
-        });
-        window.location.reload();
-      } else {
+      if (!result.success && result.error) {
         toast({
           title: 'Error',
-          description: result.error || 'Failed to fulfill order',
+          description: result.error,
           variant: 'destructive',
         });
       }
+      // Success is handled by the parent component (opens dialog or refreshes)
     } catch (error) {
       console.error('[OrderInlineActions] Fulfillment error:', error);
       toast({
@@ -99,7 +94,15 @@ export function OrderInlineActions({
   };
 
   const handleDownloadPackingSlip = () => {
-    window.open(`/api/orders/${order.id}/packing-slip?format=pdf&download=true`, '_blank');
+    if (order.airwayBillUrl) {
+      window.open(order.airwayBillUrl, '_blank');
+    } else {
+      toast({
+        title: 'Not Available',
+        description: 'Packing slip is not yet available.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleTrackShipment = () => {

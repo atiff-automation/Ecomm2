@@ -331,6 +331,7 @@ export function OrderTable({
                       status: order.status,
                       paymentStatus: order.paymentStatus,
                       airwayBillGenerated: order.airwayBillGenerated,
+                      airwayBillUrl: order.airwayBillUrl,
                       shipment: order.shipment
                         ? { trackingNumber: order.shipment.trackingNumber || '' }
                         : null,
