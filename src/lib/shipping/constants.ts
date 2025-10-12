@@ -159,11 +159,16 @@ export const WEIGHT_LIMITS = {
  * API Configuration
  *
  * EasyParcel API endpoints and defaults.
+ *
+ * NOTE: Actual timeouts are environment-specific:
+ * - Sandbox: 60 seconds (EASYPARCEL_SANDBOX_TIMEOUT env var) - Sandbox API is very slow
+ * - Production: 15 seconds (EASYPARCEL_PRODUCTION_TIMEOUT env var)
+ * DEFAULT_TIMEOUT is a fallback only.
  */
 export const EASYPARCEL_CONFIG = {
   SANDBOX_URL: 'https://demo.connect.easyparcel.my',
   PRODUCTION_URL: 'https://connect.easyparcel.my',
-  DEFAULT_TIMEOUT: 30000, // 30 seconds - EasyParcel production API can be slow
+  DEFAULT_TIMEOUT: 30000, // 30 seconds - Fallback timeout (not used when env vars are set)
   MAX_RETRIES: 3,
 } as const;
 

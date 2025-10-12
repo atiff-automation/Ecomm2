@@ -20,7 +20,7 @@ const easyParcelConfig = {
   },
   sandbox: {
     url: process.env.EASYPARCEL_SANDBOX_URL || 'http://demo.connect.easyparcel.my',
-    timeout: parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '8000')
+    timeout: parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '60000')
   }
 };
 

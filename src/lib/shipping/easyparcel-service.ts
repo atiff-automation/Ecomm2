@@ -38,7 +38,11 @@ export class EasyParcelService {
       environment === 'production'
         ? EASYPARCEL_CONFIG.PRODUCTION_URL
         : EASYPARCEL_CONFIG.SANDBOX_URL;
-    this.timeout = EASYPARCEL_CONFIG.DEFAULT_TIMEOUT;
+    // Use environment-specific timeout: 60s for sandbox (slow API), 15s for production
+    this.timeout =
+      environment === 'sandbox'
+        ? parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '60000')
+        : parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000');
   }
 
   /**
