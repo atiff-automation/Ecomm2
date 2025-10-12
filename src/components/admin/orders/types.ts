@@ -155,6 +155,7 @@ export interface OrderActionData {
   orderNumber: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  airwayBillGenerated?: boolean;
   shipment?: {
     trackingNumber: string;
   } | null;

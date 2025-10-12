@@ -232,9 +232,23 @@ export function OrderTable({
 
           <TableBody>
             {orders.map(order => (
-              <TableRow key={order.id}>
+              <TableRow
+                key={order.id}
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={(e) => {
+                  // Don't navigate if clicking on checkbox, buttons, or select
+                  if (
+                    (e.target as HTMLElement).closest('button') ||
+                    (e.target as HTMLElement).closest('[role="checkbox"]') ||
+                    (e.target as HTMLElement).closest('[role="combobox"]')
+                  ) {
+                    return;
+                  }
+                  window.location.href = `/admin/orders/${order.id}`;
+                }}
+              >
                 {/* Checkbox */}
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   {onSelectOrder && (
                     <Checkbox
                       checked={selectedOrderIds.includes(order.id)}
@@ -309,13 +323,14 @@ export function OrderTable({
                 </TableCell>
 
                 {/* Inline Actions */}
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <OrderInlineActions
                     order={{
                       id: order.id,
                       orderNumber: order.orderNumber,
                       status: order.status,
                       paymentStatus: order.paymentStatus,
+                      airwayBillGenerated: order.airwayBillGenerated,
                       shipment: order.shipment
                         ? { trackingNumber: order.shipment.trackingNumber || '' }
                         : null,

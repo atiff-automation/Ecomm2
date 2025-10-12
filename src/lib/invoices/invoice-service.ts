@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
 import { businessProfileService } from '@/lib/receipts/business-profile-service';
+import { siteCustomizationService } from '@/lib/services/site-customization.service';
 
 export interface ReceiptData {
   order: {
@@ -71,10 +72,27 @@ export interface ReceiptData {
 
 export class ReceiptService {
   /**
-   * Get company info from business profile service
+   * Get company info with logo from site customization
+   * Falls back to business profile if site customization doesn't have a logo
    */
   private async getCompanyInfo() {
-    return await businessProfileService.getLegacyCompanyInfo();
+    // Get business profile info (company name, address, etc.)
+    const businessInfo = await businessProfileService.getLegacyCompanyInfo();
+
+    // Get logo from site customization
+    const siteCustomization = await siteCustomizationService.getConfiguration();
+
+    // Use site customization logo if available, otherwise use business profile logo
+    const logo = siteCustomization.branding?.logo || businessInfo.logo;
+
+    console.log('📋 Company Info Source:');
+    console.log('- Using site customization logo:', !!siteCustomization.branding?.logo);
+    console.log('- Fallback to business profile logo:', !siteCustomization.branding?.logo && !!businessInfo.logo);
+
+    return {
+      ...businessInfo,
+      logo: logo
+    };
   }
 
   /**
@@ -234,11 +252,23 @@ export class ReceiptService {
    * Generate HTML receipt template
    */
   async generateReceiptHTML(receiptData: ReceiptData): Promise<string> {
-    const { order, customer, orderItems, shippingAddress, taxBreakdown } =
+    const { order, customer, orderItems, shippingAddress, billingAddress, taxBreakdown } =
       receiptData;
 
     // Get company info from business profile
     const companyInfo = await this.getCompanyInfo();
+
+    // Debug logging
+    console.log('📄 Invoice Generation Debug:');
+    console.log('- Has billingAddress:', !!billingAddress);
+    console.log('- Has logo:', !!companyInfo.logo);
+    if (companyInfo.logo) {
+      console.log('- Logo URL:', companyInfo.logo.url);
+      console.log('- Logo dimensions:', `${companyInfo.logo.width}x${companyInfo.logo.height}`);
+    }
+    if (billingAddress) {
+      console.log('- Billing address:', `${billingAddress.firstName} ${billingAddress.lastName}, ${billingAddress.city}`);
+    }
 
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-MY', {
@@ -420,6 +450,11 @@ export class ReceiptService {
       <body>
         <div class="receipt-header">
           <div class="company-info">
+            ${
+              companyInfo.logo
+                ? `<img src="${companyInfo.logo.url}" alt="${companyInfo.name}" style="max-width: ${companyInfo.logo.width}px; max-height: ${companyInfo.logo.height}px; margin-bottom: 10px;" />`
+                : ''
+            }
             <h1>${companyInfo.name}</h1>
             <p>Registration No: ${companyInfo.registrationNo}</p>
             <p>SST No: ${companyInfo.sstNo}</p>
@@ -436,6 +471,22 @@ export class ReceiptService {
         </div>
 
         <div class="billing-shipping">
+          ${
+            billingAddress
+              ? `
+          <div class="address-section">
+            <h3>Bill To</h3>
+            <p><strong>${billingAddress.firstName} ${billingAddress.lastName}</strong>
+            ${customer.isMember ? '<span class="member-badge">MEMBER</span>' : ''}</p>
+            <p>${billingAddress.addressLine1}</p>
+            ${billingAddress.addressLine2 ? `<p>${billingAddress.addressLine2}</p>` : ''}
+            <p>${billingAddress.city}, ${billingAddress.state} ${billingAddress.postalCode}</p>
+            <p>${billingAddress.country}</p>
+            <p>Email: ${customer.email}</p>
+            ${billingAddress.phone ? `<p>Phone: ${billingAddress.phone}</p>` : ''}
+          </div>
+          `
+              : `
           <div class="address-section">
             <h3>Bill To</h3>
             <p><strong>${customer.firstName || ''} ${customer.lastName || ''}</strong>
@@ -443,6 +494,8 @@ export class ReceiptService {
             <p>Email: ${customer.email}</p>
             ${customer.phone ? `<p>Phone: ${customer.phone}</p>` : ''}
           </div>
+          `
+          }
           ${
             shippingAddress
               ? `

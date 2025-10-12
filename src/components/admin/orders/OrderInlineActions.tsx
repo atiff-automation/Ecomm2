@@ -16,14 +16,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Eye,
   Printer,
   Truck,
   Package,
   MoreVertical,
   Loader2,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatus } from '@prisma/client';
 import { ORDER_STATUSES } from '@/lib/constants/order';
@@ -100,8 +98,8 @@ export function OrderInlineActions({
     }
   };
 
-  const handlePrintInvoice = () => {
-    window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`, '_blank');
+  const handleDownloadPackingSlip = () => {
+    window.open(`/api/orders/${order.id}/packing-slip?format=pdf&download=true`, '_blank');
   };
 
   const handleTrackShipment = () => {
@@ -114,7 +112,14 @@ export function OrderInlineActions({
     }
   };
 
+  // Fulfillment is available if:
+  // 1. Payment status is PAID
+  // 2. Order doesn't have a shipment yet (not fulfilled)
   const canFulfill = order.paymentStatus === 'PAID' && !order.shipment;
+
+  // Show packing slip if airway bill has been generated
+  const hasPackingSlip = order.airwayBillGenerated === true;
+
   const hasTracking = order.shipment?.trackingNumber;
 
   // Compact view (for mobile)
@@ -127,16 +132,6 @@ export function OrderInlineActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={`/admin/orders/${order.id}`}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePrintInvoice}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print Invoice
-          </DropdownMenuItem>
           {canFulfill && (
             <DropdownMenuItem onClick={handleFulfill} disabled={isFulfilling}>
               {isFulfilling && (
@@ -144,6 +139,12 @@ export function OrderInlineActions({
               )}
               {!isFulfilling && <Truck className="mr-2 h-4 w-4" />}
               Fulfill Order
+            </DropdownMenuItem>
+          )}
+          {hasPackingSlip && (
+            <DropdownMenuItem onClick={handleDownloadPackingSlip}>
+              <Printer className="mr-2 h-4 w-4" />
+              Download Packing Slip
             </DropdownMenuItem>
           )}
           {hasTracking && (
@@ -160,25 +161,7 @@ export function OrderInlineActions({
   // Full view (for desktop)
   return (
     <div className="flex items-center gap-1 justify-end">
-      {/* View Order */}
-      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
-        <Link href={`/admin/orders/${order.id}`} title="View order details">
-          <Eye className="h-4 w-4" />
-        </Link>
-      </Button>
-
-      {/* Print Invoice */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0"
-        onClick={handlePrintInvoice}
-        title="Print invoice"
-      >
-        <Printer className="h-4 w-4" />
-      </Button>
-
-      {/* Quick Fulfill (if eligible) */}
+      {/* Fulfill Order - Only show if paid and not yet fulfilled */}
       {canFulfill && (
         <Button
           variant="ghost"
@@ -193,6 +176,32 @@ export function OrderInlineActions({
           ) : (
             <Truck className="h-4 w-4" />
           )}
+        </Button>
+      )}
+
+      {/* Fulfill Order - Disabled/Grey if already fulfilled */}
+      {!canFulfill && order.paymentStatus === 'PAID' && order.shipment && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 opacity-50 cursor-not-allowed"
+          disabled
+          title="Order already fulfilled"
+        >
+          <Truck className="h-4 w-4" />
+        </Button>
+      )}
+
+      {/* Download Packing Slip - Only show if AWB generated */}
+      {hasPackingSlip && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={handleDownloadPackingSlip}
+          title="Download packing slip"
+        >
+          <Printer className="h-4 w-4" />
         </Button>
       )}
 

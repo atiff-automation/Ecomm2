@@ -26,21 +26,26 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
 
+    // Handle tab-based filtering
     if (status) {
-      if (status === 'pending_shipping') {
-        // Orders that need shipping assignment
-        where.OR = [
-          { status: 'CONFIRMED' },
-          {
-            AND: [
-              { status: 'PROCESSING' },
-              {
-                shipment: null,
-              },
-            ],
-          },
-        ];
+      if (status === 'awaiting-payment') {
+        // Orders waiting for payment
+        where.paymentStatus = 'PENDING';
+      } else if (status === 'processing') {
+        // Paid orders awaiting fulfillment (not yet shipped)
+        where.paymentStatus = 'PAID';
+        where.status = { in: ['PAID', 'READY_TO_SHIP'] };
+      } else if (status === 'shipped') {
+        // Orders in transit or out for delivery
+        where.status = { in: ['IN_TRANSIT', 'OUT_FOR_DELIVERY'] };
+      } else if (status === 'delivered') {
+        // Successfully delivered orders
+        where.status = 'DELIVERED';
+      } else if (status === 'cancelled') {
+        // Cancelled orders
+        where.status = 'CANCELLED';
       } else if (status !== 'all') {
+        // Handle direct status filtering (uppercase)
         where.status = status.toUpperCase();
       }
     }

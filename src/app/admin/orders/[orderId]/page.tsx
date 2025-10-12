@@ -23,10 +23,11 @@ import {
   MapPin,
   CreditCard,
   Trash2,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
-import { TrackingCard } from '@/components/admin/orders/TrackingCard';
 import { FulfillmentConfirmDialog } from '@/components/admin/orders/FulfillmentConfirmDialog';
 import {
   formatCurrency,
@@ -47,7 +48,6 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isFulfilling, setIsFulfilling] = useState(false);
-  const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
@@ -110,7 +110,7 @@ export default function OrderDetailsPage() {
           title: 'Success',
           description: 'Order status updated successfully',
         });
-        fetchOrder(); // Refresh order data
+        fetchOrder();
       } else {
         const error = await response.json();
         toast({
@@ -131,22 +131,11 @@ export default function OrderDetailsPage() {
   };
 
   const handleFulfill = () => {
-    console.log('[OrderDetailsPage] handleFulfill called');
-
     if (!order) {
-      console.log('[OrderDetailsPage] No order, returning');
       return;
     }
 
-    console.log('[OrderDetailsPage] Order:', {
-      id: order.id,
-      selectedCourierServiceId: order.selectedCourierServiceId,
-      courierName: order.courierName
-    });
-
-    // Check if courier service was selected during checkout
     if (!order.selectedCourierServiceId) {
-      console.log('[OrderDetailsPage] No courier service selected, showing error');
       toast({
         title: 'Error',
         description: 'No courier service selected. Please select a courier from the order settings.',
@@ -155,8 +144,6 @@ export default function OrderDetailsPage() {
       return;
     }
 
-    // Open fulfillment confirmation dialog
-    console.log('[OrderDetailsPage] Opening fulfillment dialog');
     setFulfillmentDialogOpen(true);
   };
 
@@ -184,10 +171,7 @@ export default function OrderDetailsPage() {
           description: 'Order fulfilled successfully',
         });
 
-        // Close dialog
         setFulfillmentDialogOpen(false);
-
-        // Refresh order data
         fetchOrder();
       } else {
         const error = await response.json();
@@ -195,48 +179,9 @@ export default function OrderDetailsPage() {
       }
     } catch (error) {
       console.error('[OrderDetailsPage] Fulfillment error:', error);
-      // Re-throw to be caught by dialog component
       throw error;
     } finally {
       setIsFulfilling(false);
-    }
-  };
-
-  const handleRefreshTracking = async () => {
-    if (!order?.shipment) {
-      return;
-    }
-
-    setIsRefreshingTracking(true);
-    try {
-      const response = await fetch(
-        `/api/shipments/${order.shipment.id}/tracking/refresh`,
-        {
-          method: 'POST',
-        }
-      );
-
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Tracking information updated',
-        });
-        fetchOrder(); // Refresh order data
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to refresh tracking',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to refresh tracking',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRefreshingTracking(false);
     }
   };
 
@@ -247,25 +192,16 @@ export default function OrderDetailsPage() {
   };
 
   const handlePrintPackingSlip = () => {
-    console.log('[PrintPackingSlip] Button clicked');
-    console.log('[PrintPackingSlip] Order:', order);
-    console.log('[PrintPackingSlip] AWB URL:', order?.airwayBillUrl);
-
     if (!order) {
-      console.log('[PrintPackingSlip] No order, returning');
       return;
     }
 
     if (order.airwayBillUrl) {
-      console.log('[PrintPackingSlip] Opening AWB URL:', order.airwayBillUrl);
-      // Open EasyParcel AWB PDF directly
       window.open(order.airwayBillUrl, '_blank');
-      console.log('[PrintPackingSlip] window.open called');
     } else {
-      console.log('[PrintPackingSlip] No AWB URL, showing toast');
       toast({
-        title: 'AWB Not Available',
-        description: 'Airway bill has not been generated yet. Please fulfill the order first.',
+        title: 'Not Available',
+        description: 'Packing slip is not yet available. Please fulfill the order first.',
         variant: 'destructive',
       });
     }
@@ -323,12 +259,15 @@ export default function OrderDetailsPage() {
     );
   }
 
+  // Determine button states
   const canFulfill = order.paymentStatus === 'PAID' && !order.shipment;
+  const isFulfilled = order.shipment !== null;
+  const hasPackingSlip = order.airwayBillGenerated === true;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -430,73 +369,82 @@ export default function OrderDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Customer Information */}
+          {/* Customer & Shipping Information (Combined) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Customer Information
+                Customer & Shipping Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-6">
+              {/* Customer Info */}
               <div>
-                <p className="text-sm text-gray-500">Name</p>
-                <p className="font-medium">{getCustomerName(order)}</p>
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Customer Details
+                </h3>
+                <div className="space-y-2 pl-6">
+                  <div>
+                    <p className="text-sm text-gray-500">Name</p>
+                    <p className="font-medium">{getCustomerName(order)}</p>
+                  </div>
+                  {order.user?.email && (
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="font-medium">{order.user.email}</p>
+                    </div>
+                  )}
+                  {order.guestEmail && (
+                    <div>
+                      <p className="text-sm text-gray-500">Email (Guest)</p>
+                      <p className="font-medium">{order.guestEmail}</p>
+                    </div>
+                  )}
+                  {order.user?.phone && (
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="font-medium">{order.user.phone}</p>
+                    </div>
+                  )}
+                  {order.user?.isMember && (
+                    <Badge variant="secondary">Member</Badge>
+                  )}
+                </div>
               </div>
-              {order.user?.email && (
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{order.user.email}</p>
-                </div>
-              )}
-              {order.guestEmail && (
-                <div>
-                  <p className="text-sm text-gray-500">Email (Guest)</p>
-                  <p className="font-medium">{order.guestEmail}</p>
-                </div>
-              )}
-              {order.user?.phone && (
-                <div>
-                  <p className="text-sm text-gray-500">Phone</p>
-                  <p className="font-medium">{order.user.phone}</p>
-                </div>
-              )}
-              {order.user?.isMember && (
-                <Badge variant="secondary">Member</Badge>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Shipping Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Shipping Address
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {order.shippingAddress ? (
-                <div className="text-sm space-y-1">
-                  <p>{order.shippingAddress.recipientName}</p>
-                  <p>{order.shippingAddress.addressLine1}</p>
-                  {order.shippingAddress.addressLine2 && (
-                    <p>{order.shippingAddress.addressLine2}</p>
-                  )}
-                  <p>
-                    {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-                    {order.shippingAddress.postalCode}
-                  </p>
-                  <p>{order.shippingAddress.country}</p>
-                  {order.shippingAddress.phoneNumber && (
-                    <p className="pt-2">
-                      Phone: {order.shippingAddress.phoneNumber}
-                    </p>
+              <Separator />
+
+              {/* Shipping Address */}
+              <div>
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Shipping Address
+                </h3>
+                <div className="pl-6">
+                  {order.shippingAddress ? (
+                    <div className="text-sm space-y-1">
+                      <p className="font-medium">{order.shippingAddress.recipientName}</p>
+                      <p>{order.shippingAddress.addressLine1}</p>
+                      {order.shippingAddress.addressLine2 && (
+                        <p>{order.shippingAddress.addressLine2}</p>
+                      )}
+                      <p>
+                        {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                        {order.shippingAddress.postalCode}
+                      </p>
+                      <p>{order.shippingAddress.country}</p>
+                      {order.shippingAddress.phoneNumber && (
+                        <p className="pt-2 text-gray-600">
+                          Phone: {order.shippingAddress.phoneNumber}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No shipping address</p>
                   )}
                 </div>
-              ) : (
-                <p className="text-gray-500">No shipping address</p>
-              )}
+              </div>
             </CardContent>
           </Card>
 
@@ -537,74 +485,18 @@ export default function OrderDetailsPage() {
 
         {/* Right Sidebar: Actions & Status (1/3 width on desktop) */}
         <div className="space-y-6">
-          {/* Status Update Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Update Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 mb-2 block">
-                  Order Status
-                </label>
-                <Select
-                  value={order.status}
-                  onValueChange={value =>
-                    handleStatusUpdate(value as OrderStatus)
-                  }
-                  disabled={isUpdatingStatus}
-                >
-                  <SelectTrigger>
-                    {isUpdatingStatus && (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    )}
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(ORDER_STATUSES).map(status => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Quick Actions */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrintInvoice}
-                className="w-full justify-start"
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Print Invoice
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrintPackingSlip}
-                className="w-full justify-start"
-              >
-                <Package className="h-4 w-4 mr-2" />
-                Print Packing Slip
-              </Button>
+              {/* Fulfill Order Button */}
               {canFulfill && (
                 <Button
                   type="button"
                   size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleFulfill();
-                  }}
+                  onClick={handleFulfill}
                   disabled={isFulfilling}
                   className="w-full justify-start"
                 >
@@ -616,10 +508,220 @@ export default function OrderDetailsPage() {
                   Fulfill Order
                 </Button>
               )}
+
+              {/* Fulfill Order - Disabled/Grey if already fulfilled */}
+              {isFulfilled && order.paymentStatus === 'PAID' && (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled
+                  variant="outline"
+                  className="w-full justify-start opacity-50 cursor-not-allowed"
+                  title="Order already fulfilled"
+                >
+                  <Truck className="h-4 w-4 mr-2" />
+                  Order Fulfilled
+                </Button>
+              )}
+
+              {/* Print Invoice */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrintInvoice}
+                className="w-full justify-start"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print Invoice
+              </Button>
+
+              {/* Print Packing Slip - Only show if available */}
+              {hasPackingSlip && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrintPackingSlip}
+                  className="w-full justify-start"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Print Packing Slip
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          {/* Danger Zone */}
+          {/* Order Status Update */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Order Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={order.status}
+                onValueChange={value =>
+                  handleStatusUpdate(value as OrderStatus)
+                }
+                disabled={isUpdatingStatus}
+              >
+                <SelectTrigger>
+                  {isUpdatingStatus && (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  )}
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(ORDER_STATUSES).map(status => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Shipping & Tracking Information (Only if fulfilled) */}
+          {isFulfilled && order.shipment && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Shipping & Tracking
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Tracking Number */}
+                <div>
+                  <p className="text-sm text-gray-500">Tracking Number</p>
+                  <p className="font-semibold font-mono text-sm">
+                    {order.trackingNumber || order.shipment.trackingNumber}
+                  </p>
+                </div>
+
+                {/* Courier Info */}
+                {order.courierName && (
+                  <div>
+                    <p className="text-sm text-gray-500">Courier</p>
+                    <p className="font-medium">{order.courierName}</p>
+                  </div>
+                )}
+
+                {/* Service Type */}
+                {order.courierServiceDetail && (
+                  <div>
+                    <p className="text-sm text-gray-500">Service Type</p>
+                    <p className="font-medium capitalize">
+                      {order.courierServiceDetail}
+                    </p>
+                  </div>
+                )}
+
+                {/* Shipment Status */}
+                {order.shipment.status && (
+                  <div>
+                    <p className="text-sm text-gray-500">Shipment Status</p>
+                    <OrderStatusBadge
+                      status={order.shipment.status}
+                      type="shipment"
+                      size="sm"
+                    />
+                  </div>
+                )}
+
+                {/* Pickup Date */}
+                {order.scheduledPickupDate && (
+                  <div>
+                    <p className="text-sm text-gray-500">Scheduled Pickup</p>
+                    <p className="font-medium">
+                      {new Date(order.scheduledPickupDate).toLocaleDateString('en-MY', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Estimated Delivery */}
+                {order.estimatedDelivery && (
+                  <div>
+                    <p className="text-sm text-gray-500">Estimated Delivery</p>
+                    <p className="font-medium flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(order.estimatedDelivery).toLocaleDateString('en-MY', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  {/* Track Shipment */}
+                  {order.trackingUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(order.trackingUrl || '', '_blank')}
+                      className="w-full justify-start text-xs"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-2" />
+                      Track Shipment
+                    </Button>
+                  )}
+
+                  {/* View AWB */}
+                  {order.airwayBillUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(order.airwayBillUrl || '', '_blank')}
+                      className="w-full justify-start text-xs"
+                    >
+                      <Package className="h-3 w-3 mr-2" />
+                      View Airway Bill
+                    </Button>
+                  )}
+                </div>
+
+                {/* Tracking Events */}
+                {order.shipment.trackingEvents && order.shipment.trackingEvents.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-medium mb-2">Recent Updates</p>
+                      <div className="space-y-2">
+                        {order.shipment.trackingEvents.slice(0, 3).map((event, index) => (
+                          <div key={index} className="text-xs border-l-2 border-gray-200 pl-3 py-1">
+                            <p className="font-medium">{event.eventName}</p>
+                            {event.description && (
+                              <p className="text-gray-600">{event.description}</p>
+                            )}
+                            <p className="text-gray-400 text-[10px] mt-1">
+                              {new Date(event.timestamp).toLocaleString('en-MY')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* AWB Generated Timestamp */}
+                {order.airwayBillGeneratedAt && (
+                  <p className="text-xs text-gray-400 pt-2">
+                    AWB Generated: {new Date(order.airwayBillGeneratedAt).toLocaleString('en-MY')}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Danger Zone - Always at the bottom */}
           <Card className="border-red-200">
             <CardHeader>
               <CardTitle className="text-sm text-red-600">Danger Zone</CardTitle>
@@ -644,114 +746,6 @@ export default function OrderDetailsPage() {
               </p>
             </CardContent>
           </Card>
-
-          {/* Tracking/AWB Information Card */}
-          {order.shipment && (
-            <TrackingCard
-              shipment={order.shipment}
-              onRefreshTracking={handleRefreshTracking}
-              isRefreshing={isRefreshingTracking}
-            />
-          )}
-
-          {/* EasyParcel Shipping Information */}
-          {(order.trackingNumber || order.easyparcelParcelNumber) && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">EasyParcel Shipping</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {/* Tracking & AWB */}
-                <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1.5">
-                  <span className="text-gray-500">Tracking:</span>
-                  <span className="font-semibold">{order.trackingNumber}</span>
-
-                  {order.easyparcelOrderNumber && (
-                    <>
-                      <span className="text-gray-500">Order No:</span>
-                      <span>{order.easyparcelOrderNumber}</span>
-                    </>
-                  )}
-
-                  {order.easyparcelParcelNumber && (
-                    <>
-                      <span className="text-gray-500">Parcel No:</span>
-                      <span>{order.easyparcelParcelNumber}</span>
-                    </>
-                  )}
-
-                  {order.courierName && (
-                    <>
-                      <span className="text-gray-500">Courier:</span>
-                      <span className="font-semibold">{order.courierName}</span>
-                    </>
-                  )}
-
-                  {order.courierServiceDetail && (
-                    <>
-                      <span className="text-gray-500">Method:</span>
-                      <span className="capitalize font-semibold">{order.courierServiceDetail}</span>
-                    </>
-                  )}
-
-                  {order.scheduledPickupDate && order.courierServiceDetail?.includes('pickup') && (
-                    <>
-                      <span className="text-gray-500">Pickup Date:</span>
-                      <span className="font-semibold">{new Date(order.scheduledPickupDate).toLocaleDateString('en-MY', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}</span>
-                    </>
-                  )}
-
-                  {order.shippingCostCharged && (
-                    <>
-                      <span className="text-gray-500">Cost:</span>
-                      <span>RM {Number(order.shippingCostCharged).toFixed(2)}</span>
-                    </>
-                  )}
-
-                  {order.easyparcelPaymentStatus && (
-                    <>
-                      <span className="text-gray-500">Status:</span>
-                      <span>{order.easyparcelPaymentStatus}</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="pt-2 space-y-1.5">
-                  {order.trackingUrl && (
-                    <a
-                      href={order.trackingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline hover:no-underline block"
-                    >
-                      Track Shipment →
-                    </a>
-                  )}
-                  {order.airwayBillUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(order.airwayBillUrl || '', '_blank')}
-                      className="w-full h-7 text-xs"
-                    >
-                      View Airway Bill
-                    </Button>
-                  )}
-                </div>
-
-                {order.airwayBillGeneratedAt && (
-                  <p className="text-xs text-gray-400 pt-1">
-                    Generated {new Date(order.airwayBillGeneratedAt).toLocaleDateString('en-MY')}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
@@ -764,7 +758,7 @@ export default function OrderDetailsPage() {
             id: order.id,
             orderNumber: order.orderNumber,
             courierName: order.courierName,
-            courierServiceDetail: order.courierServiceDetail, // 'pickup', 'dropoff', or 'dropoff or pickup'
+            courierServiceDetail: order.courierServiceDetail,
             selectedCourierServiceId: order.selectedCourierServiceId || '',
           }}
           onConfirm={handleConfirmFulfillment}
