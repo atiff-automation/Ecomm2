@@ -492,30 +492,33 @@ export class EasyParcelService {
         );
       }
 
-      // Extract parcel details first
+      // VALIDATION: The parcel array is the ONLY reliable indicator of payment success
+      // EasyParcel API documentation shows messagenow: "Fully Paid" as example,
+      // but production returns "Payment Done" or other variants
+      // The messagenow field is just a display message from EasyParcel - NOT for validation
+      //
+      // Success = parcels array has AWB data
+      // Failure = parcels array is empty or contains empty objects
       const parcels = bulkResult.parcel || [];
-      if (parcels.length === 0) {
+
+      console.log('[EasyParcel] Validating payment via parcel array:', {
+        parcelCount: parcels.length,
+        firstParcelHasAWB: parcels[0]?.awb ? true : false,
+        messagenow: bulkResult.messagenow,
+      });
+
+      if (parcels.length === 0 || !parcels[0]?.awb) {
+        // No AWB data = payment failed (regardless of messagenow)
+        const errorMessage = bulkResult.messagenow || 'No parcel details returned after payment';
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          'No parcel details returned after payment',
-          { orderNumber, response }
+          errorMessage,
+          { orderNumber, response, reason: 'No AWB data in parcel array' }
         );
       }
 
-      // IMPORTANT: If we got here with parcels, payment succeeded
-      // The messagenow field is informational and can vary ("Fully Paid", "paid", etc.)
-      // EasyParcel API docs don't guarantee exact string match
-      // Only check for actual payment failures (insufficient balance)
-      if (bulkResult.messagenow) {
-        const message = bulkResult.messagenow.toLowerCase();
-        if (message.includes('insufficient') || message.includes('not enough credit')) {
-          throw new EasyParcelError(
-            SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE,
-            bulkResult.messagenow,
-            { orderNumber, response }
-          );
-        }
-      }
+      // If we got here, payment succeeded (parcels with AWB exist)
+      // messagenow is purely informational at this point
 
       console.log('[EasyParcel] Payment successful:', {
         orderNumber: bulkResult.orderno,

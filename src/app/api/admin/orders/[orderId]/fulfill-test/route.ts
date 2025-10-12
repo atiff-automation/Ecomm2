@@ -87,7 +87,12 @@ const MOCK_INSUFFICIENT_BALANCE_RESPONSE: EasyParcelPaymentResponse = {
 };
 
 /**
- * Validate payment response (same logic as easyparcel-service.ts)
+ * Validate payment response (EXACT SAME logic as easyparcel-service.ts)
+ *
+ * VALIDATION LOGIC: The parcel array is the ONLY reliable indicator
+ * - messagenow is just a display message from EasyParcel
+ * - Success = parcels array has AWB data
+ * - Failure = parcels array is empty or no AWB
  */
 function validateMockPaymentResponse(response: EasyParcelPaymentResponse, orderNumber: string) {
   console.log('[MockTest] Validating payment response...');
@@ -104,29 +109,28 @@ function validateMockPaymentResponse(response: EasyParcelPaymentResponse, orderN
     throw new Error(bulkResult?.remarks || 'Failed to process order payment');
   }
 
-  // Step 3: Check for parcel data (THE CRITICAL CHECK)
+  // Step 3: CRITICAL VALIDATION - Check parcel array for AWB data
   const parcels = bulkResult.parcel || [];
-  console.log('[MockTest] Parcel count:', parcels.length);
 
-  if (parcels.length === 0) {
-    console.log('[MockTest] ❌ No parcel data - payment failed');
-    throw new Error('No parcel details returned after payment');
+  console.log('[MockTest] Validating payment via parcel array:', {
+    parcelCount: parcels.length,
+    firstParcelHasAWB: parcels[0]?.awb ? true : false,
+    messagenow: bulkResult.messagenow,
+  });
+
+  if (parcels.length === 0 || !parcels[0]?.awb) {
+    // No AWB data = payment failed (regardless of messagenow)
+    console.log('[MockTest] ❌ No AWB data - payment failed');
+    const errorMessage = bulkResult.messagenow || 'No parcel details returned after payment';
+    throw new Error(errorMessage);
   }
 
-  // Step 4: Check messagenow for actual failures only
-  console.log('[MockTest] messagenow:', bulkResult.messagenow);
-  if (bulkResult.messagenow) {
-    const message = bulkResult.messagenow.toLowerCase();
-    if (message.includes('insufficient') || message.includes('not enough credit')) {
-      console.log('[MockTest] ❌ Insufficient balance detected');
-      throw new Error(bulkResult.messagenow);
-    }
-  }
-
-  // Step 5: Success! Extract AWB details
+  // If we got here, payment succeeded (parcels with AWB exist)
+  // messagenow is purely informational
   const firstParcel = parcels[0];
   console.log('[MockTest] ✅ Payment validated successfully');
   console.log('[MockTest] AWB:', firstParcel.awb);
+  console.log('[MockTest] messagenow (informational only):', bulkResult.messagenow);
 
   return {
     success: true,
