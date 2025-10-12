@@ -600,8 +600,8 @@ export default function OrderDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Shipping & Tracking Information (Only if fulfilled) */}
-          {isFulfilled && order.shipment && (
+          {/* Shipping & Tracking Information - Show if tracking data or shipment exists */}
+          {(order.trackingNumber || order.airwayBillUrl || order.shipment) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -611,12 +611,14 @@ export default function OrderDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Tracking Number */}
-                <div>
-                  <p className="text-sm text-gray-500">Tracking Number</p>
-                  <p className="font-semibold font-mono text-sm">
-                    {order.trackingNumber || order.shipment.trackingNumber}
-                  </p>
-                </div>
+                {(order.trackingNumber || order.shipment?.trackingNumber) && (
+                  <div>
+                    <p className="text-sm text-gray-500">Tracking Number</p>
+                    <p className="font-semibold font-mono text-sm">
+                      {order.trackingNumber || order.shipment?.trackingNumber}
+                    </p>
+                  </div>
+                )}
 
                 {/* Courier Info */}
                 {order.courierName && (
@@ -637,7 +639,7 @@ export default function OrderDetailsPage() {
                 )}
 
                 {/* Shipment Status */}
-                {order.shipment.status && (
+                {order.shipment?.status && (
                   <div>
                     <p className="text-sm text-gray-500">Shipment Status</p>
                     <OrderStatusBadge
@@ -709,7 +711,7 @@ export default function OrderDetailsPage() {
                 </div>
 
                 {/* Tracking Events */}
-                {order.shipment.trackingEvents && order.shipment.trackingEvents.length > 0 && (
+                {order.shipment?.trackingEvents && order.shipment.trackingEvents.length > 0 && (
                   <>
                     <Separator />
                     <div>
