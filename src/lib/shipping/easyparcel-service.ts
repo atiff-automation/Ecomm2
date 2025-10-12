@@ -8,7 +8,7 @@
  * @version 3.0.0 - NO_VALIDATION_TRUST_STATUS_ONLY
  */
 
-export const EASYPARCEL_SERVICE_VERSION = '3.0.0-NO_VALIDATION' as const;
+export const EASYPARCEL_SERVICE_VERSION = '3.0.0-NO_VALIDATION-20251012T08' as const;
 
 import { EASYPARCEL_CONFIG, SHIPPING_ERROR_CODES } from './constants';
 import type {
