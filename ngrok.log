@@ -113,3 +113,4 @@ t=2025-10-12T08:50:32+0800 lvl=eror msg="session closed, starting reconnect loop
 t=2025-10-12T08:50:34+0800 lvl=info msg="client session established" obj=tunnels.session
 t=2025-10-12T08:50:34+0800 lvl=info msg="tunnel session started" obj=tunnels.session
 t=2025-10-12T08:50:46+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=eb06f2209a3b clientid=9bb83fbf6fc443a3e19e4215d84a51f8
+t=2025-10-12T11:36:40+0800 lvl=info msg="update available" obj=updater

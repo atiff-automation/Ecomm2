@@ -3,12 +3,7 @@
  *
  * Core integration layer for EasyParcel shipping API.
  * Handles rate calculation, shipment booking, tracking, and account balance.
- *
- * @module shipping/easyparcel-service
- * @version 3.0.0 - NO_VALIDATION_TRUST_STATUS_ONLY
  */
-
-export const EASYPARCEL_SERVICE_VERSION = '3.0.0-NO_VALIDATION-20251012T08' as const;
 
 import { EASYPARCEL_CONFIG, SHIPPING_ERROR_CODES } from './constants';
 import type {
@@ -432,7 +427,6 @@ export class EasyParcelService {
    */
   async payOrder(orderNumber: string): Promise<EasyParcelPaymentResponse> {
     try {
-      console.log('[EasyParcel] SERVICE VERSION:', EASYPARCEL_SERVICE_VERSION);
       console.log('[EasyParcel] Processing payment for order:', orderNumber);
 
       // Build bulk array parameter for EPPayOrderBulk
@@ -467,30 +461,8 @@ export class EasyParcelService {
         );
       }
 
-      // DEBUG: Log complete payment response FIRST before any processing
-      console.log('[EasyParcel] ===== RAW PAYMENT API RESPONSE =====');
-      console.log('Full response:', JSON.stringify(response, null, 2));
-      console.log('[EasyParcel] ===== END RAW PAYMENT RESPONSE =====');
-
-      // Write payment response to file for detailed inspection
-      const fs = require('fs');
-      try {
-        fs.writeFileSync('/tmp/easyparcel-payment-response.json', JSON.stringify(response, null, 2));
-        console.log('[EasyParcel] Payment response written to /tmp/easyparcel-payment-response.json');
-      } catch (e) {
-        console.log('[EasyParcel] Could not write payment response file:', e);
-      }
-
       // Extract payment details from bulk response
       const bulkResult = response.result?.[0];
-
-      // DEBUG: Log payment response details
-      console.log('[EasyParcel] ===== PAYMENT RESPONSE DETAILS =====');
-      console.log('bulkResult exists?:', !!bulkResult);
-      console.log('bulkResult.status:', bulkResult?.status);
-      console.log('bulkResult.messagenow:', bulkResult?.messagenow);
-      console.log('bulkResult.parcel count:', bulkResult?.parcel?.length || 0);
-      console.log('[EasyParcel] ===== END PAYMENT RESPONSE =====');
 
       if (!bulkResult || bulkResult.status !== 'Success') {
         throw new EasyParcelError(
@@ -500,21 +472,12 @@ export class EasyParcelService {
         );
       }
 
-      // NO VALIDATION - EasyParcel API handles success/failure via status field
-      // If we got here with status: "Success", payment succeeded
-      // WooCommerce plugin doesn't validate either - just returns the response
+      // Trust EasyParcel's status field - no additional validation needed
       const parcels = bulkResult.parcel || [];
 
-      console.log('[EasyParcel] Payment completed - NO VALIDATION (trust EasyParcel status):', {
+      console.log('[EasyParcel] Payment successful:', {
         orderNumber: bulkResult.orderno,
-        paymentStatus: bulkResult.messagenow,
         parcelCount: parcels.length,
-        parcels: parcels.map(p => ({
-          parcelNo: p?.parcelno || null,
-          awb: p?.awb || null,
-          hasAwbLink: !!p?.awb_id_link,
-          hasTrackingUrl: !!p?.tracking_url,
-        })),
       });
 
       return {
