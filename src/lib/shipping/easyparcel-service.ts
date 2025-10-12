@@ -439,11 +439,17 @@ export class EasyParcelService {
         error_code: string;
         error_remark: string;
         result: Array<{
-          status: string;
-          remarks: string;
+          status?: string; // Optional - not always present in response
+          remarks?: string; // Optional - not always present
           orderno?: string;
           messagenow?: string; // "Fully Paid" or error message
-          parcel?: Array<{
+          // Parcel can be EITHER object OR array (WooCommerce handles both)
+          parcel?: {
+            parcelno: string;
+            awb: string;
+            awb_id_link: string;
+            tracking_url: string;
+          } | Array<{
             parcelno: string;
             awb: string;
             awb_id_link: string;
@@ -464,20 +470,46 @@ export class EasyParcelService {
       // Extract payment details from bulk response
       const bulkResult = response.result?.[0];
 
-      if (!bulkResult || bulkResult.status !== 'Success') {
+      // DEBUG: Log complete payment response for analysis
+      console.log('[EasyParcel] ===== PAYMENT RESPONSE DETAILS =====');
+      console.log('Full response:', JSON.stringify(response, null, 2));
+      console.log('bulkResult exists?:', !!bulkResult);
+      console.log('bulkResult keys:', bulkResult ? Object.keys(bulkResult) : 'N/A');
+      console.log('bulkResult.parcel type:', bulkResult?.parcel ? (Array.isArray(bulkResult.parcel) ? 'array' : 'object') : 'missing');
+      console.log('[EasyParcel] ===== END PAYMENT RESPONSE =====');
+
+      // Validate parcel data exists (WooCommerce pattern - NO status check)
+      // WooCommerce only validates: error_code == 0 && parcel data exists
+      if (!bulkResult || !bulkResult.parcel) {
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
-          bulkResult?.remarks || 'Failed to process order payment',
+          'Payment response missing parcel data',
           { response }
         );
       }
 
-      // Trust EasyParcel's status field - no additional validation needed
-      const parcels = bulkResult.parcel || [];
+      // Handle both parcel formats: object or array (WooCommerce pattern)
+      // EasyParcel API can return parcel as object OR array
+      const parcels = Array.isArray(bulkResult.parcel)
+        ? bulkResult.parcel
+        : [bulkResult.parcel];
+
+      // Validate at least one parcel with tracking number exists
+      if (parcels.length === 0 || !parcels[0]?.parcelno) {
+        throw new EasyParcelError(
+          SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
+          'Payment successful but parcel tracking number not generated',
+          { response, parcels }
+        );
+      }
 
       console.log('[EasyParcel] Payment successful:', {
         orderNumber: bulkResult.orderno,
         parcelCount: parcels.length,
+        firstParcel: {
+          parcelno: parcels[0].parcelno,
+          awb: parcels[0].awb,
+        },
       });
 
       return {
