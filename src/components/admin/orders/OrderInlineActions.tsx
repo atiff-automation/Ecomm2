@@ -73,9 +73,20 @@ export function OrderInlineActions({
   const handleFulfill = async () => {
     setIsFulfilling(true);
     try {
+      console.log('🚀 [FULFILLMENT DEBUG] Starting fulfillment for order:', order.id);
       const result = await onFulfill(order.id);
 
+      console.log('📦 [FULFILLMENT DEBUG] Full API Response:', {
+        success: result.success,
+        message: result.message,
+        error: result.error,
+        data: result.data,
+        shipment: result.shipment,
+        fullResult: result,
+      });
+
       if (result.success) {
+        console.log('✅ [FULFILLMENT DEBUG] Success! Shipment created:', result.shipment);
         toast({
           title: 'Success',
           description: result.message || 'Order fulfilled successfully',
@@ -83,6 +94,12 @@ export function OrderInlineActions({
         // Refresh page to show updated data
         window.location.reload();
       } else {
+        console.error('❌ [FULFILLMENT DEBUG] Failed:', {
+          error: result.error,
+          code: result.code,
+          details: result.details,
+          fullResponse: result,
+        });
         toast({
           title: 'Error',
           description: result.error || 'Failed to fulfill order',
@@ -90,6 +107,12 @@ export function OrderInlineActions({
         });
       }
     } catch (error) {
+      console.error('💥 [FULFILLMENT DEBUG] Exception caught:', error);
+      console.error('💥 [FULFILLMENT DEBUG] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: error,
+      });
       toast({
         title: 'Error',
         description: 'Failed to fulfill order',
