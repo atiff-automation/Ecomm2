@@ -5,6 +5,7 @@
  * Handles rate calculation, shipment booking, tracking, and account balance.
  *
  * @module shipping/easyparcel-service
+ * @version 2.0.0 - PARCEL_ARRAY_VALIDATION_ONLY
  */
 
 import { EASYPARCEL_CONFIG, SHIPPING_ERROR_CODES } from './constants';
