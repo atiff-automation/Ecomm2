@@ -502,23 +502,25 @@ export class EasyParcelService {
       // but production returns "Payment Done" or other variants
       // The messagenow field is just a display message from EasyParcel - NOT for validation
       //
-      // Success = parcels array has AWB data
-      // Failure = parcels array is empty or contains empty objects
+      // Success = parcels array exists with parcel data (awb may be null in sandbox)
+      // Failure = parcels array is empty or missing
       const parcels = bulkResult.parcel || [];
 
       console.log('[EasyParcel] Validating payment via parcel array:', {
         parcelCount: parcels.length,
-        firstParcelHasAWB: parcels[0]?.awb ? true : false,
+        firstParcelHasData: parcels[0] ? true : false,
+        firstParcelNo: parcels[0]?.parcelno || null,
+        firstAWB: parcels[0]?.awb || null,
         messagenow: bulkResult.messagenow,
       });
 
-      if (parcels.length === 0 || !parcels[0]?.awb) {
-        // No AWB data = payment failed (regardless of messagenow)
+      if (parcels.length === 0 || !parcels[0]?.parcelno) {
+        // No parcel data = payment failed (regardless of messagenow)
         const errorMessage = bulkResult.messagenow || 'No parcel details returned after payment';
         throw new EasyParcelError(
           SHIPPING_ERROR_CODES.SERVICE_UNAVAILABLE,
           errorMessage,
-          { orderNumber, response, reason: 'No AWB data in parcel array' }
+          { orderNumber, response, reason: 'No parcel data in response' }
         );
       }
 
