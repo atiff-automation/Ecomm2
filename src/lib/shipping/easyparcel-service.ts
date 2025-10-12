@@ -5,8 +5,10 @@
  * Handles rate calculation, shipment booking, tracking, and account balance.
  *
  * @module shipping/easyparcel-service
- * @version 2.0.0 - PARCEL_ARRAY_VALIDATION_ONLY
+ * @version 3.0.0 - NO_VALIDATION_TRUST_STATUS_ONLY
  */
+
+export const EASYPARCEL_SERVICE_VERSION = '3.0.0-NO_VALIDATION' as const;
 
 import { EASYPARCEL_CONFIG, SHIPPING_ERROR_CODES } from './constants';
 import type {
@@ -430,6 +432,7 @@ export class EasyParcelService {
    */
   async payOrder(orderNumber: string): Promise<EasyParcelPaymentResponse> {
     try {
+      console.log('[EasyParcel] SERVICE VERSION:', EASYPARCEL_SERVICE_VERSION);
       console.log('[EasyParcel] Processing payment for order:', orderNumber);
 
       // Build bulk array parameter for EPPayOrderBulk
