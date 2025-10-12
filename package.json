@@ -5,7 +5,7 @@
   "description": "JRM E-commerce Platform with Malaysian Membership System",
   "scripts": {
     "dev": "next dev",
-    "build": "rm -rf .next && prisma generate && next build && npm run build:copy-assets",
+    "build": "rm -rf .next/standalone .next/static .next/server || true && prisma generate && next build && npm run build:copy-assets",
     "build:copy-assets": "mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public/ 2>/dev/null || true && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ 2>/dev/null || true",
     "start": "node scripts/railway-start.js",
     "start:production": "next start",
