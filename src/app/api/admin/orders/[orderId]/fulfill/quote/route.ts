@@ -16,7 +16,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getShippingSettings } from '@/lib/shipping/shipping-settings';
 import {
-  createLoggedEasyParcelService,
+  createEasyParcelService,
   EasyParcelError,
 } from '@/lib/shipping/easyparcel-service';
 import { SHIPPING_ERROR_CODES } from '@/lib/shipping/constants';
@@ -218,7 +218,7 @@ export async function POST(
     });
 
     // Step 10: Create shipment with EasyParcel API
-    const easyParcelService = createLoggedEasyParcelService(settings);
+    const easyParcelService = createEasyParcelService(settings);
 
     let shipmentResponse;
     try {

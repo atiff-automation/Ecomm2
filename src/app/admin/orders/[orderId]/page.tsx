@@ -167,7 +167,7 @@ export default function OrderDetailsPage() {
     setFulfillmentDialogOpen(true);
   };
 
-  const handleConfirmFulfillment = async (pickupDate: string) => {
+  const handleConfirmFulfillment = async (pickupDate: string, shipmentId?: string) => {
     if (!order) {
       throw new Error('No order available for fulfillment');
     }
@@ -181,6 +181,7 @@ export default function OrderDetailsPage() {
         body: JSON.stringify({
           serviceId: order.selectedCourierServiceId,
           pickupDate: pickupDate,
+          shipmentId: shipmentId, // Pass shipmentId for Step 2 of two-step flow
           overriddenByAdmin: false,
         }),
       });
