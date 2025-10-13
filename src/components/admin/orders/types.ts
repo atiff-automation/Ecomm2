@@ -308,3 +308,43 @@ export interface OrderDetailsData {
     }>;
   } | null;
 }
+
+/**
+ * Two-Step Fulfillment Dialog Types
+ */
+
+/**
+ * Fulfillment dialog step
+ */
+export enum FulfillmentStep {
+  PICKUP_DATE = 'PICKUP_DATE',
+  PRICE_CONFIRMATION = 'PRICE_CONFIRMATION',
+}
+
+/**
+ * Shipment quote data from Step 1
+ */
+export interface ShipmentQuoteData {
+  shipmentId: string;
+  price: number;
+  courierName: string;
+  serviceType: string;
+  estimatedDelivery?: string;
+}
+
+/**
+ * FulfillmentConfirmDialog component props
+ */
+export interface FulfillmentConfirmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  order: {
+    id: string;
+    orderNumber: string;
+    courierName?: string;
+    courierServiceDetail?: string;
+    selectedCourierServiceId: string;
+  };
+  onConfirm: (pickupDate: string, shipmentId?: string) => Promise<void>;
+  isLoading?: boolean;
+}
