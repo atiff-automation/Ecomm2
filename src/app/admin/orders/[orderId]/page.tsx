@@ -681,11 +681,7 @@ export default function OrderDetailsPage() {
                     <p className="text-sm text-gray-500">Estimated Delivery</p>
                     <p className="font-medium flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {new Date(order.estimatedDelivery).toLocaleDateString('en-MY', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {order.estimatedDelivery}
                     </p>
                   </div>
                 )}

@@ -172,7 +172,9 @@ export async function GET(
         });
 
         const page = await browser.newPage();
-        await page.setContent(htmlReceipt);
+        await page.setContent(htmlReceipt, {
+          waitUntil: 'networkidle0', // Wait for all network requests to finish
+        });
 
         const pdfBuffer = await page.pdf({
           format: 'A4',

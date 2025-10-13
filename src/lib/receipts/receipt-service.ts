@@ -8,6 +8,7 @@ import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
 import { receiptTemplateService } from './template-service';
 import { TemplateEngine } from './template-engine';
 import { businessProfileService } from './business-profile-service';
+import { imageUrlToBase64 } from '@/lib/utils/image-utils';
 
 export interface TaxReceiptData {
   order: {
@@ -279,6 +280,12 @@ export class TaxReceiptService {
     // Get company info from business profile
     const companyInfo = await this.getCompanyInfo();
 
+    // Convert logo to base64 for PDF embedding
+    let logoDataUri: string | null = null;
+    if (companyInfo.logo) {
+      logoDataUri = await imageUrlToBase64(companyInfo.logo.url);
+    }
+
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-MY', {
         year: 'numeric',
@@ -428,6 +435,11 @@ export class TaxReceiptService {
       <body>
         <div class="receipt">
           <div class="receipt-header">
+            ${
+              logoDataUri && companyInfo.logo
+                ? `<img src="${logoDataUri}" alt="${companyInfo.name}" style="max-width: ${companyInfo.logo.width}px; max-height: ${companyInfo.logo.height}px; margin: 0 auto 10px; display: block;" />`
+                : ''
+            }
             <div class="receipt-title">Tax Receipt</div>
             <div class="company-info">
               <div><strong>${companyInfo.name}</strong></div>

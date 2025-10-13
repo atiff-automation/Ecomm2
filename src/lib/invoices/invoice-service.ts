@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db/prisma';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
 import { businessProfileService } from '@/lib/receipts/business-profile-service';
 import { siteCustomizationService } from '@/lib/services/site-customization.service';
+import { imageUrlToBase64 } from '@/lib/utils/image-utils';
 
 export interface ReceiptData {
   order: {
@@ -258,10 +259,17 @@ export class ReceiptService {
     // Get company info from business profile
     const companyInfo = await this.getCompanyInfo();
 
+    // Convert logo to base64 for PDF embedding
+    let logoDataUri: string | null = null;
+    if (companyInfo.logo) {
+      logoDataUri = await imageUrlToBase64(companyInfo.logo.url);
+    }
+
     // Debug logging
     console.log('📄 Invoice Generation Debug:');
     console.log('- Has billingAddress:', !!billingAddress);
     console.log('- Has logo:', !!companyInfo.logo);
+    console.log('- Logo converted to base64:', !!logoDataUri);
     if (companyInfo.logo) {
       console.log('- Logo URL:', companyInfo.logo.url);
       console.log('- Logo dimensions:', `${companyInfo.logo.width}x${companyInfo.logo.height}`);
@@ -451,8 +459,8 @@ export class ReceiptService {
         <div class="receipt-header">
           <div class="company-info">
             ${
-              companyInfo.logo
-                ? `<img src="${companyInfo.logo.url}" alt="${companyInfo.name}" style="max-width: ${companyInfo.logo.width}px; max-height: ${companyInfo.logo.height}px; margin-bottom: 10px;" />`
+              logoDataUri && companyInfo.logo
+                ? `<img src="${logoDataUri}" alt="${companyInfo.name}" style="max-width: ${companyInfo.logo.width}px; max-height: ${companyInfo.logo.height}px; margin-bottom: 10px;" />`
                 : ''
             }
             <h1>${companyInfo.name}</h1>
