@@ -364,10 +364,16 @@ export class EasyParcelService {
         );
       }
 
+      // Extract price information
+      const price = (bulkResult as any).price;
+      const courierName = (bulkResult as any).courier;
+      const serviceName = (bulkResult as any).service_name;
+
       console.log('[EasyParcel] ✅ Shipment created successfully:', {
         orderNumber,
         parcelNumber,
-        courier: (bulkResult as any).courier,
+        courier: courierName,
+        price,
       });
 
       return {
@@ -378,6 +384,9 @@ export class EasyParcelService {
           awb_number: parcelNumber, // Use parcel_number as AWB
           label_url: (bulkResult as any).label_url || '',
           tracking_url: (bulkResult as any).tracking_url || '',
+          price: price ? parseFloat(price) : null,
+          courier_name: courierName,
+          service_name: serviceName,
         },
       };
     } catch (error) {

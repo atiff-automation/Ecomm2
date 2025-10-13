@@ -362,6 +362,7 @@ export interface EasyParcelShipmentResponse {
     awb_number: string;
     label_url: string;
     tracking_url: string;
+    price?: number | null;
     courier_name?: string;
     service_name?: string;
   };
