@@ -638,6 +638,16 @@ export default function OrderDetailsPage() {
                   </div>
                 )}
 
+                {/* Shipping Cost Charged */}
+                {order.shippingCostCharged && (
+                  <div>
+                    <p className="text-sm text-gray-500">Shipping Cost</p>
+                    <p className="font-semibold text-blue-600">
+                      {formatCurrency(order.shippingCostCharged)}
+                    </p>
+                  </div>
+                )}
+
                 {/* Shipment Status */}
                 {order.shipment?.status && (
                   <div>
