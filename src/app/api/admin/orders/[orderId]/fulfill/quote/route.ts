@@ -271,13 +271,17 @@ export async function POST(
       courierName: shipmentResponse.data.courier_name,
     });
 
+    // ✅ FIX: EasyParcel returns 'courier' field (not 'courier_name') in EPSubmitOrderBulk
+    // Extract courier from response (shipmentResponse.data.courier)
+    const actualCourier = shipmentResponse.data.courier_name || shipmentResponse.data.courier || order.courierName || 'Unknown';
+
     return NextResponse.json({
       success: true,
       message: 'Shipping quote retrieved successfully',
       quote: {
         shipmentId: shipmentResponse.data.shipment_id,
         price: quotePrice,
-        courierName: shipmentResponse.data.courier_name || order.courierName || 'Unknown',
+        courierName: actualCourier, // ← Use actual courier from EasyParcel response
         serviceType: shipmentResponse.data.service_name || order.courierServiceType || 'Unknown',
         estimatedDelivery: order.estimatedDelivery || null,
       },

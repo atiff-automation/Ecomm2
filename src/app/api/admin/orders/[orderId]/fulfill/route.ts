@@ -488,13 +488,11 @@ export async function POST(
         easyparcelPaymentStatus: paymentResponse.data.payment_status || null, // Payment status (e.g., "Fully Paid")
         easyparcelParcelNumber: parcelDetails.parcelno || null, // Parcel number (EP-xxxxx)
         shippingCostCharged: actualShippingCost, // Actual cost charged (from EPSubmitOrderBulk)
-        // Update courier name if admin overrode the selection
-        courierName: validatedData.overriddenByAdmin
-          ? shipmentResponse.data.courier_name || order.courierName
-          : order.courierName,
-        courierServiceType: validatedData.overriddenByAdmin
-          ? shipmentResponse.data.service_name || order.courierServiceType
-          : order.courierServiceType,
+
+        // ✅ FIX: ALWAYS trust EasyParcel's courier response (fixes Dropicks/Pickupp mismatch)
+        // EasyParcel returns 'courier' field in EPSubmitOrderBulk response
+        courierName: shipmentResponse.data.courier || shipmentResponse.data.courier_name || order.courierName,
+        courierServiceType: shipmentResponse.data.service_name || order.courierServiceType,
         selectedCourierServiceId: validatedData.serviceId,
         // Scheduled pickup date
         scheduledPickupDate: new Date(validatedData.pickupDate),
@@ -504,8 +502,9 @@ export async function POST(
         // Clear any previous booking errors on successful fulfillment
         failedBookingAttempts: 0,
         lastBookingError: null,
+        // Update admin notes only if admin explicitly overrode
         adminNotes: validatedData.overriddenByAdmin
-          ? `Admin overrode courier selection. Original: ${order.courierName}. New: ${shipmentResponse.data.courier_name || 'N/A'}${validatedData.adminOverrideReason ? `. Reason: ${validatedData.adminOverrideReason}` : ''}`
+          ? `Admin overrode courier selection. Original: ${order.courierName}. Selected: ${validatedData.serviceId}. Actual: ${shipmentResponse.data.courier || shipmentResponse.data.courier_name || 'N/A'}${validatedData.adminOverrideReason ? `. Reason: ${validatedData.adminOverrideReason}` : ''}`
           : order.adminNotes,
       },
     });

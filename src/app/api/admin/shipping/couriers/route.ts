@@ -96,12 +96,14 @@ export async function GET(request: NextRequest) {
     }>();
 
     rates.forEach((rate) => {
-      // Create unique key combining courier name and service detail
-      const key = `${rate.courier_name}-${rate.service_detail}`;
+      // Create unique key combining service name (brand) and service detail
+      // ✅ FIX: Use service_name (brand like "Pickupp") instead of courier_name (legal entity like "Dropicks Sdn Bhd")
+      // This ensures consistency with checkout and fulfillment flows
+      const key = `${rate.service_name}-${rate.service_detail}`;
 
       if (!courierMap.has(key)) {
         courierMap.set(key, {
-          courierName: rate.courier_name,
+          courierName: rate.service_name, // ← Changed from courier_name to service_name
           serviceId: rate.service_id,
           serviceName: rate.service_name,
           serviceDetail: rate.service_detail,

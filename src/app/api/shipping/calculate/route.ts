@@ -133,9 +133,11 @@ export async function POST(request: NextRequest) {
       orderValue >= settings.freeShippingThreshold;
 
     // Convert EasyParcel rates to ShippingOptions
+    // ✅ FIX: Use service_name (brand) instead of courier_name (legal entity)
+    // This ensures consistency with EasyParcel's shipment creation response
     let shippingOptions: ShippingOption[] = rates.map((rate) => ({
       serviceId: rate.service_id,
-      courierName: rate.courier_name,
+      courierName: rate.service_name, // ← Changed from courier_name to service_name
       serviceType: rate.service_type,
       serviceDetail: rate.service_detail, // 'pickup', 'dropoff', or 'dropoff or pickup'
       cost: freeShippingApplied ? 0 : rate.price,

@@ -353,6 +353,8 @@ export interface EasyParcelShipmentRequest {
 
 /**
  * EasyParcel API shipment creation response
+ *
+ * ⚠️ IMPORTANT: EasyParcel returns 'courier' field (not 'courier_name') in EPSubmitOrderBulk
  */
 export interface EasyParcelShipmentResponse {
   success: boolean;
@@ -363,7 +365,8 @@ export interface EasyParcelShipmentResponse {
     label_url: string;
     tracking_url: string;
     price?: number | null;
-    courier_name?: string;
+    courier?: string;        // ✅ Actual courier returned by EPSubmitOrderBulk (e.g., "Pickupp")
+    courier_name?: string;   // Legacy field (may not be present)
     service_name?: string;
   };
   error?: {
