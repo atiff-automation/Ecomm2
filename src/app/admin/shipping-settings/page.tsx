@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useShippingInit, useShippingBalance, useAvailableCouriers } from '@/lib/hooks/use-shipping-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,7 +71,15 @@ interface Courier {
 
 export default function ShippingSettingsPage() {
   const { data: session } = useSession();
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Phase 3 & 4: React Query integration with combined init endpoint
+  const {
+    data: initData,
+    error: initError,
+    isLoading: isLoadingInit,
+    refetch: refetchInit
+  } = useShippingInit();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,6 +95,11 @@ export default function ShippingSettingsPage() {
   });
   const [availableCouriers, setAvailableCouriers] = useState<Courier[]>([]);
   const [isLoadingCouriers, setIsLoadingCouriers] = useState(false);
+  // Phase 1: Track previous API config for conditional balance refetch
+  const [previousApiConfig, setPreviousApiConfig] = useState<{
+    apiKey: string;
+    environment: 'sandbox' | 'production';
+  } | null>(null);
 
   const {
     register,
@@ -108,51 +122,51 @@ export default function ShippingSettingsPage() {
 
   const watchedValues = watch();
 
+  // Phase 3 & 4: React Query effect - Sync init data to component state
   useEffect(() => {
-    loadSettings();
-    loadPickupAddress();
-  }, []);
+    if (initData?.success && initData.data) {
+      const { settings, pickupAddress: pickup, pickupValidation: validation, balance: bal, balanceTimestamp: balTs, balanceError, configured } = initData.data;
 
-  const loadSettings = async () => {
-    try {
-      const response = await fetch('/api/admin/shipping/settings');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data.settings) {
-          reset(data.data.settings);
-          // Fetch balance if configured
-          if (data.data.configured) {
-            await fetchBalance();
-          } else {
-            setConnectionStatus('not-configured');
-          }
-        } else {
-          setConnectionStatus('not-configured');
-        }
+      // Handle settings
+      if (settings) {
+        reset(settings);
+
+        // Phase 1: Store API config for conditional refetch
+        setPreviousApiConfig({
+          apiKey: settings.apiKey,
+          environment: settings.environment,
+        });
       }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
+
+      // Handle pickup address
+      if (pickup) {
+        setPickupAddress(pickup);
+      }
+
+      // Handle pickup validation
+      if (validation) {
+        setPickupValidation(validation);
+      }
+
+      // Handle balance (conditional - may be undefined)
+      if (bal) {
+        setBalance(bal.amount);
+        setBalanceTimestamp(balTs || null);
+        setConnectionStatus('connected');
+      } else if (balanceError) {
+        console.error('[Init] Balance error:', balanceError);
+        setConnectionStatus('disconnected');
+      } else if (!configured) {
+        setConnectionStatus('not-configured');
+      } else {
+        setConnectionStatus('disconnected');
+      }
+    } else if (initError) {
+      console.error('Failed to load initial data:', initError);
       toast.error('Failed to load shipping settings');
       setConnectionStatus('disconnected');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const loadPickupAddress = async () => {
-    try {
-      const response = await fetch('/api/admin/shipping/pickup-address');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setPickupAddress(data.data.pickupAddress);
-          setPickupValidation(data.data.validation);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load pickup address:', error);
-    }
-  };
+  }, [initData, initError, reset]);
 
   const fetchBalance = async () => {
     try {
@@ -267,7 +281,24 @@ export default function ShippingSettingsPage() {
         toast.success('Shipping settings saved successfully');
         // Reset form with cleaned data (without unused fields)
         reset(cleanedData);
-        await fetchBalance();
+
+        // Phase 1 Optimization: Only refetch balance if API credentials changed
+        const apiConfigChanged =
+          previousApiConfig?.apiKey !== cleanedData.apiKey ||
+          previousApiConfig?.environment !== cleanedData.environment;
+
+        if (apiConfigChanged) {
+          console.log('[Optimization] API config changed, refreshing balance...');
+          await fetchBalance();
+
+          // Update stored config
+          setPreviousApiConfig({
+            apiKey: cleanedData.apiKey,
+            environment: cleanedData.environment,
+          });
+        } else {
+          console.log('[Optimization] API config unchanged, skipping balance refresh');
+        }
       } else {
         // Show detailed validation errors if pickup address invalid
         if (result.error === 'INVALID_PICKUP_ADDRESS' && result.details) {
@@ -342,10 +373,11 @@ export default function ShippingSettingsPage() {
 
         // Clear all state
         setBalance(null);
+        setPreviousApiConfig(null); // Phase 1: Clear stored config
         setConnectionStatus('not-configured');
 
-        // Force reload settings from server to confirm deletion
-        await loadSettings();
+        // Phase 3: Use React Query refetch
+        await refetchInit();
       } else {
         if (response.status === 403) {
           toast.error('Admin access required to delete shipping settings');
@@ -361,7 +393,8 @@ export default function ShippingSettingsPage() {
     }
   };
 
-  if (isLoading) {
+  // Phase 3: Use React Query loading state
+  if (isLoadingInit) {
     return <div className="p-8">Loading...</div>;
   }
 
