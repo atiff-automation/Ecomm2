@@ -229,8 +229,12 @@ export function FulfillmentConfirmDialog({
                 <SelectContent>
                   {availableCouriers.map((courier) => (
                     <SelectItem key={courier.serviceId} value={courier.serviceId}>
-                      {courier.courierName} ({courier.serviceType || 'N/A'}) - RM {courier.cost.toFixed(2)}
-                      {courier.isCustomerChoice && ' ✓'}
+                      <span className="flex items-center gap-2">
+                        {courier.courierName} ({courier.serviceType || 'N/A'}) - RM {courier.cost.toFixed(2)}
+                        {courier.isCustomerChoice && (
+                          <span className="text-green-600 font-bold">✓ Customer Choice</span>
+                        )}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
