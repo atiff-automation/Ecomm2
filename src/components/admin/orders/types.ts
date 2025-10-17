@@ -213,7 +213,6 @@ export interface OrderDetailsData {
   // AWB (Airway Bill) Information
   airwayBillGenerated: boolean;
   airwayBillGeneratedAt: string | null;
-  airwayBillNumber: string | null;
   airwayBillUrl: string | null;
   trackingUrl: string | null;
 

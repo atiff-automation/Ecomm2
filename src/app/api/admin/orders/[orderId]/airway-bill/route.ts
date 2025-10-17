@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         orderNumber: true,
         airwayBillGenerated: true,
         airwayBillUrl: true,
-        airwayBillNumber: true,
+        trackingNumber: true,
         airwayBillGeneratedAt: true,
       },
     });
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       console.log('📄 Downloading airway bill:', {
         orderId,
         orderNumber: order.orderNumber,
-        airwayBillNumber: order.airwayBillNumber,
+        trackingNumber: order.trackingNumber,
         airwayBillUrl: order.airwayBillUrl,
       });
 
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
 
       // ✅ File stream response with proper headers for PDF download
-      const filename = `airway-bill-${order.orderNumber}-${order.airwayBillNumber}.pdf`;
+      const filename = `airway-bill-${order.orderNumber}-${order.trackingNumber}.pdf`;
 
       return new NextResponse(response.data, {
         status: 200,

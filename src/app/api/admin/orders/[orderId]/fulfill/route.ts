@@ -127,7 +127,7 @@ export async function POST(
     }
 
     // Check if already fulfilled
-    if (order.trackingNumber && order.airwayBillNumber) {
+    if (order.trackingNumber) {
       return NextResponse.json(
         {
           success: false,
@@ -135,7 +135,6 @@ export async function POST(
           code: SHIPPING_ERROR_CODES.ALREADY_FULFILLED,
           tracking: {
             trackingNumber: order.trackingNumber,
-            awbNumber: order.airwayBillNumber,
             labelUrl: order.airwayBillUrl,
           },
         },
@@ -453,7 +452,6 @@ export async function POST(
       data: {
         status: 'READY_TO_SHIP',
         trackingNumber: parcelDetails.awb || null,
-        airwayBillNumber: parcelDetails.awb || null,
         airwayBillUrl: parcelDetails.awb_id_link || null,
         airwayBillGenerated: !!parcelDetails.awb_id_link,
         airwayBillGeneratedAt: parcelDetails.awb_id_link ? new Date() : null,
@@ -489,7 +487,6 @@ export async function POST(
       orderNumber: updatedOrder.orderNumber,
       status: updatedOrder.status,
       trackingNumber: updatedOrder.trackingNumber,
-      awbNumber: updatedOrder.airwayBillNumber,
     });
 
     // Log fulfillment completion
@@ -501,7 +498,6 @@ export async function POST(
         orderNumber: updatedOrder.orderNumber,
         status: updatedOrder.status,
         trackingNumber: updatedOrder.trackingNumber,
-        awbNumber: updatedOrder.airwayBillNumber,
         easyparcelOrderNumber: updatedOrder.easyparcelOrderNumber,
         easyparcelPaymentStatus: updatedOrder.easyparcelPaymentStatus,
         shippingCostCharged: actualShippingCost,
@@ -560,7 +556,6 @@ export async function POST(
       },
       tracking: {
         trackingNumber: updatedOrder.trackingNumber,
-        awbNumber: updatedOrder.airwayBillNumber,
         labelUrl: updatedOrder.airwayBillUrl,
         trackingUrl: updatedOrder.trackingUrl,
         courierName: updatedOrder.courierName,

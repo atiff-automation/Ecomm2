@@ -262,15 +262,11 @@ model Order {
   adminNotes               String?
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
-  deliveryInstructions     String?
-  estimatedDeliveryDate    DateTime?
-  selectedCourierId        String?
   shippingPreferences      Json?
   toyyibpayBillCode        String?
   toyyibpayPaymentUrl      String?
   airwayBillGenerated      Boolean            @default(false)
   airwayBillGeneratedAt    DateTime?
-  airwayBillNumber         String?
   airwayBillUrl            String?
   trackingUrl              String?
   easyparcelOrderNumber    String?            // EasyParcel order number (e.g., "EI-12345")

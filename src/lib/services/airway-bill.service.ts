@@ -198,7 +198,7 @@ export class AirwayBillService {
         where: { id: orderId },
         select: {
           airwayBillGenerated: true,
-          airwayBillNumber: true,
+          trackingNumber: true,
           airwayBillUrl: true,
           airwayBillGeneratedAt: true,
         },
@@ -210,7 +210,7 @@ export class AirwayBillService {
 
       return {
         generated: order.airwayBillGenerated,
-        airwayBillNumber: order.airwayBillNumber || undefined,
+        airwayBillNumber: order.trackingNumber || undefined,
         airwayBillUrl: order.airwayBillUrl || undefined,
         generatedAt: order.airwayBillGeneratedAt || undefined,
       };
