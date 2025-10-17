@@ -17,6 +17,7 @@ import { getShippingSettings } from '@/lib/shipping/shipping-settings';
 import { createEasyParcelService, EasyParcelError } from '@/lib/shipping/easyparcel-service';
 import { SHIPPING_ERROR_CODES } from '@/lib/shipping/constants';
 import type { DeliveryAddress } from '@/lib/shipping/types';
+import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
 
 /**
  * GET - Fetch available shipping options for an order
@@ -25,8 +26,9 @@ import type { DeliveryAddress } from '@/lib/shipping/types';
  * 1. Validate admin authentication
  * 2. Fetch order with shipping address
  * 3. Get shipping settings
- * 4. Call EasyParcel getRates() API
- * 5. Return formatted courier options
+ * 4. Get pickup address from BusinessProfile
+ * 5. Call EasyParcel getRates() API
+ * 6. Return formatted courier options
  */
 export async function GET(
   request: NextRequest,
@@ -108,7 +110,24 @@ export async function GET(
       );
     }
 
-    // Step 6: Build delivery address object
+    // Step 6: Get pickup address from BusinessProfile
+    let pickupAddress;
+    try {
+      pickupAddress = await getPickupAddressOrThrow();
+      console.log('[ShippingOptions] Pickup address retrieved from BusinessProfile');
+    } catch (error) {
+      console.error('[ShippingOptions] Failed to get pickup address:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          message: error instanceof Error ? error.message : 'Failed to retrieve pickup address from Business Profile',
+          code: SHIPPING_ERROR_CODES.INVALID_ADDRESS,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Step 7: Build delivery address object
     const deliveryAddress: DeliveryAddress = {
       name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
       phone: order.shippingAddress.phone || '',
@@ -123,6 +142,11 @@ export async function GET(
     console.log('[ShippingOptions] Fetching rates:', {
       orderId: order.id,
       orderNumber: order.orderNumber,
+      pickup: {
+        city: pickupAddress.city,
+        state: pickupAddress.state,
+        postalCode: pickupAddress.postalCode,
+      },
       destination: {
         city: deliveryAddress.city,
         state: deliveryAddress.state,
@@ -131,12 +155,12 @@ export async function GET(
       weight: shippingWeight,
     });
 
-    // Step 7: Fetch rates from EasyParcel API
+    // Step 8: Fetch rates from EasyParcel API
     const easyParcelService = createEasyParcelService(settings);
 
     let rates;
     try {
-      rates = await easyParcelService.getRates(settings, deliveryAddress, shippingWeight);
+      rates = await easyParcelService.getRates(pickupAddress, deliveryAddress, shippingWeight);
     } catch (error) {
       console.error('[ShippingOptions] EasyParcel API error:', error);
 
@@ -164,7 +188,7 @@ export async function GET(
       );
     }
 
-    // Step 8: Format response for FulfillmentWidget
+    // Step 9: Format response for FulfillmentWidget
     const courierOptions = rates.map((rate) => ({
       serviceId: rate.service_id,
       courierName: rate.courier_name,
@@ -182,7 +206,7 @@ export async function GET(
       customerChoice: courierOptions.find((opt) => opt.isCustomerChoice)?.courierName || 'None',
     });
 
-    // Step 9: Return success response
+    // Step 10: Return success response
     return NextResponse.json({
       success: true,
       options: courierOptions,
