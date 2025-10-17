@@ -229,9 +229,8 @@ export function FulfillmentConfirmDialog({
                 <SelectContent>
                   {availableCouriers.map((courier) => (
                     <SelectItem key={courier.serviceId} value={courier.serviceId}>
-                      {courier.courierName} - RM {courier.cost.toFixed(2)}
-                      {courier.isCustomerChoice && ' (Customer Choice)'}
-                      {courier.cost < parseFloat(order.shippingCost?.toString() || '0') && ' 💰 CHEAPER'}
+                      {courier.courierName} ({courier.serviceType || 'N/A'}) - RM {courier.cost.toFixed(2)}
+                      {courier.isCustomerChoice && ' ✓'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -243,7 +242,7 @@ export function FulfillmentConfirmDialog({
               <p className="text-xs mt-2">
                 {selectedCourier.cost < parseFloat(order.shippingCost?.toString() || '0') ? (
                   <span className="text-green-600 font-medium">
-                    💰 Save RM {(parseFloat(order.shippingCost?.toString() || '0') - selectedCourier.cost).toFixed(2)} vs customer selection
+                    Save RM {(parseFloat(order.shippingCost?.toString() || '0') - selectedCourier.cost).toFixed(2)} vs customer selection
                   </span>
                 ) : selectedCourier.cost > parseFloat(order.shippingCost?.toString() || '0') ? (
                   <span className="text-orange-600 font-medium">
@@ -313,6 +312,14 @@ export function FulfillmentConfirmDialog({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
+          {/* Payment Warning */}
+          <Alert className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-900 text-sm">
+              This will deduct from your EasyParcel balance and cannot be reverted.
+            </AlertDescription>
+          </Alert>
         </div>
 
         <DialogFooter>
@@ -330,7 +337,7 @@ export function FulfillmentConfirmDialog({
             disabled={isLoading || !!dateError || !pickupDate || !selectedCourier || loadingCouriers}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Fulfill Order
+            Fulfill & Pay
           </Button>
         </DialogFooter>
       </DialogContent>
