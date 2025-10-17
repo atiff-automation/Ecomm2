@@ -310,16 +310,8 @@ export interface OrderDetailsData {
 }
 
 /**
- * Two-Step Fulfillment Dialog Types
+ * Fulfillment Dialog Types (Single-Step Flow)
  */
-
-/**
- * Fulfillment dialog step
- */
-export enum FulfillmentStep {
-  COURIER_PICKUP = 'COURIER_PICKUP',
-  PRICE_CONFIRMATION = 'PRICE_CONFIRMATION',
-}
 
 /**
  * Courier option from shipping-options API
@@ -331,17 +323,6 @@ export interface CourierOption {
   estimatedDays: string;
   isCustomerChoice: boolean;
   serviceType?: string;
-}
-
-/**
- * Shipment quote data from Step 1
- */
-export interface ShipmentQuoteData {
-  shipmentId: string;
-  price: number;
-  courierName: string;
-  serviceType: string;
-  estimatedDelivery?: string;
 }
 
 /**

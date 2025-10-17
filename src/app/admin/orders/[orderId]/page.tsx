@@ -169,7 +169,7 @@ export default function OrderDetailsPage() {
 
   const handleConfirmFulfillment = async (
     pickupDate: string,
-    shipmentId?: string,
+    shipmentId?: string, // Keep for backward compatibility, but will be undefined
     options?: { overriddenByAdmin: boolean; selectedServiceId: string }
   ) => {
     if (!order) {
@@ -185,7 +185,7 @@ export default function OrderDetailsPage() {
         body: JSON.stringify({
           serviceId: options?.selectedServiceId || order.selectedCourierServiceId,
           pickupDate: pickupDate,
-          shipmentId: shipmentId, // Pass shipmentId for Step 2 of two-step flow
+          // No shipmentId - single-step flow
           overriddenByAdmin: options?.overriddenByAdmin || false,
         }),
       });

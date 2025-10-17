@@ -29,16 +29,13 @@ import { orderFlowLogger } from '@/lib/monitoring/order-flow-logger';
 
 /**
  * Zod schema for fulfillment request
- * Supports two-step flow:
- * - Without shipmentId: Complete flow (create + pay)
- * - With shipmentId: Pay only (Step 2 of two-step flow)
+ * Single-step flow: Always create shipment and pay in one operation
  */
 const fulfillmentSchema = z.object({
   serviceId: z.string().min(1, 'Service ID is required'),
   pickupDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  shipmentId: z.string().optional(), // If provided, skip create shipment (Step 2 only)
   overriddenByAdmin: z.boolean().optional().default(false),
   adminOverrideReason: z.string().optional(),
 });
@@ -263,15 +260,10 @@ export async function POST(
     // Step 10: Create shipment with EasyParcel API (with comprehensive logging)
     const easyParcelService = createLoggedEasyParcelService(settings);
 
-    // Check if this is Step 2 of two-step flow (shipmentId provided)
-    const isStepTwo = !!validatedData.shipmentId;
-
     // Log fulfillment initiation
     orderFlowLogger.logInfo(
-      isStepTwo ? 'Fulfillment: Step 2 (Payment)' : 'Fulfillment: Starting',
-      isStepTwo
-        ? `💳 Processing payment for order ${order.orderNumber} (shipmentId: ${validatedData.shipmentId})`
-        : `🚀 Initiating fulfillment for order ${order.orderNumber}`,
+      'Fulfillment: Starting',
+      `🚀 Initiating fulfillment for order ${order.orderNumber}`,
       {
         orderId: order.id,
         orderNumber: order.orderNumber,
@@ -279,96 +271,79 @@ export async function POST(
         pickupDate: validatedData.pickupDate,
         weight: shippingWeight,
         whatsappEnabled: settings.whatsappNotificationsEnabled,
-        isStepTwo,
-        shipmentId: validatedData.shipmentId,
       }
     );
 
     let shipmentResponse;
 
-    // If shipmentId provided (Step 2), skip create shipment
-    if (isStepTwo) {
-      console.log('[Fulfillment] Skipping shipment creation (Step 2 - Payment only)');
-      // Create mock response for Step 2 - price will come from quote
-      shipmentResponse = {
-        success: true,
+    // Always create fresh shipment with EasyParcel
+    try {
+      shipmentResponse =
+        await easyParcelService.createShipment(shipmentRequest);
+    } catch (error) {
+      console.error('[Fulfillment] EasyParcel API error:', error);
+
+      // Track failed booking attempt
+      const currentAttempts = order.failedBookingAttempts || 0;
+      const newAttempts = currentAttempts + 1;
+      const errorMessage =
+        error instanceof EasyParcelError ? error.message : 'Unknown error';
+
+      await prisma.order.update({
+        where: { id: params.orderId },
         data: {
-          shipment_id: validatedData.shipmentId,
-          price: null, // Price already known from Step 1
-          courier_name: order.courierName || 'Unknown',
-          service_name: order.courierServiceType || 'Unknown',
+          failedBookingAttempts: newAttempts,
+          lastBookingError: errorMessage,
         },
-      };
-    } else {
-      // Step 1 or single-step flow: Create shipment
-      try {
-        shipmentResponse =
-          await easyParcelService.createShipment(shipmentRequest);
-      } catch (error) {
-        console.error('[Fulfillment] EasyParcel API error:', error);
+      });
 
-        // Track failed booking attempt
-        const currentAttempts = order.failedBookingAttempts || 0;
-        const newAttempts = currentAttempts + 1;
-        const errorMessage =
-          error instanceof EasyParcelError ? error.message : 'Unknown error';
+      console.log(
+        `[Fulfillment] Failed attempt ${newAttempts} recorded for order ${order.orderNumber}`
+      );
 
-        await prisma.order.update({
-          where: { id: params.orderId },
-          data: {
-            failedBookingAttempts: newAttempts,
-            lastBookingError: errorMessage,
-          },
-        });
+      // Handle specific error codes
+      if (error instanceof EasyParcelError) {
+        // Check for insufficient balance
+        if (error.code === SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE) {
+          const balanceResponse = await easyParcelService
+            .getBalance()
+            .catch(() => null);
 
-        console.log(
-          `[Fulfillment] Failed attempt ${newAttempts} recorded for order ${order.orderNumber}`
-        );
-
-        // Handle specific error codes
-        if (error instanceof EasyParcelError) {
-          // Check for insufficient balance
-          if (error.code === SHIPPING_ERROR_CODES.INSUFFICIENT_BALANCE) {
-            const balanceResponse = await easyParcelService
-              .getBalance()
-              .catch(() => null);
-
-            return NextResponse.json(
-              {
-                success: false,
-                message: error.message,
-                code: error.code,
-                balance: balanceResponse?.data.balance || null,
-                failedAttempts: newAttempts,
-              },
-              { status: 402 }
-            );
-          }
-
-          // Handle other known errors
           return NextResponse.json(
             {
               success: false,
               message: error.message,
               code: error.code,
-              details: error.details,
+              balance: balanceResponse?.data.balance || null,
               failedAttempts: newAttempts,
             },
-            { status: 400 }
+            { status: 402 }
           );
         }
 
-        // Unknown error
+        // Handle other known errors
         return NextResponse.json(
           {
             success: false,
-            message: 'Failed to create shipment. Please try again.',
-            code: SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
+            message: error.message,
+            code: error.code,
+            details: error.details,
             failedAttempts: newAttempts,
           },
-          { status: 500 }
+          { status: 400 }
         );
       }
+
+      // Unknown error
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Failed to create shipment. Please try again.',
+          code: SHIPPING_ERROR_CODES.UNKNOWN_ERROR,
+          failedAttempts: newAttempts,
+        },
+        { status: 500 }
+      );
     }
 
     // Step 10.5: Pay for the order to get AWB and tracking details
