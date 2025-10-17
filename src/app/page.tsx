@@ -194,7 +194,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-gray-200" />
@@ -207,7 +207,7 @@ export default function HomePage() {
                 ))}
               </div>
             ) : promotionalProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {promotionalProducts.slice(0, 4).map(product => (
                   <ProductCard
                     key={product.id}
@@ -258,7 +258,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-gray-200" />
@@ -271,7 +271,7 @@ export default function HomePage() {
                 ))}
               </div>
             ) : featuredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {featuredProducts.slice(0, 4).map(product => (
                   <ProductCard
                     key={product.id}

@@ -310,7 +310,7 @@ export function ProductGrid({
   variant = 'default',
   layout = 'grid',
   viewMode: initialViewMode = 'grid',
-  columns = { mobile: 2, tablet: 3, desktop: 4 },
+  columns = { mobile: 2, tablet: 3, desktop: 4 }, // Already set to 2 columns for mobile
   showFilters = false,
   showSorting = false,
   showPagination = false,
