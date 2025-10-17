@@ -127,6 +127,7 @@ export default function ShippingSelector({
   }, [deliveryAddress, items, orderValue, isAddressComplete, onShippingSelected]);
 
   // Auto-calculate when address changes (with debounce)
+  // FIXED: Removed calculateShipping from dependencies to prevent recalculation when parent re-renders
   useEffect(() => {
     if (!isAddressComplete(deliveryAddress)) {
       return;
@@ -137,7 +138,7 @@ export default function ShippingSelector({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [deliveryAddress, calculateShipping, isAddressComplete]);
+  }, [deliveryAddress.name, deliveryAddress.phone, deliveryAddress.addressLine1, deliveryAddress.city, deliveryAddress.state, deliveryAddress.postalCode, deliveryAddress.country, items, orderValue]); // Only recalculate when actual delivery data changes
 
   // Handle manual courier selection
   const handleCourierSelect = (serviceId: string) => {

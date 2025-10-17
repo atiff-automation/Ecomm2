@@ -447,6 +447,7 @@ export default function CheckoutPage() {
   };
 
   // Handle shipping selection from ShippingSelector component
+  // FIXED: Removed fieldErrors dependency to prevent unnecessary recalculations during order submission
   const handleShippingSelected = useCallback((option: ShippingOption | null, weight?: number) => {
     setSelectedShipping(option);
     setShippingCost(option?.cost || 0);
@@ -458,15 +459,16 @@ export default function CheckoutPage() {
       console.log('✅ Weight updated from shipping calculation:', weight);
     }
 
-    // Clear shipping error if exists
-    if (fieldErrors['shipping']) {
-      setFieldErrors(prev => {
+    // Clear shipping error if exists - using functional update to avoid dependency
+    setFieldErrors(prev => {
+      if (prev['shipping']) {
         const newErrors = { ...prev };
         delete newErrors['shipping'];
         return newErrors;
-      });
-    }
-  }, [fieldErrors]);
+      }
+      return prev;
+    });
+  }, []); // Empty dependencies - all state updates use functional form
 
   // Memoize deliveryAddress to prevent recreation on every render
   const memoizedDeliveryAddress = useMemo(() => ({
