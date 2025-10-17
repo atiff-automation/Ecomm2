@@ -106,7 +106,11 @@ export function OrderTable({
     };
   };
 
-  const handleConfirmFulfillment = async (pickupDate: string) => {
+  const handleConfirmFulfillment = async (
+    pickupDate: string,
+    shipmentId?: string,
+    options?: { overriddenByAdmin: boolean; selectedServiceId: string }
+  ) => {
     if (!selectedOrderForFulfillment) {
       throw new Error('No order selected for fulfillment');
     }
@@ -120,9 +124,10 @@ export function OrderTable({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            serviceId: selectedOrderForFulfillment.selectedCourierServiceId,
+            serviceId: options?.selectedServiceId || selectedOrderForFulfillment.selectedCourierServiceId,
             pickupDate: pickupDate,
-            overriddenByAdmin: false,
+            shipmentId: shipmentId,
+            overriddenByAdmin: options?.overriddenByAdmin || false,
           }),
         }
       );
@@ -356,6 +361,7 @@ export function OrderTable({
             orderNumber: selectedOrderForFulfillment.orderNumber,
             courierName: selectedOrderForFulfillment.courierName,
             selectedCourierServiceId: selectedOrderForFulfillment.selectedCourierServiceId,
+            shippingCost: selectedOrderForFulfillment.shippingCost,
           }}
           onConfirm={handleConfirmFulfillment}
           isLoading={isFulfilling}

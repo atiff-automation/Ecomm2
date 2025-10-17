@@ -12,11 +12,23 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
 import { getNextBusinessDay, validatePickupDate } from '@/lib/shipping/utils/date-utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import type { FulfillmentConfirmDialogProps, FulfillmentStep, ShipmentQuoteData } from './types';
+import type {
+  FulfillmentConfirmDialogProps,
+  FulfillmentStep,
+  ShipmentQuoteData,
+  CourierOption,
+} from './types';
 
 export function FulfillmentConfirmDialog({
   open,
@@ -28,7 +40,7 @@ export function FulfillmentConfirmDialog({
   const { toast } = useToast();
 
   // State
-  const [currentStep, setCurrentStep] = useState<FulfillmentStep>('PICKUP_DATE' as FulfillmentStep);
+  const [currentStep, setCurrentStep] = useState<FulfillmentStep>('COURIER_PICKUP' as FulfillmentStep);
   const [pickupDate, setPickupDate] = useState<string>('');
   const [dateError, setDateError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,17 +48,71 @@ export function FulfillmentConfirmDialog({
   const [isGettingQuote, setIsGettingQuote] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
-  // Initialize pickup date when dialog opens
+  // Courier selection state
+  const [availableCouriers, setAvailableCouriers] = useState<CourierOption[]>([]);
+  const [loadingCouriers, setLoadingCouriers] = useState(false);
+  const [selectedCourier, setSelectedCourier] = useState<CourierOption | null>(null);
+
+  // Load available couriers when dialog opens
   useEffect(() => {
     if (open) {
+      loadAvailableCouriers();
       const nextBusinessDay = getNextBusinessDay();
       setPickupDate(format(nextBusinessDay, 'yyyy-MM-dd'));
       setDateError(null);
       setError(null);
-      setCurrentStep('PICKUP_DATE');
+      setCurrentStep('COURIER_PICKUP');
       setQuoteData(null);
     }
   }, [open]);
+
+  // Load courier options from shipping-options API
+  const loadAvailableCouriers = async () => {
+    setLoadingCouriers(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/shipping-options`);
+      const data = await response.json();
+
+      if (data.success && data.options) {
+        setAvailableCouriers(data.options);
+
+        // Pre-select customer's choice
+        const customerChoice = data.options.find((opt: CourierOption) => opt.isCustomerChoice);
+        setSelectedCourier(customerChoice || data.options[0]);
+      } else {
+        throw new Error(data.message || 'Failed to load courier options');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load courier options';
+      console.error('Failed to load courier options:', err);
+
+      toast({
+        title: 'Error Loading Couriers',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+
+      // Fallback: Use customer's original selection only
+      if (order.selectedCourierServiceId && order.courierName) {
+        setAvailableCouriers([{
+          serviceId: order.selectedCourierServiceId,
+          courierName: order.courierName,
+          cost: parseFloat(order.shippingCost?.toString() || '0'),
+          estimatedDays: 'N/A',
+          isCustomerChoice: true,
+        }]);
+        setSelectedCourier({
+          serviceId: order.selectedCourierServiceId,
+          courierName: order.courierName,
+          cost: parseFloat(order.shippingCost?.toString() || '0'),
+          estimatedDays: 'N/A',
+          isCustomerChoice: true,
+        });
+      }
+    } finally {
+      setLoadingCouriers(false);
+    }
+  };
 
   // Calculate min and max dates for date picker
   const minDate = format(new Date(), 'yyyy-MM-dd');
@@ -69,9 +135,9 @@ export function FulfillmentConfirmDialog({
     }
   };
 
-  // Step 1: Get shipping quote
+  // Step 1: Get shipping quote with selected courier
   const handleGetQuote = async () => {
-    if (dateError || !pickupDate) return;
+    if (dateError || !pickupDate || !selectedCourier) return;
 
     setIsGettingQuote(true);
     setError(null);
@@ -83,7 +149,7 @@ export function FulfillmentConfirmDialog({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            serviceId: order.selectedCourierServiceId,
+            serviceId: selectedCourier.serviceId, // Use selected courier!
             pickupDate,
           }),
         }
@@ -113,16 +179,22 @@ export function FulfillmentConfirmDialog({
     }
   };
 
-  // Step 2: Confirm and pay
+  // Step 2: Confirm and pay with override flag
   const handleConfirmPayment = async () => {
-    if (!quoteData) return;
+    if (!quoteData || !selectedCourier) return;
 
     setIsPaying(true);
     setError(null);
 
     try {
-      // Call parent's onConfirm with shipmentId
-      await onConfirm(pickupDate, quoteData.shipmentId);
+      // Calculate override flag dynamically
+      const isOverride = selectedCourier.serviceId !== order.selectedCourierServiceId;
+
+      // Call parent's onConfirm with shipmentId and override options
+      await onConfirm(pickupDate, quoteData.shipmentId, {
+        overriddenByAdmin: isOverride,
+        selectedServiceId: selectedCourier.serviceId,
+      });
       // Dialog will be closed by parent component on success
     } catch (err) {
       const errorMessage =
@@ -149,13 +221,13 @@ export function FulfillmentConfirmDialog({
     onOpenChange(false);
   };
 
-  // Render Step 1: Pickup Date Selection
+  // Render Step 1: Courier & Pickup Selection
   const renderStep1 = () => (
     <>
       <DialogHeader>
-        <DialogTitle>Get Shipping Quote</DialogTitle>
+        <DialogTitle>Select Courier & Pickup Date</DialogTitle>
         <DialogDescription>
-          Review order details and select pickup date to get shipping cost
+          Choose the courier and schedule the pickup date for this shipment
         </DialogDescription>
       </DialogHeader>
 
@@ -168,16 +240,66 @@ export function FulfillmentConfirmDialog({
           </p>
         </div>
 
-        {/* Courier Service */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Courier Service</Label>
-          <p className="text-sm font-semibold">
-            {order.courierName || 'Selected at checkout'}
-          </p>
-          {order.courierServiceDetail && (
-            <p className="text-sm text-gray-700 capitalize">
-              <span className="font-medium">Service Type:</span>{' '}
-              {order.courierServiceDetail}
+        {/* Customer's Original Selection */}
+        {order.courierName && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <Label className="text-sm font-medium text-blue-900">
+              Customer Selected:
+            </Label>
+            <p className="text-blue-800 font-semibold mt-1">
+              ✓ {order.courierName} - RM {parseFloat(order.shippingCost?.toString() || '0').toFixed(2)}
+            </p>
+          </div>
+        )}
+
+        {/* Courier Override Dropdown */}
+        <div>
+          <Label htmlFor="courier-select" className="text-sm font-medium">
+            Change Courier (Optional):
+          </Label>
+
+          {loadingCouriers ? (
+            <div className="flex items-center gap-2 py-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm text-gray-600">
+                Loading available couriers...
+              </span>
+            </div>
+          ) : (
+            <Select
+              value={selectedCourier?.serviceId || ''}
+              onValueChange={(serviceId) => {
+                const courier = availableCouriers.find(c => c.serviceId === serviceId);
+                if (courier) setSelectedCourier(courier);
+              }}
+            >
+              <SelectTrigger id="courier-select" className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCouriers.map((courier) => (
+                  <SelectItem key={courier.serviceId} value={courier.serviceId}>
+                    {courier.courierName} - RM {courier.cost.toFixed(2)}
+                    {courier.isCustomerChoice && ' (Customer Choice)'}
+                    {courier.cost < parseFloat(order.shippingCost?.toString() || '0') && ' 💰 CHEAPER'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Cost Difference Indicator */}
+          {selectedCourier && !selectedCourier.isCustomerChoice && (
+            <p className="text-xs mt-2">
+              {selectedCourier.cost < parseFloat(order.shippingCost?.toString() || '0') ? (
+                <span className="text-green-600 font-medium">
+                  💰 Save RM {(parseFloat(order.shippingCost?.toString() || '0') - selectedCourier.cost).toFixed(2)} vs customer selection
+                </span>
+              ) : selectedCourier.cost > parseFloat(order.shippingCost?.toString() || '0') ? (
+                <span className="text-orange-600 font-medium">
+                  ⚠️ RM {(selectedCourier.cost - parseFloat(order.shippingCost?.toString() || '0')).toFixed(2)} more expensive
+                </span>
+              ) : null}
             </p>
           )}
         </div>
@@ -208,13 +330,12 @@ export function FulfillmentConfirmDialog({
           )}
         </div>
 
-        {/* Info Alert */}
-        <Alert className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800 text-sm">
-            You'll see the exact shipping cost before confirming payment.
-          </AlertDescription>
-        </Alert>
+        {/* Info Message */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-xs text-gray-600">
+            ℹ️ Prices shown are current EasyParcel rates. Final price will be confirmed in the next step.
+          </p>
+        </div>
 
         {/* Error Display */}
         {error && (
@@ -237,129 +358,145 @@ export function FulfillmentConfirmDialog({
         <Button
           type="button"
           onClick={handleGetQuote}
-          disabled={isGettingQuote || !!dateError || !pickupDate}
+          disabled={isGettingQuote || !!dateError || !pickupDate || !selectedCourier}
         >
           {isGettingQuote && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Get Shipping Quote
+          Next: Get Quote
         </Button>
       </DialogFooter>
     </>
   );
 
-  // Render Step 2: Price Confirmation
-  const renderStep2 = () => (
-    <>
-      <DialogHeader>
-        <DialogTitle>Confirm Shipping Payment</DialogTitle>
-        <DialogDescription>
-          Review shipping cost and confirm to complete fulfillment
-        </DialogDescription>
-      </DialogHeader>
+  // Render Step 2: Price Confirmation with Override Indicators
+  const renderStep2 = () => {
+    const isOverride = selectedCourier?.serviceId !== order.selectedCourierServiceId;
+    const savedAmount = parseFloat(order.shippingCost?.toString() || '0') - (quoteData?.price || 0);
 
-      <div className="space-y-4 py-4">
-        {/* Success message */}
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800 text-sm">
-            Shipping quote retrieved successfully
-          </AlertDescription>
-        </Alert>
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>Confirm Shipment Details</DialogTitle>
+          <DialogDescription>
+            Review the shipping quote and confirm payment
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Order Summary */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Order Number</Label>
-          <p className="font-mono text-sm">{order.orderNumber}</p>
-        </div>
+        <div className="space-y-4 py-4">
+          {/* Success message */}
+          <Alert className="bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800 text-sm">
+              ✅ Shipping quote retrieved successfully
+            </AlertDescription>
+          </Alert>
 
-        {/* Shipping Cost Display - Prominent */}
-        <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">
-                Shipping Cost
+          {/* Shipping Cost Display with Savings Indicator */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Shipping Cost:</span>
+              <span className="text-2xl font-bold text-gray-900">
+                RM {quoteData?.price?.toFixed(2)}
               </span>
             </div>
-            <span className="text-2xl font-bold text-blue-600">
-              RM {quoteData?.price.toFixed(2)}
-            </span>
-          </div>
-          <p className="text-xs text-gray-600 mt-2">
-            This amount will be deducted from your EasyParcel balance
-            immediately.
-          </p>
-        </div>
 
-        {/* Shipment Details */}
-        <div className="space-y-3 bg-gray-50 p-3 rounded border">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <p className="text-gray-500">Courier</p>
-              <p className="font-medium">{quoteData?.courierName}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Service Type</p>
-              <p className="font-medium capitalize">{quoteData?.serviceType}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Pickup Date</p>
-              <p className="font-medium">
-                {format(new Date(pickupDate), 'MMM dd, yyyy')}
+            {/* Savings Indicator */}
+            {savedAmount > 0 && (
+              <p className="text-sm text-green-600 font-medium mt-2">
+                💰 You saved RM {savedAmount.toFixed(2)} vs customer selection
               </p>
+            )}
+            {savedAmount < 0 && (
+              <p className="text-sm text-orange-600 font-medium mt-2">
+                ⚠️ Business absorbing RM {Math.abs(savedAmount).toFixed(2)} extra cost
+              </p>
+            )}
+          </div>
+
+          {/* Shipment Details */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Courier:</span>
+              <span className="font-medium">
+                {quoteData?.courierName}
+                {isOverride && (
+                  <span className="ml-2 text-orange-600 text-xs">
+                    ⚠️ Admin Override
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Service Type:</span>
+              <span className="font-medium capitalize">{quoteData?.serviceType}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Pickup Date:</span>
+              <span className="font-medium">
+                {format(new Date(pickupDate), 'MMM dd, yyyy')}
+              </span>
             </div>
             {quoteData?.estimatedDelivery && (
-              <div>
-                <p className="text-gray-500">Est. Delivery</p>
-                <p className="font-medium">{quoteData.estimatedDelivery}</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Est. Delivery:</span>
+                <span className="font-medium">{quoteData.estimatedDelivery}</span>
               </div>
             )}
           </div>
+
+          {/* Override Warning */}
+          {isOverride && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-sm text-orange-800">
+                ⚠️ You are overriding the customer's courier selection.
+                <br />
+                Original: <strong>{order.courierName}</strong>
+              </p>
+            </div>
+          )}
+
+          {/* Payment Warning */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-sm text-yellow-800">
+              ⚠️ Confirming will process payment with EasyParcel and cannot be undone.
+            </p>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        {/* Warning Alert */}
-        <Alert className="bg-amber-50 border-amber-200">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800 text-sm">
-            Confirming will process payment and create the shipment. This action
-            cannot be undone.
-          </AlertDescription>
-        </Alert>
-
-        {/* Error Display */}
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleClose}
-          disabled={isPaying}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          onClick={handleConfirmPayment}
-          disabled={isPaying}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          {isPaying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Confirm & Pay RM {quoteData?.price.toFixed(2)}
-        </Button>
-      </DialogFooter>
-    </>
-  );
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCurrentStep('COURIER_PICKUP')}
+            disabled={isPaying}
+          >
+            Back
+          </Button>
+          <Button
+            type="button"
+            onClick={handleConfirmPayment}
+            disabled={isPaying}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isPaying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Confirm & Pay RM {quoteData?.price.toFixed(2)}
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
-        {currentStep === 'PICKUP_DATE' && renderStep1()}
+        {currentStep === 'COURIER_PICKUP' && renderStep1()}
         {currentStep === 'PRICE_CONFIRMATION' && renderStep2()}
       </DialogContent>
     </Dialog>

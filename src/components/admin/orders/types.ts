@@ -317,8 +317,20 @@ export interface OrderDetailsData {
  * Fulfillment dialog step
  */
 export enum FulfillmentStep {
-  PICKUP_DATE = 'PICKUP_DATE',
+  COURIER_PICKUP = 'COURIER_PICKUP',
   PRICE_CONFIRMATION = 'PRICE_CONFIRMATION',
+}
+
+/**
+ * Courier option from shipping-options API
+ */
+export interface CourierOption {
+  serviceId: string;
+  courierName: string;
+  cost: number;
+  estimatedDays: string;
+  isCustomerChoice: boolean;
+  serviceType?: string;
 }
 
 /**
@@ -333,6 +345,14 @@ export interface ShipmentQuoteData {
 }
 
 /**
+ * Override options for fulfillment
+ */
+export interface FulfillmentOverrideOptions {
+  overriddenByAdmin: boolean;
+  selectedServiceId: string;
+}
+
+/**
  * FulfillmentConfirmDialog component props
  */
 export interface FulfillmentConfirmDialogProps {
@@ -344,7 +364,12 @@ export interface FulfillmentConfirmDialogProps {
     courierName?: string;
     courierServiceDetail?: string;
     selectedCourierServiceId: string;
+    shippingCost: string | number;
   };
-  onConfirm: (pickupDate: string, shipmentId?: string) => Promise<void>;
+  onConfirm: (
+    pickupDate: string,
+    shipmentId?: string,
+    options?: FulfillmentOverrideOptions
+  ) => Promise<void>;
   isLoading?: boolean;
 }

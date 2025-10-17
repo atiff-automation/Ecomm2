@@ -167,7 +167,11 @@ export default function OrderDetailsPage() {
     setFulfillmentDialogOpen(true);
   };
 
-  const handleConfirmFulfillment = async (pickupDate: string, shipmentId?: string) => {
+  const handleConfirmFulfillment = async (
+    pickupDate: string,
+    shipmentId?: string,
+    options?: { overriddenByAdmin: boolean; selectedServiceId: string }
+  ) => {
     if (!order) {
       throw new Error('No order available for fulfillment');
     }
@@ -179,10 +183,10 @@ export default function OrderDetailsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          serviceId: order.selectedCourierServiceId,
+          serviceId: options?.selectedServiceId || order.selectedCourierServiceId,
           pickupDate: pickupDate,
           shipmentId: shipmentId, // Pass shipmentId for Step 2 of two-step flow
-          overriddenByAdmin: false,
+          overriddenByAdmin: options?.overriddenByAdmin || false,
         }),
       });
 
@@ -789,6 +793,7 @@ export default function OrderDetailsPage() {
             courierName: order.courierName,
             courierServiceDetail: order.courierServiceDetail,
             selectedCourierServiceId: order.selectedCourierServiceId || '',
+            shippingCost: order.shippingCost,
           }}
           onConfirm={handleConfirmFulfillment}
           isLoading={isFulfilling}
