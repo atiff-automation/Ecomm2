@@ -803,6 +803,8 @@ model WebhookQueue {
   @@map("webhook_queue")
 }
 
+/// @deprecated - No longer used, replaced with simplified tracking approach
+/// Keep table for now in case rollback needed. Can drop after 30 days.
 model TrackingCache {
   id                     String              @id @default(cuid())
   orderId                String              @unique
@@ -840,6 +842,7 @@ model TrackingCache {
   @@map("tracking_cache")
 }
 
+/// @deprecated - Related to deprecated TrackingCache
 model TrackingUpdateLog {
   id                String        @id @default(cuid())
   trackingCacheId   String
@@ -865,6 +868,7 @@ model TrackingUpdateLog {
   @@map("tracking_update_logs")
 }
 
+/// @deprecated - Related to deprecated TrackingCache
 model TrackingJobQueue {
   id              String            @id @default(cuid())
   trackingCacheId String

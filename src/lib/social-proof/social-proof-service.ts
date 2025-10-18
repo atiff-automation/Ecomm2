@@ -42,9 +42,10 @@ export class SocialProofService {
           order: {
             status: {
               in: [
-                OrderStatus.CONFIRMED,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED,
+                OrderStatus.PAID,
+                OrderStatus.READY_TO_SHIP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.OUT_FOR_DELIVERY,
                 OrderStatus.DELIVERED,
               ],
             },
@@ -148,9 +149,10 @@ export class SocialProofService {
           order: {
             status: {
               in: [
-                OrderStatus.CONFIRMED,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED,
+                OrderStatus.PAID,
+                OrderStatus.READY_TO_SHIP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.OUT_FOR_DELIVERY,
                 OrderStatus.DELIVERED,
               ],
             },
@@ -190,9 +192,10 @@ export class SocialProofService {
           order: {
             status: {
               in: [
-                OrderStatus.CONFIRMED,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED,
+                OrderStatus.PAID,
+                OrderStatus.READY_TO_SHIP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.OUT_FOR_DELIVERY,
                 OrderStatus.DELIVERED,
               ],
             },

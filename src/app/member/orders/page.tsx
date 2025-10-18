@@ -21,7 +21,7 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react';
-import OrderTrackingCard from '@/components/customer/OrderTrackingCard';
+// OrderTrackingCard removed - will be replaced with simple implementation
 
 interface Order {
   id: string;
@@ -203,10 +203,14 @@ export default function MemberOrdersPage() {
                         </Badge>
                       </div>
 
-                      {/* Tracking Information */}
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <OrderTrackingCard order={order} />
-                      </div>
+                      {/* Tracking Information - Simple display */}
+                      {order.trackingNumber && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-sm text-gray-600">
+                            Tracking: {order.trackingNumber}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4 md:mt-0 flex items-center space-x-2">

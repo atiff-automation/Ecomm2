@@ -17,8 +17,7 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
-import { TrackingTimelineCard } from '@/components/customer/TrackingTimeline';
-import TrackingStatus from '@/components/customer/TrackingStatus';
+// Tracking components removed - will be replaced with simple implementation
 import Image from 'next/image';
 
 interface OrderItem {
@@ -452,12 +451,9 @@ export default function OrderDetailPage() {
                     <label className="text-sm font-medium text-muted-foreground">
                       Status
                     </label>
-                    <div className="mt-1">
-                      <TrackingStatus
-                        status={order.shipment.status || 'unknown'}
-                        size="md"
-                      />
-                    </div>
+                    <p className="mt-1 capitalize">
+                      {order.shipment.status || 'Unknown'}
+                    </p>
                   </div>
                 </div>
 
@@ -508,16 +504,34 @@ export default function OrderDetailPage() {
             </Card>
           )}
 
-          {/* Tracking Timeline */}
+          {/* Tracking Timeline - Simple events display */}
           {order.shipment?.trackingEvents &&
             order.shipment.trackingEvents.length > 0 && (
-              <TrackingTimelineCard
-                events={order.shipment.trackingEvents}
-                currentStatus={order.shipment.status || 'unknown'}
-                estimatedDelivery={order.shipment.estimatedDelivery}
-                onRefresh={handleTrackingRefresh}
-                refreshing={refreshingTracking}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tracking Events</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {order.shipment.trackingEvents.map((event, index) => (
+                      <div key={index} className="border-l-2 border-gray-200 pl-4">
+                        <p className="font-medium">{event.eventName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {event.description}
+                        </p>
+                        {event.location && (
+                          <p className="text-sm text-muted-foreground">
+                            📍 {event.location}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(event.timestamp)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
           {/* Shipping Address */}
