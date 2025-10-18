@@ -32,7 +32,18 @@
     "no-useless-call": "error",
     "no-useless-concat": "error",
     "radix": "error",
-    "yoda": "error"
+    "yoda": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/grid-cols-[0-9]/]",
+        "message": "❌ CLAUDE.md Violation: Use Grid component from @/components/ui/layout instead of hardcoded grid-cols classes. See claudedocs/GRID_REFACTORING_IMPLEMENTATION_PLAN.md for guidance."
+      },
+      {
+        "selector": "TemplateElement[value.raw=/grid-cols-[0-9]/]",
+        "message": "❌ CLAUDE.md Violation: Use Grid component from @/components/ui/layout instead of hardcoded grid-cols classes. See claudedocs/GRID_REFACTORING_IMPLEMENTATION_PLAN.md for guidance."
+      }
+    ]
   },
   "env": {
     "browser": true,

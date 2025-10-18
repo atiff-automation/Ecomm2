@@ -354,6 +354,87 @@ const [error, setError] = useState(null);
 
 ---
 
+### **🔴 Responsive Grid System**
+
+**MANDATORY:** All responsive grids MUST use the centralized Grid component system.
+
+**✅ DO THIS:**
+```typescript
+import { ProductGrid } from '@/components/ui/layout';
+
+<ProductGrid>
+  {products.map(product => (
+    <ProductCard key={product.id} product={product} />
+  ))}
+</ProductGrid>
+```
+
+**❌ DON'T DO THIS:**
+```typescript
+// FORBIDDEN: Hardcoded grid classes
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  {products.map(product => (
+    <ProductCard key={product.id} product={product} />
+  ))}
+</div>
+```
+
+**Available Grid Components:**
+
+| Component | Use Case | Mobile | Tablet | Desktop | XL |
+|-----------|----------|--------|--------|---------|-----|
+| `ProductGrid` | Product listings | 2 | 3 | 4 | 5 |
+| `CompactProductGrid` | Sidebars, recommendations | 2 | 2 | 3 | 4 |
+| `SearchResultsGrid` | Search results | 2 | 2 | 3 | 4 |
+| `WishlistGrid` | Wishlist page | 2 | 2 | 3 | 4 |
+| `CategoryGrid` | Category tiles | 2 | 3 | 4 | 6 |
+| `FeatureGrid` | Feature highlights | 1 | 2 | 3 | 3 |
+| `BlogGrid` | Blog/article cards | 1 | 2 | 3 | 3 |
+
+**Custom Grid Configuration:**
+```typescript
+import { Grid } from '@/components/ui/layout';
+
+<Grid
+  cols={2}
+  responsive={{
+    sm: 2,
+    md: 3,
+    lg: 4,
+    xl: 5
+  }}
+  gap="md"
+>
+  {/* content */}
+</Grid>
+```
+
+**Grid Constants (for programmatic use):**
+```typescript
+import { GRID_COLUMNS, getGridClasses } from '@/lib/design-system';
+
+// Get grid configuration
+const productGridConfig = GRID_COLUMNS.product;
+// { mobile: 2, sm: 2, md: 3, lg: 4, xl: 5 }
+
+// Generate grid classes
+const classes = getGridClasses('product', 'md');
+// "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+```
+
+**Why This Matters:**
+1. **Single Source of Truth** - One place to update all grid configurations
+2. **No Hardcoding** - Configuration-driven, not magic strings
+3. **DRY Principle** - Reuse, don't duplicate
+4. **Type Safety** - Full TypeScript support
+5. **Consistency** - Same behavior across entire app
+
+**Enforcement:**
+- ESLint will error on hardcoded `grid-cols-*` classes
+- See `claudedocs/GRID_REFACTORING_IMPLEMENTATION_PLAN.md` for complete documentation
+
+---
+
 ## Testing Requirements
 
 **Unit Tests (Mandatory for Utils):**
