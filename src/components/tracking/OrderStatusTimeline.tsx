@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { OrderStatus } from '@prisma/client';
-import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   ORDER_STATUS_TIMELINE,
@@ -63,7 +63,7 @@ export function OrderStatusTimeline({
                     <CheckCircle2 className="w-6 h-6 text-green-600" />
                   )}
                   {isCurrent && (
-                    <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                    <CheckCircle2 className="w-6 h-6 text-blue-600" />
                   )}
                   {isPending && (
                     <Circle className="w-6 h-6 text-gray-400" />
