@@ -154,7 +154,6 @@ export default function CheckoutPage() {
   const [hasAvailableGateways, setHasAvailableGateways] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [orderError, setOrderError] = useState<string>('');
-  const [orderNotes, setOrderNotes] = useState('');
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [membershipPending, setMembershipPending] = useState(false);
   const [pendingMembershipMessage, setPendingMembershipMessage] = useState('');
@@ -616,7 +615,6 @@ export default function CheckoutPage() {
           selectedShipping: selectedShipping,
           calculatedWeight: calculatedWeight,
           paymentMethod,
-          orderNotes,
           membershipActivated: membershipActivated || membershipPending, // Include pending memberships
         };
 
@@ -671,7 +669,6 @@ export default function CheckoutPage() {
         selectedShipping: selectedShipping,
         calculatedWeight: calculatedWeight,
         paymentMethod,
-        orderNotes,
         membershipActivated: membershipActivated || membershipPending, // Include pending memberships
       };
 
@@ -1351,20 +1348,6 @@ export default function CheckoutPage() {
             </Alert>
           )}
 
-          {/* Order Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Notes (Optional)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <textarea
-                placeholder="Special instructions for your order..."
-                value={orderNotes}
-                onChange={e => setOrderNotes(e.target.value)}
-                className="w-full min-h-[100px] p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </CardContent>
-          </Card>
         </div>
 
         {/* Order Summary Sidebar */}

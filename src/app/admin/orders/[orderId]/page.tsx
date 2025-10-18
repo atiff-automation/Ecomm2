@@ -26,7 +26,7 @@ import {
   Clock,
   ExternalLink,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
 import { FulfillmentConfirmDialog } from '@/components/admin/orders/FulfillmentConfirmDialog';
 import {
@@ -42,7 +42,6 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.orderId as string;
-  const { toast } = useToast();
 
   const [order, setOrder] = useState<OrderDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,30 +59,18 @@ export default function OrderDetailsPage() {
         const data = await response.json();
         setOrder(data);
       } else if (response.status === 404) {
-        toast({
-          title: 'Error',
-          description: 'Order not found',
-          variant: 'destructive',
-        });
+        toast.error('Order not found');
         router.push('/admin/orders');
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load order details',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load order details');
       }
     } catch (error) {
       console.error('Failed to fetch order:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load order details',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load order details');
     } finally {
       setLoading(false);
     }
-  }, [orderId, router, toast]);
+  }, [orderId, router]);
 
   useEffect(() => {
     fetchOrder();
@@ -109,26 +96,16 @@ export default function OrderDetailsPage() {
       });
 
       if (response.ok) {
-        toast({
-          title: 'Status Updated',
+        toast.success('Status Updated', {
           description: `Order status changed to "${statusLabel}"`,
-          duration: 4000,
         });
         fetchOrder();
       } else {
         const error = await response.json();
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to update status',
-          variant: 'destructive',
-        });
+        toast.error(error.message || 'Failed to update status');
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update order status',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update order status');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -141,30 +118,18 @@ export default function OrderDetailsPage() {
 
     // Prevent fulfillment if order is already fulfilled
     if (order.shipment) {
-      toast({
-        title: 'Already Fulfilled',
-        description: 'This order has already been fulfilled.',
-        variant: 'destructive',
-      });
+      toast.error('This order has already been fulfilled');
       return;
     }
 
     // Prevent fulfillment if payment not completed
     if (order.paymentStatus !== 'PAID') {
-      toast({
-        title: 'Payment Required',
-        description: 'Order must be paid before fulfillment.',
-        variant: 'destructive',
-      });
+      toast.error('Order must be paid before fulfillment');
       return;
     }
 
     if (!order.selectedCourierServiceId) {
-      toast({
-        title: 'Error',
-        description: 'No courier service selected. Please select a courier from the order settings.',
-        variant: 'destructive',
-      });
+      toast.error('No courier service selected. Please select a courier from the order settings.');
       return;
     }
 
@@ -195,10 +160,7 @@ export default function OrderDetailsPage() {
       });
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Order fulfilled successfully',
-        });
+        toast.success('Order fulfilled successfully');
 
         setFulfillmentDialogOpen(false);
         fetchOrder();
@@ -228,11 +190,7 @@ export default function OrderDetailsPage() {
     if (order.airwayBillUrl) {
       window.open(order.airwayBillUrl, '_blank');
     } else {
-      toast({
-        title: 'Not Available',
-        description: 'Packing slip is not yet available. Please fulfill the order first.',
-        variant: 'destructive',
-      });
+      toast.error('Packing slip is not yet available. Please fulfill the order first.');
     }
   };
 
@@ -247,25 +205,14 @@ export default function OrderDetailsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        toast({
-          title: 'Success',
-          description: `Order ${data.orderNumber} has been permanently deleted`,
-        });
+        toast.success(`Order ${data.orderNumber} has been permanently deleted`);
         router.push('/admin/orders');
       } else {
         const error = await response.json();
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to delete order',
-          variant: 'destructive',
-        });
+        toast.error(error.message || 'Failed to delete order');
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete order',
-        variant: 'destructive',
-      });
+      toast.error('Failed to delete order');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);

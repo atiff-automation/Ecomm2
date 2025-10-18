@@ -22,7 +22,7 @@ import {
 import { Loader2, AlertCircle } from 'lucide-react';
 import { getNextBusinessDay, validatePickupDate } from '@/lib/shipping/utils/date-utils';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type {
   FulfillmentConfirmDialogProps,
   CourierOption,
@@ -35,7 +35,6 @@ export function FulfillmentConfirmDialog({
   onConfirm,
   isLoading = false,
 }: FulfillmentConfirmDialogProps) {
-  const { toast } = useToast();
 
   // State
   const [pickupDate, setPickupDate] = useState<string>('');
@@ -78,11 +77,7 @@ export function FulfillmentConfirmDialog({
       const errorMessage = err instanceof Error ? err.message : 'Failed to load courier options';
       console.error('Failed to load courier options:', err);
 
-      toast({
-        title: 'Error Loading Couriers',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      toast.error(errorMessage);
 
       // Fallback: Use customer's original selection only
       if (order.selectedCourierServiceId && order.courierName) {
@@ -130,11 +125,7 @@ export function FulfillmentConfirmDialog({
   // Single-step confirmation
   const handleConfirm = async () => {
     if (dateError || !pickupDate || !selectedCourier) {
-      toast({
-        title: 'Error',
-        description: 'Please select courier and pickup date',
-        variant: 'destructive',
-      });
+      toast.error('Please select courier and pickup date');
       return;
     }
 
@@ -158,11 +149,7 @@ export function FulfillmentConfirmDialog({
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to complete fulfillment';
       setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      toast.error(errorMessage);
     }
   };
 

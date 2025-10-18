@@ -51,7 +51,7 @@ import {
   BulkActionContainer,
 } from '@/components/admin/BulkActionBar';
 import { BulkDeleteModal } from '@/components/admin/BulkDeleteModal';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Product {
   id: string;
@@ -114,16 +114,11 @@ export default function AdminProductsPage() {
   // Bulk selection state
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
-  const { toast } = useToast();
 
   // Initialize bulk selection hook
   const bulkSelection = useProductBulkSelection(products, {
     onMaxSelectionExceeded: () => {
-      toast({
-        title: 'Selection Limit Reached',
-        description: 'You can select a maximum of 100 products at once.',
-        variant: 'destructive',
-      });
+      toast.error('You can select a maximum of 100 products at once');
     },
   });
 
@@ -279,11 +274,7 @@ export default function AdminProductsPage() {
   // Bulk delete functionality
   const handleBulkDelete = () => {
     if (bulkSelection.selectedCount === 0) {
-      toast({
-        title: 'No Products Selected',
-        description: 'Please select products to delete.',
-        variant: 'destructive',
-      });
+      toast.error('Please select products to delete');
       return;
     }
     setBulkDeleteModalOpen(true);
@@ -307,29 +298,18 @@ export default function AdminProductsPage() {
       const result = await response.json();
 
       if (result.success) {
-        toast({
-          title: 'Products Deleted Successfully',
-          description: result.message,
-        });
+        toast.success(result.message || 'Products deleted successfully');
 
         // Clear selection and refresh products
         bulkSelection.clearSelection();
         fetchProducts();
         fetchMetrics();
       } else {
-        toast({
-          title: 'Bulk Delete Failed',
-          description: result.message,
-          variant: 'destructive',
-        });
+        toast.error(result.message || 'Bulk delete failed');
       }
     } catch (error) {
       console.error('Bulk delete error:', error);
-      toast({
-        title: 'Bulk Delete Failed',
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setBulkDeleteLoading(false);
     }

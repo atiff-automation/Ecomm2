@@ -8,7 +8,7 @@ import { AdminPageLayout } from '@/components/admin/layout';
 import { OrderTable } from '@/components/admin/orders/OrderTable';
 import { OrderFilters } from '@/components/admin/orders/OrderFilters';
 import { ExportDialog } from '@/components/admin/orders/ExportDialog';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Package, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { ORDER_STATUS_TABS } from '@/lib/constants/order';
 import type {
@@ -46,7 +46,6 @@ export default function AdminOrdersPage() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const { toast } = useToast();
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -67,23 +66,15 @@ export default function AdminOrdersPage() {
         setOrders(data.orders || []);
         setTotalPages(data.pagination?.totalPages || 1);
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load orders',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load orders');
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load orders',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load orders');
     } finally {
       setLoading(false);
     }
-  }, [currentPage, filters, toast]);
+  }, [currentPage, filters]);
 
   // Fetch metrics
   const fetchMetrics = useCallback(async () => {
@@ -177,24 +168,13 @@ export default function AdminOrdersPage() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        toast({
-          title: 'Success',
-          description: 'Orders exported successfully',
-        });
+        toast.success('Orders exported successfully');
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to export orders',
-          variant: 'destructive',
-        });
+        toast.error('Failed to export orders');
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to export orders',
-        variant: 'destructive',
-      });
+      toast.error('Failed to export orders');
     } finally {
       setIsExporting(false);
     }

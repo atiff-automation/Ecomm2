@@ -22,7 +22,7 @@ import {
   MoreVertical,
   Loader2,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { OrderStatus } from '@prisma/client';
 import { ORDER_STATUSES } from '@/lib/constants/order';
 import type { OrderInlineActionsProps } from './types';
@@ -36,7 +36,6 @@ export function OrderInlineActions({
 }: OrderInlineActionsProps) {
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [isFulfilling, setIsFulfilling] = useState(false);
-  const { toast } = useToast();
 
   const handleStatusChange = async (newStatus: string) => {
     setIsChangingStatus(true);
@@ -44,25 +43,14 @@ export function OrderInlineActions({
       const result = await onStatusUpdate(order.id, newStatus as OrderStatus);
 
       if (result.success) {
-        toast({
-          title: 'Success',
-          description: result.message || 'Order status updated',
-        });
+        toast.success(result.message || 'Order status updated');
         // Refresh page to show updated data
         window.location.reload();
       } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to update status',
-          variant: 'destructive',
-        });
+        toast.error(result.error || 'Failed to update status');
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update order status',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update order status');
     } finally {
       setIsChangingStatus(false);
     }
@@ -74,20 +62,12 @@ export function OrderInlineActions({
       const result = await onFulfill(order.id);
 
       if (!result.success && result.error) {
-        toast({
-          title: 'Error',
-          description: result.error,
-          variant: 'destructive',
-        });
+        toast.error(result.error);
       }
       // Success is handled by the parent component (opens dialog or refreshes)
     } catch (error) {
       console.error('[OrderInlineActions] Fulfillment error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fulfill order',
-        variant: 'destructive',
-      });
+      toast.error('Failed to fulfill order');
     } finally {
       setIsFulfilling(false);
     }
@@ -97,11 +77,7 @@ export function OrderInlineActions({
     if (order.airwayBillUrl) {
       window.open(order.airwayBillUrl, '_blank');
     } else {
-      toast({
-        title: 'Not Available',
-        description: 'Packing slip is not yet available.',
-        variant: 'destructive',
-      });
+      toast.error('Packing slip is not yet available');
     }
   };
 
