@@ -201,16 +201,7 @@ export class OrderStatusHandler {
     data: OrderStatusChangeData
   ) {
     console.log('🚚 Order shipped:', order.orderNumber);
-
-    // Send shipping notification
-    try {
-      await simplifiedTelegramService.sendMessage({
-        message: `📦 ORDER SHIPPED\n\nOrder #${order.orderNumber} has been shipped!\n\nTracking: ${order.trackingNumber || 'N/A'}`,
-        channel: 'orders',
-      });
-    } catch (error) {
-      console.error('Failed to send shipping notification:', error);
-    }
+    // No notifications for shipped status
   }
 
   /**
@@ -222,14 +213,27 @@ export class OrderStatusHandler {
   ) {
     console.log('🎉 Order delivered:', order.orderNumber);
 
-    // Send delivery confirmation
+    // Send delivery email to customer
     try {
-      await simplifiedTelegramService.sendMessage({
-        message: `✅ ORDER DELIVERED\n\nOrder #${order.orderNumber} has been successfully delivered!`,
-        channel: 'orders',
-      });
+      if (order.user) {
+        await emailService.sendShippingNotification({
+          orderNumber: order.orderNumber,
+          customerName: `${order.user.firstName} ${order.user.lastName}`,
+          customerEmail: order.user.email,
+          trackingNumber: order.trackingNumber || '',
+          courierName: order.courierName || 'Courier',
+          estimatedDelivery: order.estimatedDelivery || 'N/A',
+          trackingUrl: order.trackingUrl || '',
+          items: order.orderItems.map((item: any) => ({
+            name: item.productName || item.product?.name || 'Product',
+            quantity: item.quantity,
+            price: Number(item.appliedPrice),
+          })),
+        });
+        console.log('✅ Delivery email sent to customer:', order.user.email);
+      }
     } catch (error) {
-      console.error('Failed to send delivery notification:', error);
+      console.error('❌ Failed to send delivery email:', error);
     }
   }
 
@@ -241,16 +245,7 @@ export class OrderStatusHandler {
     data: OrderStatusChangeData
   ) {
     console.log('❌ Order cancelled:', order.orderNumber);
-
-    // Send cancellation notification
-    try {
-      await simplifiedTelegramService.sendMessage({
-        message: `❌ ORDER CANCELLED\n\nOrder #${order.orderNumber} has been cancelled.`,
-        channel: 'orders',
-      });
-    } catch (error) {
-      console.error('Failed to send cancellation notification:', error);
-    }
+    // No notifications for cancelled status
   }
 
   /**

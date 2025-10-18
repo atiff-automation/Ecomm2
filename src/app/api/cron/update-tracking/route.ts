@@ -20,6 +20,8 @@ import {
   createEasyParcelService,
   EasyParcelError,
 } from '@/lib/shipping/easyparcel-service';
+import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
+import { OrderStatus } from '@prisma/client';
 
 /**
  * Map EasyParcel tracking status to order status
@@ -161,10 +163,22 @@ export async function GET() {
             `[Cron] Status change detected for ${order.orderNumber}: ${order.status} → ${newStatus}`
           );
 
+          // Use updateOrderStatus to trigger proper notifications and logging
+          await updateOrderStatus(
+            order.id,
+            newStatus as OrderStatus,
+            undefined,
+            'cron',
+            {
+              trackingStatus: trackingData.current_status,
+              trackingDescription: trackingData.status_description,
+            }
+          );
+
+          // Update additional timestamps
           await prisma.order.update({
             where: { id: order.id },
             data: {
-              status: newStatus,
               // Update delivery timestamp if delivered
               deliveredAt: newStatus === 'DELIVERED' ? new Date() : undefined,
               // Update shipped timestamp if in transit and not already set
@@ -182,11 +196,6 @@ export async function GET() {
           results.updated++;
 
           console.log(`[Cron] Successfully updated order ${order.orderNumber}`);
-
-          // Note: No email notifications per spec (line 1245: "No email notifications (only on first tracking)")
-          // Email #1: Order Confirmation (when PAID)
-          // Email #2: Shipment Tracking (when READY_TO_SHIP)
-          // No email for DELIVERED status
         } else {
           console.log(`[Cron] No status change for order ${order.orderNumber}`);
         }

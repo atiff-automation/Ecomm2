@@ -94,6 +94,9 @@ export default function OrderDetailsPage() {
       return;
     }
 
+    const previousStatus = order.status;
+    const statusLabel = ORDER_STATUSES[newStatus]?.label || newStatus;
+
     setIsUpdatingStatus(true);
     try {
       const response = await fetch(`/api/orders/${order.id}/status`, {
@@ -107,8 +110,9 @@ export default function OrderDetailsPage() {
 
       if (response.ok) {
         toast({
-          title: 'Success',
-          description: 'Order status updated successfully',
+          title: 'Status Updated',
+          description: `Order status changed to "${statusLabel}"`,
+          duration: 4000,
         });
         fetchOrder();
       } else {

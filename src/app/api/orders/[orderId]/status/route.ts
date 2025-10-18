@@ -14,20 +14,25 @@ import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
 import { OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
 import { z } from 'zod';
 
+// Status values from Prisma schema - Single source of truth
+const ORDER_STATUS_VALUES = [
+  'PENDING',
+  'PAID',
+  'READY_TO_SHIP',
+  'IN_TRANSIT',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+] as const;
+
+const PAYMENT_STATUS_VALUES = ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] as const;
+
 const updateStatusSchema = z.object({
-  status: z.enum([
-    'PENDING',
-    'CONFIRMED',
-    'PROCESSING',
-    'SHIPPED',
-    'DELIVERED',
-    'CANCELLED',
-    'REFUNDED',
-  ]),
-  paymentStatus: z.enum(['PENDING', 'PAID', 'FAILED', 'REFUNDED']).optional(),
+  status: z.enum(ORDER_STATUS_VALUES),
+  paymentStatus: z.enum(PAYMENT_STATUS_VALUES).optional(),
   triggeredBy: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
-  // For webhook security
+  metadata: z.record(z.unknown()).optional(),
   webhookSecret: z.string().optional(),
 });
 
