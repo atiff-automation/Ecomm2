@@ -1,10 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import '@n8n/chat/style.css';
 
 export function SimpleN8nChatLoader() {
+  const pathname = usePathname();
   const [config, setConfig] = useState<any>(null);
+
+  // Hide chat on admin pages - chat should only be visible on customer-facing pages
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   useEffect(() => {
     // Load config from API
