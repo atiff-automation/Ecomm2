@@ -5,16 +5,16 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { 
-  SalesOverview, 
-  ProductPerformance, 
+import {
+  SalesOverview,
+  ProductPerformance,
   CustomerInsight,
   RevenueAnalytics,
   StateAnalytics,
   RevenuePoint,
   PaymentMethodAnalytics,
   MALAYSIAN_STATES,
-  MalaysianStateCode
+  MalaysianStateCode,
 } from '@/lib/types/sales-reports';
 
 export class SalesAnalyticsService {
@@ -33,10 +33,13 @@ export class SalesAnalyticsService {
    * Get cached data or execute query
    * Temporarily disabled caching due to Redis issues
    */
-  private async getCachedData<T>(key: string, queryFn: () => Promise<T>): Promise<T> {
+  private async getCachedData<T>(
+    key: string,
+    queryFn: () => Promise<T>
+  ): Promise<T> {
     // Temporarily disable caching to bypass Redis connection issues
     return await queryFn();
-    
+
     /* Commented out until Redis is configured properly
     const cached = this.cache.get(key);
     if (cached && Date.now() < cached.expiry) {
@@ -52,14 +55,17 @@ export class SalesAnalyticsService {
   /**
    * Get comprehensive sales overview
    */
-  async getSalesOverview(startDate: Date, endDate: Date): Promise<SalesOverview> {
+  async getSalesOverview(
+    startDate: Date,
+    endDate: Date
+  ): Promise<SalesOverview> {
     const cacheKey = `overview-${startDate.toISOString()}-${endDate.toISOString()}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       try {
         // Check if there are any orders first
         const orderCount = await prisma.order.count();
-        
+
         if (orderCount === 0) {
           // Return empty data structure for new installations
           return {
@@ -69,7 +75,7 @@ export class SalesAnalyticsService {
             memberRevenue: 0,
             nonMemberRevenue: 0,
             taxCollected: 0,
-            period: { startDate, endDate }
+            period: { startDate, endDate },
           };
         }
 
@@ -77,29 +83,29 @@ export class SalesAnalyticsService {
           prisma.order.aggregate({
             where: {
               createdAt: { gte: startDate, lte: endDate },
-              paymentStatus: 'PAID'
+              paymentStatus: 'PAID',
             },
             _sum: {
               total: true,
-              taxAmount: true
+              taxAmount: true,
             },
-            _count: true
+            _count: true,
           }),
           prisma.order.aggregate({
             where: {
               createdAt: { gte: startDate, lte: endDate },
               paymentStatus: 'PAID',
-              user: { isMember: true }
+              user: { isMember: true },
             },
-            _sum: { total: true }
-          })
+            _sum: { total: true },
+          }),
         ]);
 
         const totalRevenue = totalStats._sum.total?.toNumber() || 0;
         const memberRevenue = memberStats._sum.total?.toNumber() || 0;
         const nonMemberRevenue = totalRevenue - memberRevenue;
         const totalOrders = totalStats._count;
-        
+
         return {
           totalRevenue,
           totalOrders,
@@ -107,7 +113,7 @@ export class SalesAnalyticsService {
           memberRevenue,
           nonMemberRevenue,
           taxCollected: totalStats._sum.taxAmount?.toNumber() || 0,
-          period: { startDate, endDate }
+          period: { startDate, endDate },
         };
       } catch (innerError) {
         console.error('Database query error in getSalesOverview:', innerError);
@@ -119,7 +125,7 @@ export class SalesAnalyticsService {
           memberRevenue: 0,
           nonMemberRevenue: 0,
           taxCollected: 0,
-          period: { startDate, endDate }
+          period: { startDate, endDate },
         };
       }
     });
@@ -129,17 +135,17 @@ export class SalesAnalyticsService {
    * Get product performance analytics
    */
   async getProductPerformance(
-    startDate: Date, 
+    startDate: Date,
     endDate: Date,
     limit: number = 20
   ): Promise<ProductPerformance[]> {
     const cacheKey = `products-${startDate.toISOString()}-${endDate.toISOString()}-${limit}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       try {
         // Check if there are any order items first
         const orderItemCount = await prisma.orderItem.count();
-        
+
         if (orderItemCount === 0) {
           // Return empty array for new installations
           return [];
@@ -150,28 +156,28 @@ export class SalesAnalyticsService {
           where: {
             order: {
               createdAt: { gte: startDate, lte: endDate },
-              paymentStatus: 'PAID'
-            }
+              paymentStatus: 'PAID',
+            },
           },
           _sum: {
             quantity: true,
-            totalPrice: true
+            totalPrice: true,
           },
           orderBy: {
             _sum: {
-              totalPrice: 'desc'
-            }
+              totalPrice: 'desc',
+            },
           },
-          take: limit
+          take: limit,
         });
 
         const performanceData = await Promise.all(
-          productStats.map(async (stat) => {
+          productStats.map(async stat => {
             try {
               const [product, memberSales] = await Promise.all([
                 prisma.product.findUnique({
                   where: { id: stat.productId },
-                  select: { name: true, sku: true }
+                  select: { name: true, sku: true },
                 }),
                 prisma.orderItem.aggregate({
                   where: {
@@ -179,15 +185,16 @@ export class SalesAnalyticsService {
                     order: {
                       createdAt: { gte: startDate, lte: endDate },
                       paymentStatus: 'PAID',
-                      user: { isMember: true }
-                    }
+                      user: { isMember: true },
+                    },
                   },
-                  _sum: { totalPrice: true }
-                })
+                  _sum: { totalPrice: true },
+                }),
               ]);
 
               const totalRevenue = stat._sum.totalPrice?.toNumber() || 0;
-              const memberRevenue = memberSales._sum.totalPrice?.toNumber() || 0;
+              const memberRevenue =
+                memberSales._sum.totalPrice?.toNumber() || 0;
               const quantity = stat._sum.quantity || 0;
 
               return {
@@ -198,10 +205,13 @@ export class SalesAnalyticsService {
                 totalRevenue,
                 profitMargin: 0, // Profit calculation removed as costPrice field is no longer available
                 memberSales: memberRevenue,
-                nonMemberSales: totalRevenue - memberRevenue
+                nonMemberSales: totalRevenue - memberRevenue,
               };
             } catch (productError) {
-              console.error('Error processing product performance data:', productError);
+              console.error(
+                'Error processing product performance data:',
+                productError
+              );
               // Return fallback data for this product
               return {
                 productId: stat.productId,
@@ -211,7 +221,7 @@ export class SalesAnalyticsService {
                 totalRevenue: stat._sum.totalPrice?.toNumber() || 0,
                 profitMargin: 0, // Profit calculation removed as costPrice field is no longer available
                 memberSales: 0,
-                nonMemberSales: stat._sum.totalPrice?.toNumber() || 0
+                nonMemberSales: stat._sum.totalPrice?.toNumber() || 0,
               };
             }
           })
@@ -229,14 +239,17 @@ export class SalesAnalyticsService {
   /**
    * Get customer insights and analytics
    */
-  async getCustomerInsights(startDate: Date, endDate: Date): Promise<CustomerInsight> {
+  async getCustomerInsights(
+    startDate: Date,
+    endDate: Date
+  ): Promise<CustomerInsight> {
     const cacheKey = `customers-${startDate.toISOString()}-${endDate.toISOString()}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       try {
         // Check if there are any users first
         const userCount = await prisma.user.count();
-        
+
         if (userCount === 0) {
           // Return empty data structure for new installations
           return {
@@ -245,7 +258,7 @@ export class SalesAnalyticsService {
             returningCustomers: 0,
             memberConversionRate: 0,
             avgCustomerLifetimeValue: 0,
-            topStates: []
+            topStates: [],
           };
         }
 
@@ -254,29 +267,29 @@ export class SalesAnalyticsService {
           newCustomers,
           returningCustomers,
           memberCount,
-          stateStats
+          stateStats,
         ] = await Promise.all([
           prisma.user.count({
-            where: { role: 'CUSTOMER' }
+            where: { role: 'CUSTOMER' },
           }),
           prisma.user.count({
             where: {
               role: 'CUSTOMER',
-              createdAt: { gte: startDate, lte: endDate }
-            }
+              createdAt: { gte: startDate, lte: endDate },
+            },
           }),
           prisma.order.findMany({
             where: {
               createdAt: { gte: startDate, lte: endDate },
-              paymentStatus: 'PAID'
+              paymentStatus: 'PAID',
             },
             select: { userId: true },
-            distinct: ['userId']
+            distinct: ['userId'],
           }),
           prisma.user.count({
-            where: { role: 'CUSTOMER', isMember: true }
+            where: { role: 'CUSTOMER', isMember: true },
           }),
-          this.getStateAnalytics(startDate, endDate)
+          this.getStateAnalytics(startDate, endDate),
         ]);
 
         const avgLifetimeValue = await this.calculateAvgLifetimeValue();
@@ -285,9 +298,10 @@ export class SalesAnalyticsService {
           totalCustomers,
           newCustomers,
           returningCustomers: returningCustomers.length,
-          memberConversionRate: totalCustomers > 0 ? (memberCount / totalCustomers) * 100 : 0,
+          memberConversionRate:
+            totalCustomers > 0 ? (memberCount / totalCustomers) * 100 : 0,
           avgCustomerLifetimeValue: avgLifetimeValue,
-          topStates: stateStats
+          topStates: stateStats,
         };
       } catch (error) {
         console.error('Database query error in getCustomerInsights:', error);
@@ -298,7 +312,7 @@ export class SalesAnalyticsService {
           returningCustomers: 0,
           memberConversionRate: 0,
           avgCustomerLifetimeValue: 0,
-          topStates: []
+          topStates: [],
         };
       }
     });
@@ -307,21 +321,24 @@ export class SalesAnalyticsService {
   /**
    * Get revenue analytics with trends
    */
-  async getRevenueAnalytics(startDate: Date, endDate: Date): Promise<RevenueAnalytics> {
+  async getRevenueAnalytics(
+    startDate: Date,
+    endDate: Date
+  ): Promise<RevenueAnalytics> {
     const cacheKey = `revenue-${startDate.toISOString()}-${endDate.toISOString()}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       try {
         const [dailyData, paymentMethods] = await Promise.all([
           this.getDailyRevenueData(startDate, endDate),
-          this.getPaymentMethodAnalytics(startDate, endDate)
+          this.getPaymentMethodAnalytics(startDate, endDate),
         ]);
 
         return {
           daily: dailyData,
           weekly: this.aggregateToWeekly(dailyData),
           monthly: this.aggregateToMonthly(dailyData),
-          paymentMethods
+          paymentMethods,
         };
       } catch (error) {
         console.error('Database query error in getRevenueAnalytics:', error);
@@ -330,7 +347,7 @@ export class SalesAnalyticsService {
           daily: [],
           weekly: [],
           monthly: [],
-          paymentMethods: []
+          paymentMethods: [],
         };
       }
     });
@@ -339,11 +356,14 @@ export class SalesAnalyticsService {
   /**
    * Get state-wise analytics for Malaysian states
    */
-  private async getStateAnalytics(startDate: Date, endDate: Date): Promise<StateAnalytics[]> {
+  private async getStateAnalytics(
+    startDate: Date,
+    endDate: Date
+  ): Promise<StateAnalytics[]> {
     try {
       // Check if there are any orders first
       const orderCount = await prisma.order.count();
-      
+
       if (orderCount === 0) {
         // Return empty array for new installations
         return [];
@@ -354,39 +374,47 @@ export class SalesAnalyticsService {
         where: {
           createdAt: { gte: startDate, lte: endDate },
           paymentStatus: 'PAID',
-          shippingAddressId: { not: null }
+          shippingAddressId: { not: null },
         },
         include: {
           shippingAddress: {
             select: {
-              state: true
-            }
-          }
-        }
+              state: true,
+            },
+          },
+        },
       });
 
       // Group by state and calculate totals
-      const stateMap = new Map<MalaysianStateCode, { totalOrders: number; totalRevenue: number }>();
-      
+      const stateMap = new Map<
+        MalaysianStateCode,
+        { totalOrders: number; totalRevenue: number }
+      >();
+
       for (const order of orders) {
         const stateCode = order.shippingAddress?.state as MalaysianStateCode;
-        
+
         if (stateCode && MALAYSIAN_STATES[stateCode]) {
-          const existing = stateMap.get(stateCode) || { totalOrders: 0, totalRevenue: 0 };
+          const existing = stateMap.get(stateCode) || {
+            totalOrders: 0,
+            totalRevenue: 0,
+          };
           stateMap.set(stateCode, {
             totalOrders: existing.totalOrders + 1,
-            totalRevenue: existing.totalRevenue + order.total.toNumber()
+            totalRevenue: existing.totalRevenue + order.total.toNumber(),
           });
         }
       }
 
       // Convert to array and sort by revenue
-      const stateStats: StateAnalytics[] = Array.from(stateMap.entries()).map(([stateCode, stats]) => ({
-        state: stateCode,
-        stateName: MALAYSIAN_STATES[stateCode],
-        totalOrders: stats.totalOrders,
-        totalRevenue: stats.totalRevenue
-      }));
+      const stateStats: StateAnalytics[] = Array.from(stateMap.entries()).map(
+        ([stateCode, stats]) => ({
+          state: stateCode,
+          stateName: MALAYSIAN_STATES[stateCode],
+          totalOrders: stats.totalOrders,
+          totalRevenue: stats.totalRevenue,
+        })
+      );
 
       return stateStats
         .sort((a, b) => b.totalRevenue - a.totalRevenue)
@@ -401,11 +429,14 @@ export class SalesAnalyticsService {
   /**
    * Get daily revenue data
    */
-  private async getDailyRevenueData(startDate: Date, endDate: Date): Promise<RevenuePoint[]> {
+  private async getDailyRevenueData(
+    startDate: Date,
+    endDate: Date
+  ): Promise<RevenuePoint[]> {
     try {
       // Check if there are any orders first
       const orderCount = await prisma.order.count();
-      
+
       if (orderCount === 0) {
         // Return empty array for new installations
         return [];
@@ -414,15 +445,15 @@ export class SalesAnalyticsService {
       const orders = await prisma.order.findMany({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          paymentStatus: 'PAID'
+          paymentStatus: 'PAID',
         },
         select: {
           createdAt: true,
           total: true,
           user: {
-            select: { isMember: true }
-          }
-        }
+            select: { isMember: true },
+          },
+        },
       });
 
       const dailyMap = new Map<string, RevenuePoint>();
@@ -438,14 +469,14 @@ export class SalesAnalyticsService {
             revenue: 0,
             orders: 0,
             memberRevenue: 0,
-            nonMemberRevenue: 0
+            nonMemberRevenue: 0,
           });
         }
 
         const point = dailyMap.get(date)!;
         point.revenue += revenue;
         point.orders += 1;
-        
+
         if (isMember) {
           point.memberRevenue += revenue;
         } else {
@@ -453,7 +484,9 @@ export class SalesAnalyticsService {
         }
       });
 
-      return Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+      return Array.from(dailyMap.values()).sort((a, b) =>
+        a.date.localeCompare(b.date)
+      );
     } catch (error) {
       console.error('Database query error in getDailyRevenueData:', error);
       // Return empty array on error to prevent complete failure
@@ -465,13 +498,13 @@ export class SalesAnalyticsService {
    * Get payment method analytics
    */
   private async getPaymentMethodAnalytics(
-    startDate: Date, 
+    startDate: Date,
     endDate: Date
   ): Promise<PaymentMethodAnalytics[]> {
     try {
       // Check if there are any orders first
       const orderCount = await prisma.order.count();
-      
+
       if (orderCount === 0) {
         // Return empty array for new installations
         return [];
@@ -482,26 +515,35 @@ export class SalesAnalyticsService {
         where: {
           createdAt: { gte: startDate, lte: endDate },
           paymentStatus: 'PAID',
-          paymentMethod: { not: null }
+          paymentMethod: { not: null },
         },
         _sum: {
-          total: true
+          total: true,
         },
-        _count: true
+        _count: true,
       });
 
-      const totalRevenue = paymentData.reduce((sum, item) => 
-        sum + (item._sum.total?.toNumber() || 0), 0
+      const totalRevenue = paymentData.reduce(
+        (sum, item) => sum + (item._sum.total?.toNumber() || 0),
+        0
       );
 
-      return paymentData.map(item => ({
-        method: item.paymentMethod || 'Unknown',
-        count: item._count,
-        revenue: item._sum.total?.toNumber() || 0,
-        percentage: totalRevenue > 0 ? ((item._sum.total?.toNumber() || 0) / totalRevenue) * 100 : 0
-      })).sort((a, b) => b.revenue - a.revenue);
+      return paymentData
+        .map(item => ({
+          method: item.paymentMethod || 'Unknown',
+          count: item._count,
+          revenue: item._sum.total?.toNumber() || 0,
+          percentage:
+            totalRevenue > 0
+              ? ((item._sum.total?.toNumber() || 0) / totalRevenue) * 100
+              : 0,
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
     } catch (error) {
-      console.error('Database query error in getPaymentMethodAnalytics:', error);
+      console.error(
+        'Database query error in getPaymentMethodAnalytics:',
+        error
+      );
       // Return empty array on error to prevent complete failure
       return [];
     }
@@ -513,8 +555,10 @@ export class SalesAnalyticsService {
   private async calculateAvgLifetimeValue(): Promise<number> {
     try {
       // Check if there are any users first
-      const userCount = await prisma.user.count({ where: { role: 'CUSTOMER' } });
-      
+      const userCount = await prisma.user.count({
+        where: { role: 'CUSTOMER' },
+      });
+
       if (userCount === 0) {
         // Return 0 for new installations
         return 0;
@@ -523,16 +567,19 @@ export class SalesAnalyticsService {
       const result = await prisma.user.aggregate({
         where: {
           role: 'CUSTOMER',
-          membershipTotal: { gt: 0 }
+          membershipTotal: { gt: 0 },
         },
         _avg: {
-          membershipTotal: true
-        }
+          membershipTotal: true,
+        },
       });
 
       return result._avg.membershipTotal?.toNumber() || 0;
     } catch (error) {
-      console.error('Database query error in calculateAvgLifetimeValue:', error);
+      console.error(
+        'Database query error in calculateAvgLifetimeValue:',
+        error
+      );
       // Return 0 on error to prevent complete failure
       return 0;
     }
@@ -555,7 +602,7 @@ export class SalesAnalyticsService {
           revenue: 0,
           orders: 0,
           memberRevenue: 0,
-          nonMemberRevenue: 0
+          nonMemberRevenue: 0,
         });
       }
 
@@ -566,7 +613,9 @@ export class SalesAnalyticsService {
       weekly.nonMemberRevenue += point.nonMemberRevenue;
     });
 
-    return Array.from(weeklyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    return Array.from(weeklyMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
   }
 
   /**
@@ -584,7 +633,7 @@ export class SalesAnalyticsService {
           revenue: 0,
           orders: 0,
           memberRevenue: 0,
-          nonMemberRevenue: 0
+          nonMemberRevenue: 0,
         });
       }
 
@@ -595,7 +644,9 @@ export class SalesAnalyticsService {
       monthly.nonMemberRevenue += point.nonMemberRevenue;
     });
 
-    return Array.from(monthlyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    return Array.from(monthlyMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
   }
 
   /**

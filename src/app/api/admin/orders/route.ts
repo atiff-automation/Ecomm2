@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 
       // Airway bill fields
       airwayBillGenerated: order.airwayBillGenerated,
-      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
       airwayBillUrl: order.airwayBillUrl,
       airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString(),
 

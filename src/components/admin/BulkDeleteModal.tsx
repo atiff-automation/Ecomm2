@@ -17,7 +17,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
-import { BULK_OPERATIONS_CONFIG, formatMessage } from '@/lib/config/bulk-operations';
+import {
+  BULK_OPERATIONS_CONFIG,
+  formatMessage,
+} from '@/lib/config/bulk-operations';
 
 interface ProductSummary {
   id: string;
@@ -43,7 +46,9 @@ interface BulkDeleteModalProps {
 /**
  * Fetches product deletion summary from the API
  */
-async function fetchDeletionSummary(productIds: string[]): Promise<DeletionSummary> {
+async function fetchDeletionSummary(
+  productIds: string[]
+): Promise<DeletionSummary> {
   const response = await fetch(
     `/api/admin/products/bulk?productIds=${productIds.join(',')}`
   );
@@ -77,7 +82,7 @@ export function BulkDeleteModal({
 
       fetchDeletionSummary(productIds)
         .then(setSummary)
-        .catch((err) => {
+        .catch(err => {
           console.error('Failed to fetch deletion summary:', err);
           setError('Failed to load product information');
         })
@@ -119,9 +124,12 @@ export function BulkDeleteModal({
             Confirm Bulk Delete
           </DialogTitle>
           <DialogDescription>
-            {formatMessage(BULK_OPERATIONS_CONFIG.CONFIRMATION_MESSAGES.DELETE, {
-              count: productIds.length,
-            })}
+            {formatMessage(
+              BULK_OPERATIONS_CONFIG.CONFIRMATION_MESSAGES.DELETE,
+              {
+                count: productIds.length,
+              }
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -159,7 +167,10 @@ export function BulkDeleteModal({
                     <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                     <div className="space-y-1">
                       {summary.warnings.map((warning, index) => (
-                        <p key={index} className="text-sm text-orange-700 dark:text-orange-300">
+                        <p
+                          key={index}
+                          className="text-sm text-orange-700 dark:text-orange-300"
+                        >
                           {warning}
                         </p>
                       ))}
@@ -173,7 +184,7 @@ export function BulkDeleteModal({
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Products:</span>
                   <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted/20">
-                    {summary.products.slice(0, 5).map((product) => (
+                    {summary.products.slice(0, 5).map(product => (
                       <div
                         key={product.id}
                         className="flex items-center justify-between text-sm py-1"
@@ -197,7 +208,8 @@ export function BulkDeleteModal({
               {!summary.canDelete && (
                 <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                   <p className="text-sm text-destructive">
-                    These products cannot be deleted. Please check the warnings above.
+                    These products cannot be deleted. Please check the warnings
+                    above.
                   </p>
                 </div>
               )}
@@ -206,17 +218,15 @@ export function BulkDeleteModal({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={loading}>
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={loading || loadingSummary || !summary?.canDelete || error !== null}
+            disabled={
+              loading || loadingSummary || !summary?.canDelete || error !== null
+            }
             className="flex items-center gap-2"
           >
             {loading ? (
@@ -227,7 +237,8 @@ export function BulkDeleteModal({
             ) : (
               <>
                 <Trash2 className="h-4 w-4" />
-                Delete {productIds.length} Product{productIds.length > 1 ? 's' : ''}
+                Delete {productIds.length} Product
+                {productIds.length > 1 ? 's' : ''}
               </>
             )}
           </Button>

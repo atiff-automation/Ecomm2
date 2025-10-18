@@ -12,7 +12,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -24,21 +24,24 @@ export async function GET(request: NextRequest) {
 
     // Get business profile status
     const businessProfile = await prisma.businessProfile.findFirst();
-    const businessProfileCompleteness = calculateBusinessProfileCompleteness(businessProfile);
+    const businessProfileCompleteness =
+      calculateBusinessProfileCompleteness(businessProfile);
 
     // Get tax configuration status
     const taxConfigurations = await prisma.taxConfiguration.findMany({
-      where: { isActive: true }
+      where: { isActive: true },
     });
     const hasTaxConfig = taxConfigurations.length > 0;
-    const hasGST = taxConfigurations.some(config => config.taxType === 'GST' && config.isActive);
+    const hasGST = taxConfigurations.some(
+      config => config.taxType === 'GST' && config.isActive
+    );
 
     // Get recent changes from audit log
     const recentChanges = await prisma.auditLog.findMany({
       where: {
         category: {
-          in: ['BUSINESS_SETTINGS', 'TAX_CONFIGURATION', 'USER_SETTINGS']
-        }
+          in: ['BUSINESS_SETTINGS', 'TAX_CONFIGURATION', 'USER_SETTINGS'],
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -47,10 +50,10 @@ export async function GET(request: NextRequest) {
           select: {
             firstName: true,
             lastName: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     });
 
     // Check integrations (simplified version - you can expand this)
@@ -63,32 +66,35 @@ export async function GET(request: NextRequest) {
       businessProfile: {
         configured: !!businessProfile,
         lastUpdated: businessProfile?.updatedAt,
-        completeness: businessProfileCompleteness
+        completeness: businessProfileCompleteness,
       },
       taxConfiguration: {
         configured: hasTaxConfig,
         gstEnabled: hasGST,
-        lastUpdated: taxConfigurations[0]?.updatedAt
+        lastUpdated: taxConfigurations[0]?.updatedAt,
       },
       integrations: {
         telegram: telegramConfig,
         payment: paymentConfig,
-        shipping: shippingConfig
+        shipping: shippingConfig,
       },
       recentChanges: recentChanges.map(log => ({
         section: formatSection(log.category),
         action: log.action,
-        changedBy: log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System',
+        changedBy: log.user
+          ? `${log.user.firstName} ${log.user.lastName}`
+          : 'System',
         timestamp: log.createdAt,
-        description: log.details?.description || `${log.action} in ${formatSection(log.category)}`
-      }))
+        description:
+          log.details?.description ||
+          `${log.action} in ${formatSection(log.category)}`,
+      })),
     };
 
     return NextResponse.json({
       success: true,
-      data: dashboard
+      data: dashboard,
     });
-
   } catch (error) {
     console.error('Dashboard data error:', error);
     return NextResponse.json(
@@ -103,20 +109,17 @@ export async function GET(request: NextRequest) {
  */
 function calculateBusinessProfileCompleteness(profile: any): number {
   if (!profile) return 0;
-  
+
   const requiredFields = [
     'legalName',
-    'tradingName', 
+    'tradingName',
     'registrationNumber',
     'primaryEmail',
     'primaryPhone',
-    'website'
+    'website',
   ];
 
-  const addressFields = [
-    'registeredAddress',
-    'businessAddress'
-  ];
+  const addressFields = ['registeredAddress', 'businessAddress'];
 
   let completedFields = 0;
   const totalFields = requiredFields.length + addressFields.length;
@@ -129,10 +132,16 @@ function calculateBusinessProfileCompleteness(profile: any): number {
   });
 
   // Check address fields
-  if (profile.registeredAddress && Object.keys(profile.registeredAddress).length > 0) {
+  if (
+    profile.registeredAddress &&
+    Object.keys(profile.registeredAddress).length > 0
+  ) {
     completedFields++;
   }
-  if (profile.businessAddress && Object.keys(profile.businessAddress).length > 0) {
+  if (
+    profile.businessAddress &&
+    Object.keys(profile.businessAddress).length > 0
+  ) {
     completedFields++;
   }
 
@@ -146,7 +155,7 @@ async function checkTelegramIntegration(): Promise<boolean> {
   try {
     // Check if there are active Telegram configurations
     const adminTelegramConfig = await prisma.adminTelegramConfig.findFirst({
-      where: { isActive: true }
+      where: { isActive: true },
     });
     return !!adminTelegramConfig && !!adminTelegramConfig.botToken;
   } catch (error) {
@@ -166,9 +175,9 @@ async function checkPaymentIntegration(): Promise<boolean> {
       where: {
         paymentStatus: 'COMPLETED',
         createdAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
-      }
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        },
+      },
     });
     return recentPayments > 0;
   } catch (error) {
@@ -184,7 +193,7 @@ async function checkShippingIntegration(): Promise<boolean> {
   try {
     // Check if there are any shipping methods configured
     const shippingMethods = await prisma.shippingMethod.count({
-      where: { isActive: true }
+      where: { isActive: true },
     });
     return shippingMethods > 0;
   } catch (error) {
@@ -198,12 +207,17 @@ async function checkShippingIntegration(): Promise<boolean> {
  */
 function formatSection(category: string): string {
   const sectionMap: Record<string, string> = {
-    'BUSINESS_SETTINGS': 'Business Profile',
-    'TAX_CONFIGURATION': 'Tax Configuration', 
-    'USER_SETTINGS': 'User Settings',
-    'SYSTEM_CONFIGURATION': 'System Configuration'
+    BUSINESS_SETTINGS: 'Business Profile',
+    TAX_CONFIGURATION: 'Tax Configuration',
+    USER_SETTINGS: 'User Settings',
+    SYSTEM_CONFIGURATION: 'System Configuration',
   };
-  
-  return sectionMap[category] || category.replace(/_/g, ' ').toLowerCase()
-    .replace(/\b\w/g, l => l.toUpperCase());
+
+  return (
+    sectionMap[category] ||
+    category
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, l => l.toUpperCase())
+  );
 }

@@ -44,7 +44,8 @@ export default function NotFound() {
               </Link>
 
               <p className="text-sm text-gray-500">
-                Atau hubungi pentadbir sistem jika anda percaya ini adalah ralat.
+                Atau hubungi pentadbir sistem jika anda percaya ini adalah
+                ralat.
               </p>
             </div>
           </CardContent>

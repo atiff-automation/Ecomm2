@@ -1,13 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { AdminPageLayout } from '@/components/admin/layout';
 
 export default function ChatConfigPage() {
@@ -17,12 +29,18 @@ export default function ChatConfigPage() {
   const [primaryColor, setPrimaryColor] = useState('#2563eb');
   const [title, setTitle] = useState('Chat Support');
   const [subtitle, setSubtitle] = useState("We're here to help");
-  const [welcomeMessage, setWelcomeMessage] = useState('Hello! 👋\nHow can I help you today?');
-  const [inputPlaceholder, setInputPlaceholder] = useState('Type your message...');
+  const [welcomeMessage, setWelcomeMessage] = useState(
+    'Hello! 👋\nHow can I help you today?'
+  );
+  const [inputPlaceholder, setInputPlaceholder] = useState(
+    'Type your message...'
+  );
   const [botAvatarUrl, setBotAvatarUrl] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>(
+    'idle'
+  );
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +61,9 @@ export default function ChatConfigPage() {
         setPrimaryColor(data.primaryColor || '#2563eb');
         setTitle(data.title || 'Chat Support');
         setSubtitle(data.subtitle || "We're here to help");
-        setWelcomeMessage(data.welcomeMessage || 'Hello! 👋\nHow can I help you today?');
+        setWelcomeMessage(
+          data.welcomeMessage || 'Hello! 👋\nHow can I help you today?'
+        );
         setInputPlaceholder(data.inputPlaceholder || 'Type your message...');
         setBotAvatarUrl(data.botAvatarUrl || '');
       }
@@ -88,7 +108,11 @@ export default function ChatConfigPage() {
   };
 
   const handleClear = async () => {
-    if (!confirm('Are you sure you want to clear the chat configuration? This will disable the chat widget.')) {
+    if (
+      !confirm(
+        'Are you sure you want to clear the chat configuration? This will disable the chat widget.'
+      )
+    ) {
       return;
     }
 
@@ -125,12 +149,18 @@ export default function ChatConfigPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (
+      !['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(
+        file.type
+      )
+    ) {
       alert('Please upload a valid image file (JPEG, PNG, or WebP)');
       return;
     }
@@ -148,10 +178,13 @@ export default function ChatConfigPage() {
       formData.append('file', file);
       formData.append('usage', 'chat_avatar');
 
-      const response = await fetch('/api/admin/site-customization/media/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        '/api/admin/site-customization/media/upload',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       if (!response.ok) throw new Error('Failed to upload avatar');
 
@@ -195,7 +228,7 @@ export default function ChatConfigPage() {
                   type="url"
                   placeholder="https://your-n8n-instance.com/webhook/xxxxx/chat"
                   value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  onChange={e => setWebhookUrl(e.target.value)}
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -208,10 +241,13 @@ export default function ChatConfigPage() {
                   type="checkbox"
                   id="isEnabled"
                   checked={isEnabled}
-                  onChange={(e) => setIsEnabled(e.target.checked)}
+                  onChange={e => setIsEnabled(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300"
                 />
-                <Label htmlFor="isEnabled" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="isEnabled"
+                  className="font-normal cursor-pointer"
+                >
                   Enable chat widget on website
                 </Label>
               </div>
@@ -242,14 +278,18 @@ export default function ChatConfigPage() {
                   {saveStatus === 'success' && (
                     <div className="flex items-center gap-2 text-green-600">
                       <CheckCircle2 className="h-5 w-5" />
-                      <span className="text-sm font-medium">Saved successfully!</span>
+                      <span className="text-sm font-medium">
+                        Saved successfully!
+                      </span>
                     </div>
                   )}
 
                   {saveStatus === 'error' && (
                     <div className="flex items-center gap-2 text-red-600">
                       <AlertCircle className="h-5 w-5" />
-                      <span className="text-sm font-medium">Failed to save</span>
+                      <span className="text-sm font-medium">
+                        Failed to save
+                      </span>
                     </div>
                   )}
                 </div>
@@ -258,7 +298,8 @@ export default function ChatConfigPage() {
               {saveStatus === 'success' && (
                 <Alert className="bg-green-50 border-green-200">
                   <AlertDescription className="text-sm text-green-900">
-                    <strong>Success!</strong> Configuration updated. Changes take effect immediately on the website.
+                    <strong>Success!</strong> Configuration updated. Changes
+                    take effect immediately on the website.
                   </AlertDescription>
                 </Alert>
               )}
@@ -270,7 +311,8 @@ export default function ChatConfigPage() {
             <CardHeader>
               <CardTitle>UI Customization</CardTitle>
               <CardDescription>
-                Customize the appearance and position of the chat widget. Click "Save Configuration" above to apply changes.
+                Customize the appearance and position of the chat widget. Click
+                "Save Configuration" above to apply changes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -280,7 +322,7 @@ export default function ChatConfigPage() {
                   <select
                     id="position"
                     value={position}
-                    onChange={(e) => setPosition(e.target.value)}
+                    onChange={e => setPosition(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="bottom-right">Bottom Right</option>
@@ -297,13 +339,13 @@ export default function ChatConfigPage() {
                       type="color"
                       id="primaryColor"
                       value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      onChange={e => setPrimaryColor(e.target.value)}
                       className="h-10 w-14 rounded border border-gray-300 cursor-pointer"
                     />
                     <Input
                       type="text"
                       value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      onChange={e => setPrimaryColor(e.target.value)}
                       className="flex-1 font-mono text-sm"
                       placeholder="#2563eb"
                     />
@@ -317,7 +359,7 @@ export default function ChatConfigPage() {
                   id="title"
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   placeholder="Chat Support"
                 />
               </div>
@@ -328,7 +370,7 @@ export default function ChatConfigPage() {
                   id="subtitle"
                   type="text"
                   value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
+                  onChange={e => setSubtitle(e.target.value)}
                   placeholder="We're here to help"
                 />
               </div>
@@ -338,7 +380,7 @@ export default function ChatConfigPage() {
                 <textarea
                   id="welcomeMessage"
                   value={welcomeMessage}
-                  onChange={(e) => setWelcomeMessage(e.target.value)}
+                  onChange={e => setWelcomeMessage(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Hello! 👋&#10;How can I help you today?"
@@ -354,7 +396,7 @@ export default function ChatConfigPage() {
                   id="inputPlaceholder"
                   type="text"
                   value={inputPlaceholder}
-                  onChange={(e) => setInputPlaceholder(e.target.value)}
+                  onChange={e => setInputPlaceholder(e.target.value)}
                   placeholder="Type your message..."
                 />
               </div>
@@ -366,7 +408,8 @@ export default function ChatConfigPage() {
             <CardHeader>
               <CardTitle>Bot Avatar</CardTitle>
               <CardDescription>
-                Upload a bot avatar image (recommended: 80×80px, max 2MB). Click "Save Configuration" above to apply changes.
+                Upload a bot avatar image (recommended: 80×80px, max 2MB). Click
+                "Save Configuration" above to apply changes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -382,7 +425,9 @@ export default function ChatConfigPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">Current Avatar</p>
-                    <p className="text-xs text-muted-foreground">{botAvatarUrl}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {botAvatarUrl}
+                    </p>
                   </div>
                   <Button
                     size="sm"
@@ -406,12 +451,18 @@ export default function ChatConfigPage() {
                   disabled={isUploadingAvatar}
                 />
                 <Button
-                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  onClick={() =>
+                    document.getElementById('avatar-upload')?.click()
+                  }
                   disabled={isUploadingAvatar}
                   variant="outline"
                   size="sm"
                 >
-                  {isUploadingAvatar ? 'Uploading...' : botAvatarUrl ? 'Change Avatar' : 'Upload Avatar'}
+                  {isUploadingAvatar
+                    ? 'Uploading...'
+                    : botAvatarUrl
+                      ? 'Change Avatar'
+                      : 'Upload Avatar'}
                 </Button>
                 {!botAvatarUrl && (
                   <p className="text-xs text-muted-foreground">
@@ -429,7 +480,9 @@ export default function ChatConfigPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Webhook URL</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Webhook URL
+                </p>
                 <div className="flex items-center gap-2 mt-1">
                   <code className="flex-1 text-xs bg-muted px-3 py-2 rounded">
                     {webhookUrl || 'Not configured'}
@@ -440,17 +493,27 @@ export default function ChatConfigPage() {
                       variant="outline"
                       onClick={() => copyToClipboard(webhookUrl)}
                     >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Status
+                </p>
                 <p className="text-sm mt-1">
-                  <span className={`inline-flex items-center gap-1 ${isEnabled ? 'text-green-600' : 'text-gray-500'}`}>
-                    <span className={`w-2 h-2 rounded-full ${isEnabled ? 'bg-green-600' : 'bg-gray-400'}`}></span>
+                  <span
+                    className={`inline-flex items-center gap-1 ${isEnabled ? 'text-green-600' : 'text-gray-500'}`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${isEnabled ? 'bg-green-600' : 'bg-gray-400'}`}
+                    ></span>
                     {isEnabled ? 'Enabled' : 'Disabled'}
                   </span>
                 </p>
@@ -464,7 +527,9 @@ export default function ChatConfigPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Setup Guide</CardTitle>
-              <CardDescription>Follow these steps to integrate n8n chat</CardDescription>
+              <CardDescription>
+                Follow these steps to integrate n8n chat
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3 text-sm">
@@ -556,7 +621,12 @@ export default function ChatConfigPage() {
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => window.open('https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.chattrigger/', '_blank')}
+                  onClick={() =>
+                    window.open(
+                      'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.chattrigger/',
+                      '_blank'
+                    )
+                  }
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   View n8n Docs

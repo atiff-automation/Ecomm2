@@ -36,14 +36,15 @@ class OrderFlowLogger {
 
   constructor() {
     this.sessionId = `SESSION-${Date.now()}`;
-    this.isEnabled = process.env.DEBUG === 'order-flow' ||
-                     process.env.NODE_ENV === 'development';
+    this.isEnabled =
+      process.env.DEBUG === 'order-flow' ||
+      process.env.NODE_ENV === 'development';
 
     if (this.isEnabled) {
       this.log('INFO', 'Session Started', {
         sessionId: this.sessionId,
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
       });
     }
   }
@@ -57,7 +58,7 @@ class OrderFlowLogger {
     this.log('REQUEST', step, {
       endpoint,
       payload: this.sanitizePayload(payload),
-      orderId
+      orderId,
     });
   }
 
@@ -70,7 +71,7 @@ class OrderFlowLogger {
     this.log('RESPONSE', step, {
       endpoint,
       response: this.sanitizePayload(response),
-      orderId
+      orderId,
     });
   }
 
@@ -81,12 +82,15 @@ class OrderFlowLogger {
     if (!this.isEnabled) return;
 
     this.log('ERROR', step, {
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      } : error,
-      context
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            }
+          : error,
+      context,
     });
   }
 
@@ -108,17 +112,17 @@ class OrderFlowLogger {
       step,
       type,
       data,
-      orderNumber: data?.orderNumber || data?.orderId
+      orderNumber: data?.orderNumber || data?.orderId,
     };
 
     this.logs.push(entry);
 
     // Console output with color coding
     const color = {
-      REQUEST: '\x1b[36m',  // Cyan
+      REQUEST: '\x1b[36m', // Cyan
       RESPONSE: '\x1b[32m', // Green
-      ERROR: '\x1b[31m',    // Red
-      INFO: '\x1b[33m'      // Yellow
+      ERROR: '\x1b[31m', // Red
+      INFO: '\x1b[33m', // Yellow
     }[type];
 
     console.log(`\n${color}[${type}]\x1b[0m ${step}`);
@@ -161,7 +165,7 @@ class OrderFlowLogger {
       'creditCard',
       'cvv',
       'cardNumber',
-      'securityCode'
+      'securityCode',
     ];
 
     const sanitizeObject = (obj: any): any => {
@@ -198,7 +202,7 @@ class OrderFlowLogger {
       steps: [...new Set(this.logs.map(l => l.step))],
       errorSteps: this.logs
         .filter(l => l.type === 'ERROR')
-        .map(l => ({ step: l.step, error: l.data }))
+        .map(l => ({ step: l.step, error: l.data })),
     };
 
     console.log('\n' + '='.repeat(60));

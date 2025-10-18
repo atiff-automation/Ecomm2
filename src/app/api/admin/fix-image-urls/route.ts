@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     const images = await prisma.productImage.findMany({
       where: {
         url: {
-          contains: '-md.webp'
-        }
+          contains: '-md.webp',
+        },
       },
       select: {
         id: true,
@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
         product: {
           select: {
             name: true,
-            slug: true
-          }
-        }
-      }
+            slug: true,
+          },
+        },
+      },
     });
 
     console.log(`Found ${images.length} images with medium size URLs`);
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
         data: {
           total: 0,
           updated: 0,
-          errors: 0
-        }
+          errors: 0,
+        },
       });
     }
 
@@ -70,23 +70,27 @@ export async function POST(request: NextRequest) {
       try {
         await prisma.productImage.update({
           where: { id: image.id },
-          data: { url: newUrl }
+          data: { url: newUrl },
         });
 
         updatedImages.push({
           productName: image.product.name,
           oldUrl: image.url,
-          newUrl: newUrl
+          newUrl: newUrl,
         });
 
         console.log(`✓ Updated: ${image.product.name}`);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         errors.push({
           productName: image.product.name,
-          error: errorMessage
+          error: errorMessage,
         });
-        console.error(`✗ Error updating image for ${image.product.name}:`, error);
+        console.error(
+          `✗ Error updating image for ${image.product.name}:`,
+          error
+        );
       }
     }
 
@@ -97,16 +101,15 @@ export async function POST(request: NextRequest) {
         updated: updatedImages.length,
         errors: errors.length,
         updatedImages,
-        errorDetails: errors
-      }
+        errorDetails: errors,
+      },
     });
-
   } catch (error) {
     console.error('Error fixing image URLs:', error);
     return NextResponse.json(
       {
         message: 'Failed to fix image URLs',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

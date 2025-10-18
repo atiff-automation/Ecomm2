@@ -6,7 +6,12 @@
 
 // Core design tokens
 export { designTokens } from './tokens';
-export type { DesignTokens, ColorScale, SpacingScale, TypographyScale } from './tokens';
+export type {
+  DesignTokens,
+  ColorScale,
+  SpacingScale,
+  TypographyScale,
+} from './tokens';
 
 // Typography system
 export {
@@ -19,9 +24,14 @@ export {
   sectionTypography,
   formTypography,
   typographyStyles,
-  cn as typographyCn
+  cn as typographyCn,
 } from './typography';
-export type { TypographyProps, TypographyVariant, TextColor, TextAlign } from './typography';
+export type {
+  TypographyProps,
+  TypographyVariant,
+  TextColor,
+  TextAlign,
+} from './typography';
 
 // Spacing system
 export {
@@ -31,9 +41,13 @@ export {
   layoutSpacing,
   responsiveSpacing,
   componentSpacing,
-  cn as spacingCn
+  cn as spacingCn,
 } from './spacing';
-export type { SpacingKey, SemanticSpacingCategory, LayoutSpacingCategory } from './spacing';
+export type {
+  SpacingKey,
+  SemanticSpacingCategory,
+  LayoutSpacingCategory,
+} from './spacing';
 
 // Combined utilities
 export { cn } from '../utils';
@@ -48,7 +62,7 @@ export const breakpoints = {
   md: '768px',
   lg: '1024px',
   xl: '1280px',
-  '2xl': '1536px'
+  '2xl': '1536px',
 } as const;
 
 // Grid system configuration
@@ -59,20 +73,30 @@ export const gridSystem = {
     md: '768px',
     lg: '1024px',
     xl: '1280px',
-    '2xl': '1400px'
+    '2xl': '1400px',
   },
   padding: {
-    xs: '1rem',    // 16px
-    sm: '1.5rem',  // 24px
-    md: '2rem',    // 32px
-    lg: '3rem',    // 48px
-    xl: '4rem'     // 64px
-  }
+    xs: '1rem', // 16px
+    sm: '1.5rem', // 24px
+    md: '2rem', // 32px
+    lg: '3rem', // 48px
+    xl: '4rem', // 64px
+  },
 } as const;
 
 // Grid configuration - Centralized grid patterns
-export { GRID_COLUMNS, GRID_GAPS, GRID_BREAKPOINTS, getGridConfig, getGridClasses } from '@/lib/config/grid-config';
-export type { GridType, GridGapSize, GridConfig } from '@/lib/config/grid-config';
+export {
+  GRID_COLUMNS,
+  GRID_GAPS,
+  GRID_BREAKPOINTS,
+  getGridConfig,
+  getGridClasses,
+} from '@/lib/config/grid-config';
+export type {
+  GridType,
+  GridGapSize,
+  GridConfig,
+} from '@/lib/config/grid-config';
 
 // Component size variants
 export const sizeVariants = {
@@ -80,7 +104,7 @@ export const sizeVariants = {
   sm: 'sm',
   md: 'md',
   lg: 'lg',
-  xl: 'xl'
+  xl: 'xl',
 } as const;
 
 // Animation presets
@@ -101,7 +125,7 @@ export const animations = {
 
   // Scale animations
   scaleIn: 'animate-in zoom-in-95 duration-200',
-  scaleOut: 'animate-out zoom-out-95 duration-200'
+  scaleOut: 'animate-out zoom-out-95 duration-200',
 } as const;
 
 // Shadow presets
@@ -110,7 +134,7 @@ export const shadows = {
   cardHover: 'hover:shadow-lg transition-shadow duration-200',
   modal: 'shadow-xl',
   dropdown: 'shadow-lg border border-border/50',
-  none: 'shadow-none'
+  none: 'shadow-none',
 } as const;
 
 // Border radius presets
@@ -120,27 +144,31 @@ export const borderRadius = {
   md: 'rounded-md',
   lg: 'rounded-lg',
   xl: 'rounded-xl',
-  full: 'rounded-full'
+  full: 'rounded-full',
 } as const;
 
 // Component base classes
 export const componentBase = {
   // Interactive elements
-  interactive: 'transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+  interactive:
+    'transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
 
   // Cards
   card: 'bg-card border border-border/50 rounded-lg shadow-sm',
-  cardInteractive: 'bg-card border border-border/50 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
+  cardInteractive:
+    'bg-card border border-border/50 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
 
   // Buttons
-  button: 'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+  button:
+    'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
 
   // Form elements
-  input: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  input:
+    'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 
   // Layout
   container: 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8',
-  section: 'py-16 lg:py-20'
+  section: 'py-16 lg:py-20',
 } as const;
 
 // Theme-aware color utilities
@@ -149,19 +177,19 @@ export const themeColors = {
     primary: 'bg-background',
     secondary: 'bg-muted',
     accent: 'bg-accent',
-    card: 'bg-card'
+    card: 'bg-card',
   },
   text: {
     primary: 'text-foreground',
     secondary: 'text-muted-foreground',
     accent: 'text-accent-foreground',
-    inverse: 'text-background'
+    inverse: 'text-background',
   },
   border: {
     default: 'border-border',
     muted: 'border-border/50',
-    accent: 'border-accent'
-  }
+    accent: 'border-accent',
+  },
 } as const;
 
 // Accessibility helpers
@@ -170,14 +198,17 @@ export const a11y = {
   srOnly: 'sr-only',
 
   // Focus management
-  skipLink: 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg',
+  skipLink:
+    'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg',
 
   // Focus indicators
-  focusRing: 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-  focusRingInset: 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset',
+  focusRing:
+    'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+  focusRingInset:
+    'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset',
 
   // Touch targets (minimum 44px)
-  touchTarget: 'min-h-[44px] min-w-[44px]'
+  touchTarget: 'min-h-[44px] min-w-[44px]',
 } as const;
 
 // Export combined design system
@@ -193,7 +224,7 @@ export const designSystem = {
   borderRadius,
   componentBase,
   themeColors,
-  a11y
+  a11y,
 } as const;
 
 // Type exports

@@ -75,9 +75,7 @@ export function validateProductionUrl(url: string, context: string): void {
     }
 
     if (!url.startsWith('https://')) {
-      console.warn(
-        `⚠️ WARNING: ${context} is not using HTTPS in production`
-      );
+      console.warn(`⚠️ WARNING: ${context} is not using HTTPS in production`);
       console.warn(`⚠️ URL: ${url}`);
     }
   }

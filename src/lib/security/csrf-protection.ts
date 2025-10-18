@@ -15,8 +15,13 @@ const CSRF_CONFIG = {
   TOKEN_LIFETIME: parseInt(process.env.CSRF_TOKEN_LIFETIME || '3600000'), // 1 hour
   HEADER_NAME: process.env.CSRF_HEADER_NAME || 'x-csrf-token',
   COOKIE_NAME: process.env.CSRF_COOKIE_NAME || '__csrf_token',
-  SECRET_KEY: process.env.CSRF_SECRET_KEY || process.env.NEXTAUTH_SECRET || 'fallback-secret-key',
-  SKIP_ORIGINS: (process.env.CSRF_SKIP_ORIGINS || '').split(',').filter(Boolean),
+  SECRET_KEY:
+    process.env.CSRF_SECRET_KEY ||
+    process.env.NEXTAUTH_SECRET ||
+    'fallback-secret-key',
+  SKIP_ORIGINS: (process.env.CSRF_SKIP_ORIGINS || '')
+    .split(',')
+    .filter(Boolean),
 } as const;
 
 interface CSRFTokenData {
@@ -98,12 +103,21 @@ export class CSRFProtection {
       expectedHmac.update(expectedData);
       const expectedSignature = expectedHmac.digest('hex');
 
-      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      if (
+        !crypto.timingSafeEqual(
+          Buffer.from(signature),
+          Buffer.from(expectedSignature)
+        )
+      ) {
         return { valid: false, reason: 'Invalid token signature' };
       }
 
       // Validate session binding - SYSTEMATIC SESSION VALIDATION
-      if (sessionId && tokenSessionId !== sessionId && tokenSessionId !== 'anonymous') {
+      if (
+        sessionId &&
+        tokenSessionId !== sessionId &&
+        tokenSessionId !== 'anonymous'
+      ) {
         return { valid: false, reason: 'Token session mismatch' };
       }
 
@@ -123,7 +137,9 @@ export class CSRFProtection {
   /**
    * CENTRALIZED request validation - DRY PRINCIPLE
    */
-  static async validateRequest(request: NextRequest): Promise<CSRFValidationResult> {
+  static async validateRequest(
+    request: NextRequest
+  ): Promise<CSRFValidationResult> {
     try {
       // Skip validation for safe methods - SYSTEMATIC APPROACH
       const method = request.method.toUpperCase();
@@ -149,7 +165,8 @@ export class CSRFProtection {
         const contentType = request.headers.get('content-type');
         if (contentType?.includes('application/json')) {
           const body = await request.json();
-          bodyToken = body[CSRF_CONFIG.HEADER_NAME.replace('x-', '').replace('-', '_')];
+          bodyToken =
+            body[CSRF_CONFIG.HEADER_NAME.replace('x-', '').replace('-', '_')];
         }
       } catch (error) {
         // Body parsing failed, continue with header token only
@@ -234,7 +251,10 @@ export class CSRFProtection {
   /**
    * SYSTEMATIC token refresh - DRY PRINCIPLE
    */
-  static async refreshToken(oldToken: string, sessionId?: string): Promise<string> {
+  static async refreshToken(
+    oldToken: string,
+    sessionId?: string
+  ): Promise<string> {
     // Remove old token - CENTRALIZED TOKEN MANAGEMENT
     this.tokens.delete(oldToken);
 

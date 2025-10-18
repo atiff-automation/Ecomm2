@@ -16,11 +16,11 @@ export interface ContainerProps {
 }
 
 const containerVariants = {
-  sm: 'max-w-2xl',     // 672px
-  md: 'max-w-4xl',     // 896px
-  lg: 'max-w-6xl',     // 1152px
-  xl: 'max-w-7xl',     // 1280px
-  full: 'max-w-none'   // Full width
+  sm: 'max-w-2xl', // 672px
+  md: 'max-w-4xl', // 896px
+  lg: 'max-w-6xl', // 1152px
+  xl: 'max-w-7xl', // 1280px
+  full: 'max-w-none', // Full width
 };
 
 export function Container({
@@ -53,63 +53,83 @@ export function Container({
 }
 
 // Named size variants for convenience
-export const SmallContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
+export const SmallContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
   <Container size="sm" className={className} {...props}>
     {children}
   </Container>
 );
 
-export const MediumContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
+export const MediumContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
   <Container size="md" className={className} {...props}>
     {children}
   </Container>
 );
 
-export const LargeContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
+export const LargeContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
   <Container size="lg" className={className} {...props}>
     {children}
   </Container>
 );
 
-export const XLargeContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
+export const XLargeContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
   <Container size="xl" className={className} {...props}>
     {children}
   </Container>
 );
 
-export const FullContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
+export const FullContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
   <Container size="full" className={className} {...props}>
     {children}
   </Container>
 );
 
 // Container with specific use cases
-export const PageContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
-  <Container
-    size="xl"
-    className={cn('py-8 lg:py-12', className)}
-    {...props}
-  >
+export const PageContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
+  <Container size="xl" className={cn('py-8 lg:py-12', className)} {...props}>
     {children}
   </Container>
 );
 
-export const SectionContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
-  <Container
-    size="xl"
-    className={cn('py-16 lg:py-20', className)}
-    {...props}
-  >
+export const SectionContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
+  <Container size="xl" className={cn('py-16 lg:py-20', className)} {...props}>
     {children}
   </Container>
 );
 
-export const HeroContainer = ({ children, className, ...props }: Omit<ContainerProps, 'size'>) => (
-  <Container
-    size="xl"
-    className={cn('py-20 lg:py-32', className)}
-    {...props}
-  >
+export const HeroContainer = ({
+  children,
+  className,
+  ...props
+}: Omit<ContainerProps, 'size'>) => (
+  <Container size="xl" className={cn('py-20 lg:py-32', className)} {...props}>
     {children}
   </Container>
 );

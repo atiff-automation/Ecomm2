@@ -20,7 +20,7 @@ export function FormStepIndicator({
   currentStep,
   completedSteps,
   onStepClick,
-  className
+  className,
 }: FormStepIndicatorProps) {
   return (
     <div className={cn('w-full mb-8', className)}>
@@ -39,7 +39,9 @@ export function FormStepIndicator({
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-green-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / FORM_STEPS.length) * 100}%` }}
+            style={{
+              width: `${((currentStep + 1) / FORM_STEPS.length) * 100}%`,
+            }}
           />
         </div>
 
@@ -73,10 +75,13 @@ export function FormStepIndicator({
                       'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all',
                       {
                         'bg-green-600 border-green-600 text-white': isCompleted,
-                        'bg-blue-600 border-blue-600 text-white': isCurrent && !isCompleted,
-                        'border-gray-300 text-gray-400': !isCurrent && !isCompleted,
-                        'cursor-pointer hover:border-blue-400': isClickable && !isCurrent,
-                        'cursor-not-allowed': !isClickable
+                        'bg-blue-600 border-blue-600 text-white':
+                          isCurrent && !isCompleted,
+                        'border-gray-300 text-gray-400':
+                          !isCurrent && !isCompleted,
+                        'cursor-pointer hover:border-blue-400':
+                          isClickable && !isCurrent,
+                        'cursor-not-allowed': !isClickable,
                       }
                     )}
                   >
@@ -90,14 +95,11 @@ export function FormStepIndicator({
                   {/* Step Label */}
                   <div className="mt-3 text-center max-w-[120px]">
                     <div
-                      className={cn(
-                        'text-sm font-medium',
-                        {
-                          'text-green-600': isCompleted,
-                          'text-blue-600': isCurrent && !isCompleted,
-                          'text-gray-600': !isCurrent && !isCompleted
-                        }
-                      )}
+                      className={cn('text-sm font-medium', {
+                        'text-green-600': isCompleted,
+                        'text-blue-600': isCurrent && !isCompleted,
+                        'text-gray-600': !isCurrent && !isCompleted,
+                      })}
                     >
                       {STEP_LABELS[step.id as keyof typeof STEP_LABELS]}
                     </div>
@@ -107,13 +109,10 @@ export function FormStepIndicator({
                 {/* Connector Line */}
                 {index < FORM_STEPS.length - 1 && (
                   <div
-                    className={cn(
-                      'flex-1 h-0.5 mx-4 transition-all',
-                      {
-                        'bg-green-600': completedSteps.has(index),
-                        'bg-gray-300': !completedSteps.has(index)
-                      }
-                    )}
+                    className={cn('flex-1 h-0.5 mx-4 transition-all', {
+                      'bg-green-600': completedSteps.has(index),
+                      'bg-gray-300': !completedSteps.has(index),
+                    })}
                   />
                 )}
               </div>

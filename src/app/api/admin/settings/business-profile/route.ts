@@ -15,10 +15,16 @@ import { BusinessProfileCache } from '@/lib/cache/business-profile';
 export async function GET(request: NextRequest) {
   try {
     console.log('[API Business Profile GET] Request received');
-    console.log('[API Business Profile GET] Headers:', Object.fromEntries(request.headers.entries()));
+    console.log(
+      '[API Business Profile GET] Headers:',
+      Object.fromEntries(request.headers.entries())
+    );
 
     const session = await getServerSession(authOptions);
-    console.log('[API Business Profile GET] Session:', session ? { userId: session.user?.id, role: session.user?.role } : null);
+    console.log(
+      '[API Business Profile GET] Session:',
+      session ? { userId: session.user?.id, role: session.user?.role } : null
+    );
 
     if (!session?.user?.id) {
       console.log('[API Business Profile GET] Unauthorized - no session');
@@ -27,7 +33,10 @@ export async function GET(request: NextRequest) {
 
     // Only admins and superadmins can access business profile
     if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-      console.log('[API Business Profile GET] Forbidden - role:', session.user.role);
+      console.log(
+        '[API Business Profile GET] Forbidden - role:',
+        session.user.role
+      );
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -48,16 +57,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: null,
-        message: 'No business profile found'
+        message: 'No business profile found',
       });
     }
 
-
     return NextResponse.json({
       success: true,
-      data: businessProfile
+      data: businessProfile,
     });
-
   } catch (error) {
     console.error('Get business profile error:', error);
     return NextResponse.json(
@@ -73,10 +80,16 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     console.log('[API Business Profile PUT] Request received');
-    console.log('[API Business Profile PUT] Headers:', Object.fromEntries(request.headers.entries()));
+    console.log(
+      '[API Business Profile PUT] Headers:',
+      Object.fromEntries(request.headers.entries())
+    );
 
     const session = await getServerSession(authOptions);
-    console.log('[API Business Profile PUT] Session:', session ? { userId: session.user?.id, role: session.user?.role } : null);
+    console.log(
+      '[API Business Profile PUT] Session:',
+      session ? { userId: session.user?.id, role: session.user?.role } : null
+    );
 
     if (!session?.user?.id) {
       console.log('[API Business Profile PUT] Unauthorized - no session');
@@ -85,12 +98,18 @@ export async function PUT(request: NextRequest) {
 
     // Only admins and superadmins can update business profile
     if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-      console.log('[API Business Profile PUT] Forbidden - role:', session.user.role);
+      console.log(
+        '[API Business Profile PUT] Forbidden - role:',
+        session.user.role
+      );
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
-    console.log('[API Business Profile PUT] Request body keys:', Object.keys(body));
+    console.log(
+      '[API Business Profile PUT] Request body keys:',
+      Object.keys(body)
+    );
 
     // Validate request body
     const validatedData = businessProfileSchema.parse(body);
@@ -105,7 +124,9 @@ export async function PUT(request: NextRequest) {
       registrationNumber: validatedData.registrationNumber,
       taxRegistrationNumber: validatedData.taxRegistrationNumber || null,
       businessType: validatedData.businessType,
-      establishedDate: validatedData.establishedDate ? new Date(validatedData.establishedDate) : null,
+      establishedDate: validatedData.establishedDate
+        ? new Date(validatedData.establishedDate)
+        : null,
       primaryPhone: validatedData.primaryPhone,
       secondaryPhone: validatedData.secondaryPhone || null,
       primaryEmail: validatedData.primaryEmail,
@@ -117,39 +138,42 @@ export async function PUT(request: NextRequest) {
         city: validatedData.registeredAddress.city,
         state: validatedData.registeredAddress.state,
         postalCode: validatedData.registeredAddress.postalCode,
-        country: validatedData.registeredAddress.country
+        country: validatedData.registeredAddress.country,
       },
-      operationalAddress: validatedData.operationalAddress?.addressLine1 ? {
-        addressLine1: validatedData.operationalAddress.addressLine1,
-        addressLine2: validatedData.operationalAddress.addressLine2 || null,
-        city: validatedData.operationalAddress.city,
-        state: validatedData.operationalAddress.state,
-        postalCode: validatedData.operationalAddress.postalCode,
-        country: validatedData.operationalAddress.country
-      } : null,
-      shippingAddress: validatedData.shippingAddress?.addressLine1 ? {
-        addressLine1: validatedData.shippingAddress.addressLine1,
-        addressLine2: validatedData.shippingAddress.addressLine2 || null,
-        city: validatedData.shippingAddress.city,
-        state: validatedData.shippingAddress.state,
-        postalCode: validatedData.shippingAddress.postalCode,
-        country: validatedData.shippingAddress.country
-      } : null,
-      updatedAt: new Date()
+      operationalAddress: validatedData.operationalAddress?.addressLine1
+        ? {
+            addressLine1: validatedData.operationalAddress.addressLine1,
+            addressLine2: validatedData.operationalAddress.addressLine2 || null,
+            city: validatedData.operationalAddress.city,
+            state: validatedData.operationalAddress.state,
+            postalCode: validatedData.operationalAddress.postalCode,
+            country: validatedData.operationalAddress.country,
+          }
+        : null,
+      shippingAddress: validatedData.shippingAddress?.addressLine1
+        ? {
+            addressLine1: validatedData.shippingAddress.addressLine1,
+            addressLine2: validatedData.shippingAddress.addressLine2 || null,
+            city: validatedData.shippingAddress.city,
+            state: validatedData.shippingAddress.state,
+            postalCode: validatedData.shippingAddress.postalCode,
+            country: validatedData.shippingAddress.country,
+          }
+        : null,
+      updatedAt: new Date(),
     };
-
 
     // Upsert business profile (create or update)
     const updatedProfile = await prisma.businessProfile.upsert({
       where: { id: currentProfile?.id || 'non-existent' },
       create: {
         ...profileData,
-        createdBy: session.user.id
+        createdBy: session.user.id,
       },
       update: {
         ...profileData,
-        updatedBy: session.user.id
-      }
+        updatedBy: session.user.id,
+      },
     });
 
     // Log the change for audit
@@ -157,22 +181,28 @@ export async function PUT(request: NextRequest) {
       session.user.id,
       'BUSINESS_SETTINGS',
       {
-        action: currentProfile ? 'UPDATE_BUSINESS_PROFILE' : 'CREATE_BUSINESS_PROFILE',
+        action: currentProfile
+          ? 'UPDATE_BUSINESS_PROFILE'
+          : 'CREATE_BUSINESS_PROFILE',
         profileId: currentProfile?.id,
-        oldData: currentProfile ? {
-          legalName: currentProfile.legalName,
-          registrationNumber: currentProfile.registrationNumber,
-          primaryEmail: currentProfile.primaryEmail
-        } : null
+        oldData: currentProfile
+          ? {
+              legalName: currentProfile.legalName,
+              registrationNumber: currentProfile.registrationNumber,
+              primaryEmail: currentProfile.primaryEmail,
+            }
+          : null,
       },
       {
-        action: currentProfile ? 'UPDATE_BUSINESS_PROFILE' : 'CREATE_BUSINESS_PROFILE',
+        action: currentProfile
+          ? 'UPDATE_BUSINESS_PROFILE'
+          : 'CREATE_BUSINESS_PROFILE',
         profileId: updatedProfile.id,
         newData: {
           legalName: validatedData.legalName,
           registrationNumber: validatedData.registrationNumber,
-          primaryEmail: validatedData.primaryEmail
-        }
+          primaryEmail: validatedData.primaryEmail,
+        },
       },
       request
     );
@@ -189,11 +219,11 @@ export async function PUT(request: NextRequest) {
             registrationNumber: validatedData.registrationNumber,
             primaryEmail: validatedData.primaryEmail,
             primaryPhone: validatedData.primaryPhone,
-            registeredAddress: validatedData.registeredAddress
+            registeredAddress: validatedData.registeredAddress,
           },
           changedBy: session.user.id,
-          changeReason: 'Business profile updated via settings'
-        }
+          changeReason: 'Business profile updated via settings',
+        },
       });
     }
 
@@ -206,10 +236,9 @@ export async function PUT(request: NextRequest) {
       data: {
         id: updatedProfile.id,
         legalName: updatedProfile.legalName,
-        updatedAt: updatedProfile.updatedAt
-      }
+        updatedAt: updatedProfile.updatedAt,
+      },
     });
-
   } catch (error) {
     console.error('Update business profile error:', error);
 

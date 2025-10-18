@@ -75,17 +75,14 @@ export async function GET(request: NextRequest) {
 
       // Active products (with filters applied)
       prisma.product.count({
-        where: { ...where, status: 'ACTIVE' }
+        where: { ...where, status: 'ACTIVE' },
       }),
 
       // Low stock products (with filters applied)
       prisma.product.count({
         where: {
           ...where,
-          AND: [
-            { stockQuantity: { lte: 10 } },
-            { stockQuantity: { gt: 0 } },
-          ],
+          AND: [{ stockQuantity: { lte: 10 } }, { stockQuantity: { gt: 0 } }],
         },
       }),
 

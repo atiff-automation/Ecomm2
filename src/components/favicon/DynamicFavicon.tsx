@@ -14,24 +14,28 @@ export function DynamicFavicon() {
         // Fetch site customization data
         const response = await fetch('/api/site-customization/current');
         if (!response.ok) return;
-        
+
         const data = await response.json();
-        
+
         if (data.branding?.favicon?.url) {
           // Update favicon with custom one
-          let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-          
+          let link = document.querySelector(
+            "link[rel*='icon']"
+          ) as HTMLLinkElement;
+
           if (!link) {
             // Create favicon link if it doesn't exist
             link = document.createElement('link');
             link.rel = 'icon';
             document.head.appendChild(link);
           }
-          
+
           link.href = data.branding.favicon.url;
-          
+
           // Also update any apple-touch-icon if the same image should be used
-          let appleTouchIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+          let appleTouchIcon = document.querySelector(
+            "link[rel='apple-touch-icon']"
+          ) as HTMLLinkElement;
           if (appleTouchIcon) {
             appleTouchIcon.href = data.branding.favicon.url;
           }

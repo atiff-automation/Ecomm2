@@ -62,7 +62,8 @@ interface MemberBenefit {
 
 export default function MembershipPage() {
   const { data: session } = useSession();
-  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
+  const [membershipStatus, setMembershipStatus] =
+    useState<MembershipStatus | null>(null);
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [benefits, setBenefits] = useState<MemberBenefit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +78,7 @@ export default function MembershipPage() {
   const fetchMembershipData = async () => {
     try {
       setLoading(true);
-      
+
       // Parallel API calls for optimal performance
       const [membershipRes, referralRes, benefitsRes] = await Promise.all([
         fetch('/api/settings/membership/status'),
@@ -147,7 +148,10 @@ export default function MembershipPage() {
 
   if (loading) {
     return (
-      <SettingsLayout title="Membership" subtitle="Manage your membership status and referrals">
+      <SettingsLayout
+        title="Membership"
+        subtitle="Manage your membership status and referrals"
+      >
         <div className="space-y-6">
           <div className="animate-pulse space-y-4">
             <div className="h-32 bg-gray-200 rounded-lg"></div>
@@ -159,13 +163,18 @@ export default function MembershipPage() {
   }
 
   return (
-    <SettingsLayout title="Membership" subtitle="Manage your membership status and referrals">
+    <SettingsLayout
+      title="Membership"
+      subtitle="Manage your membership status and referrals"
+    >
       <div className="space-y-6">
         {/* Membership Status Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Crown className={`h-6 w-6 ${membershipStatus?.isMember ? 'text-yellow-500' : 'text-gray-400'}`} />
+              <Crown
+                className={`h-6 w-6 ${membershipStatus?.isMember ? 'text-yellow-500' : 'text-gray-400'}`}
+              />
               <div>
                 <CardTitle>Membership Status</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -179,13 +188,19 @@ export default function MembershipPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Badge variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                    <Badge
+                      variant="default"
+                      className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                    >
                       <Crown className="h-3 w-3 mr-1" />
                       Active Member
                     </Badge>
                     {membershipStatus.memberSince && (
                       <span className="text-sm text-muted-foreground">
-                        Since {new Date(membershipStatus.memberSince).toLocaleDateString()}
+                        Since{' '}
+                        {new Date(
+                          membershipStatus.memberSince
+                        ).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -195,7 +210,9 @@ export default function MembershipPage() {
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-900">Total Spent</span>
+                      <span className="font-medium text-green-900">
+                        Total Spent
+                      </span>
                     </div>
                     <p className="text-2xl font-bold text-green-900">
                       RM {membershipStatus.membershipTotal.toFixed(2)}
@@ -205,7 +222,9 @@ export default function MembershipPage() {
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Gift className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium text-blue-900">Current Tier</span>
+                      <span className="font-medium text-blue-900">
+                        Current Tier
+                      </span>
                     </div>
                     <p className="text-2xl font-bold text-blue-900">
                       {membershipStatus.currentTier || 'Member'}
@@ -215,9 +234,13 @@ export default function MembershipPage() {
                   <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Users className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium text-purple-900">Member Benefits</span>
+                      <span className="font-medium text-purple-900">
+                        Member Benefits
+                      </span>
                     </div>
-                    <p className="text-sm text-purple-700">Exclusive discounts & early access</p>
+                    <p className="text-sm text-purple-700">
+                      Exclusive discounts & early access
+                    </p>
                   </div>
                 </div>
 
@@ -226,7 +249,8 @@ export default function MembershipPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium">Next Tier Progress</span>
                       <span className="text-sm text-muted-foreground">
-                        RM {membershipStatus.membershipTotal.toFixed(2)} / RM {membershipStatus.nextTierThreshold}
+                        RM {membershipStatus.membershipTotal.toFixed(2)} / RM{' '}
+                        {membershipStatus.nextTierThreshold}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -234,14 +258,22 @@ export default function MembershipPage() {
                         className="bg-blue-600 h-2 rounded-full"
                         style={{
                           width: `${Math.min(
-                            (membershipStatus.membershipTotal / membershipStatus.nextTierThreshold) * 100,
+                            (membershipStatus.membershipTotal /
+                              membershipStatus.nextTierThreshold) *
+                              100,
                             100
                           )}%`,
                         }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      RM {Math.max(membershipStatus.nextTierThreshold - membershipStatus.membershipTotal, 0).toFixed(2)} more to next tier
+                      RM{' '}
+                      {Math.max(
+                        membershipStatus.nextTierThreshold -
+                          membershipStatus.membershipTotal,
+                        0
+                      ).toFixed(2)}{' '}
+                      more to next tier
                     </p>
                   </div>
                 )}
@@ -257,7 +289,9 @@ export default function MembershipPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium">Progress to Membership</span>
                     <span className="text-sm text-muted-foreground">
-                      RM {membershipStatus?.membershipTotal.toFixed(2) || '0.00'} / RM 80.00
+                      RM{' '}
+                      {membershipStatus?.membershipTotal.toFixed(2) || '0.00'} /
+                      RM 80.00
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -269,7 +303,12 @@ export default function MembershipPage() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    RM {Math.max(80 - (membershipStatus?.membershipTotal || 0), 0).toFixed(2)} more to become a member
+                    RM{' '}
+                    {Math.max(
+                      80 - (membershipStatus?.membershipTotal || 0),
+                      0
+                    ).toFixed(2)}{' '}
+                    more to become a member
                   </p>
                 </div>
               </div>
@@ -363,7 +402,9 @@ export default function MembershipPage() {
                         <div className="text-2xl font-bold text-blue-900">
                           {referralData.totalReferrals}
                         </div>
-                        <div className="text-sm text-blue-700">Total Referrals</div>
+                        <div className="text-sm text-blue-700">
+                          Total Referrals
+                        </div>
                       </div>
                       <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                         <div className="text-2xl font-bold text-yellow-900">
@@ -381,7 +422,9 @@ export default function MembershipPage() {
                         <div className="text-2xl font-bold text-purple-900">
                           RM {referralData.totalRewards.toFixed(2)}
                         </div>
-                        <div className="text-sm text-purple-700">Total Rewards</div>
+                        <div className="text-sm text-purple-700">
+                          Total Rewards
+                        </div>
                       </div>
                     </div>
 
@@ -389,7 +432,8 @@ export default function MembershipPage() {
                       <Alert className="mt-4 border-green-200 bg-green-50">
                         <Gift className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-800">
-                          You have RM {referralData.availableRewards.toFixed(2)} in available rewards!
+                          You have RM {referralData.availableRewards.toFixed(2)}{' '}
+                          in available rewards!
                         </AlertDescription>
                       </Alert>
                     )}
@@ -404,7 +448,7 @@ export default function MembershipPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {referralData.recentReferrals.map((referral) => (
+                        {referralData.recentReferrals.map(referral => (
                           <div
                             key={referral.id}
                             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
@@ -417,7 +461,9 @@ export default function MembershipPage() {
                                 </div>
                                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                                   <Calendar className="h-3 w-3" />
-                                  {new Date(referral.createdAt).toLocaleDateString()}
+                                  {new Date(
+                                    referral.createdAt
+                                  ).toLocaleDateString()}
                                 </div>
                               </div>
                             </div>
@@ -428,7 +474,11 @@ export default function MembershipPage() {
                                 </span>
                               )}
                               <Badge
-                                variant={referral.status === 'COMPLETED' ? 'default' : 'secondary'}
+                                variant={
+                                  referral.status === 'COMPLETED'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
                                 className={
                                   referral.status === 'COMPLETED'
                                     ? 'bg-green-100 text-green-800 border-green-200'
@@ -458,13 +508,13 @@ export default function MembershipPage() {
                 <p className="text-sm text-muted-foreground">
                   {membershipStatus?.isMember
                     ? 'Enjoy these exclusive benefits as a member'
-                    : 'Benefits you\'ll unlock when you become a member'}
+                    : "Benefits you'll unlock when you become a member"}
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {benefits.length > 0 ? (
-                    benefits.map((benefit) => (
+                    benefits.map(benefit => (
                       <div
                         key={benefit.id}
                         className={`p-4 rounded-lg border ${
@@ -476,12 +526,17 @@ export default function MembershipPage() {
                         <div className="flex items-start gap-3">
                           <div className="text-2xl">{benefit.icon}</div>
                           <div>
-                            <h3 className="font-semibold mb-1">{benefit.title}</h3>
+                            <h3 className="font-semibold mb-1">
+                              {benefit.title}
+                            </h3>
                             <p className="text-sm text-muted-foreground">
                               {benefit.description}
                             </p>
                             {benefit.isActive && membershipStatus?.isMember && (
-                              <Badge variant="default" className="mt-2 bg-green-100 text-green-800 border-green-200">
+                              <Badge
+                                variant="default"
+                                className="mt-2 bg-green-100 text-green-800 border-green-200"
+                              >
                                 Active
                               </Badge>
                             )}

@@ -14,7 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Container, Section } from '@/components/ui/layout';
-import { ProductCard, ProductCardGrid, type ProductCardProps } from '@/components/product/ProductCard';
+import {
+  ProductCard,
+  ProductCardGrid,
+  type ProductCardProps,
+} from '@/components/product/ProductCard';
 import {
   TrendingUp,
   ArrowRight,
@@ -24,7 +28,7 @@ import {
   Zap,
   BarChart3,
   Users,
-  Star
+  Star,
 } from 'lucide-react';
 
 export interface TrendingProductsProps {
@@ -54,21 +58,21 @@ const trendingPeriodLabels = {
   today: 'Today',
   week: 'This Week',
   month: 'This Month',
-  year: 'This Year'
+  year: 'This Year',
 };
 
 const trendingPeriodIcons = {
   today: Clock,
   week: BarChart3,
   month: TrendingUp,
-  year: Star
+  year: Star,
 };
 
 export function TrendingProducts({
   products,
   title = 'Trending Now',
-  subtitle = 'What\'s Hot',
-  description = 'Discover the products everyone is talking about right now. Don\'t miss out on the latest trends!',
+  subtitle = "What's Hot",
+  description = "Discover the products everyone is talking about right now. Don't miss out on the latest trends!",
   variant = 'featured',
   layout = 'grid',
   showViewAll = true,
@@ -80,7 +84,7 @@ export function TrendingProducts({
   onAddToCart,
   onToggleWishlist,
   onQuickView,
-  className
+  className,
 }: TrendingProductsProps) {
   const [activePeriod, setActivePeriod] = useState(trendingPeriod);
   const displayProducts = products.slice(0, maxProducts);
@@ -91,47 +95,50 @@ export function TrendingProducts({
     default: 'text-center mb-8',
     compact: 'text-left mb-6',
     featured: 'text-center mb-12',
-    minimal: 'text-left mb-6'
+    minimal: 'text-left mb-6',
   };
 
   const trendingIndicators = [
     { period: 'today' as const, label: 'Today', color: 'bg-red-500' },
     { period: 'week' as const, label: 'Week', color: 'bg-orange-500' },
     { period: 'month' as const, label: 'Month', color: 'bg-blue-500' },
-    { period: 'year' as const, label: 'Year', color: 'bg-purple-500' }
+    { period: 'year' as const, label: 'Year', color: 'bg-purple-500' },
   ];
 
   return (
-    <Section
-      variant="default"
-      className={cn('py-12 lg:py-16', className)}
-    >
+    <Section variant="default" className={cn('py-12 lg:py-16', className)}>
       <Container size="xl">
         {/* Section Header */}
         <div className={sectionHeaderClasses[variant]}>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Fire className="h-5 w-5 text-red-500 animate-pulse" />
-            <span className={cn(
-              sectionTypography.overline(),
-              'text-red-500 font-medium tracking-wide uppercase'
-            )}>
+            <span
+              className={cn(
+                sectionTypography.overline(),
+                'text-red-500 font-medium tracking-wide uppercase'
+              )}
+            >
               {subtitle}
             </span>
           </div>
 
-          <h2 className={cn(
-            sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
-            'font-bold text-foreground mb-4'
-          )}>
+          <h2
+            className={cn(
+              sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
+              'font-bold text-foreground mb-4'
+            )}
+          >
             {title}
           </h2>
 
           {description && (
-            <p className={cn(
-              sectionTypography.description(),
-              'text-muted-foreground max-w-2xl',
-              variant === 'featured' ? 'mx-auto mb-6' : 'mb-6'
-            )}>
+            <p
+              className={cn(
+                sectionTypography.description(),
+                'text-muted-foreground max-w-2xl',
+                variant === 'featured' ? 'mx-auto mb-6' : 'mb-6'
+              )}
+            >
               {description}
             </p>
           )}
@@ -139,9 +146,11 @@ export function TrendingProducts({
           {/* Trending Period Selector */}
           {showTrendingMetrics && variant === 'featured' && (
             <div className="flex items-center justify-center gap-2 mb-8">
-              <span className="text-sm text-muted-foreground mr-2">Trending:</span>
+              <span className="text-sm text-muted-foreground mr-2">
+                Trending:
+              </span>
               <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
-                {trendingIndicators.map((indicator) => {
+                {trendingIndicators.map(indicator => {
                   const IconComponent = trendingPeriodIcons[indicator.period];
                   return (
                     <button
@@ -154,7 +163,9 @@ export function TrendingProducts({
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       )}
                     >
-                      <div className={cn('w-2 h-2 rounded-full', indicator.color)} />
+                      <div
+                        className={cn('w-2 h-2 rounded-full', indicator.color)}
+                      />
                       <IconComponent className="w-3 h-3" />
                       <span>{indicator.label}</span>
                     </button>
@@ -187,7 +198,10 @@ export function TrendingProducts({
                     <span className="text-sm font-medium">Views</span>
                   </div>
                   <p className="text-2xl font-bold">24.5K</p>
-                  <p className="text-xs text-muted-foreground">+12% from last {trendingPeriodLabels[activePeriod].toLowerCase()}</p>
+                  <p className="text-xs text-muted-foreground">
+                    +12% from last{' '}
+                    {trendingPeriodLabels[activePeriod].toLowerCase()}
+                  </p>
                 </Card>
 
                 <Card className="p-4 text-center">
@@ -196,7 +210,10 @@ export function TrendingProducts({
                     <span className="text-sm font-medium">Buyers</span>
                   </div>
                   <p className="text-2xl font-bold">2.1K</p>
-                  <p className="text-xs text-muted-foreground">+8% from last {trendingPeriodLabels[activePeriod].toLowerCase()}</p>
+                  <p className="text-xs text-muted-foreground">
+                    +8% from last{' '}
+                    {trendingPeriodLabels[activePeriod].toLowerCase()}
+                  </p>
                 </Card>
 
                 <Card className="p-4 text-center">
@@ -205,7 +222,9 @@ export function TrendingProducts({
                     <span className="text-sm font-medium">Growth</span>
                   </div>
                   <p className="text-2xl font-bold">+35%</p>
-                  <p className="text-xs text-muted-foreground">Sales increase</p>
+                  <p className="text-xs text-muted-foreground">
+                    Sales increase
+                  </p>
                 </Card>
 
                 <Card className="p-4 text-center">
@@ -214,7 +233,9 @@ export function TrendingProducts({
                     <span className="text-sm font-medium">Rating</span>
                   </div>
                   <p className="text-2xl font-bold">4.8</p>
-                  <p className="text-xs text-muted-foreground">Average rating</p>
+                  <p className="text-xs text-muted-foreground">
+                    Average rating
+                  </p>
                 </Card>
               </div>
             )}
@@ -263,10 +284,12 @@ export function TrendingProducts({
                   />
                 </div>
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-xl">{displayProducts[0].name}</h4>
+                  <h4 className="font-semibold text-xl">
+                    {displayProducts[0].name}
+                  </h4>
                   <p className="text-muted-foreground">
-                    This product has seen exceptional growth with a 45% increase in sales
-                    and overwhelmingly positive customer feedback.
+                    This product has seen exceptional growth with a 45% increase
+                    in sales and overwhelmingly positive customer feedback.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
@@ -293,7 +316,9 @@ export function TrendingProducts({
             {/* Other Trending Products */}
             {displayProducts.length > 1 && (
               <div>
-                <h3 className="text-lg font-semibold mb-4">Other Hot Products</h3>
+                <h3 className="text-lg font-semibold mb-4">
+                  Other Hot Products
+                </h3>
                 <ProductCardGrid
                   products={displayProducts.slice(1)}
                   variant="compact"
@@ -354,14 +379,16 @@ export function TrendingProducts({
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No Trending Products</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No Trending Products
+              </h3>
               <p className="text-muted-foreground mb-4">
-                We're updating our trending products for {trendingPeriodLabels[activePeriod].toLowerCase()}. Check back soon!
+                We're updating our trending products for{' '}
+                {trendingPeriodLabels[activePeriod].toLowerCase()}. Check back
+                soon!
               </p>
               <Link href="/products">
-                <Button variant="outline">
-                  Browse All Products
-                </Button>
+                <Button variant="outline">Browse All Products</Button>
               </Link>
             </CardContent>
           </Card>
@@ -372,7 +399,10 @@ export function TrendingProducts({
 }
 
 // Specialized trending product variants
-export const CompactTrendingProducts = ({ className, ...props }: Omit<TrendingProductsProps, 'variant'>) => (
+export const CompactTrendingProducts = ({
+  className,
+  ...props
+}: Omit<TrendingProductsProps, 'variant'>) => (
   <TrendingProducts
     variant="compact"
     title="Hot Picks"
@@ -385,7 +415,10 @@ export const CompactTrendingProducts = ({ className, ...props }: Omit<TrendingPr
   />
 );
 
-export const MinimalTrendingProducts = ({ className, ...props }: Omit<TrendingProductsProps, 'variant' | 'layout'>) => (
+export const MinimalTrendingProducts = ({
+  className,
+  ...props
+}: Omit<TrendingProductsProps, 'variant' | 'layout'>) => (
   <TrendingProducts
     variant="minimal"
     layout="carousel"
@@ -415,7 +448,7 @@ export function QuickTrending({
   maxProducts = 3,
   period = 'week',
   onAddToCart,
-  className
+  className,
 }: QuickTrendingProps) {
   const displayProducts = products.slice(0, maxProducts);
   const PeriodIcon = trendingPeriodIcons[period];
@@ -471,7 +504,10 @@ export function QuickTrending({
       {displayProducts.length === 0 && (
         <div className="text-center p-6 text-muted-foreground">
           <Fire className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No trending products for {trendingPeriodLabels[period].toLowerCase()}</p>
+          <p className="text-sm">
+            No trending products for{' '}
+            {trendingPeriodLabels[period].toLowerCase()}
+          </p>
         </div>
       )}
     </div>

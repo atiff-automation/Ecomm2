@@ -259,18 +259,16 @@ export const optionalBusinessAddressSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  state: z.enum(MalaysianStates, {
-    errorMap: () => ({ message: 'Please select a valid Malaysian state' }),
-  })
-  .optional()
-  .or(z.literal('')),
+  state: z
+    .enum(MalaysianStates, {
+      errorMap: () => ({ message: 'Please select a valid Malaysian state' }),
+    })
+    .optional()
+    .or(z.literal('')),
 
   postalCode: z
     .string()
-    .regex(
-      MALAYSIAN_POSTCODE_REGEX,
-      'Invalid Malaysian postal code (5 digits)'
-    )
+    .regex(MALAYSIAN_POSTCODE_REGEX, 'Invalid Malaysian postal code (5 digits)')
     .optional()
     .or(z.literal('')),
 
@@ -278,7 +276,6 @@ export const optionalBusinessAddressSchema = z.object({
     errorMap: () => ({ message: 'Please select a valid country' }),
   }),
 });
-
 
 /**
  * Business Profile Schema (Admin) - Fixed to match form structure
@@ -348,11 +345,7 @@ export const businessProfileSchema = z.object({
 
   website: z.string().url('Invalid website URL').optional().or(z.literal('')),
 
-  logoUrl: z
-    .string()
-    .url('Invalid logo URL')
-    .optional()
-    .or(z.literal('')),
+  logoUrl: z.string().url('Invalid logo URL').optional().or(z.literal('')),
 
   // Address Information - Now properly nested
   registeredAddress: businessAddressSchema,
@@ -434,6 +427,4 @@ export const malaysianStatesOptions = [
  *
  * IMPORTANT: Values use ISO 3166-1 alpha-2 codes for EasyParcel API compatibility
  */
-export const countryOptions = [
-  { value: 'MY', label: 'Malaysia' },
-];
+export const countryOptions = [{ value: 'MY', label: 'Malaysia' }];

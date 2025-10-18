@@ -12,16 +12,40 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Building, MapPin, Phone, Mail, Calendar, IdCard, Store } from 'lucide-react';
-import { FIELD_LABELS, PLACEHOLDERS, BUSINESS_TYPES } from '@/lib/config/agent-application-form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  User,
+  Building,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  IdCard,
+  Store,
+} from 'lucide-react';
+import {
+  FIELD_LABELS,
+  PLACEHOLDERS,
+  BUSINESS_TYPES,
+} from '@/lib/config/agent-application-form';
 
 interface BasicInfoStepProps {
   form: UseFormReturn<AgentApplicationFormData>;
 }
 
 export function BasicInfoStep({ form }: BasicInfoStepProps) {
-  const { register, watch, setValue, formState: { errors } } = form;
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = form;
 
   const hasBusinessExp = watch('hasBusinessExp');
   const hasTeamLeadExp = watch('hasTeamLeadExp');
@@ -51,15 +75,23 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.fullName ? 'border-red-300' : ''}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.fullName.message}
+                </p>
               )}
             </div>
 
             {/* IC Number */}
             <div>
-              <Label htmlFor="icNumber" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="icNumber"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <IdCard className="w-4 h-4" />
-                <span>{FIELD_LABELS.icNumber} <span className="text-red-500">*</span></span>
+                <span>
+                  {FIELD_LABELS.icNumber}{' '}
+                  <span className="text-red-500">*</span>
+                </span>
               </Label>
               <Input
                 id="icNumber"
@@ -68,16 +100,25 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.icNumber ? 'border-red-300' : ''}
               />
               {errors.icNumber && (
-                <p className="text-sm text-red-600 mt-1">{errors.icNumber.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.icNumber.message}
+                </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">Format: YYMMDD-PP-GGGG</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Format: YYMMDD-PP-GGGG
+              </p>
             </div>
 
             {/* Age */}
             <div>
-              <Label htmlFor="age" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="age"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <Calendar className="w-4 h-4" />
-                <span>{FIELD_LABELS.age} <span className="text-red-500">*</span></span>
+                <span>
+                  {FIELD_LABELS.age} <span className="text-red-500">*</span>
+                </span>
               </Label>
               <Input
                 id="age"
@@ -89,15 +130,23 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.age ? 'border-red-300' : ''}
               />
               {errors.age && (
-                <p className="text-sm text-red-600 mt-1">{errors.age.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.age.message}
+                </p>
               )}
             </div>
 
             {/* Phone Number */}
             <div>
-              <Label htmlFor="phoneNumber" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="phoneNumber"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <Phone className="w-4 h-4" />
-                <span>{FIELD_LABELS.phoneNumber} <span className="text-red-500">*</span></span>
+                <span>
+                  {FIELD_LABELS.phoneNumber}{' '}
+                  <span className="text-red-500">*</span>
+                </span>
               </Label>
               <Input
                 id="phoneNumber"
@@ -106,16 +155,25 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.phoneNumber ? 'border-red-300' : ''}
               />
               {errors.phoneNumber && (
-                <p className="text-sm text-red-600 mt-1">{errors.phoneNumber.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.phoneNumber.message}
+                </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">Contoh: 012-3456789 atau +6012-3456789</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Contoh: 012-3456789 atau +6012-3456789
+              </p>
             </div>
 
             {/* Email */}
             <div>
-              <Label htmlFor="email" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <Mail className="w-4 h-4" />
-                <span>{FIELD_LABELS.email} <span className="text-red-500">*</span></span>
+                <span>
+                  {FIELD_LABELS.email} <span className="text-red-500">*</span>
+                </span>
               </Label>
               <Input
                 id="email"
@@ -125,15 +183,22 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.email ? 'border-red-300' : ''}
               />
               {errors.email && (
-                <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             {/* Address */}
             <div className="md:col-span-2">
-              <Label htmlFor="address" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="address"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <MapPin className="w-4 h-4" />
-                <span>{FIELD_LABELS.address} <span className="text-red-500">*</span></span>
+                <span>
+                  {FIELD_LABELS.address} <span className="text-red-500">*</span>
+                </span>
               </Label>
               <Textarea
                 id="address"
@@ -143,7 +208,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 rows={3}
               />
               {errors.address && (
-                <p className="text-sm text-red-600 mt-1">{errors.address.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.address.message}
+                </p>
               )}
             </div>
           </div>
@@ -164,9 +231,14 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             <Checkbox
               id="hasBusinessExp"
               checked={hasBusinessExp || false}
-              onCheckedChange={(checked) => setValue('hasBusinessExp', checked as boolean)}
+              onCheckedChange={checked =>
+                setValue('hasBusinessExp', checked as boolean)
+              }
             />
-            <Label htmlFor="hasBusinessExp" className="text-sm font-medium cursor-pointer">
+            <Label
+              htmlFor="hasBusinessExp"
+              className="text-sm font-medium cursor-pointer"
+            >
               {FIELD_LABELS.hasBusinessExp}
             </Label>
           </div>
@@ -184,7 +256,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 className={errors.businessLocation ? 'border-red-300' : ''}
               />
               {errors.businessLocation && (
-                <p className="text-sm text-red-600 mt-1">{errors.businessLocation.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.businessLocation.message}
+                </p>
               )}
             </div>
           )}
@@ -194,9 +268,14 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             <Checkbox
               id="hasTeamLeadExp"
               checked={hasTeamLeadExp || false}
-              onCheckedChange={(checked) => setValue('hasTeamLeadExp', checked as boolean)}
+              onCheckedChange={checked =>
+                setValue('hasTeamLeadExp', checked as boolean)
+              }
             />
-            <Label htmlFor="hasTeamLeadExp" className="text-sm font-medium cursor-pointer">
+            <Label
+              htmlFor="hasTeamLeadExp"
+              className="text-sm font-medium cursor-pointer"
+            >
               {FIELD_LABELS.hasTeamLeadExp}
             </Label>
           </div>
@@ -206,22 +285,32 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             <Checkbox
               id="isRegistered"
               checked={isRegistered || false}
-              onCheckedChange={(checked) => setValue('isRegistered', checked as boolean)}
+              onCheckedChange={checked =>
+                setValue('isRegistered', checked as boolean)
+              }
             />
-            <Label htmlFor="isRegistered" className="text-sm font-medium cursor-pointer">
+            <Label
+              htmlFor="isRegistered"
+              className="text-sm font-medium cursor-pointer"
+            >
               {FIELD_LABELS.isRegistered}
             </Label>
           </div>
 
           {/* Business Type */}
           <div>
-            <Label htmlFor="jenis" className="text-sm font-medium flex items-center space-x-1">
+            <Label
+              htmlFor="jenis"
+              className="text-sm font-medium flex items-center space-x-1"
+            >
               <Store className="w-4 h-4" />
-              <span>{FIELD_LABELS.jenis} <span className="text-red-500">*</span></span>
+              <span>
+                {FIELD_LABELS.jenis} <span className="text-red-500">*</span>
+              </span>
             </Label>
             <Select
               value={watch('jenis') || ''}
-              onValueChange={(value) => setValue('jenis', value as any)}
+              onValueChange={value => setValue('jenis', value as any)}
             >
               <SelectTrigger className={errors.jenis ? 'border-red-300' : ''}>
                 <SelectValue placeholder="Pilih jenis kedai" />
@@ -235,7 +324,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
               </SelectContent>
             </Select>
             {errors.jenis && (
-              <p className="text-sm text-red-600 mt-1">{errors.jenis.message}</p>
+              <p className="text-sm text-red-600 mt-1">
+                {errors.jenis.message}
+              </p>
             )}
           </div>
         </CardContent>
@@ -248,9 +339,10 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
           <div className="text-sm text-amber-800">
             <p className="font-medium mb-1">Nota Penting</p>
             <p>
-              Pastikan semua maklumat yang diisi adalah tepat dan benar. Maklumat ini akan digunakan
-              untuk proses semakan dan komunikasi rasmi. Sebarang maklumat palsu boleh menyebabkan
-              permohonan anda ditolak.
+              Pastikan semua maklumat yang diisi adalah tepat dan benar.
+              Maklumat ini akan digunakan untuk proses semakan dan komunikasi
+              rasmi. Sebarang maklumat palsu boleh menyebabkan permohonan anda
+              ditolak.
             </p>
           </div>
         </div>

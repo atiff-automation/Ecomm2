@@ -8,10 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Check, Eye, Star } from 'lucide-react';
-import { 
-  ReceiptTemplate, 
+import {
+  ReceiptTemplate,
   ReceiptTemplateType,
-  TEMPLATE_TYPE_LABELS 
+  TEMPLATE_TYPE_LABELS,
 } from '@/types/receipt-templates';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +30,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onSelectionChange,
   onPreview,
   allowSetDefault = false,
-  className
+  className,
 }) => {
   const [selectedId, setSelectedId] = useState(selectedTemplateId || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -58,9 +58,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
     try {
       setIsUpdating(true);
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}/set-default`, {
-        method: 'PATCH'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}/set-default`,
+        {
+          method: 'PATCH',
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to set default template');
@@ -81,7 +84,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       THERMAL_RECEIPT: 'bg-blue-100 text-blue-800 border-blue-200',
       BUSINESS_INVOICE: 'bg-purple-100 text-purple-800 border-purple-200',
       MINIMAL_RECEIPT: 'bg-green-100 text-green-800 border-green-200',
-      DETAILED_INVOICE: 'bg-orange-100 text-orange-800 border-orange-200'
+      DETAILED_INVOICE: 'bg-orange-100 text-orange-800 border-orange-200',
     };
     return colors[templateType] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
@@ -91,7 +94,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       THERMAL_RECEIPT: '🧾',
       BUSINESS_INVOICE: '📄',
       MINIMAL_RECEIPT: '📝',
-      DETAILED_INVOICE: '📋'
+      DETAILED_INVOICE: '📋',
     };
     return icons[templateType] || '📄';
   };
@@ -113,18 +116,20 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Select Template</h3>
         <Badge variant="outline" className="text-xs">
-          {activeTemplates.length} template{activeTemplates.length !== 1 ? 's' : ''} available
+          {activeTemplates.length} template
+          {activeTemplates.length !== 1 ? 's' : ''} available
         </Badge>
       </div>
 
       <RadioGroup value={selectedId} onValueChange={handleSelectionChange}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeTemplates.map((template) => (
-            <Card 
-              key={template.id} 
+          {activeTemplates.map(template => (
+            <Card
+              key={template.id}
               className={cn(
                 'relative cursor-pointer transition-all duration-200 hover:shadow-md',
-                selectedId === template.id && 'ring-2 ring-primary ring-offset-2'
+                selectedId === template.id &&
+                  'ring-2 ring-primary ring-offset-2'
               )}
               onClick={() => handleSelectionChange(template.id)}
             >
@@ -133,9 +138,11 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   <RadioGroupItem value={template.id} id={template.id} />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">{getTemplateIcon(template.templateType)}</span>
-                      <Label 
-                        htmlFor={template.id} 
+                      <span className="text-lg">
+                        {getTemplateIcon(template.templateType)}
+                      </span>
+                      <Label
+                        htmlFor={template.id}
                         className="text-sm font-medium cursor-pointer"
                       >
                         {template.name}
@@ -144,7 +151,9 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       )}
                     </div>
-                    <Badge className={getTemplateTypeColor(template.templateType)}>
+                    <Badge
+                      className={getTemplateTypeColor(template.templateType)}
+                    >
                       {TEMPLATE_TYPE_LABELS[template.templateType]}
                     </Badge>
                   </div>
@@ -166,7 +175,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           onPreview(template);
                         }}
@@ -176,12 +185,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         Preview
                       </Button>
                     )}
-                    
+
                     {allowSetDefault && !template.isDefault && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           handleSetAsDefault(template.id);
                         }}
@@ -215,7 +224,8 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             <span className="text-sm font-medium">Selected Template</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            {templates.find(t => t.id === selectedId)?.name} will be used for generating receipts and invoices.
+            {templates.find(t => t.id === selectedId)?.name} will be used for
+            generating receipts and invoices.
           </div>
         </div>
       )}

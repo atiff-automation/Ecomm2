@@ -18,11 +18,11 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Bell, 
-  Mail, 
-  MessageSquare, 
-  Smartphone, 
+import {
+  Bell,
+  Mail,
+  MessageSquare,
+  Smartphone,
   Monitor,
   Settings,
   Clock,
@@ -30,7 +30,7 @@ import {
   Save,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { NotificationSettings } from '@/lib/notifications/notification-service';
@@ -83,7 +83,7 @@ export default function NotificationsPage() {
     healthStatus: 'UNKNOWN',
     lastHealthCheck: null,
   });
-  
+
   // TELEGRAM STATE: Status tracking
   const [telegramStatus, setTelegramStatus] = useState<any>(null);
   const [telegramLoading, setTelegramLoading] = useState(false);
@@ -179,7 +179,10 @@ export default function NotificationsPage() {
 
       if (data.configured && data.config) {
         setTelegramConfig({
-          botToken: data.config.botToken !== '***masked***' ? data.config.botToken : telegramConfig.botToken,
+          botToken:
+            data.config.botToken !== '***masked***'
+              ? data.config.botToken
+              : telegramConfig.botToken,
           botUsername: data.config.botUsername || '',
           ordersEnabled: data.config.ordersEnabled,
           ordersChatId: data.config.ordersChatId || '',
@@ -231,12 +234,16 @@ export default function NotificationsPage() {
       }
 
       toast.success('Telegram configuration saved successfully!');
-      
+
       // REFRESH: Reload status after saving
       await loadTelegramStatus();
     } catch (error) {
       console.error('Error saving Telegram configuration:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save Telegram configuration');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save Telegram configuration'
+      );
     } finally {
       setTelegramLoading(false);
     }
@@ -256,7 +263,7 @@ export default function NotificationsPage() {
       } else {
         toast.error(data.message);
       }
-      
+
       // REFRESH: Reload status after testing
       await loadTelegramStatus();
     } catch (error) {
@@ -600,15 +607,21 @@ export default function NotificationsPage() {
           </p>
           {telegramStatus && (
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={telegramStatus.configured ? "default" : "secondary"}>
-                {telegramStatus.configured ? "Configured" : "Not Configured"}
+              <Badge
+                variant={telegramStatus.configured ? 'default' : 'secondary'}
+              >
+                {telegramStatus.configured ? 'Configured' : 'Not Configured'}
               </Badge>
-              <Badge variant={telegramStatus.health?.healthy ? "default" : "destructive"}>
-                {telegramStatus.health?.healthy ? "Healthy" : "Unhealthy"}
+              <Badge
+                variant={
+                  telegramStatus.health?.healthy ? 'default' : 'destructive'
+                }
+              >
+                {telegramStatus.health?.healthy ? 'Healthy' : 'Unhealthy'}
               </Badge>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={testTelegramConnection}
                 disabled={telegramTesting || !telegramStatus.configured}
               >
@@ -638,7 +651,12 @@ export default function NotificationsPage() {
                 type="password"
                 placeholder="Enter your Telegram bot token"
                 value={telegramConfig.botToken || ''}
-                onChange={(e) => setTelegramConfig({ ...telegramConfig, botToken: e.target.value })}
+                onChange={e =>
+                  setTelegramConfig({
+                    ...telegramConfig,
+                    botToken: e.target.value,
+                  })
+                }
               />
               <p className="text-sm text-muted-foreground">
                 Get your bot token from @BotFather on Telegram
@@ -651,7 +669,12 @@ export default function NotificationsPage() {
                 id="botUsername"
                 placeholder="@your_bot_username"
                 value={telegramConfig.botUsername || ''}
-                onChange={(e) => setTelegramConfig({ ...telegramConfig, botUsername: e.target.value })}
+                onChange={e =>
+                  setTelegramConfig({
+                    ...telegramConfig,
+                    botUsername: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
@@ -661,18 +684,24 @@ export default function NotificationsPage() {
           {/* Notification Channels */}
           <div className="space-y-4">
             <h4 className="font-medium">Notification Channels</h4>
-            
+
             {/* Orders Channel */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="ordersEnabled" className="text-base font-medium">
+                <Label
+                  htmlFor="ordersEnabled"
+                  className="text-base font-medium"
+                >
                   Order Notifications
                 </Label>
                 <Switch
                   id="ordersEnabled"
                   checked={telegramConfig.ordersEnabled}
-                  onCheckedChange={(checked) => 
-                    setTelegramConfig({ ...telegramConfig, ordersEnabled: checked })
+                  onCheckedChange={checked =>
+                    setTelegramConfig({
+                      ...telegramConfig,
+                      ordersEnabled: checked,
+                    })
                   }
                 />
               </div>
@@ -683,7 +712,12 @@ export default function NotificationsPage() {
                     id="ordersChatId"
                     placeholder="Enter chat ID (e.g., -1001234567890)"
                     value={telegramConfig.ordersChatId || ''}
-                    onChange={(e) => setTelegramConfig({ ...telegramConfig, ordersChatId: e.target.value })}
+                    onChange={e =>
+                      setTelegramConfig({
+                        ...telegramConfig,
+                        ordersChatId: e.target.value,
+                      })
+                    }
                   />
                   <p className="text-sm text-muted-foreground mt-1">
                     Chat ID where order notifications will be sent
@@ -695,14 +729,20 @@ export default function NotificationsPage() {
             {/* Inventory Channel */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="inventoryEnabled" className="text-base font-medium">
+                <Label
+                  htmlFor="inventoryEnabled"
+                  className="text-base font-medium"
+                >
                   Inventory Notifications
                 </Label>
                 <Switch
                   id="inventoryEnabled"
                   checked={telegramConfig.inventoryEnabled}
-                  onCheckedChange={(checked) => 
-                    setTelegramConfig({ ...telegramConfig, inventoryEnabled: checked })
+                  onCheckedChange={checked =>
+                    setTelegramConfig({
+                      ...telegramConfig,
+                      inventoryEnabled: checked,
+                    })
                   }
                 />
               </div>
@@ -713,7 +753,12 @@ export default function NotificationsPage() {
                     id="inventoryChatId"
                     placeholder="Enter chat ID (e.g., -1001234567890)"
                     value={telegramConfig.inventoryChatId || ''}
-                    onChange={(e) => setTelegramConfig({ ...telegramConfig, inventoryChatId: e.target.value })}
+                    onChange={e =>
+                      setTelegramConfig({
+                        ...telegramConfig,
+                        inventoryChatId: e.target.value,
+                      })
+                    }
                   />
                   <p className="text-sm text-muted-foreground mt-1">
                     Chat ID where low stock alerts will be sent
@@ -731,16 +776,22 @@ export default function NotificationsPage() {
               <Clock className="h-5 w-5" />
               <h4 className="font-medium">Daily Summary</h4>
             </div>
-            
+
             <div className="flex items-center justify-between">
-              <Label htmlFor="dailySummaryEnabled" className="text-base font-medium">
+              <Label
+                htmlFor="dailySummaryEnabled"
+                className="text-base font-medium"
+              >
                 Enable Daily Summary
               </Label>
               <Switch
                 id="dailySummaryEnabled"
                 checked={telegramConfig.dailySummaryEnabled}
-                onCheckedChange={(checked) => 
-                  setTelegramConfig({ ...telegramConfig, dailySummaryEnabled: checked })
+                onCheckedChange={checked =>
+                  setTelegramConfig({
+                    ...telegramConfig,
+                    dailySummaryEnabled: checked,
+                  })
                 }
               />
             </div>
@@ -753,7 +804,12 @@ export default function NotificationsPage() {
                     id="summaryTime"
                     type="time"
                     value={telegramConfig.summaryTime || '09:00'}
-                    onChange={(e) => setTelegramConfig({ ...telegramConfig, summaryTime: e.target.value })}
+                    onChange={e =>
+                      setTelegramConfig({
+                        ...telegramConfig,
+                        summaryTime: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -761,14 +817,20 @@ export default function NotificationsPage() {
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
                     value={telegramConfig.timezone}
-                    onValueChange={(value) => setTelegramConfig({ ...telegramConfig, timezone: value })}
+                    onValueChange={value =>
+                      setTelegramConfig({ ...telegramConfig, timezone: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur</SelectItem>
-                      <SelectItem value="Asia/Singapore">Asia/Singapore</SelectItem>
+                      <SelectItem value="Asia/Kuala_Lumpur">
+                        Asia/Kuala_Lumpur
+                      </SelectItem>
+                      <SelectItem value="Asia/Singapore">
+                        Asia/Singapore
+                      </SelectItem>
                       <SelectItem value="Asia/Jakarta">Asia/Jakarta</SelectItem>
                       <SelectItem value="Asia/Bangkok">Asia/Bangkok</SelectItem>
                     </SelectContent>
@@ -782,7 +844,10 @@ export default function NotificationsPage() {
 
           {/* Save Telegram Configuration */}
           <div className="flex justify-end">
-            <Button onClick={saveTelegramConfiguration} disabled={telegramLoading}>
+            <Button
+              onClick={saveTelegramConfiguration}
+              disabled={telegramLoading}
+            >
               {telegramLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -801,7 +866,7 @@ export default function NotificationsPage() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Need help setting up?</strong> 
+              <strong>Need help setting up?</strong>
               <br />
               1. Create a bot using @BotFather on Telegram
               <br />

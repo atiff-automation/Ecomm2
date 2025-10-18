@@ -13,7 +13,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
         pendingMembership: {
           select: {
             qualifyingAmount: true,
-          }
+          },
         },
-      }
+      },
     });
 
     if (!user) {
@@ -50,9 +50,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: membershipStatus
+      data: membershipStatus,
     });
-
   } catch (error) {
     console.error('Get membership status error:', error);
     return NextResponse.json(

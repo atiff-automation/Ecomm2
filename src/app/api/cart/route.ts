@@ -127,7 +127,7 @@ async function handleGET() {
     // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
     const userExists = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!userExists) {
@@ -137,9 +137,9 @@ async function handleGET() {
         timestamp: new Date().toISOString(),
       });
       return NextResponse.json(
-        { 
+        {
           message: 'User session invalid. Please log in again.',
-          code: 'USER_NOT_FOUND'
+          code: 'USER_NOT_FOUND',
         },
         { status: 401 }
       );
@@ -358,7 +358,7 @@ async function handlePOST(request: NextRequest) {
     // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
     const userExists = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!userExists) {
@@ -368,9 +368,9 @@ async function handlePOST(request: NextRequest) {
         timestamp: new Date().toISOString(),
       });
       return NextResponse.json(
-        { 
+        {
           message: 'User session invalid. Please log in again.',
-          code: 'USER_NOT_FOUND'
+          code: 'USER_NOT_FOUND',
         },
         { status: 401 }
       );
@@ -645,7 +645,7 @@ async function handlePUT(request: NextRequest) {
     // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
     const userExists = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!userExists) {
@@ -655,9 +655,9 @@ async function handlePUT(request: NextRequest) {
         timestamp: new Date().toISOString(),
       });
       return NextResponse.json(
-        { 
+        {
           message: 'User session invalid. Please log in again.',
-          code: 'USER_NOT_FOUND'
+          code: 'USER_NOT_FOUND',
         },
         { status: 401 }
       );
@@ -863,7 +863,7 @@ async function handleDELETE() {
     // CRITICAL: Verify user exists before cart operation to prevent foreign key violation
     const userExists = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!userExists) {
@@ -873,9 +873,9 @@ async function handleDELETE() {
         timestamp: new Date().toISOString(),
       });
       return NextResponse.json(
-        { 
+        {
           message: 'User session invalid. Please log in again.',
-          code: 'USER_NOT_FOUND'
+          code: 'USER_NOT_FOUND',
         },
         { status: 401 }
       );

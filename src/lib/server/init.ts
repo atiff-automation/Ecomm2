@@ -15,7 +15,9 @@ export async function ensureServerInitialized() {
     console.log('🔧 Ensuring server services are initialized...');
 
     // Import and ensure simplified Telegram service is running
-    const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
+    const { simplifiedTelegramService } = await import(
+      '@/lib/telegram/simplified-telegram-service'
+    );
 
     // Check if configuration is loaded and service is healthy
     const isConfigured = await simplifiedTelegramService.isConfigured();

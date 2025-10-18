@@ -94,8 +94,8 @@ export function BulkSelectAllCheckbox({
             indeterminate
               ? `${selectedCount} of ${totalCount} items selected`
               : checked
-              ? 'Unselect all items'
-              : 'Select all items'
+                ? 'Unselect all items'
+                : 'Select all items'
           }
         />
         <span className="text-sm font-medium whitespace-nowrap">
@@ -106,9 +106,7 @@ export function BulkSelectAllCheckbox({
         <div className="text-xs text-muted-foreground pl-6">
           {selectedCount} of {totalCount}
           {selectedCount >= maxSelection && (
-            <span className="text-orange-600 ml-1">
-              (max)
-            </span>
+            <span className="text-orange-600 ml-1">(max)</span>
           )}
         </div>
       )}
@@ -143,12 +141,11 @@ export function BulkSelectionStatus({
     <div className={cn('text-sm', className)}>
       <span className="font-medium">{selectedCount}</span>
       <span className="text-muted-foreground">
-        {' '}of {totalCount} items selected
+        {' '}
+        of {totalCount} items selected
       </span>
       {percentage > 0 && (
-        <span className="text-muted-foreground ml-1">
-          ({percentage}%)
-        </span>
+        <span className="text-muted-foreground ml-1">({percentage}%)</span>
       )}
       {isMaxReached && (
         <span className="text-orange-600 ml-1 font-medium">

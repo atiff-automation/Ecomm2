@@ -15,8 +15,11 @@ export class EncryptionService {
     if (!key) {
       throw new Error('ENCRYPTION_KEY environment variable is required');
     }
-    if (key.length !== 64) { // 32 bytes = 64 hex chars
-      throw new Error('ENCRYPTION_KEY must be 64 hexadecimal characters (32 bytes)');
+    if (key.length !== 64) {
+      // 32 bytes = 64 hex chars
+      throw new Error(
+        'ENCRYPTION_KEY must be 64 hexadecimal characters (32 bytes)'
+      );
     }
     return key;
   }
@@ -35,16 +38,16 @@ export class EncryptionService {
       const key = Buffer.from(this.secretKey, 'hex');
       const iv = crypto.randomBytes(this.ivLength);
       const cipher = crypto.createCipher(this.algorithm, key, iv);
-      
+
       // Additional authentication data for integrity
       const aad = Buffer.from('business-sensitive-data', 'utf8');
       cipher.setAAD(aad);
-      
+
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       const tag = cipher.getAuthTag();
-      
+
       // Format: iv:tag:encrypted (all in hex)
       return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
     } catch (error) {
@@ -73,17 +76,17 @@ export class EncryptionService {
       const key = Buffer.from(this.secretKey, 'hex');
       const iv = Buffer.from(ivHex, 'hex');
       const tag = Buffer.from(tagHex, 'hex');
-      
+
       const decipher = crypto.createDecipher(this.algorithm, key, iv);
-      
+
       // Set additional authentication data
       const aad = Buffer.from('business-sensitive-data', 'utf8');
       decipher.setAAD(aad);
       decipher.setAuthTag(tag);
-      
+
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       console.error('Decryption failed:', error);
@@ -108,20 +111,23 @@ export class EncryptionService {
     if (!data || typeof data !== 'string') {
       return false;
     }
-    
+
     const parts = data.split(':');
     if (parts.length !== 3) {
       return false;
     }
-    
+
     // Check if parts are valid hex strings of expected lengths
     const [iv, tag, encrypted] = parts;
     const hexRegex = /^[0-9a-fA-F]+$/;
-    
+
     return (
-      hexRegex.test(iv) && iv.length === this.ivLength * 2 &&
-      hexRegex.test(tag) && tag.length === this.tagLength * 2 &&
-      hexRegex.test(encrypted) && encrypted.length > 0
+      hexRegex.test(iv) &&
+      iv.length === this.ivLength * 2 &&
+      hexRegex.test(tag) &&
+      tag.length === this.tagLength * 2 &&
+      hexRegex.test(encrypted) &&
+      encrypted.length > 0
     );
   }
 

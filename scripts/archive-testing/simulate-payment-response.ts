@@ -114,7 +114,7 @@ console.log('─'.repeat(80));
 const databaseUpdate = {
   status: 'READY_TO_SHIP',
   trackingNumber: parcelDetails.awb,              // ✅ Use AWB (real tracking number)
-  airwayBillNumber: parcelDetails.awb,            // ✅ Same as tracking
+  airwayBillUrl: parcelDetails.awb,            // ✅ Same as tracking
   airwayBillUrl: parcelDetails.awb_id_link,       // ✅ PDF download link
   airwayBillGenerated: true,
   airwayBillGeneratedAt: new Date(),
@@ -134,8 +134,8 @@ const checks = {
   '3. AWB exists in response': !!parcels[0]?.awb,
   '4. AWB mapped to data.parcels': !!mappedResponse.data?.parcels[0]?.awb,
   '5. trackingNumber uses AWB (not parcelno)': databaseUpdate.trackingNumber === '631867054753',
-  '6. airwayBillNumber uses AWB': databaseUpdate.airwayBillNumber === '631867054753',
-  '7. trackingNumber equals airwayBillNumber': databaseUpdate.trackingNumber === databaseUpdate.airwayBillNumber,
+  '6. airwayBillUrl uses AWB': databaseUpdate.airwayBillUrl === '631867054753',
+  '7. trackingNumber equals airwayBillUrl': databaseUpdate.trackingNumber === databaseUpdate.airwayBillUrl,
   '8. airwayBillUrl has PDF link': databaseUpdate.airwayBillUrl.includes('pdf'),
   '9. trackingUrl exists': !!databaseUpdate.trackingUrl,
   '10. Status is READY_TO_SHIP': databaseUpdate.status === 'READY_TO_SHIP',
@@ -164,7 +164,7 @@ console.log('  result[0].parcel[0].awb');
 console.log('    → "631867054753"');
 console.log('    → paymentResponse.data.parcels[0].awb');
 console.log('    → databaseUpdate.trackingNumber ✅');
-console.log('    → databaseUpdate.airwayBillNumber ✅');
+console.log('    → databaseUpdate.airwayBillUrl ✅');
 console.log('');
 console.log('  result[0].parcel[0].awb_id_link');
 console.log('    → "https://connect.easyparcel.my/pdf/awb/EP-A2V318.pdf"');

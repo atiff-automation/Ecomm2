@@ -12,7 +12,9 @@ const DLQ_CONFIG = {
   RETRY_DELAY_HOURS: parseInt(process.env.DLQ_RETRY_DELAY_HOURS || '1'),
   CLEANUP_AFTER_DAYS: parseInt(process.env.DLQ_CLEANUP_AFTER_DAYS || '30'),
   BATCH_SIZE: parseInt(process.env.DLQ_BATCH_SIZE || '50'),
-  PROCESSING_INTERVAL_MS: parseInt(process.env.DLQ_PROCESSING_INTERVAL_MS || '300000'), // 5 minutes
+  PROCESSING_INTERVAL_MS: parseInt(
+    process.env.DLQ_PROCESSING_INTERVAL_MS || '300000'
+  ), // 5 minutes
   ALERT_THRESHOLD: parseInt(process.env.DLQ_ALERT_THRESHOLD || '100'),
 } as const;
 
@@ -77,7 +79,9 @@ export class DeadLetterQueue {
           stackTrace: error.stack,
           retryCount: 0,
           nextRetryAt: failureAnalysis.shouldRetry
-            ? new Date(Date.now() + DLQ_CONFIG.RETRY_DELAY_HOURS * 60 * 60 * 1000)
+            ? new Date(
+                Date.now() + DLQ_CONFIG.RETRY_DELAY_HOURS * 60 * 60 * 1000
+              )
             : null,
           metadata: metadata ? JSON.stringify(metadata) : null,
           createdAt: new Date(),
@@ -100,14 +104,19 @@ export class DeadLetterQueue {
       return failedNotification.id;
     } catch (dbError) {
       console.error('❌ Failed to record notification in DLQ:', dbError);
-      throw new Error('Could not record failed notification in dead letter queue');
+      throw new Error(
+        'Could not record failed notification in dead letter queue'
+      );
     }
   }
 
   /**
    * CENTRALIZED failure analysis - Single source of truth
    */
-  private static analyzeFailure(error: Error): { shouldRetry: boolean; category: string } {
+  private static analyzeFailure(error: Error): {
+    shouldRetry: boolean;
+    category: string;
+  } {
     const errorMessage = error.message.toLowerCase();
 
     // SYSTEMATIC non-retryable error patterns
@@ -184,7 +193,9 @@ export class DeadLetterQueue {
 
       metrics.pendingRetries = pendingRetries.length;
 
-      console.log(`🔄 Processing ${pendingRetries.length} failed notifications from DLQ`);
+      console.log(
+        `🔄 Processing ${pendingRetries.length} failed notifications from DLQ`
+      );
 
       // SYSTEMATIC batch processing
       const retryResults = await Promise.allSettled(
@@ -203,16 +214,25 @@ export class DeadLetterQueue {
             metrics.successfulRetries++;
             await this.markAsResolved(notification.id);
           } else {
-            await this.updateRetryCount(notification, retryResult.error || 'Unknown error');
+            await this.updateRetryCount(
+              notification,
+              retryResult.error || 'Unknown error'
+            );
 
-            if (!retryResult.shouldRetry || notification.retryCount >= DLQ_CONFIG.MAX_RETRY_ATTEMPTS - 1) {
+            if (
+              !retryResult.shouldRetry ||
+              notification.retryCount >= DLQ_CONFIG.MAX_RETRY_ATTEMPTS - 1
+            ) {
               metrics.permanentFailures++;
               await this.markAsPermanentFailure(notification.id);
             }
           }
         } else {
           metrics.processingErrors++;
-          console.error(`Error processing DLQ notification ${notification.id}:`, result.reason);
+          console.error(
+            `Error processing DLQ notification ${notification.id}:`,
+            result.reason
+          );
         }
       }
 
@@ -228,38 +248,59 @@ export class DeadLetterQueue {
   /**
    * CENTRALIZED notification retry - Single source of truth
    */
-  private static async retryNotification(notification: any): Promise<RetryResult> {
+  private static async retryNotification(
+    notification: any
+  ): Promise<RetryResult> {
     try {
       // SYSTEMATIC payload parsing
       const payload = JSON.parse(notification.payload);
-      const metadata = notification.metadata ? JSON.parse(notification.metadata) : undefined;
+      const metadata = notification.metadata
+        ? JSON.parse(notification.metadata)
+        : undefined;
 
       // CENTRALIZED channel-specific retry logic
       let retrySuccess = false;
 
       switch (notification.channel) {
         case 'TELEGRAM':
-          retrySuccess = await this.retryTelegramNotification(payload, notification.recipient);
+          retrySuccess = await this.retryTelegramNotification(
+            payload,
+            notification.recipient
+          );
           break;
 
         case 'EMAIL':
-          retrySuccess = await this.retryEmailNotification(payload, notification.recipient);
+          retrySuccess = await this.retryEmailNotification(
+            payload,
+            notification.recipient
+          );
           break;
 
         case 'SMS':
-          retrySuccess = await this.retrySmsNotification(payload, notification.recipient);
+          retrySuccess = await this.retrySmsNotification(
+            payload,
+            notification.recipient
+          );
           break;
 
         case 'PUSH':
-          retrySuccess = await this.retryPushNotification(payload, notification.recipient);
+          retrySuccess = await this.retryPushNotification(
+            payload,
+            notification.recipient
+          );
           break;
 
         case 'IN_APP':
-          retrySuccess = await this.retryInAppNotification(payload, notification.recipient);
+          retrySuccess = await this.retryInAppNotification(
+            payload,
+            notification.recipient
+          );
           break;
 
         default:
-          throw new Error(`Unsupported notification channel: ${notification.channel}`);
+          throw new Error(
+            `Unsupported notification channel: ${notification.channel}`
+          );
       }
 
       return {
@@ -284,9 +325,14 @@ export class DeadLetterQueue {
   /**
    * SYSTEMATIC channel-specific retry methods - DRY PRINCIPLE
    */
-  private static async retryTelegramNotification(payload: any, recipient: string): Promise<boolean> {
+  private static async retryTelegramNotification(
+    payload: any,
+    recipient: string
+  ): Promise<boolean> {
     try {
-      const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
+      const { simplifiedTelegramService } = await import(
+        '@/lib/telegram/simplified-telegram-service'
+      );
       await simplifiedTelegramService.sendMessage({
         message: payload.message,
         channel: payload.channel || 'orders',
@@ -298,7 +344,10 @@ export class DeadLetterQueue {
     }
   }
 
-  private static async retryEmailNotification(payload: any, recipient: string): Promise<boolean> {
+  private static async retryEmailNotification(
+    payload: any,
+    recipient: string
+  ): Promise<boolean> {
     try {
       const { emailService } = await import('@/lib/email/email-service');
 
@@ -317,19 +366,28 @@ export class DeadLetterQueue {
     }
   }
 
-  private static async retrySmsNotification(payload: any, recipient: string): Promise<boolean> {
+  private static async retrySmsNotification(
+    payload: any,
+    recipient: string
+  ): Promise<boolean> {
     // SMS retry implementation would go here
     console.warn('SMS retry not implemented yet');
     return false;
   }
 
-  private static async retryPushNotification(payload: any, recipient: string): Promise<boolean> {
+  private static async retryPushNotification(
+    payload: any,
+    recipient: string
+  ): Promise<boolean> {
     // Push notification retry implementation would go here
     console.warn('Push notification retry not implemented yet');
     return false;
   }
 
-  private static async retryInAppNotification(payload: any, recipient: string): Promise<boolean> {
+  private static async retryInAppNotification(
+    payload: any,
+    recipient: string
+  ): Promise<boolean> {
     // In-app notification retry implementation would go here
     console.warn('In-app notification retry not implemented yet');
     return false;
@@ -338,8 +396,13 @@ export class DeadLetterQueue {
   /**
    * CENTRALIZED database operations - DRY PRINCIPLE
    */
-  private static async updateRetryCount(notification: any, errorMessage: string): Promise<void> {
-    const nextRetryAt = new Date(Date.now() + DLQ_CONFIG.RETRY_DELAY_HOURS * 60 * 60 * 1000);
+  private static async updateRetryCount(
+    notification: any,
+    errorMessage: string
+  ): Promise<void> {
+    const nextRetryAt = new Date(
+      Date.now() + DLQ_CONFIG.RETRY_DELAY_HOURS * 60 * 60 * 1000
+    );
 
     await prisma.failedNotification.update({
       where: { id: notification.id },
@@ -347,7 +410,10 @@ export class DeadLetterQueue {
         retryCount: notification.retryCount + 1,
         lastAttemptAt: new Date(),
         failureReason: errorMessage,
-        nextRetryAt: notification.retryCount + 1 < DLQ_CONFIG.MAX_RETRY_ATTEMPTS ? nextRetryAt : null,
+        nextRetryAt:
+          notification.retryCount + 1 < DLQ_CONFIG.MAX_RETRY_ATTEMPTS
+            ? nextRetryAt
+            : null,
       },
     });
   }
@@ -361,10 +427,14 @@ export class DeadLetterQueue {
       },
     });
 
-    console.log(`✅ DLQ notification ${notificationId} successfully retried and resolved`);
+    console.log(
+      `✅ DLQ notification ${notificationId} successfully retried and resolved`
+    );
   }
 
-  private static async markAsPermanentFailure(notificationId: string): Promise<void> {
+  private static async markAsPermanentFailure(
+    notificationId: string
+  ): Promise<void> {
     await prisma.failedNotification.update({
       where: { id: notificationId },
       data: {
@@ -373,33 +443,31 @@ export class DeadLetterQueue {
       },
     });
 
-    console.error(`💀 DLQ notification ${notificationId} marked as permanent failure`);
+    console.error(
+      `💀 DLQ notification ${notificationId} marked as permanent failure`
+    );
   }
 
   /**
    * SYSTEMATIC DLQ metrics collection - Single source of truth
    */
   static async getMetrics(): Promise<DLQMetrics> {
-    const [
-      totalFailed,
-      pendingRetries,
-      permanentFailures,
-      successfulRetries,
-    ] = await Promise.all([
-      prisma.failedNotification.count(),
-      prisma.failedNotification.count({
-        where: {
-          nextRetryAt: { not: null },
-          retryCount: { lt: DLQ_CONFIG.MAX_RETRY_ATTEMPTS },
-        },
-      }),
-      prisma.failedNotification.count({
-        where: { permanentFailure: true },
-      }),
-      prisma.failedNotification.count({
-        where: { resolvedAt: { not: null } },
-      }),
-    ]);
+    const [totalFailed, pendingRetries, permanentFailures, successfulRetries] =
+      await Promise.all([
+        prisma.failedNotification.count(),
+        prisma.failedNotification.count({
+          where: {
+            nextRetryAt: { not: null },
+            retryCount: { lt: DLQ_CONFIG.MAX_RETRY_ATTEMPTS },
+          },
+        }),
+        prisma.failedNotification.count({
+          where: { permanentFailure: true },
+        }),
+        prisma.failedNotification.count({
+          where: { resolvedAt: { not: null } },
+        }),
+      ]);
 
     return {
       totalFailed,
@@ -417,11 +485,15 @@ export class DeadLetterQueue {
     const metrics = await this.getMetrics();
 
     if (metrics.pendingRetries >= DLQ_CONFIG.ALERT_THRESHOLD) {
-      console.error(`🚨 DLQ Alert: ${metrics.pendingRetries} notifications pending retry (threshold: ${DLQ_CONFIG.ALERT_THRESHOLD})`);
+      console.error(
+        `🚨 DLQ Alert: ${metrics.pendingRetries} notifications pending retry (threshold: ${DLQ_CONFIG.ALERT_THRESHOLD})`
+      );
 
       // SYSTEMATIC alert notification
       try {
-        const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
+        const { simplifiedTelegramService } = await import(
+          '@/lib/telegram/simplified-telegram-service'
+        );
         await simplifiedTelegramService.sendSystemAlertNotification(
           '🚨 Dead Letter Queue Alert',
           `High number of failed notifications: ${metrics.pendingRetries} pending retries`,
@@ -437,7 +509,9 @@ export class DeadLetterQueue {
    * SYSTEMATIC cleanup operations - DRY PRINCIPLE
    */
   static async cleanup(): Promise<number> {
-    const cutoffDate = new Date(Date.now() - DLQ_CONFIG.CLEANUP_AFTER_DAYS * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date(
+      Date.now() - DLQ_CONFIG.CLEANUP_AFTER_DAYS * 24 * 60 * 60 * 1000
+    );
 
     const deletedCount = await prisma.failedNotification.deleteMany({
       where: {
@@ -463,7 +537,9 @@ export class DeadLetterQueue {
       return; // Already running
     }
 
-    console.log(`🚀 Starting DLQ processing with ${DLQ_CONFIG.PROCESSING_INTERVAL_MS}ms interval`);
+    console.log(
+      `🚀 Starting DLQ processing with ${DLQ_CONFIG.PROCESSING_INTERVAL_MS}ms interval`
+    );
 
     this.processingInterval = setInterval(async () => {
       try {

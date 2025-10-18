@@ -12,12 +12,21 @@ import {
   SettingsInput,
   SettingsSelect,
   SettingsSwitch,
-  SettingsFormActions
+  SettingsFormActions,
 } from '@/components/settings';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { addressSchema, malaysianStatesOptions } from '@/lib/validation/settings';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  addressSchema,
+  malaysianStatesOptions,
+} from '@/lib/validation/settings';
 import type { AddressFormData } from '@/lib/validation/settings';
 import { Plus, MapPin, Edit, Trash2, Home, Building, Star } from 'lucide-react';
 
@@ -53,14 +62,14 @@ export default function AddressManagementPage() {
     formState: { errors },
     reset,
     watch,
-    setValue
+    setValue,
   } = useForm<AddressFormData>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
       type: 'shipping',
       country: 'Malaysia',
-      isDefault: false
-    }
+      isDefault: false,
+    },
   });
 
   const addressType = watch('type');
@@ -92,16 +101,16 @@ export default function AddressManagementPage() {
 
     setIsSubmitting(true);
     try {
-      const url = editingAddress 
+      const url = editingAddress
         ? `/api/settings/addresses/${editingAddress.id}`
         : '/api/settings/addresses';
-      
+
       const method = editingAddress ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -109,8 +118,12 @@ export default function AddressManagementPage() {
         throw new Error(error.message || 'Failed to save address');
       }
 
-      toast.success(editingAddress ? 'Address updated successfully' : 'Address added successfully');
-      
+      toast.success(
+        editingAddress
+          ? 'Address updated successfully'
+          : 'Address added successfully'
+      );
+
       // Reload addresses and close dialog
       await loadAddresses();
       setIsDialogOpen(false);
@@ -118,12 +131,13 @@ export default function AddressManagementPage() {
       reset({
         type: 'shipping',
         country: 'Malaysia',
-        isDefault: false
+        isDefault: false,
       });
-
     } catch (error) {
       console.error('Address submit error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save address');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save address'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +157,7 @@ export default function AddressManagementPage() {
       postalCode: address.postalCode,
       country: address.country as 'Malaysia',
       phone: address.phone || '',
-      isDefault: address.isDefault
+      isDefault: address.isDefault,
     });
     setIsDialogOpen(true);
   };
@@ -153,7 +167,7 @@ export default function AddressManagementPage() {
 
     try {
       const response = await fetch(`/api/settings/addresses/${addressId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (!response.ok) {
@@ -163,20 +177,27 @@ export default function AddressManagementPage() {
 
       toast.success('Address deleted successfully');
       await loadAddresses();
-
     } catch (error) {
       console.error('Delete address error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete address');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete address'
+      );
     }
   };
 
-  const handleSetDefaultAddress = async (addressId: string, type: 'billing' | 'shipping') => {
+  const handleSetDefaultAddress = async (
+    addressId: string,
+    type: 'billing' | 'shipping'
+  ) => {
     try {
-      const response = await fetch(`/api/settings/addresses/${addressId}/default`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type })
-      });
+      const response = await fetch(
+        `/api/settings/addresses/${addressId}/default`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -185,10 +206,11 @@ export default function AddressManagementPage() {
 
       toast.success(`Default ${type} address updated`);
       await loadAddresses();
-
     } catch (error) {
       console.error('Set default address error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to set default address');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to set default address'
+      );
     }
   };
 
@@ -197,7 +219,7 @@ export default function AddressManagementPage() {
     reset({
       type: 'shipping',
       country: 'Malaysia',
-      isDefault: false
+      isDefault: false,
     });
     setIsDialogOpen(true);
   };
@@ -232,17 +254,22 @@ export default function AddressManagementPage() {
                 {editingAddress ? 'Edit Address' : 'Add New Address'}
               </DialogTitle>
             </DialogHeader>
-            
-            <form onSubmit={handleSubmit(handleAddressSubmit)} className="space-y-6">
+
+            <form
+              onSubmit={handleSubmit(handleAddressSubmit)}
+              className="space-y-6"
+            >
               <SettingsSection title="Address Type">
                 <SettingsSelect
                   label="Address Type"
                   options={[
                     { value: 'shipping', label: 'Shipping Address' },
-                    { value: 'billing', label: 'Billing Address' }
+                    { value: 'billing', label: 'Billing Address' },
                   ]}
                   value={addressType}
-                  onValueChange={(value) => setValue('type', value as 'billing' | 'shipping')}
+                  onValueChange={value =>
+                    setValue('type', value as 'billing' | 'shipping')
+                  }
                   required
                   error={errors.type?.message}
                 />
@@ -257,7 +284,7 @@ export default function AddressManagementPage() {
                     error={errors.firstName?.message}
                     placeholder="Enter first name"
                   />
-                  
+
                   <SettingsInput
                     label="Last Name"
                     required
@@ -266,14 +293,14 @@ export default function AddressManagementPage() {
                     placeholder="Enter last name"
                   />
                 </div>
-                
+
                 <SettingsInput
                   label="Company (Optional)"
                   {...register('company')}
                   error={errors.company?.message}
                   placeholder="Enter company name"
                 />
-                
+
                 <SettingsInput
                   label="Phone Number (Optional)"
                   type="tel"
@@ -292,14 +319,14 @@ export default function AddressManagementPage() {
                   error={errors.addressLine1?.message}
                   placeholder="Street address, building number"
                 />
-                
+
                 <SettingsInput
                   label="Address Line 2 (Optional)"
                   {...register('addressLine2')}
                   error={errors.addressLine2?.message}
                   placeholder="Apartment, suite, floor, etc."
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingsInput
                     label="City"
@@ -308,7 +335,7 @@ export default function AddressManagementPage() {
                     error={errors.city?.message}
                     placeholder="Enter city"
                   />
-                  
+
                   <SettingsSelect
                     label="State"
                     options={malaysianStatesOptions}
@@ -318,7 +345,7 @@ export default function AddressManagementPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingsInput
                     label="Postal Code"
@@ -328,7 +355,7 @@ export default function AddressManagementPage() {
                     placeholder="12345"
                     helperText="5-digit Malaysian postal code"
                   />
-                  
+
                   <SettingsInput
                     label="Country"
                     value="Malaysia"
@@ -343,13 +370,13 @@ export default function AddressManagementPage() {
                   label={`Set as default ${addressType} address`}
                   description={`Use this address as your default ${addressType} address for future orders`}
                   checked={watch('isDefault')}
-                  onCheckedChange={(checked) => setValue('isDefault', checked)}
+                  onCheckedChange={checked => setValue('isDefault', checked)}
                 />
               </SettingsSection>
 
               <SettingsFormActions>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setIsDialogOpen(false);
@@ -359,15 +386,18 @@ export default function AddressManagementPage() {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSubmitting}
                   loading={isSubmitting}
                 >
-                  {isSubmitting 
-                    ? (editingAddress ? 'Updating...' : 'Adding...') 
-                    : (editingAddress ? 'Update Address' : 'Add Address')
-                  }
+                  {isSubmitting
+                    ? editingAddress
+                      ? 'Updating...'
+                      : 'Adding...'
+                    : editingAddress
+                      ? 'Update Address'
+                      : 'Add Address'}
                 </Button>
               </SettingsFormActions>
             </form>
@@ -376,14 +406,16 @@ export default function AddressManagementPage() {
       }
     >
       {/* Shipping Addresses */}
-      <SettingsCard 
+      <SettingsCard
         title="Shipping Addresses"
         description="Addresses where your orders will be delivered"
       >
         {shippingAddresses.length === 0 ? (
           <div className="text-center py-8">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">No shipping addresses added yet</p>
+            <p className="text-gray-500 mb-4">
+              No shipping addresses added yet
+            </p>
             <Button onClick={openNewAddressDialog}>
               <Plus className="h-4 w-4 mr-2" />
               Add Shipping Address
@@ -391,7 +423,7 @@ export default function AddressManagementPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {shippingAddresses.map((address) => (
+            {shippingAddresses.map(address => (
               <div key={address.id} className="border rounded-lg p-4 relative">
                 {address.isDefault && (
                   <div className="absolute top-3 right-3">
@@ -401,7 +433,7 @@ export default function AddressManagementPage() {
                     </Badge>
                   </div>
                 )}
-                
+
                 <div className="flex items-start justify-between">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center space-x-2">
@@ -412,28 +444,33 @@ export default function AddressManagementPage() {
                       {address.company && (
                         <>
                           <span className="text-gray-400">•</span>
-                          <span className="text-gray-600">{address.company}</span>
+                          <span className="text-gray-600">
+                            {address.company}
+                          </span>
                         </>
                       )}
                     </div>
-                    
+
                     <div className="text-sm text-gray-600 ml-6">
                       <p>{address.addressLine1}</p>
                       {address.addressLine2 && <p>{address.addressLine2}</p>}
                       <p>
-                        {address.city}, {getStateLabel(address.state)} {address.postalCode}
+                        {address.city}, {getStateLabel(address.state)}{' '}
+                        {address.postalCode}
                       </p>
                       <p>{address.country}</p>
                       {address.phone && <p>Phone: {address.phone}</p>}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 ml-4">
                     {!address.isDefault && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleSetDefaultAddress(address.id, 'shipping')}
+                        onClick={() =>
+                          handleSetDefaultAddress(address.id, 'shipping')
+                        }
                       >
                         Set Default
                       </Button>
@@ -461,7 +498,7 @@ export default function AddressManagementPage() {
       </SettingsCard>
 
       {/* Billing Addresses */}
-      <SettingsCard 
+      <SettingsCard
         title="Billing Addresses"
         description="Addresses for billing and invoice purposes"
       >
@@ -469,7 +506,7 @@ export default function AddressManagementPage() {
           <div className="text-center py-8">
             <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">No billing addresses added yet</p>
-            <Button 
+            <Button
               onClick={() => {
                 setValue('type', 'billing');
                 openNewAddressDialog();
@@ -481,7 +518,7 @@ export default function AddressManagementPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {billingAddresses.map((address) => (
+            {billingAddresses.map(address => (
               <div key={address.id} className="border rounded-lg p-4 relative">
                 {address.isDefault && (
                   <div className="absolute top-3 right-3">
@@ -491,7 +528,7 @@ export default function AddressManagementPage() {
                     </Badge>
                   </div>
                 )}
-                
+
                 <div className="flex items-start justify-between">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center space-x-2">
@@ -502,28 +539,33 @@ export default function AddressManagementPage() {
                       {address.company && (
                         <>
                           <span className="text-gray-400">•</span>
-                          <span className="text-gray-600">{address.company}</span>
+                          <span className="text-gray-600">
+                            {address.company}
+                          </span>
                         </>
                       )}
                     </div>
-                    
+
                     <div className="text-sm text-gray-600 ml-6">
                       <p>{address.addressLine1}</p>
                       {address.addressLine2 && <p>{address.addressLine2}</p>}
                       <p>
-                        {address.city}, {getStateLabel(address.state)} {address.postalCode}
+                        {address.city}, {getStateLabel(address.state)}{' '}
+                        {address.postalCode}
                       </p>
                       <p>{address.country}</p>
                       {address.phone && <p>Phone: {address.phone}</p>}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 ml-4">
                     {!address.isDefault && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleSetDefaultAddress(address.id, 'billing')}
+                        onClick={() =>
+                          handleSetDefaultAddress(address.id, 'billing')
+                        }
                       >
                         Set Default
                       </Button>

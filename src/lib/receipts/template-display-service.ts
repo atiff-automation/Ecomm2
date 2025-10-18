@@ -3,8 +3,15 @@
  * Centralized service for template presentation logic
  */
 
-import { ReceiptTemplate, ReceiptTemplateType } from '@/types/receipt-templates';
-import { getTemplateConfig, getTemplatesByPopularity, TEMPLATE_CATEGORIES } from './template-config';
+import {
+  ReceiptTemplate,
+  ReceiptTemplateType,
+} from '@/types/receipt-templates';
+import {
+  getTemplateConfig,
+  getTemplatesByPopularity,
+  TEMPLATE_CATEGORIES,
+} from './template-config';
 
 export interface EnhancedReceiptTemplate extends ReceiptTemplate {
   displayConfig: {
@@ -51,32 +58,39 @@ export class TemplateDisplayService {
       ...template,
       displayConfig: {
         ...config,
-        categoryInfo
-      }
+        categoryInfo,
+      },
     };
   }
 
   /**
    * Sort templates by popularity
    */
-  sortTemplatesByPopularity(templates: EnhancedReceiptTemplate[]): EnhancedReceiptTemplate[] {
-    return templates.sort((a, b) => 
-      a.displayConfig.popularityRank - b.displayConfig.popularityRank
+  sortTemplatesByPopularity(
+    templates: EnhancedReceiptTemplate[]
+  ): EnhancedReceiptTemplate[] {
+    return templates.sort(
+      (a, b) => a.displayConfig.popularityRank - b.displayConfig.popularityRank
     );
   }
 
   /**
    * Group templates by category
    */
-  groupTemplatesByCategory(templates: EnhancedReceiptTemplate[]): Record<string, EnhancedReceiptTemplate[]> {
-    return templates.reduce((groups, template) => {
-      const category = template.displayConfig.category;
-      if (!groups[category]) {
-        groups[category] = [];
-      }
-      groups[category].push(template);
-      return groups;
-    }, {} as Record<string, EnhancedReceiptTemplate[]>);
+  groupTemplatesByCategory(
+    templates: EnhancedReceiptTemplate[]
+  ): Record<string, EnhancedReceiptTemplate[]> {
+    return templates.reduce(
+      (groups, template) => {
+        const category = template.displayConfig.category;
+        if (!groups[category]) {
+          groups[category] = [];
+        }
+        groups[category].push(template);
+        return groups;
+      },
+      {} as Record<string, EnhancedReceiptTemplate[]>
+    );
   }
 
   /**
@@ -86,10 +100,18 @@ export class TemplateDisplayService {
     return {
       isDefault: template.isDefault,
       isActive: template.isActive,
-      statusText: template.isDefault ? 'Default' : template.isActive ? 'Active' : 'Inactive',
-      statusVariant: template.isDefault ? 'default' : template.isActive ? 'secondary' : 'outline',
+      statusText: template.isDefault
+        ? 'Default'
+        : template.isActive
+          ? 'Active'
+          : 'Inactive',
+      statusVariant: template.isDefault
+        ? 'default'
+        : template.isActive
+          ? 'secondary'
+          : 'outline',
       actionText: template.isDefault ? 'Currently Active' : 'Use as Default',
-      canSetAsDefault: !template.isDefault && template.isActive
+      canSetAsDefault: !template.isDefault && template.isActive,
     };
   }
 
@@ -98,7 +120,7 @@ export class TemplateDisplayService {
    */
   generatePreviewFallbackHtml(template: ReceiptTemplate): string {
     const config = getTemplateConfig(template.templateType);
-    
+
     return `
       <div style="padding: 40px; text-align: center; font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
         <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); max-width: 400px; width: 100%;">

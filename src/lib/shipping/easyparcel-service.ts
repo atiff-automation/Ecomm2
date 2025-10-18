@@ -29,7 +29,10 @@ export class EasyParcelService {
   private apiKey: string;
   private timeout: number;
 
-  constructor(apiKey: string, environment: 'sandbox' | 'production' = 'sandbox') {
+  constructor(
+    apiKey: string,
+    environment: 'sandbox' | 'production' = 'sandbox'
+  ) {
     this.apiKey = apiKey;
     this.baseUrl =
       environment === 'production'
@@ -130,7 +133,7 @@ export class EasyParcelService {
       }
 
       // Map EasyParcel response to our format
-      const services: EasyParcelRateService[] = bulkResult.rates.map((rate) => ({
+      const services: EasyParcelRateService[] = bulkResult.rates.map(rate => ({
         service_id: rate.service_id,
         service_name: rate.service_name,
         courier_name: rate.courier_name,
@@ -216,7 +219,10 @@ export class EasyParcelService {
 
       console.log('[EasyParcel] Formatted phone numbers:', {
         pickup: { original: request.pickup.phone, formatted: pickupPhone },
-        delivery: { original: request.delivery.phone, formatted: deliveryPhone },
+        delivery: {
+          original: request.delivery.phone,
+          formatted: deliveryPhone,
+        },
       });
 
       // Build bulk array parameter for EPSubmitOrderBulk
@@ -268,7 +274,8 @@ export class EasyParcelService {
 
       // Add WhatsApp tracking if enabled
       if (request.addon_whatsapp_tracking_enabled) {
-        bulkParams['bulk[0][addon_whatsapp_tracking_enabled]'] = request.addon_whatsapp_tracking_enabled;
+        bulkParams['bulk[0][addon_whatsapp_tracking_enabled]'] =
+          request.addon_whatsapp_tracking_enabled;
       }
 
       const response = await this.makeRequest<{
@@ -308,8 +315,13 @@ export class EasyParcelService {
       // Write to file for detailed inspection
       const fs = require('fs');
       try {
-        fs.writeFileSync('/tmp/easyparcel-response.json', JSON.stringify(response, null, 2));
-        console.log('[EasyParcel] Response written to /tmp/easyparcel-response.json');
+        fs.writeFileSync(
+          '/tmp/easyparcel-response.json',
+          JSON.stringify(response, null, 2)
+        );
+        console.log(
+          '[EasyParcel] Response written to /tmp/easyparcel-response.json'
+        );
       } catch (e) {
         console.log('[EasyParcel] Could not write response file:', e);
       }
@@ -453,17 +465,19 @@ export class EasyParcelService {
           orderno?: string;
           messagenow?: string; // "Fully Paid" or error message
           // Parcel can be EITHER object OR array (WooCommerce handles both)
-          parcel?: {
-            parcelno: string;
-            awb: string;
-            awb_id_link: string;
-            tracking_url: string;
-          } | Array<{
-            parcelno: string;
-            awb: string;
-            awb_id_link: string;
-            tracking_url: string;
-          }>;
+          parcel?:
+            | {
+                parcelno: string;
+                awb: string;
+                awb_id_link: string;
+                tracking_url: string;
+              }
+            | Array<{
+                parcelno: string;
+                awb: string;
+                awb_id_link: string;
+                tracking_url: string;
+              }>;
         }>;
       }>('EPPayOrderBulk', bulkParams);
 
@@ -483,8 +497,18 @@ export class EasyParcelService {
       console.log('[EasyParcel] ===== PAYMENT RESPONSE DETAILS =====');
       console.log('Full response:', JSON.stringify(response, null, 2));
       console.log('bulkResult exists?:', !!bulkResult);
-      console.log('bulkResult keys:', bulkResult ? Object.keys(bulkResult) : 'N/A');
-      console.log('bulkResult.parcel type:', bulkResult?.parcel ? (Array.isArray(bulkResult.parcel) ? 'array' : 'object') : 'missing');
+      console.log(
+        'bulkResult keys:',
+        bulkResult ? Object.keys(bulkResult) : 'N/A'
+      );
+      console.log(
+        'bulkResult.parcel type:',
+        bulkResult?.parcel
+          ? Array.isArray(bulkResult.parcel)
+            ? 'array'
+            : 'object'
+          : 'missing'
+      );
       console.log('[EasyParcel] ===== END PAYMENT RESPONSE =====');
 
       // Validate parcel data exists (WooCommerce pattern - NO status check)
@@ -565,7 +589,9 @@ export class EasyParcelService {
    * @returns Tracking events and current status
    * @throws EasyParcelError if tracking fetch fails
    */
-  async getTracking(trackingNumber: string): Promise<EasyParcelTrackingResponse> {
+  async getTracking(
+    trackingNumber: string
+  ): Promise<EasyParcelTrackingResponse> {
     try {
       console.log('[EasyParcel] Fetching tracking:', trackingNumber);
 
@@ -633,13 +659,14 @@ export class EasyParcelService {
           sender_contact: bulkResult.sender_contact,
           receiver_name: bulkResult.receiver_name,
           receiver_contact: bulkResult.receiver_contact,
-          events: bulkResult.events?.map(event => ({
-            date: event.date,
-            time: event.time,
-            status: event.status,
-            location: event.location,
-            description: event.description,
-          })) || [],
+          events:
+            bulkResult.events?.map(event => ({
+              date: event.date,
+              time: event.time,
+              status: event.status,
+              location: event.location,
+              description: event.description,
+            })) || [],
         },
       };
     } catch (error) {
@@ -762,7 +789,10 @@ export class EasyParcelService {
    * @throws EasyParcelError if request fails
    * @private
    */
-  private async makeRequest<T>(action: string, params: Record<string, unknown>): Promise<T> {
+  private async makeRequest<T>(
+    action: string,
+    params: Record<string, unknown>
+  ): Promise<T> {
     // Build URL with action query parameter
     const url = `${this.baseUrl}?ac=${action}`;
 
@@ -804,7 +834,8 @@ export class EasyParcelService {
 
         throw new EasyParcelError(
           this.mapHttpStatusToErrorCode(response.status),
-          errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          errorData.message ||
+            `HTTP ${response.status}: ${response.statusText}`,
           { status: response.status, errorData }
         );
       }
@@ -949,6 +980,8 @@ export class EasyParcelError extends Error {
  * @param settings - Shipping settings from database
  * @returns Configured EasyParcel service instance
  */
-export function createEasyParcelService(settings: ShippingSettings): EasyParcelService {
+export function createEasyParcelService(
+  settings: ShippingSettings
+): EasyParcelService {
   return new EasyParcelService(settings.apiKey, settings.environment);
 }

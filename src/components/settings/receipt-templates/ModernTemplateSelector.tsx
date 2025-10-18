@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Check, 
+import {
+  Check,
   Loader2,
   AlertTriangle,
   RefreshCw,
@@ -19,23 +19,32 @@ import {
   Sparkles,
   Crown,
   Star,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ReceiptTemplate, TEMPLATE_TYPE_LABELS } from '@/types/receipt-templates';
-import { templateDisplayService, EnhancedReceiptTemplate } from '@/lib/receipts/template-display-service';
+import {
+  ReceiptTemplate,
+  TEMPLATE_TYPE_LABELS,
+} from '@/types/receipt-templates';
+import {
+  templateDisplayService,
+  EnhancedReceiptTemplate,
+} from '@/lib/receipts/template-display-service';
 import { cn } from '@/lib/utils';
 
 interface ModernTemplateSelectorProps {
   className?: string;
 }
 
-export default function ModernTemplateSelector({ className }: ModernTemplateSelectorProps) {
+export default function ModernTemplateSelector({
+  className,
+}: ModernTemplateSelectorProps) {
   const [templates, setTemplates] = useState<EnhancedReceiptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<EnhancedReceiptTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<EnhancedReceiptTemplate | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
 
@@ -49,7 +58,7 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       setError(null);
 
       const response = await fetch('/api/admin/receipt-templates');
-      
+
       if (!response.ok) {
         if (response.status === 404 || response.status === 500) {
           await initializeTemplates();
@@ -59,10 +68,13 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.templates?.length > 0) {
-        const enhanced = templateDisplayService.enhanceTemplates(data.templates);
-        const sorted = templateDisplayService.sortTemplatesByPopularity(enhanced);
+        const enhanced = templateDisplayService.enhanceTemplates(
+          data.templates
+        );
+        const sorted =
+          templateDisplayService.sortTemplatesByPopularity(enhanced);
         setTemplates(sorted);
       } else {
         await initializeTemplates();
@@ -79,7 +91,7 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
     try {
       setLoading(true);
       const response = await fetch('/api/admin/receipt-templates/initialize', {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -88,8 +100,11 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
 
       const data = await response.json();
       if (data.success && data.templates) {
-        const enhanced = templateDisplayService.enhanceTemplates(data.templates);
-        const sorted = templateDisplayService.sortTemplatesByPopularity(enhanced);
+        const enhanced = templateDisplayService.enhanceTemplates(
+          data.templates
+        );
+        const sorted =
+          templateDisplayService.sortTemplatesByPopularity(enhanced);
         setTemplates(sorted);
         toast.success('Default templates initialized successfully');
       }
@@ -104,9 +119,12 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
     try {
       setSettingDefault(templateId);
 
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}/set-default`, {
-        method: 'PUT'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}/set-default`,
+        {
+          method: 'PUT',
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -115,11 +133,11 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
 
       const data = await response.json();
       if (data.success) {
-        setTemplates(prevTemplates => 
+        setTemplates(prevTemplates =>
           prevTemplates.map(template => ({
             ...template,
             isDefault: template.id === templateId,
-            isActive: template.id === templateId ? true : template.isActive
+            isActive: template.id === templateId ? true : template.isActive,
           }))
         );
         toast.success('Default template updated successfully');
@@ -137,8 +155,10 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       setPreviewLoading(true);
       setPreviewTemplate(template);
 
-      const response = await fetch(`/api/admin/receipt-templates/${template.id}/preview`);
-      
+      const response = await fetch(
+        `/api/admin/receipt-templates/${template.id}/preview`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to generate preview');
       }
@@ -148,7 +168,9 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
     } catch (error) {
       console.error('Error generating preview:', error);
       toast.error('Failed to generate preview');
-      setPreviewHtml(templateDisplayService.generatePreviewFallbackHtml(template));
+      setPreviewHtml(
+        templateDisplayService.generatePreviewFallbackHtml(template)
+      );
     } finally {
       setPreviewLoading(false);
     }
@@ -179,7 +201,9 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-red-700">Unable to Load Templates</h3>
+              <h3 className="text-lg font-semibold text-red-700">
+                Unable to Load Templates
+              </h3>
               <p className="text-muted-foreground text-sm max-w-md">{error}</p>
             </div>
             <Button onClick={loadTemplates} variant="outline" className="gap-2">
@@ -198,14 +222,22 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Receipt Templates</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Receipt Templates
+            </h1>
             <Crown className="h-6 w-6 text-yellow-500" />
           </div>
           <p className="text-muted-foreground">
-            Choose your preferred template design for customer receipts and invoices
+            Choose your preferred template design for customer receipts and
+            invoices
           </p>
         </div>
-        <Button onClick={loadTemplates} variant="outline" size="sm" className="gap-2">
+        <Button
+          onClick={loadTemplates}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
@@ -214,15 +246,16 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {templates.map((template, index) => {
-          const statusInfo = templateDisplayService.getTemplateStatusInfo(template);
-          
+          const statusInfo =
+            templateDisplayService.getTemplateStatusInfo(template);
+
           return (
-            <Card 
+            <Card
               key={template.id}
               className={cn(
-                "group relative overflow-hidden transition-all duration-300 hover:shadow-lg",
-                template.isDefault && "ring-2 ring-blue-500 shadow-lg",
-                "hover:scale-[1.02] hover:-translate-y-1"
+                'group relative overflow-hidden transition-all duration-300 hover:shadow-lg',
+                template.isDefault && 'ring-2 ring-blue-500 shadow-lg',
+                'hover:scale-[1.02] hover:-translate-y-1'
               )}
             >
               {/* Popular Badge */}
@@ -249,23 +282,28 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     {/* Icon with gradient background */}
-                    <div className={cn(
-                      "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl bg-gradient-to-br shadow-lg",
-                      template.displayConfig.gradient
-                    )}>
+                    <div
+                      className={cn(
+                        'w-16 h-16 rounded-2xl flex items-center justify-center text-2xl bg-gradient-to-br shadow-lg',
+                        template.displayConfig.gradient
+                      )}
+                    >
                       <span className="filter drop-shadow-sm">
                         {template.displayConfig.icon}
                       </span>
                     </div>
-                    
+
                     <div className="space-y-1">
                       <CardTitle className="text-xl font-bold">
                         {TEMPLATE_TYPE_LABELS[template.templateType]}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={cn("text-xs border-0 bg-gray-50", template.displayConfig.categoryInfo.color)}
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'text-xs border-0 bg-gray-50',
+                            template.displayConfig.categoryInfo.color
+                          )}
                         >
                           {template.displayConfig.categoryInfo.name}
                         </Badge>
@@ -290,10 +328,16 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
 
                 {/* Features */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-900">Key Features</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    Key Features
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {template.displayConfig.features.map((feature, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100">
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      >
                         {feature}
                       </Badge>
                     ))}
@@ -303,9 +347,10 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div className="text-xs text-muted-foreground">
-                    Updated {new Date(template.updatedAt).toLocaleDateString('en-MY')}
+                    Updated{' '}
+                    {new Date(template.updatedAt).toLocaleDateString('en-MY')}
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       onClick={() => handlePreview(template)}
@@ -317,7 +362,7 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
                       <Eye className="h-3 w-3" />
                       Preview
                     </Button>
-                    
+
                     {statusInfo.canSetAsDefault && (
                       <Button
                         onClick={() => setAsDefault(template.id)}
@@ -338,7 +383,7 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
                         )}
                       </Button>
                     )}
-                    
+
                     {template.isDefault && (
                       <div className="flex items-center text-sm text-blue-600 font-medium gap-1 px-3 py-2 bg-blue-50 rounded-md">
                         <Check className="h-4 w-4" />
@@ -361,12 +406,26 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
               <Sparkles className="h-5 w-5 text-blue-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-blue-900">How Template Selection Works</h3>
+              <h3 className="font-semibold text-blue-900">
+                How Template Selection Works
+              </h3>
               <div className="text-sm text-blue-800 space-y-1">
-                <p>• Click <strong>"Preview"</strong> to see how each template looks with sample data</p>
-                <p>• Select <strong>"Use This Template"</strong> to make it your active receipt template</p>
-                <p>• All future customer receipts and invoices will use your selected design</p>
-                <p>• You can change templates anytime without affecting past receipts</p>
+                <p>
+                  • Click <strong>"Preview"</strong> to see how each template
+                  looks with sample data
+                </p>
+                <p>
+                  • Select <strong>"Use This Template"</strong> to make it your
+                  active receipt template
+                </p>
+                <p>
+                  • All future customer receipts and invoices will use your
+                  selected design
+                </p>
+                <p>
+                  • You can change templates anytime without affecting past
+                  receipts
+                </p>
               </div>
             </div>
           </div>
@@ -374,28 +433,38 @@ export default function ModernTemplateSelector({ className }: ModernTemplateSele
       </Card>
 
       {/* Preview Dialog */}
-      <Dialog open={previewTemplate !== null} onOpenChange={() => setPreviewTemplate(null)}>
+      <Dialog
+        open={previewTemplate !== null}
+        onOpenChange={() => setPreviewTemplate(null)}
+      >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center text-lg bg-gradient-to-br",
-                  previewTemplate?.displayConfig.gradient || "from-gray-400 to-gray-600"
-                )}>
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center text-lg bg-gradient-to-br',
+                    previewTemplate?.displayConfig.gradient ||
+                      'from-gray-400 to-gray-600'
+                  )}
+                >
                   {previewTemplate?.displayConfig.icon}
                 </div>
                 <span>
-                  {previewTemplate && TEMPLATE_TYPE_LABELS[previewTemplate.templateType]} Preview
+                  {previewTemplate &&
+                    TEMPLATE_TYPE_LABELS[previewTemplate.templateType]}{' '}
+                  Preview
                 </span>
               </div>
               {previewTemplate && (
-                <Badge className={cn(
-                  "text-xs",
-                  previewTemplate.isDefault 
-                    ? "bg-blue-500 text-white" 
-                    : "bg-gray-100 text-gray-700"
-                )}>
+                <Badge
+                  className={cn(
+                    'text-xs',
+                    previewTemplate.isDefault
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-700'
+                  )}
+                >
                   {previewTemplate.isDefault ? 'Currently Active' : 'Available'}
                 </Badge>
               )}

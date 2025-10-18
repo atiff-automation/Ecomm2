@@ -25,11 +25,7 @@ export function TabStatusIcon({ status, className }: TabStatusIconProps) {
     }
   };
 
-  return (
-    <div className={cn('flex-shrink-0', className)}>
-      {getIcon()}
-    </div>
-  );
+  return <div className={cn('flex-shrink-0', className)}>{getIcon()}</div>;
 }
 
 export default TabStatusIcon;

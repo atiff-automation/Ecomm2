@@ -71,7 +71,8 @@ class DailySummaryCron {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const success = await simplifiedTelegramService.sendDailySummary(yesterday);
+      const success =
+        await simplifiedTelegramService.sendDailySummary(yesterday);
 
       if (success) {
         console.log(
@@ -97,7 +98,8 @@ class DailySummaryCron {
         `📊 Manually triggering daily summary for ${targetDate.toDateString()}...`
       );
 
-      const success = await simplifiedTelegramService.sendDailySummary(targetDate);
+      const success =
+        await simplifiedTelegramService.sendDailySummary(targetDate);
 
       if (success) {
         console.log(`✅ Manual daily summary sent successfully`);

@@ -68,7 +68,8 @@ export function AdminPageLayout({
   }
 
   return (
-    <div className="flex flex-col">{/* Breadcrumb Navigation removed - using contextual navigation instead */}
+    <div className="flex flex-col">
+      {/* Breadcrumb Navigation removed - using contextual navigation instead */}
 
       {/* Page Header - 64px height */}
       <PageHeader

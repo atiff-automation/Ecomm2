@@ -10,7 +10,7 @@ import { z } from 'zod';
 /**
  * User Preferences API - Customer Settings Phase 2
  * Following @CLAUDE.md principles - systematic, DRY, single source of truth
- * 
+ *
  * Features from @SETTINGS_IMPLEMENTATION_GUIDE.md:
  * - Default shipping/billing addresses
  * - Preferred payment methods
@@ -21,7 +21,9 @@ import { z } from 'zod';
 const preferencesSchema = z.object({
   defaultShippingAddressId: z.string().optional(),
   defaultBillingAddressId: z.string().optional(),
-  preferredPaymentMethod: z.enum(['CREDIT_CARD', 'ONLINE_BANKING', 'EWALLET', 'BANK_TRANSFER']).optional(),
+  preferredPaymentMethod: z
+    .enum(['CREDIT_CARD', 'ONLINE_BANKING', 'EWALLET', 'BANK_TRANSFER'])
+    .optional(),
   language: z.enum(['en', 'ms']),
   currency: z.enum(['MYR']),
   timezone: z.string(),
@@ -39,7 +41,7 @@ const preferencesSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -54,7 +56,7 @@ export async function GET(request: NextRequest) {
         // Map existing fields to preference structure
         id: true,
         userId: true,
-      }
+      },
     });
 
     // Get user's default addresses
@@ -66,11 +68,15 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         type: true,
-      }
+      },
     });
 
-    const defaultShippingAddress = defaultAddresses.find(addr => addr.type === 'shipping');
-    const defaultBillingAddress = defaultAddresses.find(addr => addr.type === 'billing');
+    const defaultShippingAddress = defaultAddresses.find(
+      addr => addr.type === 'shipping'
+    );
+    const defaultBillingAddress = defaultAddresses.find(
+      addr => addr.type === 'billing'
+    );
 
     // Provide default preferences if none exist
     const preferences = {
@@ -90,9 +96,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: preferences
+      data: preferences,
     });
-
   } catch (error) {
     console.error('Get preferences error:', error);
     return NextResponse.json(
@@ -108,7 +113,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -117,7 +122,7 @@ export async function PUT(request: NextRequest) {
     const validatedData = preferencesSchema.parse(body);
 
     // Start a transaction to update multiple related records
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       // Update or create notification preferences (for language)
       await tx.notificationPreference.upsert({
         where: {
@@ -204,7 +209,7 @@ export async function PUT(request: NextRequest) {
       // Note: Other preferences like payment method, privacy settings, etc.
       // would typically be stored in a dedicated UserPreferences table
       // For now, we'll store the essential ones that integrate with existing schema
-      
+
       // In future enhancement, create a UserPreferences table:
       // await tx.userPreferences.upsert({
       //   where: { userId: session.user.id },
@@ -217,7 +222,6 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: 'Preferences updated successfully',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

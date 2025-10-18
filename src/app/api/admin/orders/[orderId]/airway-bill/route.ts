@@ -47,10 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
     // Check if airway bill is generated
@@ -107,10 +104,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           'Content-Disposition': `attachment; filename="${filename}"`,
           'Content-Length': response.data.length.toString(),
           'Cache-Control': 'private, no-cache, no-store, must-revalidate',
-          'Expires': '0',
+          Expires: '0',
         },
       });
-
     } catch (downloadError: any) {
       console.error('Error downloading airway bill PDF:', {
         orderId,
@@ -120,7 +116,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       });
 
       // Handle different error types
-      if (downloadError.code === 'ENOTFOUND' || downloadError.code === 'ECONNREFUSED') {
+      if (
+        downloadError.code === 'ENOTFOUND' ||
+        downloadError.code === 'ECONNREFUSED'
+      ) {
         return NextResponse.json(
           {
             message: 'Airway bill service temporarily unavailable',
@@ -148,14 +147,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         { status: 500 }
       );
     }
-
   } catch (error: any) {
     console.error('Airway bill download API error:', error);
 
     return NextResponse.json(
       {
         message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred',
+        error:
+          process.env.NODE_ENV === 'development'
+            ? error.message
+            : 'An unexpected error occurred',
       },
       { status: 500 }
     );
@@ -198,17 +199,19 @@ export async function HEAD(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       generated: airwayBillInfo.generated,
-      airwayBillNumber: airwayBillInfo.airwayBillNumber,
+      airwayBillUrl: airwayBillInfo.airwayBillUrl,
       generatedAt: airwayBillInfo.generatedAt,
     });
-
   } catch (error: any) {
     console.error('Airway bill info API error:', error);
 
     return NextResponse.json(
       {
         message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred',
+        error:
+          process.env.NODE_ENV === 'development'
+            ? error.message
+            : 'An unexpected error occurred',
       },
       { status: 500 }
     );

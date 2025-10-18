@@ -18,7 +18,11 @@ export async function GET(
     const { filename } = params;
 
     // Security: Validate filename to prevent directory traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    if (
+      filename.includes('..') ||
+      filename.includes('/') ||
+      filename.includes('\\')
+    ) {
       return NextResponse.json(
         { message: 'Invalid filename' },
         { status: 400 }
@@ -28,9 +32,26 @@ export async function GET(
     // Try to read from Railway Volume first (production), fallback to public/uploads
     // Check both hero and site-customization directories
     const volumeHeroPath = path.join('/data', 'uploads', 'hero', filename);
-    const volumeSitePath = path.join('/data', 'uploads', 'site-customization', filename);
-    const publicHeroPath = path.join(process.cwd(), 'public', 'uploads', 'hero', filename);
-    const publicSitePath = path.join(process.cwd(), 'public', 'uploads', 'site-customization', filename);
+    const volumeSitePath = path.join(
+      '/data',
+      'uploads',
+      'site-customization',
+      filename
+    );
+    const publicHeroPath = path.join(
+      process.cwd(),
+      'public',
+      'uploads',
+      'hero',
+      filename
+    );
+    const publicSitePath = path.join(
+      process.cwd(),
+      'public',
+      'uploads',
+      'site-customization',
+      filename
+    );
 
     let filePath: string;
     let fileBuffer: Buffer;
@@ -49,10 +70,7 @@ export async function GET(
       filePath = publicSitePath;
       fileBuffer = await readFile(publicSitePath);
     } else {
-      return NextResponse.json(
-        { message: 'File not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'File not found' }, { status: 404 });
     }
 
     // Determine content type from file extension

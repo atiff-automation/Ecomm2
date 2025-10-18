@@ -49,7 +49,9 @@ export function calculateTotalWeight(items: CartItemWithWeight[]): number {
 
     // Validate quantity
     if (!Number.isInteger(item.quantity) || item.quantity < 1) {
-      throw new Error(`Invalid quantity: ${item.quantity} must be a positive integer`);
+      throw new Error(
+        `Invalid quantity: ${item.quantity} must be a positive integer`
+      );
     }
 
     totalWeight += itemWeight * item.quantity;

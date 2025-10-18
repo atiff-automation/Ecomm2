@@ -69,11 +69,11 @@
   .border {
     border-width: 2px;
   }
-  
+
   .text-muted-foreground {
     color: inherit;
   }
-  
+
   .bg-muted {
     background-color: transparent;
     border: 2px solid currentColor;
@@ -125,12 +125,7 @@
 
 /* Skeleton screens */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
-  );
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: skeleton 1.5s infinite;
 }
@@ -174,12 +169,7 @@
 /* Dark mode skeleton */
 @media (prefers-color-scheme: dark) {
   .skeleton {
-    background: linear-gradient(
-      90deg,
-      #374151 25%,
-      #4b5563 50%,
-      #374151 75%
-    );
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
     background-size: 200% 100%;
   }
 }
@@ -296,12 +286,12 @@ th {
   font-weight: 600;
 }
 
-th[aria-sort="ascending"]::after {
-  content: " ↑";
+th[aria-sort='ascending']::after {
+  content: ' ↑';
 }
 
-th[aria-sort="descending"]::after {
-  content: " ↓";
+th[aria-sort='descending']::after {
+  content: ' ↓';
 }
 
 /* Modal and dialog accessibility */
@@ -328,7 +318,7 @@ th[aria-sort="descending"]::after {
 
 /* Button states */
 button:disabled,
-[aria-disabled="true"] {
+[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -340,12 +330,12 @@ a:focus {
 }
 
 /* Tab accessibility */
-[role="tablist"] {
+[role='tablist'] {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
 }
 
-[role="tab"] {
+[role='tab'] {
   padding: 8px 16px;
   background: none;
   border: none;
@@ -353,21 +343,21 @@ a:focus {
   border-bottom: 2px solid transparent;
 }
 
-[role="tab"][aria-selected="true"] {
+[role='tab'][aria-selected='true'] {
   border-bottom-color: #1d4ed8;
   color: #1d4ed8;
 }
 
-[role="tabpanel"] {
+[role='tabpanel'] {
   padding: 16px 0;
 }
 
 /* Disclosure/Accordion accessibility */
-[aria-expanded="false"] + [role="region"] {
+[aria-expanded='false'] + [role='region'] {
   display: none;
 }
 
-[aria-expanded="true"] + [role="region"] {
+[aria-expanded='true'] + [role='region'] {
   display: block;
 }
 
@@ -392,14 +382,14 @@ a:focus {
     overflow: visible !important;
     clip: auto !important;
   }
-  
+
   .no-print {
     display: none !important;
   }
 }
 
 /* RTL support */
-[dir="rtl"] .skip-link {
+[dir='rtl'] .skip-link {
   left: auto;
   right: 6px;
 }
@@ -438,7 +428,7 @@ a:focus {
     font-size: 1rem;
     padding: 12px 20px;
   }
-  
+
   .focus-visible {
     outline-width: 3px;
   }

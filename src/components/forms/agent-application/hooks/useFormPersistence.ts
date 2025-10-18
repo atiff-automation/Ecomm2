@@ -21,23 +21,23 @@ export function useFormPersistence() {
   /**
    * Save form data to localStorage
    */
-  const saveFormData = useCallback((
-    data: Partial<AgentApplicationFormData>,
-    currentStep: number
-  ) => {
-    try {
-      const persistedData: PersistedFormData = {
-        version: STORAGE_VERSION,
-        data,
-        lastSaved: new Date().toISOString(),
-        currentStep
-      };
+  const saveFormData = useCallback(
+    (data: Partial<AgentApplicationFormData>, currentStep: number) => {
+      try {
+        const persistedData: PersistedFormData = {
+          version: STORAGE_VERSION,
+          data,
+          lastSaved: new Date().toISOString(),
+          currentStep,
+        };
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
-    } catch (error) {
-      console.warn('Failed to save form data to localStorage:', error);
-    }
-  }, []);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
+      } catch (error) {
+        console.warn('Failed to save form data to localStorage:', error);
+      }
+    },
+    []
+  );
 
   /**
    * Load form data from localStorage
@@ -71,7 +71,7 @@ export function useFormPersistence() {
 
       return {
         data: persistedData.data,
-        currentStep: persistedData.currentStep
+        currentStep: persistedData.currentStep,
       };
     } catch (error) {
       console.warn('Failed to load form data from localStorage:', error);
@@ -145,7 +145,7 @@ export function useFormPersistence() {
         lastSaved: persistedData.lastSaved,
         currentStep: persistedData.currentStep,
         dataKeys: Object.keys(persistedData.data),
-        size: stored.length
+        size: stored.length,
       };
     } catch {
       return null;
@@ -158,6 +158,6 @@ export function useFormPersistence() {
     clearFormData,
     hasSavedData,
     useAutoSave,
-    getStorageInfo
+    getStorageInfo,
   };
 }

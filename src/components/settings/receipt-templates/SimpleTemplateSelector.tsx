@@ -10,29 +10,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  FileText, 
-  Settings, 
-  Check, 
+import {
+  FileText,
+  Settings,
+  Check,
   Loader2,
   AlertTriangle,
   RefreshCw,
-  Eye
+  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ReceiptTemplate, TEMPLATE_TYPE_LABELS } from '@/types/receipt-templates';
+import {
+  ReceiptTemplate,
+  TEMPLATE_TYPE_LABELS,
+} from '@/types/receipt-templates';
 import { cn } from '@/lib/utils';
 
 interface SimpleTemplateSelectorProps {
   className?: string;
 }
 
-export default function SimpleTemplateSelector({ className }: SimpleTemplateSelectorProps) {
+export default function SimpleTemplateSelector({
+  className,
+}: SimpleTemplateSelectorProps) {
   const [templates, setTemplates] = useState<ReceiptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [initializingDefault, setInitializingDefault] = useState<string | null>(null);
+  const [initializingDefault, setInitializingDefault] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<ReceiptTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<ReceiptTemplate | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
 
@@ -46,7 +54,7 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       setError(null);
 
       const response = await fetch('/api/admin/receipt-templates');
-      
+
       if (!response.ok) {
         // If no templates exist, try to initialize them
         if (response.status === 404 || response.status === 500) {
@@ -57,7 +65,7 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.templates?.length > 0) {
         setTemplates(data.templates);
       } else {
@@ -76,7 +84,7 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
     try {
       setLoading(true);
       const response = await fetch('/api/admin/receipt-templates/initialize', {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -99,9 +107,12 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
     try {
       setInitializingDefault(templateId);
 
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}/set-default`, {
-        method: 'PUT'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}/set-default`,
+        {
+          method: 'PUT',
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -111,11 +122,11 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       const data = await response.json();
       if (data.success) {
         // Update local state
-        setTemplates(prevTemplates => 
+        setTemplates(prevTemplates =>
           prevTemplates.map(template => ({
             ...template,
             isDefault: template.id === templateId,
-            isActive: template.id === templateId ? true : template.isActive
+            isActive: template.id === templateId ? true : template.isActive,
           }))
         );
         toast.success('Default template updated successfully');
@@ -133,8 +144,10 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       setPreviewLoading(true);
       setPreviewTemplate(template);
 
-      const response = await fetch(`/api/admin/receipt-templates/${template.id}/preview`);
-      
+      const response = await fetch(
+        `/api/admin/receipt-templates/${template.id}/preview`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to generate preview');
       }
@@ -159,30 +172,30 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
 
   const getTemplateIcon = (templateType: string) => {
     const icons = {
-      'THERMAL_RECEIPT': '🧾',
-      'BUSINESS_INVOICE': '📋',
-      'MINIMAL_RECEIPT': '📄',
-      'DETAILED_INVOICE': '📊'
+      THERMAL_RECEIPT: '🧾',
+      BUSINESS_INVOICE: '📋',
+      MINIMAL_RECEIPT: '📄',
+      DETAILED_INVOICE: '📊',
     };
     return icons[templateType as keyof typeof icons] || '📄';
   };
 
   const getTemplateDescription = (templateType: string) => {
     const descriptions = {
-      'THERMAL_RECEIPT': 'Compact format for thermal printers',
-      'BUSINESS_INVOICE': 'Professional business documentation',
-      'MINIMAL_RECEIPT': 'Clean and modern design',
-      'DETAILED_INVOICE': 'Comprehensive with full details'
+      THERMAL_RECEIPT: 'Compact format for thermal printers',
+      BUSINESS_INVOICE: 'Professional business documentation',
+      MINIMAL_RECEIPT: 'Clean and modern design',
+      DETAILED_INVOICE: 'Comprehensive with full details',
     };
     return descriptions[templateType as keyof typeof descriptions] || '';
   };
 
   const getUseCaseRecommendation = (templateType: string) => {
     const recommendations = {
-      'THERMAL_RECEIPT': 'Best for: Retail stores, POS systems',
-      'BUSINESS_INVOICE': 'Best for: B2B transactions, service providers',
-      'MINIMAL_RECEIPT': 'Best for: Modern retail, mobile commerce',
-      'DETAILED_INVOICE': 'Best for: Tax compliance, detailed billing'
+      THERMAL_RECEIPT: 'Best for: Retail stores, POS systems',
+      BUSINESS_INVOICE: 'Best for: B2B transactions, service providers',
+      MINIMAL_RECEIPT: 'Best for: Modern retail, mobile commerce',
+      DETAILED_INVOICE: 'Best for: Tax compliance, detailed billing',
     };
     return recommendations[templateType as keyof typeof recommendations] || '';
   };
@@ -205,7 +218,9 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       <Card className={className}>
         <CardContent className="p-8 text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Templates</h3>
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            Error Loading Templates
+          </h3>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={loadTemplates} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -232,12 +247,12 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {templates.map((template) => (
-          <Card 
+        {templates.map(template => (
+          <Card
             key={template.id}
             className={cn(
-              "transition-all duration-200 hover:shadow-md",
-              template.isDefault && "ring-2 ring-blue-500 bg-blue-50/30"
+              'transition-all duration-200 hover:shadow-md',
+              template.isDefault && 'ring-2 ring-blue-500 bg-blue-50/30'
             )}
           >
             <CardHeader>
@@ -276,16 +291,18 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
                     {getUseCaseRecommendation(template.templateType)}
                   </div>
                   <p className="text-muted-foreground">
-                    {template.description || getTemplateDescription(template.templateType)}
+                    {template.description ||
+                      getTemplateDescription(template.templateType)}
                   </p>
                 </div>
 
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
-                      Last updated: {new Date(template.updatedAt).toLocaleDateString('en-MY')}
+                      Last updated:{' '}
+                      {new Date(template.updatedAt).toLocaleDateString('en-MY')}
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handlePreview(template)}
@@ -296,7 +313,7 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
                         <Eye className="h-3 w-3 mr-1" />
                         Preview
                       </Button>
-                      
+
                       {!template.isDefault && (
                         <Button
                           onClick={() => setAsDefault(template.id)}
@@ -317,7 +334,7 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
                           )}
                         </Button>
                       )}
-                      
+
                       {template.isDefault && (
                         <div className="flex items-center text-sm text-blue-600 font-medium">
                           <Check className="h-4 w-4 mr-1" />
@@ -337,7 +354,9 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
         <Card>
           <CardContent className="p-8 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Templates Available</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              No Templates Available
+            </h3>
             <p className="text-muted-foreground mb-4">
               No receipt templates are currently configured in your system.
             </p>
@@ -355,8 +374,9 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
             <div className="text-sm">
               <p className="font-medium text-blue-900 mb-1">How it works:</p>
               <p className="text-blue-700">
-                Click "Preview" to see how each template looks, then select "Use as Default" to make it your active receipt template. 
-                All new customer receipts will be generated using this template design.
+                Click "Preview" to see how each template looks, then select "Use
+                as Default" to make it your active receipt template. All new
+                customer receipts will be generated using this template design.
               </p>
             </div>
           </div>
@@ -364,20 +384,31 @@ export default function SimpleTemplateSelector({ className }: SimpleTemplateSele
       </Card>
 
       {/* Preview Dialog */}
-      <Dialog open={previewTemplate !== null} onOpenChange={() => setPreviewTemplate(null)}>
+      <Dialog
+        open={previewTemplate !== null}
+        onOpenChange={() => setPreviewTemplate(null)}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>
-                Preview: {previewTemplate && TEMPLATE_TYPE_LABELS[previewTemplate.templateType]}
+                Preview:{' '}
+                {previewTemplate &&
+                  TEMPLATE_TYPE_LABELS[previewTemplate.templateType]}
               </span>
               <div className="flex items-center gap-2">
                 {previewTemplate && (
-                  <Badge className={cn(
-                    "text-xs",
-                    previewTemplate.isDefault ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                  )}>
-                    {previewTemplate.isDefault ? 'Currently Active' : 'Available'}
+                  <Badge
+                    className={cn(
+                      'text-xs',
+                      previewTemplate.isDefault
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-700'
+                    )}
+                  >
+                    {previewTemplate.isDefault
+                      ? 'Currently Active'
+                      : 'Available'}
                   </Badge>
                 )}
               </div>

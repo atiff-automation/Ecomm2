@@ -124,10 +124,13 @@ export function DataTable<T extends Record<string, any>>({
                           key={String(column.key)}
                           className={cn(
                             'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap',
-                            column.sortable && 'cursor-pointer hover:bg-gray-100',
+                            column.sortable &&
+                              'cursor-pointer hover:bg-gray-100',
                             column.width && `w-${column.width}`
                           )}
-                          onClick={() => column.sortable && handleSort(column.key)}
+                          onClick={() =>
+                            column.sortable && handleSort(column.key)
+                          }
                         >
                           <div className="flex items-center space-x-1">
                             <span>{column.header}</span>

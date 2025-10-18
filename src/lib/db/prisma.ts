@@ -20,7 +20,9 @@ function getDatabaseUrl(): string {
   // Use dummy URL during build if not provided (prevents build-time errors)
   if (!baseUrl) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('DATABASE_URL environment variable is required in production');
+      throw new Error(
+        'DATABASE_URL environment variable is required in production'
+      );
     }
     return 'postgresql://dummy:dummy@localhost:5432/dummy';
   }
@@ -55,9 +57,10 @@ export const prisma =
         url: getDatabaseUrl(),
       },
     },
-    log: process.env.NODE_ENV === 'production'
-      ? ['error']
-      : ['query', 'error', 'warn'],
+    log:
+      process.env.NODE_ENV === 'production'
+        ? ['error']
+        : ['query', 'error', 'warn'],
   });
 
 if (process.env.NODE_ENV !== 'production') {

@@ -11,7 +11,9 @@ export function getPrismaClient(): PrismaClient | null {
   // During build time, DATABASE_URL might not be available
   if (!process.env.DATABASE_URL) {
     if (process.env.NODE_ENV === 'production') {
-      console.warn('⚠️ DATABASE_URL not found in production - this might cause issues');
+      console.warn(
+        '⚠️ DATABASE_URL not found in production - this might cause issues'
+      );
     }
     return null;
   }
@@ -24,7 +26,10 @@ export function getPrismaClient(): PrismaClient | null {
             url: process.env.DATABASE_URL,
           },
         },
-        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+        log:
+          process.env.NODE_ENV === 'development'
+            ? ['query', 'error', 'warn']
+            : ['error'],
       });
     } catch (error) {
       console.error('Failed to initialize Prisma client:', error);

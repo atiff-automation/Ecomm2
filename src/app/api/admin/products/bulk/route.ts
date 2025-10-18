@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Unauthorized. Admin access required for bulk operations.'
+          message: 'Unauthorized. Admin access required for bulk operations.',
         },
         { status: 403 }
       );
@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
     } else {
       return NextResponse.json(result, { status: 400 });
     }
-
   } catch (error) {
     console.error('Bulk delete operation failed:', error);
 
@@ -139,10 +138,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get deletion summary
-    const summary = await bulkOperationsService.getProductDeletionSummary(productIds);
+    const summary =
+      await bulkOperationsService.getProductDeletionSummary(productIds);
 
     return NextResponse.json(summary);
-
   } catch (error) {
     console.error('Error getting product deletion summary:', error);
     return NextResponse.json(

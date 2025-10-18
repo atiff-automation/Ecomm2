@@ -37,7 +37,9 @@ export const useExport = (): UseExportReturn => {
   const startProgressTracking = useCallback((jobId: string) => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/admin/chat/export/progress/${jobId}`);
+        const response = await fetch(
+          `/api/admin/chat/export/progress/${jobId}`
+        );
         if (!response.ok) {
           clearInterval(interval);
           progressIntervals.current.delete(jobId);
@@ -69,137 +71,146 @@ export const useExport = (): UseExportReturn => {
     progressIntervals.current.set(jobId, interval);
 
     // Cleanup after 5 minutes to prevent memory leaks
-    setTimeout(() => {
-      if (progressIntervals.current.has(jobId)) {
-        clearInterval(interval);
-        progressIntervals.current.delete(jobId);
-      }
-    }, 5 * 60 * 1000);
+    setTimeout(
+      () => {
+        if (progressIntervals.current.has(jobId)) {
+          clearInterval(interval);
+          progressIntervals.current.delete(jobId);
+        }
+      },
+      5 * 60 * 1000
+    );
   }, []);
 
   // Export single session
-  const exportSession = useCallback(async (
-    sessionId: string,
-    options: Partial<ExportOptions> = {}
-  ) => {
-    const exportOptions: ExportOptions = {
-      ...DEFAULT_EXPORT_OPTIONS,
-      ...options,
-      sessionIds: [sessionId],
-      dateRange: options.dateRange || {
-        from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-        to: new Date(),
-      },
-    };
-
-    // Validate options
-    const validation = validateExportOptions(exportOptions);
-    if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch('/api/admin/chat/export/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          options: exportOptions,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      const newJob: ExportJob = {
-        id: result.jobId,
-        options: exportOptions,
-        progress: {
-          id: result.jobId,
-          status: 'pending',
-          progress: 0,
-          createdAt: new Date().toISOString(),
-          totalSessions: 1,
-          processedSessions: 0,
+  const exportSession = useCallback(
+    async (sessionId: string, options: Partial<ExportOptions> = {}) => {
+      const exportOptions: ExportOptions = {
+        ...DEFAULT_EXPORT_OPTIONS,
+        ...options,
+        sessionIds: [sessionId],
+        dateRange: options.dateRange || {
+          from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+          to: new Date(),
         },
       };
 
-      const updatedJobs = [newJob, ...exportJobs];
-      saveExportJobs(updatedJobs);
+      // Validate options
+      const validation = validateExportOptions(exportOptions);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
+      }
 
-      // Start tracking progress
-      startProgressTracking(result.jobId);
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/chat/export/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId,
+            options: exportOptions,
+          }),
+        });
 
-      return result.jobId;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    } finally {
-      setLoading(false);
-    }
-  }, [exportJobs, saveExportJobs, startProgressTracking]);
+        if (!response.ok) {
+          throw new Error(`Export failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        const newJob: ExportJob = {
+          id: result.jobId,
+          options: exportOptions,
+          progress: {
+            id: result.jobId,
+            status: 'pending',
+            progress: 0,
+            createdAt: new Date().toISOString(),
+            totalSessions: 1,
+            processedSessions: 0,
+          },
+        };
+
+        const updatedJobs = [newJob, ...exportJobs];
+        saveExportJobs(updatedJobs);
+
+        // Start tracking progress
+        startProgressTracking(result.jobId);
+
+        return result.jobId;
+      } catch (error) {
+        throw new Error(handleApiError(error));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [exportJobs, saveExportJobs, startProgressTracking]
+  );
 
   // Export multiple sessions
-  const exportSessions = useCallback(async (options: ExportOptions) => {
-    // Validate options
-    const validation = validateExportOptions(options);
-    if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch('/api/admin/chat/export/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(options),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
+  const exportSessions = useCallback(
+    async (options: ExportOptions) => {
+      // Validate options
+      const validation = validateExportOptions(options);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
       }
 
-      const result = await response.json();
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/chat/export/sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(options),
+        });
 
-      const newJob: ExportJob = {
-        id: result.jobId,
-        options,
-        progress: {
+        if (!response.ok) {
+          throw new Error(`Export failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        const newJob: ExportJob = {
           id: result.jobId,
-          status: 'pending',
-          progress: 0,
-          createdAt: new Date().toISOString(),
-          totalSessions: options.sessionIds.length,
-          processedSessions: 0,
-        },
-      };
+          options,
+          progress: {
+            id: result.jobId,
+            status: 'pending',
+            progress: 0,
+            createdAt: new Date().toISOString(),
+            totalSessions: options.sessionIds.length,
+            processedSessions: 0,
+          },
+        };
 
-      const updatedJobs = [newJob, ...exportJobs];
-      saveExportJobs(updatedJobs);
+        const updatedJobs = [newJob, ...exportJobs];
+        saveExportJobs(updatedJobs);
 
-      // Start tracking progress
-      startProgressTracking(result.jobId);
+        // Start tracking progress
+        startProgressTracking(result.jobId);
 
-      return result.jobId;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    } finally {
-      setLoading(false);
-    }
-  }, [exportJobs, saveExportJobs, startProgressTracking]);
+        return result.jobId;
+      } catch (error) {
+        throw new Error(handleApiError(error));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [exportJobs, saveExportJobs, startProgressTracking]
+  );
 
   // Get export progress
-  const getExportProgress = useCallback((jobId: string): ExportProgress | null => {
-    const job = exportJobs.find(job => job.id === jobId);
-    return job?.progress || null;
-  }, [exportJobs]);
+  const getExportProgress = useCallback(
+    (jobId: string): ExportProgress | null => {
+      const job = exportJobs.find(job => job.id === jobId);
+      return job?.progress || null;
+    },
+    [exportJobs]
+  );
 
   // Cancel export
   const cancelExport = useCallback(async (jobId: string) => {
@@ -242,36 +253,42 @@ export const useExport = (): UseExportReturn => {
   }, []);
 
   // Download export
-  const downloadExport = useCallback((jobId: string) => {
-    const job = exportJobs.find(job => job.id === jobId);
-    if (!job || !job.progress.downloadUrl) {
-      throw new Error('Export not ready for download');
-    }
+  const downloadExport = useCallback(
+    (jobId: string) => {
+      const job = exportJobs.find(job => job.id === jobId);
+      if (!job || !job.progress.downloadUrl) {
+        throw new Error('Export not ready for download');
+      }
 
-    // Create download link
-    const link = document.createElement('a');
-    link.href = job.progress.downloadUrl;
-    link.download = generateExportFileName(
-      job.options.format,
-      job.options.sessionIds.length
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [exportJobs]);
+      // Create download link
+      const link = document.createElement('a');
+      link.href = job.progress.downloadUrl;
+      link.download = generateExportFileName(
+        job.options.format,
+        job.options.sessionIds.length
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    [exportJobs]
+  );
 
   // Remove export job from history
-  const removeExportJob = useCallback((jobId: string) => {
-    // Clear progress tracking
-    const interval = progressIntervals.current.get(jobId);
-    if (interval) {
-      clearInterval(interval);
-      progressIntervals.current.delete(jobId);
-    }
+  const removeExportJob = useCallback(
+    (jobId: string) => {
+      // Clear progress tracking
+      const interval = progressIntervals.current.get(jobId);
+      if (interval) {
+        clearInterval(interval);
+        progressIntervals.current.delete(jobId);
+      }
 
-    const updatedJobs = exportJobs.filter(job => job.id !== jobId);
-    saveExportJobs(updatedJobs);
-  }, [exportJobs, saveExportJobs]);
+      const updatedJobs = exportJobs.filter(job => job.id !== jobId);
+      saveExportJobs(updatedJobs);
+    },
+    [exportJobs, saveExportJobs]
+  );
 
   // Clear export history
   const clearExportHistory = useCallback(() => {
@@ -285,10 +302,16 @@ export const useExport = (): UseExportReturn => {
   // Get export statistics
   const getExportStats = useCallback(() => {
     const totalExports = exportJobs.length;
-    const completedExports = exportJobs.filter(job => job.progress.status === 'completed').length;
-    const failedExports = exportJobs.filter(job => job.progress.status === 'failed').length;
+    const completedExports = exportJobs.filter(
+      job => job.progress.status === 'completed'
+    ).length;
+    const failedExports = exportJobs.filter(
+      job => job.progress.status === 'failed'
+    ).length;
     const inProgressExports = exportJobs.filter(
-      job => job.progress.status === 'pending' || job.progress.status === 'processing'
+      job =>
+        job.progress.status === 'pending' ||
+        job.progress.status === 'processing'
     ).length;
 
     return {
@@ -296,7 +319,8 @@ export const useExport = (): UseExportReturn => {
       completedExports,
       failedExports,
       inProgressExports,
-      successRate: totalExports > 0 ? (completedExports / totalExports) * 100 : 0,
+      successRate:
+        totalExports > 0 ? (completedExports / totalExports) * 100 : 0,
     };
   }, [exportJobs]);
 
@@ -320,10 +344,15 @@ export const useExport = (): UseExportReturn => {
     cleanup,
 
     // Helper methods
-    getCompletedExports: () => exportJobs.filter(job => job.progress.status === 'completed'),
-    getFailedExports: () => exportJobs.filter(job => job.progress.status === 'failed'),
-    getInProgressExports: () => exportJobs.filter(
-      job => job.progress.status === 'pending' || job.progress.status === 'processing'
-    ),
+    getCompletedExports: () =>
+      exportJobs.filter(job => job.progress.status === 'completed'),
+    getFailedExports: () =>
+      exportJobs.filter(job => job.progress.status === 'failed'),
+    getInProgressExports: () =>
+      exportJobs.filter(
+        job =>
+          job.progress.status === 'pending' ||
+          job.progress.status === 'processing'
+      ),
   };
 };

@@ -38,7 +38,10 @@ export async function GET(
     const whereClause: any = { id: orderId };
 
     // If not admin/staff, restrict to user's own orders
-    if (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.STAFF) {
+    if (
+      session.user.role !== UserRole.ADMIN &&
+      session.user.role !== UserRole.STAFF
+    ) {
       whereClause.userId = session.user.id;
     }
 
@@ -118,7 +121,7 @@ export async function GET(
       // AWB (Airway Bill) Information
       airwayBillGenerated: order.airwayBillGenerated,
       airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString() || null,
-      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
       airwayBillUrl: order.airwayBillUrl,
       trackingUrl: order.trackingUrl,
 
@@ -126,7 +129,9 @@ export async function GET(
       easyparcelOrderNumber: order.easyparcelOrderNumber,
       easyparcelPaymentStatus: order.easyparcelPaymentStatus,
       easyparcelParcelNumber: order.easyparcelParcelNumber,
-      shippingCostCharged: order.shippingCostCharged ? Number(order.shippingCostCharged) : null,
+      shippingCostCharged: order.shippingCostCharged
+        ? Number(order.shippingCostCharged)
+        : null,
 
       // Courier/shipping information
       selectedCourierServiceId: order.selectedCourierServiceId,
@@ -135,7 +140,9 @@ export async function GET(
       courierServiceDetail: order.courierServiceDetail,
       selectedDropoffPointId: order.selectedDropoffPointId,
       estimatedDelivery: order.estimatedDelivery,
-      shippingWeight: order.shippingWeight ? Number(order.shippingWeight) : null,
+      shippingWeight: order.shippingWeight
+        ? Number(order.shippingWeight)
+        : null,
       scheduledPickupDate: order.scheduledPickupDate?.toISOString() || null,
 
       // User information

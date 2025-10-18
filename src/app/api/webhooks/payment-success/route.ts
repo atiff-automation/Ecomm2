@@ -105,15 +105,20 @@ export async function POST(request: NextRequest) {
     // ✅ NEW: Process EasyParcel payment to get AWB
     let airwayBillGenerated = false;
     try {
-      console.log('🎯 Processing EasyParcel payment for AWB extraction:', order.orderNumber);
-      const awbResult = await AirwayBillService.processPaymentAndExtractAWB(order.orderNumber);
+      console.log(
+        '🎯 Processing EasyParcel payment for AWB extraction:',
+        order.orderNumber
+      );
+      const awbResult = await AirwayBillService.processPaymentAndExtractAWB(
+        order.orderNumber
+      );
 
       if (awbResult.success) {
         // Update order with real AWB information
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            airwayBillNumber: awbResult.awbNumber,
+            airwayBillUrl: awbResult.awbNumber,
             airwayBillUrl: awbResult.awbPdfUrl,
             trackingUrl: awbResult.trackingUrl,
             airwayBillGenerated: true,
@@ -135,10 +140,18 @@ export async function POST(request: NextRequest) {
 
         // Send notification about the failure
         try {
-          const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
-          await OrderStatusHandler.handleAirwayBillFailure(order.id, awbResult.error);
+          const { OrderStatusHandler } = await import(
+            '@/lib/notifications/order-status-handler'
+          );
+          await OrderStatusHandler.handleAirwayBillFailure(
+            order.id,
+            awbResult.error
+          );
         } catch (notificationError) {
-          console.error('❌ Failed to handle airway bill failure notification:', notificationError);
+          console.error(
+            '❌ Failed to handle airway bill failure notification:',
+            notificationError
+          );
         }
 
         // Don't fail the webhook if EasyParcel processing fails
@@ -149,10 +162,15 @@ export async function POST(request: NextRequest) {
 
       // Send notification about the exception
       try {
-        const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
+        const { OrderStatusHandler } = await import(
+          '@/lib/notifications/order-status-handler'
+        );
         await OrderStatusHandler.handleAirwayBillFailure(order.id, awbError);
       } catch (notificationError) {
-        console.error('❌ Failed to handle airway bill failure notification:', notificationError);
+        console.error(
+          '❌ Failed to handle airway bill failure notification:',
+          notificationError
+        );
       }
 
       // Continue with webhook processing even if AWB processing fails
@@ -178,8 +196,10 @@ export async function POST(request: NextRequest) {
     // This ensures notifications are sent through the centralized handler
     try {
       // Import here to avoid circular dependencies
-      const { OrderStatusHandler } = await import('@/lib/notifications/order-status-handler');
-      
+      const { OrderStatusHandler } = await import(
+        '@/lib/notifications/order-status-handler'
+      );
+
       await OrderStatusHandler.handleOrderStatusChange({
         orderId: order.id,
         previousStatus,
@@ -192,13 +212,16 @@ export async function POST(request: NextRequest) {
           webhookTimestamp: timestamp,
         },
       });
-      
+
       console.log(
         '✅ Order status change handled for order:',
         order.orderNumber
       );
     } catch (statusHandlerError) {
-      console.error('Failed to handle order status change:', statusHandlerError);
+      console.error(
+        'Failed to handle order status change:',
+        statusHandlerError
+      );
       // Don't fail the webhook if status handler fails
     }
 

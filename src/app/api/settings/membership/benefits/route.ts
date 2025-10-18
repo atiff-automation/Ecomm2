@@ -15,28 +15,32 @@ const MEMBER_BENEFITS = [
   {
     id: 'exclusive-pricing',
     title: 'Exclusive Member Pricing',
-    description: 'Get special discounted prices on selected products as a member',
+    description:
+      'Get special discounted prices on selected products as a member',
     isActive: true,
     icon: '💎',
   },
   {
     id: 'early-access',
     title: 'Early Access to Sales',
-    description: 'Be the first to shop new arrivals and flash sales before they go public',
+    description:
+      'Be the first to shop new arrivals and flash sales before they go public',
     isActive: true,
     icon: '⚡',
   },
   {
     id: 'free-shipping',
     title: 'Free Shipping Perks',
-    description: 'Enjoy free shipping on orders above RM 50 (non-members: RM 100)',
+    description:
+      'Enjoy free shipping on orders above RM 50 (non-members: RM 100)',
     isActive: true,
     icon: '🚚',
   },
   {
     id: 'priority-support',
     title: 'Priority Customer Support',
-    description: 'Get faster response times and priority handling of your inquiries',
+    description:
+      'Get faster response times and priority handling of your inquiries',
     isActive: true,
     icon: '🎧',
   },
@@ -50,7 +54,8 @@ const MEMBER_BENEFITS = [
   {
     id: 'loyalty-points',
     title: 'Enhanced Loyalty Points',
-    description: 'Earn 2x points on every purchase compared to regular customers',
+    description:
+      'Earn 2x points on every purchase compared to regular customers',
     isActive: true,
     icon: '⭐',
   },
@@ -73,7 +78,7 @@ const MEMBER_BENEFITS = [
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -83,12 +88,11 @@ export async function GET(request: NextRequest) {
     // 1. Fetch from database for dynamic configuration
     // 2. Include user-specific benefit status
     // 3. Show tier-based benefits
-    
+
     return NextResponse.json({
       success: true,
-      data: MEMBER_BENEFITS
+      data: MEMBER_BENEFITS,
     });
-
   } catch (error) {
     console.error('Get member benefits error:', error);
     return NextResponse.json(

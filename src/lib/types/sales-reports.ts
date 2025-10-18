@@ -74,22 +74,22 @@ export interface ExportOptions {
 
 // Malaysian States Mapping (centralized)
 export const MALAYSIAN_STATES = {
-  'JHR': 'Johor',
-  'KDH': 'Kedah',
-  'KTN': 'Kelantan',
-  'MLK': 'Malacca',
-  'NSN': 'Negeri Sembilan',
-  'PHG': 'Pahang',
-  'PNG': 'Penang',
-  'PRK': 'Perak',
-  'PLS': 'Perlis',
-  'SEL': 'Selangor',
-  'TRG': 'Terengganu',
-  'SBH': 'Sabah',
-  'SWK': 'Sarawak',
-  'KUL': 'Kuala Lumpur',
-  'LBN': 'Labuan',
-  'PJY': 'Putrajaya'
+  JHR: 'Johor',
+  KDH: 'Kedah',
+  KTN: 'Kelantan',
+  MLK: 'Malacca',
+  NSN: 'Negeri Sembilan',
+  PHG: 'Pahang',
+  PNG: 'Penang',
+  PRK: 'Perak',
+  PLS: 'Perlis',
+  SEL: 'Selangor',
+  TRG: 'Terengganu',
+  SBH: 'Sabah',
+  SWK: 'Sarawak',
+  KUL: 'Kuala Lumpur',
+  LBN: 'Labuan',
+  PJY: 'Putrajaya',
 } as const;
 
 export type MalaysianStateCode = keyof typeof MALAYSIAN_STATES;

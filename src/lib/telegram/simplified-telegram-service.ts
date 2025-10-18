@@ -1,5 +1,5 @@
 /**
- * Simplified Admin Telegram Service - Malaysian E-commerce Platform  
+ * Simplified Admin Telegram Service - Malaysian E-commerce Platform
  * CENTRALIZED admin-only telegram notifications
  * FOLLOWS @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH | CENTRALIZED
  */
@@ -35,12 +35,12 @@ export class SimplifiedTelegramService {
   private config: AdminTelegramConfig | null = null;
   private apiUrl: string = '';
   private configLoaded: boolean = false;
-  
+
   // DRY: Health monitoring (same pattern as before but simplified)
   private lastHealthCheck: Date | null = null;
   private isHealthy: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
-  
+
   // DRY: Message retry queue (same reliability pattern)
   private retryQueue: Array<{
     message: TelegramMessage;
@@ -57,7 +57,7 @@ export class SimplifiedTelegramService {
       await this.loadConfiguration();
       this.startHealthCheck();
       this.initializeCronJobs();
-      
+
       console.log('🤖 Simplified TelegramService initialized (admin-only)');
     } catch (error) {
       console.error('Failed to initialize SimplifiedTelegramService:', error);
@@ -88,14 +88,14 @@ export class SimplifiedTelegramService {
     try {
       // SINGLE SOURCE: Get active admin configuration
       this.config = await adminTelegramConfigService.getActiveConfig();
-      
+
       if (this.config?.botToken) {
         this.apiUrl = `https://api.telegram.org/bot${this.config.botToken}`;
         this.configLoaded = true;
         console.log('✅ Admin telegram configuration loaded successfully');
         return;
       }
-      
+
       // NO CONFIGURATION: Clear state (no .env fallback for simplified admin-only system)
       this.config = null;
       this.apiUrl = '';
@@ -145,7 +145,7 @@ export class SimplifiedTelegramService {
 
       this.isHealthy = response.ok;
       this.lastHealthCheck = new Date();
-      
+
       console.log('🔍 Health check completed at:', new Date().toISOString());
 
       if (!this.isHealthy) {
@@ -179,7 +179,10 @@ export class SimplifiedTelegramService {
           });
         }
       } else {
-        console.error('❌ Telegram message failed after 3 retries, discarding:', queueItem.message);
+        console.error(
+          '❌ Telegram message failed after 3 retries, discarding:',
+          queueItem.message
+        );
       }
     }
   }
@@ -192,7 +195,10 @@ export class SimplifiedTelegramService {
     if (!this.configLoaded) {
       await this.loadConfiguration();
     }
-    return !!(this.config?.botToken && (this.config?.ordersChatId || this.config?.inventoryChatId));
+    return !!(
+      this.config?.botToken &&
+      (this.config?.ordersChatId || this.config?.inventoryChatId)
+    );
   }
 
   /**
@@ -202,28 +208,44 @@ export class SimplifiedTelegramService {
     if (!this.configLoaded) {
       await this.loadConfiguration();
     }
-    return !!(this.config?.botToken && this.config?.ordersChatId && this.config?.ordersEnabled);
+    return !!(
+      this.config?.botToken &&
+      this.config?.ordersChatId &&
+      this.config?.ordersEnabled
+    );
   }
 
   async isInventoryChannelConfigured(): Promise<boolean> {
     if (!this.configLoaded) {
       await this.loadConfiguration();
     }
-    return !!(this.config?.botToken && this.config?.inventoryChatId && this.config?.inventoryEnabled);
+    return !!(
+      this.config?.botToken &&
+      this.config?.inventoryChatId &&
+      this.config?.inventoryEnabled
+    );
   }
 
   async isChatManagementChannelConfigured(): Promise<boolean> {
     if (!this.configLoaded) {
       await this.loadConfiguration();
     }
-    return !!(this.config?.botToken && this.config?.chatManagementChatId && this.config?.chatManagementEnabled);
+    return !!(
+      this.config?.botToken &&
+      this.config?.chatManagementChatId &&
+      this.config?.chatManagementEnabled
+    );
   }
 
   async isSystemAlertsChannelConfigured(): Promise<boolean> {
     if (!this.configLoaded) {
       await this.loadConfiguration();
     }
-    return !!(this.config?.botToken && this.config?.systemAlertsChatId && this.config?.systemAlertsEnabled);
+    return !!(
+      this.config?.botToken &&
+      this.config?.systemAlertsChatId &&
+      this.config?.systemAlertsEnabled
+    );
   }
 
   /**
@@ -273,7 +295,7 @@ export class SimplifiedTelegramService {
     }
 
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch(`${this.apiUrl}/sendMessage`, {
         method: 'POST',
@@ -281,14 +303,22 @@ export class SimplifiedTelegramService {
         body: JSON.stringify(message),
         signal: AbortSignal.timeout(30000),
       });
-      
+
       const responseTime = Date.now() - startTime;
 
       if (!response.ok) {
         const error = await response.text();
-        console.error('Failed to send Telegram message:', response.status, error);
-        console.log(`📈 Message send failed (${responseTime}ms):`, response.status, error);
-        
+        console.error(
+          'Failed to send Telegram message:',
+          response.status,
+          error
+        );
+        console.log(
+          `📈 Message send failed (${responseTime}ms):`,
+          response.status,
+          error
+        );
+
         if (allowQueue && this.shouldRetry(response.status)) {
           this.retryQueue.push({
             message,
@@ -331,7 +361,9 @@ export class SimplifiedTelegramService {
    * CENTRALIZED: Send order notification using admin config
    * DRY: Same notification format and logic
    */
-  async sendNewOrderNotification(orderData: OrderNotificationData): Promise<boolean> {
+  async sendNewOrderNotification(
+    orderData: OrderNotificationData
+  ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
       console.log('Orders channel not configured, skipping order notification');
       return false;
@@ -385,11 +417,14 @@ ${itemsList}
     amount: number
   ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
-      console.log('Orders channel not configured, skipping payment notification');
+      console.log(
+        'Orders channel not configured, skipping payment notification'
+      );
       return false;
     }
 
-    const statusEmoji = status === 'COMPLETED' ? '✅' : status === 'FAILED' ? '❌' : '⏳';
+    const statusEmoji =
+      status === 'COMPLETED' ? '✅' : status === 'FAILED' ? '❌' : '⏳';
     const formattedAmount = `RM ${amount.toFixed(2)}`;
 
     const message = `
@@ -484,7 +519,8 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
       return sum + orderTotal;
     }, 0);
     const completedOrders = orders.filter(
-      order => order.paymentStatus === 'COMPLETED' || order.paymentStatus === 'PAID'
+      order =>
+        order.paymentStatus === 'COMPLETED' || order.paymentStatus === 'PAID'
     ).length;
     const failedOrders = totalOrders - completedOrders;
 
@@ -531,9 +567,14 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   /**
    * DRY: Same general notification logic
    */
-  async sendGeneralNotification(title: string, message: string): Promise<boolean> {
+  async sendGeneralNotification(
+    title: string,
+    message: string
+  ): Promise<boolean> {
     if (!(await this.isOrdersChannelConfigured())) {
-      console.log('Orders channel not configured, skipping general notification');
+      console.log(
+        'Orders channel not configured, skipping general notification'
+      );
       return false;
     }
 
@@ -555,9 +596,14 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   /**
    * CENTRALIZED: Send chat management notifications
    */
-  async sendChatManagementNotification(title: string, message: string): Promise<boolean> {
+  async sendChatManagementNotification(
+    title: string,
+    message: string
+  ): Promise<boolean> {
     if (!(await this.isChatManagementChannelConfigured())) {
-      console.log('Chat management channel not configured, skipping notification');
+      console.log(
+        'Chat management channel not configured, skipping notification'
+      );
       return false;
     }
 
@@ -579,13 +625,20 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   /**
    * CENTRALIZED: Send system alerts notifications
    */
-  async sendSystemAlertNotification(title: string, message: string, severity: 'info' | 'warning' | 'error' = 'info'): Promise<boolean> {
+  async sendSystemAlertNotification(
+    title: string,
+    message: string,
+    severity: 'info' | 'warning' | 'error' = 'info'
+  ): Promise<boolean> {
     if (!(await this.isSystemAlertsChannelConfigured())) {
-      console.log('System alerts channel not configured, skipping notification');
+      console.log(
+        'System alerts channel not configured, skipping notification'
+      );
       return false;
     }
 
-    const emoji = severity === 'error' ? '🚨' : severity === 'warning' ? '⚠️' : 'ℹ️';
+    const emoji =
+      severity === 'error' ? '🚨' : severity === 'warning' ? '⚠️' : 'ℹ️';
     const formattedMessage = `
 ${emoji} <b>${title}</b>
 
@@ -608,7 +661,8 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
     if (!(await this.isConfigured())) {
       return {
         success: false,
-        message: 'Telegram not configured. Please configure your bot token and chat ID in the admin settings.',
+        message:
+          'Telegram not configured. Please configure your bot token and chat ID in the admin settings.',
       };
     }
 
@@ -663,82 +717,122 @@ export const simplifiedTelegramService = {
     }
     return globalSimplifiedServiceInstance;
   },
-  
+
   // DRY: Same convenience methods but using simplified service
-  async sendNewOrderNotification(...args: Parameters<SimplifiedTelegramService['sendNewOrderNotification']>) {
+  async sendNewOrderNotification(
+    ...args: Parameters<SimplifiedTelegramService['sendNewOrderNotification']>
+  ) {
     const instance = await this.getInstance();
     return instance.sendNewOrderNotification(...args);
   },
-  
-  async sendPaymentStatusNotification(...args: Parameters<SimplifiedTelegramService['sendPaymentStatusNotification']>) {
+
+  async sendPaymentStatusNotification(
+    ...args: Parameters<
+      SimplifiedTelegramService['sendPaymentStatusNotification']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.sendPaymentStatusNotification(...args);
   },
-  
-  async sendDailySummary(...args: Parameters<SimplifiedTelegramService['sendDailySummary']>) {
+
+  async sendDailySummary(
+    ...args: Parameters<SimplifiedTelegramService['sendDailySummary']>
+  ) {
     const instance = await this.getInstance();
     return instance.sendDailySummary(...args);
   },
-  
-  async sendLowStockAlert(...args: Parameters<SimplifiedTelegramService['sendLowStockAlert']>) {
+
+  async sendLowStockAlert(
+    ...args: Parameters<SimplifiedTelegramService['sendLowStockAlert']>
+  ) {
     const instance = await this.getInstance();
     return instance.sendLowStockAlert(...args);
   },
-  
-  async sendGeneralNotification(...args: Parameters<SimplifiedTelegramService['sendGeneralNotification']>) {
+
+  async sendGeneralNotification(
+    ...args: Parameters<SimplifiedTelegramService['sendGeneralNotification']>
+  ) {
     const instance = await this.getInstance();
     return instance.sendGeneralNotification(...args);
   },
-  
-  async testConnection(...args: Parameters<SimplifiedTelegramService['testConnection']>) {
+
+  async testConnection(
+    ...args: Parameters<SimplifiedTelegramService['testConnection']>
+  ) {
     const instance = await this.getInstance();
     return instance.testConnection(...args);
   },
-  
-  async isConfigured(...args: Parameters<SimplifiedTelegramService['isConfigured']>) {
+
+  async isConfigured(
+    ...args: Parameters<SimplifiedTelegramService['isConfigured']>
+  ) {
     const instance = await this.getInstance();
     return instance.isConfigured(...args);
   },
-  
-  async isOrdersChannelConfigured(...args: Parameters<SimplifiedTelegramService['isOrdersChannelConfigured']>) {
+
+  async isOrdersChannelConfigured(
+    ...args: Parameters<SimplifiedTelegramService['isOrdersChannelConfigured']>
+  ) {
     const instance = await this.getInstance();
     return instance.isOrdersChannelConfigured(...args);
   },
-  
-  async isInventoryChannelConfigured(...args: Parameters<SimplifiedTelegramService['isInventoryChannelConfigured']>) {
+
+  async isInventoryChannelConfigured(
+    ...args: Parameters<
+      SimplifiedTelegramService['isInventoryChannelConfigured']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.isInventoryChannelConfigured(...args);
   },
 
-  async isChatManagementChannelConfigured(...args: Parameters<SimplifiedTelegramService['isChatManagementChannelConfigured']>) {
+  async isChatManagementChannelConfigured(
+    ...args: Parameters<
+      SimplifiedTelegramService['isChatManagementChannelConfigured']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.isChatManagementChannelConfigured(...args);
   },
 
-  async isSystemAlertsChannelConfigured(...args: Parameters<SimplifiedTelegramService['isSystemAlertsChannelConfigured']>) {
+  async isSystemAlertsChannelConfigured(
+    ...args: Parameters<
+      SimplifiedTelegramService['isSystemAlertsChannelConfigured']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.isSystemAlertsChannelConfigured(...args);
   },
 
-  async sendChatManagementNotification(...args: Parameters<SimplifiedTelegramService['sendChatManagementNotification']>) {
+  async sendChatManagementNotification(
+    ...args: Parameters<
+      SimplifiedTelegramService['sendChatManagementNotification']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.sendChatManagementNotification(...args);
   },
 
-  async sendSystemAlertNotification(...args: Parameters<SimplifiedTelegramService['sendSystemAlertNotification']>) {
+  async sendSystemAlertNotification(
+    ...args: Parameters<
+      SimplifiedTelegramService['sendSystemAlertNotification']
+    >
+  ) {
     const instance = await this.getInstance();
     return instance.sendSystemAlertNotification(...args);
   },
-  
-  async reloadConfiguration(...args: Parameters<SimplifiedTelegramService['reloadConfiguration']>) {
+
+  async reloadConfiguration(
+    ...args: Parameters<SimplifiedTelegramService['reloadConfiguration']>
+  ) {
     const instance = await this.getInstance();
     return instance.reloadConfiguration(...args);
   },
-  
+
   getHealthStatus() {
     if (!globalSimplifiedServiceInstance) {
       return { healthy: false, lastCheck: null, queuedMessages: 0 };
     }
     return globalSimplifiedServiceInstance.getHealthStatus();
-  }
+  },
 };

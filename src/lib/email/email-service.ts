@@ -475,7 +475,9 @@ export class EmailService {
   /**
    * Generate HTML for ready to ship notification email
    */
-  private generateReadyToShipNotificationHTML(orderData: OrderEmailData): string {
+  private generateReadyToShipNotificationHTML(
+    orderData: OrderEmailData
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -688,7 +690,10 @@ export class EmailService {
       console.error('Agent application confirmation email error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send confirmation',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send confirmation',
       };
     }
   }
@@ -720,7 +725,10 @@ export class EmailService {
       console.error('Agent application status update email error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send status update',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to send status update',
       };
     }
   }
@@ -751,7 +759,8 @@ export class EmailService {
       console.error('Admin notification email error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to notify admins',
+        error:
+          error instanceof Error ? error.message : 'Failed to notify admins',
       };
     }
   }
@@ -838,10 +847,10 @@ export class EmailService {
     reviewDate: Date;
   }): string {
     const statusLabels: Record<string, string> = {
-      'APPROVED': 'Diluluskan',
-      'REJECTED': 'Ditolak',
-      'UNDER_REVIEW': 'Dalam Semakan',
-      'NEEDS_MORE_INFO': 'Memerlukan Maklumat Tambahan'
+      APPROVED: 'Diluluskan',
+      REJECTED: 'Ditolak',
+      UNDER_REVIEW: 'Dalam Semakan',
+      NEEDS_MORE_INFO: 'Memerlukan Maklumat Tambahan',
     };
 
     const statusLabel = statusLabels[data.status] || data.status;
@@ -880,12 +889,18 @@ export class EmailService {
               <p><strong>Tarikh Semakan:</strong> ${data.reviewDate.toLocaleDateString('ms-MY')}</p>
             </div>
 
-            ${data.adminNotes ? `
+            ${
+              data.adminNotes
+                ? `
               <h3>Nota dari Pasukan Kami:</h3>
               <p style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-style: italic;">${data.adminNotes}</p>
-            ` : ''}
+            `
+                : ''
+            }
 
-            ${isApproved ? `
+            ${
+              isApproved
+                ? `
               <h3>Tahniah! Permohonan Anda Diluluskan</h3>
               <p>Selamat datang ke keluarga besar JRM! Berikut adalah langkah-langkah seterusnya:</p>
               <ul>
@@ -894,13 +909,17 @@ export class EmailService {
                 <li>Training online akan dijadualkan untuk minggu depan</li>
                 <li>Portal agen akan diaktifkan selepas training</li>
               </ul>
-            ` : isRejected ? `
+            `
+                : isRejected
+                  ? `
               <h3>Maaf, Permohonan Tidak Diluluskan</h3>
               <p>Walaupun permohonan anda tidak diluluskan pada kali ini, kami amat menghargai minat anda. Anda boleh memohon semula selepas 6 bulan.</p>
-            ` : `
+            `
+                  : `
               <h3>Permohonan Sedang Diproses</h3>
               <p>Kami masih dalam proses menyemak permohonan anda. Kami akan menghubungi anda sekiranya memerlukan maklumat tambahan.</p>
-            `}
+            `
+            }
 
             <p>Jika anda mempunyai sebarang pertanyaan, sila hubungi kami di agent@jrm.com atau +6012-345-6789.</p>
 

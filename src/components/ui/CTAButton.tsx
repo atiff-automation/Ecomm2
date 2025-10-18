@@ -31,14 +31,14 @@ const sizeVariants = {
   sm: 'px-4 py-2 text-sm',
   md: 'px-6 py-2.5 text-base',
   lg: 'px-8 py-3 text-lg font-semibold',
-  xl: 'px-10 py-4 text-xl font-semibold'
+  xl: 'px-10 py-4 text-xl font-semibold',
 };
 
 const iconComponents = {
   arrow: ArrowRight,
   chevron: ChevronRight,
   external: ExternalLink,
-  none: null
+  none: null,
 };
 
 export function CTAButton({
@@ -64,7 +64,9 @@ export function CTAButton({
       {iconPosition === 'left' && IconComponent && (
         <IconComponent className="w-5 h-5" aria-hidden="true" />
       )}
-      <span className={cn('transition-all duration-200', loading && 'opacity-70')}>
+      <span
+        className={cn('transition-all duration-200', loading && 'opacity-70')}
+      >
         {children}
       </span>
       {iconPosition === 'right' && IconComponent && (
@@ -122,7 +124,12 @@ export function CTAButton({
     }
 
     return (
-      <Link href={href} className={buttonClasses} data-testid={testId} {...props}>
+      <Link
+        href={href}
+        className={buttonClasses}
+        data-testid={testId}
+        {...props}
+      >
         {buttonContent}
       </Link>
     );
@@ -145,7 +152,11 @@ export function CTAButton({
 }
 
 // Specialized CTA button variants for common use cases
-export const PrimaryCTAButton = ({ children, className, ...props }: Omit<CTAButtonProps, 'variant'>) => (
+export const PrimaryCTAButton = ({
+  children,
+  className,
+  ...props
+}: Omit<CTAButtonProps, 'variant'>) => (
   <CTAButton
     variant="primary"
     className={cn(
@@ -160,7 +171,11 @@ export const PrimaryCTAButton = ({ children, className, ...props }: Omit<CTAButt
   </CTAButton>
 );
 
-export const SecondaryCTAButton = ({ children, className, ...props }: Omit<CTAButtonProps, 'variant'>) => (
+export const SecondaryCTAButton = ({
+  children,
+  className,
+  ...props
+}: Omit<CTAButtonProps, 'variant'>) => (
   <CTAButton
     variant="outline"
     className={cn(
@@ -174,7 +189,11 @@ export const SecondaryCTAButton = ({ children, className, ...props }: Omit<CTABu
   </CTAButton>
 );
 
-export const GhostCTAButton = ({ children, className, ...props }: Omit<CTAButtonProps, 'variant'>) => (
+export const GhostCTAButton = ({
+  children,
+  className,
+  ...props
+}: Omit<CTAButtonProps, 'variant'>) => (
   <CTAButton
     variant="ghost"
     className={cn(
@@ -212,23 +231,23 @@ export function CTAButtonGroup({
   alignment = 'left',
   spacing = 'md',
   direction = 'horizontal',
-  className
+  className,
 }: CTAButtonGroupProps) {
   const alignmentClasses = {
     left: 'justify-start',
     center: 'justify-center',
-    right: 'justify-end'
+    right: 'justify-end',
   };
 
   const spacingClasses = {
     sm: 'gap-3',
     md: 'gap-4',
-    lg: 'gap-6'
+    lg: 'gap-6',
   };
 
   const directionClasses = {
     horizontal: 'flex-col sm:flex-row',
-    vertical: 'flex-col'
+    vertical: 'flex-col',
   };
 
   if (!primaryCTA && !secondaryCTA) {
@@ -236,13 +255,15 @@ export function CTAButtonGroup({
   }
 
   return (
-    <div className={cn(
-      'flex',
-      directionClasses[direction],
-      alignmentClasses[alignment],
-      spacingClasses[spacing],
-      className
-    )}>
+    <div
+      className={cn(
+        'flex',
+        directionClasses[direction],
+        alignmentClasses[alignment],
+        spacingClasses[spacing],
+        className
+      )}
+    >
       {primaryCTA && (
         <PrimaryCTAButton
           href={primaryCTA.href}

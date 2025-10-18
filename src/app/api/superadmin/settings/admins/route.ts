@@ -12,7 +12,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Get all admin accounts (exclude superadmins and customers)
     const admins = await prisma.user.findMany({
       where: {
-        role: 'ADMIN'
+        role: 'ADMIN',
       },
       select: {
         id: true,
@@ -41,21 +41,20 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             createdOrders: true,
-            auditLogs: true
-          }
-        }
+            auditLogs: true,
+          },
+        },
       },
       orderBy: [
         { status: 'asc' }, // Active first
-        { createdAt: 'desc' } // Newest first
-      ]
+        { createdAt: 'desc' }, // Newest first
+      ],
     });
 
     return NextResponse.json({
       success: true,
-      data: admins
+      data: admins,
     });
-
   } catch (error) {
     console.error('Get admin accounts error:', error);
     return NextResponse.json(

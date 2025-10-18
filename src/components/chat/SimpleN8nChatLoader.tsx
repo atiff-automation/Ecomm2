@@ -32,39 +32,40 @@ export function SimpleN8nChatLoader() {
     console.log('🚀 Initializing n8n chat with webhook:', config.webhookUrl);
 
     // Import and initialize using the installed package
-    import('@n8n/chat').then(({ createChat }) => {
-      console.log('📦 @n8n/chat loaded, creating chat with config:', {
-        webhookUrl: config.webhookUrl,
-        mode: 'window'
-      });
+    import('@n8n/chat')
+      .then(({ createChat }) => {
+        console.log('📦 @n8n/chat loaded, creating chat with config:', {
+          webhookUrl: config.webhookUrl,
+          mode: 'window',
+        });
 
-      createChat({
-        webhookUrl: config.webhookUrl,
-        mode: 'window',
-        showWelcomeScreen: false,
-        initialMessages: config.welcomeMessage.split('\n'),
-        i18n: {
-          en: {
-            title: config.title,
-            subtitle: config.subtitle,
-            footer: '',
-            getStarted: 'New Conversation',
-            inputPlaceholder: config.inputPlaceholder,
-          }
-        },
-        chatInputKey: 'chatInput',
-        chatSessionKey: 'sessionId',
-        loadPreviousSession: false,
-        defaultLanguage: 'en',
-        target: '#n8n-chat'
-      });
+        createChat({
+          webhookUrl: config.webhookUrl,
+          mode: 'window',
+          showWelcomeScreen: false,
+          initialMessages: config.welcomeMessage.split('\n'),
+          i18n: {
+            en: {
+              title: config.title,
+              subtitle: config.subtitle,
+              footer: '',
+              getStarted: 'New Conversation',
+              inputPlaceholder: config.inputPlaceholder,
+            },
+          },
+          chatInputKey: 'chatInput',
+          chatSessionKey: 'sessionId',
+          loadPreviousSession: false,
+          defaultLanguage: 'en',
+          target: '#n8n-chat',
+        });
 
-      console.log('✅ n8n chat initialized');
+        console.log('✅ n8n chat initialized');
 
-      // Inject dynamic CSS for colors and styling
-      const styleElement = document.createElement('style');
-      styleElement.id = 'n8n-chat-custom-styles';
-      styleElement.textContent = `
+        // Inject dynamic CSS for colors and styling
+        const styleElement = document.createElement('style');
+        styleElement.id = 'n8n-chat-custom-styles';
+        styleElement.textContent = `
         :root {
           --chat--color-primary: ${config.primaryColor};
           --chat--color-primary-shade-50: ${adjustColor(config.primaryColor, -10)};
@@ -91,18 +92,18 @@ export function SimpleN8nChatLoader() {
           border-radius: 12px !important;
         }
       `;
-      document.head.appendChild(styleElement);
+        document.head.appendChild(styleElement);
 
-      // Inject bot avatar if configured
-      if (config.botAvatarUrl) {
-        const observer = new MutationObserver(() => {
-          const chatHeader = document.querySelector('[class*="chat-header"]');
-          if (chatHeader && !chatHeader.querySelector('.bot-avatar')) {
-            const avatar = document.createElement('img');
-            avatar.src = config.botAvatarUrl;
-            avatar.alt = 'Chat Bot';
-            avatar.className = 'bot-avatar';
-            avatar.style.cssText = `
+        // Inject bot avatar if configured
+        if (config.botAvatarUrl) {
+          const observer = new MutationObserver(() => {
+            const chatHeader = document.querySelector('[class*="chat-header"]');
+            if (chatHeader && !chatHeader.querySelector('.bot-avatar')) {
+              const avatar = document.createElement('img');
+              avatar.src = config.botAvatarUrl;
+              avatar.alt = 'Chat Bot';
+              avatar.className = 'bot-avatar';
+              avatar.style.cssText = `
               width: 40px;
               height: 40px;
               border-radius: 50%;
@@ -115,25 +116,26 @@ export function SimpleN8nChatLoader() {
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             `;
 
-            chatHeader.style.position = 'relative';
-            chatHeader.style.paddingLeft = '60px';
-            chatHeader.prepend(avatar);
+              chatHeader.style.position = 'relative';
+              chatHeader.style.paddingLeft = '60px';
+              chatHeader.prepend(avatar);
+              observer.disconnect();
+            }
+          });
+
+          observer.observe(document.body, { childList: true, subtree: true });
+
+          // Cleanup on unmount
+          return () => {
             observer.disconnect();
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // Cleanup on unmount
-        return () => {
-          observer.disconnect();
-          const styleEl = document.getElementById('n8n-chat-custom-styles');
-          if (styleEl) styleEl.remove();
-        };
-      }
-    }).catch(err => {
-      console.error('❌ Failed to load @n8n/chat:', err);
-    });
+            const styleEl = document.getElementById('n8n-chat-custom-styles');
+            if (styleEl) styleEl.remove();
+          };
+        }
+      })
+      .catch(err => {
+        console.error('❌ Failed to load @n8n/chat:', err);
+      });
   }, [config]);
 
   // Color adjustment helper function
@@ -141,14 +143,19 @@ export function SimpleN8nChatLoader() {
     const num = parseInt(hex.replace('#', ''), 16);
     const amt = Math.round(2.55 * percent);
     const R = (num >> 16) + amt;
-    const G = (num >> 8 & 0x00FF) + amt;
-    const B = (num & 0x0000FF) + amt;
-    return '#' + (
-      0x1000000 +
-      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
-      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
-      (B < 255 ? (B < 1 ? 0 : B) : 255)
-    ).toString(16).slice(1);
+    const G = ((num >> 8) & 0x00ff) + amt;
+    const B = (num & 0x0000ff) + amt;
+    return (
+      '#' +
+      (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+      )
+        .toString(16)
+        .slice(1)
+    );
   };
 
   return <div id="n8n-chat" />;

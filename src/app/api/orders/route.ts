@@ -41,26 +41,25 @@ const createOrderSchema = z.object({
   cartItems: z.array(orderItemSchema).optional(), // Optional for authenticated users (use cart)
   shippingAddress: addressSchema,
   billingAddress: addressSchema,
-  paymentMethod: z.enum([
-    'toyyibpay',
-    'TOYYIBPAY',
-  ]),
+  paymentMethod: z.enum(['toyyibpay', 'TOYYIBPAY']),
   orderNotes: z.string().optional(),
   membershipActivated: z.boolean().optional(),
   isGuest: z.boolean().optional(), // To indicate guest checkout
   guestEmail: z.string().email().optional(), // Guest email for order tracking
   // New simplified shipping implementation
-  selectedShipping: z.object({
-    serviceId: z.string(),
-    courierName: z.string(),
-    serviceType: z.string(), // 'parcel' or 'document'
-    serviceDetail: z.string(), // 'pickup', 'dropoff', or 'dropoff or pickup'
-    cost: z.number(),
-    originalCost: z.number(),
-    freeShipping: z.boolean(),
-    estimatedDays: z.string(),
-    savedAmount: z.number().optional(),
-  }).optional(),
+  selectedShipping: z
+    .object({
+      serviceId: z.string(),
+      courierName: z.string(),
+      serviceType: z.string(), // 'parcel' or 'document'
+      serviceDetail: z.string(), // 'pickup', 'dropoff', or 'dropoff or pickup'
+      cost: z.number(),
+      originalCost: z.number(),
+      freeShipping: z.boolean(),
+      estimatedDays: z.string(),
+      savedAmount: z.number().optional(),
+    })
+    .optional(),
   calculatedWeight: z.number().positive().optional(),
   // Old shipping rate (deprecated, keep for backward compatibility)
   shippingRate: z
@@ -343,7 +342,9 @@ export async function POST(request: NextRequest) {
       // Fallback: flat rate shipping
       const freeShippingThreshold = 150;
       shippingCost = subtotal >= freeShippingThreshold ? 0 : 15;
-      console.log(`🚚 Using temporary fallback shipping calculation: RM${shippingCost}`);
+      console.log(
+        `🚚 Using temporary fallback shipping calculation: RM${shippingCost}`
+      );
     }
 
     // No tax calculation for now - tax system not configured
@@ -626,7 +627,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // Enhanced error logging for production debugging
     console.error('❌ Error creating order:', error);
-    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error(
+      'Error type:',
+      error instanceof Error ? error.constructor.name : typeof error
+    );
 
     if (error instanceof Error) {
       console.error('Error message:', error.message);
@@ -691,14 +695,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Return more detailed error message in development
-    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
-      ? `Failed to create order: ${error.message}`
-      : 'Failed to create order';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' && error instanceof Error
+        ? `Failed to create order: ${error.message}`
+        : 'Failed to create order';
 
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
 

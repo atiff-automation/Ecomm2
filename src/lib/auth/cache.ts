@@ -17,7 +17,10 @@ export function getCachedUserValidation(userId: string): boolean | undefined {
   return userValidationCache.get(userId);
 }
 
-export function setCachedUserValidation(userId: string, isValid: boolean): void {
+export function setCachedUserValidation(
+  userId: string,
+  isValid: boolean
+): void {
   userValidationCache.set(userId, isValid);
 }
 
@@ -30,12 +33,15 @@ export function clearUserValidationCache(): void {
 }
 
 // Session data cache - reduces DB queries for user info
-const sessionDataCache = new LRUCache<string, {
-  role: string;
-  isMember: boolean;
-  memberSince: Date | null;
-  status: string;
-}>({
+const sessionDataCache = new LRUCache<
+  string,
+  {
+    role: string;
+    isMember: boolean;
+    memberSince: Date | null;
+    status: string;
+  }
+>({
   max: 5000,
   ttl: 5 * 60 * 1000, // 5 minute TTL for session data
 });
@@ -44,12 +50,15 @@ export function getCachedSessionData(userId: string) {
   return sessionDataCache.get(userId);
 }
 
-export function setCachedSessionData(userId: string, data: {
-  role: string;
-  isMember: boolean;
-  memberSince: Date | null;
-  status: string;
-}): void {
+export function setCachedSessionData(
+  userId: string,
+  data: {
+    role: string;
+    isMember: boolean;
+    memberSince: Date | null;
+    status: string;
+  }
+): void {
   sessionDataCache.set(userId, data);
 }
 

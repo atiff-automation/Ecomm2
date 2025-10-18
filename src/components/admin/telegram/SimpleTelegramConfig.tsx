@@ -28,7 +28,7 @@ import {
   Package,
   Trash2,
   Database,
-  Shield
+  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -54,9 +54,11 @@ interface SimpleTelegramConfigProps {
   onConfigUpdated?: () => void;
 }
 
-export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigProps) {
+export function SimpleTelegramConfig({
+  onConfigUpdated,
+}: SimpleTelegramConfigProps) {
   const router = useRouter();
-  
+
   // SINGLE SOURCE OF TRUTH: State management
   const [config, setConfig] = useState<AdminTelegramConfig>({
     ordersChatId: '',
@@ -68,9 +70,9 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
     chatManagementEnabled: true,
     systemAlertsEnabled: true,
     dailySummaryEnabled: true,
-    timezone: 'Asia/Kuala_Lumpur'
+    timezone: 'Asia/Kuala_Lumpur',
   });
-  
+
   const [botToken, setBotToken] = useState('');
   const [showBotToken, setShowBotToken] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,12 +157,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
           ordersChatId: config.ordersChatId.trim(),
           inventoryChatId: config.inventoryChatId?.trim(),
           chatManagementChatId: config.chatManagementChatId?.trim(),
-          systemAlertsChatId: config.systemAlertsChatId?.trim()
-        })
+          systemAlertsChatId: config.systemAlertsChatId?.trim(),
+        }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('✅ Configuration test passed!');
         setTestResults({ orders: true, inventory: true });
@@ -204,12 +206,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
           chatManagementEnabled: config.chatManagementEnabled,
           systemAlertsEnabled: config.systemAlertsEnabled,
           dailySummaryEnabled: config.dailySummaryEnabled,
-          timezone: config.timezone
-        })
+          timezone: config.timezone,
+        }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('🎉 Telegram configuration saved successfully!');
         setConfig(result.config);
@@ -217,17 +219,17 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
         // SECURITY: Clear bot token from UI after successful save
         setBotToken('');
         setShowBotToken(false);
-        
+
         // Force service reload to refresh cached config
         try {
           await fetch('/api/admin/telegram/simple-config', { method: 'PATCH' });
         } catch (error) {
           console.warn('Service reload failed:', error);
         }
-        
+
         // Refresh dashboard data
         router.refresh();
-        
+
         if (onConfigUpdated) {
           onConfigUpdated();
         }
@@ -253,15 +255,22 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
     }
 
     // User confirmation
-    if (!window.confirm('⚠️ Are you sure you want to clear the Telegram configuration?\n\nThis will:\n• Delete bot token and chat IDs\n• Disable all notifications\n• This action cannot be undone!')) {
+    if (
+      !window.confirm(
+        '⚠️ Are you sure you want to clear the Telegram configuration?\n\nThis will:\n• Delete bot token and chat IDs\n• Disable all notifications\n• This action cannot be undone!'
+      )
+    ) {
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/admin/telegram/simple-config?id=${config.id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/admin/telegram/simple-config?id=${config.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -277,23 +286,25 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
             chatManagementEnabled: true,
             systemAlertsEnabled: true,
             dailySummaryEnabled: true,
-            timezone: 'Asia/Kuala_Lumpur'
+            timezone: 'Asia/Kuala_Lumpur',
           });
           setBotToken('');
           setIsConfigured(false);
-          
+
           toast.success('🗑️ Telegram configuration cleared successfully!');
-          
+
           // Force service reload to clear cached config
           try {
-            await fetch('/api/admin/telegram/simple-config', { method: 'PATCH' });
+            await fetch('/api/admin/telegram/simple-config', {
+              method: 'PATCH',
+            });
           } catch (error) {
             console.warn('Service reload failed:', error);
           }
-          
+
           // Refresh dashboard data
           router.refresh();
-          
+
           if (onConfigUpdated) {
             onConfigUpdated();
           }
@@ -314,7 +325,9 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
   /**
    * DRY: Test notifications
    */
-  const testNotification = async (type: 'orders' | 'inventory' | 'chat-management' | 'system-alerts') => {
+  const testNotification = async (
+    type: 'orders' | 'inventory' | 'chat-management' | 'system-alerts'
+  ) => {
     if (!isConfigured) {
       toast.error('Please save your configuration first');
       return;
@@ -322,22 +335,22 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
 
     try {
       const endpointMap = {
-        'orders': 'simple-test-order',
-        'inventory': 'simple-test-inventory',
+        orders: 'simple-test-order',
+        inventory: 'simple-test-inventory',
         'chat-management': 'simple-test-chat-management',
-        'system-alerts': 'simple-test-system-alerts'
+        'system-alerts': 'simple-test-system-alerts',
       };
 
       const typeMap = {
-        'orders': 'Order',
-        'inventory': 'Inventory',
+        orders: 'Order',
+        inventory: 'Inventory',
         'chat-management': 'Chat Management',
-        'system-alerts': 'System Alerts'
+        'system-alerts': 'System Alerts',
       };
 
       const endpoint = endpointMap[type];
       const response = await fetch(`/api/admin/telegram/${endpoint}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       const result = await response.json();
@@ -364,7 +377,8 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
               <div>
                 <CardTitle>Admin Telegram Configuration</CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  Centralized telegram notifications for your e-commerce platform
+                  Centralized telegram notifications for your e-commerce
+                  platform
                 </p>
               </div>
             </div>
@@ -394,8 +408,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 id="botToken"
                 type={showBotToken ? 'text' : 'password'}
                 value={botToken}
-                onChange={(e) => setBotToken(e.target.value)}
-                placeholder={isConfigured && !botToken ? "••••••••••••••••••••••••••••••••" : "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"}
+                onChange={e => setBotToken(e.target.value)}
+                placeholder={
+                  isConfigured && !botToken
+                    ? '••••••••••••••••••••••••••••••••'
+                    : '1234567890:ABCdefGHIjklMNOpqrsTUVwxyz'
+                }
                 className="pr-10"
               />
               <Button
@@ -405,14 +423,17 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 className="absolute right-0 top-0 h-full px-3"
                 onClick={() => setShowBotToken(!showBotToken)}
               >
-                {showBotToken ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                {showBotToken ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {isConfigured && !botToken ? 
-                "🔒 Bot token is configured and hidden for security. Enter new token to update." : 
-                "Get this from @BotFather on Telegram. Keep this secret!"
-              }
+              {isConfigured && !botToken
+                ? '🔒 Bot token is configured and hidden for security. Enter new token to update.'
+                : 'Get this from @BotFather on Telegram. Keep this secret!'}
             </p>
           </div>
         </CardContent>
@@ -431,7 +452,9 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
           <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
             <div className="flex items-center gap-2 mb-3">
               <MessageCircle className="w-5 h-5 text-blue-600" />
-              <h4 className="font-medium text-blue-900">Orders Notifications</h4>
+              <h4 className="font-medium text-blue-900">
+                Orders Notifications
+              </h4>
             </div>
             <div className="space-y-3">
               <div>
@@ -439,7 +462,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 <Input
                   id="ordersChatId"
                   value={config.ordersChatId}
-                  onChange={(e) => setConfig(prev => ({ ...prev, ordersChatId: e.target.value }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      ordersChatId: e.target.value,
+                    }))
+                  }
                   placeholder="-1001234567890"
                   className="mt-1"
                 />
@@ -473,7 +501,12 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
                 <Input
                   id="inventoryChatId"
                   value={config.inventoryChatId || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, inventoryChatId: e.target.value }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      inventoryChatId: e.target.value,
+                    }))
+                  }
                   placeholder="-1001234567890 (optional)"
                   className="mt-1 border-orange-300 focus:border-white focus:ring-orange-200"
                 />
@@ -503,16 +536,24 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
             </div>
             <div className="space-y-3">
               <div>
-                <Label htmlFor="chatManagementChatId">Chat Management Group Chat ID</Label>
+                <Label htmlFor="chatManagementChatId">
+                  Chat Management Group Chat ID
+                </Label>
                 <Input
                   id="chatManagementChatId"
                   value={config.chatManagementChatId || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, chatManagementChatId: e.target.value }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      chatManagementChatId: e.target.value,
+                    }))
+                  }
                   placeholder="-1001234567890 (optional)"
                   className="mt-1 border-purple-300 focus:border-white focus:ring-purple-200"
                 />
                 <p className="text-xs text-gray-600 mt-1">
-                  Chat backups, cleanup operations, and data management notifications
+                  Chat backups, cleanup operations, and data management
+                  notifications
                 </p>
               </div>
               {isConfigured && config.chatManagementChatId && (
@@ -537,11 +578,18 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
             </div>
             <div className="space-y-3">
               <div>
-                <Label htmlFor="systemAlertsChatId">System Alerts Group Chat ID</Label>
+                <Label htmlFor="systemAlertsChatId">
+                  System Alerts Group Chat ID
+                </Label>
                 <Input
                   id="systemAlertsChatId"
                   value={config.systemAlertsChatId || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, systemAlertsChatId: e.target.value }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      systemAlertsChatId: e.target.value,
+                    }))
+                  }
                   placeholder="-1001234567890 (optional)"
                   className="mt-1 border-red-300 focus:border-white focus:ring-red-200"
                 />
@@ -576,20 +624,36 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
         <CardContent>
           <div className="space-y-3 text-sm text-gray-700">
             <div className="flex items-start gap-2">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">1</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                1
+              </span>
               <p>Create a Telegram group for your notifications</p>
             </div>
             <div className="flex items-start gap-2">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">2</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                2
+              </span>
               <p>Add your bot to the group and make it an admin</p>
             </div>
             <div className="flex items-start gap-2">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">3</span>
-              <p>Send a message to the group, then visit: <code className="bg-gray-200 px-1 rounded">https://api.telegram.org/bot{'{YOUR_BOT_TOKEN}'}/getUpdates</code></p>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                3
+              </span>
+              <p>
+                Send a message to the group, then visit:{' '}
+                <code className="bg-gray-200 px-1 rounded">
+                  https://api.telegram.org/bot{'{YOUR_BOT_TOKEN}'}/getUpdates
+                </code>
+              </p>
             </div>
             <div className="flex items-start gap-2">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">4</span>
-              <p>Look for the "chat" object and copy the "id" value (it will be negative for groups)</p>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                4
+              </span>
+              <p>
+                Look for the "chat" object and copy the "id" value (it will be
+                negative for groups)
+              </p>
             </div>
           </div>
         </CardContent>
@@ -612,7 +676,7 @@ export function SimpleTelegramConfig({ onConfigUpdated }: SimpleTelegramConfigPr
               )}
               Test Configuration
             </Button>
-            
+
             <Button
               onClick={saveConfiguration}
               disabled={isLoading || isTesting}

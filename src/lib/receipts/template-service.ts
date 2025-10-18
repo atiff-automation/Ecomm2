@@ -4,14 +4,14 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { 
-  ReceiptTemplate, 
+import {
+  ReceiptTemplate,
   CreateReceiptTemplateInput,
   UpdateReceiptTemplateInput,
   ReceiptTemplateType,
   TemplateValidationResult,
   DEFAULT_TEMPLATE_CONFIGS,
-  ReceiptTemplateContent
+  ReceiptTemplateContent,
 } from '@/types/receipt-templates';
 import { TaxReceiptData } from './receipt-service';
 
@@ -38,15 +38,12 @@ export class ReceiptTemplateService {
           ...(options?.activeOnly && { isActive: true }),
           ...(options?.templateType && { templateType: options.templateType }),
         },
-        orderBy: [
-          { isDefault: 'desc' },
-          { createdAt: 'asc' }
-        ]
+        orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       });
 
       return templates.map(template => ({
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       }));
     } catch (error) {
       console.error('Error fetching templates:', error);
@@ -63,15 +60,15 @@ export class ReceiptTemplateService {
       let template = await prisma.receiptTemplate.findFirst({
         where: {
           isDefault: true,
-          isActive: true
-        }
+          isActive: true,
+        },
       });
 
       // If no default, get any active template
       if (!template) {
         template = await prisma.receiptTemplate.findFirst({
           where: { isActive: true },
-          orderBy: { createdAt: 'asc' }
+          orderBy: { createdAt: 'asc' },
         });
       }
 
@@ -81,7 +78,7 @@ export class ReceiptTemplateService {
 
       return {
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       };
     } catch (error) {
       console.error('Error fetching active template:', error);
@@ -95,7 +92,7 @@ export class ReceiptTemplateService {
   async getTemplateById(id: string): Promise<ReceiptTemplate | null> {
     try {
       const template = await prisma.receiptTemplate.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!template) {
@@ -104,7 +101,7 @@ export class ReceiptTemplateService {
 
       return {
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       };
     } catch (error) {
       console.error('Error fetching template by ID:', error);
@@ -123,7 +120,9 @@ export class ReceiptTemplateService {
       // Validate template content
       const validation = await this.validateTemplate(input.templateContent);
       if (!validation.isValid) {
-        throw new Error(`Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+        throw new Error(
+          `Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+        );
       }
 
       // If this is set as default, unset current default
@@ -140,13 +139,13 @@ export class ReceiptTemplateService {
           isDefault: input.isDefault || false,
           isActive: input.isActive !== undefined ? input.isActive : true,
           previewImage: input.previewImage,
-          createdBy: userId
-        }
+          createdBy: userId,
+        },
       });
 
       return {
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       };
     } catch (error) {
       console.error('Error creating template:', error);
@@ -167,7 +166,9 @@ export class ReceiptTemplateService {
       if (input.templateContent) {
         const validation = await this.validateTemplate(input.templateContent);
         if (!validation.isValid) {
-          throw new Error(`Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+          throw new Error(
+            `Template validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+          );
         }
       }
 
@@ -180,19 +181,25 @@ export class ReceiptTemplateService {
         where: { id },
         data: {
           ...(input.name && { name: input.name }),
-          ...(input.description !== undefined && { description: input.description }),
-          ...(input.templateContent && { templateContent: input.templateContent as any }),
+          ...(input.description !== undefined && {
+            description: input.description,
+          }),
+          ...(input.templateContent && {
+            templateContent: input.templateContent as any,
+          }),
           ...(input.isDefault !== undefined && { isDefault: input.isDefault }),
           ...(input.isActive !== undefined && { isActive: input.isActive }),
-          ...(input.previewImage !== undefined && { previewImage: input.previewImage }),
+          ...(input.previewImage !== undefined && {
+            previewImage: input.previewImage,
+          }),
           updatedBy: userId,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       return {
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       };
     } catch (error) {
       console.error('Error updating template:', error);
@@ -206,7 +213,7 @@ export class ReceiptTemplateService {
   async deleteTemplate(id: string): Promise<void> {
     try {
       const template = await prisma.receiptTemplate.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!template) {
@@ -218,7 +225,7 @@ export class ReceiptTemplateService {
       }
 
       await prisma.receiptTemplate.delete({
-        where: { id }
+        where: { id },
       });
     } catch (error) {
       console.error('Error deleting template:', error);
@@ -229,17 +236,20 @@ export class ReceiptTemplateService {
   /**
    * Set a template as the default
    */
-  async setDefaultTemplate(id: string, userId: string): Promise<ReceiptTemplate> {
+  async setDefaultTemplate(
+    id: string,
+    userId: string
+  ): Promise<ReceiptTemplate> {
     try {
       // Use a transaction to ensure atomicity
-      const template = await prisma.$transaction(async (tx) => {
+      const template = await prisma.$transaction(async tx => {
         // First, unset all current defaults in a single operation
         await tx.receiptTemplate.updateMany({
           where: { isDefault: true },
-          data: { 
+          data: {
             isDefault: false,
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
 
         // Then set the new default
@@ -249,8 +259,8 @@ export class ReceiptTemplateService {
             isDefault: true,
             isActive: true, // Ensure default template is active
             updatedBy: userId,
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
 
         return updatedTemplate;
@@ -258,7 +268,7 @@ export class ReceiptTemplateService {
 
       return {
         ...template,
-        templateContent: template.templateContent as ReceiptTemplateContent
+        templateContent: template.templateContent as ReceiptTemplateContent,
       };
     } catch (error) {
       console.error('Error setting default template:', error);
@@ -269,15 +279,21 @@ export class ReceiptTemplateService {
   /**
    * Validate template content
    */
-  async validateTemplate(content: ReceiptTemplateContent): Promise<TemplateValidationResult> {
-    const errors: Array<{ field: string; message: string; severity: 'error' | 'warning' }> = [];
+  async validateTemplate(
+    content: ReceiptTemplateContent
+  ): Promise<TemplateValidationResult> {
+    const errors: Array<{
+      field: string;
+      message: string;
+      severity: 'error' | 'warning';
+    }> = [];
 
     // Validate required fields
     if (!content.templateType) {
       errors.push({
         field: 'templateType',
         message: 'Template type is required',
-        severity: 'error'
+        severity: 'error',
       });
     }
 
@@ -285,7 +301,7 @@ export class ReceiptTemplateService {
       errors.push({
         field: 'layout',
         message: 'Layout configuration is required',
-        severity: 'error'
+        severity: 'error',
       });
     }
 
@@ -293,7 +309,7 @@ export class ReceiptTemplateService {
       errors.push({
         field: 'colors',
         message: 'Color configuration is required',
-        severity: 'error'
+        severity: 'error',
       });
     }
 
@@ -301,7 +317,7 @@ export class ReceiptTemplateService {
       errors.push({
         field: 'typography',
         message: 'Typography configuration is required',
-        severity: 'error'
+        severity: 'error',
       });
     }
 
@@ -309,20 +325,26 @@ export class ReceiptTemplateService {
       errors.push({
         field: 'sections',
         message: 'Section configuration is required',
-        severity: 'error'
+        severity: 'error',
       });
     }
 
     // Validate color values
     if (content.colors) {
-      const colorFields = ['primary', 'secondary', 'text', 'accent', 'background'];
+      const colorFields = [
+        'primary',
+        'secondary',
+        'text',
+        'accent',
+        'background',
+      ];
       for (const field of colorFields) {
         const color = content.colors[field as keyof typeof content.colors];
         if (color && !this.isValidColor(color)) {
           errors.push({
             field: `colors.${field}`,
             message: `Invalid color format: ${color}`,
-            severity: 'error'
+            severity: 'error',
           });
         }
       }
@@ -336,7 +358,7 @@ export class ReceiptTemplateService {
           errors.push({
             field: `typography.fontSize.${key}`,
             message: `Font size must be between 8 and 72px`,
-            severity: 'warning'
+            severity: 'warning',
           });
         }
       });
@@ -344,7 +366,7 @@ export class ReceiptTemplateService {
 
     return {
       isValid: errors.filter(e => e.severity === 'error').length === 0,
-      errors
+      errors,
     };
   }
 
@@ -354,28 +376,31 @@ export class ReceiptTemplateService {
   async initializeDefaultTemplates(userId: string): Promise<void> {
     try {
       const existingTemplates = await this.getAvailableTemplates();
-      
+
       if (existingTemplates.length === 0) {
         // Create default templates
         const templateTypes: ReceiptTemplateType[] = [
           'THERMAL_RECEIPT',
-          'BUSINESS_INVOICE', 
+          'BUSINESS_INVOICE',
           'MINIMAL_RECEIPT',
-          'DETAILED_INVOICE'
+          'DETAILED_INVOICE',
         ];
 
         for (let i = 0; i < templateTypes.length; i++) {
           const templateType = templateTypes[i];
           const config = DEFAULT_TEMPLATE_CONFIGS[templateType];
-          
-          await this.createTemplate({
-            name: this.getDefaultTemplateName(templateType),
-            description: this.getDefaultTemplateDescription(templateType),
-            templateType,
-            templateContent: config,
-            isDefault: i === 0, // First template is default
-            isActive: true
-          }, userId);
+
+          await this.createTemplate(
+            {
+              name: this.getDefaultTemplateName(templateType),
+              description: this.getDefaultTemplateDescription(templateType),
+              templateType,
+              templateContent: config,
+              isDefault: i === 0, // First template is default
+              isActive: true,
+            },
+            userId
+          );
         }
       }
     } catch (error) {
@@ -399,12 +424,15 @@ export class ReceiptTemplateService {
 
       // Use sample data or create default sample data
       const previewData = sampleData || this.createSampleData();
-      
+
       // Import template engine for rendering
       const { TemplateEngine } = await import('./template-engine');
       const engine = new TemplateEngine();
-      
-      return await engine.renderTemplate(template, previewData as TaxReceiptData);
+
+      return await engine.renderTemplate(
+        template,
+        previewData as TaxReceiptData
+      );
     } catch (error) {
       console.error('Error generating preview:', error);
       throw new Error('Failed to generate template preview');
@@ -415,7 +443,7 @@ export class ReceiptTemplateService {
   private async unsetCurrentDefault(): Promise<void> {
     await prisma.receiptTemplate.updateMany({
       where: { isDefault: true },
-      data: { isDefault: false }
+      data: { isDefault: false },
     });
   }
 
@@ -428,8 +456,8 @@ export class ReceiptTemplateService {
     const names = {
       THERMAL_RECEIPT: 'Thermal Receipt',
       BUSINESS_INVOICE: 'Business Invoice',
-      MINIMAL_RECEIPT: 'Minimal Receipt', 
-      DETAILED_INVOICE: 'Detailed Invoice'
+      MINIMAL_RECEIPT: 'Minimal Receipt',
+      DETAILED_INVOICE: 'Detailed Invoice',
     };
     return names[type];
   }
@@ -437,9 +465,11 @@ export class ReceiptTemplateService {
   private getDefaultTemplateDescription(type: ReceiptTemplateType): string {
     const descriptions = {
       THERMAL_RECEIPT: 'Compact receipt style suitable for thermal printers',
-      BUSINESS_INVOICE: 'Professional invoice format for business documentation',
+      BUSINESS_INVOICE:
+        'Professional invoice format for business documentation',
       MINIMAL_RECEIPT: 'Clean and simple receipt with modern design',
-      DETAILED_INVOICE: 'Comprehensive invoice with full tax and billing details'
+      DETAILED_INVOICE:
+        'Comprehensive invoice with full tax and billing details',
     };
     return descriptions[type];
   }
@@ -452,20 +482,20 @@ export class ReceiptTemplateService {
         createdAt: new Date(),
         status: 'COMPLETED',
         paymentStatus: 'PAID',
-        subtotal: 150.00,
-        taxAmount: 9.00,
-        shippingCost: 15.00,
-        discountAmount: 5.00,
-        total: 169.00,
+        subtotal: 150.0,
+        taxAmount: 9.0,
+        shippingCost: 15.0,
+        discountAmount: 5.0,
+        total: 169.0,
         paymentMethod: 'Credit Card',
-        customerNotes: undefined
+        customerNotes: undefined,
       },
       customer: {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
         phone: '+60123456789',
-        isMember: true
+        isMember: true,
       },
       orderItems: [
         {
@@ -473,21 +503,21 @@ export class ReceiptTemplateService {
           productName: 'Sample Product 1',
           productSku: 'SKU-001',
           quantity: 2,
-          regularPrice: 50.00,
-          memberPrice: 45.00,
-          appliedPrice: 45.00,
-          totalPrice: 90.00
+          regularPrice: 50.0,
+          memberPrice: 45.0,
+          appliedPrice: 45.0,
+          totalPrice: 90.0,
         },
         {
           id: 'item-2',
           productName: 'Sample Product 2',
           productSku: 'SKU-002',
           quantity: 1,
-          regularPrice: 60.00,
-          memberPrice: 60.00,
-          appliedPrice: 60.00,
-          totalPrice: 60.00
-        }
+          regularPrice: 60.0,
+          memberPrice: 60.0,
+          appliedPrice: 60.0,
+          totalPrice: 60.0,
+        },
       ],
       shippingAddress: {
         firstName: 'John',
@@ -498,15 +528,15 @@ export class ReceiptTemplateService {
         city: 'Kuala Lumpur',
         state: 'KUL',
         postalCode: '50000',
-        country: 'Malaysia'
+        country: 'Malaysia',
       },
       taxBreakdown: {
-        taxableAmount: 150.00,
-        sstAmount: 9.00,
-        gstAmount: 0.00,
-        totalTax: 9.00,
-        taxRate: '6%'
-      }
+        taxableAmount: 150.0,
+        sstAmount: 9.0,
+        gstAmount: 0.0,
+        totalTax: 9.0,
+        taxRate: '6%',
+      },
     };
   }
 }

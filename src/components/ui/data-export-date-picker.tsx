@@ -248,7 +248,9 @@ export function DataExportDatePicker({
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded"></div>
               <span className="text-gray-600">
-                {startDate && endDate ? 'Export Period' : 'Select export period'}
+                {startDate && endDate
+                  ? 'Export Period'
+                  : 'Select export period'}
               </span>
             </div>
             {getDaysCount() && (

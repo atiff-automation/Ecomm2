@@ -14,7 +14,7 @@ import { AuditLogger } from '@/lib/security';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -26,17 +26,13 @@ export async function GET(request: NextRequest) {
 
     const addresses = await prisma.address.findMany({
       where: { userId: session.user.id },
-      orderBy: [
-        { isDefault: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
 
     return NextResponse.json({
       success: true,
-      data: addresses
+      data: addresses,
     });
-
   } catch (error) {
     console.error('Get addresses error:', error);
     return NextResponse.json(
@@ -52,7 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -63,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate request body
     const validatedData = addressSchema.parse(body);
 
@@ -72,11 +68,11 @@ export async function POST(request: NextRequest) {
       await prisma.address.updateMany({
         where: {
           userId: session.user.id,
-          type: validatedData.type
+          type: validatedData.type,
         },
         data: {
-          isDefault: false
-        }
+          isDefault: false,
+        },
       });
     }
 
@@ -95,8 +91,8 @@ export async function POST(request: NextRequest) {
         postalCode: validatedData.postalCode,
         country: validatedData.country,
         phone: validatedData.phone || null,
-        isDefault: validatedData.isDefault
-      }
+        isDefault: validatedData.isDefault,
+      },
     });
 
     // Log the action for audit
@@ -109,7 +105,7 @@ export async function POST(request: NextRequest) {
         addressId: newAddress.id,
         type: validatedData.type,
         city: validatedData.city,
-        state: validatedData.state
+        state: validatedData.state,
       },
       request
     );
@@ -117,12 +113,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Address added successfully',
-      data: newAddress
+      data: newAddress,
     });
-
   } catch (error) {
     console.error('Create address error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },

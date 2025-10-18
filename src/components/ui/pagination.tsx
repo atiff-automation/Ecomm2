@@ -24,7 +24,7 @@ export function Pagination({
   onPageChange,
   showPageNumbers = true,
   maxVisiblePages = 7,
-  className
+  className,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -51,7 +51,8 @@ export function Pagination({
 
   const visiblePages = getVisiblePages();
   const showLeftEllipsis = visiblePages[0] > 2;
-  const showRightEllipsis = visiblePages[visiblePages.length - 1] < totalPages - 1;
+  const showRightEllipsis =
+    visiblePages[visiblePages.length - 1] < totalPages - 1;
 
   return (
     <nav
@@ -77,7 +78,7 @@ export function Pagination({
           {visiblePages[0] > 1 && (
             <>
               <Button
-                variant={currentPage === 1 ? "default" : "outline"}
+                variant={currentPage === 1 ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onPageChange(1)}
                 aria-label="Go to page 1"
@@ -93,14 +94,14 @@ export function Pagination({
           )}
 
           {/* Visible Page Numbers */}
-          {visiblePages.map((page) => (
+          {visiblePages.map(page => (
             <Button
               key={page}
-              variant={currentPage === page ? "default" : "outline"}
+              variant={currentPage === page ? 'default' : 'outline'}
               size="sm"
               onClick={() => onPageChange(page)}
               aria-label={`Go to page ${page}`}
-              aria-current={currentPage === page ? "page" : undefined}
+              aria-current={currentPage === page ? 'page' : undefined}
             >
               {page}
             </Button>
@@ -115,7 +116,7 @@ export function Pagination({
                 </div>
               )}
               <Button
-                variant={currentPage === totalPages ? "default" : "outline"}
+                variant={currentPage === totalPages ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onPageChange(totalPages)}
                 aria-label={`Go to page ${totalPages}`}

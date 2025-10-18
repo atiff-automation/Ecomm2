@@ -44,8 +44,10 @@ describe('Agent Application Validation', () => {
     // Step 4: Additional Information
     hasJrmExp: true,
     jrmProducts: 'JRM Premium Skincare, JRM Supplements',
-    reasonToJoin: 'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
-    expectations: 'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
+    reasonToJoin:
+      'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
+    expectations:
+      'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
 
     // Step 5: Final Agreement
     finalAgreement: true,
@@ -87,7 +89,9 @@ describe('Agent Application Validation', () => {
       const result = stepSchemas.terms.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Anda mesti bersetuju dengan syarat-syarat');
+        expect(result.error.issues[0].message).toContain(
+          'Anda mesti bersetuju dengan syarat-syarat'
+        );
       }
     });
 
@@ -148,12 +152,12 @@ describe('Agent Application Validation', () => {
 
       it('should reject invalid IC number formats', () => {
         const invalidICs = [
-          '90102-01-1234',    // Wrong year format
-          '901020-1-1234',    // Wrong state format
-          '901020-01-123',    // Wrong sequence format
-          '901020011234',     // Missing dashes
-          '12345678901234',   // Too long
-          'ABC123-01-1234',   // Contains letters
+          '90102-01-1234', // Wrong year format
+          '901020-1-1234', // Wrong state format
+          '901020-01-123', // Wrong sequence format
+          '901020011234', // Missing dashes
+          '12345678901234', // Too long
+          'ABC123-01-1234', // Contains letters
         ];
 
         invalidICs.forEach(ic => {
@@ -184,12 +188,12 @@ describe('Agent Application Validation', () => {
 
       it('should reject invalid phone number formats', () => {
         const invalidPhones = [
-          '123456789',        // Too short
-          '+60123456',        // Too short
-          '+60223456789',     // Invalid prefix
-          '012345678901',     // Too long
+          '123456789', // Too short
+          '+60123456', // Too short
+          '+60223456789', // Invalid prefix
+          '012345678901', // Too long
           '+601234567890123', // Too long
-          'abc123456789',     // Contains letters
+          'abc123456789', // Contains letters
         ];
 
         invalidPhones.forEach(phone => {
@@ -224,7 +228,10 @@ describe('Agent Application Validation', () => {
 
     describe('Address Validation', () => {
       it('should accept valid Malaysian addresses', () => {
-        const data = { ...validData, address: 'No. 123, Jalan Utama, Taman Indah, 50100 Kuala Lumpur' };
+        const data = {
+          ...validData,
+          address: 'No. 123, Jalan Utama, Taman Indah, 50100 Kuala Lumpur',
+        };
         const result = stepSchemas['basic-info'].safeParse(data);
         expect(result.success).toBe(true);
       });

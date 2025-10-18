@@ -7,14 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DynamicAdminLogo } from '@/components/admin/DynamicAdminLogo';
 import { Sidebar } from '@/components/admin/layout/Sidebar';
-import {
-  Menu,
-  X,
-  LogOut,
-  User,
-  Bell,
-  ExternalLink,
-} from 'lucide-react';
+import { Menu, X, LogOut, User, Bell, ExternalLink } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 
 interface AdminLayoutProps {
@@ -34,31 +27,42 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     if (status === 'unauthenticated' || !session?.user) {
-      console.log('❌ Admin access denied: No valid session', { status, hasUser: !!session?.user });
-      router.push('/auth/signin?callbackUrl=' + encodeURIComponent('/admin/dashboard'));
+      console.log('❌ Admin access denied: No valid session', {
+        status,
+        hasUser: !!session?.user,
+      });
+      router.push(
+        '/auth/signin?callbackUrl=' + encodeURIComponent('/admin/dashboard')
+      );
       return;
     }
 
     const userRole = (session.user as any)?.role;
     const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
     const hasValidRole = allowedRoles.includes(userRole);
-    
-    console.log('🔐 Admin access check:', { 
-      userRole, 
+
+    console.log('🔐 Admin access check:', {
+      userRole,
       isSuperAdmin: userRole === UserRole.SUPERADMIN,
       isAdmin: userRole === UserRole.ADMIN,
       isStaff: userRole === UserRole.STAFF,
       allowedRoles,
-      hasValidRole
+      hasValidRole,
     });
 
     if (!hasValidRole) {
-      console.log('❌ Admin access denied: Insufficient role', { userRole, required: allowedRoles });
+      console.log('❌ Admin access denied: Insufficient role', {
+        userRole,
+        required: allowedRoles,
+      });
       router.push('/?error=access_denied');
       return;
     }
 
-    console.log('✅ Admin access granted:', { userRole, user: session.user.name });
+    console.log('✅ Admin access granted:', {
+      userRole,
+      user: session.user.name,
+    });
   }, [status, session, router]);
 
   // Show loading state
@@ -89,15 +93,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const userRole = (session.user as any)?.role;
   const allowedRoles = [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF];
   const hasValidRole = allowedRoles.includes(userRole);
-  
+
   if (!hasValidRole) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You don't have permission to access the admin panel.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 mb-4">
+            You don't have permission to access the admin panel.
+          </p>
           <p className="text-sm text-gray-500 mb-4">Current role: {userRole}</p>
-          <p className="text-sm text-gray-500 mb-4">Required roles: SUPERADMIN, ADMIN, or STAFF</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Required roles: SUPERADMIN, ADMIN, or STAFF
+          </p>
           <Button onClick={() => router.push('/')}>Return Home</Button>
         </div>
       </div>

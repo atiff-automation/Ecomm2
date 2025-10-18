@@ -45,7 +45,9 @@ export function getOptimalImageSize(
   const sizes = Object.entries(IMAGE_CONFIG.sizes);
 
   // Find the smallest size that's larger than or equal to target
-  for (const [sizeKey, sizeConfig] of sizes.sort((a, b) => a[1].width - b[1].width)) {
+  for (const [sizeKey, sizeConfig] of sizes.sort(
+    (a, b) => a[1].width - b[1].width
+  )) {
     if (sizeConfig.width >= targetWidth && sizeConfig.height >= targetHeight) {
       return sizeKey;
     }
@@ -128,12 +130,13 @@ export function calculateLazyLoadingThreshold(): number {
 export function isWebPSupported(): Promise<boolean> {
   if (typeof window === 'undefined') return Promise.resolve(false);
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const webP = new Image();
     webP.onload = webP.onerror = function () {
       resolve(webP.height === 2);
     };
-    webP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+    webP.src =
+      'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
   });
 }
 
@@ -143,12 +146,13 @@ export function isWebPSupported(): Promise<boolean> {
 export function isAvifSupported(): Promise<boolean> {
   if (typeof window === 'undefined') return Promise.resolve(false);
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const avif = new Image();
     avif.onload = avif.onerror = function () {
       resolve(avif.height === 2);
     };
-    avif.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
+    avif.src =
+      'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
   });
 }
 
@@ -185,7 +189,7 @@ export function createLazyLoadObserver(
     ...options,
   };
 
-  return new IntersectionObserver((entries) => {
+  return new IntersectionObserver(entries => {
     entries.forEach(callback);
   }, defaultOptions);
 }
@@ -193,7 +197,9 @@ export function createLazyLoadObserver(
 /**
  * Get image dimensions from URL
  */
-export function getImageDimensions(url: string): Promise<{ width: number; height: number }> {
+export function getImageDimensions(
+  url: string
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -257,7 +263,10 @@ export function getBandwidthAwareQuality(): number {
   // Check for slow connection
   const connection = (navigator as any).connection;
   if (connection) {
-    if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+    if (
+      connection.effectiveType === 'slow-2g' ||
+      connection.effectiveType === '2g'
+    ) {
       return 60; // Lower quality for slow connections
     }
     if (connection.effectiveType === '3g') {

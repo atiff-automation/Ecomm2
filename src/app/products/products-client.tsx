@@ -198,7 +198,7 @@ export function ProductsClient({
     const normalizedInitialParams = {
       search: initialParams.search || '',
       category: initialParams.category || 'all',
-      sortBy: initialParams.sortBy || 'created-desc', 
+      sortBy: initialParams.sortBy || 'created-desc',
       page: parseInt(initialParams.page || '1', 10),
     };
 
@@ -290,15 +290,15 @@ export function ProductsClient({
         <div className="lg:hidden mb-6">
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full h-12 text-base"
-              >
+              <Button variant="outline" className="w-full h-12 text-base">
                 <Filter className="mr-2 h-5 w-5" />
                 Filters & Sort
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
+            <SheetContent
+              side="left"
+              className="w-[300px] sm:w-[400px] overflow-y-auto"
+            >
               <SheetHeader>
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>

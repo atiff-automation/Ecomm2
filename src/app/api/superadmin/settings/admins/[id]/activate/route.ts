@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -32,8 +32,8 @@ export async function POST(
     const adminUser = await prisma.user.findFirst({
       where: {
         id: adminId,
-        role: 'ADMIN'
-      }
+        role: 'ADMIN',
+      },
     });
 
     if (!adminUser) {
@@ -47,7 +47,7 @@ export async function POST(
     if (adminUser.status === 'ACTIVE') {
       return NextResponse.json({
         success: true,
-        message: 'Admin account is already active'
+        message: 'Admin account is already active',
       });
     }
 
@@ -57,8 +57,8 @@ export async function POST(
       data: {
         status: 'ACTIVE',
         updatedAt: new Date(),
-        updatedBy: session.user.id
-      }
+        updatedBy: session.user.id,
+      },
     });
 
     // Log the activation for audit
@@ -69,14 +69,14 @@ export async function POST(
         action: 'ACTIVATE_ADMIN_ACCOUNT',
         targetAdminId: adminId,
         targetAdminEmail: adminUser.email,
-        previousStatus: adminUser.status
+        previousStatus: adminUser.status,
       },
       {
         action: 'ACTIVATE_ADMIN_ACCOUNT',
         targetAdminId: adminId,
         targetAdminEmail: adminUser.email,
         newStatus: 'ACTIVE',
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       request
     );
@@ -87,10 +87,9 @@ export async function POST(
       data: {
         id: updatedAdmin.id,
         email: updatedAdmin.email,
-        status: updatedAdmin.status
-      }
+        status: updatedAdmin.status,
+      },
     });
-
   } catch (error) {
     console.error('Activate admin account error:', error);
     return NextResponse.json(

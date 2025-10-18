@@ -471,11 +471,9 @@ export class ProductService {
   async trackProductView(productId: string): Promise<void> {
     try {
       // Fire and forget - don't wait for response
-      apiClient
-        .post('/api/recently-viewed', { productId })
-        .catch(error => {
-          console.warn('Failed to track product view:', error);
-        });
+      apiClient.post('/api/recently-viewed', { productId }).catch(error => {
+        console.warn('Failed to track product view:', error);
+      });
     } catch (error) {
       // Silently fail - tracking shouldn't break user experience
       console.warn('ProductService.trackProductView error:', error);

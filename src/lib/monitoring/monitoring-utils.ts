@@ -174,11 +174,13 @@ export function trackCoreWebVitals(): void {
       }
 
       // Use centralized monitoring service - eliminates duplicate API call logic
-      monitoringService.track(MonitoringType.PERFORMANCE, {
-        type: 'lcp',
-        metric: 'lcp',
-        value: lastEntry.startTime,
-      }).catch(() => {});
+      monitoringService
+        .track(MonitoringType.PERFORMANCE, {
+          type: 'lcp',
+          metric: 'lcp',
+          value: lastEntry.startTime,
+        })
+        .catch(() => {});
     });
 
     lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
@@ -198,11 +200,13 @@ export function trackCoreWebVitals(): void {
       }
 
       // Use centralized monitoring service - eliminates duplicate API call logic
-      monitoringService.track(MonitoringType.PERFORMANCE, {
-        type: 'fid',
-        metric: 'fid',
-        value: fid,
-      }).catch(() => {});
+      monitoringService
+        .track(MonitoringType.PERFORMANCE, {
+          type: 'fid',
+          metric: 'fid',
+          value: fid,
+        })
+        .catch(() => {});
     });
 
     fidObserver.observe({ entryTypes: ['first-input'] });
@@ -227,11 +231,13 @@ export function trackCoreWebVitals(): void {
       }
 
       // Use centralized monitoring service - eliminates duplicate API call logic
-      monitoringService.track(MonitoringType.PERFORMANCE, {
-        type: 'cls',
-        metric: 'cls',
-        value: clsValue,
-      }).catch(() => {});
+      monitoringService
+        .track(MonitoringType.PERFORMANCE, {
+          type: 'cls',
+          metric: 'cls',
+          value: clsValue,
+        })
+        .catch(() => {});
     });
 
     clsObserver.observe({ entryTypes: ['layout-shift'] });
@@ -260,7 +266,7 @@ export function trackClickEvents(): void {
       const text = target.textContent?.trim().slice(0, 50) || 'Unknown';
       const id = target.id || target.className || 'unknown';
 
-          trackUserAction('click', {
+      trackUserAction('click', {
         element: target.tagName.toLowerCase(),
         text,
         id,

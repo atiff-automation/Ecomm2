@@ -26,7 +26,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  FileText
+  FileText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ms } from 'date-fns/locale';
@@ -36,7 +36,10 @@ interface ApplicationCardProps {
   onStatusUpdate: () => void;
 }
 
-export function ApplicationCard({ application, onStatusUpdate }: ApplicationCardProps) {
+export function ApplicationCard({
+  application,
+  onStatusUpdate,
+}: ApplicationCardProps) {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   const getStatusColor = (status: AgentApplicationStatus) => {
@@ -132,12 +135,16 @@ export function ApplicationCard({ application, onStatusUpdate }: ApplicationCard
                     <h3 className="font-semibold text-lg text-gray-900">
                       {application.fullName}
                     </h3>
-                    <p className="text-sm text-gray-500">ID: {application.id}</p>
+                    <p className="text-sm text-gray-500">
+                      ID: {application.id}
+                    </p>
                   </div>
                 </div>
                 <Badge className={getStatusColor(application.status)}>
                   {getStatusIcon(application.status)}
-                  <span className="ml-1">{getStatusLabel(application.status)}</span>
+                  <span className="ml-1">
+                    {getStatusLabel(application.status)}
+                  </span>
                 </Badge>
               </div>
 
@@ -188,13 +195,15 @@ export function ApplicationCard({ application, onStatusUpdate }: ApplicationCard
                 {application.submittedAt && (
                   <div>
                     <span className="font-medium">Dihantar: </span>
-                    {formatDate(application.submittedAt)} {getDaysAgo(application.submittedAt)}
+                    {formatDate(application.submittedAt)}{' '}
+                    {getDaysAgo(application.submittedAt)}
                   </div>
                 )}
                 {application.reviewedAt && (
                   <div>
                     <span className="font-medium">Disemak: </span>
-                    {formatDate(application.reviewedAt)} {getDaysAgo(application.reviewedAt)}
+                    {formatDate(application.reviewedAt)}{' '}
+                    {getDaysAgo(application.reviewedAt)}
                   </div>
                 )}
               </div>
@@ -213,7 +222,11 @@ export function ApplicationCard({ application, onStatusUpdate }: ApplicationCard
             {/* Actions */}
             <div className="flex lg:flex-col items-center gap-2">
               <Link href={`/admin/agents/applications/${application.id}`}>
-                <Button variant="outline" size="sm" className="w-full lg:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full lg:w-auto"
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Lihat
                 </Button>
@@ -239,9 +252,14 @@ export function ApplicationCard({ application, onStatusUpdate }: ApplicationCard
               </h4>
               <div className="space-y-2">
                 {application.reviews.slice(0, 2).map((review, index) => (
-                  <div key={review.id} className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 rounded p-2">
+                  <div
+                    key={review.id}
+                    className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 rounded p-2"
+                  >
                     <div>
-                      <span className="font-medium">{review.reviewer?.name || 'Admin'}</span>
+                      <span className="font-medium">
+                        {review.reviewer?.name || 'Admin'}
+                      </span>
                       <span className="mx-2">•</span>
                       <span>{review.decision}</span>
                       {review.notes && (

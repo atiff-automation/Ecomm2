@@ -25,7 +25,11 @@ import {
   Smartphone,
 } from 'lucide-react';
 import Link from 'next/link';
-import { AdminPageLayout, TabConfig, BreadcrumbItem } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  TabConfig,
+  BreadcrumbItem,
+} from '@/components/admin/layout';
 import { toast } from 'sonner';
 
 interface Transaction {
@@ -70,7 +74,10 @@ export default function PaymentTransactionsPage() {
     );
   }
 
-  if (!session || !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user?.role || '')) {
+  if (
+    !session ||
+    !['ADMIN', 'SUPERADMIN', 'STAFF'].includes(session.user?.role || '')
+  ) {
     redirect('/auth/signin');
   }
 
@@ -90,7 +97,9 @@ export default function PaymentTransactionsPage() {
         ),
       });
 
-      const response = await fetch(`/api/admin/payments/transactions?${queryParams}`);
+      const response = await fetch(
+        `/api/admin/payments/transactions?${queryParams}`
+      );
       if (response.ok) {
         const data = await response.json();
         setTransactions(data.transactions || []);
@@ -119,7 +128,10 @@ export default function PaymentTransactionsPage() {
         ),
       });
 
-      window.open(`/api/admin/payments/transactions/export?${queryParams}`, '_blank');
+      window.open(
+        `/api/admin/payments/transactions/export?${queryParams}`,
+        '_blank'
+      );
     } catch (error) {
       console.error('Failed to export transactions:', error);
     }
@@ -294,9 +306,14 @@ export default function PaymentTransactionsPage() {
                   </thead>
                   <tbody>
                     {transactions.map(transaction => (
-                      <tr key={transaction.id} className="border-b hover:bg-gray-50">
+                      <tr
+                        key={transaction.id}
+                        className="border-b hover:bg-gray-50"
+                      >
                         <td className="py-4 px-4">
-                          <div className="font-medium">{transaction.orderNumber}</div>
+                          <div className="font-medium">
+                            {transaction.orderNumber}
+                          </div>
                           {transaction.toyyibpayBillCode && (
                             <div className="text-xs text-muted-foreground">
                               Bill: {transaction.toyyibpayBillCode}
@@ -304,7 +321,9 @@ export default function PaymentTransactionsPage() {
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          <div className="font-medium">{transaction.customerName}</div>
+                          <div className="font-medium">
+                            {transaction.customerName}
+                          </div>
                           <div className="text-sm text-muted-foreground">
                             {transaction.customerEmail}
                           </div>
@@ -325,7 +344,11 @@ export default function PaymentTransactionsPage() {
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          <Badge className={getPaymentStatusColor(transaction.paymentStatus)}>
+                          <Badge
+                            className={getPaymentStatusColor(
+                              transaction.paymentStatus
+                            )}
+                          >
                             {transaction.paymentStatus}
                           </Badge>
                         </td>
@@ -353,8 +376,11 @@ export default function PaymentTransactionsPage() {
                 <div className="flex items-center justify-between mt-6 pt-6 border-t">
                   <div className="text-sm text-muted-foreground">
                     Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                    {pagination.total} transactions
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )}{' '}
+                    of {pagination.total} transactions
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

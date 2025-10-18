@@ -129,7 +129,9 @@ export default function OrderDetailsPage() {
     }
 
     if (!order.selectedCourierServiceId) {
-      toast.error('No courier service selected. Please select a courier from the order settings.');
+      toast.error(
+        'No courier service selected. Please select a courier from the order settings.'
+      );
       return;
     }
 
@@ -152,7 +154,8 @@ export default function OrderDetailsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          serviceId: options?.selectedServiceId || order.selectedCourierServiceId,
+          serviceId:
+            options?.selectedServiceId || order.selectedCourierServiceId,
           pickupDate: pickupDate,
           // No shipmentId - single-step flow
           overriddenByAdmin: options?.overriddenByAdmin || false,
@@ -178,7 +181,10 @@ export default function OrderDetailsPage() {
 
   const handlePrintInvoice = () => {
     if (order) {
-      window.open(`/api/orders/${order.id}/invoice?format=pdf&download=true`, '_blank');
+      window.open(
+        `/api/orders/${order.id}/invoice?format=pdf&download=true`,
+        '_blank'
+      );
     }
   };
 
@@ -190,7 +196,9 @@ export default function OrderDetailsPage() {
     if (order.airwayBillUrl) {
       window.open(order.airwayBillUrl, '_blank');
     } else {
-      toast.error('Packing slip is not yet available. Please fulfill the order first.');
+      toast.error(
+        'Packing slip is not yet available. Please fulfill the order first.'
+      );
     }
   };
 
@@ -400,13 +408,16 @@ export default function OrderDetailsPage() {
                 <div className="pl-6">
                   {order.shippingAddress ? (
                     <div className="text-sm space-y-1">
-                      <p className="font-medium">{order.shippingAddress.recipientName}</p>
+                      <p className="font-medium">
+                        {order.shippingAddress.recipientName}
+                      </p>
                       <p>{order.shippingAddress.addressLine1}</p>
                       {order.shippingAddress.addressLine2 && (
                         <p>{order.shippingAddress.addressLine2}</p>
                       )}
                       <p>
-                        {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                        {order.shippingAddress.city},{' '}
+                        {order.shippingAddress.state}{' '}
                         {order.shippingAddress.postalCode}
                       </p>
                       <p>{order.shippingAddress.country}</p>
@@ -621,11 +632,14 @@ export default function OrderDetailsPage() {
                   <div>
                     <p className="text-sm text-gray-500">Scheduled Pickup</p>
                     <p className="font-medium">
-                      {new Date(order.scheduledPickupDate).toLocaleDateString('en-MY', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {new Date(order.scheduledPickupDate).toLocaleDateString(
+                        'en-MY',
+                        {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        }
+                      )}
                     </p>
                   </div>
                 )}
@@ -650,7 +664,9 @@ export default function OrderDetailsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(order.trackingUrl || '', '_blank')}
+                      onClick={() =>
+                        window.open(order.trackingUrl || '', '_blank')
+                      }
                       className="w-full justify-start text-xs"
                     >
                       <ExternalLink className="h-3 w-3 mr-2" />
@@ -663,7 +679,9 @@ export default function OrderDetailsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(order.airwayBillUrl || '', '_blank')}
+                      onClick={() =>
+                        window.open(order.airwayBillUrl || '', '_blank')
+                      }
                       className="w-full justify-start text-xs"
                     >
                       <Package className="h-3 w-3 mr-2" />
@@ -673,32 +691,47 @@ export default function OrderDetailsPage() {
                 </div>
 
                 {/* Tracking Events */}
-                {order.shipment?.trackingEvents && order.shipment.trackingEvents.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-sm font-medium mb-2">Recent Updates</p>
-                      <div className="space-y-2">
-                        {order.shipment.trackingEvents.slice(0, 3).map((event, index) => (
-                          <div key={index} className="text-xs border-l-2 border-gray-200 pl-3 py-1">
-                            <p className="font-medium">{event.eventName}</p>
-                            {event.description && (
-                              <p className="text-gray-600">{event.description}</p>
-                            )}
-                            <p className="text-gray-400 text-[10px] mt-1">
-                              {new Date(event.timestamp).toLocaleString('en-MY')}
-                            </p>
-                          </div>
-                        ))}
+                {order.shipment?.trackingEvents &&
+                  order.shipment.trackingEvents.length > 0 && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-sm font-medium mb-2">
+                          Recent Updates
+                        </p>
+                        <div className="space-y-2">
+                          {order.shipment.trackingEvents
+                            .slice(0, 3)
+                            .map((event, index) => (
+                              <div
+                                key={index}
+                                className="text-xs border-l-2 border-gray-200 pl-3 py-1"
+                              >
+                                <p className="font-medium">{event.eventName}</p>
+                                {event.description && (
+                                  <p className="text-gray-600">
+                                    {event.description}
+                                  </p>
+                                )}
+                                <p className="text-gray-400 text-[10px] mt-1">
+                                  {new Date(event.timestamp).toLocaleString(
+                                    'en-MY'
+                                  )}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
                       </div>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
 
                 {/* AWB Generated Timestamp */}
                 {order.airwayBillGeneratedAt && (
                   <p className="text-xs text-gray-400 pt-2">
-                    AWB Generated: {new Date(order.airwayBillGeneratedAt).toLocaleString('en-MY')}
+                    AWB Generated:{' '}
+                    {new Date(order.airwayBillGeneratedAt).toLocaleString(
+                      'en-MY'
+                    )}
                   </p>
                 )}
               </CardContent>
@@ -708,7 +741,9 @@ export default function OrderDetailsPage() {
           {/* Danger Zone - Always at the bottom */}
           <Card className="border-red-200">
             <CardHeader>
-              <CardTitle className="text-sm text-red-600">Danger Zone</CardTitle>
+              <CardTitle className="text-sm text-red-600">
+                Danger Zone
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Button
@@ -726,7 +761,8 @@ export default function OrderDetailsPage() {
                 Delete Order
               </Button>
               <p className="text-xs text-gray-500 mt-2">
-                Permanently delete this order and all related data. This action cannot be undone.
+                Permanently delete this order and all related data. This action
+                cannot be undone.
               </p>
             </CardContent>
           </Card>

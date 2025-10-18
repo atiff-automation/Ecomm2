@@ -12,7 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Download, TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
+import {
+  AlertCircle,
+  Download,
+  TrendingUp,
+  Users,
+  ShoppingCart,
+  DollarSign,
+} from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MetricCard } from './metric-card';
 import { ProductPerformanceTable } from './product-performance-table';
@@ -30,7 +37,7 @@ export function SalesDashboard() {
   const [overview, setOverview] = useState<SalesOverview | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    endDate: new Date()
+    endDate: new Date(),
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,21 +49,23 @@ export function SalesDashboard() {
   const fetchSalesOverview = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         startDate: dateRange.startDate.toISOString(),
-        endDate: dateRange.endDate.toISOString()
+        endDate: dateRange.endDate.toISOString(),
       });
 
-      const response = await fetch(`/api/admin/reports/sales/overview?${params}`);
-      
+      const response = await fetch(
+        `/api/admin/reports/sales/overview?${params}`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to fetch sales data');
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         setOverview(result.data);
       } else {
@@ -64,7 +73,9 @@ export function SalesDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch sales overview:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      setError(
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+      );
     } finally {
       setLoading(false);
     }
@@ -76,11 +87,11 @@ export function SalesDashboard() {
         startDate: dateRange.startDate.toISOString(),
         endDate: dateRange.endDate.toISOString(),
         format: 'csv',
-        reportType: 'overview'
+        reportType: 'overview',
       });
 
       const response = await fetch(`/api/admin/reports/sales/export?${params}`);
-      
+
       if (!response.ok) {
         throw new Error('Export failed');
       }
@@ -103,19 +114,19 @@ export function SalesDashboard() {
     const startStr = dateRange.startDate.toLocaleDateString('en-MY', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
     const endStr = dateRange.endDate.toLocaleDateString('en-MY', {
       day: 'numeric',
-      month: 'short', 
-      year: 'numeric'
+      month: 'short',
+      year: 'numeric',
     });
     return `${startStr} - ${endStr}`;
   };
 
   const calculateMemberPercentage = () => {
     if (!overview || overview.totalRevenue === 0) return 0;
-    return ((overview.memberRevenue / overview.totalRevenue) * 100);
+    return (overview.memberRevenue / overview.totalRevenue) * 100;
   };
 
   if (error) {
@@ -123,9 +134,7 @@ export function SalesDashboard() {
       <div className="space-y-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
         <Button onClick={fetchSalesOverview} variant="outline">
           Try Again
@@ -145,10 +154,7 @@ export function SalesDashboard() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <DateRangePicker
-            value={dateRange}
-            onChange={setDateRange}
-          />
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
           <Button onClick={handleExport} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -172,39 +178,41 @@ export function SalesDashboard() {
               </Card>
             ))}
           </>
-        ) : overview && (
-          <>
-            <MetricCard
-              title="Total Revenue"
-              value={overview.totalRevenue}
-              formatAsCurrency
-              description="Completed orders only"
-              icon={<DollarSign className="h-4 w-4" />}
-            />
-            <MetricCard
-              title="Total Orders"
-              value={overview.totalOrders}
-              description={`Avg: ${new Intl.NumberFormat('ms-MY', {
-                style: 'currency',
-                currency: 'MYR'
-              }).format(overview.averageOrderValue)}`}
-              icon={<ShoppingCart className="h-4 w-4" />}
-            />
-            <MetricCard
-              title="Member Revenue"
-              value={overview.memberRevenue}
-              formatAsCurrency
-              description={`${calculateMemberPercentage().toFixed(1)}% of total`}
-              icon={<Users className="h-4 w-4" />}
-            />
-            <MetricCard
-              title="Tax Collected"
-              value={overview.taxCollected}
-              formatAsCurrency
-              description="GST/SST total"
-              icon={<TrendingUp className="h-4 w-4" />}
-            />
-          </>
+        ) : (
+          overview && (
+            <>
+              <MetricCard
+                title="Total Revenue"
+                value={overview.totalRevenue}
+                formatAsCurrency
+                description="Completed orders only"
+                icon={<DollarSign className="h-4 w-4" />}
+              />
+              <MetricCard
+                title="Total Orders"
+                value={overview.totalOrders}
+                description={`Avg: ${new Intl.NumberFormat('ms-MY', {
+                  style: 'currency',
+                  currency: 'MYR',
+                }).format(overview.averageOrderValue)}`}
+                icon={<ShoppingCart className="h-4 w-4" />}
+              />
+              <MetricCard
+                title="Member Revenue"
+                value={overview.memberRevenue}
+                formatAsCurrency
+                description={`${calculateMemberPercentage().toFixed(1)}% of total`}
+                icon={<Users className="h-4 w-4" />}
+              />
+              <MetricCard
+                title="Tax Collected"
+                value={overview.taxCollected}
+                formatAsCurrency
+                description="GST/SST total"
+                icon={<TrendingUp className="h-4 w-4" />}
+              />
+            </>
+          )
         )}
       </div>
 
@@ -212,7 +220,9 @@ export function SalesDashboard() {
       {!loading && overview && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Member vs Non-Member Analysis</CardTitle>
+            <CardTitle className="text-lg">
+              Member vs Non-Member Analysis
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
@@ -226,13 +236,15 @@ export function SalesDashboard() {
                 <div className="text-2xl font-bold">
                   {new Intl.NumberFormat('ms-MY', {
                     style: 'currency',
-                    currency: 'MYR'
+                    currency: 'MYR',
                   }).format(overview.memberRevenue)}
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Non-Member Revenue</span>
+                  <span className="text-sm font-medium">
+                    Non-Member Revenue
+                  </span>
                   <Badge variant="outline">
                     {(100 - calculateMemberPercentage()).toFixed(1)}%
                   </Badge>
@@ -240,7 +252,7 @@ export function SalesDashboard() {
                 <div className="text-2xl font-bold">
                   {new Intl.NumberFormat('ms-MY', {
                     style: 'currency',
-                    currency: 'MYR'
+                    currency: 'MYR',
                   }).format(overview.nonMemberRevenue)}
                 </div>
               </div>
@@ -266,7 +278,7 @@ export function SalesDashboard() {
               </p>
             </CardHeader>
             <CardContent>
-              <RevenueChart 
+              <RevenueChart
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
               />
@@ -317,8 +329,8 @@ export function SalesDashboard() {
               🇲🇾 Malaysian Compliance
             </Badge>
             <span className="text-blue-700">
-              GST/SST tax calculations follow Malaysian regulations. 
-              Export features ready for accounting software integration.
+              GST/SST tax calculations follow Malaysian regulations. Export
+              features ready for accounting software integration.
             </span>
           </div>
         </CardContent>

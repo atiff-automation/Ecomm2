@@ -276,7 +276,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`);
+    console.log(
+      `✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`
+    );
 
     // Create audit log for the order status change
     if (order.user) {

@@ -1,7 +1,7 @@
 /**
  * Base Cache Service - Foundation for all caching operations
  * Following CLAUDE.md: NO hardcoding, systematic approach, centralized
- * 
+ *
  * Implements production-ready Redis caching with graceful fallback to in-memory
  * Provides monitoring, health checks, and configuration management
  */
@@ -17,12 +17,12 @@ if (typeof window === 'undefined') {
 }
 
 export interface CacheConfig {
-  ttl: number;                    // Time to live in seconds
-  maxKeys: number;                // Maximum keys to store
-  keyPrefix: string;              // Cache key prefix for namespacing
-  redisUrl?: string;              // Redis connection URL
-  enableCompression?: boolean;    // Enable gzip compression for large values
-  maxValueSize?: number;          // Maximum value size in bytes
+  ttl: number; // Time to live in seconds
+  maxKeys: number; // Maximum keys to store
+  keyPrefix: string; // Cache key prefix for namespacing
+  redisUrl?: string; // Redis connection URL
+  enableCompression?: boolean; // Enable gzip compression for large values
+  maxValueSize?: number; // Maximum value size in bytes
 }
 
 export interface CacheStats {
@@ -51,13 +51,14 @@ export abstract class BaseCacheService {
   protected redis: any;
   protected config: CacheConfig;
   protected isRedisAvailable: boolean = false;
-  protected fallbackCache: Map<string, { data: any; expires: number }> = new Map();
+  protected fallbackCache: Map<string, { data: any; expires: number }> =
+    new Map();
   protected stats = { hits: 0, misses: 0, startTime: Date.now() };
-  
+
   // Default configuration following production best practices
   protected readonly DEFAULT_CONFIG: Partial<CacheConfig> = {
-    ttl: 3600,              // 1 hour default
-    maxKeys: 1000,          // Reasonable default for memory management
+    ttl: 3600, // 1 hour default
+    maxKeys: 1000, // Reasonable default for memory management
     enableCompression: false, // Disabled by default for performance
     maxValueSize: 1024 * 1024, // 1MB max value size
   };
@@ -74,19 +75,26 @@ export abstract class BaseCacheService {
   private initializeRedis(): void {
     if (typeof window !== 'undefined' || !Redis) {
       this.isRedisAvailable = false;
-      console.log(`🔄 ${this.config.keyPrefix} cache: Using in-memory fallback`);
+      console.log(
+        `🔄 ${this.config.keyPrefix} cache: Using in-memory fallback`
+      );
       return;
     }
 
     try {
       // Use centralized Redis configuration following @CLAUDE.md
-      const { getRedisConfig, validateRedisConfig } = require('../config/redis.config');
+      const {
+        getRedisConfig,
+        validateRedisConfig,
+      } = require('../config/redis.config');
       const redisConfig = getRedisConfig();
-      
+
       // Validate configuration before connection
       const validation = validateRedisConfig(redisConfig);
       if (!validation.valid) {
-        console.warn(`⚠️ ${this.config.keyPrefix} cache: Configuration issues detected`);
+        console.warn(
+          `⚠️ ${this.config.keyPrefix} cache: Configuration issues detected`
+        );
         validation.errors.forEach(error => console.warn(`   - ${error}`));
       }
 
@@ -101,13 +109,18 @@ export abstract class BaseCacheService {
       this.redis.on('error', (error: Error) => {
         this.isRedisAvailable = false;
         if (!error.message.includes('ECONNREFUSED')) {
-          console.error(`❌ ${this.config.keyPrefix} cache Redis error:`, error.message);
+          console.error(
+            `❌ ${this.config.keyPrefix} cache Redis error:`,
+            error.message
+          );
         }
       });
 
       this.redis.on('close', () => {
         this.isRedisAvailable = false;
-        console.log(`⚠️ ${this.config.keyPrefix} cache: Redis disconnected, using fallback`);
+        console.log(
+          `⚠️ ${this.config.keyPrefix} cache: Redis disconnected, using fallback`
+        );
       });
 
       this.redis.on('reconnecting', () => {
@@ -116,10 +129,11 @@ export abstract class BaseCacheService {
 
       // Test initial connection
       this.testConnection();
-
     } catch (error) {
       this.isRedisAvailable = false;
-      console.log(`⚠️ ${this.config.keyPrefix} cache: Redis initialization failed, using fallback`);
+      console.log(
+        `⚠️ ${this.config.keyPrefix} cache: Redis initialization failed, using fallback`
+      );
     }
   }
 
@@ -134,7 +148,9 @@ export abstract class BaseCacheService {
       this.isRedisAvailable = true;
     } catch (error) {
       this.isRedisAvailable = false;
-      console.log(`⚠️ ${this.config.keyPrefix} cache: Connection test failed, using fallback`);
+      console.log(
+        `⚠️ ${this.config.keyPrefix} cache: Connection test failed, using fallback`
+      );
     }
   }
 
@@ -179,7 +195,6 @@ export abstract class BaseCacheService {
 
       await this.recordMiss();
       return null;
-
     } catch (error) {
       console.error(`${this.config.keyPrefix} cache get error:`, error);
       await this.recordMiss();
@@ -190,15 +205,24 @@ export abstract class BaseCacheService {
   /**
    * Set value in cache with fallback support
    */
-  protected async setCacheValue<T>(key: string, value: T, ttl?: number): Promise<void> {
+  protected async setCacheValue<T>(
+    key: string,
+    value: T,
+    ttl?: number
+  ): Promise<void> {
     try {
       const cacheKey = this.buildCacheKey(key);
       const cacheTtl = ttl || this.config.ttl;
       const serialized = this.serializeValue(value);
 
       // Validate value size
-      if (this.config.maxValueSize && serialized.length > this.config.maxValueSize) {
-        console.warn(`${this.config.keyPrefix} cache: Value too large for key ${key}`);
+      if (
+        this.config.maxValueSize &&
+        serialized.length > this.config.maxValueSize
+      ) {
+        console.warn(
+          `${this.config.keyPrefix} cache: Value too large for key ${key}`
+        );
         return;
       }
 
@@ -210,15 +234,16 @@ export abstract class BaseCacheService {
           return;
         } catch (error) {
           this.isRedisAvailable = false;
-          console.warn(`${this.config.keyPrefix} cache: Redis set failed, using fallback`);
+          console.warn(
+            `${this.config.keyPrefix} cache: Redis set failed, using fallback`
+          );
         }
       }
 
       // Use fallback cache
-      const expires = Date.now() + (cacheTtl * 1000);
+      const expires = Date.now() + cacheTtl * 1000;
       this.fallbackCache.set(key, { data: value, expires });
       this.manageFallbackCacheSize();
-
     } catch (error) {
       console.error(`${this.config.keyPrefix} cache set error:`, error);
     }
@@ -227,7 +252,9 @@ export abstract class BaseCacheService {
   /**
    * Batch set multiple values
    */
-  protected async setBatchValues<T>(items: Array<{ key: string; value: T; ttl?: number }>): Promise<void> {
+  protected async setBatchValues<T>(
+    items: Array<{ key: string; value: T; ttl?: number }>
+  ): Promise<void> {
     try {
       const cacheTtl = this.config.ttl;
 
@@ -239,28 +266,28 @@ export abstract class BaseCacheService {
             const cacheKey = this.buildCacheKey(item.key);
             const serialized = this.serializeValue(item.value);
             const ttl = item.ttl || cacheTtl;
-            
+
             pipeline.setex(cacheKey, ttl, serialized);
           }
 
           await pipeline.exec();
           await this.manageCacheSize();
           return;
-
         } catch (error) {
           this.isRedisAvailable = false;
-          console.warn(`${this.config.keyPrefix} cache: Batch Redis set failed, using fallback`);
+          console.warn(
+            `${this.config.keyPrefix} cache: Batch Redis set failed, using fallback`
+          );
         }
       }
 
       // Use fallback cache for batch
       for (const item of items) {
-        const expires = Date.now() + ((item.ttl || cacheTtl) * 1000);
+        const expires = Date.now() + (item.ttl || cacheTtl) * 1000;
         this.fallbackCache.set(item.key, { data: item.value, expires });
       }
 
       this.manageFallbackCacheSize();
-
     } catch (error) {
       console.error(`${this.config.keyPrefix} cache batch set error:`, error);
     }
@@ -298,9 +325,14 @@ export abstract class BaseCacheService {
         this.fallbackCache.clear();
       }
 
-      console.log(`🗑️ ${this.config.keyPrefix} cache: Invalidated ${pattern || 'all entries'}`);
+      console.log(
+        `🗑️ ${this.config.keyPrefix} cache: Invalidated ${pattern || 'all entries'}`
+      );
     } catch (error) {
-      console.error(`${this.config.keyPrefix} cache invalidation error:`, error);
+      console.error(
+        `${this.config.keyPrefix} cache invalidation error:`,
+        error
+      );
     }
   }
 
@@ -311,17 +343,19 @@ export abstract class BaseCacheService {
     try {
       const uptime = Math.floor((Date.now() - this.stats.startTime) / 1000);
       const total = this.stats.hits + this.stats.misses;
-      const hitRate = total > 0 ? ((this.stats.hits / total) * 100).toFixed(2) + '%' : '0%';
+      const hitRate =
+        total > 0 ? ((this.stats.hits / total) * 100).toFixed(2) + '%' : '0%';
 
       let totalKeys = this.fallbackCache.size;
       let memoryUsage = 'In-memory fallback';
-      let connectionStatus: 'connected' | 'disconnected' | 'fallback' = 'fallback';
+      let connectionStatus: 'connected' | 'disconnected' | 'fallback' =
+        'fallback';
 
       if (this.isRedisAvailable && this.redis) {
         try {
           const keys = await this.redis.keys(`${this.config.keyPrefix}:*`);
           totalKeys = keys.length;
-          
+
           const info = await this.redis.info('memory');
           const memoryMatch = info.match(/used_memory_human:([^\r\n]*)/);
           memoryUsage = memoryMatch ? memoryMatch[1] : 'Redis connected';
@@ -364,12 +398,12 @@ export abstract class BaseCacheService {
         try {
           await this.redis.ping();
           const latency = Date.now() - start;
-          
+
           // Check memory pressure
           const info = await this.redis.info('memory');
           const usedMemoryMatch = info.match(/used_memory:(\d+)/);
           const maxMemoryMatch = info.match(/maxmemory:(\d+)/);
-          
+
           let memoryPressure = 0;
           if (usedMemoryMatch && maxMemoryMatch) {
             const used = parseInt(usedMemoryMatch[1]);
@@ -377,7 +411,8 @@ export abstract class BaseCacheService {
             memoryPressure = max > 0 ? (used / max) * 100 : 0;
           }
 
-          const status = latency > 1000 || memoryPressure > 90 ? 'degraded' : 'healthy';
+          const status =
+            latency > 1000 || memoryPressure > 90 ? 'degraded' : 'healthy';
 
           return {
             status,
@@ -388,13 +423,17 @@ export abstract class BaseCacheService {
         } catch (error) {
           return {
             status: 'unhealthy',
-            error: error instanceof Error ? error.message : 'Redis connection failed',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Redis connection failed',
             fallbackActive: true,
           };
         }
       } else {
         // Fallback cache health
-        const memoryPressure = (this.fallbackCache.size / this.config.maxKeys) * 100;
+        const memoryPressure =
+          (this.fallbackCache.size / this.config.maxKeys) * 100;
         return {
           status: memoryPressure > 90 ? 'degraded' : 'healthy',
           fallbackActive: true,
@@ -419,7 +458,9 @@ export abstract class BaseCacheService {
         await this.redis.quit();
       }
       this.fallbackCache.clear();
-      console.log(`👋 ${this.config.keyPrefix} cache: Disconnected and cleaned up`);
+      console.log(
+        `👋 ${this.config.keyPrefix} cache: Disconnected and cleaned up`
+      );
     } catch (error) {
       console.error(`${this.config.keyPrefix} cache disconnect error:`, error);
     }
@@ -459,20 +500,25 @@ export abstract class BaseCacheService {
       if (!this.isRedisAvailable || !this.redis) return;
 
       const keys = await this.redis.keys(`${this.config.keyPrefix}:*`);
-      
+
       if (keys.length > this.config.maxKeys) {
         // Remove excess keys (simple FIFO approach)
         const keysToRemove = keys.length - this.config.maxKeys;
         const sortedKeys = keys.sort();
         const oldestKeys = sortedKeys.slice(0, keysToRemove);
-        
+
         if (oldestKeys.length > 0) {
           await this.redis.del(...oldestKeys);
-          console.log(`🧹 ${this.config.keyPrefix} cache: Cleaned up ${oldestKeys.length} entries`);
+          console.log(
+            `🧹 ${this.config.keyPrefix} cache: Cleaned up ${oldestKeys.length} entries`
+          );
         }
       }
     } catch (error) {
-      console.error(`${this.config.keyPrefix} cache size management error:`, error);
+      console.error(
+        `${this.config.keyPrefix} cache size management error:`,
+        error
+      );
     }
   }
 
@@ -483,15 +529,17 @@ export abstract class BaseCacheService {
     if (this.fallbackCache.size > this.config.maxKeys) {
       const entries = Array.from(this.fallbackCache.entries());
       const keysToRemove = entries.length - this.config.maxKeys;
-      
+
       // Sort by expiration time (oldest first)
       entries.sort((a, b) => a[1].expires - b[1].expires);
-      
+
       for (let i = 0; i < keysToRemove; i++) {
         this.fallbackCache.delete(entries[i][0]);
       }
-      
-      console.log(`🧹 ${this.config.keyPrefix} fallback cache: Cleaned up ${keysToRemove} entries`);
+
+      console.log(
+        `🧹 ${this.config.keyPrefix} fallback cache: Cleaned up ${keysToRemove} entries`
+      );
     }
   }
 }

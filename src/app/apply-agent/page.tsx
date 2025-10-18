@@ -11,11 +11,14 @@ import { Loader2 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Permohonan Ejen JRM | Jutawan Bonda 4',
-  description: 'Sertai program Jutawan Bonda 4 dan mulakan perjalanan kejayaan anda sebagai ejen JRM. Daftar sekarang untuk peluang pendapatan yang menarik.',
-  keywords: 'ejen JRM, jutawan bonda, permohonan ejen, peluang perniagaan, MLM Malaysia',
+  description:
+    'Sertai program Jutawan Bonda 4 dan mulakan perjalanan kejayaan anda sebagai ejen JRM. Daftar sekarang untuk peluang pendapatan yang menarik.',
+  keywords:
+    'ejen JRM, jutawan bonda, permohonan ejen, peluang perniagaan, MLM Malaysia',
   openGraph: {
     title: 'Permohonan Ejen JRM | Jutawan Bonda 4',
-    description: 'Sertai program Jutawan Bonda 4 dan mulakan perjalanan kejayaan anda sebagai ejen JRM.',
+    description:
+      'Sertai program Jutawan Bonda 4 dan mulakan perjalanan kejayaan anda sebagai ejen JRM.',
     type: 'website',
   },
 };

@@ -11,7 +11,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { siteCustomizationService } from '@/lib/services/site-customization.service';
-import { uploadHeroImage, deleteHeroImage } from '@/lib/upload/hero-image-upload';
+import {
+  uploadHeroImage,
+  deleteHeroImage,
+} from '@/lib/upload/hero-image-upload';
 
 // ==================== CONFIGURATION ENDPOINTS ====================
 
@@ -22,7 +25,10 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -39,16 +45,15 @@ export async function GET() {
       success: true,
       config,
       status,
-      message: 'Site customization configuration retrieved successfully'
+      message: 'Site customization configuration retrieved successfully',
     });
-
   } catch (error) {
     console.error('Error fetching site customization:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to fetch site customization configuration',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -62,7 +67,10 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -77,7 +85,7 @@ export async function PUT(request: NextRequest) {
         {
           success: false,
           error: 'Configuration data is required',
-          details: 'Request body must contain a "config" field'
+          details: 'Request body must contain a "config" field',
         },
         { status: 400 }
       );
@@ -95,7 +103,7 @@ export async function PUT(request: NextRequest) {
           success: false,
           error: 'Configuration validation failed',
           validation: result.validation,
-          config: result.config
+          config: result.config,
         },
         { status: 400 }
       );
@@ -106,16 +114,15 @@ export async function PUT(request: NextRequest) {
       config: result.config,
       validation: result.validation,
       preview: result.preview,
-      message: 'Site customization updated successfully'
+      message: 'Site customization updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating site customization:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to update site customization',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -129,7 +136,10 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -149,17 +159,20 @@ export async function PATCH(request: NextRequest) {
         session.user.id
       );
 
-      return NextResponse.json({
-        success: result.validation.isValid,
-        config: result.config,
-        validation: result.validation,
-        preview: result.preview,
-        message: result.validation.isValid 
-          ? 'Configuration updated successfully'
-          : 'Configuration validation failed'
-      }, { 
-        status: result.validation.isValid ? 200 : 400 
-      });
+      return NextResponse.json(
+        {
+          success: result.validation.isValid,
+          config: result.config,
+          validation: result.validation,
+          preview: result.preview,
+          message: result.validation.isValid
+            ? 'Configuration updated successfully'
+            : 'Configuration validation failed',
+        },
+        {
+          status: result.validation.isValid ? 200 : 400,
+        }
+      );
     }
 
     // Update specific section
@@ -168,7 +181,7 @@ export async function PATCH(request: NextRequest) {
         {
           success: false,
           error: 'Invalid section',
-          details: 'Section must be either "hero" or "branding"'
+          details: 'Section must be either "hero" or "branding"',
         },
         { status: 400 }
       );
@@ -180,25 +193,27 @@ export async function PATCH(request: NextRequest) {
       session.user.id
     );
 
-    return NextResponse.json({
-      success: result.validation.isValid,
-      config: result.config,
-      validation: result.validation,
-      preview: result.preview,
-      message: result.validation.isValid 
-        ? `${section} section updated successfully`
-        : `${section} section validation failed`
-    }, { 
-      status: result.validation.isValid ? 200 : 400 
-    });
-
+    return NextResponse.json(
+      {
+        success: result.validation.isValid,
+        config: result.config,
+        validation: result.validation,
+        preview: result.preview,
+        message: result.validation.isValid
+          ? `${section} section updated successfully`
+          : `${section} section validation failed`,
+      },
+      {
+        status: result.validation.isValid ? 200 : 400,
+      }
+    );
   } catch (error) {
     console.error('Error updating site customization section:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to update site customization section',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -217,7 +232,10 @@ export async function POST(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       console.log('❌ POST - Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Admin access required' },
@@ -225,19 +243,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ POST - Authenticated as:', session.user.email, 'role:', session.user.role);
+    console.log(
+      '✅ POST - Authenticated as:',
+      session.user.email,
+      'role:',
+      session.user.role
+    );
 
     if (action === 'reset') {
       console.log('🔄 Admin resetting site customization to defaults');
 
-      const result = await siteCustomizationService.resetToDefault(session.user.id);
+      const result = await siteCustomizationService.resetToDefault(
+        session.user.id
+      );
 
       return NextResponse.json({
         success: true,
         config: result.config,
         validation: result.validation,
         preview: result.preview,
-        message: 'Site customization reset to default values successfully'
+        message: 'Site customization reset to default values successfully',
       });
     }
 
@@ -250,18 +275,17 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Invalid action',
-        details: 'Action must be either "reset" or "upload"'
+        details: 'Action must be either "reset" or "upload"',
       },
       { status: 400 }
     );
-
   } catch (error) {
     console.error('Error processing site customization action:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to process action',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -282,7 +306,7 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       section,
       filename: file?.name,
       size: file?.size,
-      mimeType: file?.type
+      mimeType: file?.type,
     });
 
     if (!file) {
@@ -297,7 +321,7 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
         {
           success: false,
           error: 'Missing required parameters',
-          details: 'Both "type" and "section" are required'
+          details: 'Both "type" and "section" are required',
         },
         { status: 400 }
       );
@@ -314,7 +338,7 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       return NextResponse.json(
         {
           success: false,
-          error: uploadResult.error || 'Upload failed'
+          error: uploadResult.error || 'Upload failed',
         },
         { status: 400 }
       );
@@ -324,13 +348,21 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
 
     console.log('✅ File uploaded successfully:', {
       filename,
-      url: fileUrl
+      url: fileUrl,
     });
 
     // Build configuration update
-    const updateConfig = buildUpdateConfigForUpload(type, section, fileUrl!, formData);
+    const updateConfig = buildUpdateConfigForUpload(
+      type,
+      section,
+      fileUrl!,
+      formData
+    );
 
-    console.log('🔧 Updating configuration:', JSON.stringify(updateConfig, null, 2));
+    console.log(
+      '🔧 Updating configuration:',
+      JSON.stringify(updateConfig, null, 2)
+    );
 
     // Update configuration through service
     const result = await siteCustomizationService.updateConfiguration(
@@ -339,7 +371,7 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
     );
 
     console.log('✅ Configuration updated:', {
-      heroBackground: result.config.hero?.background
+      heroBackground: result.config.hero?.background,
     });
 
     return NextResponse.json({
@@ -349,16 +381,15 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
       config: result.config,
       validation: result.validation,
       preview: result.preview,
-      message: `${type.replace('_', ' ')} uploaded and configuration updated successfully`
+      message: `${type.replace('_', ' ')} uploaded and configuration updated successfully`,
     });
-
   } catch (error) {
     console.error('❌ Media upload error:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to upload media file',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -366,9 +397,9 @@ async function handleMediaUpload(request: NextRequest, userId: string) {
 }
 
 function buildUpdateConfigForUpload(
-  type: string, 
-  section: string, 
-  fileUrl: string, 
+  type: string,
+  section: string,
+  fileUrl: string,
   formData: FormData
 ): any {
   const config: any = {};
@@ -377,26 +408,33 @@ function buildUpdateConfigForUpload(
     config.hero = {
       background: {
         url: fileUrl,
-        type: fileUrl.includes('.mp4') || fileUrl.includes('.webm') ? 'VIDEO' : 'IMAGE'
-      }
+        type:
+          fileUrl.includes('.mp4') || fileUrl.includes('.webm')
+            ? 'VIDEO'
+            : 'IMAGE',
+      },
     };
   } else if (section === 'branding') {
     if (type === 'logo') {
-      const width = formData.get('width') ? parseInt(formData.get('width') as string) : 120;
-      const height = formData.get('height') ? parseInt(formData.get('height') as string) : 40;
-      
+      const width = formData.get('width')
+        ? parseInt(formData.get('width') as string)
+        : 120;
+      const height = formData.get('height')
+        ? parseInt(formData.get('height') as string)
+        : 40;
+
       config.branding = {
         logo: {
           url: fileUrl,
           width,
-          height
-        }
+          height,
+        },
       };
     } else if (type === 'favicon') {
       config.branding = {
         favicon: {
-          url: fileUrl
-        }
+          url: fileUrl,
+        },
       };
     }
   }
@@ -413,7 +451,10 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -428,7 +469,7 @@ export async function DELETE(request: NextRequest) {
         {
           success: false,
           error: 'Filename is required',
-          details: 'Provide filename query parameter'
+          details: 'Provide filename query parameter',
         },
         { status: 400 }
       );
@@ -444,7 +485,7 @@ export async function DELETE(request: NextRequest) {
         {
           success: false,
           error: 'File not found or already deleted',
-          details: `File ${filename} does not exist in volume`
+          details: `File ${filename} does not exist in volume`,
         },
         { status: 404 }
       );
@@ -455,16 +496,15 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'File deleted successfully from volume',
-      filename
+      filename,
     });
-
   } catch (error) {
     console.error('❌ Error deleting site customization file:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to delete file',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

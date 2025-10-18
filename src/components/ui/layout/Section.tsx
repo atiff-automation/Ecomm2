@@ -24,22 +24,24 @@ const sectionVariants = {
   muted: 'bg-muted/30 text-foreground',
   accent: 'bg-accent/5 text-foreground',
   primary: 'bg-primary/5 text-foreground',
-  dark: 'bg-neutral-900 text-white'
+  dark: 'bg-neutral-900 text-white',
 };
 
 const sectionSizes = {
-  xs: 'py-8',         // 32px
-  sm: 'py-12',        // 48px
-  md: 'py-16',        // 64px
-  lg: 'py-20',        // 80px
-  xl: 'py-24'         // 96px
+  xs: 'py-8', // 32px
+  sm: 'py-12', // 48px
+  md: 'py-16', // 64px
+  lg: 'py-20', // 80px
+  xl: 'py-24', // 96px
 };
 
 const decorationVariants = {
   none: '',
-  subtle: 'relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-background/5 before:to-transparent',
-  pattern: 'relative overflow-hidden bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary),0.02),transparent)]',
-  gradient: 'bg-gradient-to-b from-background via-muted/20 to-background'
+  subtle:
+    'relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-background/5 before:to-transparent',
+  pattern:
+    'relative overflow-hidden bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary),0.02),transparent)]',
+  gradient: 'bg-gradient-to-b from-background via-muted/20 to-background',
 };
 
 export function Section({
@@ -83,7 +85,11 @@ export function Section({
 }
 
 // Specialized section components
-export const HeroSection = ({ children, className, ...props }: Omit<SectionProps, 'size'>) => (
+export const HeroSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'size'>) => (
   <Section
     size="xl"
     decoration="gradient"
@@ -94,7 +100,11 @@ export const HeroSection = ({ children, className, ...props }: Omit<SectionProps
   </Section>
 );
 
-export const FeatureSection = ({ children, className, ...props }: Omit<SectionProps, 'variant' | 'size'>) => (
+export const FeatureSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'variant' | 'size'>) => (
   <Section
     variant="muted"
     size="lg"
@@ -106,17 +116,21 @@ export const FeatureSection = ({ children, className, ...props }: Omit<SectionPr
   </Section>
 );
 
-export const ProductSection = ({ children, className, ...props }: Omit<SectionProps, 'size'>) => (
-  <Section
-    size="lg"
-    className={className}
-    {...props}
-  >
+export const ProductSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'size'>) => (
+  <Section size="lg" className={className} {...props}>
     {children}
   </Section>
 );
 
-export const TestimonialSection = ({ children, className, ...props }: Omit<SectionProps, 'variant' | 'decoration'>) => (
+export const TestimonialSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'variant' | 'decoration'>) => (
   <Section
     variant="accent"
     decoration="pattern"
@@ -127,7 +141,11 @@ export const TestimonialSection = ({ children, className, ...props }: Omit<Secti
   </Section>
 );
 
-export const CallToActionSection = ({ children, className, ...props }: Omit<SectionProps, 'variant' | 'decoration'>) => (
+export const CallToActionSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'variant' | 'decoration'>) => (
   <Section
     variant="primary"
     decoration="gradient"
@@ -138,13 +156,12 @@ export const CallToActionSection = ({ children, className, ...props }: Omit<Sect
   </Section>
 );
 
-export const FooterSection = ({ children, className, ...props }: Omit<SectionProps, 'variant' | 'size'>) => (
-  <Section
-    variant="dark"
-    size="lg"
-    className={className}
-    {...props}
-  >
+export const FooterSection = ({
+  children,
+  className,
+  ...props
+}: Omit<SectionProps, 'variant' | 'size'>) => (
+  <Section variant="dark" size="lg" className={className} {...props}>
     {children}
   </Section>
 );
@@ -159,14 +176,14 @@ export function SectionWithContainer({
   children,
   ...sectionProps
 }: SectionWithContainerProps) {
-  const Container = React.lazy(() => import('./Container').then(module => ({ default: module.Container })));
+  const Container = React.lazy(() =>
+    import('./Container').then(module => ({ default: module.Container }))
+  );
 
   return (
     <Section {...sectionProps}>
       <React.Suspense fallback={<div className="min-h-4" />}>
-        <Container size={containerSize}>
-          {children}
-        </Container>
+        <Container size={containerSize}>{children}</Container>
       </React.Suspense>
     </Section>
   );
@@ -186,12 +203,12 @@ export function SectionHeader({
   subtitle,
   description,
   align = 'center',
-  className
+  className,
 }: SectionHeaderProps) {
   const alignClasses = {
     left: 'text-left',
     center: 'text-center',
-    right: 'text-right'
+    right: 'text-right',
   };
 
   return (
@@ -223,12 +240,12 @@ export interface SectionFooterProps {
 export function SectionFooter({
   children,
   align = 'center',
-  className
+  className,
 }: SectionFooterProps) {
   const alignClasses = {
     left: 'justify-start text-left',
     center: 'justify-center text-center',
-    right: 'justify-end text-right'
+    right: 'justify-end text-right',
   };
 
   return (

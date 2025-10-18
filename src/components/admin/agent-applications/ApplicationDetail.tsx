@@ -33,7 +33,7 @@ import {
   Edit,
   ArrowLeft,
   Download,
-  Send
+  Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ms } from 'date-fns/locale';
@@ -45,7 +45,10 @@ interface ApplicationDetailProps {
   onStatusUpdate: () => void;
 }
 
-export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDetailProps) {
+export function ApplicationDetail({
+  application,
+  onStatusUpdate,
+}: ApplicationDetailProps) {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   const getStatusColor = (status: string) => {
@@ -93,7 +96,9 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
 
   const handleExportPDF = async () => {
     try {
-      const response = await fetch(`/api/admin/agent-applications/${application.id}/export-pdf`);
+      const response = await fetch(
+        `/api/admin/agent-applications/${application.id}/export-pdf`
+      );
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -112,9 +117,12 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
 
   const handleSendEmail = async () => {
     try {
-      const response = await fetch(`/api/admin/agent-applications/${application.id}/send-email`, {
-        method: 'POST',
-      });
+      const response = await fetch(
+        `/api/admin/agent-applications/${application.id}/send-email`,
+        {
+          method: 'POST',
+        }
+      );
       if (response.ok) {
         alert('Email berjaya dihantar');
       }
@@ -242,7 +250,9 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Pengalaman Perniagaan:</span>
-              <Badge variant={application.hasBusinessExp ? "default" : "outline"}>
+              <Badge
+                variant={application.hasBusinessExp ? 'default' : 'outline'}
+              >
                 {application.hasBusinessExp ? 'Ya' : 'Tidak'}
               </Badge>
             </div>
@@ -250,20 +260,26 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
             {application.hasBusinessExp && application.businessLocation && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Lokasi Perniagaan:</span>
-                <span className="font-medium">{application.businessLocation}</span>
+                <span className="font-medium">
+                  {application.businessLocation}
+                </span>
               </div>
             )}
 
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Pengalaman Memimpin Pasukan:</span>
-              <Badge variant={application.hasTeamLeadExp ? "default" : "outline"}>
+              <span className="text-gray-600">
+                Pengalaman Memimpin Pasukan:
+              </span>
+              <Badge
+                variant={application.hasTeamLeadExp ? 'default' : 'outline'}
+              >
                 {application.hasTeamLeadExp ? 'Ya' : 'Tidak'}
               </Badge>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Perniagaan Berdaftar:</span>
-              <Badge variant={application.isRegistered ? "default" : "outline"}>
+              <Badge variant={application.isRegistered ? 'default' : 'outline'}>
                 {application.isRegistered ? 'Ya' : 'Tidak'}
               </Badge>
             </div>
@@ -286,7 +302,9 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
                 <div>
                   <p className="font-medium">Instagram</p>
                   <p className="text-sm text-gray-600">
-                    {application.instagramHandle ? `@${application.instagramHandle}` : 'Tidak dinyatakan'}
+                    {application.instagramHandle
+                      ? `@${application.instagramHandle}`
+                      : 'Tidak dinyatakan'}
                   </p>
                 </div>
               </div>
@@ -318,7 +336,9 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
                 <div>
                   <p className="font-medium">TikTok</p>
                   <p className="text-sm text-gray-600">
-                    {application.tiktokHandle ? `@${application.tiktokHandle}` : 'Tidak dinyatakan'}
+                    {application.tiktokHandle
+                      ? `@${application.tiktokHandle}`
+                      : 'Tidak dinyatakan'}
                   </p>
                 </div>
               </div>
@@ -339,15 +359,19 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Pengalaman dengan Produk JRM:</span>
-              <Badge variant={application.hasJrmExp ? "default" : "outline"}>
+              <span className="text-gray-600">
+                Pengalaman dengan Produk JRM:
+              </span>
+              <Badge variant={application.hasJrmExp ? 'default' : 'outline'}>
                 {application.hasJrmExp ? 'Ya' : 'Tidak'}
               </Badge>
             </div>
 
             {application.hasJrmExp && application.jrmProducts && (
               <div>
-                <span className="text-gray-600">Produk JRM yang Digunakan:</span>
+                <span className="text-gray-600">
+                  Produk JRM yang Digunakan:
+                </span>
                 <p className="font-medium mt-1 p-3 bg-yellow-50 rounded-lg text-sm">
                   {application.jrmProducts}
                 </p>
@@ -372,7 +396,8 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
       </div>
 
       {/* Admin Notes and Reviews */}
-      {(application.adminNotes || (application.reviews && application.reviews.length > 0)) && (
+      {(application.adminNotes ||
+        (application.reviews && application.reviews.length > 0)) && (
         <Card>
           <CardHeader>
             <CardTitle>Nota Admin & Sejarah Semakan</CardTitle>
@@ -380,8 +405,12 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
           <CardContent className="space-y-4">
             {application.adminNotes && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h4 className="font-medium text-yellow-900 mb-2">Nota Admin Terkini</h4>
-                <p className="text-yellow-800 text-sm">{application.adminNotes}</p>
+                <h4 className="font-medium text-yellow-900 mb-2">
+                  Nota Admin Terkini
+                </h4>
+                <p className="text-yellow-800 text-sm">
+                  {application.adminNotes}
+                </p>
               </div>
             )}
 
@@ -391,15 +420,22 @@ export function ApplicationDetail({ application, onStatusUpdate }: ApplicationDe
                   Sejarah Semakan ({application.reviews.length})
                 </h4>
                 <div className="space-y-3">
-                  {application.reviews.map((review) => (
+                  {application.reviews.map(review => (
                     <div key={review.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{review.reviewer?.name || 'Admin'}</span>
-                          <Badge variant={
-                            review.decision === 'APPROVED' ? 'default' :
-                            review.decision === 'REJECTED' ? 'destructive' : 'secondary'
-                          }>
+                          <span className="font-medium">
+                            {review.reviewer?.name || 'Admin'}
+                          </span>
+                          <Badge
+                            variant={
+                              review.decision === 'APPROVED'
+                                ? 'default'
+                                : review.decision === 'REJECTED'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                          >
                             {review.decision}
                           </Badge>
                         </div>

@@ -9,12 +9,12 @@
  * @see https://tailwindcss.com/docs/responsive-design
  */
 export const GRID_BREAKPOINTS = {
-  mobile: 0,      // 0px+
-  sm: 640,        // 640px+
-  md: 768,        // 768px+
-  lg: 1024,       // 1024px+
-  xl: 1280,       // 1280px+
-  '2xl': 1536     // 1536px+
+  mobile: 0, // 0px+
+  sm: 640, // 640px+
+  md: 768, // 768px+
+  lg: 1024, // 1024px+
+  xl: 1280, // 1280px+
+  '2xl': 1536, // 1536px+
 } as const;
 
 /**
@@ -24,11 +24,11 @@ export const GRID_BREAKPOINTS = {
 export const GRID_COLUMNS = {
   // Product grids - Standard e-commerce product display
   product: {
-    mobile: 2,     // 2 columns on mobile
-    sm: 2,         // 2 columns on small screens
-    md: 3,         // 3 columns on tablet
-    lg: 4,         // 4 columns on desktop
-    xl: 5          // 5 columns on large desktop
+    mobile: 2, // 2 columns on mobile
+    sm: 2, // 2 columns on small screens
+    md: 3, // 3 columns on tablet
+    lg: 4, // 4 columns on desktop
+    xl: 5, // 5 columns on large desktop
   },
 
   // Compact product grid - Sidebars, recommendations
@@ -37,7 +37,7 @@ export const GRID_COLUMNS = {
     sm: 2,
     md: 3,
     lg: 4,
-    xl: 5
+    xl: 5,
   },
 
   // Search results - Optimized for search pages
@@ -46,7 +46,7 @@ export const GRID_COLUMNS = {
     sm: 2,
     md: 2,
     lg: 3,
-    xl: 4
+    xl: 4,
   },
 
   // Wishlist - Consistent with product display
@@ -55,7 +55,7 @@ export const GRID_COLUMNS = {
     sm: 2,
     md: 2,
     lg: 3,
-    xl: 4
+    xl: 4,
   },
 
   // Category grid - Category cards/tiles
@@ -64,7 +64,7 @@ export const GRID_COLUMNS = {
     sm: 2,
     md: 3,
     lg: 4,
-    xl: 6
+    xl: 6,
   },
 
   // Feature grid - Feature highlights, benefits
@@ -73,7 +73,7 @@ export const GRID_COLUMNS = {
     sm: 1,
     md: 2,
     lg: 3,
-    xl: 3
+    xl: 3,
   },
 
   // Blog/Article grid
@@ -82,7 +82,7 @@ export const GRID_COLUMNS = {
     sm: 1,
     md: 2,
     lg: 3,
-    xl: 3
+    xl: 3,
   },
 
   // Testimonial grid
@@ -91,7 +91,7 @@ export const GRID_COLUMNS = {
     sm: 1,
     md: 1,
     lg: 2,
-    xl: 2
+    xl: 2,
   },
 
   // Form fields - Two column forms
@@ -100,7 +100,7 @@ export const GRID_COLUMNS = {
     sm: 1,
     md: 2,
     lg: 2,
-    xl: 2
+    xl: 2,
   },
 
   // Admin dashboard cards
@@ -109,8 +109,8 @@ export const GRID_COLUMNS = {
     sm: 2,
     md: 2,
     lg: 3,
-    xl: 4
-  }
+    xl: 4,
+  },
 } as const;
 
 /**
@@ -118,12 +118,12 @@ export const GRID_COLUMNS = {
  * Responsive spacing between grid items
  */
 export const GRID_GAPS = {
-  xs: 'gap-2',              // 8px
-  sm: 'gap-3',              // 12px
-  md: 'gap-4',              // 16px
-  lg: 'gap-6',              // 24px
-  xl: 'gap-8',              // 32px
-  responsive: 'gap-4 lg:gap-6'  // Responsive gap
+  xs: 'gap-2', // 8px
+  sm: 'gap-3', // 12px
+  md: 'gap-4', // 16px
+  lg: 'gap-6', // 24px
+  xl: 'gap-8', // 32px
+  responsive: 'gap-4 lg:gap-6', // Responsive gap
 } as const;
 
 /**
@@ -155,7 +155,7 @@ export function getGridClasses(
     `md:grid-cols-${config.md}`,
     `lg:grid-cols-${config.lg}`,
     `xl:grid-cols-${config.xl}`,
-    gapClass
+    gapClass,
   ];
 
   return classes.join(' ');
@@ -166,4 +166,4 @@ export function getGridClasses(
  */
 export type GridType = keyof typeof GRID_COLUMNS;
 export type GridGapSize = keyof typeof GRID_GAPS;
-export type GridConfig = typeof GRID_COLUMNS[GridType];
+export type GridConfig = (typeof GRID_COLUMNS)[GridType];

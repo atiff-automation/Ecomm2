@@ -14,7 +14,7 @@ import { AuditLogger } from '@/lib/security';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
         memberSince: true,
         emailVerified: true,
         createdAt: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
 
     if (!user) {
@@ -44,9 +44,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: user
+      data: user,
     });
-
   } catch (error) {
     console.error('Get account error:', error);
     return NextResponse.json(
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -73,7 +72,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate request body
     const validatedData = personalInfoSchema.parse(body);
 
@@ -85,8 +84,8 @@ export async function PUT(request: NextRequest) {
         lastName: true,
         email: true,
         phone: true,
-        dateOfBirth: true
-      }
+        dateOfBirth: true,
+      },
     });
 
     if (!currentUser) {
@@ -98,8 +97,8 @@ export async function PUT(request: NextRequest) {
       const existingUser = await prisma.user.findFirst({
         where: {
           email: validatedData.email,
-          id: { not: session.user.id }
-        }
+          id: { not: session.user.id },
+        },
       });
 
       if (existingUser) {
@@ -116,7 +115,7 @@ export async function PUT(request: NextRequest) {
       lastName: validatedData.lastName,
       email: validatedData.email,
       phone: validatedData.phone || null,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     // Handle date of birth
@@ -141,8 +140,8 @@ export async function PUT(request: NextRequest) {
         phone: true,
         dateOfBirth: true,
         emailVerified: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
 
     // Log the change for audit
@@ -154,14 +153,14 @@ export async function PUT(request: NextRequest) {
         lastName: currentUser.lastName,
         email: currentUser.email,
         phone: currentUser.phone,
-        dateOfBirth: currentUser.dateOfBirth
+        dateOfBirth: currentUser.dateOfBirth,
       },
       {
         firstName: validatedData.firstName,
         lastName: validatedData.lastName,
         email: validatedData.email,
         phone: validatedData.phone,
-        dateOfBirth: validatedData.dateOfBirth
+        dateOfBirth: validatedData.dateOfBirth,
       },
       request
     );
@@ -169,12 +168,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Account updated successfully',
-      data: updatedUser
+      data: updatedUser,
     });
-
   } catch (error) {
     console.error('Update account error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },

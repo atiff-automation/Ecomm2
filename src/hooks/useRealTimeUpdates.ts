@@ -53,7 +53,8 @@ export function useRealTimeUpdates({
         onError?.(error as Error);
       } else {
         // Exponential backoff for retries
-        const backoffDelay = interval * Math.pow(backoffMultiplier, retryCountRef.current - 1);
+        const backoffDelay =
+          interval * Math.pow(backoffMultiplier, retryCountRef.current - 1);
         setTimeout(() => {
           if (enabled) {
             performUpdate();
@@ -63,7 +64,15 @@ export function useRealTimeUpdates({
     } finally {
       isUpdatingRef.current = false;
     }
-  }, [onUpdate, onError, maxRetries, backoffMultiplier, interval, enabled, stopUpdates]);
+  }, [
+    onUpdate,
+    onError,
+    maxRetries,
+    backoffMultiplier,
+    interval,
+    enabled,
+    stopUpdates,
+  ]);
 
   const startUpdates = useCallback(() => {
     stopUpdates(); // Clear any existing interval

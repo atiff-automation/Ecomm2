@@ -30,9 +30,13 @@ export async function validateSessionMiddleware(request: NextRequest) {
 
     // If user doesn't exist, clear stale session
     if (!user) {
-      console.warn(`Stale session detected - User ID ${token.sub} not found in database`);
+      console.warn(
+        `Stale session detected - User ID ${token.sub} not found in database`
+      );
 
-      const response = NextResponse.redirect(new URL('/auth/signin?error=stale-session', request.url));
+      const response = NextResponse.redirect(
+        new URL('/auth/signin?error=stale-session', request.url)
+      );
 
       // Clear NextAuth cookies
       const cookiesToClear = [

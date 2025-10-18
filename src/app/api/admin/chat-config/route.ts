@@ -13,16 +13,19 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       console.log('❌ [Chat Config Admin API] Unauthorized access attempt');
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    console.log('🔍 [Chat Config Admin API] Request body:', JSON.stringify(body, null, 2));
+    console.log(
+      '🔍 [Chat Config Admin API] Request body:',
+      JSON.stringify(body, null, 2)
+    );
 
     const {
       webhookUrl,
@@ -39,7 +42,10 @@ export async function POST(request: NextRequest) {
     // Allow empty webhook URL for clearing configuration
     // But if provided, it must be a valid URL
     if (webhookUrl && !webhookUrl.startsWith('http')) {
-      console.log('❌ [Chat Config Admin API] Invalid webhook URL:', webhookUrl);
+      console.log(
+        '❌ [Chat Config Admin API] Invalid webhook URL:',
+        webhookUrl
+      );
       return NextResponse.json(
         { error: 'Invalid webhook URL. Must start with http:// or https://' },
         { status: 400 }
@@ -73,16 +79,43 @@ export async function POST(request: NextRequest) {
     // Save all configuration fields
     const configFields = [
       { key: 'n8n_chat_enabled', value: String(isEnabled), type: 'boolean' },
-      { key: 'n8n_chat_position', value: position || 'bottom-right', type: 'string' },
-      { key: 'n8n_chat_primary_color', value: primaryColor || '#2563eb', type: 'string' },
+      {
+        key: 'n8n_chat_position',
+        value: position || 'bottom-right',
+        type: 'string',
+      },
+      {
+        key: 'n8n_chat_primary_color',
+        value: primaryColor || '#2563eb',
+        type: 'string',
+      },
       { key: 'n8n_chat_title', value: title || 'Chat Support', type: 'string' },
-      { key: 'n8n_chat_subtitle', value: subtitle || "We're here to help", type: 'string' },
-      { key: 'n8n_chat_welcome_message', value: welcomeMessage || 'Hello! 👋\nHow can I help you today?', type: 'string' },
-      { key: 'n8n_chat_input_placeholder', value: inputPlaceholder || 'Type your message...', type: 'string' },
-      { key: 'n8n_chat_bot_avatar_url', value: botAvatarUrl || '', type: 'string' },
+      {
+        key: 'n8n_chat_subtitle',
+        value: subtitle || "We're here to help",
+        type: 'string',
+      },
+      {
+        key: 'n8n_chat_welcome_message',
+        value: welcomeMessage || 'Hello! 👋\nHow can I help you today?',
+        type: 'string',
+      },
+      {
+        key: 'n8n_chat_input_placeholder',
+        value: inputPlaceholder || 'Type your message...',
+        type: 'string',
+      },
+      {
+        key: 'n8n_chat_bot_avatar_url',
+        value: botAvatarUrl || '',
+        type: 'string',
+      },
     ];
 
-    console.log('💾 [Chat Config Admin API] Saving config fields:', JSON.stringify(configFields, null, 2));
+    console.log(
+      '💾 [Chat Config Admin API] Saving config fields:',
+      JSON.stringify(configFields, null, 2)
+    );
 
     await Promise.all(
       configFields.map(({ key, value, type }) =>
@@ -94,7 +127,9 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    console.log('✅ [Chat Config Admin API] All config fields saved successfully');
+    console.log(
+      '✅ [Chat Config Admin API] All config fields saved successfully'
+    );
 
     return NextResponse.json({
       success: true,
@@ -103,7 +138,10 @@ export async function POST(request: NextRequest) {
         : 'Configuration cleared successfully.',
     });
   } catch (error) {
-    console.error('❌ [Chat Config Admin API] Error saving chat config:', error);
+    console.error(
+      '❌ [Chat Config Admin API] Error saving chat config:',
+      error
+    );
     return NextResponse.json(
       { error: 'Failed to save configuration' },
       { status: 500 }
@@ -116,11 +154,11 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Read all config fields from database
@@ -142,10 +180,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const configMap = configs.reduce((acc, config) => {
-      acc[config.key] = config.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const configMap = configs.reduce(
+      (acc, config) => {
+        acc[config.key] = config.value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     return NextResponse.json({
       webhookUrl: configMap['n8n_chat_webhook_url'] || '',
@@ -154,8 +195,11 @@ export async function GET(request: NextRequest) {
       primaryColor: configMap['n8n_chat_primary_color'] || '#2563eb',
       title: configMap['n8n_chat_title'] || 'Chat Support',
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
-      welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! 👋\nHow can I help you today?',
-      inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
+      welcomeMessage:
+        configMap['n8n_chat_welcome_message'] ||
+        'Hello! 👋\nHow can I help you today?',
+      inputPlaceholder:
+        configMap['n8n_chat_input_placeholder'] || 'Type your message...',
       botAvatarUrl: configMap['n8n_chat_bot_avatar_url'] || '',
     });
   } catch (error) {

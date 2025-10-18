@@ -3,12 +3,12 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { SettingsTabs } from '@/components/settings';
-import { 
-  User, 
-  Crown, 
-  Settings as SettingsIcon, 
-  Shield, 
-  MapPin 
+import {
+  User,
+  Crown,
+  Settings as SettingsIcon,
+  Shield,
+  MapPin,
 } from 'lucide-react';
 
 const settingsTabs = [
@@ -16,33 +16,35 @@ const settingsTabs = [
     id: 'account',
     label: 'Account',
     href: '/settings/account',
-    icon: <User className="h-5 w-5" />
+    icon: <User className="h-5 w-5" />,
   },
   {
     id: 'membership',
     label: 'Membership',
     href: '/settings/membership',
-    icon: <Crown className="h-5 w-5" />
+    icon: <Crown className="h-5 w-5" />,
   },
   {
     id: 'preferences',
     label: 'Preferences',
     href: '/settings/preferences',
-    icon: <SettingsIcon className="h-5 w-5" />
+    icon: <SettingsIcon className="h-5 w-5" />,
   },
   {
     id: 'privacy',
     label: 'Privacy',
     href: '/settings/privacy',
-    icon: <Shield className="h-5 w-5" />
-  }
+    icon: <Shield className="h-5 w-5" />,
+  },
 ];
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function SettingsLayout({ children }: SettingsLayoutProps) {
+export default async function SettingsLayout({
+  children,
+}: SettingsLayoutProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -84,7 +86,7 @@ export default async function SettingsLayout({ children }: SettingsLayoutProps) 
               </div>
             </div>
           </div>
-          
+
           {/* Navigation Tabs */}
           <SettingsTabs tabs={settingsTabs} />
         </div>
@@ -92,9 +94,7 @@ export default async function SettingsLayout({ children }: SettingsLayoutProps) 
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
-          {children}
-        </div>
+        <div className="max-w-4xl mx-auto">{children}</div>
       </div>
     </div>
   );

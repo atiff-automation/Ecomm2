@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized - Login required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Login required' },
+        { status: 401 }
+      );
     }
 
     // Authorization check
@@ -80,7 +83,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized - Login required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Login required' },
+        { status: 401 }
+      );
     }
 
     // Authorization check
@@ -131,7 +137,8 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'INVALID_PICKUP_ADDRESS',
-          message: 'Pickup address validation failed. Please configure your shipping address in Business Profile.',
+          message:
+            'Pickup address validation failed. Please configure your shipping address in Business Profile.',
           details: {
             errors: pickupValidation.errors,
             warnings: pickupValidation.warnings,
@@ -156,7 +163,8 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'INVALID_API_KEY',
-          message: 'Failed to connect to EasyParcel API. Please check your API key.',
+          message:
+            'Failed to connect to EasyParcel API. Please check your API key.',
         },
         { status: 400 }
       );
@@ -165,8 +173,14 @@ export async function POST(request: NextRequest) {
     // Save settings
     const savedSettings = await saveShippingSettings(settingsData);
 
-    console.log('[API] Shipping settings saved successfully by:', session.user.email);
-    console.log('[API] WhatsApp notifications enabled:', savedSettings.whatsappNotificationsEnabled);
+    console.log(
+      '[API] Shipping settings saved successfully by:',
+      session.user.email
+    );
+    console.log(
+      '[API] WhatsApp notifications enabled:',
+      savedSettings.whatsappNotificationsEnabled
+    );
 
     return NextResponse.json({
       success: true,
@@ -210,7 +224,10 @@ export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized - Login required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Login required' },
+        { status: 401 }
+      );
     }
 
     // Authorization check - ADMIN or SUPERADMIN can delete settings
@@ -234,7 +251,10 @@ export async function DELETE(request: NextRequest) {
     console.error('[API] Delete shipping settings error:', error);
 
     // Handle case where settings don't exist
-    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
+    if (
+      error instanceof Error &&
+      error.message.includes('Record to delete does not exist')
+    ) {
       return NextResponse.json(
         {
           success: false,

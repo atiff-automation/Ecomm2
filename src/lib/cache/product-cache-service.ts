@@ -2,7 +2,7 @@
  * Product Cache Service - Production Ready
  * Following @REDIS_PRODUCTION_IMPLEMENTATION_PLAN.md architecture (lines 344-431)
  * Following @CLAUDE.md: NO hardcoding, systematic approach, centralized
- * 
+ *
  * Extends BaseCacheService for centralized caching architecture
  * Specialized for product data caching with business logic integration
  */
@@ -35,12 +35,11 @@ export interface ProductCacheConfig extends CacheConfig {
  * Following @CLAUDE.md: Extends BaseCacheService for centralized architecture
  */
 export class ProductCacheService extends BaseCacheService {
-  
   // Default configuration following production best practices
   private readonly DEFAULT_PRODUCT_CONFIG: Partial<ProductCacheConfig> = {
-    ttl: 7200,              // 2 hours for product data
-    maxKeys: 5000,          // Top 5000 frequently accessed products
-    keyPrefix: 'product',   // Systematic key prefix
+    ttl: 7200, // 2 hours for product data
+    maxKeys: 5000, // Top 5000 frequently accessed products
+    keyPrefix: 'product', // Systematic key prefix
     enableCompression: false, // Products have moderate size
     enableInventoryTracking: true,
     enablePriceTracking: true,
@@ -65,7 +64,11 @@ export class ProductCacheService extends BaseCacheService {
    * Set product data in cache
    * Uses BaseCacheService foundation - centralized implementation
    */
-  async setCachedProduct(productId: string, data: ProductCacheData, ttl?: number): Promise<void> {
+  async setCachedProduct(
+    productId: string,
+    data: ProductCacheData,
+    ttl?: number
+  ): Promise<void> {
     await this.setCacheValue(productId, data, ttl);
   }
 
@@ -73,13 +76,19 @@ export class ProductCacheService extends BaseCacheService {
    * Batch cache multiple products
    * Uses BaseCacheService batch operations - eliminates duplication
    */
-  async setCachedProducts(productData: Array<{ productId: string; data: ProductCacheData; ttl?: number }>): Promise<void> {
+  async setCachedProducts(
+    productData: Array<{
+      productId: string;
+      data: ProductCacheData;
+      ttl?: number;
+    }>
+  ): Promise<void> {
     const batchItems = productData.map(({ productId, data, ttl }) => ({
       key: productId,
       value: data,
-      ttl
+      ttl,
     }));
-    
+
     await this.setBatchValues(batchItems);
   }
 
@@ -87,25 +96,27 @@ export class ProductCacheService extends BaseCacheService {
    * Fetch product data from database
    * Following existing database patterns - single source of truth
    */
-  private async fetchProductFromDatabase(productId: string): Promise<ProductCacheData | null> {
+  private async fetchProductFromDatabase(
+    productId: string
+  ): Promise<ProductCacheData | null> {
     try {
       // Import prisma at runtime to avoid client-side issues
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       // Query product with necessary relations following existing patterns
       const product = await prisma.product.findUnique({
         where: { id: productId },
         include: {
           categories: {
             include: {
-              category: true
-            }
+              category: true,
+            },
           },
           images: {
             orderBy: { sortOrder: 'asc' },
-            take: 5 // Limit images for cache efficiency
-          }
-        }
+            take: 5, // Limit images for cache efficiency
+          },
+        },
       });
 
       if (!product) {
@@ -127,13 +138,12 @@ export class ProductCacheService extends BaseCacheService {
         images: product.images.map(img => ({
           url: img.url,
           altText: img.altText || undefined,
-          isPrimary: img.isPrimary
+          isPrimary: img.isPrimary,
         })),
         lastUpdated: Date.now(),
       };
 
       return productData;
-      
     } catch (error) {
       console.error('ProductCacheService: Database fetch failed', error);
       return null;
@@ -148,14 +158,14 @@ export class ProductCacheService extends BaseCacheService {
     try {
       // Try cache first
       let cachedProduct = await this.getCachedProduct(productId);
-      
+
       if (cachedProduct) {
         return cachedProduct;
       }
 
       // Cache miss - fetch from database
       const productData = await this.fetchProductFromDatabase(productId);
-      
+
       if (productData) {
         // Cache the result for future requests
         await this.setCachedProduct(productId, productData);
@@ -184,15 +194,15 @@ export class ProductCacheService extends BaseCacheService {
    */
   async invalidateProducts(productIds: string[]): Promise<void> {
     const batchSize = 50;
-    
+
     for (let i = 0; i < productIds.length; i += batchSize) {
       const batch = productIds.slice(i, i + batchSize);
-      
+
       await Promise.allSettled(
         batch.map(productId => this.invalidateProduct(productId))
       );
     }
-    
+
     console.log(`🗑️ Batch invalidated ${productIds.length} products`);
   }
 
@@ -202,17 +212,17 @@ export class ProductCacheService extends BaseCacheService {
    */
   async warmCache(customProductIds?: string[]): Promise<void> {
     console.log('🔥 Starting data-driven product cache warmup...');
-    
+
     try {
       let productIds: string[];
-      
+
       if (customProductIds && customProductIds.length > 0) {
         productIds = customProductIds;
       } else {
         // Get popular products from actual usage data (systematic approach)
         productIds = await this.getPopularProductsFromData();
       }
-      
+
       if (productIds.length === 0) {
         console.log('📊 No product data available for warmup');
         return;
@@ -220,7 +230,6 @@ export class ProductCacheService extends BaseCacheService {
 
       console.log(`📊 Warming cache for ${productIds.length} popular products`);
       await this.warmupProducts(productIds);
-      
     } catch (error) {
       console.error('Product cache warmup error:', error);
       throw error;
@@ -234,10 +243,12 @@ export class ProductCacheService extends BaseCacheService {
   private async getPopularProductsFromData(): Promise<string[]> {
     try {
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       // Query most accessed/ordered products from database
       // This represents actual business usage patterns
-      const popularProducts = await prisma.$queryRaw<Array<{ product_id: string; usage_count: number }>>/*sql*/`
+      const popularProducts = await prisma.$queryRaw<
+        Array<{ product_id: string; usage_count: number }>
+      > /*sql*/ `
         SELECT p.id as product_id, COUNT(*) as usage_count
         FROM products p
         LEFT JOIN order_items oi ON oi."productId" = p.id
@@ -250,9 +261,11 @@ export class ProductCacheService extends BaseCacheService {
       `;
 
       return popularProducts.map(p => p.product_id);
-      
     } catch (error) {
-      console.warn('Could not fetch popular products, using featured fallback:', error);
+      console.warn(
+        'Could not fetch popular products, using featured fallback:',
+        error
+      );
       return await this.getFeaturedProductsAsFallback();
     }
   }
@@ -264,20 +277,21 @@ export class ProductCacheService extends BaseCacheService {
   private async getFeaturedProductsAsFallback(): Promise<string[]> {
     try {
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       const featuredProducts = await prisma.product.findMany({
-        where: { 
+        where: {
           featured: true,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         select: { id: true },
         orderBy: { createdAt: 'desc' },
-        take: 50
+        take: 50,
       });
 
-      console.log(`🏛️ Using ${featuredProducts.length} featured products for warmup`);
+      console.log(
+        `🏛️ Using ${featuredProducts.length} featured products for warmup`
+      );
       return featuredProducts.map(p => p.id);
-      
     } catch (error) {
       console.error('Could not fetch featured products:', error);
       return [];
@@ -289,7 +303,8 @@ export class ProductCacheService extends BaseCacheService {
    * Following @CLAUDE.md: Systematic batch processing
    */
   private async warmupProducts(productIds: string[]): Promise<void> {
-    const batchSize = (this.config as ProductCacheConfig).maxConcurrentWarmup || 10;
+    const batchSize =
+      (this.config as ProductCacheConfig).maxConcurrentWarmup || 10;
     let warmedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
@@ -297,8 +312,8 @@ export class ProductCacheService extends BaseCacheService {
     // Process in batches for efficiency
     for (let i = 0; i < productIds.length; i += batchSize) {
       const batch = productIds.slice(i, i + batchSize);
-      
-      const batchPromises = batch.map(async (productId) => {
+
+      const batchPromises = batch.map(async productId => {
         try {
           // Check if already cached
           const existing = await this.getCachedProduct(productId);
@@ -314,7 +329,7 @@ export class ProductCacheService extends BaseCacheService {
             warmedCount++;
             return { status: 'cached', productId, data };
           }
-          
+
           return { status: 'no_data', productId };
         } catch (error) {
           errorCount++;
@@ -324,13 +339,17 @@ export class ProductCacheService extends BaseCacheService {
       });
 
       await Promise.allSettled(batchPromises);
-      
+
       // Progress logging
       const progress = warmedCount + skippedCount + errorCount;
-      console.log(`🔥 Product cache warmup progress: ${progress}/${productIds.length} (${warmedCount} cached, ${skippedCount} existing, ${errorCount} errors)`);
+      console.log(
+        `🔥 Product cache warmup progress: ${progress}/${productIds.length} (${warmedCount} cached, ${skippedCount} existing, ${errorCount} errors)`
+      );
     }
 
-    console.log(`✅ Product cache warmup completed: ${warmedCount} new, ${skippedCount} existing, ${errorCount} errors`);
+    console.log(
+      `✅ Product cache warmup completed: ${warmedCount} new, ${skippedCount} existing, ${errorCount} errors`
+    );
   }
 
   /**
@@ -339,22 +358,21 @@ export class ProductCacheService extends BaseCacheService {
    */
   async invalidateByCategory(categoryId: string): Promise<void> {
     console.log(`🗑️ Invalidating product cache by category: ${categoryId}`);
-    
+
     try {
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       // Get all products in this category
       const categoryProducts = await prisma.productCategory.findMany({
         where: { categoryId },
-        select: { productId: true }
+        select: { productId: true },
       });
 
       const productIds = categoryProducts.map(pc => pc.productId);
-      
+
       if (productIds.length > 0) {
         await this.invalidateProducts(productIds);
       }
-      
     } catch (error) {
       console.error('Category-based invalidation error:', error);
       // Fall back to pattern-based invalidation
@@ -369,17 +387,19 @@ export class ProductCacheService extends BaseCacheService {
   async updateInventory(productId: string, newQuantity: number): Promise<void> {
     try {
       const cachedProduct = await this.getCachedProduct(productId);
-      
+
       if (cachedProduct) {
         // Update cached inventory
         const updatedProduct: ProductCacheData = {
           ...cachedProduct,
           stockQuantity: newQuantity,
-          lastUpdated: Date.now()
+          lastUpdated: Date.now(),
         };
-        
+
         await this.setCachedProduct(productId, updatedProduct);
-        console.log(`📦 Updated inventory for product ${productId}: ${newQuantity}`);
+        console.log(
+          `📦 Updated inventory for product ${productId}: ${newQuantity}`
+        );
       }
     } catch (error) {
       console.error('Inventory update error:', error);
@@ -390,21 +410,27 @@ export class ProductCacheService extends BaseCacheService {
    * Update product pricing in cache
    * Following plan: Real-time price sync
    */
-  async updatePricing(productId: string, regularPrice: number, memberPrice: number): Promise<void> {
+  async updatePricing(
+    productId: string,
+    regularPrice: number,
+    memberPrice: number
+  ): Promise<void> {
     try {
       const cachedProduct = await this.getCachedProduct(productId);
-      
+
       if (cachedProduct) {
         // Update cached pricing
         const updatedProduct: ProductCacheData = {
           ...cachedProduct,
           regularPrice,
           memberPrice,
-          lastUpdated: Date.now()
+          lastUpdated: Date.now(),
         };
-        
+
         await this.setCachedProduct(productId, updatedProduct);
-        console.log(`💰 Updated pricing for product ${productId}: regular=${regularPrice}, member=${memberPrice}`);
+        console.log(
+          `💰 Updated pricing for product ${productId}: regular=${regularPrice}, member=${memberPrice}`
+        );
       }
     } catch (error) {
       console.error('Pricing update error:', error);
@@ -433,14 +459,15 @@ export class ProductCacheService extends BaseCacheService {
         const keys = await this.redis.keys(`${this.config.keyPrefix}:*`);
         totalProducts = keys.length;
 
-        for (const key of keys.slice(0, 100)) { // Sample first 100 for performance
+        for (const key of keys.slice(0, 100)) {
+          // Sample first 100 for performance
           try {
             const cached = await this.redis.get(key);
             if (cached) {
               const product: ProductCacheData = JSON.parse(cached);
               if (product.lastUpdated) {
                 activeProducts++;
-                totalAge += (now - product.lastUpdated);
+                totalAge += now - product.lastUpdated;
                 if (product.stockQuantity <= 10) {
                   lowStockCount++;
                 }
@@ -453,12 +480,12 @@ export class ProductCacheService extends BaseCacheService {
       } else {
         // Use fallback cache
         totalProducts = this.fallbackCache.size;
-        this.fallbackCache.forEach((item) => {
+        this.fallbackCache.forEach(item => {
           if (item.data && typeof item.data === 'object') {
             const product = item.data as ProductCacheData;
             if (product.lastUpdated) {
               activeProducts++;
-              totalAge += (now - product.lastUpdated);
+              totalAge += now - product.lastUpdated;
               if (product.stockQuantity <= 10) {
                 lowStockCount++;
               }
@@ -467,7 +494,10 @@ export class ProductCacheService extends BaseCacheService {
         });
       }
 
-      const averageAge = activeProducts > 0 ? Math.round(totalAge / activeProducts / 1000 / 60) : 0; // Average age in minutes
+      const averageAge =
+        activeProducts > 0
+          ? Math.round(totalAge / activeProducts / 1000 / 60)
+          : 0; // Average age in minutes
 
       return {
         totalProducts,

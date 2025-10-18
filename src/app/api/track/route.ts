@@ -144,7 +144,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: TRACKING_MESSAGES.RATE_LIMITED.replace('{minutes}', minutes.toString()),
+          error: TRACKING_MESSAGES.RATE_LIMITED.replace(
+            '{minutes}',
+            minutes.toString()
+          ),
           retryAfter: rateLimit.retryAfter,
         },
         { status: 429 }
@@ -213,7 +216,6 @@ export async function POST(request: NextRequest) {
         trackingUrl: order.trackingUrl,
       },
     });
-
   } catch (error) {
     console.error('Track API error:', error);
 

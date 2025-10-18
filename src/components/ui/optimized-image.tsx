@@ -109,9 +109,7 @@ export function OptimizedImage({
   }, []);
 
   // Generate image URLs
-  const primaryUrl = getImageUrl(
-    `${baseName}-${uuid}-${size}.${format}`
-  );
+  const primaryUrl = getImageUrl(`${baseName}-${uuid}-${size}.${format}`);
 
   const fallbackUrl = getImageUrl(
     `${baseName}-${uuid}-${fallbackSize || size}.jpeg`
@@ -165,7 +163,11 @@ export function OptimizedImage({
         {/* Modern format source */}
         {IMAGE_CONFIG.optimization.enableWebP && (
           <source
-            srcSet={generateSrcSet(baseName, uuid, 'webp', ['small', 'medium', 'large'])}
+            srcSet={generateSrcSet(baseName, uuid, 'webp', [
+              'small',
+              'medium',
+              'large',
+            ])}
             type="image/webp"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
@@ -174,7 +176,11 @@ export function OptimizedImage({
         {/* AVIF support if enabled */}
         {IMAGE_CONFIG.optimization.enableAvif && (
           <source
-            srcSet={generateSrcSet(baseName, uuid, 'avif', ['small', 'medium', 'large'])}
+            srcSet={generateSrcSet(baseName, uuid, 'avif', [
+              'small',
+              'medium',
+              'large',
+            ])}
             type="image/avif"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
@@ -295,7 +301,8 @@ export function ProductImageGallery({
                 'flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors',
                 {
                   'border-blue-500': index === activeIndex,
-                  'border-gray-200 hover:border-gray-300': index !== activeIndex,
+                  'border-gray-200 hover:border-gray-300':
+                    index !== activeIndex,
                 }
               )}
             >
@@ -333,8 +340,18 @@ export function ProductImageGallery({
               onClick={() => setShowZoom(false)}
               className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>

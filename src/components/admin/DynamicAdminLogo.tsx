@@ -36,7 +36,10 @@ export function DynamicAdminLogo() {
 
   if (loading) {
     return (
-      <Link href="/admin/dashboard" className="flex justify-center items-center">
+      <Link
+        href="/admin/dashboard"
+        className="flex justify-center items-center"
+      >
         <div className="w-16 h-16 bg-gray-200 rounded-lg animate-pulse" />
       </Link>
     );

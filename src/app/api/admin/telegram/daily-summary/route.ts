@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -41,13 +44,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Daily summary sent successfully',
-        date: targetDate.toISOString()
+        date: targetDate.toISOString(),
       });
     } else {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Failed to send daily summary - check Telegram configuration' 
+        {
+          success: false,
+          message:
+            'Failed to send daily summary - check Telegram configuration',
         },
         { status: 500 }
       );
@@ -55,9 +59,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error sending daily summary:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Failed to send daily summary' 
+      {
+        success: false,
+        message: 'Failed to send daily summary',
       },
       { status: 500 }
     );

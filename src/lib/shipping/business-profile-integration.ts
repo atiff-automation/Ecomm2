@@ -75,7 +75,9 @@ export async function getPickupAddressFromBusinessProfile(): Promise<PickupAddre
 
     // If shippingAddress not configured, return null
     if (!shippingAddress?.addressLine1) {
-      console.log('[PickupAddress] BusinessProfile exists but shippingAddress not configured');
+      console.log(
+        '[PickupAddress] BusinessProfile exists but shippingAddress not configured'
+      );
       return null;
     }
 
@@ -87,12 +89,15 @@ export async function getPickupAddressFromBusinessProfile(): Promise<PickupAddre
       addressLine2: shippingAddress.addressLine2 || undefined,
       city: shippingAddress.city || '',
       // Convert state to lowercase for EasyParcel API compatibility (Business Profile uses uppercase)
-      state: (shippingAddress.state?.toLowerCase() as MalaysianStateCode) || 'sgr',
+      state:
+        (shippingAddress.state?.toLowerCase() as MalaysianStateCode) || 'sgr',
       postalCode: shippingAddress.postalCode || '',
       country: shippingAddress.country || DEFAULT_COUNTRY.CODE,
     };
 
-    console.log('[PickupAddress] Successfully retrieved pickup address from BusinessProfile');
+    console.log(
+      '[PickupAddress] Successfully retrieved pickup address from BusinessProfile'
+    );
     return pickupAddress;
   } catch (error) {
     console.error('[PickupAddress] Failed to get pickup address:', error);
@@ -125,7 +130,9 @@ export async function validatePickupAddress(): Promise<PickupAddressValidation> 
 
     // Check if BusinessProfile exists
     if (!businessProfile) {
-      errors.push('Business profile not configured. Please set up your business profile first.');
+      errors.push(
+        'Business profile not configured. Please set up your business profile first.'
+      );
       return { isValid: false, errors, warnings };
     }
 
@@ -145,8 +152,13 @@ export async function validatePickupAddress(): Promise<PickupAddressValidation> 
     }
 
     // Validate required address fields
-    if (!shippingAddress.addressLine1 || shippingAddress.addressLine1.trim().length === 0) {
-      errors.push('Address line 1 is required in business profile shipping address.');
+    if (
+      !shippingAddress.addressLine1 ||
+      shippingAddress.addressLine1.trim().length === 0
+    ) {
+      errors.push(
+        'Address line 1 is required in business profile shipping address.'
+      );
     }
 
     if (!shippingAddress.city || shippingAddress.city.trim().length === 0) {
@@ -157,12 +169,20 @@ export async function validatePickupAddress(): Promise<PickupAddressValidation> 
       errors.push('State is required in business profile shipping address.');
     }
 
-    if (!shippingAddress.postalCode || !/^\d{5}$/.test(shippingAddress.postalCode)) {
-      errors.push('Valid 5-digit postal code is required in business profile shipping address.');
+    if (
+      !shippingAddress.postalCode ||
+      !/^\d{5}$/.test(shippingAddress.postalCode)
+    ) {
+      errors.push(
+        'Valid 5-digit postal code is required in business profile shipping address.'
+      );
     }
 
     // Validate phone format
-    if (!businessProfile.primaryPhone || !/^\+60[0-9]{8,10}$/.test(businessProfile.primaryPhone)) {
+    if (
+      !businessProfile.primaryPhone ||
+      !/^\+60[0-9]{8,10}$/.test(businessProfile.primaryPhone)
+    ) {
       errors.push(
         'Valid Malaysian phone number (+60XXXXXXXXX) is required in business profile.'
       );
@@ -176,7 +196,9 @@ export async function validatePickupAddress(): Promise<PickupAddressValidation> 
     }
 
     if (!shippingAddress.addressLine2) {
-      warnings.push('Address line 2 not set. Consider adding unit/building details.');
+      warnings.push(
+        'Address line 2 not set. Consider adding unit/building details.'
+      );
     }
 
     return {

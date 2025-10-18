@@ -12,7 +12,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { AgentApplicationFormData } from '@/types/agent-application';
-import { agentApplicationSchema, stepSchemas } from '@/lib/validation/agent-application';
+import {
+  agentApplicationSchema,
+  stepSchemas,
+} from '@/lib/validation/agent-application';
 import { FORM_STEPS } from '@/lib/config/agent-application-form';
 import { useFormPersistence } from './hooks/useFormPersistence';
 import { FormStepIndicator } from './FormStepIndicator';
@@ -34,7 +37,7 @@ interface AgentApplicationFormProps {
 
 export function AgentApplicationForm({
   userId,
-  initialData
+  initialData,
 }: Omit<AgentApplicationFormProps, 'onSuccess' | 'onError'>) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -43,7 +46,13 @@ export function AgentApplicationForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form persistence hooks
-  const { saveFormData, loadFormData, clearFormData, hasSavedData, useAutoSave } = useFormPersistence();
+  const {
+    saveFormData,
+    loadFormData,
+    clearFormData,
+    hasSavedData,
+    useAutoSave,
+  } = useFormPersistence();
 
   // React Hook Form setup
   const form = useForm<AgentApplicationFormData>({
@@ -72,12 +81,18 @@ export function AgentApplicationForm({
       reasonToJoin: '',
       expectations: '',
       finalAgreement: false,
-      ...initialData
+      ...initialData,
     },
-    mode: 'onChange'
+    mode: 'onChange',
   });
 
-  const { watch, trigger, reset, getValues, formState: { errors } } = form;
+  const {
+    watch,
+    trigger,
+    reset,
+    getValues,
+    formState: { errors },
+  } = form;
   const formData = watch();
 
   // Auto-save form data
@@ -93,7 +108,7 @@ export function AgentApplicationForm({
         toast.success('Saved data has been restored');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]); // Only depend on initialData to run once
 
   // Get current step configuration
@@ -124,18 +139,34 @@ export function AgentApplicationForm({
       stepSchema.parse(stepValues);
       return true;
     } catch (error) {
-      console.warn('Validation failed for step:', stepId, 'with values:', stepValues, 'error:', error);
+      console.warn(
+        'Validation failed for step:',
+        stepId,
+        'with values:',
+        stepValues,
+        'error:',
+        error
+      );
 
       // Trigger validation to show errors - only if fields exist
       try {
-        if (currentStepConfig?.fields && Array.isArray(currentStepConfig.fields) && currentStepConfig.fields.length > 0) {
-          const validFields = currentStepConfig.fields.filter(field => field && typeof field === 'string');
+        if (
+          currentStepConfig?.fields &&
+          Array.isArray(currentStepConfig.fields) &&
+          currentStepConfig.fields.length > 0
+        ) {
+          const validFields = currentStepConfig.fields.filter(
+            field => field && typeof field === 'string'
+          );
           if (validFields.length > 0) {
             for (const field of validFields) {
               try {
                 await trigger(field as any);
               } catch (fieldError) {
-                console.warn(`Failed to trigger validation for field: ${field}`, fieldError);
+                console.warn(
+                  `Failed to trigger validation for field: ${field}`,
+                  fieldError
+                );
               }
             }
           }
@@ -204,23 +235,25 @@ export function AgentApplicationForm({
         },
         body: JSON.stringify({
           formData: getValues(),
-          userId: userId || null
+          userId: userId || null,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Error occurred while submitting application');
+        throw new Error(
+          result.error || 'Error occurred while submitting application'
+        );
       }
 
       // Success
       clearFormData();
       toast.success(result.message || 'Application submitted successfully!');
       router.push(`/apply-agent/success?id=${result.id}`);
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
       setSubmitError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -301,9 +334,15 @@ export function AgentApplicationForm({
         <FormStepContainer
           title={currentStepConfig?.title || 'Loading...'}
           subtitle={currentStepConfig?.subtitle || ''}
-          onNext={currentStep === FORM_STEPS.length - 1 ? handleSubmit : handleNext}
+          onNext={
+            currentStep === FORM_STEPS.length - 1 ? handleSubmit : handleNext
+          }
           onPrevious={currentStep > 0 ? handlePrevious : undefined}
-          nextLabel={currentStep === FORM_STEPS.length - 1 ? 'Submit Application' : 'Next'}
+          nextLabel={
+            currentStep === FORM_STEPS.length - 1
+              ? 'Submit Application'
+              : 'Next'
+          }
           previousLabel="Back"
           isFirst={currentStep === 0}
           isLast={currentStep === FORM_STEPS.length - 1}

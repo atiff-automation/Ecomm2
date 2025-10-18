@@ -15,7 +15,7 @@ import bcrypt from 'bcryptjs';
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate request body
     const validatedData = passwordChangeSchema.parse(body);
 
@@ -36,8 +36,8 @@ export async function PUT(request: NextRequest) {
       select: {
         id: true,
         password: true,
-        email: true
-      }
+        email: true,
+      },
     });
 
     if (!currentUser) {
@@ -72,15 +72,18 @@ export async function PUT(request: NextRequest) {
 
     // Hash new password
     const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(validatedData.newPassword, saltRounds);
+    const hashedPassword = await bcrypt.hash(
+      validatedData.newPassword,
+      saltRounds
+    );
 
     // Update password in database
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
         password: hashedPassword,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     // Log password change for audit (without actual password values)
@@ -94,12 +97,11 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Password changed successfully'
+      message: 'Password changed successfully',
     });
-
   } catch (error) {
     console.error('Change password error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },

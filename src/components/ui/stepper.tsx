@@ -49,7 +49,7 @@ export function Stepper({
 
   const getStepStatusColor = (step: StepperStep, index: number): string => {
     const baseClasses = 'transition-colors duration-200';
-    
+
     switch (step.status) {
       case 'completed':
         return `${baseClasses} bg-green-600 text-white border-green-600`;
@@ -106,9 +106,13 @@ export function Stepper({
               <p
                 className={cn(
                   'text-sm font-medium',
-                  step.status === 'active' ? 'text-blue-600' : 
-                  step.status === 'completed' ? 'text-green-600' : 
-                  step.status === 'error' ? 'text-red-600' : 'text-gray-700'
+                  step.status === 'active'
+                    ? 'text-blue-600'
+                    : step.status === 'completed'
+                      ? 'text-green-600'
+                      : step.status === 'error'
+                        ? 'text-red-600'
+                        : 'text-gray-700'
                 )}
               >
                 {step.label}
@@ -167,9 +171,13 @@ export function Stepper({
               <p
                 className={cn(
                   'text-sm font-medium whitespace-nowrap',
-                  step.status === 'active' ? 'text-blue-600' : 
-                  step.status === 'completed' ? 'text-green-600' : 
-                  step.status === 'error' ? 'text-red-600' : 'text-gray-700'
+                  step.status === 'active'
+                    ? 'text-blue-600'
+                    : step.status === 'completed'
+                      ? 'text-green-600'
+                      : step.status === 'error'
+                        ? 'text-red-600'
+                        : 'text-gray-700'
                 )}
               >
                 {step.label}
@@ -179,7 +187,10 @@ export function Stepper({
 
           {/* Arrow Connector - positioned between steps at icon level */}
           {index < steps.length - 1 && showArrows && (
-            <div className="flex-1 flex items-center justify-center px-4" style={{ marginTop: '-24px' }}>
+            <div
+              className="flex-1 flex items-center justify-center px-4"
+              style={{ marginTop: '-24px' }}
+            >
               <div className="flex items-center w-full">
                 <div
                   className={cn(
@@ -219,8 +230,10 @@ export function useStepperState(initialSteps: Omit<StepperStep, 'status'>[]) {
       status: index === 0 ? 'active' : 'pending',
     }))
   );
-  
-  const [currentStep, setCurrentStep] = React.useState(initialSteps[0]?.id || '');
+
+  const [currentStep, setCurrentStep] = React.useState(
+    initialSteps[0]?.id || ''
+  );
 
   const goToStep = (stepId: string) => {
     const stepIndex = steps.findIndex(step => step.id === stepId);
@@ -230,9 +243,12 @@ export function useStepperState(initialSteps: Omit<StepperStep, 'status'>[]) {
     setSteps(prev =>
       prev.map((step, index) => ({
         ...step,
-        status: 
-          index < stepIndex ? 'completed' :
-          index === stepIndex ? 'active' : 'pending',
+        status:
+          index < stepIndex
+            ? 'completed'
+            : index === stepIndex
+              ? 'active'
+              : 'pending',
       }))
     );
   };
@@ -277,7 +293,8 @@ export function useStepperState(initialSteps: Omit<StepperStep, 'status'>[]) {
     markStepAsCompleted,
     currentIndex: steps.findIndex(step => step.id === currentStep),
     isFirstStep: steps.findIndex(step => step.id === currentStep) === 0,
-    isLastStep: steps.findIndex(step => step.id === currentStep) === steps.length - 1,
+    isLastStep:
+      steps.findIndex(step => step.id === currentStep) === steps.length - 1,
   };
 }
 

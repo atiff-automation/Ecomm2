@@ -24,10 +24,13 @@ export async function GET(request: NextRequest) {
       orders,
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      message: 'Failed to access ToyyibPay fields',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        message: 'Failed to access ToyyibPay fields',
+      },
+      { status: 500 }
+    );
   }
 }

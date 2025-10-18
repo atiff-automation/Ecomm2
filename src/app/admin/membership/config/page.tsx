@@ -178,11 +178,7 @@ export default function MembershipConfigPage() {
         <RefreshCw className="h-4 w-4 mr-2" />
         Reset
       </Button>
-      <Button
-        size="sm"
-        onClick={handleSave}
-        disabled={!hasChanges || saving}
-      >
+      <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
         <Save className="h-4 w-4 mr-2" />
         {saving ? 'Saving...' : 'Save'}
       </Button>

@@ -4,22 +4,28 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { 
-  Download, 
-  Printer, 
-  Eye, 
-  Monitor, 
-  Smartphone, 
+import {
+  Download,
+  Printer,
+  Eye,
+  Monitor,
+  Smartphone,
   Tablet,
   RefreshCw,
-  X
+  X,
 } from 'lucide-react';
-import { 
-  ReceiptTemplate, 
+import {
+  ReceiptTemplate,
   ReceiptTemplateType,
-  TEMPLATE_TYPE_LABELS 
+  TEMPLATE_TYPE_LABELS,
 } from '@/types/receipt-templates';
 import { cn } from '@/lib/utils';
 
@@ -43,26 +49,26 @@ const VIEWPORT_CONFIGS: Record<ViewportSize, ViewportConfig> = {
     name: 'Desktop',
     icon: Monitor,
     width: '100%',
-    maxWidth: '1024px'
+    maxWidth: '1024px',
   },
   tablet: {
     name: 'Tablet',
     icon: Tablet,
     width: '768px',
-    maxWidth: '768px'
+    maxWidth: '768px',
   },
   mobile: {
     name: 'Mobile',
     icon: Smartphone,
     width: '375px',
-    maxWidth: '375px'
-  }
+    maxWidth: '375px',
+  },
 };
 
 export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
   template,
   onClose,
-  className
+  className,
 }) => {
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -105,14 +111,14 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
     try {
       const blob = new Blob([previewHtml], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `${template.name.replace(/[^a-zA-Z0-9]/g, '_')}_preview.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       URL.revokeObjectURL(url);
       toast.success('Preview downloaded successfully');
     } catch (error) {
@@ -138,7 +144,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
       THERMAL_RECEIPT: 'bg-blue-100 text-blue-800',
       BUSINESS_INVOICE: 'bg-purple-100 text-purple-800',
       MINIMAL_RECEIPT: 'bg-green-100 text-green-800',
-      DETAILED_INVOICE: 'bg-orange-100 text-orange-800'
+      DETAILED_INVOICE: 'bg-orange-100 text-orange-800',
     };
     return colors[templateType] || 'bg-gray-100 text-gray-800';
   };
@@ -172,7 +178,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
             )}
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-0">
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
             {/* Viewport Controls */}
@@ -198,7 +204,12 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
             {/* Sample Data Selector */}
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Sample Data:</span>
-              <Select value={sampleData} onValueChange={(value: 'default' | 'custom') => setSampleData(value)}>
+              <Select
+                value={sampleData}
+                onValueChange={(value: 'default' | 'custom') =>
+                  setSampleData(value)
+                }
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -218,7 +229,9 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
                 disabled={loading}
                 className="flex items-center gap-1"
               >
-                <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+                <RefreshCw
+                  className={cn('h-3 w-3', loading && 'animate-spin')}
+                />
                 Refresh
               </Button>
               <Button
@@ -271,10 +284,10 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
 
             {!loading && !error && previewHtml && (
               <div className="p-6">
-                <div 
+                <div
                   className={cn(
-                    "mx-auto border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white",
-                    "transition-all duration-300 ease-in-out"
+                    'mx-auto border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white',
+                    'transition-all duration-300 ease-in-out'
                   )}
                   style={{
                     width: currentViewport.width,
@@ -296,19 +309,19 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
                       {currentViewport.name} View
                     </div>
                   </div>
-                  
+
                   <div className="relative">
                     <iframe
                       srcDoc={previewHtml}
                       className="w-full border-0"
-                      style={{ 
+                      style={{
                         height: viewport === 'mobile' ? '600px' : '800px',
-                        minHeight: '400px'
+                        minHeight: '400px',
                       }}
                       title={`${template.name} Preview`}
                       sandbox="allow-same-origin"
                     />
-                    
+
                     {/* Overlay for different viewport sizes */}
                     {viewport !== 'desktop' && (
                       <div className="absolute inset-0 pointer-events-none border-2 border-dashed border-gray-300 rounded"></div>
@@ -319,8 +332,10 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
                 {/* Preview Info */}
                 <div className="mt-4 text-center text-sm text-muted-foreground">
                   <p>
-                    Preview shows how the template will appear when generated for customers.
-                    {viewport !== 'desktop' && ' Responsive layout adjustments are applied automatically.'}
+                    Preview shows how the template will appear when generated
+                    for customers.
+                    {viewport !== 'desktop' &&
+                      ' Responsive layout adjustments are applied automatically.'}
                   </p>
                 </div>
               </div>
@@ -337,35 +352,56 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">Template Name</label>
+              <label className="text-sm font-medium text-gray-600">
+                Template Name
+              </label>
               <p className="text-sm">{template.name}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Template Type</label>
-              <p className="text-sm">{TEMPLATE_TYPE_LABELS[template.templateType]}</p>
+              <label className="text-sm font-medium text-gray-600">
+                Template Type
+              </label>
+              <p className="text-sm">
+                {TEMPLATE_TYPE_LABELS[template.templateType]}
+              </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Status</label>
+              <label className="text-sm font-medium text-gray-600">
+                Status
+              </label>
               <div className="flex items-center gap-2">
-                {template.isDefault && <Badge className="text-xs">Default</Badge>}
-                <Badge variant={template.isActive ? 'secondary' : 'outline'} className="text-xs">
+                {template.isDefault && (
+                  <Badge className="text-xs">Default</Badge>
+                )}
+                <Badge
+                  variant={template.isActive ? 'secondary' : 'outline'}
+                  className="text-xs"
+                >
                   {template.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Last Updated</label>
-              <p className="text-sm">{new Date(template.updatedAt).toLocaleDateString('en-MY', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}</p>
+              <label className="text-sm font-medium text-gray-600">
+                Last Updated
+              </label>
+              <p className="text-sm">
+                {new Date(template.updatedAt).toLocaleDateString('en-MY', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
             </div>
           </div>
           {template.description && (
             <div>
-              <label className="text-sm font-medium text-gray-600">Description</label>
-              <p className="text-sm text-muted-foreground">{template.description}</p>
+              <label className="text-sm font-medium text-gray-600">
+                Description
+              </label>
+              <p className="text-sm text-muted-foreground">
+                {template.description}
+              </p>
             </div>
           )}
         </CardContent>

@@ -7,7 +7,7 @@ import {
   getCachedUserValidation,
   setCachedUserValidation,
   getCachedSessionData,
-  setCachedSessionData
+  setCachedSessionData,
 } from './cache';
 
 export const authOptions: NextAuthOptions = {
@@ -104,13 +104,21 @@ export const authOptions: NextAuthOptions = {
         // Cache miss - query database
         const userExists = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { id: true, role: true, isMember: true, memberSince: true, status: true },
+          select: {
+            id: true,
+            role: true,
+            isMember: true,
+            memberSince: true,
+            status: true,
+          },
         });
 
         if (!userExists || userExists.status !== UserStatus.ACTIVE) {
           // Cache invalid user to prevent repeated DB queries
           setCachedUserValidation(token.sub, false);
-          console.warn(`Token validation failed for user ${token.sub}: ${!userExists ? 'User not found' : 'User not active'}`);
+          console.warn(
+            `Token validation failed for user ${token.sub}: ${!userExists ? 'User not found' : 'User not active'}`
+          );
           return {};
         }
 

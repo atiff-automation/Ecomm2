@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { OrderStatus } from '@prisma/client';
 
 export interface RecentPurchase {
   id: string;
@@ -37,7 +38,12 @@ export class RecentActivityService {
     const recentOrders = await prisma.order.findMany({
       where: {
         status: {
-          in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'],
+          in: [
+            OrderStatus.PAID, // Payment confirmed
+            OrderStatus.READY_TO_SHIP, // Being processed
+            OrderStatus.IN_TRANSIT, // Shipped
+            OrderStatus.DELIVERED, // Delivered
+          ],
         },
         createdAt: {
           gte: new Date(Date.now() - this.RECENT_HOURS * 60 * 60 * 1000),
@@ -153,7 +159,12 @@ export class RecentActivityService {
                 gte: new Date(Date.now() - this.RECENT_HOURS * 60 * 60 * 1000),
               },
               status: {
-                in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'],
+                in: [
+                  OrderStatus.PAID,
+                  OrderStatus.READY_TO_SHIP,
+                  OrderStatus.IN_TRANSIT,
+                  OrderStatus.DELIVERED,
+                ],
               },
             },
           },
@@ -209,7 +220,12 @@ export class RecentActivityService {
           order: {
             createdAt: { gte: last24h },
             status: {
-              in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'],
+              in: [
+                OrderStatus.PAID,
+                OrderStatus.READY_TO_SHIP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.DELIVERED,
+              ],
             },
           },
         },
@@ -222,7 +238,12 @@ export class RecentActivityService {
           order: {
             createdAt: { gte: lastWeek },
             status: {
-              in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'],
+              in: [
+                OrderStatus.PAID,
+                OrderStatus.READY_TO_SHIP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.DELIVERED,
+              ],
             },
           },
         },

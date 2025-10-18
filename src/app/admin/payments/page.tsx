@@ -87,9 +87,15 @@ export default function AdminPaymentsPage() {
               name: 'toyyibPay',
               type: 'toyyibpay',
               status: 'pending',
-              description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+              description:
+                'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
               configPath: '/admin/payments/toyyibpay',
-              features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+              features: [
+                'FPX Online Banking',
+                'Credit/Debit Cards',
+                'E-wallets',
+                'QR Code',
+              ],
             },
           ]);
         }
@@ -102,13 +108,18 @@ export default function AdminPaymentsPage() {
             name: 'toyyibPay',
             type: 'toyyibpay',
             status: 'pending',
-            description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+            description:
+              'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
             configPath: '/admin/payments/toyyibpay',
-            features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+            features: [
+              'FPX Online Banking',
+              'Credit/Debit Cards',
+              'E-wallets',
+              'QR Code',
+            ],
           },
         ]);
       }
-
     } catch (error) {
       console.error('Failed to fetch payment data:', error);
       // Provide fallback data for errors
@@ -129,9 +140,15 @@ export default function AdminPaymentsPage() {
           name: 'toyyibPay',
           type: 'toyyibpay',
           status: 'pending',
-          description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+          description:
+            'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
           configPath: '/admin/payments/toyyibpay',
-          features: ['FPX Online Banking', 'Credit/Debit Cards', 'E-wallets', 'QR Code'],
+          features: [
+            'FPX Online Banking',
+            'Credit/Debit Cards',
+            'E-wallets',
+            'QR Code',
+          ],
         },
       ]);
     } finally {
@@ -210,7 +227,9 @@ export default function AdminPaymentsPage() {
               disabled={isRefreshing}
               className="flex items-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+              />
               Refresh
             </Button>
           </div>
@@ -284,7 +303,7 @@ export default function AdminPaymentsPage() {
               No payment gateways configured
             </div>
           ) : (
-            gateways.map((gateway) => (
+            gateways.map(gateway => (
               <Card key={gateway.id} className="border">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -294,10 +313,17 @@ export default function AdminPaymentsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-base font-semibold">{gateway.name}</h3>
-                          <Badge variant="outline" className={getStatusColor(gateway.status)}>
+                          <h3 className="text-base font-semibold">
+                            {gateway.name}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className={getStatusColor(gateway.status)}
+                          >
                             {getStatusIcon(gateway.status)}
-                            <span className="ml-1 capitalize">{gateway.status}</span>
+                            <span className="ml-1 capitalize">
+                              {gateway.status}
+                            </span>
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">
@@ -337,7 +363,8 @@ export default function AdminPaymentsPage() {
                 More payment gateways coming soon
               </p>
               <p className="text-xs text-gray-500">
-                Stripe, PayPal, and other providers will be available in future updates
+                Stripe, PayPal, and other providers will be available in future
+                updates
               </p>
             </CardContent>
           </Card>

@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -74,8 +77,9 @@ export async function POST(request: NextRequest) {
     // Validate dimensions
     if (width < 20 || height < 20 || width > 400 || height > 200) {
       return NextResponse.json(
-        { 
-          message: 'Invalid dimensions. Width must be 20-400px, height must be 20-200px' 
+        {
+          message:
+            'Invalid dimensions. Width must be 20-400px, height must be 20-200px',
         },
         { status: 400 }
       );
@@ -111,14 +115,16 @@ export async function POST(request: NextRequest) {
       businessProfile = await prisma.businessProfile.create({
         data: {
           legalName: process.env.BUSINESS_NAME || 'EcomJRM Store',
-          registrationNumber: process.env.BUSINESS_REGISTRATION_NUMBER || 'REG-DEFAULT-001',
+          registrationNumber:
+            process.env.BUSINESS_REGISTRATION_NUMBER || 'REG-DEFAULT-001',
           registeredAddress: {
-            addressLine1: process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
+            addressLine1:
+              process.env.BUSINESS_ADDRESS_LINE1 || 'No. 123, Jalan Technology',
             addressLine2: process.env.BUSINESS_ADDRESS_LINE2,
             city: process.env.BUSINESS_CITY || 'Kuala Terengganu',
             state: process.env.BUSINESS_STATE || 'TRG',
             postalCode: process.env.BUSINESS_POSTAL_CODE || '20000',
-            country: 'Malaysia'
+            country: 'Malaysia',
           },
           primaryPhone: process.env.BUSINESS_PHONE || '+60123456789',
           primaryEmail: process.env.BUSINESS_EMAIL || 'store@ecomjrm.com',
@@ -163,7 +169,10 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -210,7 +219,10 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -220,10 +232,18 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { width, height } = body;
 
-    if (!width || !height || width < 20 || height < 20 || width > 400 || height > 200) {
+    if (
+      !width ||
+      !height ||
+      width < 20 ||
+      height < 20 ||
+      width > 400 ||
+      height > 200
+    ) {
       return NextResponse.json(
-        { 
-          message: 'Invalid dimensions. Width must be 20-400px, height must be 20-200px' 
+        {
+          message:
+            'Invalid dimensions. Width must be 20-400px, height must be 20-200px',
         },
         { status: 400 }
       );

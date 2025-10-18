@@ -30,7 +30,8 @@ export const SERVICE_DETAILS = {
   PICKUP_OR_DROPOFF: 'dropoff or pickup',
 } as const;
 
-export type ServiceDetail = (typeof SERVICE_DETAILS)[keyof typeof SERVICE_DETAILS];
+export type ServiceDetail =
+  (typeof SERVICE_DETAILS)[keyof typeof SERVICE_DETAILS];
 
 /**
  * Validate service detail value
@@ -43,16 +44,20 @@ export function isValidServiceDetail(value: string): value is ServiceDetail {
  * Check if service supports dropoff
  */
 export function supportsDropoff(serviceDetail: string): boolean {
-  return serviceDetail === SERVICE_DETAILS.DROPOFF ||
-         serviceDetail === SERVICE_DETAILS.PICKUP_OR_DROPOFF;
+  return (
+    serviceDetail === SERVICE_DETAILS.DROPOFF ||
+    serviceDetail === SERVICE_DETAILS.PICKUP_OR_DROPOFF
+  );
 }
 
 /**
  * Check if service supports pickup
  */
 export function supportsPickup(serviceDetail: string): boolean {
-  return serviceDetail === SERVICE_DETAILS.PICKUP ||
-         serviceDetail === SERVICE_DETAILS.PICKUP_OR_DROPOFF;
+  return (
+    serviceDetail === SERVICE_DETAILS.PICKUP ||
+    serviceDetail === SERVICE_DETAILS.PICKUP_OR_DROPOFF
+  );
 }
 
 // ============================================================================

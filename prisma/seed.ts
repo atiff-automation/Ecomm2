@@ -39,7 +39,7 @@ async function seedUsers() {
       emailVerified: new Date(),
       isMember: true,
       memberSince: new Date(),
-      membershipTotal: 5000.00,
+      membershipTotal: 5000.0,
     },
   });
 
@@ -93,7 +93,7 @@ async function seedUsers() {
       emailVerified: new Date(),
       isMember: true,
       memberSince: new Date('2023-01-01'),
-      membershipTotal: 2500.50,
+      membershipTotal: 2500.5,
     },
   });
 
@@ -216,14 +216,18 @@ async function seedProducts() {
         description: 'Latest iPhone with advanced features',
         shortDescription: 'Premium smartphone with Pro camera system',
         sku: 'PHONE-001',
-        regularPrice: 4999.00,
-        memberPrice: 4499.00,
+        regularPrice: 4999.0,
+        memberPrice: 4499.0,
         stockQuantity: 50,
         weight: 0.2,
         dimensions: '15.0 x 7.1 x 0.8 cm',
         status: 'ACTIVE',
         featured: true,
-        categoryId: smartphoneCategory.id,
+        categories: {
+          create: {
+            categoryId: smartphoneCategory.id,
+          },
+        },
       },
     });
 
@@ -236,14 +240,18 @@ async function seedProducts() {
         description: 'Flagship Samsung smartphone',
         shortDescription: 'Powerful Android smartphone',
         sku: 'PHONE-002',
-        regularPrice: 3999.00,
-        memberPrice: 3599.00,
+        regularPrice: 3999.0,
+        memberPrice: 3599.0,
         stockQuantity: 30,
         weight: 0.18,
         dimensions: '14.7 x 7.0 x 0.79 cm',
         status: 'ACTIVE',
         featured: true,
-        categoryId: smartphoneCategory.id,
+        categories: {
+          create: {
+            categoryId: smartphoneCategory.id,
+          },
+        },
       },
     });
 
@@ -256,14 +264,18 @@ async function seedProducts() {
         description: 'Professional laptop for creators',
         shortDescription: 'High-performance laptop',
         sku: 'LAPTOP-001',
-        regularPrice: 8999.00,
-        memberPrice: 8099.00,
+        regularPrice: 8999.0,
+        memberPrice: 8099.0,
         stockQuantity: 15,
         weight: 1.6,
         dimensions: '31.26 x 22.12 x 1.55 cm',
         status: 'ACTIVE',
         featured: true,
-        categoryId: electronicsCategory.id,
+        categories: {
+          create: {
+            categoryId: electronicsCategory.id,
+          },
+        },
       },
     });
   }
@@ -335,7 +347,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('❌ Seeding error:', e);
     process.exit(1);
   })

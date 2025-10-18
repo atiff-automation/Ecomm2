@@ -26,8 +26,10 @@ export const BULK_OPERATIONS_CONFIG = {
    * User-facing confirmation messages
    */
   CONFIRMATION_MESSAGES: {
-    DELETE: 'Are you sure you want to delete {count} product(s)? This action cannot be undone.',
-    DELETE_SINGLE: 'Are you sure you want to delete this product? This action cannot be undone.',
+    DELETE:
+      'Are you sure you want to delete {count} product(s)? This action cannot be undone.',
+    DELETE_SINGLE:
+      'Are you sure you want to delete this product? This action cannot be undone.',
   },
 
   /**
@@ -35,7 +37,8 @@ export const BULK_OPERATIONS_CONFIG = {
    */
   SUCCESS_MESSAGES: {
     DELETE: 'Successfully deleted {count} product(s)',
-    DELETE_PARTIAL: 'Deleted {successCount} product(s). {failureCount} product(s) could not be deleted.',
+    DELETE_PARTIAL:
+      'Deleted {successCount} product(s). {failureCount} product(s) could not be deleted.',
   },
 
   /**
@@ -77,7 +80,8 @@ export const BULK_OPERATIONS_CONFIG = {
 /**
  * Type definitions for bulk operations
  */
-export type BulkOperation = typeof BULK_OPERATIONS_CONFIG.OPERATIONS[keyof typeof BULK_OPERATIONS_CONFIG.OPERATIONS];
+export type BulkOperation =
+  (typeof BULK_OPERATIONS_CONFIG.OPERATIONS)[keyof typeof BULK_OPERATIONS_CONFIG.OPERATIONS];
 
 export type BulkOperationResult = {
   success: boolean;
@@ -93,9 +97,13 @@ export type BulkOperationResult = {
 /**
  * Helper function to format confirmation messages
  */
-export const formatMessage = (template: string, replacements: Record<string, string | number>): string => {
+export const formatMessage = (
+  template: string,
+  replacements: Record<string, string | number>
+): string => {
   return Object.entries(replacements).reduce(
-    (message, [key, value]) => message.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value)),
+    (message, [key, value]) =>
+      message.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value)),
     template
   );
 };
@@ -107,7 +115,11 @@ export const validateBulkOperation = (
   operation: string,
   selectionCount: number
 ): { valid: boolean; error?: string } => {
-  if (!Object.values(BULK_OPERATIONS_CONFIG.OPERATIONS).includes(operation as BulkOperation)) {
+  if (
+    !Object.values(BULK_OPERATIONS_CONFIG.OPERATIONS).includes(
+      operation as BulkOperation
+    )
+  ) {
     return { valid: false, error: 'Invalid operation type' };
   }
 
@@ -118,9 +130,12 @@ export const validateBulkOperation = (
   if (selectionCount > BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE) {
     return {
       valid: false,
-      error: formatMessage(BULK_OPERATIONS_CONFIG.ERROR_MESSAGES.MAX_SELECTION_EXCEEDED, {
-        max: BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE,
-      }),
+      error: formatMessage(
+        BULK_OPERATIONS_CONFIG.ERROR_MESSAGES.MAX_SELECTION_EXCEEDED,
+        {
+          max: BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE,
+        }
+      ),
     };
   }
 

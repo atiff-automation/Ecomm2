@@ -1,5 +1,5 @@
 /**
- * Admin Telegram Configuration Service - Malaysian E-commerce Platform  
+ * Admin Telegram Configuration Service - Malaysian E-commerce Platform
  * CENTRALIZED admin telegram configuration management
  * Follows @CLAUDE.md: NO HARDCODE | DRY | SINGLE SOURCE OF TRUTH | CENTRALIZED
  */
@@ -22,7 +22,6 @@ export interface AdminTelegramConfigData {
 }
 
 export class AdminTelegramConfigService {
-  
   /**
    * SINGLE SOURCE OF TRUTH: Get active admin telegram configuration
    * CENTRALIZED: Only one active config allowed
@@ -30,7 +29,7 @@ export class AdminTelegramConfigService {
   static async getActiveConfig(): Promise<AdminTelegramConfig | null> {
     try {
       return await prisma.adminTelegramConfig.findFirst({
-        where: { isActive: true }
+        where: { isActive: true },
       });
     } catch (error) {
       console.error('Failed to get active admin telegram config:', error);
@@ -49,10 +48,10 @@ export class AdminTelegramConfigService {
   ): Promise<AdminTelegramConfig> {
     try {
       // SINGLE SOURCE OF TRUTH: Use transaction to safely update/create
-      return await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async tx => {
         // Check if active config exists
         const existingConfig = await tx.adminTelegramConfig.findFirst({
-          where: { isActive: true }
+          where: { isActive: true },
         });
 
         if (existingConfig) {
@@ -72,8 +71,8 @@ export class AdminTelegramConfigService {
               dailySummaryEnabled: data.dailySummaryEnabled ?? true,
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               updatedBy: null,
-              updatedAt: new Date()
-            }
+              updatedAt: new Date(),
+            },
           });
         } else {
           // Create new active config
@@ -92,8 +91,8 @@ export class AdminTelegramConfigService {
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               isActive: true,
               createdBy: null,
-              updatedBy: null
-            }
+              updatedBy: null,
+            },
           });
         }
       });
@@ -122,8 +121,8 @@ export class AdminTelegramConfigService {
         data: {
           ...data,
           updatedBy: null,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
     } catch (error) {
       console.error('Failed to update admin telegram config:', error);
@@ -137,7 +136,7 @@ export class AdminTelegramConfigService {
   static async deleteConfig(configId: string): Promise<boolean> {
     try {
       await prisma.adminTelegramConfig.delete({
-        where: { id: configId }
+        where: { id: configId },
       });
       return true;
     } catch (error) {
@@ -164,7 +163,7 @@ export class AdminTelegramConfigService {
       if (!botTestResponse.ok) {
         return {
           success: false,
-          message: 'Invalid bot token - unable to connect to Telegram API'
+          message: 'Invalid bot token - unable to connect to Telegram API',
         };
       }
 
@@ -176,14 +175,14 @@ export class AdminTelegramConfigService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: config.ordersChatId }),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000),
           }
         );
 
         if (!ordersTestResponse.ok) {
           return {
             success: false,
-            message: 'Invalid orders chat ID - bot cannot access this group'
+            message: 'Invalid orders chat ID - bot cannot access this group',
           };
         }
       }
@@ -196,14 +195,14 @@ export class AdminTelegramConfigService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: config.inventoryChatId }),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000),
           }
         );
 
         if (!inventoryTestResponse.ok) {
           return {
             success: false,
-            message: 'Invalid inventory chat ID - bot cannot access this group'
+            message: 'Invalid inventory chat ID - bot cannot access this group',
           };
         }
       }
@@ -216,14 +215,15 @@ export class AdminTelegramConfigService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: config.chatManagementChatId }),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000),
           }
         );
 
         if (!chatMgmtTestResponse.ok) {
           return {
             success: false,
-            message: 'Invalid chat management chat ID - bot cannot access this group'
+            message:
+              'Invalid chat management chat ID - bot cannot access this group',
           };
         }
       }
@@ -236,27 +236,28 @@ export class AdminTelegramConfigService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: config.systemAlertsChatId }),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000),
           }
         );
 
         if (!systemAlertsTestResponse.ok) {
           return {
             success: false,
-            message: 'Invalid system alerts chat ID - bot cannot access this group'
+            message:
+              'Invalid system alerts chat ID - bot cannot access this group',
           };
         }
       }
 
       return {
         success: true,
-        message: 'Configuration validated successfully'
+        message: 'Configuration validated successfully',
       };
     } catch (error) {
       console.error('Config test failed:', error);
       return {
         success: false,
-        message: 'Configuration test failed - please check your settings'
+        message: 'Configuration test failed - please check your settings',
       };
     }
   }
@@ -280,7 +281,11 @@ export class AdminTelegramConfigService {
   static async isOrdersEnabled(): Promise<boolean> {
     try {
       const config = await this.getActiveConfig();
-      return !!(config?.botToken && config?.ordersChatId && config?.ordersEnabled);
+      return !!(
+        config?.botToken &&
+        config?.ordersChatId &&
+        config?.ordersEnabled
+      );
     } catch (error) {
       return false;
     }
@@ -289,7 +294,11 @@ export class AdminTelegramConfigService {
   static async isInventoryEnabled(): Promise<boolean> {
     try {
       const config = await this.getActiveConfig();
-      return !!(config?.botToken && config?.inventoryChatId && config?.inventoryEnabled);
+      return !!(
+        config?.botToken &&
+        config?.inventoryChatId &&
+        config?.inventoryEnabled
+      );
     } catch (error) {
       return false;
     }
@@ -298,7 +307,11 @@ export class AdminTelegramConfigService {
   static async isChatManagementEnabled(): Promise<boolean> {
     try {
       const config = await this.getActiveConfig();
-      return !!(config?.botToken && config?.chatManagementChatId && config?.chatManagementEnabled);
+      return !!(
+        config?.botToken &&
+        config?.chatManagementChatId &&
+        config?.chatManagementEnabled
+      );
     } catch (error) {
       return false;
     }
@@ -307,7 +320,11 @@ export class AdminTelegramConfigService {
   static async isSystemAlertsEnabled(): Promise<boolean> {
     try {
       const config = await this.getActiveConfig();
-      return !!(config?.botToken && config?.systemAlertsChatId && config?.systemAlertsEnabled);
+      return !!(
+        config?.botToken &&
+        config?.systemAlertsChatId &&
+        config?.systemAlertsEnabled
+      );
     } catch (error) {
       return false;
     }
@@ -319,7 +336,7 @@ export class AdminTelegramConfigService {
   static async getAllConfigs(): Promise<AdminTelegramConfig[]> {
     try {
       return await prisma.adminTelegramConfig.findMany({
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
       console.error('Failed to get all admin telegram configs:', error);

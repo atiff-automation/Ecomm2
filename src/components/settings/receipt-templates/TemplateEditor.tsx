@@ -7,25 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { 
-  Save, 
-  Palette, 
-  Type, 
-  Layout, 
+import {
+  Save,
+  Palette,
+  Type,
+  Layout,
   Eye,
   RefreshCw,
   X,
-  Undo
+  Undo,
 } from 'lucide-react';
-import { 
+import {
   ReceiptTemplate,
   ReceiptTemplateContent,
   TemplateColorConfig,
   TemplateTypographyConfig,
-  TemplateSectionConfig
+  TemplateSectionConfig,
 } from '@/types/receipt-templates';
 import { TemplatePreview } from './TemplatePreview';
 import { cn } from '@/lib/utils';
@@ -43,24 +49,50 @@ const FONT_OPTIONS = [
   { value: 'Georgia, serif', label: 'Georgia' },
   { value: 'Times New Roman, serif', label: 'Times New Roman' },
   { value: 'Courier New, monospace', label: 'Courier New' },
-  { value: 'Verdana, sans-serif', label: 'Verdana' }
+  { value: 'Verdana, sans-serif', label: 'Verdana' },
 ];
 
 const COLOR_PRESETS = [
-  { name: 'Default Blue', primary: '#3B82F6', secondary: '#F8FAFC', accent: '#FDE047' },
-  { name: 'Professional Black', primary: '#000000', secondary: '#F5F5F5', accent: '#666666' },
-  { name: 'Corporate Green', primary: '#059669', secondary: '#ECFDF5', accent: '#F59E0B' },
-  { name: 'Modern Purple', primary: '#7C3AED', secondary: '#F3E8FF', accent: '#EC4899' },
-  { name: 'Classic Red', primary: '#DC2626', secondary: '#FEF2F2', accent: '#F59E0B' }
+  {
+    name: 'Default Blue',
+    primary: '#3B82F6',
+    secondary: '#F8FAFC',
+    accent: '#FDE047',
+  },
+  {
+    name: 'Professional Black',
+    primary: '#000000',
+    secondary: '#F5F5F5',
+    accent: '#666666',
+  },
+  {
+    name: 'Corporate Green',
+    primary: '#059669',
+    secondary: '#ECFDF5',
+    accent: '#F59E0B',
+  },
+  {
+    name: 'Modern Purple',
+    primary: '#7C3AED',
+    secondary: '#F3E8FF',
+    accent: '#EC4899',
+  },
+  {
+    name: 'Classic Red',
+    primary: '#DC2626',
+    secondary: '#FEF2F2',
+    accent: '#F59E0B',
+  },
 ];
 
 export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   template,
   onSave,
   onClose,
-  className
+  className,
 }) => {
-  const [editedTemplate, setEditedTemplate] = useState<ReceiptTemplate>(template);
+  const [editedTemplate, setEditedTemplate] =
+    useState<ReceiptTemplate>(template);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -75,8 +107,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
       ...prev,
       templateContent: {
         ...prev.templateContent,
-        ...updates
-      }
+        ...updates,
+      },
     }));
     setHasChanges(true);
   };
@@ -85,8 +117,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     updateTemplateContent({
       colors: {
         ...editedTemplate.templateContent.colors,
-        ...colors
-      }
+        ...colors,
+      },
     });
   };
 
@@ -94,8 +126,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     updateTemplateContent({
       typography: {
         ...editedTemplate.templateContent.typography,
-        ...typography
-      }
+        ...typography,
+      },
     });
   };
 
@@ -103,16 +135,16 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     updateTemplateContent({
       sections: {
         ...editedTemplate.templateContent.sections,
-        ...sections
-      }
+        ...sections,
+      },
     });
   };
 
-  const applyColorPreset = (preset: typeof COLOR_PRESETS[0]) => {
+  const applyColorPreset = (preset: (typeof COLOR_PRESETS)[0]) => {
     updateColors({
       primary: preset.primary,
       secondary: preset.secondary,
-      accent: preset.accent
+      accent: preset.accent,
     });
   };
 
@@ -120,17 +152,20 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     try {
       setSaving(true);
 
-      const response = await fetch(`/api/admin/receipt-templates/${editedTemplate.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: editedTemplate.name,
-          description: editedTemplate.description,
-          templateContent: editedTemplate.templateContent
-        })
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${editedTemplate.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: editedTemplate.name,
+            description: editedTemplate.description,
+            templateContent: editedTemplate.templateContent,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to save template');
@@ -167,7 +202,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           </Button>
           <h2 className="text-lg font-semibold">Live Preview</h2>
         </div>
-        <TemplatePreview 
+        <TemplatePreview
           template={editedTemplate}
           onClose={() => setPreviewMode(false)}
         />
@@ -183,7 +218,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold">Template Editor</h2>
-          <p className="text-muted-foreground">Customize your receipt template</p>
+          <p className="text-muted-foreground">
+            Customize your receipt template
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {hasChanges && (
@@ -211,7 +248,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-orange-800">
                 <Save className="h-4 w-4" />
-                <span className="text-sm font-medium">You have unsaved changes</span>
+                <span className="text-sm font-medium">
+                  You have unsaved changes
+                </span>
               </div>
               <Button size="sm" onClick={handleSave} disabled={saving}>
                 {saving ? (
@@ -243,22 +282,28 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Input
                 id="template-name"
                 value={editedTemplate.name}
-                onChange={(e) => {
-                  setEditedTemplate(prev => ({ ...prev, name: e.target.value }));
+                onChange={e => {
+                  setEditedTemplate(prev => ({
+                    ...prev,
+                    name: e.target.value,
+                  }));
                   setHasChanges(true);
                 }}
                 placeholder="Enter template name"
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="template-description">Description</Label>
             <Textarea
               id="template-description"
               value={editedTemplate.description || ''}
-              onChange={(e) => {
-                setEditedTemplate(prev => ({ ...prev, description: e.target.value }));
+              onChange={e => {
+                setEditedTemplate(prev => ({
+                  ...prev,
+                  description: e.target.value,
+                }));
                 setHasChanges(true);
               }}
               placeholder="Describe this template"
@@ -304,16 +349,16 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex gap-1">
-                          <div 
-                            className="w-4 h-4 rounded-full border" 
+                          <div
+                            className="w-4 h-4 rounded-full border"
                             style={{ backgroundColor: preset.primary }}
                           />
-                          <div 
-                            className="w-4 h-4 rounded-full border" 
+                          <div
+                            className="w-4 h-4 rounded-full border"
                             style={{ backgroundColor: preset.secondary }}
                           />
-                          <div 
-                            className="w-4 h-4 rounded-full border" 
+                          <div
+                            className="w-4 h-4 rounded-full border"
                             style={{ backgroundColor: preset.accent }}
                           />
                         </div>
@@ -334,12 +379,16 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         id="primary-color"
                         type="color"
                         value={templateContent.colors.primary}
-                        onChange={(e) => updateColors({ primary: e.target.value })}
+                        onChange={e =>
+                          updateColors({ primary: e.target.value })
+                        }
                         className="w-16 h-10 p-1"
                       />
                       <Input
                         value={templateContent.colors.primary}
-                        onChange={(e) => updateColors({ primary: e.target.value })}
+                        onChange={e =>
+                          updateColors({ primary: e.target.value })
+                        }
                         placeholder="#3B82F6"
                         className="flex-1"
                       />
@@ -353,12 +402,16 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         id="secondary-color"
                         type="color"
                         value={templateContent.colors.secondary}
-                        onChange={(e) => updateColors({ secondary: e.target.value })}
+                        onChange={e =>
+                          updateColors({ secondary: e.target.value })
+                        }
                         className="w-16 h-10 p-1"
                       />
                       <Input
                         value={templateContent.colors.secondary}
-                        onChange={(e) => updateColors({ secondary: e.target.value })}
+                        onChange={e =>
+                          updateColors({ secondary: e.target.value })
+                        }
                         placeholder="#F8FAFC"
                         className="flex-1"
                       />
@@ -374,12 +427,12 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         id="accent-color"
                         type="color"
                         value={templateContent.colors.accent}
-                        onChange={(e) => updateColors({ accent: e.target.value })}
+                        onChange={e => updateColors({ accent: e.target.value })}
                         className="w-16 h-10 p-1"
                       />
                       <Input
                         value={templateContent.colors.accent}
-                        onChange={(e) => updateColors({ accent: e.target.value })}
+                        onChange={e => updateColors({ accent: e.target.value })}
                         placeholder="#FDE047"
                         className="flex-1"
                       />
@@ -393,12 +446,12 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         id="text-color"
                         type="color"
                         value={templateContent.colors.text}
-                        onChange={(e) => updateColors({ text: e.target.value })}
+                        onChange={e => updateColors({ text: e.target.value })}
                         className="w-16 h-10 p-1"
                       />
                       <Input
                         value={templateContent.colors.text}
-                        onChange={(e) => updateColors({ text: e.target.value })}
+                        onChange={e => updateColors({ text: e.target.value })}
                         placeholder="#1E293B"
                         className="flex-1"
                       />
@@ -421,15 +474,19 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Label htmlFor="font-family">Font Family</Label>
                   <Select
                     value={templateContent.typography.fontFamily}
-                    onValueChange={(value) => updateTypography({ fontFamily: value })}
+                    onValueChange={value =>
+                      updateTypography({ fontFamily: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {FONT_OPTIONS.map((font) => (
+                      {FONT_OPTIONS.map(font => (
                         <SelectItem key={font.value} value={font.value}>
-                          <span style={{ fontFamily: font.value }}>{font.label}</span>
+                          <span style={{ fontFamily: font.value }}>
+                            {font.label}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -445,12 +502,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       min="8"
                       max="24"
                       value={templateContent.typography.fontSize.normal}
-                      onChange={(e) => updateTypography({
-                        fontSize: {
-                          ...templateContent.typography.fontSize,
-                          normal: parseInt(e.target.value)
-                        }
-                      })}
+                      onChange={e =>
+                        updateTypography({
+                          fontSize: {
+                            ...templateContent.typography.fontSize,
+                            normal: parseInt(e.target.value),
+                          },
+                        })
+                      }
                     />
                   </div>
 
@@ -462,12 +521,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       min="6"
                       max="20"
                       value={templateContent.typography.fontSize.small}
-                      onChange={(e) => updateTypography({
-                        fontSize: {
-                          ...templateContent.typography.fontSize,
-                          small: parseInt(e.target.value)
-                        }
-                      })}
+                      onChange={e =>
+                        updateTypography({
+                          fontSize: {
+                            ...templateContent.typography.fontSize,
+                            small: parseInt(e.target.value),
+                          },
+                        })
+                      }
                     />
                   </div>
 
@@ -479,12 +540,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       min="12"
                       max="32"
                       value={templateContent.typography.fontSize.large}
-                      onChange={(e) => updateTypography({
-                        fontSize: {
-                          ...templateContent.typography.fontSize,
-                          large: parseInt(e.target.value)
-                        }
-                      })}
+                      onChange={e =>
+                        updateTypography({
+                          fontSize: {
+                            ...templateContent.typography.fontSize,
+                            large: parseInt(e.target.value),
+                          },
+                        })
+                      }
                     />
                   </div>
 
@@ -496,12 +559,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       min="16"
                       max="48"
                       value={templateContent.typography.fontSize.title}
-                      onChange={(e) => updateTypography({
-                        fontSize: {
-                          ...templateContent.typography.fontSize,
-                          title: parseInt(e.target.value)
-                        }
-                      })}
+                      onChange={e =>
+                        updateTypography({
+                          fontSize: {
+                            ...templateContent.typography.fontSize,
+                            title: parseInt(e.target.value),
+                          },
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -524,9 +589,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Switch
                       id="header-enabled"
                       checked={templateContent.sections.header.enabled}
-                      onCheckedChange={(checked) => updateSections({
-                        header: { ...templateContent.sections.header, enabled: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          header: {
+                            ...templateContent.sections.header,
+                            enabled: checked,
+                          },
+                        })
+                      }
                     />
                     <Label htmlFor="header-enabled">Show header</Label>
                   </div>
@@ -535,9 +605,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Switch
                       id="header-logo"
                       checked={templateContent.sections.header.showLogo}
-                      onCheckedChange={(checked) => updateSections({
-                        header: { ...templateContent.sections.header, showLogo: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          header: {
+                            ...templateContent.sections.header,
+                            showLogo: checked,
+                          },
+                        })
+                      }
                       disabled={!templateContent.sections.header.enabled}
                     />
                     <Label htmlFor="header-logo">Show logo</Label>
@@ -548,9 +623,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Label htmlFor="header-alignment">Header Alignment</Label>
                   <Select
                     value={templateContent.sections.header.alignment}
-                    onValueChange={(value: 'left' | 'center' | 'right') => updateSections({
-                      header: { ...templateContent.sections.header, alignment: value }
-                    })}
+                    onValueChange={(value: 'left' | 'center' | 'right') =>
+                      updateSections({
+                        header: {
+                          ...templateContent.sections.header,
+                          alignment: value,
+                        },
+                      })
+                    }
                     disabled={!templateContent.sections.header.enabled}
                   >
                     <SelectTrigger>
@@ -573,20 +653,32 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Switch
                       id="customer-enabled"
                       checked={templateContent.sections.customer.enabled}
-                      onCheckedChange={(checked) => updateSections({
-                        customer: { ...templateContent.sections.customer, enabled: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          customer: {
+                            ...templateContent.sections.customer,
+                            enabled: checked,
+                          },
+                        })
+                      }
                     />
-                    <Label htmlFor="customer-enabled">Customer information</Label>
+                    <Label htmlFor="customer-enabled">
+                      Customer information
+                    </Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="items-enabled"
                       checked={templateContent.sections.items.enabled}
-                      onCheckedChange={(checked) => updateSections({
-                        items: { ...templateContent.sections.items, enabled: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          items: {
+                            ...templateContent.sections.items,
+                            enabled: checked,
+                          },
+                        })
+                      }
                     />
                     <Label htmlFor="items-enabled">Items list</Label>
                   </div>
@@ -595,9 +687,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Switch
                       id="totals-enabled"
                       checked={templateContent.sections.totals.enabled}
-                      onCheckedChange={(checked) => updateSections({
-                        totals: { ...templateContent.sections.totals, enabled: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          totals: {
+                            ...templateContent.sections.totals,
+                            enabled: checked,
+                          },
+                        })
+                      }
                     />
                     <Label htmlFor="totals-enabled">Totals section</Label>
                   </div>
@@ -606,9 +703,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Switch
                       id="footer-enabled"
                       checked={templateContent.sections.footer.enabled}
-                      onCheckedChange={(checked) => updateSections({
-                        footer: { ...templateContent.sections.footer, enabled: checked }
-                      })}
+                      onCheckedChange={checked =>
+                        updateSections({
+                          footer: {
+                            ...templateContent.sections.footer,
+                            enabled: checked,
+                          },
+                        })
+                      }
                     />
                     <Label htmlFor="footer-enabled">Footer</Label>
                   </div>
@@ -621,9 +723,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 <Textarea
                   id="footer-message"
                   value={templateContent.sections.footer.message}
-                  onChange={(e) => updateSections({
-                    footer: { ...templateContent.sections.footer, message: e.target.value }
-                  })}
+                  onChange={e =>
+                    updateSections({
+                      footer: {
+                        ...templateContent.sections.footer,
+                        message: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Thank you for your business!"
                   rows={2}
                   disabled={!templateContent.sections.footer.enabled}

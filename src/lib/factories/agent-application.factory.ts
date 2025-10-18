@@ -4,8 +4,15 @@
  * Following CLAUDE.md principles: Centralized test data generation
  */
 
-import { AgentApplicationFormData, BusinessType } from '@/types/agent-application';
-import { AgentApplicationStatus, SocialMediaLevel, ApplicationDecision } from '@prisma/client';
+import {
+  AgentApplicationFormData,
+  BusinessType,
+} from '@/types/agent-application';
+import {
+  AgentApplicationStatus,
+  SocialMediaLevel,
+  ApplicationDecision,
+} from '@prisma/client';
 
 // Sample IC numbers (fake but valid format)
 const SAMPLE_IC_NUMBERS = [
@@ -13,7 +20,7 @@ const SAMPLE_IC_NUMBERS = [
   '920605-08-1234',
   '880925-12-9876',
   '791204-01-5432',
-  '940717-05-2468'
+  '940717-05-2468',
 ];
 
 // Sample phone numbers
@@ -22,7 +29,7 @@ const SAMPLE_PHONE_NUMBERS = [
   '013-9876543',
   '017-2468135',
   '019-1357924',
-  '011-8642097'
+  '011-8642097',
 ];
 
 // Sample addresses
@@ -31,7 +38,7 @@ const SAMPLE_ADDRESSES = [
   'Lot 456, Jalan Mawar, Kampung Baru, 53100 Kuala Lumpur',
   'No. 789, Lorong Cempaka 1, Taman Desa Harmoni, 81300 Skudai, Johor',
   '234, Jalan Kenanga, Bandar Baru Bangi, 43650 Bangi, Selangor',
-  'Unit 567, Jalan Orkid 2/3, Taman Bayu Puteri, 80150 Johor Bahru, Johor'
+  'Unit 567, Jalan Orkid 2/3, Taman Bayu Puteri, 80150 Johor Bahru, Johor',
 ];
 
 // Sample names
@@ -43,7 +50,7 @@ const SAMPLE_NAMES = [
   'Fatimah Zahra Yusof',
   'Aminuddin Hakim',
   'Zarina Mohd Nasir',
-  'Iskandar Shah Ali'
+  'Iskandar Shah Ali',
 ];
 
 // Sample social media handles
@@ -53,22 +60,22 @@ const SAMPLE_SOCIAL_HANDLES = {
     'ahmadfirdaus92',
     'nurulaina.style',
     'hafiz_entrepreneur',
-    'fatimah_business'
+    'fatimah_business',
   ],
   facebook: [
     'Siti Nurhaliza Official',
     'Ahmad Firdaus Business',
     'Nurul Aina Lifestyle',
     'Hafiz Trading',
-    'Fatimah Enterprise'
+    'Fatimah Enterprise',
   ],
   tiktok: [
     'sitinur2023',
     'firdausbiz',
     'ainastyle',
     'hafiztrader',
-    'fatimahbiz'
-  ]
+    'fatimahbiz',
+  ],
 };
 
 // Sample business locations
@@ -78,7 +85,7 @@ const SAMPLE_BUSINESS_LOCATIONS = [
   'Online sahaja - Facebook dan Instagram',
   'Bazar Ramadan Kampung Baru',
   'NA - Tidak berniaga lagi',
-  'Kedai di Kompleks Karamunsing, Kota Kinabalu'
+  'Kedai di Kompleks Karamunsing, Kota Kinabalu',
 ];
 
 // Sample JRM products
@@ -87,7 +94,7 @@ const SAMPLE_JRM_PRODUCTS = [
   'Set Herba JRM untuk kesihatan',
   'NA - Belum pernah guna',
   'Produk kecantikan JRM - facial wash dan moisturizer',
-  'Vitamin C JRM dan suplemen kesihatan'
+  'Vitamin C JRM dan suplemen kesihatan',
 ];
 
 // Sample reasons to join
@@ -96,7 +103,7 @@ const SAMPLE_REASONS = [
   'Tertarik dengan produk JRM yang berkualiti tinggi dan halal',
   'Mahu membantu orang lain mendapat produk kesihatan yang baik',
   'Sudah ada pengalaman berniaga, ingin tambah line produk baru',
-  'Ingin belajar skill pemasaran digital sambil menjual produk bagus'
+  'Ingin belajar skill pemasaran digital sambil menjual produk bagus',
 ];
 
 // Sample expectations
@@ -105,13 +112,15 @@ const SAMPLE_EXPECTATIONS = [
   'Ingin dapat profit margin yang munasabah dan target sales yang realistik',
   'Mengharapkan produk yang konsisten berkualiti dan delivery yang cepat',
   'Ingin dapat bimbingan untuk develop business online terutama di social media',
-  'Harap dapat networking yang baik dengan pengedar lain untuk berkongsi tips'
+  'Harap dapat networking yang baik dengan pengedar lain untuk berkongsi tips',
 ];
 
 /**
  * Generate a random agent application form data
  */
-export const createMockAgentApplication = (overrides: Partial<AgentApplicationFormData> = {}): AgentApplicationFormData => {
+export const createMockAgentApplication = (
+  overrides: Partial<AgentApplicationFormData> = {}
+): AgentApplicationFormData => {
   const randomIndex = Math.floor(Math.random() * 5);
 
   return {
@@ -126,15 +135,25 @@ export const createMockAgentApplication = (overrides: Partial<AgentApplicationFo
     email: `${SAMPLE_NAMES[randomIndex].toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
     age: Math.floor(Math.random() * 30) + 25, // Age between 25-55
     hasBusinessExp: Math.random() > 0.4, // 60% have business experience
-    businessLocation: Math.random() > 0.3 ? SAMPLE_BUSINESS_LOCATIONS[randomIndex] : undefined,
+    businessLocation:
+      Math.random() > 0.3 ? SAMPLE_BUSINESS_LOCATIONS[randomIndex] : undefined,
     hasTeamLeadExp: Math.random() > 0.5, // 50% have team lead experience
     isRegistered: Math.random() > 0.6, // 40% are registered
     jenis: Math.random() > 0.5 ? BusinessType.KEDAI : BusinessType.MUDAH,
 
     // Step 3: Social Media
-    instagramHandle: Math.random() > 0.2 ? SAMPLE_SOCIAL_HANDLES.instagram[randomIndex] : undefined,
-    facebookHandle: Math.random() > 0.1 ? SAMPLE_SOCIAL_HANDLES.facebook[randomIndex] : undefined,
-    tiktokHandle: Math.random() > 0.4 ? SAMPLE_SOCIAL_HANDLES.tiktok[randomIndex] : undefined,
+    instagramHandle:
+      Math.random() > 0.2
+        ? SAMPLE_SOCIAL_HANDLES.instagram[randomIndex]
+        : undefined,
+    facebookHandle:
+      Math.random() > 0.1
+        ? SAMPLE_SOCIAL_HANDLES.facebook[randomIndex]
+        : undefined,
+    tiktokHandle:
+      Math.random() > 0.4
+        ? SAMPLE_SOCIAL_HANDLES.tiktok[randomIndex]
+        : undefined,
     instagramLevel: getRandomSocialMediaLevel(),
     facebookLevel: getRandomSocialMediaLevel(),
     tiktokLevel: getRandomSocialMediaLevel(),
@@ -149,14 +168,16 @@ export const createMockAgentApplication = (overrides: Partial<AgentApplicationFo
     finalAgreement: true,
 
     // Apply any overrides
-    ...overrides
+    ...overrides,
   };
 };
 
 /**
  * Generate partial form data for specific step
  */
-export const createMockStepData = (step: string): Partial<AgentApplicationFormData> => {
+export const createMockStepData = (
+  step: string
+): Partial<AgentApplicationFormData> => {
   const mockData = createMockAgentApplication();
 
   switch (step) {
@@ -175,7 +196,7 @@ export const createMockStepData = (step: string): Partial<AgentApplicationFormDa
         businessLocation: mockData.businessLocation,
         hasTeamLeadExp: mockData.hasTeamLeadExp,
         isRegistered: mockData.isRegistered,
-        jenis: mockData.jenis
+        jenis: mockData.jenis,
       };
 
     case 'social-media':
@@ -185,7 +206,7 @@ export const createMockStepData = (step: string): Partial<AgentApplicationFormDa
         tiktokHandle: mockData.tiktokHandle,
         instagramLevel: mockData.instagramLevel,
         facebookLevel: mockData.facebookLevel,
-        tiktokLevel: mockData.tiktokLevel
+        tiktokLevel: mockData.tiktokLevel,
       };
 
     case 'additional-info':
@@ -193,7 +214,7 @@ export const createMockStepData = (step: string): Partial<AgentApplicationFormDa
         hasJrmExp: mockData.hasJrmExp,
         jrmProducts: mockData.jrmProducts,
         reasonToJoin: mockData.reasonToJoin,
-        expectations: mockData.expectations
+        expectations: mockData.expectations,
       };
 
     case 'review':
@@ -207,14 +228,18 @@ export const createMockStepData = (step: string): Partial<AgentApplicationFormDa
 /**
  * Generate multiple mock applications
  */
-export const createMockApplicationsList = (count: number = 10): AgentApplicationFormData[] => {
+export const createMockApplicationsList = (
+  count: number = 10
+): AgentApplicationFormData[] => {
   return Array.from({ length: count }, () => createMockAgentApplication());
 };
 
 /**
  * Generate mock application with specific status
  */
-export const createMockApplicationWithStatus = (status: AgentApplicationStatus): AgentApplicationFormData => {
+export const createMockApplicationWithStatus = (
+  status: AgentApplicationStatus
+): AgentApplicationFormData => {
   const baseData = createMockAgentApplication();
 
   switch (status) {
@@ -222,7 +247,7 @@ export const createMockApplicationWithStatus = (status: AgentApplicationStatus):
       return {
         ...baseData,
         acceptTerms: Math.random() > 0.5,
-        finalAgreement: false
+        finalAgreement: false,
       };
 
     case AgentApplicationStatus.SUBMITTED:
@@ -232,7 +257,7 @@ export const createMockApplicationWithStatus = (status: AgentApplicationStatus):
       return {
         ...baseData,
         acceptTerms: true,
-        finalAgreement: true
+        finalAgreement: true,
       };
 
     default:
@@ -242,34 +267,44 @@ export const createMockApplicationWithStatus = (status: AgentApplicationStatus):
 
 // Helper functions
 function getRandomSocialMediaLevel(): SocialMediaLevel {
-  const levels = [SocialMediaLevel.TIDAK_MAHIR, SocialMediaLevel.MAHIR, SocialMediaLevel.SANGAT_MAHIR];
+  const levels = [
+    SocialMediaLevel.TIDAK_MAHIR,
+    SocialMediaLevel.MAHIR,
+    SocialMediaLevel.SANGAT_MAHIR,
+  ];
   return levels[Math.floor(Math.random() * levels.length)];
 }
 
 /**
  * Create invalid form data for testing validation
  */
-export const createInvalidAgentApplication = (): Partial<AgentApplicationFormData> => {
-  return {
-    fullName: 'A', // Too short
-    icNumber: '123456', // Invalid format
-    phoneNumber: '123', // Invalid format
-    address: 'Short', // Too short
-    email: 'invalid-email', // Invalid email
-    age: 15, // Too young
-    reasonToJoin: 'Too short', // Too short
-    expectations: 'Short' // Too short
+export const createInvalidAgentApplication =
+  (): Partial<AgentApplicationFormData> => {
+    return {
+      fullName: 'A', // Too short
+      icNumber: '123456', // Invalid format
+      phoneNumber: '123', // Invalid format
+      address: 'Short', // Too short
+      email: 'invalid-email', // Invalid email
+      age: 15, // Too young
+      reasonToJoin: 'Too short', // Too short
+      expectations: 'Short', // Too short
+    };
   };
-};
 
 /**
  * Create mock application for specific business type
  */
-export const createMockApplicationByBusinessType = (businessType: BusinessType): AgentApplicationFormData => {
+export const createMockApplicationByBusinessType = (
+  businessType: BusinessType
+): AgentApplicationFormData => {
   return createMockAgentApplication({
     jenis: businessType,
     hasBusinessExp: businessType !== BusinessType.TIDAK_BERKAITAN,
     isRegistered: businessType === BusinessType.KEDAI,
-    businessLocation: businessType === BusinessType.TIDAK_BERKAITAN ? 'NA' : SAMPLE_BUSINESS_LOCATIONS[0]
+    businessLocation:
+      businessType === BusinessType.TIDAK_BERKAITAN
+        ? 'NA'
+        : SAMPLE_BUSINESS_LOCATIONS[0],
   });
 };

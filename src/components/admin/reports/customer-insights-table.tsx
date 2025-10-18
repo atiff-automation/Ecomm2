@@ -26,9 +26,9 @@ interface CustomerInsightsTableProps {
   endDate: Date;
 }
 
-export function CustomerInsightsTable({ 
-  startDate, 
-  endDate 
+export function CustomerInsightsTable({
+  startDate,
+  endDate,
 }: CustomerInsightsTableProps) {
   const [insights, setInsights] = useState<CustomerInsight | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,21 +41,23 @@ export function CustomerInsightsTable({
   const fetchCustomerInsights = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
       });
 
-      const response = await fetch(`/api/admin/reports/sales/customers?${params}`);
-      
+      const response = await fetch(
+        `/api/admin/reports/sales/customers?${params}`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to fetch customer insights');
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         setInsights(result.data);
       } else {
@@ -63,7 +65,9 @@ export function CustomerInsightsTable({
       }
     } catch (error) {
       console.error('Failed to fetch customer insights:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      setError(
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+      );
     } finally {
       setLoading(false);
     }
@@ -73,7 +77,7 @@ export function CustomerInsightsTable({
     return new Intl.NumberFormat('ms-MY', {
       style: 'currency',
       currency: 'MYR',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -118,7 +122,9 @@ export function CustomerInsightsTable({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Users className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground">No customer data found</h3>
+        <h3 className="text-lg font-medium text-muted-foreground">
+          No customer data found
+        </h3>
         <p className="text-sm text-muted-foreground">
           No customer activity during the selected period.
         </p>
@@ -132,11 +138,15 @@ export function CustomerInsightsTable({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Customers
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(insights.totalCustomers)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(insights.totalCustomers)}
+            </div>
             <p className="text-xs text-muted-foreground">
               All registered customers
             </p>
@@ -149,7 +159,9 @@ export function CustomerInsightsTable({
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(insights.newCustomers)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(insights.newCustomers)}
+            </div>
             <p className="text-xs text-muted-foreground">
               Registered in period
             </p>
@@ -158,11 +170,15 @@ export function CustomerInsightsTable({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Returning Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Returning Customers
+            </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(insights.returningCustomers)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(insights.returningCustomers)}
+            </div>
             <p className="text-xs text-muted-foreground">
               Made orders in period
             </p>
@@ -171,7 +187,9 @@ export function CustomerInsightsTable({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Member Conversion</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Member Conversion
+            </CardTitle>
             <Badge className="bg-blue-100 text-blue-800">
               {formatPercentage(insights.memberConversionRate)}
             </Badge>
@@ -223,14 +241,19 @@ export function CustomerInsightsTable({
                     <TableHead>State</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
                     <TableHead className="text-right">Revenue</TableHead>
-                    <TableHead className="text-right">Avg Order Value</TableHead>
+                    <TableHead className="text-right">
+                      Avg Order Value
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {insights.topStates.map((state, index) => (
                     <TableRow key={state.state}>
                       <TableCell className="font-medium">
-                        <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
+                        <Badge
+                          variant="outline"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                        >
                           {index + 1}
                         </Badge>
                       </TableCell>
@@ -250,7 +273,9 @@ export function CustomerInsightsTable({
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(
-                          state.totalOrders > 0 ? state.totalRevenue / state.totalOrders : 0
+                          state.totalOrders > 0
+                            ? state.totalRevenue / state.totalOrders
+                            : 0
                         )}
                       </TableCell>
                     </TableRow>
@@ -267,18 +292,36 @@ export function CustomerInsightsTable({
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-medium text-green-800 mb-2">Growth Insights</h4>
+              <h4 className="font-medium text-green-800 mb-2">
+                Growth Insights
+              </h4>
               <ul className="space-y-1 text-green-700">
-                <li>• {formatNumber(insights.newCustomers)} new customers acquired</li>
-                <li>• {formatPercentage(insights.memberConversionRate)} successfully converted to members</li>
-                <li>• {formatNumber(insights.returningCustomers)} active customers made purchases</li>
+                <li>
+                  • {formatNumber(insights.newCustomers)} new customers acquired
+                </li>
+                <li>
+                  • {formatPercentage(insights.memberConversionRate)}{' '}
+                  successfully converted to members
+                </li>
+                <li>
+                  • {formatNumber(insights.returningCustomers)} active customers
+                  made purchases
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-green-800 mb-2">Revenue Performance</h4>
+              <h4 className="font-medium text-green-800 mb-2">
+                Revenue Performance
+              </h4>
               <ul className="space-y-1 text-green-700">
-                <li>• {formatCurrency(insights.avgCustomerLifetimeValue)} average lifetime value</li>
-                <li>• Strong performance in {insights.topStates[0]?.stateName || 'major states'}</li>
+                <li>
+                  • {formatCurrency(insights.avgCustomerLifetimeValue)} average
+                  lifetime value
+                </li>
+                <li>
+                  • Strong performance in{' '}
+                  {insights.topStates[0]?.stateName || 'major states'}
+                </li>
                 <li>• Membership program driving customer loyalty</li>
               </ul>
             </div>

@@ -20,7 +20,7 @@ interface EasyParcelConfigWarningProps {
 
 export default function EasyParcelConfigWarning({
   showDismiss = false,
-  className = ''
+  className = '',
 }: EasyParcelConfigWarningProps) {
   const [status, setStatus] = useState<ConfigStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,7 @@ export default function EasyParcelConfigWarning({
     const parts = error.split(': ');
     return {
       code: parts[0] || '',
-      message: parts[1] || error
+      message: parts[1] || error,
     };
   };
 

@@ -30,7 +30,7 @@ import {
   Users,
   Clock,
   ArrowRight,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 export interface PaginationInfo {
@@ -120,7 +120,7 @@ function PageSizeSelector({
   options,
   onPageSizeChange,
   loading,
-  disabled
+  disabled,
 }: {
   pageSize: number;
   options: number[];
@@ -130,19 +130,22 @@ function PageSizeSelector({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor="page-size" className="text-sm text-muted-foreground whitespace-nowrap">
+      <Label
+        htmlFor="page-size"
+        className="text-sm text-muted-foreground whitespace-nowrap"
+      >
         Show:
       </Label>
       <Select
         value={pageSize.toString()}
-        onValueChange={(value) => onPageSizeChange(parseInt(value))}
+        onValueChange={value => onPageSizeChange(parseInt(value))}
         disabled={loading || disabled}
       >
         <SelectTrigger id="page-size" className="w-20 h-8">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {options.map((size) => (
+          {options.map(size => (
             <SelectItem key={size} value={size.toString()}>
               {size}
             </SelectItem>
@@ -160,7 +163,7 @@ function JumpToPage({
   totalPages,
   onPageChange,
   loading,
-  disabled
+  disabled,
 }: {
   currentPage: number;
   totalPages: number;
@@ -170,18 +173,24 @@ function JumpToPage({
 }) {
   const [inputValue, setInputValue] = useState('');
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    const page = parseInt(inputValue);
-    if (page && page >= 1 && page <= totalPages) {
-      onPageChange(page);
-      setInputValue('');
-    }
-  }, [inputValue, totalPages, onPageChange]);
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const page = parseInt(inputValue);
+      if (page && page >= 1 && page <= totalPages) {
+        onPageChange(page);
+        setInputValue('');
+      }
+    },
+    [inputValue, totalPages, onPageChange]
+  );
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
-      <Label htmlFor="jump-page" className="text-sm text-muted-foreground whitespace-nowrap">
+      <Label
+        htmlFor="jump-page"
+        className="text-sm text-muted-foreground whitespace-nowrap"
+      >
         Go to:
       </Label>
       <Input
@@ -190,7 +199,7 @@ function JumpToPage({
         min={1}
         max={totalPages}
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={e => setInputValue(e.target.value)}
         placeholder={currentPage.toString()}
         className="w-16 h-8 text-sm"
         disabled={loading || disabled}
@@ -214,7 +223,7 @@ function PaginationInfo({
   pagination,
   showTotalItems,
   showItemRange,
-  loading
+  loading,
 }: {
   pagination: PaginationInfo;
   showTotalItems?: boolean;
@@ -236,7 +245,8 @@ function PaginationInfo({
         <div className="flex items-center gap-1">
           <Package className="h-4 w-4" />
           <span>
-            {pagination.startItem.toLocaleString()}-{pagination.endItem.toLocaleString()}
+            {pagination.startItem.toLocaleString()}-
+            {pagination.endItem.toLocaleString()}
           </span>
         </div>
       )}
@@ -271,10 +281,15 @@ export function ProductPagination({
   maxVisiblePages = 7,
   loading = false,
   disabled = false,
-  className
+  className,
 }: ProductPaginationProps) {
   const pages = useMemo(
-    () => generatePageRange(pagination.currentPage, pagination.totalPages, maxVisiblePages),
+    () =>
+      generatePageRange(
+        pagination.currentPage,
+        pagination.totalPages,
+        maxVisiblePages
+      ),
     [pagination.currentPage, pagination.totalPages, maxVisiblePages]
   );
 
@@ -536,7 +551,11 @@ export function ProductPagination({
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(pagination.totalPages)}
-              disabled={pagination.currentPage === pagination.totalPages || loading || disabled}
+              disabled={
+                pagination.currentPage === pagination.totalPages ||
+                loading ||
+                disabled
+              }
               className="hidden sm:flex"
             >
               <ChevronsRight className="h-4 w-4" />
@@ -550,7 +569,12 @@ export function ProductPagination({
 
   // Default variant - standard pagination
   return (
-    <div className={cn('flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4', className)}>
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4',
+        className
+      )}
+    >
       <div className="flex items-center gap-4">
         <PaginationInfo
           pagination={pagination}
@@ -644,7 +668,11 @@ export function ProductPagination({
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.totalPages)}
-            disabled={pagination.currentPage === pagination.totalPages || loading || disabled}
+            disabled={
+              pagination.currentPage === pagination.totalPages ||
+              loading ||
+              disabled
+            }
             className="hidden sm:flex"
           >
             <ChevronsRight className="h-4 w-4" />
@@ -666,7 +694,10 @@ export function ProductPagination({
 }
 
 // Specialized pagination components
-export const SimplePagination = ({ className, ...props }: Omit<ProductPaginationProps, 'variant'>) => (
+export const SimplePagination = ({
+  className,
+  ...props
+}: Omit<ProductPaginationProps, 'variant'>) => (
   <ProductPagination
     variant="simple"
     showPageSize={false}
@@ -678,7 +709,10 @@ export const SimplePagination = ({ className, ...props }: Omit<ProductPagination
   />
 );
 
-export const CompactPagination = ({ className, ...props }: Omit<ProductPaginationProps, 'variant'>) => (
+export const CompactPagination = ({
+  className,
+  ...props
+}: Omit<ProductPaginationProps, 'variant'>) => (
   <ProductPagination
     variant="compact"
     showPageSize={false}
@@ -689,7 +723,10 @@ export const CompactPagination = ({ className, ...props }: Omit<ProductPaginatio
   />
 );
 
-export const MobilePagination = ({ className, ...props }: Omit<ProductPaginationProps, 'variant'>) => (
+export const MobilePagination = ({
+  className,
+  ...props
+}: Omit<ProductPaginationProps, 'variant'>) => (
   <ProductPagination
     variant="simple"
     showPageSize={false}
@@ -701,7 +738,10 @@ export const MobilePagination = ({ className, ...props }: Omit<ProductPagination
   />
 );
 
-export const AdvancedPagination = ({ className, ...props }: Omit<ProductPaginationProps, 'variant'>) => (
+export const AdvancedPagination = ({
+  className,
+  ...props
+}: Omit<ProductPaginationProps, 'variant'>) => (
   <ProductPagination
     variant="detailed"
     showPageSize={true}

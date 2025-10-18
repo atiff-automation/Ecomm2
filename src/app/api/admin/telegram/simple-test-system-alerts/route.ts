@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -29,12 +32,13 @@ export async function POST(request: NextRequest) {
     }
 
     // SINGLE SOURCE OF TRUTH: Check if system alerts channel is configured
-    const isConfigured = await simplifiedTelegramService.isSystemAlertsChannelConfigured();
+    const isConfigured =
+      await simplifiedTelegramService.isSystemAlertsChannelConfigured();
 
     if (!isConfigured) {
       return NextResponse.json({
         success: false,
-        message: 'System alerts channel not configured'
+        message: 'System alerts channel not configured',
       });
     }
 
@@ -56,12 +60,12 @@ This channel will receive:
     if (success) {
       return NextResponse.json({
         success: true,
-        message: 'Test notification sent successfully'
+        message: 'Test notification sent successfully',
       });
     } else {
       return NextResponse.json({
         success: false,
-        message: 'Failed to send test notification'
+        message: 'Failed to send test notification',
       });
     }
   } catch (error) {

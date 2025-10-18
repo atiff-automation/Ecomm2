@@ -12,7 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarIcon, Filter, RotateCcw } from 'lucide-react';
 
@@ -22,8 +28,13 @@ interface ApplicationFiltersProps {
   onReset: () => void;
 }
 
-export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFiltersProps) {
-  const [localFilters, setLocalFilters] = useState<ApplicationFiltersType>(filters);
+export function ApplicationFilters({
+  filters,
+  onApply,
+  onReset,
+}: ApplicationFiltersProps) {
+  const [localFilters, setLocalFilters] =
+    useState<ApplicationFiltersType>(filters);
 
   const handleApply = () => {
     onApply(localFilters);
@@ -37,7 +48,7 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
       search: '',
       hasJrmExp: undefined,
       dateFrom: undefined,
-      dateTo: undefined
+      dateTo: undefined,
     };
     setLocalFilters(resetFilters);
     onReset();
@@ -46,7 +57,7 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
   const updateFilter = (key: keyof ApplicationFiltersType, value: any) => {
     setLocalFilters(prev => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
@@ -69,7 +80,7 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
                 <Checkbox
                   id="hasJrmExp"
                   checked={localFilters.hasJrmExp === true}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     updateFilter('hasJrmExp', checked ? true : undefined)
                   }
                 />
@@ -82,7 +93,7 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
                 <Checkbox
                   id="noJrmExp"
                   checked={localFilters.hasJrmExp === false}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     updateFilter('hasJrmExp', checked ? false : undefined)
                   }
                 />
@@ -106,7 +117,9 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
                   id="dateFrom"
                   type="date"
                   value={localFilters.dateFrom || ''}
-                  onChange={(e) => updateFilter('dateFrom', e.target.value || undefined)}
+                  onChange={e =>
+                    updateFilter('dateFrom', e.target.value || undefined)
+                  }
                   className="text-sm"
                 />
               </div>
@@ -119,7 +132,9 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
                   id="dateTo"
                   type="date"
                   value={localFilters.dateTo || ''}
-                  onChange={(e) => updateFilter('dateTo', e.target.value || undefined)}
+                  onChange={e =>
+                    updateFilter('dateTo', e.target.value || undefined)
+                  }
                   className="text-sm"
                 />
               </div>
@@ -132,7 +147,7 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
 
             <Select
               value={localFilters.limit?.toString() || '10'}
-              onValueChange={(value) => updateFilter('limit', parseInt(value))}
+              onValueChange={value => updateFilter('limit', parseInt(value))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -157,7 +172,9 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
               size="sm"
               onClick={() => {
                 const today = new Date();
-                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const lastWeek = new Date(
+                  today.getTime() - 7 * 24 * 60 * 60 * 1000
+                );
                 updateFilter('dateFrom', lastWeek.toISOString().split('T')[0]);
                 updateFilter('dateTo', today.toISOString().split('T')[0]);
               }}
@@ -170,7 +187,11 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
               size="sm"
               onClick={() => {
                 const today = new Date();
-                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                const lastMonth = new Date(
+                  today.getFullYear(),
+                  today.getMonth() - 1,
+                  today.getDate()
+                );
                 updateFilter('dateFrom', lastMonth.toISOString().split('T')[0]);
                 updateFilter('dateTo', today.toISOString().split('T')[0]);
               }}
@@ -183,8 +204,15 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
               size="sm"
               onClick={() => {
                 const today = new Date();
-                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                updateFilter('dateFrom', startOfMonth.toISOString().split('T')[0]);
+                const startOfMonth = new Date(
+                  today.getFullYear(),
+                  today.getMonth(),
+                  1
+                );
+                updateFilter(
+                  'dateFrom',
+                  startOfMonth.toISOString().split('T')[0]
+                );
                 updateFilter('dateTo', today.toISOString().split('T')[0]);
               }}
             >
@@ -224,12 +252,16 @@ export function ApplicationFilters({ filters, onApply, onReset }: ApplicationFil
                 )}
                 {localFilters.dateFrom && (
                   <li>
-                    Dari: {new Date(localFilters.dateFrom).toLocaleDateString('ms-MY')}
+                    Dari:{' '}
+                    {new Date(localFilters.dateFrom).toLocaleDateString(
+                      'ms-MY'
+                    )}
                   </li>
                 )}
                 {localFilters.dateTo && (
                   <li>
-                    Hingga: {new Date(localFilters.dateTo).toLocaleDateString('ms-MY')}
+                    Hingga:{' '}
+                    {new Date(localFilters.dateTo).toLocaleDateString('ms-MY')}
                   </li>
                 )}
               </ul>

@@ -59,7 +59,12 @@ export class RateLimiter {
     options: RateLimitOptions = {}
   ): Promise<RateLimitResult> {
     try {
-      const identifier = this.generateIdentifier(request, type, userId, options);
+      const identifier = this.generateIdentifier(
+        request,
+        type,
+        userId,
+        options
+      );
       const config = RATE_LIMIT_CONFIG[type];
       const windowSeconds = Math.floor(config.WINDOW / 1000);
 
@@ -146,7 +151,8 @@ export class RateLimiter {
   ): Response {
     const config = RATE_LIMIT_CONFIG[type];
 
-    const message = customMessage ||
+    const message =
+      customMessage ||
       `Too many requests. Limit: ${config.MAX_REQUESTS} requests per ${config.WINDOW / 1000} seconds.`;
 
     const headers = new Headers({
@@ -154,7 +160,9 @@ export class RateLimiter {
       'X-RateLimit-Limit': config.MAX_REQUESTS.toString(),
       'X-RateLimit-Remaining': result.remaining.toString(),
       'X-RateLimit-Reset': result.reset.getTime().toString(),
-      'Retry-After': Math.round((result.reset.getTime() - Date.now()) / 1000).toString(),
+      'Retry-After': Math.round(
+        (result.reset.getTime() - Date.now()) / 1000
+      ).toString(),
     });
 
     return new Response(
@@ -205,9 +213,16 @@ export function withRateLimit(
       const request = args[0] as NextRequest;
 
       // Extract userId from session if available
-      const userId = options.skipUserId ? undefined : await extractUserIdFromRequest(request);
+      const userId = options.skipUserId
+        ? undefined
+        : await extractUserIdFromRequest(request);
 
-      const rateLimitResult = await RateLimiter.middleware(request, type, userId, options);
+      const rateLimitResult = await RateLimiter.middleware(
+        request,
+        type,
+        userId,
+        options
+      );
 
       if (rateLimitResult) {
         return rateLimitResult as R;
@@ -221,7 +236,9 @@ export function withRateLimit(
 /**
  * Helper to extract userId from request - CENTRALIZED LOGIC
  */
-async function extractUserIdFromRequest(request: NextRequest): Promise<string | undefined> {
+async function extractUserIdFromRequest(
+  request: NextRequest
+): Promise<string | undefined> {
   try {
     const { getServerSession } = await import('next-auth');
     const { authOptions } = await import('@/lib/auth/config');

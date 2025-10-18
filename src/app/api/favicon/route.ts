@@ -15,14 +15,18 @@ export async function GET(request: NextRequest) {
   try {
     // Get site customization configuration
     const config = await siteCustomizationService.getConfiguration();
-    
+
     if (config.branding.favicon?.url) {
       // Serve custom favicon
-      const faviconPath = path.join(process.cwd(), 'public', config.branding.favicon.url);
-      
+      const faviconPath = path.join(
+        process.cwd(),
+        'public',
+        config.branding.favicon.url
+      );
+
       try {
         const faviconBuffer = await readFile(faviconPath);
-        
+
         // Determine content type based on file extension
         const ext = path.extname(config.branding.favicon.url).toLowerCase();
         let contentType = 'image/x-icon';
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest) {
         } else if (ext === '.jpg' || ext === '.jpeg') {
           contentType = 'image/jpeg';
         }
-        
+
         return new NextResponse(faviconBuffer, {
           headers: {
             'Content-Type': contentType,
@@ -43,23 +47,26 @@ export async function GET(request: NextRequest) {
         // Fall through to default favicon
       }
     }
-    
+
     // Serve default favicon
-    const defaultFaviconPath = path.join(process.cwd(), 'src/app', 'favicon.ico');
+    const defaultFaviconPath = path.join(
+      process.cwd(),
+      'src/app',
+      'favicon.ico'
+    );
     const defaultFaviconBuffer = await readFile(defaultFaviconPath);
-    
+
     return new NextResponse(defaultFaviconBuffer, {
       headers: {
         'Content-Type': 'image/x-icon',
         'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
       },
     });
-    
   } catch (error) {
     console.error('Error serving favicon:', error);
-    
+
     // Return 404 if everything fails
-    return new NextResponse(null, { 
+    return new NextResponse(null, {
       status: 404,
     });
   }

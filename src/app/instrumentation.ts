@@ -40,12 +40,20 @@ export async function register() {
       }
 
       // Initialize monitoring system - Systematic configuration via environment variables
-      console.log('📊 Initializing monitoring system with environment controls...');
+      console.log(
+        '📊 Initializing monitoring system with environment controls...'
+      );
       const monitoringResult = await initializeMonitoring({
         enableErrorReporting: process.env.ENABLE_ERROR_MONITORING === 'true',
-        enablePerformanceMonitoring: process.env.ENABLE_PERFORMANCE_MONITORING === 'true',
+        enablePerformanceMonitoring:
+          process.env.ENABLE_PERFORMANCE_MONITORING === 'true',
         enableUserTracking: process.env.ENABLE_USER_TRACKING === 'true',
-        sampleRate: process.env.MONITORING_EMERGENCY_DISABLE === 'true' ? 0 : (process.env.NODE_ENV === 'production' ? 0.1 : 1.0),
+        sampleRate:
+          process.env.MONITORING_EMERGENCY_DISABLE === 'true'
+            ? 0
+            : process.env.NODE_ENV === 'production'
+              ? 0.1
+              : 1.0,
       });
 
       if (monitoringResult.success) {

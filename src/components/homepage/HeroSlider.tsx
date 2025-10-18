@@ -45,7 +45,7 @@ const defaultConfig: SliderConfig = {
   showDots: true,
   showArrows: true,
   pauseOnHover: true,
-  slides: []
+  slides: [],
 };
 
 export function HeroSlider({
@@ -53,7 +53,7 @@ export function HeroSlider({
   config,
   className,
   onSlideChange,
-  children
+  children,
 }: HeroSliderProps) {
   const sliderConfig = { ...defaultConfig, ...config, slides };
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -78,7 +78,12 @@ export function HeroSlider({
     intervalRef.current = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % activeSlides.length);
     }, sliderConfig.interval);
-  }, [sliderConfig.autoAdvance, sliderConfig.interval, activeSlides.length, hasMultipleSlides]);
+  }, [
+    sliderConfig.autoAdvance,
+    sliderConfig.interval,
+    activeSlides.length,
+    hasMultipleSlides,
+  ]);
 
   const stopAutoAdvance = useCallback(() => {
     if (intervalRef.current) {
@@ -98,26 +103,38 @@ export function HeroSlider({
   }, [isPlaying, startAutoAdvance, stopAutoAdvance]);
 
   // Navigation handlers
-  const goToSlide = useCallback((index: number) => {
-    if (index === currentSlide || isTransitioning) return;
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (index === currentSlide || isTransitioning) return;
 
-    setIsTransitioning(true);
-    setCurrentSlide(index);
-    onSlideChange?.(index);
+      setIsTransitioning(true);
+      setCurrentSlide(index);
+      onSlideChange?.(index);
 
-    // Reset transition state
-    setTimeout(() => setIsTransitioning(false), 300);
+      // Reset transition state
+      setTimeout(() => setIsTransitioning(false), 300);
 
-    // Restart auto-advance if active
-    if (sliderConfig.autoAdvance && isPlaying) {
-      stopAutoAdvance();
-      startAutoAdvance();
-    }
-  }, [currentSlide, isTransitioning, onSlideChange, sliderConfig.autoAdvance, isPlaying, stopAutoAdvance, startAutoAdvance]);
+      // Restart auto-advance if active
+      if (sliderConfig.autoAdvance && isPlaying) {
+        stopAutoAdvance();
+        startAutoAdvance();
+      }
+    },
+    [
+      currentSlide,
+      isTransitioning,
+      onSlideChange,
+      sliderConfig.autoAdvance,
+      isPlaying,
+      stopAutoAdvance,
+      startAutoAdvance,
+    ]
+  );
 
   const goToPrevious = useCallback(() => {
     if (!hasMultipleSlides) return;
-    const newIndex = currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
+    const newIndex =
+      currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
     goToSlide(newIndex);
   }, [currentSlide, activeSlides.length, hasMultipleSlides, goToSlide]);
 
@@ -153,24 +170,27 @@ export function HeroSlider({
   };
 
   // Keyboard navigation
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!hasMultipleSlides) return;
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!hasMultipleSlides) return;
 
-    switch (e.key) {
-      case 'ArrowLeft':
-        e.preventDefault();
-        goToPrevious();
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        goToNext();
-        break;
-      case ' ':
-        e.preventDefault();
-        toggleAutoAdvance();
-        break;
-    }
-  }, [hasMultipleSlides, goToPrevious, goToNext, toggleAutoAdvance]);
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          goToPrevious();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          goToNext();
+          break;
+        case ' ':
+          e.preventDefault();
+          toggleAutoAdvance();
+          break;
+      }
+    },
+    [hasMultipleSlides, goToPrevious, goToNext, toggleAutoAdvance]
+  );
 
   // Effects
   useEffect(() => {
@@ -183,7 +203,13 @@ export function HeroSlider({
     }
 
     return stopAutoAdvance;
-  }, [sliderConfig.autoAdvance, isPaused, hasMultipleSlides, startAutoAdvance, stopAutoAdvance]);
+  }, [
+    sliderConfig.autoAdvance,
+    isPaused,
+    hasMultipleSlides,
+    startAutoAdvance,
+    stopAutoAdvance,
+  ]);
 
   useEffect(() => {
     // Reset current slide if it's beyond the active slides range
@@ -200,11 +226,13 @@ export function HeroSlider({
 
   if (activeSlides.length === 0) {
     return (
-      <div className={cn(
-        'relative min-h-[600px] flex items-center justify-center',
-        'bg-gradient-to-br from-primary/20 to-primary/10',
-        className
-      )}>
+      <div
+        className={cn(
+          'relative min-h-[600px] flex items-center justify-center',
+          'bg-gradient-to-br from-primary/20 to-primary/10',
+          className
+        )}
+      >
         <div className="text-center text-muted-foreground">
           <p>No slides available</p>
         </div>
@@ -223,8 +251,16 @@ export function HeroSlider({
       onTouchStart={hasMultipleSlides ? onTouchStart : undefined}
       onTouchMove={hasMultipleSlides ? onTouchMove : undefined}
       onTouchEnd={hasMultipleSlides ? onTouchEnd : undefined}
-      onMouseEnter={hasMultipleSlides && sliderConfig.pauseOnHover ? () => setIsPaused(true) : undefined}
-      onMouseLeave={hasMultipleSlides && sliderConfig.pauseOnHover ? () => setIsPaused(false) : undefined}
+      onMouseEnter={
+        hasMultipleSlides && sliderConfig.pauseOnHover
+          ? () => setIsPaused(true)
+          : undefined
+      }
+      onMouseLeave={
+        hasMultipleSlides && sliderConfig.pauseOnHover
+          ? () => setIsPaused(false)
+          : undefined
+      }
       role="region"
       aria-label="Hero image carousel"
       aria-live="polite"
@@ -262,9 +298,7 @@ export function HeroSlider({
       </div>
 
       {/* Content Overlay */}
-      <div className="relative z-10 h-full">
-        {children}
-      </div>
+      <div className="relative z-10 h-full">{children}</div>
 
       {/* Navigation Controls */}
       {hasMultipleSlides && (
@@ -346,7 +380,9 @@ export function HeroSlider({
                 'focus:outline-none focus:ring-2 focus:ring-white/50',
                 'hover:scale-110 active:scale-95'
               )}
-              aria-label={isPlaying && !isPaused ? 'Pause slideshow' : 'Play slideshow'}
+              aria-label={
+                isPlaying && !isPaused ? 'Pause slideshow' : 'Play slideshow'
+              }
             >
               {isPlaying && !isPaused ? (
                 <Pause className="h-5 w-5" />
@@ -357,23 +393,27 @@ export function HeroSlider({
           )}
 
           {/* Slide Counter */}
-          <div className={cn(
-            'absolute top-4 lg:top-6 left-4 lg:left-6',
-            'px-3 py-1.5 bg-black/20 backdrop-blur-sm',
-            'text-white text-sm lg:text-base rounded-lg',
-            'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
-          )}>
+          <div
+            className={cn(
+              'absolute top-4 lg:top-6 left-4 lg:left-6',
+              'px-3 py-1.5 bg-black/20 backdrop-blur-sm',
+              'text-white text-sm lg:text-base rounded-lg',
+              'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+            )}
+          >
             {currentSlide + 1} / {activeSlides.length}
           </div>
 
           {/* Pause Indicator */}
           {isPaused && sliderConfig.autoAdvance && (
-            <div className={cn(
-              'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-              'bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg',
-              'text-sm lg:text-base font-medium',
-              'animate-in fade-in duration-200'
-            )}>
+            <div
+              className={cn(
+                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                'bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg',
+                'text-sm lg:text-base font-medium',
+                'animate-in fade-in duration-200'
+              )}
+            >
               Paused
             </div>
           )}

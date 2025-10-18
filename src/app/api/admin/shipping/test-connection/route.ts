@@ -7,7 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
-import { EasyParcelService, EasyParcelError } from '@/lib/shipping/easyparcel-service';
+import {
+  EasyParcelService,
+  EasyParcelError,
+} from '@/lib/shipping/easyparcel-service';
 
 const testConnectionSchema = z.object({
   apiKey: z.string().min(1, 'API key is required'),
@@ -73,12 +76,16 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        console.error('[TestConnection] ❌ Connection failed:', balanceResponse.error);
+        console.error(
+          '[TestConnection] ❌ Connection failed:',
+          balanceResponse.error
+        );
 
         return NextResponse.json(
           {
             success: false,
-            message: balanceResponse.error || 'Failed to connect to EasyParcel API',
+            message:
+              balanceResponse.error || 'Failed to connect to EasyParcel API',
           },
           { status: 400 }
         );
@@ -105,7 +112,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to test connection. Please check your API key and try again.',
+        message:
+          'Failed to test connection. Please check your API key and try again.',
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }

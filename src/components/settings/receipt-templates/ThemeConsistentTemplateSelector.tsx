@@ -13,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Check, 
+import {
+  Check,
   Loader2,
   AlertTriangle,
   RefreshCw,
@@ -28,11 +28,17 @@ import {
   Image as ImageIcon,
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ReceiptTemplate, TEMPLATE_TYPE_LABELS } from '@/types/receipt-templates';
-import { templateDisplayService, EnhancedReceiptTemplate } from '@/lib/receipts/template-display-service';
+import {
+  ReceiptTemplate,
+  TEMPLATE_TYPE_LABELS,
+} from '@/types/receipt-templates';
+import {
+  templateDisplayService,
+  EnhancedReceiptTemplate,
+} from '@/lib/receipts/template-display-service';
 import { cn } from '@/lib/utils';
 
 interface ThemeConsistentTemplateSelectorProps {
@@ -41,21 +47,24 @@ interface ThemeConsistentTemplateSelectorProps {
 
 // Icon mapping following your existing pattern
 const IconMap = {
-  'Receipt': Receipt,
-  'FileText': FileText,
-  'FileCheck': FileCheck,
-  'FileBarChart': FileBarChart
+  Receipt: Receipt,
+  FileText: FileText,
+  FileCheck: FileCheck,
+  FileBarChart: FileBarChart,
 };
 
-export default function ThemeConsistentTemplateSelector({ className }: ThemeConsistentTemplateSelectorProps) {
+export default function ThemeConsistentTemplateSelector({
+  className,
+}: ThemeConsistentTemplateSelectorProps) {
   const [templates, setTemplates] = useState<EnhancedReceiptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<EnhancedReceiptTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<EnhancedReceiptTemplate | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
-  
+
   // Logo upload states
   const [businessProfile, setBusinessProfile] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -77,7 +86,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       setError(null);
 
       const response = await fetch('/api/admin/receipt-templates');
-      
+
       if (!response.ok) {
         if (response.status === 404 || response.status === 500) {
           await initializeTemplates();
@@ -87,10 +96,13 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.templates?.length > 0) {
-        const enhanced = templateDisplayService.enhanceTemplates(data.templates);
-        const sorted = templateDisplayService.sortTemplatesByPopularity(enhanced);
+        const enhanced = templateDisplayService.enhanceTemplates(
+          data.templates
+        );
+        const sorted =
+          templateDisplayService.sortTemplatesByPopularity(enhanced);
         setTemplates(sorted);
       } else {
         await initializeTemplates();
@@ -107,7 +119,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
     try {
       setLoading(true);
       const response = await fetch('/api/admin/receipt-templates/initialize', {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -116,8 +128,11 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
 
       const data = await response.json();
       if (data.success && data.templates) {
-        const enhanced = templateDisplayService.enhanceTemplates(data.templates);
-        const sorted = templateDisplayService.sortTemplatesByPopularity(enhanced);
+        const enhanced = templateDisplayService.enhanceTemplates(
+          data.templates
+        );
+        const sorted =
+          templateDisplayService.sortTemplatesByPopularity(enhanced);
         setTemplates(sorted);
         toast.success('Default templates initialized successfully');
       }
@@ -132,9 +147,12 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
     try {
       setSettingDefault(templateId);
 
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}/set-default`, {
-        method: 'PUT'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}/set-default`,
+        {
+          method: 'PUT',
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -143,11 +161,11 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
 
       const data = await response.json();
       if (data.success) {
-        setTemplates(prevTemplates => 
+        setTemplates(prevTemplates =>
           prevTemplates.map(template => ({
             ...template,
             isDefault: template.id === templateId,
-            isActive: template.id === templateId ? true : template.isActive
+            isActive: template.id === templateId ? true : template.isActive,
           }))
         );
         toast.success('Default template updated successfully');
@@ -165,8 +183,10 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       setPreviewLoading(true);
       setPreviewTemplate(template);
 
-      const response = await fetch(`/api/admin/receipt-templates/${template.id}/preview`);
-      
+      const response = await fetch(
+        `/api/admin/receipt-templates/${template.id}/preview`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to generate preview');
       }
@@ -176,7 +196,9 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
     } catch (error) {
       console.error('Error generating preview:', error);
       toast.error('Failed to generate preview');
-      setPreviewHtml(templateDisplayService.generatePreviewFallbackHtml(template));
+      setPreviewHtml(
+        templateDisplayService.generatePreviewFallbackHtml(template)
+      );
     } finally {
       setPreviewLoading(false);
     }
@@ -202,7 +224,9 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
     }
   };
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -302,7 +326,9 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       <Card>
         <CardContent className="p-8 text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Templates</h3>
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            Error Loading Templates
+          </h3>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={loadTemplates} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -332,30 +358,37 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
       {/* Templates Grid - matching your existing business profile layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {templates.map((template, index) => {
-          const statusInfo = templateDisplayService.getTemplateStatusInfo(template);
-          const IconComponent = IconMap[template.displayConfig.icon as keyof typeof IconMap] || FileText;
-          
+          const statusInfo =
+            templateDisplayService.getTemplateStatusInfo(template);
+          const IconComponent =
+            IconMap[template.displayConfig.icon as keyof typeof IconMap] ||
+            FileText;
+
           return (
-            <Card 
+            <Card
               key={template.id}
               className={cn(
-                "relative transition-all duration-200 hover:shadow-md",
-                template.isDefault && "ring-2 ring-blue-500 bg-blue-50/30"
+                'relative transition-all duration-200 hover:shadow-md',
+                template.isDefault && 'ring-2 ring-blue-500 bg-blue-50/30'
               )}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     {/* Icon with subtle background - matching business profile style */}
-                    <div className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center",
-                      template.displayConfig.gradient,
-                      template.isDefault ? "bg-blue-100" : ""
-                    )}>
-                      <IconComponent className={cn(
-                        "h-5 w-5",
-                        template.isDefault ? "text-blue-600" : "text-gray-600"
-                      )} />
+                    <div
+                      className={cn(
+                        'h-10 w-10 rounded-full flex items-center justify-center',
+                        template.displayConfig.gradient,
+                        template.isDefault ? 'bg-blue-100' : ''
+                      )}
+                    >
+                      <IconComponent
+                        className={cn(
+                          'h-5 w-5',
+                          template.isDefault ? 'text-blue-600' : 'text-gray-600'
+                        )}
+                      />
                     </div>
                     <div>
                       <CardTitle className="text-lg">
@@ -396,7 +429,9 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
 
                   {/* Features */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900">Features</h4>
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Features
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {template.displayConfig.features.map((feature, idx) => (
                         <Badge key={idx} variant="outline" className="text-xs">
@@ -409,9 +444,10 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-2 border-t">
                     <div className="text-xs text-muted-foreground">
-                      Updated {new Date(template.updatedAt).toLocaleDateString('en-MY')}
+                      Updated{' '}
+                      {new Date(template.updatedAt).toLocaleDateString('en-MY')}
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handlePreview(template)}
@@ -422,7 +458,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
                         <Eye className="h-3 w-3 mr-1" />
                         Preview
                       </Button>
-                      
+
                       {statusInfo.canSetAsDefault && (
                         <Button
                           onClick={() => setAsDefault(template.id)}
@@ -443,7 +479,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
                           )}
                         </Button>
                       )}
-                      
+
                       {template.isDefault && (
                         <div className="flex items-center text-sm text-blue-600 font-medium">
                           <Check className="h-4 w-4 mr-1" />
@@ -464,7 +500,9 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
         <Card>
           <CardContent className="p-8 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Templates Available</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              No Templates Available
+            </h3>
             <p className="text-muted-foreground mb-4">
               No receipt templates are currently configured in your system.
             </p>
@@ -511,7 +549,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
             {/* Logo Preview */}
             <div className="space-y-4">
               <Label className="text-base font-medium">Current Logo</Label>
-              
+
               {businessProfile?.logoUrl ? (
                 <div className="border rounded-lg p-4 bg-white">
                   <div className="flex items-center justify-center mb-4">
@@ -524,7 +562,8 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
                     />
                   </div>
                   <p className="text-xs text-gray-500 text-center">
-                    Size: {businessProfile.logoWidth || 120}×{businessProfile.logoHeight || 40}px
+                    Size: {businessProfile.logoWidth || 120}×
+                    {businessProfile.logoHeight || 40}px
                   </p>
                 </div>
               ) : (
@@ -554,7 +593,7 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
             {/* Upload Controls */}
             <div className="space-y-4">
               <Label className="text-base font-medium">Upload New Logo</Label>
-              
+
               {/* Logo Dimensions */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -624,29 +663,49 @@ export default function ThemeConsistentTemplateSelector({ className }: ThemeCons
         <div className="flex items-start space-x-3">
           <div className="h-5 w-5 text-blue-600 mt-0.5">💡</div>
           <div>
-            <h4 className="text-sm font-medium text-blue-800">How Template Selection Works</h4>
+            <h4 className="text-sm font-medium text-blue-800">
+              How Template Selection Works
+            </h4>
             <div className="text-sm text-blue-700 mt-1 space-y-1">
-              <p>• Click "Preview" to see how each template looks with sample data</p>
-              <p>• Select "Use as Default" to make it your active receipt template</p>
-              <p>• All future customer receipts and invoices will use your selected design</p>
+              <p>
+                • Click "Preview" to see how each template looks with sample
+                data
+              </p>
+              <p>
+                • Select "Use as Default" to make it your active receipt
+                template
+              </p>
+              <p>
+                • All future customer receipts and invoices will use your
+                selected design
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Preview Dialog */}
-      <Dialog open={previewTemplate !== null} onOpenChange={() => setPreviewTemplate(null)}>
+      <Dialog
+        open={previewTemplate !== null}
+        onOpenChange={() => setPreviewTemplate(null)}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>
-                Preview: {previewTemplate && TEMPLATE_TYPE_LABELS[previewTemplate.templateType]}
+                Preview:{' '}
+                {previewTemplate &&
+                  TEMPLATE_TYPE_LABELS[previewTemplate.templateType]}
               </span>
               {previewTemplate && (
-                <Badge className={cn(
-                  "text-xs",
-                  previewTemplate.isDefault ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                )}>
+                <Badge
+                  className={cn(
+                    'text-xs',
+                    previewTemplate.isDefault
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-700'
+                  )}
+                >
                   {previewTemplate.isDefault ? 'Currently Active' : 'Available'}
                 </Badge>
               )}

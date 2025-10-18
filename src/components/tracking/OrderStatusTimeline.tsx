@@ -68,10 +68,13 @@ export function OrderStatusTimeline({
                 {/* Label */}
                 <div className="text-center mt-3 w-16 md:w-20">
                   <p
-                    className={cn('text-[10px] md:text-xs font-medium leading-tight break-words', {
-                      'text-green-700': isCompletedOrCurrent,
-                      'text-gray-500': isPending,
-                    })}
+                    className={cn(
+                      'text-[10px] md:text-xs font-medium leading-tight break-words',
+                      {
+                        'text-green-700': isCompletedOrCurrent,
+                        'text-gray-500': isPending,
+                      }
+                    )}
                   >
                     {stage.label}
                   </p>
@@ -82,13 +85,10 @@ export function OrderStatusTimeline({
               {!isLast && (
                 <div className="flex items-center flex-1 px-1 md:px-2 pt-5">
                   <div
-                    className={cn(
-                      'w-full h-0.5 transition-all duration-300',
-                      {
-                        'bg-green-500': currentStage > stage.number,
-                        'bg-gray-300': currentStage <= stage.number,
-                      }
-                    )}
+                    className={cn('w-full h-0.5 transition-all duration-300', {
+                      'bg-green-500': currentStage > stage.number,
+                      'bg-gray-300': currentStage <= stage.number,
+                    })}
                   />
                 </div>
               )}

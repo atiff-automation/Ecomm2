@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Play,
   Pause,
-  MoreHorizontal
+  MoreHorizontal,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -76,16 +76,20 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
 
   // ==================== NAVIGATION HANDLERS ====================
 
-  const goToSlide = useCallback((index: number) => {
-    setCurrentSlide(index);
-    if (sliderConfig.autoAdvance && isPlaying) {
-      stopAutoAdvance();
-      startAutoAdvance(); // Restart the timer
-    }
-  }, [sliderConfig.autoAdvance, isPlaying, stopAutoAdvance, startAutoAdvance]);
+  const goToSlide = useCallback(
+    (index: number) => {
+      setCurrentSlide(index);
+      if (sliderConfig.autoAdvance && isPlaying) {
+        stopAutoAdvance();
+        startAutoAdvance(); // Restart the timer
+      }
+    },
+    [sliderConfig.autoAdvance, isPlaying, stopAutoAdvance, startAutoAdvance]
+  );
 
   const goToPrevious = useCallback(() => {
-    const newIndex = currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
+    const newIndex =
+      currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
     goToSlide(newIndex);
   }, [currentSlide, activeSlides.length, goToSlide]);
 
@@ -97,14 +101,26 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
   // ==================== EFFECTS ====================
 
   useEffect(() => {
-    if (sliderConfig.autoAdvance && isPlaying && !isPaused && activeSlides.length > 1) {
+    if (
+      sliderConfig.autoAdvance &&
+      isPlaying &&
+      !isPaused &&
+      activeSlides.length > 1
+    ) {
       startAutoAdvance();
     } else {
       stopAutoAdvance();
     }
 
     return stopAutoAdvance;
-  }, [sliderConfig.autoAdvance, isPlaying, isPaused, activeSlides.length, startAutoAdvance, stopAutoAdvance]);
+  }, [
+    sliderConfig.autoAdvance,
+    isPlaying,
+    isPaused,
+    activeSlides.length,
+    startAutoAdvance,
+    stopAutoAdvance,
+  ]);
 
   useEffect(() => {
     // Reset current slide if it's beyond the active slides range
@@ -121,17 +137,18 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
 
   if (!sliderConfig.enabled || activeSlides.length === 0) {
     return (
-      <div className={cn(
-        "relative w-full h-64 bg-muted rounded-lg flex items-center justify-center",
-        className
-      )}>
+      <div
+        className={cn(
+          'relative w-full h-64 bg-muted rounded-lg flex items-center justify-center',
+          className
+        )}
+      >
         <div className="text-center text-muted-foreground">
           <div className="text-lg font-medium">Slider Preview</div>
           <div className="text-sm">
             {!sliderConfig.enabled
-              ? "Enable slider mode to see preview"
-              : "Add slides to see preview"
-            }
+              ? 'Enable slider mode to see preview'
+              : 'Add slides to see preview'}
           </div>
         </div>
       </div>
@@ -142,7 +159,10 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
 
   return (
     <div
-      className={cn("relative w-full h-64 rounded-lg overflow-hidden bg-muted group", className)}
+      className={cn(
+        'relative w-full h-64 rounded-lg overflow-hidden bg-muted group',
+        className
+      )}
       onMouseEnter={() => sliderConfig.pauseOnHover && setIsPaused(true)}
       onMouseLeave={() => sliderConfig.pauseOnHover && setIsPaused(false)}
     >
@@ -198,10 +218,10 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
               key={index}
               onClick={() => goToSlide(index)}
               className={cn(
-                "w-2 h-2 rounded-full transition-all",
+                'w-2 h-2 rounded-full transition-all',
                 index === currentSlide
-                  ? "bg-white scale-125"
-                  : "bg-white/50 hover:bg-white/75"
+                  ? 'bg-white scale-125'
+                  : 'bg-white/50 hover:bg-white/75'
               )}
               aria-label={`Go to slide ${index + 1}`}
             />

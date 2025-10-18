@@ -403,8 +403,7 @@ export class EasyParcelProductionConfig {
   private async validateWebhookConfig(): Promise<ProductionConfigCheck> {
     try {
       // Use centralized helper for webhook URL
-      const webhookUrl =
-        getAppUrl(true) + '/api/webhooks/easyparcel-tracking';
+      const webhookUrl = getAppUrl(true) + '/api/webhooks/easyparcel-tracking';
       const isHTTPS = webhookUrl.startsWith('https://');
 
       if (!isHTTPS) {

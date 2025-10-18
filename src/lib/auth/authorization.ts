@@ -12,7 +12,12 @@ import { UserRole } from '@prisma/client';
 export const ROLES = {
   SUPERADMIN_ONLY: [UserRole.SUPERADMIN],
   ADMIN_ROLES: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF],
-  MEMBER_ROLES: [UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF, UserRole.USER],
+  MEMBER_ROLES: [
+    UserRole.SUPERADMIN,
+    UserRole.ADMIN,
+    UserRole.STAFF,
+    UserRole.USER,
+  ],
 } as const;
 
 export interface AuthResult {
@@ -70,7 +75,10 @@ export async function requireSuperAdminRole(): Promise<AuthResult> {
   if (session.user.role !== UserRole.SUPERADMIN) {
     return {
       error: NextResponse.json(
-        { success: false, message: 'Unauthorized. SuperAdmin access required.' },
+        {
+          success: false,
+          message: 'Unauthorized. SuperAdmin access required.',
+        },
         { status: 403 }
       ),
       session: null,
@@ -117,7 +125,10 @@ export async function requireMemberRole(): Promise<AuthResult> {
     };
   }
 
-  if (!session.user.isMember && !ROLES.ADMIN_ROLES.includes(session.user.role)) {
+  if (
+    !session.user.isMember &&
+    !ROLES.ADMIN_ROLES.includes(session.user.role)
+  ) {
     return {
       error: NextResponse.json(
         { success: false, message: 'Membership required for this feature' },

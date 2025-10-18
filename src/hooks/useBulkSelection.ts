@@ -35,7 +35,8 @@ export interface UseBulkSelectionOptions {
 }
 
 export interface UseBulkSelectionReturn<T = string>
-  extends BulkSelectionState<T>, BulkSelectionActions<T> {}
+  extends BulkSelectionState<T>,
+    BulkSelectionActions<T> {}
 
 /**
  * Hook for managing bulk selection state with validation and limits
@@ -68,61 +69,75 @@ export function useBulkSelection<T = string>(
   }, [selectedItems, maxSelection]);
 
   // Selection actions
-  const selectItem = useCallback((item: T) => {
-    setSelectedItems(prev => {
-      if (prev.has(item)) return prev; // Already selected
+  const selectItem = useCallback(
+    (item: T) => {
+      setSelectedItems(prev => {
+        if (prev.has(item)) return prev; // Already selected
 
-      if (prev.size >= maxSelection) {
-        onMaxSelectionExceeded?.();
-        return prev; // Don't exceed limit
-      }
-
-      const newSelection = new Set(prev);
-      newSelection.add(item);
-      onSelectionChange?.(newSelection as Set<string>);
-      return newSelection;
-    });
-  }, [maxSelection, onSelectionChange, onMaxSelectionExceeded]);
-
-  const unselectItem = useCallback((item: T) => {
-    setSelectedItems(prev => {
-      if (!prev.has(item)) return prev; // Not selected
-
-      const newSelection = new Set(prev);
-      newSelection.delete(item);
-      onSelectionChange?.(newSelection as Set<string>);
-      return newSelection;
-    });
-  }, [onSelectionChange]);
-
-  const toggleItem = useCallback((item: T) => {
-    if (selectedItems.has(item)) {
-      unselectItem(item);
-    } else {
-      selectItem(item);
-    }
-  }, [selectedItems, selectItem, unselectItem]);
-
-  const selectAll = useCallback((items: T[]) => {
-    setSelectedItems(prev => {
-      // Limit selection to maxSelection items
-      const itemsToSelect = items.slice(0, maxSelection);
-      const newSelection = new Set([...prev, ...itemsToSelect]);
-
-      // If we exceeded the limit, keep only the first maxSelection items
-      if (newSelection.size > maxSelection) {
-        const limitedSelection = new Set(Array.from(newSelection).slice(0, maxSelection));
-        if (newSelection.size > maxSelection) {
+        if (prev.size >= maxSelection) {
           onMaxSelectionExceeded?.();
+          return prev; // Don't exceed limit
         }
-        onSelectionChange?.(limitedSelection as Set<string>);
-        return limitedSelection;
-      }
 
-      onSelectionChange?.(newSelection as Set<string>);
-      return newSelection;
-    });
-  }, [maxSelection, onSelectionChange, onMaxSelectionExceeded]);
+        const newSelection = new Set(prev);
+        newSelection.add(item);
+        onSelectionChange?.(newSelection as Set<string>);
+        return newSelection;
+      });
+    },
+    [maxSelection, onSelectionChange, onMaxSelectionExceeded]
+  );
+
+  const unselectItem = useCallback(
+    (item: T) => {
+      setSelectedItems(prev => {
+        if (!prev.has(item)) return prev; // Not selected
+
+        const newSelection = new Set(prev);
+        newSelection.delete(item);
+        onSelectionChange?.(newSelection as Set<string>);
+        return newSelection;
+      });
+    },
+    [onSelectionChange]
+  );
+
+  const toggleItem = useCallback(
+    (item: T) => {
+      if (selectedItems.has(item)) {
+        unselectItem(item);
+      } else {
+        selectItem(item);
+      }
+    },
+    [selectedItems, selectItem, unselectItem]
+  );
+
+  const selectAll = useCallback(
+    (items: T[]) => {
+      setSelectedItems(prev => {
+        // Limit selection to maxSelection items
+        const itemsToSelect = items.slice(0, maxSelection);
+        const newSelection = new Set([...prev, ...itemsToSelect]);
+
+        // If we exceeded the limit, keep only the first maxSelection items
+        if (newSelection.size > maxSelection) {
+          const limitedSelection = new Set(
+            Array.from(newSelection).slice(0, maxSelection)
+          );
+          if (newSelection.size > maxSelection) {
+            onMaxSelectionExceeded?.();
+          }
+          onSelectionChange?.(limitedSelection as Set<string>);
+          return limitedSelection;
+        }
+
+        onSelectionChange?.(newSelection as Set<string>);
+        return newSelection;
+      });
+    },
+    [maxSelection, onSelectionChange, onMaxSelectionExceeded]
+  );
 
   const unselectAll = useCallback(() => {
     setSelectedItems(prev => {
@@ -134,21 +149,27 @@ export function useBulkSelection<T = string>(
     });
   }, [onSelectionChange]);
 
-  const toggleAll = useCallback((items: T[]) => {
-    if (selectedItems.size === 0) {
-      selectAll(items);
-    } else {
-      unselectAll();
-    }
-  }, [selectedItems.size, selectAll, unselectAll]);
+  const toggleAll = useCallback(
+    (items: T[]) => {
+      if (selectedItems.size === 0) {
+        selectAll(items);
+      } else {
+        unselectAll();
+      }
+    },
+    [selectedItems.size, selectAll, unselectAll]
+  );
 
   const clearSelection = useCallback(() => {
     unselectAll();
   }, [unselectAll]);
 
-  const isSelected = useCallback((item: T): boolean => {
-    return selectedItems.has(item);
-  }, [selectedItems]);
+  const isSelected = useCallback(
+    (item: T): boolean => {
+      return selectedItems.has(item);
+    },
+    [selectedItems]
+  );
 
   return {
     // State
@@ -177,7 +198,9 @@ export function useProductBulkSelection(
   // Calculate isAllSelected based on available products
   const isAllSelected = useMemo(() => {
     if (availableProducts.length === 0) return false;
-    return availableProducts.every(product => bulkSelection.isSelected(product.id));
+    return availableProducts.every(product =>
+      bulkSelection.isSelected(product.id)
+    );
   }, [availableProducts, bulkSelection.selectedItems]);
 
   // Calculate isPartiallySelected more precisely
@@ -186,7 +209,10 @@ export function useProductBulkSelection(
     const selectedAvailableCount = availableProducts.filter(product =>
       bulkSelection.isSelected(product.id)
     ).length;
-    return selectedAvailableCount > 0 && selectedAvailableCount < availableProducts.length;
+    return (
+      selectedAvailableCount > 0 &&
+      selectedAvailableCount < availableProducts.length
+    );
   }, [availableProducts, bulkSelection.selectedItems]);
 
   // Helper to select all available products

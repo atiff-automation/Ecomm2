@@ -15,17 +15,21 @@ import crypto from 'crypto';
 // Temporary inline config until new system is implemented
 const easyParcelConfig = {
   production: {
-    url: process.env.EASYPARCEL_PRODUCTION_URL || 'https://connect.easyparcel.my',
-    timeout: parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000')
+    url:
+      process.env.EASYPARCEL_PRODUCTION_URL || 'https://connect.easyparcel.my',
+    timeout: parseInt(process.env.EASYPARCEL_PRODUCTION_TIMEOUT || '15000'),
   },
   sandbox: {
-    url: process.env.EASYPARCEL_SANDBOX_URL || 'http://demo.connect.easyparcel.my',
-    timeout: parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '60000')
-  }
+    url:
+      process.env.EASYPARCEL_SANDBOX_URL || 'http://demo.connect.easyparcel.my',
+    timeout: parseInt(process.env.EASYPARCEL_SANDBOX_TIMEOUT || '60000'),
+  },
 };
 
 const getEasyParcelUrl = (isSandbox: boolean) => {
-  return isSandbox ? easyParcelConfig.sandbox.url : easyParcelConfig.production.url;
+  return isSandbox
+    ? easyParcelConfig.sandbox.url
+    : easyParcelConfig.production.url;
 };
 
 export interface EasyParcelCredentials {
@@ -112,10 +116,7 @@ export class EasyParcelCredentialsService {
    * Store encrypted credentials in database
    */
   async storeCredentials(
-    credentials: Pick<
-      EasyParcelCredentials,
-      'apiKey' | 'endpoint'
-    >,
+    credentials: Pick<EasyParcelCredentials, 'apiKey' | 'endpoint'>,
     updatedBy: string
   ): Promise<void> {
     try {
@@ -292,7 +293,8 @@ export class EasyParcelCredentialsService {
   async getCredentialStatus(): Promise<CredentialStatus> {
     try {
       const isProduction = process.env.NODE_ENV === 'production';
-      const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+      const isStrictMode =
+        isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
 
       const credentials = await this.getCredentials();
 
@@ -340,7 +342,6 @@ export class EasyParcelCredentialsService {
     }
   }
 
-
   /**
    * Clear stored credentials and fallback to environment variables
    */
@@ -382,7 +383,8 @@ export class EasyParcelCredentialsService {
     source: 'database' | 'environment';
   } | null> {
     const isProduction = process.env.NODE_ENV === 'production';
-    const isStrictMode = isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
+    const isStrictMode =
+      isProduction || process.env.EASYPARCEL_STRICT_MODE === 'true';
 
     // Try database first - primary source of truth
     const dbCredentials = await this.getCredentials();
@@ -396,7 +398,9 @@ export class EasyParcelCredentialsService {
 
     // Production mode: NO fallbacks - database credentials required
     if (isStrictMode) {
-      console.error('🚫 Production mode: EasyParcel credentials must be configured in database via System Settings');
+      console.error(
+        '🚫 Production mode: EasyParcel credentials must be configured in database via System Settings'
+      );
       return null; // Force configuration through admin UI
     }
 
@@ -405,12 +409,16 @@ export class EasyParcelCredentialsService {
     const envEndpoint = process.env.EASYPARCEL_ENDPOINT;
 
     if (!envEndpoint && envApiKey) {
-      console.error('⚠️ Environment variable EASYPARCEL_ENDPOINT is required when using EASYPARCEL_API_KEY');
+      console.error(
+        '⚠️ Environment variable EASYPARCEL_ENDPOINT is required when using EASYPARCEL_API_KEY'
+      );
       return null;
     }
 
     if (envApiKey) {
-      console.warn('⚠️ Development mode: Using environment variable fallback. Configure credentials in System Settings for production.');
+      console.warn(
+        '⚠️ Development mode: Using environment variable fallback. Configure credentials in System Settings for production.'
+      );
       return {
         apiKey: envApiKey,
         endpoint: envEndpoint,
@@ -437,9 +445,7 @@ export class EasyParcelCredentialsService {
     const startTime = Date.now();
 
     try {
-      console.log(
-        `🔍 Testing EasyParcel API - Endpoint: ${endpoint}`
-      );
+      console.log(`🔍 Testing EasyParcel API - Endpoint: ${endpoint}`);
 
       // Use the same API format as the working EasyParcel service
       const formData = new URLSearchParams();

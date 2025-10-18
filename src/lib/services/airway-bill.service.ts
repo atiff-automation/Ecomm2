@@ -25,7 +25,6 @@ export interface AirwayBillResult {
   };
 }
 
-
 /**
  * AirwayBillService Class
  * Follows Single Responsibility Principle - handles only airway bill operations
@@ -45,7 +44,7 @@ export class AirwayBillService {
         timeout: AirwayBillConfig.generation.timeout,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${credentials.apiKey}`,
+          Authorization: `Bearer ${credentials.apiKey}`,
         },
       });
     }
@@ -56,7 +55,9 @@ export class AirwayBillService {
    * ✅ NEW: Process EasyParcel payment and extract AWB data
    * This is the correct implementation based on EasyParcel API documentation
    */
-  static async processPaymentAndExtractAWB(orderNumber: string): Promise<AirwayBillResult> {
+  static async processPaymentAndExtractAWB(
+    orderNumber: string
+  ): Promise<AirwayBillResult> {
     try {
       const credentials = await easyParcelCredentialsService.getCredentials();
       const axiosInstance = await this.getAxiosInstance();
@@ -64,14 +65,19 @@ export class AirwayBillService {
       // Call EasyParcel payment API
       const response = await axiosInstance.post('/?ac=EPPayOrderBulk', {
         api: credentials.apiKey,
-        bulk: [{
-          order_no: orderNumber
-        }]
+        bulk: [
+          {
+            order_no: orderNumber,
+          },
+        ],
       });
 
       console.log('🎯 EasyParcel payment API response:', response.data);
 
-      if (response.data.api_status === 'Success' && response.data.result[0]?.parcel[0]) {
+      if (
+        response.data.api_status === 'Success' &&
+        response.data.result[0]?.parcel[0]
+      ) {
         const parcelData = response.data.result[0].parcel[0];
 
         return {
@@ -144,11 +150,12 @@ export class AirwayBillService {
     }
   }
 
-
   /**
    * Helper: Validate order for airway bill generation
    */
-  static async validateOrder(orderId: string): Promise<{ valid: boolean; reason?: string }> {
+  static async validateOrder(
+    orderId: string
+  ): Promise<{ valid: boolean; reason?: string }> {
     try {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
@@ -161,12 +168,26 @@ export class AirwayBillService {
         return { valid: false, reason: 'Order not found' };
       }
 
-      if (!AirwayBillConfig.validation.requiredOrderStatus.includes(order.status as any)) {
-        return { valid: false, reason: `Invalid order status: ${order.status}` };
+      if (
+        !AirwayBillConfig.validation.requiredOrderStatus.includes(
+          order.status as any
+        )
+      ) {
+        return {
+          valid: false,
+          reason: `Invalid order status: ${order.status}`,
+        };
       }
 
-      if (!AirwayBillConfig.validation.requiredPaymentStatus.includes(order.paymentStatus as any)) {
-        return { valid: false, reason: `Payment not confirmed: ${order.paymentStatus}` };
+      if (
+        !AirwayBillConfig.validation.requiredPaymentStatus.includes(
+          order.paymentStatus as any
+        )
+      ) {
+        return {
+          valid: false,
+          reason: `Payment not confirmed: ${order.paymentStatus}`,
+        };
       }
 
       if (!order.shipment) {
@@ -189,7 +210,7 @@ export class AirwayBillService {
    */
   static async getAirwayBillInfo(orderId: string): Promise<{
     generated: boolean;
-    airwayBillNumber?: string;
+    airwayBillUrl?: string;
     airwayBillUrl?: string;
     generatedAt?: Date;
   }> {
@@ -210,7 +231,7 @@ export class AirwayBillService {
 
       return {
         generated: order.airwayBillGenerated,
-        airwayBillNumber: order.trackingNumber || undefined,
+        airwayBillUrl: order.trackingNumber || undefined,
         airwayBillUrl: order.airwayBillUrl || undefined,
         generatedAt: order.airwayBillGeneratedAt || undefined,
       };

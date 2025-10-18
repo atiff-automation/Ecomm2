@@ -7,9 +7,9 @@
 import { getCircuitBreakerConfig } from './monitoring-config';
 
 enum CircuitState {
-  CLOSED = 'CLOSED',     // Normal operation
-  OPEN = 'OPEN',         // Circuit tripped, blocking calls
-  HALF_OPEN = 'HALF_OPEN' // Testing if service recovered
+  CLOSED = 'CLOSED', // Normal operation
+  OPEN = 'OPEN', // Circuit tripped, blocking calls
+  HALF_OPEN = 'HALF_OPEN', // Testing if service recovered
 }
 
 interface CircuitBreakerState {
@@ -26,25 +26,25 @@ interface CircuitBreakerState {
  */
 export class CircuitBreaker {
   private circuits: Map<string, CircuitBreakerState> = new Map();
-  
+
   /**
    * Check if circuit allows calls - Systematic protection
    */
   canProceed(feature: string): boolean {
     const config = getCircuitBreakerConfig(feature);
-    
+
     if (!config.enabled) {
       return true;
     }
-    
+
     const circuit = this.getOrCreateCircuit(feature);
     const now = Date.now();
-    
+
     switch (circuit.state) {
       case CircuitState.CLOSED:
         // Normal operation
         return true;
-        
+
       case CircuitState.OPEN:
         // Check if enough time has passed to try again
         if (now >= circuit.nextAttemptTime) {
@@ -53,22 +53,22 @@ export class CircuitBreaker {
           return true;
         }
         return false;
-        
+
       case CircuitState.HALF_OPEN:
         // Allow limited testing calls
         return true;
-        
+
       default:
         return false;
     }
   }
-  
+
   /**
    * Record successful call - Systematic success tracking
    */
   recordSuccess(feature: string): void {
     const circuit = this.getOrCreateCircuit(feature);
-    
+
     switch (circuit.state) {
       case CircuitState.HALF_OPEN:
         circuit.successCount++;
@@ -79,14 +79,14 @@ export class CircuitBreaker {
           console.log(`✅ Circuit breaker for ${feature} restored to CLOSED`);
         }
         break;
-        
+
       case CircuitState.CLOSED:
         // Reset failure count on success
         circuit.failureCount = 0;
         break;
     }
   }
-  
+
   /**
    * Record failed call - Systematic failure tracking
    */
@@ -94,28 +94,32 @@ export class CircuitBreaker {
     const config = getCircuitBreakerConfig(feature);
     const circuit = this.getOrCreateCircuit(feature);
     const now = Date.now();
-    
+
     circuit.failureCount++;
     circuit.lastFailureTime = now;
-    
+
     switch (circuit.state) {
       case CircuitState.CLOSED:
         if (circuit.failureCount >= config.maxFailures) {
           circuit.state = CircuitState.OPEN;
           circuit.nextAttemptTime = now + config.resetTimeoutMs;
-          console.warn(`🚨 Circuit breaker for ${feature} OPENED after ${circuit.failureCount} failures`);
+          console.warn(
+            `🚨 Circuit breaker for ${feature} OPENED after ${circuit.failureCount} failures`
+          );
         }
         break;
-        
+
       case CircuitState.HALF_OPEN:
         // Failure during testing - back to open
         circuit.state = CircuitState.OPEN;
         circuit.nextAttemptTime = now + config.resetTimeoutMs;
-        console.warn(`🚨 Circuit breaker for ${feature} returned to OPEN after test failure`);
+        console.warn(
+          `🚨 Circuit breaker for ${feature} returned to OPEN after test failure`
+        );
         break;
     }
   }
-  
+
   /**
    * Get circuit status - Systematic monitoring
    */
@@ -127,49 +131,49 @@ export class CircuitBreaker {
   } {
     const circuit = this.getOrCreateCircuit(feature);
     const now = Date.now();
-    
+
     const status = {
       state: circuit.state,
       failureCount: circuit.failureCount,
       successCount: circuit.successCount,
     };
-    
+
     if (circuit.state === CircuitState.OPEN && circuit.nextAttemptTime > now) {
       return {
         ...status,
         nextAttemptIn: circuit.nextAttemptTime - now,
       };
     }
-    
+
     return status;
   }
-  
+
   /**
    * Force open circuit - Emergency control
    */
   forceOpen(feature: string): void {
     const config = getCircuitBreakerConfig(feature);
     const circuit = this.getOrCreateCircuit(feature);
-    
+
     circuit.state = CircuitState.OPEN;
     circuit.nextAttemptTime = Date.now() + config.resetTimeoutMs;
-    
+
     console.warn(`🚨 Circuit breaker for ${feature} FORCE OPENED`);
   }
-  
+
   /**
    * Force close circuit - Emergency control
    */
   forceClose(feature: string): void {
     const circuit = this.getOrCreateCircuit(feature);
-    
+
     circuit.state = CircuitState.CLOSED;
     circuit.failureCount = 0;
     circuit.successCount = 0;
-    
+
     console.log(`✅ Circuit breaker for ${feature} FORCE CLOSED`);
   }
-  
+
   /**
    * Reset circuit to initial state - Emergency control
    */
@@ -182,20 +186,20 @@ export class CircuitBreaker {
       console.log('🔄 All circuit breakers RESET');
     }
   }
-  
+
   /**
    * Get all circuit states - Monitoring dashboard
    */
   getAllStatus(): Record<string, any> {
     const status: Record<string, any> = {};
-    
+
     for (const [feature] of this.circuits.entries()) {
       status[feature] = this.getStatus(feature);
     }
-    
+
     return status;
   }
-  
+
   /**
    * Check if any circuits are open - System health
    */
@@ -207,7 +211,7 @@ export class CircuitBreaker {
     }
     return false;
   }
-  
+
   /**
    * Get metrics for monitoring - Quality assurance
    */
@@ -222,10 +226,10 @@ export class CircuitBreaker {
     let halfOpenCount = 0;
     let closedCount = 0;
     let totalFailures = 0;
-    
+
     for (const [, circuit] of this.circuits.entries()) {
       totalFailures += circuit.failureCount;
-      
+
       switch (circuit.state) {
         case CircuitState.OPEN:
           openCount++;
@@ -238,7 +242,7 @@ export class CircuitBreaker {
           break;
       }
     }
-    
+
     return {
       totalCircuits: this.circuits.size,
       openCircuits: openCount,
@@ -247,7 +251,7 @@ export class CircuitBreaker {
       totalFailures,
     };
   }
-  
+
   /**
    * Private: Get or create circuit state
    */

@@ -9,7 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -36,7 +42,7 @@ import { SettingsLayout } from '@/components/settings';
 /**
  * Admin Preferences Page - Phase 3 Admin Settings
  * Following @CLAUDE.md principles - systematic, DRY, single source of truth
- * 
+ *
  * Features from @SETTINGS_IMPLEMENTATION_GUIDE.md:
  * - Dashboard layout preferences
  * - Default filters and views
@@ -50,14 +56,14 @@ const adminPreferencesSchema = z.object({
   showWelcomeMessage: z.boolean(),
   showQuickStats: z.boolean(),
   showRecentActivity: z.boolean(),
-  
+
   // Default Views and Filters
   defaultOrdersView: z.enum(['ALL', 'PENDING', 'PROCESSING', 'SHIPPED']),
   defaultProductsView: z.enum(['GRID', 'LIST']),
   itemsPerPage: z.number().min(10).max(100),
   enableAutoRefresh: z.boolean(),
   autoRefreshInterval: z.number().min(30).max(300), // seconds
-  
+
   // Notifications
   emailNotifications: z.object({
     newOrders: z.boolean(),
@@ -66,17 +72,17 @@ const adminPreferencesSchema = z.object({
     systemAlerts: z.boolean(),
     dailySummary: z.boolean(),
   }),
-  
+
   desktopNotifications: z.boolean(),
   notificationSounds: z.boolean(),
-  
+
   // System Preferences
   timezone: z.string(),
   currency: z.enum(['MYR']),
   dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']),
   timeFormat: z.enum(['12h', '24h']),
   language: z.enum(['en', 'ms']),
-  
+
   // Advanced Settings
   enableDeveloperMode: z.boolean(),
   showSystemLogs: z.boolean(),
@@ -99,14 +105,14 @@ export default function AdminPreferencesPage() {
       showWelcomeMessage: true,
       showQuickStats: true,
       showRecentActivity: true,
-      
+
       // Default Views Defaults
       defaultOrdersView: 'ALL',
       defaultProductsView: 'GRID',
       itemsPerPage: 25,
       enableAutoRefresh: false,
       autoRefreshInterval: 60,
-      
+
       // Notifications Defaults
       emailNotifications: {
         newOrders: true,
@@ -117,14 +123,14 @@ export default function AdminPreferencesPage() {
       },
       desktopNotifications: true,
       notificationSounds: false,
-      
+
       // System Preferences Defaults
       timezone: 'Asia/Kuala_Lumpur',
       currency: 'MYR',
       dateFormat: 'DD/MM/YYYY',
       timeFormat: '24h',
       language: 'en',
-      
+
       // Advanced Settings Defaults
       enableDeveloperMode: false,
       showSystemLogs: false,
@@ -142,7 +148,7 @@ export default function AdminPreferencesPage() {
     try {
       setLoading(true);
       const response = await fetch('/api/admin/settings/preferences');
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -182,7 +188,10 @@ export default function AdminPreferencesPage() {
 
   if (loading) {
     return (
-      <SettingsLayout title="Admin Preferences" subtitle="Configure your admin dashboard preferences">
+      <SettingsLayout
+        title="Admin Preferences"
+        subtitle="Configure your admin dashboard preferences"
+      >
         <div className="space-y-6">
           <div className="animate-pulse space-y-4">
             <div className="h-32 bg-gray-200 rounded-lg"></div>
@@ -195,7 +204,10 @@ export default function AdminPreferencesPage() {
   }
 
   return (
-    <SettingsLayout title="Admin Preferences" subtitle="Configure your admin dashboard and system preferences">
+    <SettingsLayout
+      title="Admin Preferences"
+      subtitle="Configure your admin dashboard and system preferences"
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Dashboard Layout */}
@@ -219,16 +231,25 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Dashboard Style</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="COMPACT">Compact - Dense information</SelectItem>
-                          <SelectItem value="DETAILED">Detailed - Full information cards</SelectItem>
-                          <SelectItem value="CARDS">Cards - Visual card layout</SelectItem>
+                          <SelectItem value="COMPACT">
+                            Compact - Dense information
+                          </SelectItem>
+                          <SelectItem value="DETAILED">
+                            Detailed - Full information cards
+                          </SelectItem>
+                          <SelectItem value="CARDS">
+                            Cards - Visual card layout
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -251,13 +272,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Welcome Message</FormLabel>
+                          <FormLabel className="text-base">
+                            Welcome Message
+                          </FormLabel>
                           <FormDescription>
                             Show personalized welcome message on dashboard
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -269,13 +295,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Quick Statistics</FormLabel>
+                          <FormLabel className="text-base">
+                            Quick Statistics
+                          </FormLabel>
                           <FormDescription>
                             Display summary statistics cards at the top
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -287,13 +318,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Recent Activity</FormLabel>
+                          <FormLabel className="text-base">
+                            Recent Activity
+                          </FormLabel>
                           <FormDescription>
                             Show recent orders and system activity
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -324,7 +360,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Default Orders View</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -332,7 +371,9 @@ export default function AdminPreferencesPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="ALL">All Orders</SelectItem>
-                          <SelectItem value="PENDING">Pending Orders</SelectItem>
+                          <SelectItem value="PENDING">
+                            Pending Orders
+                          </SelectItem>
                           <SelectItem value="PROCESSING">Processing</SelectItem>
                           <SelectItem value="SHIPPED">Shipped</SelectItem>
                         </SelectContent>
@@ -348,7 +389,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Default Products View</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -370,7 +414,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Items per Page</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <Select
+                        onValueChange={value => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -398,13 +445,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Auto Refresh</FormLabel>
+                        <FormLabel className="text-base">
+                          Auto Refresh
+                        </FormLabel>
                         <FormDescription>
                           Automatically refresh data on dashboard
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -418,7 +470,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Auto Refresh Interval</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <Select
+                        onValueChange={value => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full md:w-48">
                             <SelectValue />
@@ -465,13 +520,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">New Orders</FormLabel>
+                          <FormLabel className="text-base">
+                            New Orders
+                          </FormLabel>
                           <FormDescription>
                             Get notified when new orders are placed
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -483,13 +543,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Low Stock Alerts</FormLabel>
+                          <FormLabel className="text-base">
+                            Low Stock Alerts
+                          </FormLabel>
                           <FormDescription>
                             Get notified when products are running low
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -501,13 +566,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Payment Issues</FormLabel>
+                          <FormLabel className="text-base">
+                            Payment Issues
+                          </FormLabel>
                           <FormDescription>
                             Get notified about payment failures or issues
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -519,13 +589,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">System Alerts</FormLabel>
+                          <FormLabel className="text-base">
+                            System Alerts
+                          </FormLabel>
                           <FormDescription>
                             Get notified about system issues or maintenance
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -537,13 +612,18 @@ export default function AdminPreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Daily Summary</FormLabel>
+                          <FormLabel className="text-base">
+                            Daily Summary
+                          </FormLabel>
                           <FormDescription>
                             Receive daily business summary reports
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -560,13 +640,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Browser Notifications</FormLabel>
+                        <FormLabel className="text-base">
+                          Browser Notifications
+                        </FormLabel>
                         <FormDescription>
                           Show browser notifications for important events
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -578,13 +663,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Notification Sounds</FormLabel>
+                        <FormLabel className="text-base">
+                          Notification Sounds
+                        </FormLabel>
                         <FormDescription>
                           Play sounds for notifications and alerts
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -614,17 +704,28 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Timezone</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Asia/Kuala_Lumpur">Malaysia (UTC+8)</SelectItem>
-                          <SelectItem value="Asia/Singapore">Singapore (UTC+8)</SelectItem>
-                          <SelectItem value="Asia/Bangkok">Thailand (UTC+7)</SelectItem>
-                          <SelectItem value="Asia/Jakarta">Indonesia (UTC+7)</SelectItem>
+                          <SelectItem value="Asia/Kuala_Lumpur">
+                            Malaysia (UTC+8)
+                          </SelectItem>
+                          <SelectItem value="Asia/Singapore">
+                            Singapore (UTC+8)
+                          </SelectItem>
+                          <SelectItem value="Asia/Bangkok">
+                            Thailand (UTC+7)
+                          </SelectItem>
+                          <SelectItem value="Asia/Jakarta">
+                            Indonesia (UTC+7)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -638,7 +739,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Date Format</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -661,7 +765,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Time Format</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -683,7 +790,10 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Language</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -705,14 +815,19 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="MYR">Malaysian Ringgit (RM)</SelectItem>
+                          <SelectItem value="MYR">
+                            Malaysian Ringgit (RM)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -744,13 +859,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Developer Mode</FormLabel>
+                        <FormLabel className="text-base">
+                          Developer Mode
+                        </FormLabel>
                         <FormDescription>
                           Enable advanced debugging and development features
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -762,13 +882,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Show System Logs</FormLabel>
+                        <FormLabel className="text-base">
+                          Show System Logs
+                        </FormLabel>
                         <FormDescription>
                           Display system logs and error messages
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -780,13 +905,18 @@ export default function AdminPreferencesPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">API Request Logging</FormLabel>
+                        <FormLabel className="text-base">
+                          API Request Logging
+                        </FormLabel>
                         <FormDescription>
                           Log all API requests for debugging purposes
                         </FormDescription>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                     </FormItem>
                   )}

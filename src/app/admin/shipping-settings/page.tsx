@@ -18,7 +18,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useShippingInit, useShippingBalance, useAvailableCouriers } from '@/lib/hooks/use-shipping-data';
+import {
+  useShippingInit,
+  useShippingBalance,
+  useAvailableCouriers,
+} from '@/lib/hooks/use-shipping-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,9 +37,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Package, Settings, MapPin, AlertCircle, CheckCircle, Info, ExternalLink, Trash2, RefreshCw, X, AlertTriangle } from 'lucide-react';
-import { COURIER_SELECTION_STRATEGIES, MALAYSIAN_STATES } from '@/lib/shipping/constants';
-import { ShippingSettingsValidationSchema, type ShippingSettingsFormData } from '@/lib/shipping/validation';
+import {
+  Package,
+  Settings,
+  MapPin,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  ExternalLink,
+  Trash2,
+  RefreshCw,
+  X,
+  AlertTriangle,
+} from 'lucide-react';
+import {
+  COURIER_SELECTION_STRATEGIES,
+  MALAYSIAN_STATES,
+} from '@/lib/shipping/constants';
+import {
+  ShippingSettingsValidationSchema,
+  type ShippingSettingsFormData,
+} from '@/lib/shipping/validation';
 import Link from 'next/link';
 
 // Use centralized validation schema
@@ -77,7 +99,7 @@ export default function ShippingSettingsPage() {
     data: initData,
     error: initError,
     isLoading: isLoadingInit,
-    refetch: refetchInit
+    refetch: refetchInit,
   } = useShippingInit();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,13 +108,17 @@ export default function ShippingSettingsPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceTimestamp, setBalanceTimestamp] = useState<string | null>(null);
   const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('not-configured');
-  const [pickupAddress, setPickupAddress] = useState<PickupAddress | null>(null);
-  const [pickupValidation, setPickupValidation] = useState<PickupAddressValidation>({
-    isValid: false,
-    errors: [],
-    warnings: [],
-  });
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>('not-configured');
+  const [pickupAddress, setPickupAddress] = useState<PickupAddress | null>(
+    null
+  );
+  const [pickupValidation, setPickupValidation] =
+    useState<PickupAddressValidation>({
+      isValid: false,
+      errors: [],
+      warnings: [],
+    });
   const [availableCouriers, setAvailableCouriers] = useState<Courier[]>([]);
   const [isLoadingCouriers, setIsLoadingCouriers] = useState(false);
   // Phase 1: Track previous API config for conditional balance refetch
@@ -125,7 +151,15 @@ export default function ShippingSettingsPage() {
   // Phase 3 & 4: React Query effect - Sync init data to component state
   useEffect(() => {
     if (initData?.success && initData.data) {
-      const { settings, pickupAddress: pickup, pickupValidation: validation, balance: bal, balanceTimestamp: balTs, balanceError, configured } = initData.data;
+      const {
+        settings,
+        pickupAddress: pickup,
+        pickupValidation: validation,
+        balance: bal,
+        balanceTimestamp: balTs,
+        balanceError,
+        configured,
+      } = initData.data;
 
       // Handle settings
       if (settings) {
@@ -210,8 +244,10 @@ export default function ShippingSettingsPage() {
     const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
     if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
@@ -238,12 +274,13 @@ export default function ShippingSettingsPage() {
     }
   };
 
-
   // Load couriers when "Selected Couriers" or "Priority Courier" mode is chosen and settings are configured
   useEffect(() => {
     if (
-      (watchedValues.courierSelectionMode === COURIER_SELECTION_STRATEGIES.SELECTED ||
-       watchedValues.courierSelectionMode === COURIER_SELECTION_STRATEGIES.PRIORITY) &&
+      (watchedValues.courierSelectionMode ===
+        COURIER_SELECTION_STRATEGIES.SELECTED ||
+        watchedValues.courierSelectionMode ===
+          COURIER_SELECTION_STRATEGIES.PRIORITY) &&
       connectionStatus === 'connected' &&
       availableCouriers.length === 0
     ) {
@@ -288,7 +325,9 @@ export default function ShippingSettingsPage() {
           previousApiConfig?.environment !== cleanedData.environment;
 
         if (apiConfigChanged) {
-          console.log('[Optimization] API config changed, refreshing balance...');
+          console.log(
+            '[Optimization] API config changed, refreshing balance...'
+          );
           await fetchBalance();
 
           // Update stored config
@@ -297,7 +336,9 @@ export default function ShippingSettingsPage() {
             environment: cleanedData.environment,
           });
         } else {
-          console.log('[Optimization] API config unchanged, skipping balance refresh');
+          console.log(
+            '[Optimization] API config unchanged, skipping balance refresh'
+          );
         }
       } else {
         // Show detailed validation errors if pickup address invalid
@@ -324,7 +365,10 @@ export default function ShippingSettingsPage() {
       const response = await fetch('/api/admin/shipping/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: watchedValues.apiKey, environment: watchedValues.environment }),
+        body: JSON.stringify({
+          apiKey: watchedValues.apiKey,
+          environment: watchedValues.environment,
+        }),
       });
 
       const result = await response.json();
@@ -426,7 +470,9 @@ export default function ShippingSettingsPage() {
             before setting up EasyParcel integration.
             <div className="mt-2 space-y-1">
               {pickupValidation.errors.map((error, index) => (
-                <div key={index} className="text-sm">• {error}</div>
+                <div key={index} className="text-sm">
+                  • {error}
+                </div>
               ))}
             </div>
           </AlertDescription>
@@ -444,15 +490,23 @@ export default function ShippingSettingsPage() {
         >
           <div className="flex justify-between items-start mb-2">
             <h2 className="text-xl font-semibold">
-              {connectionStatus === 'connected' ? 'Account Balance' : 'API Connection'}
+              {connectionStatus === 'connected'
+                ? 'Account Balance'
+                : 'API Connection'}
             </h2>
             {connectionStatus === 'connected' ? (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-300 flex items-center gap-1"
+              >
                 <CheckCircle className="w-3 h-3" />
                 Connected to API
               </Badge>
             ) : (
-              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className="bg-red-50 text-red-700 border-red-300 flex items-center gap-1"
+              >
                 <AlertCircle className="w-3 h-3" />
                 Disconnected
               </Badge>
@@ -463,7 +517,9 @@ export default function ShippingSettingsPage() {
             <div className="space-y-3">
               <div className="flex items-baseline gap-2">
                 <span className="text-sm text-gray-600">Current Balance:</span>
-                <span className="text-3xl font-bold text-blue-600">RM {balance.toFixed(2)}</span>
+                <span className="text-3xl font-bold text-blue-600">
+                  RM {balance.toFixed(2)}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -475,16 +531,13 @@ export default function ShippingSettingsPage() {
                   disabled={isRefreshingBalance}
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshingBalance ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`w-4 h-4 ${isRefreshingBalance ? 'animate-spin' : ''}`}
+                  />
                   Refresh Balance
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  asChild
-                >
+                <Button type="button" variant="outline" size="sm" asChild>
                   <a
                     href="https://easyparcel.com/my/"
                     target="_blank"
@@ -499,7 +552,8 @@ export default function ShippingSettingsPage() {
 
               {balance < 50 && (
                 <p className="text-sm text-orange-600">
-                  ⚠️ Your balance is running low. Top up to avoid fulfillment failures.
+                  ⚠️ Your balance is running low. Top up to avoid fulfillment
+                  failures.
                 </p>
               )}
 
@@ -511,9 +565,12 @@ export default function ShippingSettingsPage() {
             </div>
           ) : (
             <div className="mt-2">
-              <p className="text-red-700 font-medium">Failed to connect to EasyParcel API</p>
+              <p className="text-red-700 font-medium">
+                Failed to connect to EasyParcel API
+              </p>
               <p className="text-sm text-red-600 mt-1">
-                Please check your API key and environment settings, then test the connection below.
+                Please check your API key and environment settings, then test
+                the connection below.
               </p>
             </div>
           )}
@@ -537,7 +594,9 @@ export default function ShippingSettingsPage() {
                 placeholder="Enter your EasyParcel API key"
               />
               {errors.apiKey && (
-                <p className="text-sm text-red-600 mt-1">{errors.apiKey.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.apiKey.message}
+                </p>
               )}
               <p className="text-sm text-gray-600 mt-1">
                 Get your API key from EasyParcel dashboard
@@ -548,7 +607,11 @@ export default function ShippingSettingsPage() {
               <Label htmlFor="environment">Environment *</Label>
               <Select
                 value={watchedValues.environment}
-                onValueChange={(value) => setValue('environment', value as 'sandbox' | 'production', { shouldDirty: true })}
+                onValueChange={value =>
+                  setValue('environment', value as 'sandbox' | 'production', {
+                    shouldDirty: true,
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -560,7 +623,12 @@ export default function ShippingSettingsPage() {
               </Select>
             </div>
 
-            <Button type="button" variant="outline" onClick={testConnection} disabled={isTesting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={testConnection}
+              disabled={isTesting}
+            >
               {isTesting ? 'Testing...' : 'Test Connection'}
             </Button>
           </div>
@@ -578,7 +646,10 @@ export default function ShippingSettingsPage() {
                 Read-only - managed in Business Profile
               </p>
             </div>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-300"
+            >
               From Business Profile
             </Badge>
           </div>
@@ -656,7 +727,9 @@ export default function ShippingSettingsPage() {
                     disabled
                     value={
                       pickupAddress.state
-                        ? MALAYSIAN_STATES[pickupAddress.state.toLowerCase() as keyof typeof MALAYSIAN_STATES] || pickupAddress.state
+                        ? MALAYSIAN_STATES[
+                            pickupAddress.state.toLowerCase() as keyof typeof MALAYSIAN_STATES
+                          ] || pickupAddress.state
                         : ''
                     }
                     className="bg-gray-100 border-gray-300"
@@ -677,7 +750,11 @@ export default function ShippingSettingsPage() {
                 <Label className="text-gray-700">Country</Label>
                 <Input
                   disabled
-                  value={pickupAddress.country === 'MY' ? 'Malaysia (MY)' : pickupAddress.country}
+                  value={
+                    pickupAddress.country === 'MY'
+                      ? 'Malaysia (MY)'
+                      : pickupAddress.country
+                  }
                   className="bg-gray-100 border-gray-300"
                 />
               </div>
@@ -686,21 +763,29 @@ export default function ShippingSettingsPage() {
               {pickupValidation.isValid ? (
                 <div className="flex items-center gap-2 text-green-700 bg-green-50 p-3 rounded-md">
                   <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">Pickup address is valid and ready for use</span>
+                  <span className="font-medium">
+                    Pickup address is valid and ready for use
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-red-700 bg-red-50 p-3 rounded-md">
                   <AlertCircle className="w-5 h-5" />
-                  <span className="font-medium">Pickup address has validation errors (see above)</span>
+                  <span className="font-medium">
+                    Pickup address has validation errors (see above)
+                  </span>
                 </div>
               )}
 
               {/* Warnings */}
               {pickupValidation.warnings.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md">
-                  <p className="font-medium text-yellow-800 mb-2">Recommendations:</p>
+                  <p className="font-medium text-yellow-800 mb-2">
+                    Recommendations:
+                  </p>
                   {pickupValidation.warnings.map((warning, index) => (
-                    <p key={index} className="text-sm text-yellow-700">• {warning}</p>
+                    <p key={index} className="text-sm text-yellow-700">
+                      • {warning}
+                    </p>
                   ))}
                 </div>
               )}
@@ -708,7 +793,9 @@ export default function ShippingSettingsPage() {
           ) : (
             <div className="text-center py-8 text-gray-500">
               <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium">No shipping address configured</p>
+              <p className="text-lg font-medium">
+                No shipping address configured
+              </p>
               <p className="text-sm mt-2">
                 Please set up your shipping address in{' '}
                 <Link
@@ -724,13 +811,19 @@ export default function ShippingSettingsPage() {
 
         {/* Courier Selection */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Courier Selection Strategy</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Courier Selection Strategy
+          </h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="courierSelectionMode">How should customers see shipping options? *</Label>
+              <Label htmlFor="courierSelectionMode">
+                How should customers see shipping options? *
+              </Label>
               <Select
                 value={watchedValues.courierSelectionMode}
-                onValueChange={(value) => setValue('courierSelectionMode', value, { shouldDirty: true })}
+                onValueChange={value =>
+                  setValue('courierSelectionMode', value, { shouldDirty: true })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -751,24 +844,33 @@ export default function ShippingSettingsPage() {
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-600 mt-1">
-                Cheapest: Auto-select lowest price • Show All: Customer chooses • Selected: Show all from your list • Priority: Show highest priority available only
+                Cheapest: Auto-select lowest price • Show All: Customer chooses
+                • Selected: Show all from your list • Priority: Show highest
+                priority available only
               </p>
             </div>
 
             {/* Conditional: Priority Courier - 3 Dropdowns */}
-            {watchedValues.courierSelectionMode === COURIER_SELECTION_STRATEGIES.PRIORITY && (
+            {watchedValues.courierSelectionMode ===
+              COURIER_SELECTION_STRATEGIES.PRIORITY && (
               <div className="space-y-4">
                 <Alert className="bg-blue-50 border-blue-200">
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-900">
-                    Select up to 3 couriers in order of preference. Customers will see the highest priority courier available for their area.
+                    Select up to 3 couriers in order of preference. Customers
+                    will see the highest priority courier available for their
+                    area.
                   </AlertDescription>
                 </Alert>
 
                 <Alert className="bg-amber-50 border-amber-200">
                   <Info className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-900 text-sm">
-                    <strong>Note:</strong> Service types (Pickup/Drop-off) are determined per destination. Each courier may offer pickup, drop-off, or both options. Customers will see the available service type during checkout based on their delivery address.
+                    <strong>Note:</strong> Service types (Pickup/Drop-off) are
+                    determined per destination. Each courier may offer pickup,
+                    drop-off, or both options. Customers will see the available
+                    service type during checkout based on their delivery
+                    address.
                   </AlertDescription>
                 </Alert>
 
@@ -776,31 +878,37 @@ export default function ShippingSettingsPage() {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Configure and save API settings first to load available couriers
+                      Configure and save API settings first to load available
+                      couriers
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {connectionStatus === 'connected' && availableCouriers.length === 0 && (
-                  <div className="flex items-center justify-center py-4 border rounded-lg bg-gray-50">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={fetchCouriers}
-                      disabled={isLoadingCouriers}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingCouriers ? 'animate-spin' : ''}`} />
-                      Load Courier List
-                    </Button>
-                  </div>
-                )}
+                {connectionStatus === 'connected' &&
+                  availableCouriers.length === 0 && (
+                    <div className="flex items-center justify-center py-4 border rounded-lg bg-gray-50">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchCouriers}
+                        disabled={isLoadingCouriers}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw
+                          className={`w-4 h-4 ${isLoadingCouriers ? 'animate-spin' : ''}`}
+                        />
+                        Load Courier List
+                      </Button>
+                    </div>
+                  )}
 
                 {isLoadingCouriers && (
                   <div className="flex items-center justify-center py-8">
                     <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-gray-600">Loading couriers...</span>
+                    <span className="ml-2 text-gray-600">
+                      Loading couriers...
+                    </span>
                   </div>
                 )}
 
@@ -808,24 +916,34 @@ export default function ShippingSettingsPage() {
                   <div className="space-y-4">
                     {/* 1st Priority (Required) */}
                     <div>
-                      <Label htmlFor="priority-first" className="text-sm font-medium">
+                      <Label
+                        htmlFor="priority-first"
+                        className="text-sm font-medium"
+                      >
                         1st Priority (Required) *
                       </Label>
                       <Select
                         value={watchedValues.priorityCouriers?.first || ''}
-                        onValueChange={(value) => {
-                          setValue('priorityCouriers', {
-                            ...watchedValues.priorityCouriers,
-                            first: value,
-                          }, { shouldDirty: true, shouldValidate: true });
+                        onValueChange={value => {
+                          setValue(
+                            'priorityCouriers',
+                            {
+                              ...watchedValues.priorityCouriers,
+                              first: value,
+                            },
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="priority-first">
                           <SelectValue placeholder="Select Courier" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableCouriers.map((courier) => (
-                            <SelectItem key={courier.courierId} value={courier.courierId}>
+                          {availableCouriers.map(courier => (
+                            <SelectItem
+                              key={courier.courierId}
+                              value={courier.courierId}
+                            >
                               {courier.name}
                             </SelectItem>
                           ))}
@@ -841,7 +959,10 @@ export default function ShippingSettingsPage() {
                     {/* 2nd Priority (Optional) */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <Label htmlFor="priority-second" className="text-sm font-medium">
+                        <Label
+                          htmlFor="priority-second"
+                          className="text-sm font-medium"
+                        >
                           2nd Priority (Optional)
                         </Label>
                         {watchedValues.priorityCouriers?.second && (
@@ -850,10 +971,14 @@ export default function ShippingSettingsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setValue('priorityCouriers', {
-                                ...watchedValues.priorityCouriers,
-                                second: undefined,
-                              }, { shouldDirty: true, shouldValidate: true });
+                              setValue(
+                                'priorityCouriers',
+                                {
+                                  ...watchedValues.priorityCouriers,
+                                  second: undefined,
+                                },
+                                { shouldDirty: true, shouldValidate: true }
+                              );
                             }}
                             className="h-6 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
@@ -864,11 +989,15 @@ export default function ShippingSettingsPage() {
                       </div>
                       <Select
                         value={watchedValues.priorityCouriers?.second || ''}
-                        onValueChange={(value) => {
-                          setValue('priorityCouriers', {
-                            ...watchedValues.priorityCouriers,
-                            second: value,
-                          }, { shouldDirty: true, shouldValidate: true });
+                        onValueChange={value => {
+                          setValue(
+                            'priorityCouriers',
+                            {
+                              ...watchedValues.priorityCouriers,
+                              second: value,
+                            },
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="priority-second">
@@ -876,9 +1005,16 @@ export default function ShippingSettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {availableCouriers
-                            .filter((c) => c.courierId !== watchedValues.priorityCouriers?.first)
-                            .map((courier) => (
-                              <SelectItem key={courier.courierId} value={courier.courierId}>
+                            .filter(
+                              c =>
+                                c.courierId !==
+                                watchedValues.priorityCouriers?.first
+                            )
+                            .map(courier => (
+                              <SelectItem
+                                key={courier.courierId}
+                                value={courier.courierId}
+                              >
                                 {courier.name}
                               </SelectItem>
                             ))}
@@ -889,7 +1025,10 @@ export default function ShippingSettingsPage() {
                     {/* 3rd Priority (Optional) */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <Label htmlFor="priority-third" className="text-sm font-medium">
+                        <Label
+                          htmlFor="priority-third"
+                          className="text-sm font-medium"
+                        >
                           3rd Priority (Optional)
                         </Label>
                         {watchedValues.priorityCouriers?.third && (
@@ -898,10 +1037,14 @@ export default function ShippingSettingsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setValue('priorityCouriers', {
-                                ...watchedValues.priorityCouriers,
-                                third: undefined,
-                              }, { shouldDirty: true, shouldValidate: true });
+                              setValue(
+                                'priorityCouriers',
+                                {
+                                  ...watchedValues.priorityCouriers,
+                                  third: undefined,
+                                },
+                                { shouldDirty: true, shouldValidate: true }
+                              );
                             }}
                             className="h-6 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
@@ -912,11 +1055,15 @@ export default function ShippingSettingsPage() {
                       </div>
                       <Select
                         value={watchedValues.priorityCouriers?.third || ''}
-                        onValueChange={(value) => {
-                          setValue('priorityCouriers', {
-                            ...watchedValues.priorityCouriers,
-                            third: value,
-                          }, { shouldDirty: true, shouldValidate: true });
+                        onValueChange={value => {
+                          setValue(
+                            'priorityCouriers',
+                            {
+                              ...watchedValues.priorityCouriers,
+                              third: value,
+                            },
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="priority-third">
@@ -924,12 +1071,18 @@ export default function ShippingSettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {availableCouriers
-                            .filter((c) =>
-                              c.courierId !== watchedValues.priorityCouriers?.first &&
-                              c.courierId !== watchedValues.priorityCouriers?.second
+                            .filter(
+                              c =>
+                                c.courierId !==
+                                  watchedValues.priorityCouriers?.first &&
+                                c.courierId !==
+                                  watchedValues.priorityCouriers?.second
                             )
-                            .map((courier) => (
-                              <SelectItem key={courier.courierId} value={courier.courierId}>
+                            .map(courier => (
+                              <SelectItem
+                                key={courier.courierId}
+                                value={courier.courierId}
+                              >
                                 {courier.name}
                               </SelectItem>
                             ))}
@@ -940,34 +1093,45 @@ export default function ShippingSettingsPage() {
                     <Alert className="bg-orange-50 border-orange-200">
                       <AlertTriangle className="h-4 w-4 text-orange-600" />
                       <AlertDescription className="text-orange-800">
-                        If none of your ranked couriers are available for the delivery address, checkout will be blocked (same as no courier available).
+                        If none of your ranked couriers are available for the
+                        delivery address, checkout will be blocked (same as no
+                        courier available).
                       </AlertDescription>
                     </Alert>
                   </div>
                 )}
 
-                {errors.priorityCouriers && 'message' in errors.priorityCouriers && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {errors.priorityCouriers.message}
-                  </p>
-                )}
+                {errors.priorityCouriers &&
+                  'message' in errors.priorityCouriers && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.priorityCouriers.message}
+                    </p>
+                  )}
               </div>
             )}
 
             {/* Conditional: Selected Couriers - 3 Dropdowns (shows all to customer) */}
-            {watchedValues.courierSelectionMode === COURIER_SELECTION_STRATEGIES.SELECTED && (
+            {watchedValues.courierSelectionMode ===
+              COURIER_SELECTION_STRATEGIES.SELECTED && (
               <div className="space-y-4">
                 <Alert className="bg-blue-50 border-blue-200">
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-900">
-                    Select up to 3 couriers in order of preference. Customers will see ALL selected couriers that are available for their area.
+                    Select up to 3 couriers in order of preference. Customers
+                    will see ALL selected couriers that are available for their
+                    area.
                   </AlertDescription>
                 </Alert>
 
                 <Alert className="bg-amber-50 border-amber-200">
                   <Info className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-900 text-sm">
-                    <strong>Note:</strong> Service types (Pickup/Drop-off) are service-specific, not courier-specific. Each courier may offer multiple service types depending on the destination. Customers will see available service options (pickup, drop-off, or both) during checkout based on their delivery address.
+                    <strong>Note:</strong> Service types (Pickup/Drop-off) are
+                    service-specific, not courier-specific. Each courier may
+                    offer multiple service types depending on the destination.
+                    Customers will see available service options (pickup,
+                    drop-off, or both) during checkout based on their delivery
+                    address.
                   </AlertDescription>
                 </Alert>
 
@@ -975,31 +1139,37 @@ export default function ShippingSettingsPage() {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Configure and save API settings first to load available couriers
+                      Configure and save API settings first to load available
+                      couriers
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {connectionStatus === 'connected' && availableCouriers.length === 0 && (
-                  <div className="flex items-center justify-center py-4 border rounded-lg bg-gray-50">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={fetchCouriers}
-                      disabled={isLoadingCouriers}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingCouriers ? 'animate-spin' : ''}`} />
-                      Load Couriers
-                    </Button>
-                  </div>
-                )}
+                {connectionStatus === 'connected' &&
+                  availableCouriers.length === 0 && (
+                    <div className="flex items-center justify-center py-4 border rounded-lg bg-gray-50">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchCouriers}
+                        disabled={isLoadingCouriers}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw
+                          className={`w-4 h-4 ${isLoadingCouriers ? 'animate-spin' : ''}`}
+                        />
+                        Load Couriers
+                      </Button>
+                    </div>
+                  )}
 
                 {isLoadingCouriers && (
                   <div className="flex items-center justify-center py-8">
                     <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-gray-600">Loading couriers...</span>
+                    <span className="ml-2 text-gray-600">
+                      Loading couriers...
+                    </span>
                   </div>
                 )}
 
@@ -1007,23 +1177,35 @@ export default function ShippingSettingsPage() {
                   <>
                     {/* 1st Selection (Required) */}
                     <div>
-                      <Label htmlFor="selected-first" className="text-sm font-medium">
+                      <Label
+                        htmlFor="selected-first"
+                        className="text-sm font-medium"
+                      >
                         1st Selection (Required) *
                       </Label>
                       <Select
                         value={watchedValues.selectedCouriers?.[0] || ''}
-                        onValueChange={(value) => {
-                          const newSelected = [...(watchedValues.selectedCouriers || [])];
+                        onValueChange={value => {
+                          const newSelected = [
+                            ...(watchedValues.selectedCouriers || []),
+                          ];
                           newSelected[0] = value;
-                          setValue('selectedCouriers', newSelected.filter(Boolean), { shouldDirty: true, shouldValidate: true });
+                          setValue(
+                            'selectedCouriers',
+                            newSelected.filter(Boolean),
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="selected-first">
                           <SelectValue placeholder="Select Courier" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableCouriers.map((courier) => (
-                            <SelectItem key={courier.courierId} value={courier.courierId}>
+                          {availableCouriers.map(courier => (
+                            <SelectItem
+                              key={courier.courierId}
+                              value={courier.courierId}
+                            >
                               {courier.name}
                             </SelectItem>
                           ))}
@@ -1034,7 +1216,10 @@ export default function ShippingSettingsPage() {
                     {/* 2nd Selection (Optional) */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <Label htmlFor="selected-second" className="text-sm font-medium">
+                        <Label
+                          htmlFor="selected-second"
+                          className="text-sm font-medium"
+                        >
                           2nd Selection (Optional)
                         </Label>
                         {watchedValues.selectedCouriers?.[1] && (
@@ -1043,9 +1228,15 @@ export default function ShippingSettingsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              const newSelected = [...(watchedValues.selectedCouriers || [])];
+                              const newSelected = [
+                                ...(watchedValues.selectedCouriers || []),
+                              ];
                               newSelected[1] = '';
-                              setValue('selectedCouriers', newSelected.filter(Boolean), { shouldDirty: true, shouldValidate: true });
+                              setValue(
+                                'selectedCouriers',
+                                newSelected.filter(Boolean),
+                                { shouldDirty: true, shouldValidate: true }
+                              );
                             }}
                             className="h-6 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
@@ -1056,10 +1247,16 @@ export default function ShippingSettingsPage() {
                       </div>
                       <Select
                         value={watchedValues.selectedCouriers?.[1] || ''}
-                        onValueChange={(value) => {
-                          const newSelected = [...(watchedValues.selectedCouriers || [])];
+                        onValueChange={value => {
+                          const newSelected = [
+                            ...(watchedValues.selectedCouriers || []),
+                          ];
                           newSelected[1] = value;
-                          setValue('selectedCouriers', newSelected.filter(Boolean), { shouldDirty: true, shouldValidate: true });
+                          setValue(
+                            'selectedCouriers',
+                            newSelected.filter(Boolean),
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="selected-second">
@@ -1067,9 +1264,16 @@ export default function ShippingSettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {availableCouriers
-                            .filter((c) => c.courierId !== watchedValues.selectedCouriers?.[0])
-                            .map((courier) => (
-                              <SelectItem key={courier.courierId} value={courier.courierId}>
+                            .filter(
+                              c =>
+                                c.courierId !==
+                                watchedValues.selectedCouriers?.[0]
+                            )
+                            .map(courier => (
+                              <SelectItem
+                                key={courier.courierId}
+                                value={courier.courierId}
+                              >
                                 {courier.name}
                               </SelectItem>
                             ))}
@@ -1080,7 +1284,10 @@ export default function ShippingSettingsPage() {
                     {/* 3rd Selection (Optional) */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <Label htmlFor="selected-third" className="text-sm font-medium">
+                        <Label
+                          htmlFor="selected-third"
+                          className="text-sm font-medium"
+                        >
                           3rd Selection (Optional)
                         </Label>
                         {watchedValues.selectedCouriers?.[2] && (
@@ -1089,9 +1296,15 @@ export default function ShippingSettingsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              const newSelected = [...(watchedValues.selectedCouriers || [])];
+                              const newSelected = [
+                                ...(watchedValues.selectedCouriers || []),
+                              ];
                               newSelected[2] = '';
-                              setValue('selectedCouriers', newSelected.filter(Boolean), { shouldDirty: true, shouldValidate: true });
+                              setValue(
+                                'selectedCouriers',
+                                newSelected.filter(Boolean),
+                                { shouldDirty: true, shouldValidate: true }
+                              );
                             }}
                             className="h-6 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
@@ -1102,10 +1315,16 @@ export default function ShippingSettingsPage() {
                       </div>
                       <Select
                         value={watchedValues.selectedCouriers?.[2] || ''}
-                        onValueChange={(value) => {
-                          const newSelected = [...(watchedValues.selectedCouriers || [])];
+                        onValueChange={value => {
+                          const newSelected = [
+                            ...(watchedValues.selectedCouriers || []),
+                          ];
                           newSelected[2] = value;
-                          setValue('selectedCouriers', newSelected.filter(Boolean), { shouldDirty: true, shouldValidate: true });
+                          setValue(
+                            'selectedCouriers',
+                            newSelected.filter(Boolean),
+                            { shouldDirty: true, shouldValidate: true }
+                          );
                         }}
                       >
                         <SelectTrigger id="selected-third">
@@ -1113,12 +1332,18 @@ export default function ShippingSettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {availableCouriers
-                            .filter((c) =>
-                              c.courierId !== watchedValues.selectedCouriers?.[0] &&
-                              c.courierId !== watchedValues.selectedCouriers?.[1]
+                            .filter(
+                              c =>
+                                c.courierId !==
+                                  watchedValues.selectedCouriers?.[0] &&
+                                c.courierId !==
+                                  watchedValues.selectedCouriers?.[1]
                             )
-                            .map((courier) => (
-                              <SelectItem key={courier.courierId} value={courier.courierId}>
+                            .map(courier => (
+                              <SelectItem
+                                key={courier.courierId}
+                                value={courier.courierId}
+                              >
                                 {courier.name}
                               </SelectItem>
                             ))}
@@ -1146,21 +1371,29 @@ export default function ShippingSettingsPage() {
               <Checkbox
                 id="freeShippingEnabled"
                 checked={watchedValues.freeShippingEnabled}
-                onCheckedChange={(checked) =>
-                  setValue('freeShippingEnabled', checked as boolean, { shouldDirty: true })
+                onCheckedChange={checked =>
+                  setValue('freeShippingEnabled', checked as boolean, {
+                    shouldDirty: true,
+                  })
                 }
               />
-              <Label htmlFor="freeShippingEnabled">Enable free shipping threshold</Label>
+              <Label htmlFor="freeShippingEnabled">
+                Enable free shipping threshold
+              </Label>
             </div>
 
             {watchedValues.freeShippingEnabled && (
               <div>
-                <Label htmlFor="freeShippingThreshold">Minimum order amount (RM)</Label>
+                <Label htmlFor="freeShippingThreshold">
+                  Minimum order amount (RM)
+                </Label>
                 <Input
                   id="freeShippingThreshold"
                   type="number"
                   step="0.01"
-                  {...register('freeShippingThreshold', { valueAsNumber: true })}
+                  {...register('freeShippingThreshold', {
+                    valueAsNumber: true,
+                  })}
                 />
                 <p className="text-sm text-gray-600 mt-1">
                   Orders above this amount get free shipping
@@ -1177,8 +1410,10 @@ export default function ShippingSettingsPage() {
             <Checkbox
               id="autoUpdateOrderStatus"
               checked={watchedValues.autoUpdateOrderStatus}
-              onCheckedChange={(checked) =>
-                setValue('autoUpdateOrderStatus', checked as boolean, { shouldDirty: true })
+              onCheckedChange={checked =>
+                setValue('autoUpdateOrderStatus', checked as boolean, {
+                  shouldDirty: true,
+                })
               }
             />
             <Label htmlFor="autoUpdateOrderStatus">
@@ -1186,7 +1421,8 @@ export default function ShippingSettingsPage() {
             </Label>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            When enabled, order status will change based on courier tracking updates
+            When enabled, order status will change based on courier tracking
+            updates
           </p>
         </Card>
 
@@ -1197,8 +1433,10 @@ export default function ShippingSettingsPage() {
             <Checkbox
               id="whatsappNotificationsEnabled"
               checked={watchedValues.whatsappNotificationsEnabled}
-              onCheckedChange={(checked) =>
-                setValue('whatsappNotificationsEnabled', checked as boolean, { shouldDirty: true })
+              onCheckedChange={checked =>
+                setValue('whatsappNotificationsEnabled', checked as boolean, {
+                  shouldDirty: true,
+                })
               }
             />
             <Label htmlFor="whatsappNotificationsEnabled">
@@ -1228,18 +1466,19 @@ export default function ShippingSettingsPage() {
 
           {/* Delete Button - Only show if settings exist and user is Admin/SuperAdmin */}
           {connectionStatus !== 'not-configured' &&
-           (session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN') && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeleteSettings}
-              disabled={isDeleting}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              {isDeleting ? 'Deleting...' : 'Clear Configuration'}
-            </Button>
-          )}
+            (session?.user?.role === 'ADMIN' ||
+              session?.user?.role === 'SUPERADMIN') && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteSettings}
+                disabled={isDeleting}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Deleting...' : 'Clear Configuration'}
+              </Button>
+            )}
         </div>
 
         {/* Save button disabled message */}

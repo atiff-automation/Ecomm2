@@ -5,10 +5,12 @@
 
 :root {
   /* Font Stack - Single source of truth */
-  --chat-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --chat-font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Text', 'Roboto',
+    'Helvetica Neue', Arial, sans-serif;
 
   /* Font Features - Centralized */
-  --chat-font-features: "kern" 1;
+  --chat-font-features: 'kern' 1;
   --chat-font-smoothing: antialiased;
   --chat-font-smoothing-moz: grayscale;
 }

@@ -17,17 +17,20 @@ export async function GET() {
       database: 'connected',
       userCount,
       databaseUrl: !!process.env.DATABASE_URL,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Database test error:', error);
 
-    return NextResponse.json({
-      status: 'error',
-      database: 'disconnected',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      databaseUrl: !!process.env.DATABASE_URL,
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'error',
+        database: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        databaseUrl: !!process.env.DATABASE_URL,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
   }
 }

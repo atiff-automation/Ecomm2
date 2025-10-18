@@ -126,14 +126,17 @@ export default function HomePage() {
     const fetchHomeData = async () => {
       try {
         // Use service layer for data fetching with built-in error handling and caching
-        const [products, promotionalProducts, categories, customizationResponse] = await Promise.all(
-          [
-            productService.getFeaturedProducts(8),
-            productService.getPromotionalProducts(8),
-            categoryService.getCategories({ includeProductCount: true }),
-            fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
-          ]
-        );
+        const [
+          products,
+          promotionalProducts,
+          categories,
+          customizationResponse,
+        ] = await Promise.all([
+          productService.getFeaturedProducts(8),
+          productService.getPromotionalProducts(8),
+          categoryService.getCategories({ includeProductCount: true }),
+          fetch('/api/site-customization/current'), // Keep customization API until we create a service for it
+        ]);
 
         setFeaturedProducts(products);
         setPromotionalProducts(promotionalProducts);
@@ -142,7 +145,10 @@ export default function HomePage() {
         if (customizationResponse.ok) {
           const customizationData = await customizationResponse.json();
           console.log('🎨 Hero Section Data:', customizationData.heroSection);
-          console.log('🖼️ Background Image URL:', customizationData.heroSection?.backgroundImage);
+          console.log(
+            '🖼️ Background Image URL:',
+            customizationData.heroSection?.backgroundImage
+          );
           setSiteTheme(customizationData.theme);
           setHeroSection(customizationData.heroSection);
           setSliderConfig(customizationData.sliderConfig);
@@ -180,14 +186,19 @@ export default function HomePage() {
                   <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                     <Percent className="w-6 h-6 text-red-600" />
                   </div>
-                  <h2 className="text-3xl font-bold text-red-800">On Promotion</h2>
+                  <h2 className="text-3xl font-bold text-red-800">
+                    On Promotion
+                  </h2>
                 </div>
                 <p className="text-gray-600">
                   Limited time offers with amazing discounts and special deals
                 </p>
               </div>
               <Link href="/products?promotional=true">
-                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50">
+                <Button
+                  variant="outline"
+                  className="border-red-200 text-red-700 hover:bg-red-50"
+                >
                   View All Deals
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>

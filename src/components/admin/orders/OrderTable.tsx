@@ -36,7 +36,8 @@ export function OrderTable({
 }: OrderTableProps) {
   // Fulfillment dialog state
   const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] = useState<OrderTableData | null>(null);
+  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] =
+    useState<OrderTableData | null>(null);
   const [isFulfilling, setIsFulfilling] = useState(false);
 
   const allSelected =
@@ -90,7 +91,8 @@ export function OrderTable({
     if (!orderToFulfill.selectedCourierServiceId) {
       return {
         success: false,
-        error: 'No courier service selected. Please select a courier from the order detail page.',
+        error:
+          'No courier service selected. Please select a courier from the order detail page.',
       };
     }
 
@@ -124,7 +126,9 @@ export function OrderTable({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            serviceId: options?.selectedServiceId || selectedOrderForFulfillment.selectedCourierServiceId,
+            serviceId:
+              options?.selectedServiceId ||
+              selectedOrderForFulfillment.selectedCourierServiceId,
             pickupDate: pickupDate,
             shipmentId: shipmentId,
             overriddenByAdmin: options?.overriddenByAdmin || false,
@@ -231,7 +235,9 @@ export function OrderTable({
               </TableHead>
 
               {/* Actions */}
-              <TableHead className="text-right min-w-[200px]">Actions</TableHead>
+              <TableHead className="text-right min-w-[200px]">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
 
@@ -240,7 +246,7 @@ export function OrderTable({
               <TableRow
                 key={order.id}
                 className="cursor-pointer hover:bg-gray-50"
-                onClick={(e) => {
+                onClick={e => {
                   // Don't navigate if clicking on checkbox, buttons, or select
                   if (
                     (e.target as HTMLElement).closest('button') ||
@@ -253,7 +259,7 @@ export function OrderTable({
                 }}
               >
                 {/* Checkbox */}
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell onClick={e => e.stopPropagation()}>
                   {onSelectOrder && (
                     <Checkbox
                       checked={selectedOrderIds.includes(order.id)}
@@ -328,7 +334,10 @@ export function OrderTable({
                 </TableCell>
 
                 {/* Inline Actions */}
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                <TableCell
+                  className="text-right"
+                  onClick={e => e.stopPropagation()}
+                >
                   <OrderInlineActions
                     order={{
                       id: order.id,
@@ -338,7 +347,9 @@ export function OrderTable({
                       airwayBillGenerated: order.airwayBillGenerated,
                       airwayBillUrl: order.airwayBillUrl,
                       shipment: order.shipment
-                        ? { trackingNumber: order.shipment.trackingNumber || '' }
+                        ? {
+                            trackingNumber: order.shipment.trackingNumber || '',
+                          }
                         : null,
                     }}
                     onStatusUpdate={handleStatusUpdate}
@@ -360,7 +371,8 @@ export function OrderTable({
             id: selectedOrderForFulfillment.id,
             orderNumber: selectedOrderForFulfillment.orderNumber,
             courierName: selectedOrderForFulfillment.courierName,
-            selectedCourierServiceId: selectedOrderForFulfillment.selectedCourierServiceId,
+            selectedCourierServiceId:
+              selectedOrderForFulfillment.selectedCourierServiceId,
             shippingCost: selectedOrderForFulfillment.shippingCost,
           }}
           onConfirm={handleConfirmFulfillment}

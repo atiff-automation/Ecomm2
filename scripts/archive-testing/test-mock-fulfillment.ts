@@ -28,7 +28,7 @@ async function testMockFulfillment() {
         orderNumber: true,
         status: true,
         trackingNumber: true,
-        airwayBillNumber: true,
+        airwayBillUrl: true,
         airwayBillUrl: true,
         trackingUrl: true,
         airwayBillGenerated: true,
@@ -48,7 +48,7 @@ async function testMockFulfillment() {
     console.log(`Order Number: ${order.orderNumber}`);
     console.log(`Status: ${order.status}`);
     console.log(`Tracking Number: ${order.trackingNumber || 'NULL'}`);
-    console.log(`AWB Number: ${order.airwayBillNumber || 'NULL'}`);
+    console.log(`AWB Number: ${order.airwayBillUrl || 'NULL'}`);
     console.log(`AWB URL: ${order.airwayBillUrl || 'NULL'}`);
     console.log(`Tracking URL: ${order.trackingUrl || 'NULL'}`);
     console.log(`AWB Generated: ${order.airwayBillGenerated}`);
@@ -89,7 +89,7 @@ async function testMockFulfillment() {
         orderNumber: true,
         status: true,
         trackingNumber: true,
-        airwayBillNumber: true,
+        airwayBillUrl: true,
         airwayBillUrl: true,
         trackingUrl: true,
         airwayBillGenerated: true,
@@ -109,7 +109,7 @@ async function testMockFulfillment() {
     console.log(`Order Number: ${updatedOrder.orderNumber}`);
     console.log(`Status: ${updatedOrder.status}`);
     console.log(`Tracking Number: ${updatedOrder.trackingNumber || 'NULL'}`);
-    console.log(`AWB Number: ${updatedOrder.airwayBillNumber || 'NULL'}`);
+    console.log(`AWB Number: ${updatedOrder.airwayBillUrl || 'NULL'}`);
     console.log(`AWB URL: ${updatedOrder.airwayBillUrl || 'NULL'}`);
     console.log(`Tracking URL: ${updatedOrder.trackingUrl || 'NULL'}`);
     console.log(`AWB Generated: ${updatedOrder.airwayBillGenerated}`);
@@ -135,15 +135,15 @@ async function testMockFulfillment() {
       },
       {
         name: 'AWB Number is 631867054753',
-        pass: updatedOrder.airwayBillNumber === '631867054753',
+        pass: updatedOrder.airwayBillUrl === '631867054753',
         expected: '631867054753',
-        actual: updatedOrder.airwayBillNumber,
+        actual: updatedOrder.airwayBillUrl,
       },
       {
         name: 'Tracking Number equals AWB Number',
-        pass: updatedOrder.trackingNumber === updatedOrder.airwayBillNumber,
+        pass: updatedOrder.trackingNumber === updatedOrder.airwayBillUrl,
         expected: 'Equal values',
-        actual: `${updatedOrder.trackingNumber} === ${updatedOrder.airwayBillNumber}`,
+        actual: `${updatedOrder.trackingNumber} === ${updatedOrder.airwayBillUrl}`,
       },
       {
         name: 'AWB URL exists',

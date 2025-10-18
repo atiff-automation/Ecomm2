@@ -6,7 +6,11 @@
 
 'use client';
 
-import { getMonitoringConfig, isFeatureEnabled, getSamplingRate } from './monitoring-config';
+import {
+  getMonitoringConfig,
+  isFeatureEnabled,
+  getSamplingRate,
+} from './monitoring-config';
 import { throttler } from './throttler';
 import { circuitBreaker } from './circuit-breaker';
 
@@ -39,11 +43,11 @@ interface SendDataOptions {
 export class MonitoringService {
   private static instance: MonitoringService;
   private initialized = false;
-  
+
   private constructor() {
     // Private constructor for singleton pattern
   }
-  
+
   /**
    * Get singleton instance - Centralized access
    */
@@ -53,7 +57,7 @@ export class MonitoringService {
     }
     return MonitoringService.instance;
   }
-  
+
   /**
    * Initialize monitoring service - Systematic setup
    */
@@ -61,7 +65,7 @@ export class MonitoringService {
     if (this.initialized) {
       return;
     }
-    
+
     // Validate configuration
     const config = getMonitoringConfig();
     console.log('📊 Monitoring service initialized with config:', {
@@ -69,10 +73,10 @@ export class MonitoringService {
       samplingRate: getSamplingRate(),
       emergencyDisabled: process.env.MONITORING_EMERGENCY_DISABLE === 'true',
     });
-    
+
     this.initialized = true;
   }
-  
+
   /**
    * Track monitoring data - Single entry point for all monitoring
    */
@@ -86,22 +90,22 @@ export class MonitoringService {
       if (!this.initialized) {
         this.initialize();
       }
-      
+
       // Check if feature is enabled
       if (!options.force && !isFeatureEnabled(type)) {
         return false;
       }
-      
+
       // Check sampling rate
       if (!options.force && !this.shouldSample()) {
         return false;
       }
-      
+
       // Check circuit breaker
       if (!circuitBreaker.canProceed(type)) {
         return false;
       }
-      
+
       // Check throttling
       if (!options.force && !throttler.canProceed(type)) {
         if (options.batch !== false) {
@@ -110,20 +114,20 @@ export class MonitoringService {
         }
         return false;
       }
-      
+
       // Create monitoring data
       const monitoringData = this.createMonitoringData(type, data);
-      
+
       // Send data
       const success = await this.sendData(monitoringData, options);
-      
+
       // Record circuit breaker result
       if (success) {
         circuitBreaker.recordSuccess(type);
       } else {
         circuitBreaker.recordFailure(type);
       }
-      
+
       return success;
     } catch (error) {
       console.warn(`Monitoring tracking failed for ${type}:`, error);
@@ -131,7 +135,7 @@ export class MonitoringService {
       return false;
     }
   }
-  
+
   /**
    * Track performance metrics - Specific interface
    */
@@ -141,7 +145,7 @@ export class MonitoringService {
       metrics,
     });
   }
-  
+
   /**
    * Track slow resource - Specific interface
    */
@@ -151,7 +155,7 @@ export class MonitoringService {
       resource,
     });
   }
-  
+
   /**
    * Track error - Specific interface
    */
@@ -163,7 +167,7 @@ export class MonitoringService {
       context,
     });
   }
-  
+
   /**
    * Track user action - Specific interface
    */
@@ -173,7 +177,7 @@ export class MonitoringService {
       properties,
     });
   }
-  
+
   /**
    * Track custom event - Specific interface
    */
@@ -183,7 +187,7 @@ export class MonitoringService {
       eventData,
     });
   }
-  
+
   /**
    * Batch send queued items - Systematic processing
    */
@@ -198,7 +202,7 @@ export class MonitoringService {
       console.warn('Failed to process monitoring queues:', error);
     }
   }
-  
+
   /**
    * Get service health status - Systematic monitoring
    */
@@ -210,7 +214,7 @@ export class MonitoringService {
     samplingRate: number;
   } {
     const config = getMonitoringConfig();
-    
+
     return {
       initialized: this.initialized,
       featuresEnabled: config.features,
@@ -219,7 +223,7 @@ export class MonitoringService {
       samplingRate: getSamplingRate(),
     };
   }
-  
+
   /**
    * Emergency disable all monitoring - Emergency control
    */
@@ -227,19 +231,22 @@ export class MonitoringService {
     // Reset all systems
     throttler.reset();
     circuitBreaker.reset();
-    
+
     // Force open all circuit breakers
     Object.keys(getMonitoringConfig().features).forEach(feature => {
       circuitBreaker.forceOpen(feature);
     });
-    
+
     console.warn('🚨 EMERGENCY: Monitoring service disabled');
   }
-  
+
   /**
    * Private: Create standardized monitoring data
    */
-  private createMonitoringData(type: MonitoringType, data: any): MonitoringData {
+  private createMonitoringData(
+    type: MonitoringType,
+    data: any
+  ): MonitoringData {
     return {
       type,
       timestamp: new Date().toISOString(),
@@ -249,7 +256,7 @@ export class MonitoringService {
       data,
     };
   }
-  
+
   /**
    * Private: Send data to monitoring API
    */
@@ -259,7 +266,7 @@ export class MonitoringService {
   ): Promise<boolean> {
     const config = getMonitoringConfig();
     const endpoint = this.getEndpointForType(monitoringData.type);
-    
+
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -268,20 +275,20 @@ export class MonitoringService {
         },
         body: JSON.stringify(monitoringData.data),
       });
-      
+
       return response.ok;
     } catch (error) {
       console.warn(`Failed to send monitoring data to ${endpoint}:`, error);
       return false;
     }
   }
-  
+
   /**
    * Private: Get API endpoint for monitoring type
    */
   private getEndpointForType(type: MonitoringType): string {
     const config = getMonitoringConfig();
-    
+
     switch (type) {
       case MonitoringType.PERFORMANCE:
         return config.endpoints.performance;
@@ -294,7 +301,7 @@ export class MonitoringService {
         return config.endpoints.performance;
     }
   }
-  
+
   /**
    * Private: Check if should sample this request
    */
@@ -302,7 +309,7 @@ export class MonitoringService {
     const samplingRate = getSamplingRate();
     return Math.random() < samplingRate;
   }
-  
+
   /**
    * Private: Get session ID
    */
@@ -310,16 +317,16 @@ export class MonitoringService {
     if (typeof window === 'undefined') {
       return 'ssr';
     }
-    
+
     let sessionId = sessionStorage.getItem('monitoring_session_id');
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       sessionStorage.setItem('monitoring_session_id', sessionId);
     }
-    
+
     return sessionId;
   }
-  
+
   /**
    * Private: Get user ID
    */
@@ -327,9 +334,10 @@ export class MonitoringService {
     if (typeof window === 'undefined') {
       return null;
     }
-    
+
     try {
-      const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+      const userStr =
+        sessionStorage.getItem('user') || localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         return user.id || null;
@@ -337,7 +345,7 @@ export class MonitoringService {
     } catch {
       // Ignore errors
     }
-    
+
     return null;
   }
 }

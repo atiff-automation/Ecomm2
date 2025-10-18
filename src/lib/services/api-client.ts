@@ -302,11 +302,12 @@ export class APIClient {
     // For server-side execution (no window object), convert relative URLs to absolute
     if (typeof window === 'undefined') {
       // In server-side context, construct absolute URL
-      const protocol = process.env.NODE_ENV === 'production' ? 'https:' : 'http:';
-      const host = process.env.VERCEL_URL 
+      const protocol =
+        process.env.NODE_ENV === 'production' ? 'https:' : 'http:';
+      const host = process.env.VERCEL_URL
         ? `${protocol}//${process.env.VERCEL_URL}`
         : `${protocol}//localhost:${process.env.PORT || 3000}`;
-      
+
       return `${host}${url}`;
     }
 

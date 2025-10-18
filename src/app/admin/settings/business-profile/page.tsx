@@ -133,7 +133,10 @@ export default function BusinessProfilePage() {
       });
 
       console.log('[Business Profile] Load response status:', response.status);
-      console.log('[Business Profile] Load response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        '[Business Profile] Load response headers:',
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -215,7 +218,10 @@ export default function BusinessProfilePage() {
       });
 
       console.log('[Business Profile] Response status:', response.status);
-      console.log('[Business Profile] Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        '[Business Profile] Response headers:',
+        Object.fromEntries(response.headers.entries())
+      );
 
       // Get response text first to debug
       const responseText = await response.text();

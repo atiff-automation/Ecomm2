@@ -18,7 +18,11 @@ export async function GET(
     const { filename } = params;
 
     // Security: Validate filename to prevent directory traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    if (
+      filename.includes('..') ||
+      filename.includes('/') ||
+      filename.includes('\\')
+    ) {
       return NextResponse.json(
         { message: 'Invalid filename' },
         { status: 400 }
@@ -27,7 +31,13 @@ export async function GET(
 
     // Try to read from /data first (production), fallback to public/uploads
     const volumePath = path.join('/data', 'uploads', 'products', filename);
-    const publicPath = path.join(process.cwd(), 'public', 'uploads', 'products', filename);
+    const publicPath = path.join(
+      process.cwd(),
+      'public',
+      'uploads',
+      'products',
+      filename
+    );
 
     let filePath: string;
     let fileBuffer: Buffer;
@@ -39,10 +49,7 @@ export async function GET(
       filePath = publicPath;
       fileBuffer = await readFile(publicPath);
     } else {
-      return NextResponse.json(
-        { message: 'File not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'File not found' }, { status: 404 });
     }
 
     // Determine content type from file extension

@@ -26,7 +26,12 @@ const ORDER_STATUS_VALUES = [
   'REFUNDED',
 ] as const;
 
-const PAYMENT_STATUS_VALUES = ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] as const;
+const PAYMENT_STATUS_VALUES = [
+  'PENDING',
+  'PAID',
+  'FAILED',
+  'REFUNDED',
+] as const;
 
 const updateStatusSchema = z.object({
   status: z.enum(ORDER_STATUS_VALUES),

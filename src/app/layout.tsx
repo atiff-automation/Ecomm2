@@ -155,7 +155,8 @@ export default function RootLayout({
                       color: '#374151',
                     },
                     className: 'group',
-                    descriptionClassName: 'group-[.toast]:text-muted-foreground',
+                    descriptionClassName:
+                      'group-[.toast]:text-muted-foreground',
                   }}
                 />
                 <SimpleN8nChatLoader />

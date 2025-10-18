@@ -270,9 +270,7 @@ export class EasyParcelCache {
     try {
       const allKeys = Array.from(this.memoryCache.keys());
       const rateKeys = allKeys.filter(key => key.includes('rate:'));
-      const validationKeys = allKeys.filter(key =>
-        key.includes('validation:')
-      );
+      const validationKeys = allKeys.filter(key => key.includes('validation:'));
       const serviceKeys = allKeys.filter(key => key.includes('services:'));
 
       return {

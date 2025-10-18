@@ -19,12 +19,12 @@ export async function GET() {
     // Get current configuration from unified system
     const config = await siteCustomizationService.getConfiguration();
 
-    console.error('✅ Configuration retrieved:', JSON.stringify({
+    console.error('✅ Configuration retrieved:', {
       hasHero: !!config.hero,
       heroTitle: config.hero?.title,
-      heroBackground: config.hero?.background,
-      fullHero: config.hero
-    }, null, 2));
+      heroBackgroundType: config.hero?.background?.type,
+      heroBackgroundUrl: config.hero?.background?.url,
+    });
 
     // Extract theme configuration from branding
     const theme = {
@@ -49,7 +49,10 @@ export async function GET() {
       ctaSecondaryLink: config.hero.ctaSecondary.link,
       backgroundType: config.hero.background.type,
       backgroundImage: config.hero.background.url,
-      backgroundVideo: config.hero.background.type === 'VIDEO' ? config.hero.background.url : null,
+      backgroundVideo:
+        config.hero.background.type === 'VIDEO'
+          ? config.hero.background.url
+          : null,
       overlayOpacity: config.hero.background.overlayOpacity,
       textAlignment: config.hero.layout.textAlignment,
       showTitle: config.hero.layout.showTitle,
@@ -58,14 +61,13 @@ export async function GET() {
     };
 
     // Debug logging (using console.error so it appears in Railway logs)
-    console.error('🔍 API - config.hero.background:', JSON.stringify(config.hero.background));
-    console.error('🔍 API - Transformed heroSection:', JSON.stringify({
+    console.error('🔍 API - Transformed heroSection:', {
       backgroundType: heroSection.backgroundType,
       backgroundImage: heroSection.backgroundImage,
       backgroundVideo: heroSection.backgroundVideo,
       title: heroSection.title,
-      subtitle: heroSection.subtitle
-    }));
+      subtitle: heroSection.subtitle,
+    });
 
     // Extract branding configuration
     const branding = {
@@ -85,10 +87,10 @@ export async function GET() {
       message: 'Site customization retrieved successfully',
     });
   } catch (error) {
-    console.error('❌ ERROR in /api/site-customization/current:', error);
-    console.error('❌ Error details:', {
+    console.error('❌ ERROR in /api/site-customization/current:', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      name: error instanceof Error ? error.name : typeof error,
+      stack: error instanceof Error ? error.stack?.split('\n')[0] : undefined,
     });
 
     // Return defaults in case of error WITH ERROR INFO
@@ -129,8 +131,8 @@ export async function GET() {
       _error: {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        type: error instanceof Error ? error.constructor.name : typeof error
-      }
+        type: error instanceof Error ? error.constructor.name : typeof error,
+      },
     });
   }
 }

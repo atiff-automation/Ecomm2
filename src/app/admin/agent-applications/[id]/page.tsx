@@ -33,7 +33,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { AdminPageLayout, type BreadcrumbItem } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  type BreadcrumbItem,
+} from '@/components/admin/layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AgentApplication {
@@ -120,7 +123,9 @@ export default function AgentApplicationDetailPage() {
     const fetchApplication = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/admin/agent-applications/${applicationId}`);
+        const response = await fetch(
+          `/api/admin/agent-applications/${applicationId}`
+        );
         if (!response.ok) {
           throw new Error('Failed to fetch application');
         }
@@ -145,23 +150,28 @@ export default function AgentApplicationDetailPage() {
 
     try {
       setUpdating(true);
-      const response = await fetch(`/api/admin/agent-applications/${applicationId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: newStatus,
-          adminNotes,
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/agent-applications/${applicationId}/status`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: newStatus,
+            adminNotes,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to update status');
       }
 
       // Refresh the application data
-      const updatedResponse = await fetch(`/api/admin/agent-applications/${applicationId}`);
+      const updatedResponse = await fetch(
+        `/api/admin/agent-applications/${applicationId}`
+      );
       const updatedData = await updatedResponse.json();
       setApplication(updatedData);
 
@@ -187,8 +197,12 @@ export default function AgentApplicationDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Not Found</h1>
-          <p className="text-gray-600 mb-4">The requested agent application could not be found.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Application Not Found
+          </h1>
+          <p className="text-gray-600 mb-4">
+            The requested agent application could not be found.
+          </p>
           <Link href="/admin/agent-applications">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -217,324 +231,363 @@ export default function AgentApplicationDetailPage() {
   };
 
   const applicationDetailsContent = (
-        <div className="space-y-6">
-          {/* Header with Status */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    {application.fullName}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">ID: {application.id}</p>
-                </div>
-                <Badge className={`flex items-center gap-1 ${statusColors[application.status]}`}>
-                  {getStatusIcon(application.status)}
-                  {application.status.replace('_', ' ')}
-                </Badge>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
+    <div className="space-y-6">
+      {/* Header with Status */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Personal Information
+                {application.fullName}
               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium">Email</p>
-                      <p className="text-sm text-gray-600">{application.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium">Phone</p>
-                      <p className="text-sm text-gray-600">{application.phoneNumber}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium">IC Number</p>
-                      <p className="text-sm text-gray-600">{application.icNumber}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium">Age</p>
-                      <p className="text-sm text-gray-600">{application.age} years old</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                    <div>
-                      <p className="text-sm font-medium">Address</p>
-                      <p className="text-sm text-gray-600">{application.address}</p>
-                    </div>
-                  </div>
+              <p className="text-sm text-gray-600 mt-1">ID: {application.id}</p>
+            </div>
+            <Badge
+              className={`flex items-center gap-1 ${statusColors[application.status]}`}
+            >
+              {getStatusIcon(application.status)}
+              {application.status.replace('_', ' ')}
+            </Badge>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Personal Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Personal Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium">Email</p>
+                  <p className="text-sm text-gray-600">{application.email}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Business Experience */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Business Experience
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">Has Business Experience</p>
-                    <Badge variant={application.hasBusinessExp ? "default" : "secondary"}>
-                      {application.hasBusinessExp ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                  {application.hasBusinessExp && application.businessLocation && (
-                    <div>
-                      <p className="text-sm font-medium">Business Location</p>
-                      <p className="text-sm text-gray-600">{application.businessLocation}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium">Has Team Leadership Experience</p>
-                    <Badge variant={application.hasTeamLeadExp ? "default" : "secondary"}>
-                      {application.hasTeamLeadExp ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium">Phone</p>
+                  <p className="text-sm text-gray-600">
+                    {application.phoneNumber}
+                  </p>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">Business Registration</p>
-                    <Badge variant={application.isRegistered ? "default" : "secondary"}>
-                      {application.isRegistered ? 'Registered' : 'Not Registered'}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Business Type</p>
-                    <p className="text-sm text-gray-600">
-                      {businessTypes[application.jenis as keyof typeof businessTypes] || application.jenis}
+              </div>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium">IC Number</p>
+                  <p className="text-sm text-gray-600">
+                    {application.icNumber}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium">Age</p>
+                  <p className="text-sm text-gray-600">
+                    {application.age} years old
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-gray-400 mt-1" />
+                <div>
+                  <p className="text-sm font-medium">Address</p>
+                  <p className="text-sm text-gray-600">{application.address}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Business Experience */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="w-5 h-5" />
+            Business Experience
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Has Business Experience</p>
+                <Badge
+                  variant={application.hasBusinessExp ? 'default' : 'secondary'}
+                >
+                  {application.hasBusinessExp ? 'Yes' : 'No'}
+                </Badge>
+              </div>
+              {application.hasBusinessExp && application.businessLocation && (
+                <div>
+                  <p className="text-sm font-medium">Business Location</p>
+                  <p className="text-sm text-gray-600">
+                    {application.businessLocation}
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">
+                  Has Team Leadership Experience
+                </p>
+                <Badge
+                  variant={application.hasTeamLeadExp ? 'default' : 'secondary'}
+                >
+                  {application.hasTeamLeadExp ? 'Yes' : 'No'}
+                </Badge>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Business Registration</p>
+                <Badge
+                  variant={application.isRegistered ? 'default' : 'secondary'}
+                >
+                  {application.isRegistered ? 'Registered' : 'Not Registered'}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Business Type</p>
+                <p className="text-sm text-gray-600">
+                  {businessTypes[
+                    application.jenis as keyof typeof businessTypes
+                  ] || application.jenis}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Social Media */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Social Media Presence
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Instagram className="w-4 h-4 text-pink-500" />
+                <p className="text-sm font-medium">Instagram</p>
+              </div>
+              <p className="text-sm text-gray-600">
+                {application.instagramHandle || 'Not provided'}
+              </p>
+              <Badge variant="outline" className="text-xs">
+                {
+                  socialMediaLevels[
+                    application.instagramLevel as keyof typeof socialMediaLevels
+                  ]
+                }
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Facebook className="w-4 h-4 text-blue-600" />
+                <p className="text-sm font-medium">Facebook</p>
+              </div>
+              <p className="text-sm text-gray-600">
+                {application.facebookHandle || 'Not provided'}
+              </p>
+              <Badge variant="outline" className="text-xs">
+                {
+                  socialMediaLevels[
+                    application.facebookLevel as keyof typeof socialMediaLevels
+                  ]
+                }
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-black" />
+                <p className="text-sm font-medium">TikTok</p>
+              </div>
+              <p className="text-sm text-gray-600">
+                {application.tiktokHandle || 'Not provided'}
+              </p>
+              <Badge variant="outline" className="text-xs">
+                {
+                  socialMediaLevels[
+                    application.tiktokLevel as keyof typeof socialMediaLevels
+                  ]
+                }
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* JRM Experience & Motivation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="w-5 h-5" />
+            JRM Experience & Motivation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <p className="text-sm font-medium mb-2">Has JRM Experience</p>
+              <Badge variant={application.hasJrmExp ? 'default' : 'secondary'}>
+                {application.hasJrmExp ? 'Yes' : 'No'}
+              </Badge>
+              {application.hasJrmExp && application.jrmProducts && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium mb-1">JRM Products Used</p>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                    {application.jrmProducts}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Reason to Join</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                {application.reasonToJoin}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Expectations</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                {application.expectations}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Timeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Clock className="w-4 h-4 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium">Created</p>
+                <p className="text-xs text-gray-600">
+                  {formatDate(application.createdAt)}
+                </p>
+              </div>
+            </div>
+            {application.submittedAt && (
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-4 h-4 text-blue-500" />
+                <div>
+                  <p className="text-sm font-medium">Submitted</p>
+                  <p className="text-xs text-gray-600">
+                    {formatDate(application.submittedAt)}
+                  </p>
+                </div>
+              </div>
+            )}
+            {application.reviewedAt && (
+              <div className="flex items-center gap-3">
+                {application.status === 'APPROVED' ? (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-red-500" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">Reviewed</p>
+                  <p className="text-xs text-gray-600">
+                    {formatDate(application.reviewedAt)}
+                  </p>
+                  {application.reviewedBy && (
+                    <p className="text-xs text-gray-500">
+                      by {application.reviewedBy}
                     </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Social Media */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Social Media Presence
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Instagram className="w-4 h-4 text-pink-500" />
-                    <p className="text-sm font-medium">Instagram</p>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {application.instagramHandle || 'Not provided'}
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {socialMediaLevels[application.instagramLevel as keyof typeof socialMediaLevels]}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Facebook className="w-4 h-4 text-blue-600" />
-                    <p className="text-sm font-medium">Facebook</p>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {application.facebookHandle || 'Not provided'}
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {socialMediaLevels[application.facebookLevel as keyof typeof socialMediaLevels]}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-black" />
-                    <p className="text-sm font-medium">TikTok</p>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {application.tiktokHandle || 'Not provided'}
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {socialMediaLevels[application.tiktokLevel as keyof typeof socialMediaLevels]}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* JRM Experience & Motivation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5" />
-                JRM Experience & Motivation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <p className="text-sm font-medium mb-2">Has JRM Experience</p>
-                  <Badge variant={application.hasJrmExp ? "default" : "secondary"}>
-                    {application.hasJrmExp ? 'Yes' : 'No'}
-                  </Badge>
-                  {application.hasJrmExp && application.jrmProducts && (
-                    <div className="mt-2">
-                      <p className="text-sm font-medium mb-1">JRM Products Used</p>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-                        {application.jrmProducts}
-                      </p>
-                    </div>
                   )}
                 </div>
-                <div>
-                  <p className="text-sm font-medium mb-2">Reason to Join</p>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-                    {application.reasonToJoin}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-2">Expectations</p>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-                    {application.expectations}
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium">Created</p>
-                    <p className="text-xs text-gray-600">{formatDate(application.createdAt)}</p>
-                  </div>
-                </div>
-                {application.submittedAt && (
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-4 h-4 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium">Submitted</p>
-                      <p className="text-xs text-gray-600">{formatDate(application.submittedAt)}</p>
-                    </div>
-                  </div>
-                )}
-                {application.reviewedAt && (
-                  <div className="flex items-center gap-3">
-                    {application.status === 'APPROVED' ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-red-500" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium">Reviewed</p>
-                      <p className="text-xs text-gray-600">{formatDate(application.reviewedAt)}</p>
-                      {application.reviewedBy && (
-                        <p className="text-xs text-gray-500">by {application.reviewedBy}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 
   const reviewActionsContent = (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Update Application Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={newStatus} onValueChange={setNewStatus}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                      <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
-                      <SelectItem value="APPROVED">Approved</SelectItem>
-                      <SelectItem value="REJECTED">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Admin Notes</label>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add notes about the review decision..."
-                    className="mt-1"
-                    rows={4}
-                  />
-                </div>
-                <Button
-                  onClick={handleStatusUpdate}
-                  disabled={updating || newStatus === application.status}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  {updating ? 'Updating...' : 'Update Status'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Update Application Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Status</label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                  <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Admin Notes</label>
+              <Textarea
+                value={adminNotes}
+                onChange={e => setAdminNotes(e.target.value)}
+                placeholder="Add notes about the review decision..."
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={updating || newStatus === application.status}
+              className="flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {updating ? 'Updating...' : 'Update Status'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-          {application.adminNotes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Previous Admin Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-                  {application.adminNotes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+      {application.adminNotes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Previous Admin Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+              {application.adminNotes}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
-
 
   return (
     <AdminPageLayout
@@ -555,13 +608,9 @@ export default function AgentApplicationDetailPage() {
           <TabsTrigger value="review">Review & Actions</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details">
-          {applicationDetailsContent}
-        </TabsContent>
+        <TabsContent value="details">{applicationDetailsContent}</TabsContent>
 
-        <TabsContent value="review">
-          {reviewActionsContent}
-        </TabsContent>
+        <TabsContent value="review">{reviewActionsContent}</TabsContent>
       </Tabs>
     </AdminPageLayout>
   );

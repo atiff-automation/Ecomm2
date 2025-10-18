@@ -6,7 +6,14 @@
 
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { CheckCircle, Clock, Mail, Phone, ArrowRight, Home } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  Mail,
+  Phone,
+  ArrowRight,
+  Home,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +21,8 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Permohonan Berjaya | JRM Agent Application',
-  description: 'Permohonan ejen JRM anda telah berjaya dihantar. Kami akan menghubungi anda tidak lama lagi.',
+  description:
+    'Permohonan ejen JRM anda telah berjaya dihantar. Kami akan menghubungi anda tidak lama lagi.',
   robots: 'noindex, nofollow', // Prevent indexing of success pages
 };
 
@@ -56,9 +64,12 @@ function SuccessContent({ applicationId }: { applicationId?: string }) {
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 bg-green-600 rounded-full"></div>
               <div>
-                <p className="font-medium text-green-800">Permohonan Diterima</p>
+                <p className="font-medium text-green-800">
+                  Permohonan Diterima
+                </p>
                 <p className="text-sm text-gray-600">
-                  Permohonan anda telah berjaya dihantar dan sedang menunggu semakan
+                  Permohonan anda telah berjaya dihantar dan sedang menunggu
+                  semakan
                 </p>
               </div>
             </div>
@@ -157,7 +168,9 @@ function SuccessContent({ applicationId }: { applicationId?: string }) {
             <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
               <li>Pastikan telefon anda sentiasa aktif untuk dihubungi</li>
               <li>Semak folder spam/junk untuk email daripada kami</li>
-              <li>Jangan buat permohonan berganda - ini akan melambatkan proses</li>
+              <li>
+                Jangan buat permohonan berganda - ini akan melambatkan proses
+              </li>
               <li>Semua maklumat yang diberikan adalah sulit dan selamat</li>
             </ul>
           </CardContent>
@@ -183,7 +196,8 @@ function SuccessContent({ applicationId }: { applicationId?: string }) {
         {/* Footer Note */}
         <div className="text-center mt-8 text-sm text-gray-500">
           <p>
-            Permohonan ini dijaga kerahsiaan mengikut Akta Perlindungan Data Peribadi 2010
+            Permohonan ini dijaga kerahsiaan mengikut Akta Perlindungan Data
+            Peribadi 2010
           </p>
         </div>
       </div>
@@ -191,18 +205,22 @@ function SuccessContent({ applicationId }: { applicationId?: string }) {
   );
 }
 
-export default function AgentApplicationSuccessPage({ searchParams }: SuccessPageProps) {
+export default function AgentApplicationSuccessPage({
+  searchParams,
+}: SuccessPageProps) {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <p className="text-gray-600">Memuatkan maklumat permohonan...</p>
           </div>
-          <p className="text-gray-600">Memuatkan maklumat permohonan...</p>
         </div>
-      </div>
-    }>
+      }
+    >
       <SuccessContent applicationId={searchParams.id} />
     </Suspense>
   );
