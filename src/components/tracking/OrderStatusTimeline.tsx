@@ -39,8 +39,7 @@ export function OrderStatusTimeline({
       {/* Timeline visualization */}
       <div className="flex items-center justify-between relative">
         {TIMELINE_STAGES.map((stage, index) => {
-          const isCompleted = currentStage > stage.number;
-          const isCurrent = currentStage === stage.number;
+          const isCompletedOrCurrent = currentStage >= stage.number;
           const isPending = currentStage < stage.number;
           const isLast = index === TIMELINE_STAGES.length - 1;
 
@@ -53,17 +52,13 @@ export function OrderStatusTimeline({
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300',
                     {
-                      'bg-green-100 border-2 border-green-500': isCompleted,
-                      'bg-blue-100 border-2 border-blue-500 animate-pulse': isCurrent,
+                      'bg-green-100 border-2 border-green-500': isCompletedOrCurrent,
                       'bg-gray-100 border-2 border-gray-300': isPending,
                     }
                   )}
                 >
-                  {isCompleted && (
+                  {isCompletedOrCurrent && (
                     <CheckCircle2 className="w-6 h-6 text-green-600" />
-                  )}
-                  {isCurrent && (
-                    <CheckCircle2 className="w-6 h-6 text-blue-600" />
                   )}
                   {isPending && (
                     <Circle className="w-6 h-6 text-gray-400" />
@@ -74,8 +69,7 @@ export function OrderStatusTimeline({
                 <div className="text-center mt-2 max-w-[80px]">
                   <p
                     className={cn('text-xs font-medium leading-tight', {
-                      'text-green-700': isCompleted,
-                      'text-blue-700': isCurrent,
+                      'text-green-700': isCompletedOrCurrent,
                       'text-gray-500': isPending,
                     })}
                   >
