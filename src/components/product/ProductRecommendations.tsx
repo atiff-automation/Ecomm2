@@ -24,6 +24,7 @@ import { useAlertDialog } from '@/components/ui/alert-dialog';
 import config from '@/lib/config/app-config';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useCart } from '@/hooks/use-cart';
+import { CompactProductGrid } from '@/components/ui/layout';
 
 interface RecommendedProduct {
   id: string;
@@ -238,7 +239,7 @@ export function ProductRecommendations({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <CompactProductGrid>
         {recommendations.map(product => (
           <ProductCard
             key={product.id}
@@ -249,7 +250,7 @@ export function ProductRecommendations({
             showRating={true}
           />
         ))}
-      </div>
+      </CompactProductGrid>
 
       <AlertDialog />
     </div>

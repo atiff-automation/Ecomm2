@@ -36,6 +36,7 @@ import { productService } from '@/lib/services/product-service';
 import { categoryService } from '@/lib/services/category-service';
 import { useCart } from '@/hooks/use-cart';
 import config from '@/lib/config/app-config';
+import { ProductGrid } from '@/components/ui/layout';
 
 interface Product {
   id: string;
@@ -194,7 +195,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <ProductGrid>
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-gray-200" />
@@ -205,9 +206,9 @@ export default function HomePage() {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
+              </ProductGrid>
             ) : promotionalProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <ProductGrid>
                 {promotionalProducts.slice(0, 4).map(product => (
                   <ProductCard
                     key={product.id}
@@ -224,7 +225,7 @@ export default function HomePage() {
                     showRating={true}
                   />
                 ))}
-              </div>
+              </ProductGrid>
             ) : (
               <div className="text-center py-12">
                 <Percent className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -258,7 +259,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <ProductGrid>
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-square bg-gray-200" />
@@ -269,9 +270,9 @@ export default function HomePage() {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
+              </ProductGrid>
             ) : featuredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <ProductGrid>
                 {featuredProducts.slice(0, 4).map(product => (
                   <ProductCard
                     key={product.id}
@@ -288,7 +289,7 @@ export default function HomePage() {
                     showRating={true}
                   />
                 ))}
-              </div>
+              </ProductGrid>
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-600">

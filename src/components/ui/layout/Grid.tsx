@@ -134,12 +134,66 @@ export function Grid({
 // Predefined grid layouts for common use cases
 export const ProductGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
-    cols={1}
+    cols={2}
     responsive={{
       sm: 2,
       md: 3,
       lg: 4,
       xl: 5
+    }}
+    gap="md"
+    className={className}
+    {...props}
+  >
+    {children}
+  </Grid>
+);
+
+// Compact Product Grid (for sidebars, smaller spaces)
+export const CompactProductGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+  <Grid
+    cols={2}
+    responsive={{
+      sm: 2,
+      md: 2,
+      lg: 3,
+      xl: 4
+    }}
+    gap="sm"
+    className={className}
+    {...props}
+  >
+    {children}
+  </Grid>
+);
+
+// Search Results Grid (optimized for search pages)
+export const SearchResultsGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+  <Grid
+    cols={2}
+    responsive={{
+      sm: 2,
+      md: 2,
+      lg: 3,
+      xl: 4
+    }}
+    gap="lg"
+    className={className}
+    {...props}
+  >
+    {children}
+  </Grid>
+);
+
+// Wishlist Grid (consistent with product display)
+export const WishlistGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+  <Grid
+    cols={2}
+    responsive={{
+      sm: 2,
+      md: 2,
+      lg: 3,
+      xl: 4
     }}
     gap="md"
     className={className}

@@ -19,6 +19,7 @@ import { useAlertDialog } from '@/components/ui/alert-dialog';
 import config from '@/lib/config/app-config';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useCart } from '@/hooks/use-cart';
+import { CompactProductGrid } from '@/components/ui/layout';
 
 interface RecentlyViewedItem {
   id: string;
@@ -196,13 +197,7 @@ export function RecentlyViewed({
         </div>
       )}
 
-      <div
-        className={`grid gap-4 ${
-          horizontal
-            ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-        }`}
-      >
+      <CompactProductGrid>
         {items.map(item => {
           // Transform RecentlyViewedItem to match ProductCard expectations
           const productCardData = {
@@ -238,7 +233,7 @@ export function RecentlyViewed({
             </div>
           );
         })}
-      </div>
+      </CompactProductGrid>
 
       <ConfirmationDialog />
       <AlertDialog />

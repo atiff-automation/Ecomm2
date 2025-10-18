@@ -38,6 +38,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useCart } from '@/hooks/use-cart';
+import { SearchResultsGrid } from '@/components/ui/layout';
 
 interface Product {
   id: string;
@@ -635,24 +636,33 @@ export default function SearchPage() {
               ) : (
                 <>
                   {/* Products Grid */}
-                  <div
-                    className={`grid gap-6 ${
-                      viewMode === 'grid'
-                        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3'
-                        : 'grid-cols-1'
-                    }`}
-                  >
-                    {products.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onAddToCart={handleAddToCart}
-                        size="md"
-                        showDescription={true}
-                        showRating={true}
-                      />
-                    ))}
-                  </div>
+                  {viewMode === 'grid' ? (
+                    <SearchResultsGrid>
+                      {products.map(product => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onAddToCart={handleAddToCart}
+                          size="md"
+                          showDescription={true}
+                          showRating={true}
+                        />
+                      ))}
+                    </SearchResultsGrid>
+                  ) : (
+                    <div className="grid gap-6 grid-cols-1">
+                      {products.map(product => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onAddToCart={handleAddToCart}
+                          size="md"
+                          showDescription={true}
+                          showRating={true}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                   {/* Pagination */}
                   {totalPages > 1 && (

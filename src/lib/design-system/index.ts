@@ -70,6 +70,10 @@ export const gridSystem = {
   }
 } as const;
 
+// Grid configuration - Centralized grid patterns
+export { GRID_COLUMNS, GRID_GAPS, GRID_BREAKPOINTS, getGridConfig, getGridClasses } from '@/lib/config/grid-config';
+export type { GridType, GridGapSize, GridConfig } from '@/lib/config/grid-config';
+
 // Component size variants
 export const sizeVariants = {
   xs: 'xs',
