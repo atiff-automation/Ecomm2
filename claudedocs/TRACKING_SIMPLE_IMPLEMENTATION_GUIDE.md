@@ -229,6 +229,29 @@ model Order {
 }
 ```
 
+### TrackingCache Removal
+
+**Status**: The legacy `TrackingCache` table and relationship must be removed during implementation.
+
+**Why**: The simple tracking approach queries Order table directly. TrackingCache was part of the over-engineered background job system that has been removed.
+
+**Migration Required**:
+```prisma
+// Remove from Order model:
+- trackingCache            TrackingCache?
+
+// Delete entire model:
+- model TrackingCache { ... }
+```
+
+**Steps**:
+1. Remove `trackingCache` relationship from Order model (line 296 in schema.prisma)
+2. Remove entire `TrackingCache` model definition (lines 808-828+ in schema.prisma)
+3. Create migration: `npx prisma migrate dev --name remove_tracking_cache`
+4. Verify no code references remain: `grep -r "TrackingCache" src/`
+
+**Expected Impact**: None - TrackingCache was only used by the removed tracking job system.
+
 ---
 
 ## Implementation Specifications
@@ -1318,9 +1341,10 @@ describe('OrderStatusTimeline', () => {
 - [ ] TypeScript compilation successful
 
 **Database**:
-- [ ] Migration applied (removed unused OrderStatus values)
-- [ ] TrackingCache marked as deprecated
+- [ ] Migration created to remove TrackingCache table and Order.trackingCache relationship
+- [ ] Migration applied successfully
 - [ ] Indexes verified on orderNumber and trackingNumber
+- [ ] No references to TrackingCache remain in codebase
 
 **Testing**:
 - [ ] Manual testing completed
@@ -1408,6 +1432,9 @@ npx prisma migrate deploy
 - [ ] `src/app/api/track/route.ts` (API endpoint)
 - [ ] `src/app/track-order/page.tsx` (main page)
 
+**Database Cleanup** (1 task):
+- [ ] Remove TrackingCache table and relationship from Order model (deprecated, no longer needed)
+
 **Validation** (@CLAUDE.md compliance):
 - [ ] Single source of truth (constants in config)
 - [ ] No hardcoding (all values in config)
@@ -1422,5 +1449,8 @@ npx prisma migrate deploy
 ---
 
 **Document Status**: Implementation Ready
-**Next Action**: Begin implementation with `tracking-simple.ts` config file
+**Next Action**:
+1. Remove TrackingCache from schema and create migration
+2. Begin implementation with `tracking-simple.ts` config file
+
 **Success Criteria**: All test cases pass, deploys to Railway successfully

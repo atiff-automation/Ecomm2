@@ -293,7 +293,6 @@ model Order {
   user                     User?              @relation(fields: [userId], references: [id])
   pendingMembership        PendingMembership?
   shipment                 Shipment?
-  trackingCache            TrackingCache?
 
   @@index([userId])
   @@index([status])
@@ -803,95 +802,6 @@ model WebhookQueue {
   @@map("webhook_queue")
 }
 
-/// @deprecated - No longer used, replaced with simplified tracking approach
-/// Keep table for now in case rollback needed. Can drop after 30 days.
-model TrackingCache {
-  id                     String              @id @default(cuid())
-  orderId                String              @unique
-  courierTrackingNumber  String
-  courierService         String
-  currentStatus          String
-  lastStatusUpdate       DateTime
-  trackingEvents         Json                @default("[]")
-  estimatedDelivery      DateTime?
-  actualDelivery         DateTime?
-  deliveryLocation       String?
-  lastApiUpdate          DateTime
-  nextUpdateDue          DateTime
-  updateFrequencyMinutes Int                 @default(120)
-  consecutiveFailures    Int                 @default(0)
-  isDelivered            Boolean             @default(false)
-  isFailed               Boolean             @default(false)
-  isActive               Boolean             @default(true)
-  requiresAttention      Boolean             @default(false)
-  lastApiResponse        Json?
-  apiResponseHash        String?
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
-  order                  Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  jobQueue               TrackingJobQueue[]
-  updateLogs             TrackingUpdateLog[]
-
-  @@unique([orderId, courierTrackingNumber])
-  @@index([orderId])
-  @@index([courierTrackingNumber])
-  @@index([nextUpdateDue])
-  @@index([isActive, isDelivered])
-  @@index([currentStatus])
-  @@index([requiresAttention])
-  @@map("tracking_cache")
-}
-
-/// @deprecated - Related to deprecated TrackingCache
-model TrackingUpdateLog {
-  id                String        @id @default(cuid())
-  trackingCacheId   String
-  updateType        String
-  triggeredBy       String?
-  apiCallSuccess    Boolean
-  apiResponseTimeMs Int?
-  apiStatusCode     Int?
-  apiErrorMessage   String?
-  statusChanged     Boolean       @default(false)
-  previousStatus    String?
-  newStatus         String?
-  eventsAdded       Int           @default(0)
-  startedAt         DateTime
-  completedAt       DateTime?
-  createdAt         DateTime      @default(now())
-  trackingCache     TrackingCache @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
-
-  @@index([trackingCacheId])
-  @@index([startedAt])
-  @@index([apiCallSuccess])
-  @@index([updateType])
-  @@map("tracking_update_logs")
-}
-
-/// @deprecated - Related to deprecated TrackingCache
-model TrackingJobQueue {
-  id              String            @id @default(cuid())
-  trackingCacheId String
-  jobType         TrackingJobType
-  priority        Int               @default(100)
-  scheduledFor    DateTime
-  attempts        Int               @default(0)
-  maxAttempts     Int               @default(3)
-  lastAttemptAt   DateTime?
-  lastError       String?
-  status          TrackingJobStatus @default(PENDING)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  trackingCache   TrackingCache     @relation(fields: [trackingCacheId], references: [id], onDelete: Cascade)
-
-  @@index([scheduledFor, status])
-  @@index([trackingCacheId])
-  @@index([status])
-  @@index([priority])
-  @@index([jobType])
-  @@map("tracking_job_queue")
-}
-
 model MalaysianState {
   id        String              @id @db.VarChar(3)
   name      String              @db.VarChar(100)
@@ -1265,20 +1175,6 @@ enum WebhookStatus {
   RETRY
   PROCESSED
   FAILED
-}
-
-enum TrackingJobStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
-enum TrackingJobType {
-  UPDATE
-  RETRY
-  MANUAL
-  CLEANUP
 }
 
 enum ReceiptTemplateType {
