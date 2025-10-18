@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { OrderStatus } from '@prisma/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,7 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
-// Tracking components removed - will be replaced with simple implementation
+import { OrderStatusTimeline } from '@/components/tracking/OrderStatusTimeline';
 import Image from 'next/image';
 
 interface OrderItem {
@@ -56,7 +57,7 @@ interface Address {
 interface Order {
   id: string;
   orderNumber: string;
-  status: string;
+  status: OrderStatus;
   paymentStatus: string;
   subtotal: number;
   taxAmount: number;
@@ -321,6 +322,19 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Order Status Timeline */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            Order #{order.orderNumber}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OrderStatusTimeline currentStatus={order.status} />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}

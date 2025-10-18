@@ -37,7 +37,7 @@ export function OrderStatusTimeline({
   return (
     <div className={cn('w-full py-6', className)}>
       {/* Timeline visualization */}
-      <div className="flex items-center justify-between relative">
+      <div className="flex items-start justify-between relative px-4 md:px-0">
         {TIMELINE_STAGES.map((stage, index) => {
           const isCompletedOrCurrent = currentStage >= stage.number;
           const isPending = currentStage < stage.number;
@@ -46,29 +46,29 @@ export function OrderStatusTimeline({
           return (
             <React.Fragment key={stage.number}>
               {/* Stage indicator */}
-              <div className="flex flex-col items-center relative z-10">
+              <div className="flex flex-col items-center relative z-10 flex-shrink-0">
                 {/* Circle */}
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300',
+                    'w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 bg-white',
                     {
-                      'bg-green-100 border-2 border-green-500': isCompletedOrCurrent,
-                      'bg-gray-100 border-2 border-gray-300': isPending,
+                      'border-2 border-green-500': isCompletedOrCurrent,
+                      'border-2 border-gray-300': isPending,
                     }
                   )}
                 >
                   {isCompletedOrCurrent && (
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-green-600" />
                   )}
                   {isPending && (
-                    <Circle className="w-6 h-6 text-gray-400" />
+                    <Circle className="w-6 h-6 md:w-7 md:h-7 text-gray-400" />
                   )}
                 </div>
 
                 {/* Label */}
-                <div className="text-center mt-2 max-w-[80px]">
+                <div className="text-center mt-3 w-16 md:w-20">
                   <p
-                    className={cn('text-xs font-medium leading-tight', {
+                    className={cn('text-[10px] md:text-xs font-medium leading-tight break-words', {
                       'text-green-700': isCompletedOrCurrent,
                       'text-gray-500': isPending,
                     })}
@@ -80,15 +80,17 @@ export function OrderStatusTimeline({
 
               {/* Connecting line */}
               {!isLast && (
-                <div
-                  className={cn(
-                    'flex-1 h-0.5 mx-2 transition-all duration-300',
-                    {
-                      'bg-green-500': currentStage > stage.number,
-                      'bg-gray-300 border-t-2 border-dashed': currentStage <= stage.number,
-                    }
-                  )}
-                />
+                <div className="flex items-center flex-1 px-1 md:px-2 pt-5">
+                  <div
+                    className={cn(
+                      'w-full h-0.5 transition-all duration-300',
+                      {
+                        'bg-green-500': currentStage > stage.number,
+                        'bg-gray-300': currentStage <= stage.number,
+                      }
+                    )}
+                  />
+                </div>
               )}
             </React.Fragment>
           );
