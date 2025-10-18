@@ -35,9 +35,9 @@ export const GRID_COLUMNS = {
   productCompact: {
     mobile: 2,
     sm: 2,
-    md: 2,
-    lg: 3,
-    xl: 4
+    md: 3,
+    lg: 4,
+    xl: 5
   },
 
   // Search results - Optimized for search pages

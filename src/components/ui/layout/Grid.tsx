@@ -155,9 +155,9 @@ export const CompactProductGrid = ({ children, className, ...props }: Omit<GridP
     cols={2}
     responsive={{
       sm: 2,
-      md: 2,
-      lg: 3,
-      xl: 4
+      md: 3,
+      lg: 4,
+      xl: 5
     }}
     gap="sm"
     className={className}

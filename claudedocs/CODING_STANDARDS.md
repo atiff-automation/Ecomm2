@@ -384,7 +384,7 @@ import { ProductGrid } from '@/components/ui/layout';
 | Component | Use Case | Mobile | Tablet | Desktop | XL |
 |-----------|----------|--------|--------|---------|-----|
 | `ProductGrid` | Product listings | 2 | 3 | 4 | 5 |
-| `CompactProductGrid` | Sidebars, recommendations | 2 | 2 | 3 | 4 |
+| `CompactProductGrid` | Sidebars, recommendations | 2 | 3 | 4 | 5 |
 | `SearchResultsGrid` | Search results | 2 | 2 | 3 | 4 |
 | `WishlistGrid` | Wishlist page | 2 | 2 | 3 | 4 |
 | `CategoryGrid` | Category tiles | 2 | 3 | 4 | 6 |
