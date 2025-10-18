@@ -12,7 +12,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderInlineActions } from './OrderInlineActions';
-import { FulfillmentConfirmDialog } from './FulfillmentConfirmDialog';
+import { ResponsiveFulfillmentDialog } from './ResponsiveFulfillmentDialog';
 import {
   formatCurrency,
   formatOrderDate,
@@ -353,7 +353,7 @@ export function OrderTable({
 
       {/* Fulfillment Confirmation Dialog */}
       {selectedOrderForFulfillment && (
-        <FulfillmentConfirmDialog
+        <ResponsiveFulfillmentDialog
           open={fulfillmentDialogOpen}
           onOpenChange={setFulfillmentDialogOpen}
           order={{

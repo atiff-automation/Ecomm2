@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
-import { FulfillmentConfirmDialog } from '@/components/admin/orders/FulfillmentConfirmDialog';
+import { ResponsiveFulfillmentDialog } from '@/components/admin/orders/ResponsiveFulfillmentDialog';
 import {
   formatCurrency,
   formatOrderDateTime,
@@ -735,7 +735,7 @@ export default function OrderDetailsPage() {
 
       {/* Fulfillment Confirmation Dialog */}
       {order && (
-        <FulfillmentConfirmDialog
+        <ResponsiveFulfillmentDialog
           open={fulfillmentDialogOpen}
           onOpenChange={setFulfillmentDialogOpen}
           order={{
