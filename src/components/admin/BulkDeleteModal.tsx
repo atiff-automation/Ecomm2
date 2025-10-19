@@ -99,7 +99,9 @@ export function BulkDeleteModal({
   }, [open]);
 
   const handleConfirm = async () => {
-    if (!summary?.canDelete || loading) return;
+    if (!summary?.canDelete || loading) {
+      return;
+    }
 
     try {
       await onConfirm(productIds);
@@ -111,7 +113,9 @@ export function BulkDeleteModal({
   };
 
   const handleCancel = () => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
     onOpenChange(false);
   };
 

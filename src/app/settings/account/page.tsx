@@ -76,7 +76,9 @@ export default function AccountSettingsPage() {
   }, [session, resetProfile]);
 
   const handleProfileUpdate = async (data: PersonalInfoFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsLoadingProfile(true);
     try {
@@ -112,7 +114,9 @@ export default function AccountSettingsPage() {
   };
 
   const handlePasswordChange = async (data: PasswordChangeFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsLoadingPassword(true);
     try {

@@ -146,7 +146,9 @@ export default function AgentApplicationDetailPage() {
   }, [applicationId]);
 
   const handleStatusUpdate = async () => {
-    if (!application || !newStatus) return;
+    if (!application || !newStatus) {
+      return;
+    }
 
     try {
       setUpdating(true);
@@ -220,7 +222,9 @@ export default function AgentApplicationDetailPage() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not set';
+    if (!dateString) {
+      return 'Not set';
+    }
     return new Date(dateString).toLocaleDateString('en-MY', {
       year: 'numeric',
       month: 'long',

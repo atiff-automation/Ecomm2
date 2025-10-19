@@ -86,7 +86,9 @@ export default function PrivacySettingsPage() {
   };
 
   const handleSavePreferences = async (data: NotificationPreferencesData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {

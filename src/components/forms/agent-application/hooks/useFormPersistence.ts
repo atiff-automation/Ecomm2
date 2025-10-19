@@ -48,7 +48,9 @@ export function useFormPersistence() {
   } | null => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return null;
+      if (!stored) {
+        return null;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
 
@@ -97,7 +99,9 @@ export function useFormPersistence() {
   const hasSavedData = useCallback((): boolean => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return false;
+      if (!stored) {
+        return false;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
       return persistedData.version === STORAGE_VERSION;
@@ -137,7 +141,9 @@ export function useFormPersistence() {
   const getStorageInfo = useCallback(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return null;
+      if (!stored) {
+        return null;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
       return {

@@ -378,7 +378,9 @@ export function ProductGrid({
 
   // Render section header if provided
   const renderHeader = () => {
-    if (!title && !subtitle && !description) return null;
+    if (!title && !subtitle && !description) {
+      return null;
+    }
 
     return (
       <SectionHeader
@@ -393,7 +395,9 @@ export function ProductGrid({
 
   // Render toolbar
   const renderToolbar = () => {
-    if (!showViewToggle && !showSorting && !onRefresh) return null;
+    if (!showViewToggle && !showSorting && !onRefresh) {
+      return null;
+    }
 
     return (
       <div className="flex items-center justify-between mb-6">
@@ -502,10 +506,14 @@ export function ProductGrid({
 
   // Render load more button
   const renderLoadMore = () => {
-    if (!showLoadMore || !onLoadMore || !pagination) return null;
+    if (!showLoadMore || !onLoadMore || !pagination) {
+      return null;
+    }
 
     const hasMore = pagination.page < pagination.totalPages;
-    if (!hasMore) return null;
+    if (!hasMore) {
+      return null;
+    }
 
     return (
       <div className="text-center mt-8">

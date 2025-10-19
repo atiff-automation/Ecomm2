@@ -53,7 +53,9 @@ class OrderFlowLogger {
    * Log API request
    */
   logRequest(step: string, endpoint: string, payload: any, orderId?: string) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled) {
+      return;
+    }
 
     this.log('REQUEST', step, {
       endpoint,
@@ -66,7 +68,9 @@ class OrderFlowLogger {
    * Log API response
    */
   logResponse(step: string, endpoint: string, response: any, orderId?: string) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled) {
+      return;
+    }
 
     this.log('RESPONSE', step, {
       endpoint,
@@ -79,7 +83,9 @@ class OrderFlowLogger {
    * Log error
    */
   logError(step: string, error: any, context?: any) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled) {
+      return;
+    }
 
     this.log('ERROR', step, {
       error:
@@ -98,7 +104,9 @@ class OrderFlowLogger {
    * Log info
    */
   logInfo(step: string, message: string, data?: any) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled) {
+      return;
+    }
 
     this.log('INFO', step, { message, ...data });
   }
@@ -150,7 +158,9 @@ class OrderFlowLogger {
    * Sanitize sensitive data from payloads
    */
   private sanitizePayload(payload: any): any {
-    if (!payload) return payload;
+    if (!payload) {
+      return payload;
+    }
 
     const sanitized = { ...payload };
 
@@ -169,7 +179,9 @@ class OrderFlowLogger {
     ];
 
     const sanitizeObject = (obj: any): any => {
-      if (typeof obj !== 'object' || obj === null) return obj;
+      if (typeof obj !== 'object' || obj === null) {
+        return obj;
+      }
 
       if (Array.isArray(obj)) {
         return obj.map(sanitizeObject);

@@ -116,12 +116,16 @@ export function AgentApplicationForm({
 
   // Validate current step
   const validateCurrentStep = async (): Promise<boolean> => {
-    if (!currentStepConfig) return true;
+    if (!currentStepConfig) {
+      return true;
+    }
 
     const stepId = currentStepConfig.id as keyof typeof stepSchemas;
     const stepSchema = stepSchemas[stepId];
 
-    if (!stepSchema) return true;
+    if (!stepSchema) {
+      return true;
+    }
 
     // Get only the current step's field values
     const allValues = getValues();
@@ -281,12 +285,16 @@ export function AgentApplicationForm({
 
   // Check if current step is valid
   const isCurrentStepValid = async () => {
-    if (!currentStepConfig) return true;
+    if (!currentStepConfig) {
+      return true;
+    }
 
     const stepId = currentStepConfig.id as keyof typeof stepSchemas;
     const stepSchema = stepSchemas[stepId];
 
-    if (!stepSchema) return true;
+    if (!stepSchema) {
+      return true;
+    }
 
     try {
       stepSchema.parse(getValues());

@@ -13,7 +13,9 @@ export function DynamicFavicon() {
       try {
         // Fetch site customization data
         const response = await fetch('/api/site-customization/current');
-        if (!response.ok) return;
+        if (!response.ok) {
+          return;
+        }
 
         const data = await response.json();
 
@@ -33,7 +35,7 @@ export function DynamicFavicon() {
           link.href = data.branding.favicon.url;
 
           // Also update any apple-touch-icon if the same image should be used
-          let appleTouchIcon = document.querySelector(
+          const appleTouchIcon = document.querySelector(
             "link[rel='apple-touch-icon']"
           ) as HTMLLinkElement;
           if (appleTouchIcon) {

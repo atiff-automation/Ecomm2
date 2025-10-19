@@ -157,7 +157,7 @@ export class ProductCacheService extends BaseCacheService {
   async getProduct(productId: string): Promise<ProductCacheData | null> {
     try {
       // Try cache first
-      let cachedProduct = await this.getCachedProduct(productId);
+      const cachedProduct = await this.getCachedProduct(productId);
 
       if (cachedProduct) {
         return cachedProduct;

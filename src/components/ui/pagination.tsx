@@ -26,7 +26,9 @@ export function Pagination({
   maxVisiblePages = 7,
   className,
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   const getVisiblePages = () => {
     if (totalPages <= maxVisiblePages) {
@@ -35,7 +37,7 @@ export function Pagination({
 
     const half = Math.floor(maxVisiblePages / 2);
     let start = Math.max(1, currentPage - half);
-    let end = Math.min(totalPages, start + maxVisiblePages - 1);
+    const end = Math.min(totalPages, start + maxVisiblePages - 1);
 
     if (end - start + 1 < maxVisiblePages) {
       start = Math.max(1, end - maxVisiblePages + 1);

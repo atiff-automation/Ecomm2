@@ -106,7 +106,9 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
   };
 
   const handleDownload = async () => {
-    if (!previewHtml) return;
+    if (!previewHtml) {
+      return;
+    }
 
     try {
       const blob = new Blob([previewHtml], { type: 'text/html' });
@@ -128,7 +130,9 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
   };
 
   const handlePrint = () => {
-    if (!previewHtml) return;
+    if (!previewHtml) {
+      return;
+    }
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {

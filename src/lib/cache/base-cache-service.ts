@@ -141,7 +141,9 @@ export abstract class BaseCacheService {
    * Test Redis connection health
    */
   private async testConnection(): Promise<void> {
-    if (!this.redis) return;
+    if (!this.redis) {
+      return;
+    }
 
     try {
       await this.redis.ping();
@@ -497,7 +499,9 @@ export abstract class BaseCacheService {
    */
   private async manageCacheSize(): Promise<void> {
     try {
-      if (!this.isRedisAvailable || !this.redis) return;
+      if (!this.isRedisAvailable || !this.redis) {
+        return;
+      }
 
       const keys = await this.redis.keys(`${this.config.keyPrefix}:*`);
 

@@ -70,6 +70,7 @@ interface Product {
   regularPrice: number;
   memberPrice: number;
   stockQuantity: number;
+  lowStockAlert: number;
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
   featured: boolean;
   isPromotional: boolean;
@@ -709,24 +710,24 @@ export default function AdminProductsPage() {
                                 variant={
                                   product.stockQuantity === 0
                                     ? 'destructive'
-                                    : product.stockQuantity <
-                                        PRODUCT_CONSTANTS.LOW_STOCK_THRESHOLD
+                                    : product.stockQuantity <=
+                                        product.lowStockAlert
                                       ? 'secondary'
                                       : 'outline'
                                 }
                                 className={
                                   product.stockQuantity === 0
                                     ? 'bg-red-100 text-red-800'
-                                    : product.stockQuantity <
-                                        PRODUCT_CONSTANTS.LOW_STOCK_THRESHOLD
+                                    : product.stockQuantity <=
+                                        product.lowStockAlert
                                       ? 'bg-yellow-100 text-yellow-800'
                                       : 'bg-green-100 text-green-800'
                                 }
                               >
                                 {product.stockQuantity}
                               </Badge>
-                              {product.stockQuantity <
-                                PRODUCT_CONSTANTS.LOW_STOCK_THRESHOLD &&
+                              {product.stockQuantity <=
+                                product.lowStockAlert &&
                                 product.stockQuantity > 0 && (
                                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
                                 )}

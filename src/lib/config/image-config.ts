@@ -236,7 +236,9 @@ export function generateSrcSet(
   return sizeKeys
     .map(sizeKey => {
       const size = getImageSize(sizeKey);
-      if (!size) return '';
+      if (!size) {
+        return '';
+      }
 
       const fileName = generateImageFileName(
         baseName,

@@ -25,7 +25,9 @@ export async function GET(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const customer = await prisma.user.findUnique({
       where: {
@@ -128,7 +130,9 @@ export async function PUT(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
 

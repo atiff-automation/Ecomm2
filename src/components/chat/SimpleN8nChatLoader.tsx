@@ -27,7 +27,9 @@ export function SimpleN8nChatLoader() {
   }, []);
 
   useEffect(() => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     console.log('🚀 Initializing n8n chat with webhook:', config.webhookUrl);
 
@@ -129,7 +131,9 @@ export function SimpleN8nChatLoader() {
           return () => {
             observer.disconnect();
             const styleEl = document.getElementById('n8n-chat-custom-styles');
-            if (styleEl) styleEl.remove();
+            if (styleEl) {
+              styleEl.remove();
+            }
           };
         }
       })

@@ -105,7 +105,9 @@ export function ProductActions({
   const maxQty = Math.min(maxQuantity, stock);
 
   const handleAddToCart = async () => {
-    if (isOutOfStock || isLoading) return;
+    if (isOutOfStock || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('addToCart');
@@ -119,7 +121,9 @@ export function ProductActions({
   };
 
   const handleToggleWishlist = async () => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('wishlist');
@@ -137,7 +141,9 @@ export function ProductActions({
   };
 
   const handleToggleCompare = async () => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('compare');
@@ -393,7 +399,9 @@ export function QuickAddButton({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
-    if (isOutOfStock || isLoading) return;
+    if (isOutOfStock || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     try {

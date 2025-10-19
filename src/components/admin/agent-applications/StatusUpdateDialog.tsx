@@ -133,7 +133,9 @@ export function StatusUpdateDialog({
 
   const getStatusIcon = (statusValue: AgentApplicationStatus) => {
     const option = statusOptions.find(opt => opt.value === statusValue);
-    if (!option) return null;
+    if (!option) {
+      return null;
+    }
     const Icon = option.icon;
     return <Icon className="w-4 h-4" />;
   };

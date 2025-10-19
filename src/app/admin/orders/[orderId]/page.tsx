@@ -203,7 +203,9 @@ export default function OrderDetailsPage() {
   };
 
   const handleDeleteOrder = async () => {
-    if (!order) return;
+    if (!order) {
+      return;
+    }
 
     setIsDeleting(true);
     try {

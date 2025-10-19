@@ -99,7 +99,9 @@ export function MegaMenu({
     }).format(price);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const currentSection =
     sections.find(section => section.title === activeSection) || sections[0];

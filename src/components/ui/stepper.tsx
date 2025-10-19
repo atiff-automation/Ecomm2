@@ -237,7 +237,9 @@ export function useStepperState(initialSteps: Omit<StepperStep, 'status'>[]) {
 
   const goToStep = (stepId: string) => {
     const stepIndex = steps.findIndex(step => step.id === stepId);
-    if (stepIndex === -1) return;
+    if (stepIndex === -1) {
+      return;
+    }
 
     setCurrentStep(stepId);
     setSteps(prev =>

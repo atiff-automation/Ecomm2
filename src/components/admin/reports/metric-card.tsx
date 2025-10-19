@@ -45,8 +45,12 @@ export function MetricCard({
   };
 
   const getChangeColor = (changeValue: number) => {
-    if (changeValue > 0) return 'text-green-600 bg-green-50';
-    if (changeValue < 0) return 'text-red-600 bg-red-50';
+    if (changeValue > 0) {
+      return 'text-green-600 bg-green-50';
+    }
+    if (changeValue < 0) {
+      return 'text-red-600 bg-red-50';
+    }
     return 'text-gray-600 bg-gray-50';
   };
 

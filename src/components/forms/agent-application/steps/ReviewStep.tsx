@@ -60,7 +60,9 @@ export function ReviewStep({ form }: ReviewStepProps) {
   };
 
   const formatPhoneNumber = (phone: string) => {
-    if (!phone) return '';
+    if (!phone) {
+      return '';
+    }
     // Format Malaysian phone numbers
     return phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
   };

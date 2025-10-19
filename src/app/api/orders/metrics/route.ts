@@ -12,7 +12,9 @@ export async function GET() {
   try {
     // Authorization check - only admins can view metrics
     const { error } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     // Calculate all metrics in parallel for performance
     const [total, awaitingPayment, processing, shipped, delivered, cancelled] =

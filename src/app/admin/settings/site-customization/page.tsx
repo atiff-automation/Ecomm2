@@ -183,7 +183,9 @@ export default function SiteCustomizationSettings() {
   };
 
   const saveConfiguration = async (showMessage = true) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -277,7 +279,9 @@ export default function SiteCustomizationSettings() {
     type: 'hero_background' | 'logo' | 'favicon',
     section: 'hero' | 'branding'
   ) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     try {
       // Get current file URL to extract filename
@@ -333,7 +337,9 @@ export default function SiteCustomizationSettings() {
     section: 'hero' | 'branding'
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !config) return;
+    if (!file || !config) {
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -411,7 +417,9 @@ export default function SiteCustomizationSettings() {
   // ==================== CONFIGURATION UPDATES ====================
 
   const updateConfig = (path: string, value: any) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const updatedConfig = { ...config };
     const keys = path.split('.');
@@ -432,7 +440,9 @@ export default function SiteCustomizationSettings() {
 
   const handleSliderChange = useCallback(
     (updates: Partial<SliderConfig>) => {
-      if (!config) return;
+      if (!config) {
+        return;
+      }
 
       const updatedConfig = {
         ...config,

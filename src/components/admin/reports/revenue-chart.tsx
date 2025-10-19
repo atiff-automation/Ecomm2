@@ -82,7 +82,9 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
   };
 
   const getMaxRevenue = () => {
-    if (!analytics?.daily.length) return 0;
+    if (!analytics?.daily.length) {
+      return 0;
+    }
     return Math.max(...analytics.daily.map(point => point.revenue));
   };
 

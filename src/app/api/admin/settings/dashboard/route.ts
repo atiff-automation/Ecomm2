@@ -108,7 +108,9 @@ export async function GET(request: NextRequest) {
  * Calculate business profile completeness percentage
  */
 function calculateBusinessProfileCompleteness(profile: any): number {
-  if (!profile) return 0;
+  if (!profile) {
+    return 0;
+  }
 
   const requiredFields = [
     'legalName',

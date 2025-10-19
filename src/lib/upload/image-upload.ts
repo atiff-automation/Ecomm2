@@ -186,11 +186,15 @@ export async function uploadProductImage(
     // Generate all size and format combinations
     for (const sizeKey of sizes) {
       const sizeConfig = getImageSize(sizeKey);
-      if (!sizeConfig) continue;
+      if (!sizeConfig) {
+        continue;
+      }
 
       for (const formatKey of formats) {
         const formatConfig = getImageFormat(formatKey);
-        if (!formatConfig) continue;
+        if (!formatConfig) {
+          continue;
+        }
 
         try {
           // Process image variant

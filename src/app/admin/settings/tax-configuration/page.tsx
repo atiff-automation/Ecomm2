@@ -112,7 +112,9 @@ export default function TaxConfigurationPage() {
   };
 
   const handleSaveTaxConfig = async (data: TaxConfigurationFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {

@@ -11,9 +11,6 @@ export const PRODUCT_LISTING = {
   /** Default number of products per page in admin listing */
   PAGINATION_LIMIT: 20,
 
-  /** Low stock threshold for warning display */
-  LOW_STOCK_THRESHOLD: 10,
-
   /** Default low stock alert value for new products */
   DEFAULT_LOW_STOCK_ALERT: 10,
 } as const;

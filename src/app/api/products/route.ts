@@ -66,7 +66,9 @@ const searchProductsSchema = z.object({
     .string()
     .optional()
     .transform(val => {
-      if (!val) return undefined;
+      if (!val) {
+        return undefined;
+      }
       try {
         return JSON.parse(val) as (
           | 'featured'

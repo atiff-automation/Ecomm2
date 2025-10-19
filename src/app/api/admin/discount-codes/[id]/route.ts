@@ -21,7 +21,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const discountCode = await prisma.discountCode.findUnique({
       where: { id: params.id },
@@ -101,7 +103,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
 
@@ -149,7 +153,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     // Check if the discount code has been used
     const usageCount = await prisma.discountUsage.count({

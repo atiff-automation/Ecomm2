@@ -95,7 +95,9 @@ export default function ChatConfigPage() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to save configuration');
+      if (!response.ok) {
+        throw new Error('Failed to save configuration');
+      }
 
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
@@ -129,7 +131,9 @@ export default function ChatConfigPage() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to clear configuration');
+      if (!response.ok) {
+        throw new Error('Failed to clear configuration');
+      }
 
       setWebhookUrl('');
       setIsEnabled(false);
@@ -153,7 +157,9 @@ export default function ChatConfigPage() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     if (
@@ -186,7 +192,9 @@ export default function ChatConfigPage() {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to upload avatar');
+      if (!response.ok) {
+        throw new Error('Failed to upload avatar');
+      }
 
       const data = await response.json();
       setBotAvatarUrl(data.mediaUpload.url);

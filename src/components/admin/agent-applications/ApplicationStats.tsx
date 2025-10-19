@@ -106,14 +106,22 @@ export function ApplicationStats() {
   ];
 
   const getGrowthIcon = () => {
-    if (stats.growth > 0) return TrendingUp;
-    if (stats.growth < 0) return TrendingDown;
+    if (stats.growth > 0) {
+      return TrendingUp;
+    }
+    if (stats.growth < 0) {
+      return TrendingDown;
+    }
     return Minus;
   };
 
   const getGrowthColor = () => {
-    if (stats.growth > 0) return 'text-green-600';
-    if (stats.growth < 0) return 'text-red-600';
+    if (stats.growth > 0) {
+      return 'text-green-600';
+    }
+    if (stats.growth < 0) {
+      return 'text-red-600';
+    }
     return 'text-gray-600';
   };
 

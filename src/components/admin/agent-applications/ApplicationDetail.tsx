@@ -86,7 +86,9 @@ export function ApplicationDetail({
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return '-';
+    if (!date) {
+      return '-';
+    }
     try {
       return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ms });
     } catch {

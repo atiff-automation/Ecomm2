@@ -318,22 +318,9 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    if (stockLevel && stockLevel !== 'all') {
-      switch (stockLevel) {
-        case 'low-stock':
-          where.AND = [
-            { stockQuantity: { lte: 10 } }, // Low stock threshold
-            { stockQuantity: { gt: 0 } },
-          ];
-          break;
-        case 'out-of-stock':
-          where.stockQuantity = 0;
-          break;
-        case 'in-stock':
-          where.stockQuantity = { gt: 10 }; // Above low stock threshold
-          break;
-      }
-    }
+    // Note: Stock level filtering is handled after fetching
+    // Prisma doesn't support comparing two columns directly in WHERE clause
+    let stockLevelFilter = stockLevel;
 
     if (promotionStatus && promotionStatus !== 'all') {
       const now = new Date();
@@ -356,7 +343,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
+    const [allProducts, total] = await Promise.all([
       prisma.product.findMany({
         where,
         skip,
@@ -389,6 +376,26 @@ export async function GET(request: NextRequest) {
       }),
       prisma.product.count({ where }),
     ]);
+
+    // Apply stock level filtering based on each product's lowStockAlert
+    let products = allProducts;
+    if (stockLevelFilter && stockLevelFilter !== 'all') {
+      products = allProducts.filter(product => {
+        switch (stockLevelFilter) {
+          case 'low-stock':
+            return (
+              product.stockQuantity <= product.lowStockAlert &&
+              product.stockQuantity > 0
+            );
+          case 'out-of-stock':
+            return product.stockQuantity === 0;
+          case 'in-stock':
+            return product.stockQuantity > product.lowStockAlert;
+          default:
+            return true;
+        }
+      });
+    }
 
     return NextResponse.json({
       products,

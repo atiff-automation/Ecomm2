@@ -205,22 +205,33 @@ export class AgentApplicationService {
 
       // Sanitize update data
       const sanitizedData = data as Partial<AgentApplicationFormData>;
-      if (data.fullName) sanitizedData.fullName = sanitizeString(data.fullName);
-      if (data.address) sanitizedData.address = sanitizeString(data.address);
-      if (data.businessLocation)
+      if (data.fullName) {
+        sanitizedData.fullName = sanitizeString(data.fullName);
+      }
+      if (data.address) {
+        sanitizedData.address = sanitizeString(data.address);
+      }
+      if (data.businessLocation) {
         sanitizedData.businessLocation = sanitizeString(data.businessLocation);
-      if (data.instagramHandle)
+      }
+      if (data.instagramHandle) {
         sanitizedData.instagramHandle = sanitizeString(data.instagramHandle);
-      if (data.facebookHandle)
+      }
+      if (data.facebookHandle) {
         sanitizedData.facebookHandle = sanitizeString(data.facebookHandle);
-      if (data.tiktokHandle)
+      }
+      if (data.tiktokHandle) {
         sanitizedData.tiktokHandle = sanitizeString(data.tiktokHandle);
-      if (data.jrmProducts)
+      }
+      if (data.jrmProducts) {
         sanitizedData.jrmProducts = sanitizeString(data.jrmProducts);
-      if (data.reasonToJoin)
+      }
+      if (data.reasonToJoin) {
         sanitizedData.reasonToJoin = sanitizeString(data.reasonToJoin);
-      if (data.expectations)
+      }
+      if (data.expectations) {
         sanitizedData.expectations = sanitizeString(data.expectations);
+      }
 
       // Update the application
       const updatedApplication = await prisma.agentApplication.update({

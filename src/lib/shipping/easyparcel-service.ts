@@ -181,7 +181,7 @@ export class EasyParcelService {
     }
 
     // Remove all non-digit characters
-    let cleaned = phone.replace(/\D/g, '');
+    const cleaned = phone.replace(/\D/g, '');
 
     // If starts with '60' (Malaysia country code), keep it
     // If starts with '0', keep it (local format)

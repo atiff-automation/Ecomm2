@@ -28,7 +28,7 @@ export function getNextBusinessDay(fromDate: Date = new Date()): Date {
   nextDay.setDate(nextDay.getDate() + 1);
   nextDay.setHours(0, 0, 0, 0);
 
-  let currentDate = new Date(nextDay);
+  const currentDate = new Date(nextDay);
   const maxAttempts = 14; // Prevent infinite loop (check up to 2 weeks ahead)
   let attempts = 0;
 

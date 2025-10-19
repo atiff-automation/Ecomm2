@@ -177,7 +177,9 @@ export function isEncryptedData(value: any): value is EncryptedData {
  * Returns null instead of throwing for invalid inputs
  */
 export function safeEncrypt(plaintext: string | null): EncryptedData | null {
-  if (!plaintext) return null;
+  if (!plaintext) {
+    return null;
+  }
 
   try {
     return encryptSensitiveData(plaintext);
@@ -194,7 +196,9 @@ export function safeEncrypt(plaintext: string | null): EncryptedData | null {
 export function safeDecrypt(
   encryptedData: EncryptedData | null
 ): string | null {
-  if (!encryptedData) return null;
+  if (!encryptedData) {
+    return null;
+  }
 
   try {
     return decryptSensitiveData(encryptedData);

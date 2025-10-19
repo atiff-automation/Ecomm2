@@ -221,13 +221,23 @@ export class AuditLogger {
 
     const where: any = {};
 
-    if (userId) where.userId = userId;
-    if (resource) where.resource = resource;
-    if (action) where.action = action;
+    if (userId) {
+      where.userId = userId;
+    }
+    if (resource) {
+      where.resource = resource;
+    }
+    if (action) {
+      where.action = action;
+    }
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt.gte = dateFrom;
-      if (dateTo) where.createdAt.lte = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     const [logs, total] = await Promise.all([
@@ -280,7 +290,9 @@ export class AuditLogger {
    * @returns Sanitized profile data
    */
   private static sanitizeProfileData(profile: any): any {
-    if (!profile) return null;
+    if (!profile) {
+      return null;
+    }
 
     const sanitized = { ...profile };
 

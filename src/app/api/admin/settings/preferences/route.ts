@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if admin preferences exist in notification preferences table
-    let adminPreferences = await prisma.notificationPreference.findFirst({
+    const adminPreferences = await prisma.notificationPreference.findFirst({
       where: {
         userId: session.user.id,
       },

@@ -213,7 +213,9 @@ function SlideEditDialog({
   }, [slide]);
 
   const handleSave = useCallback(() => {
-    if (!slide) return;
+    if (!slide) {
+      return;
+    }
 
     const updatedSlide: HeroSlide = {
       ...slide,
@@ -224,7 +226,9 @@ function SlideEditDialog({
     onOpenChange(false);
   }, [slide, altText, onSave, onOpenChange]);
 
-  if (!slide) return null;
+  if (!slide) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

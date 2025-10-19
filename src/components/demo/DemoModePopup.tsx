@@ -67,7 +67,9 @@ export default function DemoModePopup({
   };
 
   // Don't render if not visible
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const message = DEMO_CONFIG.messages[type];
   const isCheckoutType = type === 'checkout';

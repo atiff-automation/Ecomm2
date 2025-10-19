@@ -162,7 +162,9 @@ export class NotificationLogger {
   private static async logToConsole(
     entry: NotificationLogEntry
   ): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_CONSOLE_LOGGING) return;
+    if (!LOGGING_CONFIG.ENABLE_CONSOLE_LOGGING) {
+      return;
+    }
 
     const timestamp = entry.timestamp.toISOString();
     const levelName = LogLevel[entry.level];
@@ -194,7 +196,9 @@ export class NotificationLogger {
   private static async bufferForDatabase(
     entry: NotificationLogEntry
   ): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_DATABASE_LOGGING) return;
+    if (!LOGGING_CONFIG.ENABLE_DATABASE_LOGGING) {
+      return;
+    }
 
     this.logBuffer.push(entry);
 
@@ -211,7 +215,9 @@ export class NotificationLogger {
    * SYSTEMATIC database flushing - DRY PRINCIPLE
    */
   private static async flushToDatabase(): Promise<void> {
-    if (this.logBuffer.length === 0) return;
+    if (this.logBuffer.length === 0) {
+      return;
+    }
 
     const logsToFlush = [...this.logBuffer];
     this.logBuffer = [];
@@ -256,7 +262,9 @@ export class NotificationLogger {
   private static async updateMetrics(
     entry: NotificationLogEntry
   ): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_METRICS) return;
+    if (!LOGGING_CONFIG.ENABLE_METRICS) {
+      return;
+    }
 
     // Invalidate cache on new events to ensure fresh metrics
     this.metricsCache = null;
@@ -348,7 +356,9 @@ export class NotificationLogger {
       },
     });
 
-    if (recentLogs.length === 0) return;
+    if (recentLogs.length === 0) {
+      return;
+    }
 
     const errorCount = recentLogs.filter(log => log.level === 'ERROR').length;
     const errorRate = errorCount / recentLogs.length;
@@ -601,16 +611,29 @@ export class NotificationLogger {
   }) {
     const where: any = {};
 
-    if (criteria.level) where.level = criteria.level;
-    if (criteria.event) where.event = criteria.event;
-    if (criteria.channel) where.channel = criteria.channel;
-    if (criteria.userId) where.userId = criteria.userId;
-    if (criteria.errorMessage)
+    if (criteria.level) {
+      where.level = criteria.level;
+    }
+    if (criteria.event) {
+      where.event = criteria.event;
+    }
+    if (criteria.channel) {
+      where.channel = criteria.channel;
+    }
+    if (criteria.userId) {
+      where.userId = criteria.userId;
+    }
+    if (criteria.errorMessage) {
       where.errorMessage = { contains: criteria.errorMessage };
+    }
     if (criteria.timeFrom || criteria.timeTo) {
       where.timestamp = {};
-      if (criteria.timeFrom) where.timestamp.gte = criteria.timeFrom;
-      if (criteria.timeTo) where.timestamp.lte = criteria.timeTo;
+      if (criteria.timeFrom) {
+        where.timestamp.gte = criteria.timeFrom;
+      }
+      if (criteria.timeTo) {
+        where.timestamp.lte = criteria.timeTo;
+      }
     }
 
     return await prisma.notificationLog.findMany({

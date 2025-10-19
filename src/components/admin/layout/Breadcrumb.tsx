@@ -110,7 +110,6 @@ export const BREADCRUMB_CONFIGS = {
     main: { label: 'Products', href: '/admin/products' },
     catalog: { label: 'Product Catalog', href: '/admin/products' },
     categories: { label: 'Categories', href: '/admin/categories' },
-    inventory: { label: 'Inventory', href: '/admin/products/inventory' },
     import: { label: 'Import/Export', href: '/admin/products/import' },
   },
   orders: {

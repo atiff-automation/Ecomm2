@@ -72,7 +72,9 @@ export function useBulkSelection<T = string>(
   const selectItem = useCallback(
     (item: T) => {
       setSelectedItems(prev => {
-        if (prev.has(item)) return prev; // Already selected
+        if (prev.has(item)) {
+          return prev;
+        } // Already selected
 
         if (prev.size >= maxSelection) {
           onMaxSelectionExceeded?.();
@@ -91,7 +93,9 @@ export function useBulkSelection<T = string>(
   const unselectItem = useCallback(
     (item: T) => {
       setSelectedItems(prev => {
-        if (!prev.has(item)) return prev; // Not selected
+        if (!prev.has(item)) {
+          return prev;
+        } // Not selected
 
         const newSelection = new Set(prev);
         newSelection.delete(item);
@@ -141,7 +145,9 @@ export function useBulkSelection<T = string>(
 
   const unselectAll = useCallback(() => {
     setSelectedItems(prev => {
-      if (prev.size === 0) return prev;
+      if (prev.size === 0) {
+        return prev;
+      }
 
       const newSelection = new Set<T>();
       onSelectionChange?.(newSelection as Set<string>);
@@ -197,7 +203,9 @@ export function useProductBulkSelection(
 
   // Calculate isAllSelected based on available products
   const isAllSelected = useMemo(() => {
-    if (availableProducts.length === 0) return false;
+    if (availableProducts.length === 0) {
+      return false;
+    }
     return availableProducts.every(product =>
       bulkSelection.isSelected(product.id)
     );
@@ -205,7 +213,9 @@ export function useProductBulkSelection(
 
   // Calculate isPartiallySelected more precisely
   const isPartiallySelected = useMemo(() => {
-    if (availableProducts.length === 0) return false;
+    if (availableProducts.length === 0) {
+      return false;
+    }
     const selectedAvailableCount = availableProducts.filter(product =>
       bulkSelection.isSelected(product.id)
     ).length;

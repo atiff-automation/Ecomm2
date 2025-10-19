@@ -50,7 +50,9 @@ export function SliderPreview({ sliderConfig, className }: SliderPreviewProps) {
   // ==================== AUTO-ADVANCE LOGIC ====================
 
   const startAutoAdvance = useCallback(() => {
-    if (!sliderConfig.autoAdvance || activeSlides.length <= 1) return;
+    if (!sliderConfig.autoAdvance || activeSlides.length <= 1) {
+      return;
+    }
 
     intervalRef.current = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % activeSlides.length);

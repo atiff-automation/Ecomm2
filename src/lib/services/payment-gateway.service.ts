@@ -215,7 +215,9 @@ export class PaymentGatewayService {
     credentials: PaymentGateway['credentials'],
     gatewayId: string
   ): boolean {
-    if (!credentials) return false;
+    if (!credentials) {
+      return false;
+    }
 
     switch (gatewayId) {
       case 'toyyibpay':
@@ -260,8 +262,12 @@ export class PaymentGatewayService {
 
     if (startDate || endDate) {
       whereClause.createdAt = {};
-      if (startDate) whereClause.createdAt.gte = startDate;
-      if (endDate) whereClause.createdAt.lte = endDate;
+      if (startDate) {
+        whereClause.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = endDate;
+      }
     }
 
     const stats = await prisma.order.groupBy({

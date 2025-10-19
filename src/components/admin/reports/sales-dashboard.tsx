@@ -125,7 +125,9 @@ export function SalesDashboard() {
   };
 
   const calculateMemberPercentage = () => {
-    if (!overview || overview.totalRevenue === 0) return 0;
+    if (!overview || overview.totalRevenue === 0) {
+      return 0;
+    }
     return (overview.memberRevenue / overview.totalRevenue) * 100;
   };
 

@@ -73,7 +73,9 @@ export function HeroSlider({
 
   // Auto-advance functionality
   const startAutoAdvance = useCallback(() => {
-    if (!sliderConfig.autoAdvance || !hasMultipleSlides) return;
+    if (!sliderConfig.autoAdvance || !hasMultipleSlides) {
+      return;
+    }
 
     intervalRef.current = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % activeSlides.length);
@@ -105,7 +107,9 @@ export function HeroSlider({
   // Navigation handlers
   const goToSlide = useCallback(
     (index: number) => {
-      if (index === currentSlide || isTransitioning) return;
+      if (index === currentSlide || isTransitioning) {
+        return;
+      }
 
       setIsTransitioning(true);
       setCurrentSlide(index);
@@ -132,14 +136,18 @@ export function HeroSlider({
   );
 
   const goToPrevious = useCallback(() => {
-    if (!hasMultipleSlides) return;
+    if (!hasMultipleSlides) {
+      return;
+    }
     const newIndex =
       currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
     goToSlide(newIndex);
   }, [currentSlide, activeSlides.length, hasMultipleSlides, goToSlide]);
 
   const goToNext = useCallback(() => {
-    if (!hasMultipleSlides) return;
+    if (!hasMultipleSlides) {
+      return;
+    }
     const newIndex = (currentSlide + 1) % activeSlides.length;
     goToSlide(newIndex);
   }, [currentSlide, activeSlides.length, hasMultipleSlides, goToSlide]);
@@ -155,7 +163,9 @@ export function HeroSlider({
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd || !hasMultipleSlides) return;
+    if (!touchStart || !touchEnd || !hasMultipleSlides) {
+      return;
+    }
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;
@@ -172,7 +182,9 @@ export function HeroSlider({
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (!hasMultipleSlides) return;
+      if (!hasMultipleSlides) {
+        return;
+      }
 
       switch (e.key) {
         case 'ArrowLeft':

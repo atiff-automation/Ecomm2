@@ -107,19 +107,26 @@ export const socialMediaSchema = z.object({
     .max(30, 'Nama Instagram tidak boleh melebihi 30 aksara')
     .refine(
       val => {
-        if (val === '') return true;
-        if (val.length < 2) return false;
+        if (val === '') {
+          return true;
+        }
+        if (val.length < 2) {
+          return false;
+        }
         if (
           val.includes('..') ||
           val.includes('__') ||
           val.includes('.-') ||
           val.includes('-.')
-        )
+        ) {
           return false;
-        if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-'))
+        }
+        if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-')) {
           return false;
-        if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-'))
+        }
+        if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-')) {
           return false;
+        }
         return /^[a-zA-Z0-9._]{2,30}$/.test(val);
       },
       {
@@ -141,19 +148,26 @@ export const socialMediaSchema = z.object({
     .max(25, 'Nama TikTok tidak boleh melebihi 25 aksara')
     .refine(
       val => {
-        if (val === '') return true;
-        if (val.length < 2) return false;
+        if (val === '') {
+          return true;
+        }
+        if (val.length < 2) {
+          return false;
+        }
         if (
           val.includes('..') ||
           val.includes('__') ||
           val.includes('.-') ||
           val.includes('-.')
-        )
+        ) {
           return false;
-        if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-'))
+        }
+        if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-')) {
           return false;
-        if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-'))
+        }
+        if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-')) {
           return false;
+        }
         return /^[a-zA-Z0-9._]{2,25}$/.test(val);
       },
       {
@@ -281,19 +295,30 @@ export const agentApplicationSchema = z
       .max(30, 'Nama Instagram tidak boleh melebihi 30 aksara')
       .refine(
         val => {
-          if (val === '') return true;
-          if (val.length < 2) return false;
+          if (val === '') {
+            return true;
+          }
+          if (val.length < 2) {
+            return false;
+          }
           if (
             val.includes('..') ||
             val.includes('__') ||
             val.includes('.-') ||
             val.includes('-.')
-          )
+          ) {
             return false;
-          if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-'))
+          }
+          if (
+            val.startsWith('.') ||
+            val.startsWith('_') ||
+            val.startsWith('-')
+          ) {
             return false;
-          if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-'))
+          }
+          if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-')) {
             return false;
+          }
           return /^[a-zA-Z0-9._]{2,30}$/.test(val);
         },
         {
@@ -315,19 +340,30 @@ export const agentApplicationSchema = z
       .max(25, 'Nama TikTok tidak boleh melebihi 25 aksara')
       .refine(
         val => {
-          if (val === '') return true;
-          if (val.length < 2) return false;
+          if (val === '') {
+            return true;
+          }
+          if (val.length < 2) {
+            return false;
+          }
           if (
             val.includes('..') ||
             val.includes('__') ||
             val.includes('.-') ||
             val.includes('-.')
-          )
+          ) {
             return false;
-          if (val.startsWith('.') || val.startsWith('_') || val.startsWith('-'))
+          }
+          if (
+            val.startsWith('.') ||
+            val.startsWith('_') ||
+            val.startsWith('-')
+          ) {
             return false;
-          if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-'))
+          }
+          if (val.endsWith('.') || val.endsWith('_') || val.endsWith('-')) {
             return false;
+          }
           return /^[a-zA-Z0-9._]{2,25}$/.test(val);
         },
         {

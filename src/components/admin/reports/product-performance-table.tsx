@@ -90,13 +90,19 @@ export function ProductPerformanceTable({
   };
 
   const getProfitColor = (margin: number) => {
-    if (margin > 0) return 'text-green-600';
-    if (margin < 0) return 'text-red-600';
+    if (margin > 0) {
+      return 'text-green-600';
+    }
+    if (margin < 0) {
+      return 'text-red-600';
+    }
     return 'text-gray-600';
   };
 
   const getMemberPercentage = (memberSales: number, totalRevenue: number) => {
-    if (totalRevenue === 0) return 0;
+    if (totalRevenue === 0) {
+      return 0;
+    }
     return (memberSales / totalRevenue) * 100;
   };
 

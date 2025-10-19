@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const { searchParams } = new URL(request.url);
     const period = parseInt(searchParams.get('period') || '30', 10);

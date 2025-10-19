@@ -67,7 +67,9 @@ function getAspectRatioClass(aspectRatio: string): string {
  * Modern browsers supporting WebP/AVIF
  */
 function supportsModernFormats(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined') {
+    return false;
+  }
 
   const canvas = document.createElement('canvas');
   canvas.width = 1;

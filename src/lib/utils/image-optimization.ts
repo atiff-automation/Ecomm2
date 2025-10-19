@@ -118,7 +118,9 @@ export function getImageWithFallback(
  * Calculate lazy loading threshold based on viewport
  */
 export function calculateLazyLoadingThreshold(): number {
-  if (typeof window === 'undefined') return 100;
+  if (typeof window === 'undefined') {
+    return 100;
+  }
 
   const viewportHeight = window.innerHeight;
   return Math.min(viewportHeight * 0.5, 500); // 50% of viewport or 500px max
@@ -128,7 +130,9 @@ export function calculateLazyLoadingThreshold(): number {
  * Check if WebP is supported by browser
  */
 export function isWebPSupported(): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (typeof window === 'undefined') {
+    return Promise.resolve(false);
+  }
 
   return new Promise(resolve => {
     const webP = new Image();
@@ -144,7 +148,9 @@ export function isWebPSupported(): Promise<boolean> {
  * Check if AVIF is supported by browser
  */
 export function isAvifSupported(): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (typeof window === 'undefined') {
+    return Promise.resolve(false);
+  }
 
   return new Promise(resolve => {
     const avif = new Image();
@@ -226,9 +232,15 @@ export function calculateAspectRatio(width: number, height: number): number {
 export function getAspectRatioClass(width: number, height: number): string {
   const ratio = calculateAspectRatio(width, height);
 
-  if (Math.abs(ratio - 1) < 0.1) return 'aspect-square';
-  if (ratio > 1.5) return 'aspect-video';
-  if (ratio < 0.8) return 'aspect-[3/4]';
+  if (Math.abs(ratio - 1) < 0.1) {
+    return 'aspect-square';
+  }
+  if (ratio > 1.5) {
+    return 'aspect-video';
+  }
+  if (ratio < 0.8) {
+    return 'aspect-[3/4]';
+  }
 
   return `aspect-[${width}/${height}]`;
 }
@@ -246,7 +258,9 @@ export function generateBlurPlaceholder(
   canvas.height = height;
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
+  if (!ctx) {
+    return '';
+  }
 
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, width, height);
@@ -258,7 +272,9 @@ export function generateBlurPlaceholder(
  * Calculate bandwidth-aware image quality
  */
 export function getBandwidthAwareQuality(): number {
-  if (typeof navigator === 'undefined') return 85;
+  if (typeof navigator === 'undefined') {
+    return 85;
+  }
 
   // Check for slow connection
   const connection = (navigator as any).connection;
@@ -312,7 +328,9 @@ export class ImagePerformanceMonitor {
 
   static endTiming(imageId: string): number {
     const startTime = this.metrics.get(imageId);
-    if (!startTime) return 0;
+    if (!startTime) {
+      return 0;
+    }
 
     const duration = performance.now() - startTime;
     this.metrics.delete(imageId);
@@ -322,7 +340,9 @@ export class ImagePerformanceMonitor {
 
   static getAverageLoadTime(): number {
     const times = Array.from(this.metrics.values());
-    if (times.length === 0) return 0;
+    if (times.length === 0) {
+      return 0;
+    }
 
     return times.reduce((sum, time) => sum + time, 0) / times.length;
   }

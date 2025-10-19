@@ -37,7 +37,9 @@ export function useRealTimeUpdates({
   }, []);
 
   const performUpdate = useCallback(async () => {
-    if (isUpdatingRef.current) return;
+    if (isUpdatingRef.current) {
+      return;
+    }
 
     try {
       isUpdatingRef.current = true;

@@ -29,7 +29,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // ✅ Admin authentication check
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const orderId = params.id;
 
@@ -180,7 +182,9 @@ export async function HEAD(request: NextRequest, { params }: RouteParams) {
     // Admin authentication check
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const orderId = params.id;
 

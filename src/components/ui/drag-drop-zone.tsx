@@ -149,10 +149,14 @@ export function DragDropZone({
       setIsDragOver(false);
       setError(null);
 
-      if (disabled || isUploading) return;
+      if (disabled || isUploading) {
+        return;
+      }
 
       const files = Array.from(e.dataTransfer.files);
-      if (files.length === 0) return;
+      if (files.length === 0) {
+        return;
+      }
 
       const file = files[0];
       const validationError = validateFile(file);
@@ -177,7 +181,9 @@ export function DragDropZone({
       setError(null);
       const file = e.target.files?.[0];
 
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
       const validationError = validateFile(file);
       if (validationError) {
@@ -204,7 +210,9 @@ export function DragDropZone({
 
   // Render current file preview
   const renderCurrentFile = () => {
-    if (!currentFile) return null;
+    if (!currentFile) {
+      return null;
+    }
 
     return (
       <div className="border rounded-lg p-3 bg-white">

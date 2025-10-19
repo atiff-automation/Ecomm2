@@ -84,7 +84,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
 
   // Auto-advance functionality
   const startAutoAdvance = useCallback(() => {
-    if (!sliderConfig?.autoAdvance || activeSlides.length <= 1) return;
+    if (!sliderConfig?.autoAdvance || activeSlides.length <= 1) {
+      return;
+    }
 
     intervalRef.current = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % activeSlides.length);
@@ -142,7 +144,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) {
+      return;
+    }
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;

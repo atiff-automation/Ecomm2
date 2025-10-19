@@ -99,7 +99,8 @@ export default function CreateProductPage() {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create product');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create product');
     }
 
     toast.success('Product created successfully!');

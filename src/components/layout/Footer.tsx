@@ -78,7 +78,9 @@ export function Footer({ className }: FooterProps) {
   const formatAddress = (
     address: BusinessProfile['operationalAddress']
   ): string => {
-    if (!address) return 'Kuala Lumpur, Malaysia';
+    if (!address) {
+      return 'Kuala Lumpur, Malaysia';
+    }
 
     if (typeof address === 'string') {
       return address;

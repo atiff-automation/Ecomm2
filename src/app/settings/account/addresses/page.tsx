@@ -97,7 +97,9 @@ export default function AddressManagementPage() {
   };
 
   const handleAddressSubmit = async (data: AddressFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -163,7 +165,9 @@ export default function AddressManagementPage() {
   };
 
   const handleDeleteAddress = async (addressId: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    if (!confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/settings/addresses/${addressId}`, {

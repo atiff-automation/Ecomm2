@@ -108,7 +108,9 @@ export async function getImageDimensions(
  * @returns true if the URL appears to be an image
  */
 export function isValidImageUrl(url: string): boolean {
-  if (!url) return false;
+  if (!url) {
+    return false;
+  }
 
   const imageExtensions = [
     '.jpg',

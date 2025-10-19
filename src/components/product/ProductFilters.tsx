@@ -492,7 +492,9 @@ function ActiveFilters({
     )
     .map(([filterId, value]) => {
       const group = filterGroups.find(g => g.id === filterId);
-      if (!group) return null;
+      if (!group) {
+        return null;
+      }
 
       if (Array.isArray(value)) {
         return value.map(v => ({
@@ -525,7 +527,9 @@ function ActiveFilters({
     .flat()
     .filter(Boolean);
 
-  if (activeFiltersList.length === 0) return null;
+  if (activeFiltersList.length === 0) {
+    return null;
+  }
 
   return (
     <div className="space-y-3">

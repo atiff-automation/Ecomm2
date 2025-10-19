@@ -237,17 +237,23 @@ export default function ShippingSettingsPage() {
 
   // Helper function to format relative time
   const getRelativeTime = (timestamp: string | null): string => {
-    if (!timestamp) return '';
+    if (!timestamp) {
+      return '';
+    }
 
     const now = new Date();
     const then = new Date(timestamp);
     const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600)
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    }
+    if (diffInSeconds < 3600) {
       return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400)
+    }
+    if (diffInSeconds < 86400) {
       return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    }
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
@@ -390,7 +396,9 @@ export default function ShippingSettingsPage() {
       '⚠️ Are you sure you want to delete all shipping settings?\n\nThis will:\n• Remove API configuration\n• Clear courier selection settings\n• Delete free shipping configuration\n• Require reconfiguration to use shipping features\n\nThis action cannot be undone.'
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setIsDeleting(true);
     try {

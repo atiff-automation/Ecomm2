@@ -170,16 +170,29 @@ export function estimateBundleImpact(changes: string[]): {
   let totalReduction = 0;
 
   changes.forEach(change => {
-    if (change.includes('admin')) totalReduction += 200; // KB
-    if (change.includes('chart')) totalReduction += 150;
-    if (change.includes('lodash')) totalReduction += 100;
-    if (change.includes('moment')) totalReduction += 80;
-    if (change.includes('image')) totalReduction += 50;
+    if (change.includes('admin')) {
+      totalReduction += 200;
+    } // KB
+    if (change.includes('chart')) {
+      totalReduction += 150;
+    }
+    if (change.includes('lodash')) {
+      totalReduction += 100;
+    }
+    if (change.includes('moment')) {
+      totalReduction += 80;
+    }
+    if (change.includes('image')) {
+      totalReduction += 50;
+    }
   });
 
   let performanceImpact: 'high' | 'medium' | 'low' = 'low';
-  if (totalReduction > 300) performanceImpact = 'high';
-  else if (totalReduction > 150) performanceImpact = 'medium';
+  if (totalReduction > 300) {
+    performanceImpact = 'high';
+  } else if (totalReduction > 150) {
+    performanceImpact = 'medium';
+  }
 
   const userExperienceImpact =
     performanceImpact === 'high'

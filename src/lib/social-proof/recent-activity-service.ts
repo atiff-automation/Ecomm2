@@ -27,7 +27,6 @@ export interface StockAlert {
 }
 
 export class RecentActivityService {
-  private readonly LOW_STOCK_THRESHOLD = 10;
   private readonly RECENT_HOURS = 24;
   private readonly MAX_RECENT_PURCHASES = 10;
 
@@ -151,7 +150,11 @@ export class RecentActivityService {
 
     const products = await prisma.product.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        stockQuantity: true,
+        lowStockAlert: true,
         orderItems: {
           where: {
             order: {
@@ -185,7 +188,7 @@ export class RecentActivityService {
         productName: product.name,
         currentStock,
         isLowStock:
-          currentStock <= this.LOW_STOCK_THRESHOLD && currentStock > 0,
+          currentStock <= product.lowStockAlert && currentStock > 0,
         isOutOfStock: currentStock <= 0,
         recentPurchases,
       };

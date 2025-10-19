@@ -54,7 +54,9 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   };
 
   const handleSetAsDefault = async (templateId: string) => {
-    if (!allowSetDefault) return;
+    if (!allowSetDefault) {
+      return;
+    }
 
     try {
       setIsUpdating(true);

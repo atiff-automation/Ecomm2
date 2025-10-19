@@ -116,7 +116,9 @@ export function getStepStatus(
   errors: Record<string, string>
 ): 'pending' | 'active' | 'completed' | 'error' {
   const step = PRODUCT_FORM_STEPS.find(s => s.id === stepId);
-  if (!step) return 'pending';
+  if (!step) {
+    return 'pending';
+  }
 
   // Check for errors first
   const stepErrorFields =
@@ -153,7 +155,9 @@ export function getStepStatus(
  */
 export function getErrorTab(errors: Record<string, string>): string | null {
   const errorFields = Object.keys(errors);
-  if (errorFields.length === 0) return null;
+  if (errorFields.length === 0) {
+    return null;
+  }
 
   // Find the first tab that has errors, prioritizing in step order
   for (const step of PRODUCT_FORM_STEPS) {

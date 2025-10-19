@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user preferences exist in notification preferences table
-    let userPreferences = await prisma.notificationPreference.findFirst({
+    const userPreferences = await prisma.notificationPreference.findFirst({
       where: {
         userId: session.user.id,
       },

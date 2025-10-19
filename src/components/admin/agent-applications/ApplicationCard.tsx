@@ -94,7 +94,9 @@ export function ApplicationCard({
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return '-';
+    if (!date) {
+      return '-';
+    }
     try {
       return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ms });
     } catch {
@@ -103,13 +105,19 @@ export function ApplicationCard({
   };
 
   const getDaysAgo = (date: Date | null) => {
-    if (!date) return '';
+    if (!date) {
+      return '';
+    }
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - new Date(date).getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) return '(1 hari lalu)';
-    if (diffDays <= 30) return `(${diffDays} hari lalu)`;
+    if (diffDays === 1) {
+      return '(1 hari lalu)';
+    }
+    if (diffDays <= 30) {
+      return `(${diffDays} hari lalu)`;
+    }
     if (diffDays <= 365) {
       const months = Math.floor(diffDays / 30);
       return `(${months} bulan lalu)`;
