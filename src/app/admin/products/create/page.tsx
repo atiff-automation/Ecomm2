@@ -10,10 +10,44 @@ import { useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/admin/ProductForm';
 import { toast } from 'sonner';
 
+interface ProductImage {
+  url: string;
+  altText?: string;
+  isPrimary: boolean;
+}
+
+interface ProductFormData {
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string;
+  sku: string;
+  barcode: string;
+  categoryIds: string[];
+  regularPrice: number | string;
+  memberPrice: number | string;
+  stockQuantity: number;
+  lowStockAlert: number;
+  weight: number | string;
+  length?: number | string;
+  width?: number | string;
+  height?: number | string;
+  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+  featured: boolean;
+  isPromotional: boolean;
+  isQualifyingForMembership: boolean;
+  promotionalPrice?: number;
+  promotionStartDate?: Date;
+  promotionEndDate?: Date;
+  memberOnlyUntil?: Date;
+  earlyAccessStart?: Date;
+  images: ProductImage[];
+}
+
 export default function CreateProductPage() {
   const router = useRouter();
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: ProductFormData) => {
     // Process form data to match API expectations
     const filteredCategoryIds =
       formData.categoryIds?.filter((id: string) => id && id.trim() !== '') ||
@@ -49,7 +83,7 @@ export default function CreateProductPage() {
             ? parseFloat(formData.height.toString())
             : null,
       }),
-      images: formData.images.map((img: any, index: number) => ({
+      images: formData.images.map((img: ProductImage, index: number) => ({
         url: img.url,
         altText: img.altText || formData.name,
         isPrimary: index === 0,

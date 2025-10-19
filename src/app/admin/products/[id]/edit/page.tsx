@@ -42,6 +42,19 @@ interface ProductFormData {
   }>;
 }
 
+interface ProductCategory {
+  category: {
+    id: string;
+    name: string;
+  };
+}
+
+interface ProductImage {
+  url: string;
+  altText?: string;
+  isPrimary?: boolean;
+}
+
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
@@ -56,16 +69,9 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
-      console.log('🔍 Fetching product:', productId);
       const response = await fetch(`/api/admin/products/${productId}`);
-      console.log(
-        '📡 Product API response:',
-        response.status,
-        response.statusText
-      );
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Product data received:', data);
         const product = data.product;
 
         // Transform the product data to match our form structure
@@ -77,10 +83,7 @@ export default function EditProductPage() {
           sku: product.sku || '',
           barcode: product.barcode || '',
           categoryIds:
-            product.categories?.map((cat: any) => {
-              console.log('🏷️ Processing category:', cat);
-              return cat.category.id;
-            }) || [],
+            product.categories?.map((cat: ProductCategory) => cat.category.id) || [],
           regularPrice: product.regularPrice || '',
           memberPrice: product.memberPrice || '',
           stockQuantity: product.stockQuantity || 0,
@@ -107,7 +110,7 @@ export default function EditProductPage() {
             ? new Date(product.earlyAccessStart)
             : undefined,
           images:
-            product.images?.map((img: any, index: number) => ({
+            product.images?.map((img: ProductImage, index: number) => ({
               url: img.url,
               altText: img.altText || product.name,
               isPrimary: index === 0,
@@ -119,8 +122,6 @@ export default function EditProductPage() {
             })) || [],
         };
 
-        console.log('🎯 Final productData for form:', productData);
-        console.log('📂 CategoryIds specifically:', productData.categoryIds);
         setInitialData(productData);
       } else {
         toast.error('Product not found');

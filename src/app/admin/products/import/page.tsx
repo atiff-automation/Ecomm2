@@ -72,11 +72,18 @@ export default function ProductImportPage() {
         setFile(selectedFile);
         setResult(null);
       } else {
-        alert('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
+        toast.error('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
         event.target.value = '';
       }
     }
   };
+
+  interface CategoryData {
+    name: string;
+    slug: string;
+    description?: string;
+    productCount?: number;
+  }
 
   const downloadCategoryList = async () => {
     try {
@@ -91,7 +98,7 @@ export default function ProductImportPage() {
           'description',
           'productCount',
         ];
-        const csvData = categories.map((cat: any) => [
+        const csvData = categories.map((cat: CategoryData) => [
           cat.name,
           cat.slug,
           cat.description || '',
@@ -99,7 +106,9 @@ export default function ProductImportPage() {
         ]);
 
         const csvContent = [headers, ...csvData]
-          .map(row => row.map(cell => `"${cell}"`).join(','))
+          .map((row: (string | number)[]) =>
+            row.map((cell: string | number) => `"${cell}"`).join(',')
+          )
           .join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -287,11 +296,6 @@ export default function ProductImportPage() {
   const tabs: TabConfig[] = [
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
-    {
-      id: 'inventory',
-      label: 'Inventory Management',
-      href: '/admin/products/inventory',
-    },
     {
       id: 'import-export',
       label: 'Import/Export',

@@ -56,6 +56,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { PRODUCT_CONSTANTS } from '@/lib/constants/product-config';
 
 interface Category {
   id: string;
@@ -66,6 +75,11 @@ interface ProductImage {
   url: string;
   altText?: string;
   isPrimary: boolean;
+}
+
+interface CategoryResponse {
+  id: string;
+  name: string;
 }
 
 interface ProductFormData {
@@ -115,7 +129,7 @@ const initialFormData: ProductFormData = {
   regularPrice: '',
   memberPrice: '',
   stockQuantity: 0,
-  lowStockAlert: 10,
+  lowStockAlert: PRODUCT_CONSTANTS.DEFAULT_LOW_STOCK_ALERT,
   weight: 0,
   length: '',
   width: '',
@@ -144,6 +158,7 @@ export function ProductForm({
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Initialize form data with initial data or defaults
   const [formData, setFormData] = useState<ProductFormData>(() => ({
@@ -177,17 +192,10 @@ export function ProductForm({
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
-      console.log('🔄 ProductForm received initialData:', initialData);
-      console.log('🏷️ CategoryIds from initialData:', initialData.categoryIds);
-      setFormData(prev => {
-        const newData = {
-          ...prev,
-          ...initialData,
-        };
-        console.log('🆕 New formData after merge:', newData);
-        console.log('🔖 Final categoryIds in formData:', newData.categoryIds);
-        return newData;
-      });
+      setFormData(prev => ({
+        ...prev,
+        ...initialData,
+      }));
     }
   }, [initialData]);
 
@@ -196,13 +204,6 @@ export function ProductForm({
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
-        console.log('📁 Categories loaded:', data);
-        if (data.categories) {
-          console.log(
-            '📁 Categories array:',
-            data.categories.map((c: any) => ({ id: c.id, name: c.name }))
-          );
-        }
         setCategories(data);
       }
     } catch (error) {
@@ -218,13 +219,16 @@ export function ProductForm({
       .replace(/^-+|-+$/g, '');
   };
 
-  const handleInputChange = (field: keyof ProductFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof ProductFormData,
+    value: ProductFormData[keyof ProductFormData]
+  ) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
 
       // Auto-generate slug when name changes
       if (field === 'name' && value) {
-        updated.slug = generateSlug(value);
+        updated.slug = generateSlug(value as string);
       }
 
       // Clear promotional fields when promotional is disabled
@@ -278,8 +282,11 @@ export function ProductForm({
       newErrors.stockQuantity = 'Stock quantity cannot be negative';
     }
 
-    if (!formData.weight || parseFloat(formData.weight.toString()) < 0.01) {
-      newErrors.weight = 'Weight is required and must be at least 0.01 kg';
+    if (
+      !formData.weight ||
+      parseFloat(formData.weight.toString()) < PRODUCT_CONSTANTS.MIN_WEIGHT_KG
+    ) {
+      newErrors.weight = `Weight is required and must be at least ${PRODUCT_CONSTANTS.MIN_WEIGHT_KG} kg`;
     }
 
     // Promotional pricing validation
@@ -348,7 +355,8 @@ export function ProductForm({
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to ${mode} product`);
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to ${mode} product`);
         }
 
         toast.success(
@@ -368,24 +376,24 @@ export function ProductForm({
   };
 
   const handleDelete = async () => {
-    if (mode !== 'edit' || !onDelete) return;
+    if (mode !== 'edit' || !onDelete) {
+      return;
+    }
+    setDeleteDialogOpen(true);
+  };
 
-    if (
-      window.confirm(
-        'Are you sure you want to delete this product? This action cannot be undone.'
-      )
-    ) {
-      setLoading(true);
-      try {
-        await onDelete();
-        toast.success('Product deleted successfully!');
-        router.push('/admin/products');
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        toast.error('Failed to delete product. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+  const confirmDelete = async () => {
+    setLoading(true);
+    setDeleteDialogOpen(false);
+    try {
+      await onDelete!();
+      toast.success('Product deleted successfully!');
+      router.push('/admin/products');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -542,9 +550,9 @@ export function ProductForm({
                       <MultiSelect
                         options={(() => {
                           const categoryOptions: Option[] = Array.isArray(
-                            categories?.categories
+                            categories
                           )
-                            ? categories.categories.map(category => ({
+                            ? categories.map(category => ({
                                 label: category.name,
                                 value: category.id,
                               }))
@@ -577,10 +585,11 @@ export function ProductForm({
                           handleInputChange('shortDescription', e.target.value)
                         }
                         placeholder="Brief product description"
-                        maxLength={160}
+                        maxLength={PRODUCT_CONSTANTS.MAX_SHORT_DESC_LENGTH}
                       />
                       <p className="text-xs text-muted-foreground">
-                        {formData.shortDescription.length}/160 characters
+                        {formData.shortDescription.length}/
+                        {PRODUCT_CONSTANTS.MAX_SHORT_DESC_LENGTH} characters
                       </p>
                     </div>
 
@@ -604,12 +613,12 @@ export function ProductForm({
                           id="weight"
                           type="number"
                           step="0.01"
-                          min="0.01"
+                          min={PRODUCT_CONSTANTS.MIN_WEIGHT_KG}
                           value={formData.weight}
                           onChange={e =>
                             handleInputChange('weight', e.target.value)
                           }
-                          placeholder="0.01"
+                          placeholder={PRODUCT_CONSTANTS.MIN_WEIGHT_KG.toString()}
                           className={errors.weight ? 'border-red-500' : ''}
                           required
                         />
@@ -859,7 +868,7 @@ export function ProductForm({
                               parseInt(e.target.value) || 0
                             )
                           }
-                          placeholder="10"
+                          placeholder={PRODUCT_CONSTANTS.DEFAULT_LOW_STOCK_ALERT.toString()}
                         />
                         <p className="text-xs text-muted-foreground">
                           Get notified when stock falls below this number
@@ -926,15 +935,16 @@ export function ProductForm({
                           altText: img.altText || formData.name,
                         }))}
                         onChange={handleImageChange}
-                        maxFiles={5}
-                        maxSize={5 * 1024 * 1024} // 5MB
+                        maxFiles={PRODUCT_CONSTANTS.MAX_IMAGES}
+                        maxSize={PRODUCT_CONSTANTS.MAX_SIZE_BYTES}
                         accept="image/*"
                         uploadPath="/api/upload/image"
                         className="border-2 border-dashed border-gray-300 rounded-lg p-8"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Upload up to 5 images (max 5MB each). First image will
-                        be the primary image.
+                        Upload up to {PRODUCT_CONSTANTS.MAX_IMAGES} images (max{' '}
+                        {PRODUCT_CONSTANTS.MAX_SIZE_MB}MB each). First image
+                        will be the primary image.
                       </p>
                     </div>
                   </TabsContent>
@@ -971,7 +981,6 @@ export function ProductForm({
                           }
                           onEndDateChange={() => {}}
                           placeholder="Select member-only period end date"
-                          singleDate
                         />
                         <p className="text-xs text-muted-foreground">
                           Product only available to members until this date
@@ -988,7 +997,6 @@ export function ProductForm({
                           }
                           onEndDateChange={() => {}}
                           placeholder="Select early access start date"
-                          singleDate
                         />
                         <p className="text-xs text-muted-foreground">
                           Members get early access starting from this date
@@ -1162,6 +1170,35 @@ export function ProductForm({
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={loading}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
