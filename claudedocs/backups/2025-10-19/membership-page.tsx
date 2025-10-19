@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  AdminPageLayout,
-  BreadcrumbItem,
-} from '@/components/admin/layout';
-import { CUSTOMER_MEMBERSHIP_TABS } from '@/lib/constants/admin-navigation';
+import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -106,22 +102,29 @@ export default function AdminMembership() {
   // Remove breadcrumbs - using AdminPageLayout with contextual navigation
 
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers (Membership section)
-  const tabs = CUSTOMER_MEMBERSHIP_TABS;
+  const tabs: TabConfig[] = [
+    { id: 'directory', label: 'Directory', href: '/admin/customers' },
+    { id: 'membership', label: 'Membership', href: '/admin/membership' },
+    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
+  ];
 
   // Extract page actions
   const pageActions = (
-    <Link href="/admin/membership/config">
-      <Button>
-        <Settings className="h-4 w-4 mr-2" />
-        Configuration
-      </Button>
-    </Link>
+    <div className="flex gap-3">
+      <Link href="/admin/membership/analytics">
+        <Button variant="outline">
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Analytics
+        </Button>
+      </Link>
+      <Link href="/admin/membership/config">
+        <Button>
+          <Settings className="h-4 w-4 mr-2" />
+          Configuration
+        </Button>
+      </Link>
+    </div>
   );
-
-  // Define breadcrumbs
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Membership', href: '/admin/membership' },
-  ];
 
   return (
     <AdminPageLayout
@@ -129,7 +132,7 @@ export default function AdminMembership() {
       subtitle="Manage your membership program and track member engagement"
       actions={pageActions}
       tabs={tabs}
-      breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
       loading={loading}
     >
       {/* Key Metrics */}
@@ -200,6 +203,25 @@ export default function AdminMembership() {
             <Link href="/admin/membership/config">
               <Button variant="outline" className="w-full">
                 Configure Benefits
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              Growth Analytics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Track membership growth, engagement, and revenue trends
+            </p>
+            <Link href="/admin/membership/analytics">
+              <Button variant="outline" className="w-full">
+                View Analytics
               </Button>
             </Link>
           </CardContent>
@@ -297,12 +319,20 @@ export default function AdminMembership() {
               pricing, early access to products, and special promotions. Members
               enjoy significant savings and premium shopping experiences.
             </p>
-            <Link href="/admin/membership/config">
-              <Button size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Manage Program
-              </Button>
-            </Link>
+            <div className="flex gap-3">
+              <Link href="/admin/membership/config">
+                <Button size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Program
+                </Button>
+              </Link>
+              <Link href="/admin/membership/analytics">
+                <Button variant="outline" size="sm">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Reports
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

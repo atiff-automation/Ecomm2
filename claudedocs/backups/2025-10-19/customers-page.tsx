@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search,
+  Download,
   Eye,
   Edit,
   Mail,
@@ -27,10 +28,10 @@ import {
 import Link from 'next/link';
 import {
   AdminPageLayout,
+  TabConfig,
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
-import { CUSTOMER_MEMBERSHIP_TABS } from '@/lib/constants/admin-navigation';
 
 interface Customer {
   id: string;
@@ -96,6 +97,34 @@ export default function AdminCustomers() {
     fetchCustomers();
   }, [fetchCustomers]);
 
+  const handleExport = async () => {
+    try {
+      const queryParams = new URLSearchParams({
+        export: 'true',
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([, value]) => value && value !== '')
+        ),
+      });
+
+      const response = await fetch(
+        `/api/admin/customers/export?${queryParams}`
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Failed to export customers:', error);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', {
       style: 'currency',
@@ -117,7 +146,19 @@ export default function AdminCustomers() {
   };
 
   // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers
-  const tabs = CUSTOMER_MEMBERSHIP_TABS;
+  const tabs: TabConfig[] = [
+    { id: 'directory', label: 'Directory', href: '/admin/customers' },
+    { id: 'membership', label: 'Membership', href: '/admin/membership' },
+    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
+  ];
+
+  // Extract page actions
+  const pageActions = (
+    <Button onClick={handleExport}>
+      <Download className="w-4 h-4 mr-2" />
+      Export Customers
+    </Button>
+  );
 
   // Extract filters component
   const filtersComponent = (
@@ -180,6 +221,7 @@ export default function AdminCustomers() {
     <AdminPageLayout
       title="Customer Management"
       subtitle="Manage customer accounts and membership status"
+      actions={pageActions}
       tabs={tabs}
       filters={filtersComponent}
       breadcrumbs={breadcrumbs}

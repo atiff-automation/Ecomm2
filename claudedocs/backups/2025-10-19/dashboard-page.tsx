@@ -540,7 +540,7 @@ export default function AdminDashboard() {
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   asChild
                 >
-                  <Link href="/admin/membership">View Membership</Link>
+                  <Link href="/admin/membership/analytics">View Analytics</Link>
                 </Button>
               </CardContent>
             </Card>

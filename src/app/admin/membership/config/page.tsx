@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -210,10 +209,15 @@ export default function MembershipConfigPage() {
 
       {/* Configuration Settings */}
       <div className="space-y-6">
-        {/* Membership Settings */}
+        {/* Membership Qualification Rules */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Membership Settings</CardTitle>
+            <CardTitle className="text-lg">
+              Membership Qualification Rules
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure how customers qualify for automatic membership activation
+            </p>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Threshold Setting */}
@@ -283,52 +287,6 @@ export default function MembershipConfigPage() {
                   }
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content & Messaging */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Content & Messaging</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="benefits">Membership Benefits</Label>
-              <Textarea
-                id="benefits"
-                rows={3}
-                value={config.membershipBenefitsText}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    membershipBenefitsText: e.target.value,
-                  })
-                }
-                placeholder="Describe the benefits members receive..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Displayed to customers explaining membership benefits
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="terms">Terms & Conditions</Label>
-              <Textarea
-                id="terms"
-                rows={3}
-                value={config.membershipTermsText}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    membershipTermsText: e.target.value,
-                  })
-                }
-                placeholder="Explain how membership activation works..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Terms and conditions for membership activation
-              </p>
             </div>
           </CardContent>
         </Card>
