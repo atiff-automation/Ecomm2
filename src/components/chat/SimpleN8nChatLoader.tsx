@@ -7,13 +7,18 @@ import '@n8n/chat/style.css';
 export function SimpleN8nChatLoader() {
   const pathname = usePathname();
   const [config, setConfig] = useState<any>(null);
-
-  // Hide chat on admin pages - chat should only be visible on customer-facing pages
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only load config if not on admin pages
+    if (pathname.startsWith('/admin')) {
+      return;
+    }
+
     // Load config from API
     fetch('/api/chat-config/public')
       .then(res => res.json())
@@ -24,7 +29,7 @@ export function SimpleN8nChatLoader() {
         }
       })
       .catch(err => console.error('❌ Failed to load chat config:', err));
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!config) return;
@@ -150,6 +155,12 @@ export function SimpleN8nChatLoader() {
       (B < 255 ? (B < 1 ? 0 : B) : 255)
     ).toString(16).slice(1);
   };
+
+  // Don't render until mounted to prevent hydration mismatch
+  // Hide on admin pages (check after mount to avoid SSR/client mismatch)
+  if (!mounted || pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return <div id="n8n-chat" />;
 }
