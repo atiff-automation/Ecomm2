@@ -102,8 +102,10 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     Promise.all([fetchDashboardStats(), fetchDashboardAnalytics()]);
   }, []);
 
@@ -203,7 +205,8 @@ export default function AdminDashboard() {
     '#F97316',
   ];
 
-  if (loading) {
+  // Prevent hydration mismatch - don't render until client-side mounted
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
