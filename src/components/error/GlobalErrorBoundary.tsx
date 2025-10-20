@@ -310,8 +310,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 </Button>
               </div>
 
-              {/* Developer Information (only in development) */}
-              {process.env.NODE_ENV === 'development' && error && (
+              {/* Developer Information (development or when SHOW_ERROR_DETAILS is enabled) */}
+              {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SHOW_ERROR_DETAILS === 'true') && error && (
                 <details className="mt-6">
                   <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
                     <Bug className="inline h-4 w-4 mr-2" />
