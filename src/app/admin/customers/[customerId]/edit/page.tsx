@@ -14,13 +14,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Crown } from 'lucide-react';
+import { ArrowLeft, Save, Crown, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   AdminPageLayout,
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
+import { toast } from 'sonner';
 
 interface CustomerFormData {
   firstName: string;
@@ -58,6 +59,7 @@ export default function AdminCustomerEdit({
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
@@ -156,17 +158,56 @@ export default function AdminCustomerEdit({
       );
 
       if (response.ok) {
+        toast.success('Customer updated successfully');
         router.push(`/admin/customers/${params.customerId}`);
       } else {
         const errorData = await response.json();
         console.error('Failed to update customer:', errorData);
-        setErrors({ submit: errorData.message || 'Failed to update customer' });
+        const errorMessage = errorData.message || 'Failed to update customer';
+        toast.error(errorMessage);
+        setErrors({ submit: errorMessage });
       }
     } catch (error) {
       console.error('Failed to update customer:', error);
-      setErrors({ submit: 'An unexpected error occurred' });
+      const errorMessage = 'An unexpected error occurred';
+      toast.error(errorMessage);
+      setErrors({ submit: errorMessage });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${customer?.firstName} ${customer?.lastName}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/admin/customers/${params.customerId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (response.ok) {
+        toast.success('Customer deleted successfully');
+        router.push('/admin/customers');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete customer:', errorData);
+        toast.error(errorData.message || 'Failed to delete customer');
+      }
+    } catch (error) {
+      console.error('Failed to delete customer:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -221,6 +262,15 @@ export default function AdminCustomerEdit({
   const pageActions = (
     <div className="flex items-center gap-2">
       {customer.isMember && <Crown className="h-5 w-5 text-yellow-500" />}
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleDelete}
+        disabled={deleting}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        {deleting ? 'Deleting...' : 'Delete Customer'}
+      </Button>
     </div>
   );
 

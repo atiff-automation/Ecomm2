@@ -16,12 +16,11 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Settings,
-  Users,
   Save,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   AdminPageLayout,
@@ -158,12 +157,20 @@ export default function MembershipConfigPage() {
   }
 
   const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Membership', href: '/admin/membership' },
-    { label: 'Configuration', href: '/admin/membership/config' },
+    BREADCRUMB_CONFIGS.customers.main,
+    { label: 'Membership Settings', href: '/admin/membership/config' },
   ];
 
   const pageActions = (
     <div className="flex gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push('/admin/customers')}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Customers
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -182,10 +189,11 @@ export default function MembershipConfigPage() {
 
   return (
     <AdminPageLayout
-      title="Membership Configuration"
-      subtitle="Configure membership settings and requirements"
+      title="Membership Settings"
+      subtitle="Configure membership qualification rules and thresholds"
       actions={pageActions}
       breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
       loading={loading}
     >
       {/* Message Alert */}
@@ -250,7 +258,7 @@ export default function MembershipConfigPage() {
                     Exclude Promotional Items
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Promotional items won't count towards membership
+                    Promotional items won&apos;t count towards membership
                   </p>
                 </div>
                 <Switch

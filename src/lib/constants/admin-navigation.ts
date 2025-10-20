@@ -4,34 +4,6 @@
  * Following CLAUDE.md: DRY principle - no duplication
  */
 
-import { TabConfig } from '@/components/admin/layout';
-
-/**
- * Customer & Membership section tabs
- * Used across: /admin/customers, /admin/membership
- */
-export const CUSTOMER_MEMBERSHIP_TABS: TabConfig[] = [
-  {
-    id: 'customers',
-    label: 'Customers',
-    href: '/admin/customers',
-  },
-  {
-    id: 'membership',
-    label: 'Membership',
-    href: '/admin/membership',
-  },
-];
-
-/**
- * Helper to get active tab from current pathname
- */
-export function getActiveTab(pathname: string): string {
-  if (pathname.startsWith('/admin/membership')) {
-    return 'membership';
-  }
-  if (pathname.startsWith('/admin/customers')) {
-    return 'customers';
-  }
-  return '';
-}
+// No shared navigation tabs currently needed
+// Customer and Membership management is unified in /admin/customers
+// Membership settings accessible via /admin/membership/config
