@@ -12,17 +12,18 @@ import { SalesDashboard } from '@/components/admin/reports/sales-dashboard';
 
 export const metadata: Metadata = {
   title: 'Sales Reports | Admin Dashboard',
-  description: 'Comprehensive sales analytics for Malaysian e-commerce platform',
+  description:
+    'Comprehensive sales analytics for Malaysian e-commerce platform',
 };
 
 export default async function SalesReportsPage() {
   const session = await getServerSession(authOptions);
-  
+
   // Check authentication and authorization
   if (!session?.user) {
     redirect('/auth/signin');
   }
-  
+
   if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
     redirect('/admin');
   }

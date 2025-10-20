@@ -22,7 +22,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const orderId = params.orderId;
 
@@ -164,7 +166,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const orderId = params.orderId;
     const body = await request.json();
@@ -345,7 +349,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     // Authorization check - only admin can delete orders
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const orderId = params.orderId;
 

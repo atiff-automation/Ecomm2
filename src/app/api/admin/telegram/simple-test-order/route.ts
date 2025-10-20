@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -33,17 +36,17 @@ export async function POST(request: NextRequest) {
     const mockOrderData = {
       orderNumber: `ORD-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-TEST`,
       customerName: 'Ahmad Bin Ali',
-      total: 185.50,
+      total: 185.5,
       items: [
         {
           name: 'Wireless Bluetooth Earbuds Pro',
           quantity: 1,
-          price: 129.90,
+          price: 129.9,
         },
         {
           name: 'Phone Case - Clear TPU with Corner Protection',
           quantity: 2,
-          price: 27.80,
+          price: 27.8,
         },
       ],
       paymentMethod: 'TOYYIBPAY',
@@ -51,7 +54,8 @@ export async function POST(request: NextRequest) {
     };
 
     // DRY: Use simplified service
-    const success = await simplifiedTelegramService.sendNewOrderNotification(mockOrderData);
+    const success =
+      await simplifiedTelegramService.sendNewOrderNotification(mockOrderData);
 
     if (success) {
       return NextResponse.json({

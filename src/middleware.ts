@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { protectApiEndpoint, protectionConfigs } from '@/lib/middleware/api-protection';
+import {
+  protectApiEndpoint,
+  protectionConfigs,
+} from '@/lib/middleware/api-protection';
 
 /**
  * Security headers
@@ -55,9 +58,14 @@ function generateCSRFToken(): string {
 /**
  * Determine API protection level based on pathname
  */
-function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenticated' | 'admin' | 'sensitive' {
+function getProtectionLevel(
+  pathname: string
+): 'public' | 'standard' | 'authenticated' | 'admin' | 'sensitive' {
   // Admin routes - highest protection
-  if (pathname.startsWith('/api/admin') || pathname.startsWith('/api/superadmin')) {
+  if (
+    pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/api/superadmin')
+  ) {
     return 'admin';
   }
 
@@ -80,7 +88,8 @@ function getProtectionLevel(pathname: string): 'public' | 'standard' | 'authenti
   // Note: Webhooks moved to public to allow payment gateway callbacks
   if (
     pathname.startsWith('/api/upload') ||
-    (pathname.startsWith('/api/site-customization') && pathname !== '/api/site-customization/current')
+    (pathname.startsWith('/api/site-customization') &&
+      pathname !== '/api/site-customization/current')
   ) {
     return 'sensitive';
   }
@@ -125,13 +134,14 @@ export async function middleware(request: NextRequest) {
     'unknown';
 
   // CRITICAL: Block all test and debug endpoints in production
-  if ((pathname.startsWith('/api/test') || pathname.startsWith('/api/debug')) &&
-      process.env.NODE_ENV === 'production') {
-    console.warn(`🚫 Blocked test endpoint access in production: ${pathname} from IP: ${ip}`);
-    return NextResponse.json(
-      { message: 'Not found' },
-      { status: 404 }
+  if (
+    (pathname.startsWith('/api/test') || pathname.startsWith('/api/debug')) &&
+    process.env.NODE_ENV === 'production'
+  ) {
+    console.warn(
+      `🚫 Blocked test endpoint access in production: ${pathname} from IP: ${ip}`
     );
+    return NextResponse.json({ message: 'Not found' }, { status: 404 });
   }
 
   // Apply API protection middleware for all API routes

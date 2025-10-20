@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -30,13 +33,18 @@ export async function POST(request: NextRequest) {
 
     // NO HARDCODE: Dynamic test data with Malaysian product context
     const testProducts = [
-      { name: 'Batik Print Shirt - Traditional Malaysian', sku: 'BTK-001-M', stock: 3 },
+      {
+        name: 'Batik Print Shirt - Traditional Malaysian',
+        sku: 'BTK-001-M',
+        stock: 3,
+      },
       { name: 'Rendang Instant Paste 200g', sku: 'RND-200G', stock: 5 },
       { name: 'Teh Tarik Premium Mix', sku: 'TEH-MIX-500G', stock: 2 },
     ];
 
     // NO HARDCODE: Random selection for variety
-    const randomProduct = testProducts[Math.floor(Math.random() * testProducts.length)];
+    const randomProduct =
+      testProducts[Math.floor(Math.random() * testProducts.length)];
 
     // DRY: Use simplified service
     const success = await simplifiedTelegramService.sendLowStockAlert(

@@ -5,7 +5,12 @@
  */
 
 import { AgentApplicationService } from '../agent-application.service';
-import { AgentApplicationStatus, SocialMediaLevel, ApplicationDecision, PrismaClient } from '@prisma/client';
+import {
+  AgentApplicationStatus,
+  SocialMediaLevel,
+  ApplicationDecision,
+  PrismaClient,
+} from '@prisma/client';
 import { emailService } from '@/lib/email/email-service';
 
 // Mock PrismaClient
@@ -22,7 +27,7 @@ const mockPrismaClient = {
   },
   user: {
     findUnique: jest.fn(),
-  }
+  },
 };
 
 jest.mock('@prisma/client', () => ({
@@ -36,7 +41,7 @@ jest.mock('@/lib/email/email-service', () => ({
     sendAgentApplicationConfirmation: jest.fn(),
     sendAgentApplicationStatusUpdate: jest.fn(),
     notifyAdminsOfNewAgentApplication: jest.fn(),
-  }
+  },
 }));
 
 const mockPrisma = mockPrismaClient as jest.Mocked<typeof mockPrismaClient>;
@@ -63,8 +68,10 @@ describe('AgentApplicationService', () => {
     tiktokLevel: SocialMediaLevel.TIDAK_MAHIR,
     hasJrmExp: true,
     jrmProducts: 'JRM Premium Skincare, JRM Supplements',
-    reasonToJoin: 'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
-    expectations: 'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
+    reasonToJoin:
+      'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
+    expectations:
+      'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
   };
 
   const mockApplication = {
@@ -78,14 +85,14 @@ describe('AgentApplicationService', () => {
     reviewedAt: null,
     reviewedBy: null,
     adminNotes: null,
-    reviews: []
+    reviews: [],
   };
 
   const mockAdmin = {
     id: 'admin-123',
     email: 'admin@jrm.com',
     name: 'Admin User',
-    role: 'ADMIN'
+    role: 'ADMIN',
   };
 
   beforeEach(() => {
@@ -96,14 +103,15 @@ describe('AgentApplicationService', () => {
     it('should create a new application successfully', async () => {
       mockPrisma.agentApplication.create.mockResolvedValue(mockApplication);
 
-      const result = await AgentApplicationService.createApplication(validApplicationData);
+      const result =
+        await AgentApplicationService.createApplication(validApplicationData);
 
       expect(mockPrisma.agentApplication.create).toHaveBeenCalledWith({
         data: {
           ...validApplicationData,
           status: AgentApplicationStatus.SUBMITTED,
           submittedAt: expect.any(Date),
-        }
+        },
       });
       expect(result).toEqual(mockApplication);
     });
@@ -112,15 +120,17 @@ describe('AgentApplicationService', () => {
       const dbError = new Error('Database connection failed');
       mockPrisma.agentApplication.create.mockRejectedValue(dbError);
 
-      await expect(AgentApplicationService.createApplication(validApplicationData))
-        .rejects.toThrow('Database connection failed');
+      await expect(
+        AgentApplicationService.createApplication(validApplicationData)
+      ).rejects.toThrow('Database connection failed');
     });
 
     it('should sanitize input data before saving', async () => {
       const maliciousData = {
         ...validApplicationData,
         fullName: 'Ahmad<script>alert("xss")</script>',
-        reasonToJoin: 'Valid reason with <script>alert("xss")</script> injection attempt'
+        reasonToJoin:
+          'Valid reason with <script>alert("xss")</script> injection attempt',
       };
 
       mockPrisma.agentApplication.create.mockResolvedValue(mockApplication);
@@ -135,12 +145,13 @@ describe('AgentApplicationService', () => {
 
     it('should validate required fields', async () => {
       const incompleteData = {
-        email: 'test@example.com'
+        email: 'test@example.com',
         // Missing required fields
       };
 
-      await expect(AgentApplicationService.createApplication(incompleteData as any))
-        .rejects.toThrow();
+      await expect(
+        AgentApplicationService.createApplication(incompleteData as any)
+      ).rejects.toThrow();
     });
   });
 
@@ -154,20 +165,26 @@ describe('AgentApplicationService', () => {
       const updatedApplication = { ...mockApplication, ...updatedData };
       mockPrisma.agentApplication.update.mockResolvedValue(updatedApplication);
 
-      const result = await AgentApplicationService.updateApplication('app-123', updatedData);
+      const result = await AgentApplicationService.updateApplication(
+        'app-123',
+        updatedData
+      );
 
       expect(mockPrisma.agentApplication.update).toHaveBeenCalledWith({
         where: { id: 'app-123' },
-        data: updatedData
+        data: updatedData,
       });
       expect(result).toEqual(updatedApplication);
     });
 
     it('should handle non-existent application', async () => {
-      mockPrisma.agentApplication.update.mockRejectedValue(new Error('Record to update not found'));
+      mockPrisma.agentApplication.update.mockRejectedValue(
+        new Error('Record to update not found')
+      );
 
-      await expect(AgentApplicationService.updateApplication('non-existent', {}))
-        .rejects.toThrow('Record to update not found');
+      await expect(
+        AgentApplicationService.updateApplication('non-existent', {})
+      ).rejects.toThrow('Record to update not found');
     });
   });
 
@@ -183,7 +200,7 @@ describe('AgentApplicationService', () => {
         page: 1,
         limit: 10,
         status: AgentApplicationStatus.SUBMITTED,
-        search: 'Ahmad'
+        search: 'Ahmad',
       };
 
       const result = await AgentApplicationService.getApplications(filters);
@@ -194,8 +211,8 @@ describe('AgentApplicationService', () => {
           page: 1,
           limit: 10,
           total: totalCount,
-          totalPages: 1
-        }
+          totalPages: 1,
+        },
       });
 
       expect(mockPrisma.agentApplication.findMany).toHaveBeenCalledWith({
@@ -204,8 +221,8 @@ describe('AgentApplicationService', () => {
           OR: [
             { fullName: { contains: 'Ahmad', mode: 'insensitive' } },
             { email: { contains: 'Ahmad', mode: 'insensitive' } },
-            { icNumber: { contains: 'Ahmad', mode: 'insensitive' } }
-          ]
+            { icNumber: { contains: 'Ahmad', mode: 'insensitive' } },
+          ],
         },
         include: {
           reviews: {
@@ -214,15 +231,15 @@ describe('AgentApplicationService', () => {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
-              }
-            }
-          }
+                  email: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { submittedAt: 'desc' },
         skip: 0,
-        take: 10
+        take: 10,
       });
     });
 
@@ -241,14 +258,14 @@ describe('AgentApplicationService', () => {
       mockPrisma.agentApplication.count.mockResolvedValue(0);
 
       await AgentApplicationService.getApplications({
-        status: AgentApplicationStatus.APPROVED
+        status: AgentApplicationStatus.APPROVED,
       });
 
       expect(mockPrisma.agentApplication.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            status: AgentApplicationStatus.APPROVED
-          })
+            status: AgentApplicationStatus.APPROVED,
+          }),
         })
       );
     });
@@ -262,7 +279,7 @@ describe('AgentApplicationService', () => {
 
       await AgentApplicationService.getApplications({
         startDate,
-        endDate
+        endDate,
       });
 
       expect(mockPrisma.agentApplication.findMany).toHaveBeenCalledWith(
@@ -270,9 +287,9 @@ describe('AgentApplicationService', () => {
           where: expect.objectContaining({
             submittedAt: {
               gte: startDate,
-              lte: endDate
-            }
-          })
+              lte: endDate,
+            },
+          }),
         })
       );
     });
@@ -282,7 +299,8 @@ describe('AgentApplicationService', () => {
     it('should retrieve a specific application', async () => {
       mockPrisma.agentApplication.findUnique.mockResolvedValue(mockApplication);
 
-      const result = await AgentApplicationService.getApplicationById('app-123');
+      const result =
+        await AgentApplicationService.getApplicationById('app-123');
 
       expect(mockPrisma.agentApplication.findUnique).toHaveBeenCalledWith({
         where: { id: 'app-123' },
@@ -291,8 +309,8 @@ describe('AgentApplicationService', () => {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           reviews: {
             include: {
@@ -300,13 +318,13 @@ describe('AgentApplicationService', () => {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
-              }
+                  email: true,
+                },
+              },
             },
-            orderBy: { createdAt: 'desc' }
-          }
-        }
+            orderBy: { createdAt: 'desc' },
+          },
+        },
       });
       expect(result).toEqual(mockApplication);
     });
@@ -314,7 +332,8 @@ describe('AgentApplicationService', () => {
     it('should return null for non-existent application', async () => {
       mockPrisma.agentApplication.findUnique.mockResolvedValue(null);
 
-      const result = await AgentApplicationService.getApplicationById('non-existent');
+      const result =
+        await AgentApplicationService.getApplicationById('non-existent');
 
       expect(result).toBeNull();
     });
@@ -327,7 +346,8 @@ describe('AgentApplicationService', () => {
         status: AgentApplicationStatus.APPROVED,
         reviewedAt: new Date(),
         reviewedBy: 'admin-123',
-        adminNotes: 'Application approved based on excellent business experience'
+        adminNotes:
+          'Application approved based on excellent business experience',
       };
 
       mockPrisma.agentApplication.update.mockResolvedValue(updatedApplication);
@@ -337,7 +357,7 @@ describe('AgentApplicationService', () => {
         reviewerId: 'admin-123',
         decision: ApplicationDecision.APPROVED,
         notes: 'Application approved based on excellent business experience',
-        createdAt: new Date()
+        createdAt: new Date(),
       });
 
       await AgentApplicationService.updateApplicationStatus(
@@ -353,8 +373,9 @@ describe('AgentApplicationService', () => {
           status: AgentApplicationStatus.APPROVED,
           reviewedAt: expect.any(Date),
           reviewedBy: 'admin-123',
-          adminNotes: 'Application approved based on excellent business experience'
-        }
+          adminNotes:
+            'Application approved based on excellent business experience',
+        },
       });
 
       expect(mockPrisma.agentApplicationReview.create).toHaveBeenCalledWith({
@@ -362,8 +383,8 @@ describe('AgentApplicationService', () => {
           applicationId: 'app-123',
           reviewerId: 'admin-123',
           decision: ApplicationDecision.APPROVED,
-          notes: 'Application approved based on excellent business experience'
-        }
+          notes: 'Application approved based on excellent business experience',
+        },
       });
     });
 
@@ -373,7 +394,7 @@ describe('AgentApplicationService', () => {
         status: AgentApplicationStatus.REJECTED,
         reviewedAt: new Date(),
         reviewedBy: 'admin-123',
-        adminNotes: 'Insufficient business experience'
+        adminNotes: 'Insufficient business experience',
       };
 
       mockPrisma.agentApplication.update.mockResolvedValue(updatedApplication);
@@ -383,7 +404,7 @@ describe('AgentApplicationService', () => {
         reviewerId: 'admin-123',
         decision: ApplicationDecision.REJECTED,
         notes: 'Insufficient business experience',
-        createdAt: new Date()
+        createdAt: new Date(),
       });
 
       await AgentApplicationService.updateApplicationStatus(
@@ -396,29 +417,33 @@ describe('AgentApplicationService', () => {
       expect(mockPrisma.agentApplicationReview.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           decision: ApplicationDecision.REJECTED,
-          notes: 'Insufficient business experience'
-        })
+          notes: 'Insufficient business experience',
+        }),
       });
     });
 
     it('should require admin notes for status changes', async () => {
-      await expect(AgentApplicationService.updateApplicationStatus(
-        'app-123',
-        AgentApplicationStatus.APPROVED,
-        'admin-123'
-        // Missing notes
-      )).rejects.toThrow('Admin notes are required for status updates');
+      await expect(
+        AgentApplicationService.updateApplicationStatus(
+          'app-123',
+          AgentApplicationStatus.APPROVED,
+          'admin-123'
+          // Missing notes
+        )
+      ).rejects.toThrow('Admin notes are required for status updates');
     });
 
     it('should validate admin user exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(AgentApplicationService.updateApplicationStatus(
-        'app-123',
-        AgentApplicationStatus.APPROVED,
-        'non-existent-admin',
-        'Notes'
-      )).rejects.toThrow('Admin user not found');
+      await expect(
+        AgentApplicationService.updateApplicationStatus(
+          'app-123',
+          AgentApplicationStatus.APPROVED,
+          'non-existent-admin',
+          'Notes'
+        )
+      ).rejects.toThrow('Admin user not found');
     });
   });
 
@@ -433,11 +458,13 @@ describe('AgentApplicationService', () => {
       it('should send confirmation email after application submission', async () => {
         await AgentApplicationService.sendConfirmationEmail(mockApplication);
 
-        expect(mockEmailService.sendAgentApplicationConfirmation).toHaveBeenCalledWith({
+        expect(
+          mockEmailService.sendAgentApplicationConfirmation
+        ).toHaveBeenCalledWith({
           applicationId: mockApplication.id,
           applicantName: mockApplication.fullName,
           applicantEmail: mockApplication.email,
-          submissionDate: mockApplication.submittedAt
+          submissionDate: mockApplication.submittedAt,
         });
       });
 
@@ -447,8 +474,9 @@ describe('AgentApplicationService', () => {
         );
 
         // Should not throw, but log the error
-        await expect(AgentApplicationService.sendConfirmationEmail(mockApplication))
-          .resolves.not.toThrow();
+        await expect(
+          AgentApplicationService.sendConfirmationEmail(mockApplication)
+        ).resolves.not.toThrow();
       });
     });
 
@@ -457,17 +485,21 @@ describe('AgentApplicationService', () => {
         const reviewedApplication = {
           ...mockApplication,
           status: AgentApplicationStatus.APPROVED,
-          adminNotes: 'Congratulations! Your application has been approved.'
+          adminNotes: 'Congratulations! Your application has been approved.',
         };
 
-        await AgentApplicationService.sendStatusUpdateEmail(reviewedApplication);
+        await AgentApplicationService.sendStatusUpdateEmail(
+          reviewedApplication
+        );
 
-        expect(mockEmailService.sendAgentApplicationStatusUpdate).toHaveBeenCalledWith({
+        expect(
+          mockEmailService.sendAgentApplicationStatusUpdate
+        ).toHaveBeenCalledWith({
           applicationId: reviewedApplication.id,
           applicantName: reviewedApplication.fullName,
           applicantEmail: reviewedApplication.email,
           status: 'APPROVED',
-          notes: 'Congratulations! Your application has been approved.'
+          notes: 'Congratulations! Your application has been approved.',
         });
       });
 
@@ -475,30 +507,40 @@ describe('AgentApplicationService', () => {
         const rejectedApplication = {
           ...mockApplication,
           status: AgentApplicationStatus.REJECTED,
-          adminNotes: 'We regret to inform you that your application has been rejected.'
+          adminNotes:
+            'We regret to inform you that your application has been rejected.',
         };
 
-        await AgentApplicationService.sendStatusUpdateEmail(rejectedApplication);
+        await AgentApplicationService.sendStatusUpdateEmail(
+          rejectedApplication
+        );
 
-        expect(mockEmailService.sendAgentApplicationStatusUpdate).toHaveBeenCalledWith({
+        expect(
+          mockEmailService.sendAgentApplicationStatusUpdate
+        ).toHaveBeenCalledWith({
           applicationId: rejectedApplication.id,
           applicantName: rejectedApplication.fullName,
           applicantEmail: rejectedApplication.email,
           status: 'REJECTED',
-          notes: 'We regret to inform you that your application has been rejected.'
+          notes:
+            'We regret to inform you that your application has been rejected.',
         });
       });
     });
 
     describe('notifyAdminsOfNewApplication', () => {
       it('should notify admins when new application is submitted', async () => {
-        await AgentApplicationService.notifyAdminsOfNewApplication(mockApplication);
+        await AgentApplicationService.notifyAdminsOfNewApplication(
+          mockApplication
+        );
 
-        expect(mockEmailService.notifyAdminsOfNewAgentApplication).toHaveBeenCalledWith({
+        expect(
+          mockEmailService.notifyAdminsOfNewAgentApplication
+        ).toHaveBeenCalledWith({
           applicationId: mockApplication.id,
           applicantName: mockApplication.fullName,
           applicantEmail: mockApplication.email,
-          submissionDate: mockApplication.submittedAt
+          submissionDate: mockApplication.submittedAt,
         });
       });
     });
@@ -508,18 +550,24 @@ describe('AgentApplicationService', () => {
     it('should enforce business rules for application creation', async () => {
       // Test age restrictions
       const underageData = { ...validApplicationData, age: 17 };
-      await expect(AgentApplicationService.createApplication(underageData))
-        .rejects.toThrow();
+      await expect(
+        AgentApplicationService.createApplication(underageData)
+      ).rejects.toThrow();
 
       // Test IC number format
       const invalidIcData = { ...validApplicationData, icNumber: 'invalid-ic' };
-      await expect(AgentApplicationService.createApplication(invalidIcData))
-        .rejects.toThrow();
+      await expect(
+        AgentApplicationService.createApplication(invalidIcData)
+      ).rejects.toThrow();
 
       // Test phone number format
-      const invalidPhoneData = { ...validApplicationData, phoneNumber: 'invalid-phone' };
-      await expect(AgentApplicationService.createApplication(invalidPhoneData))
-        .rejects.toThrow();
+      const invalidPhoneData = {
+        ...validApplicationData,
+        phoneNumber: 'invalid-phone',
+      };
+      await expect(
+        AgentApplicationService.createApplication(invalidPhoneData)
+      ).rejects.toThrow();
     });
 
     it('should validate Malaysian-specific data patterns', async () => {
@@ -527,26 +575,29 @@ describe('AgentApplicationService', () => {
         ...validApplicationData,
         icNumber: '950423-14-1234',
         phoneNumber: '+60123456789',
-        address: 'No. 456, Jalan Sultan, Taman Permai, 47000 Petaling Jaya, Selangor'
+        address:
+          'No. 456, Jalan Sultan, Taman Permai, 47000 Petaling Jaya, Selangor',
       };
 
       mockPrisma.agentApplication.create.mockResolvedValue({
         ...mockApplication,
-        ...validMalaysianData
+        ...validMalaysianData,
       });
 
-      await expect(AgentApplicationService.createApplication(validMalaysianData))
-        .resolves.not.toThrow();
+      await expect(
+        AgentApplicationService.createApplication(validMalaysianData)
+      ).resolves.not.toThrow();
     });
 
     it('should enforce social media level requirements', async () => {
       const invalidSocialMediaData = {
         ...validApplicationData,
-        instagramLevel: 'INVALID_LEVEL' as any
+        instagramLevel: 'INVALID_LEVEL' as any,
       };
 
-      await expect(AgentApplicationService.createApplication(invalidSocialMediaData))
-        .rejects.toThrow();
+      await expect(
+        AgentApplicationService.createApplication(invalidSocialMediaData)
+      ).rejects.toThrow();
     });
   });
 
@@ -556,8 +607,9 @@ describe('AgentApplicationService', () => {
         new Error('Database connection failed')
       );
 
-      await expect(AgentApplicationService.createApplication(validApplicationData))
-        .rejects.toThrow('Database connection failed');
+      await expect(
+        AgentApplicationService.createApplication(validApplicationData)
+      ).rejects.toThrow('Database connection failed');
     });
 
     it('should handle concurrent access issues', async () => {
@@ -565,25 +617,30 @@ describe('AgentApplicationService', () => {
         new Error('Record has been modified by another user')
       );
 
-      await expect(AgentApplicationService.updateApplicationStatus(
-        'app-123',
-        AgentApplicationStatus.APPROVED,
-        'admin-123',
-        'Approved'
-      )).rejects.toThrow('Record has been modified by another user');
+      await expect(
+        AgentApplicationService.updateApplicationStatus(
+          'app-123',
+          AgentApplicationStatus.APPROVED,
+          'admin-123',
+          'Approved'
+        )
+      ).rejects.toThrow('Record has been modified by another user');
     });
 
     it('should validate input parameters', async () => {
       // Test null/undefined parameters
-      await expect(AgentApplicationService.getApplicationById(null as any))
-        .rejects.toThrow();
+      await expect(
+        AgentApplicationService.getApplicationById(null as any)
+      ).rejects.toThrow();
 
-      await expect(AgentApplicationService.updateApplicationStatus(
-        '',
-        AgentApplicationStatus.APPROVED,
-        'admin-123',
-        'Notes'
-      )).rejects.toThrow();
+      await expect(
+        AgentApplicationService.updateApplicationStatus(
+          '',
+          AgentApplicationStatus.APPROVED,
+          'admin-123',
+          'Notes'
+        )
+      ).rejects.toThrow();
     });
   });
 
@@ -595,14 +652,14 @@ describe('AgentApplicationService', () => {
 
       const result = await AgentApplicationService.getApplications({
         page: 1,
-        limit: 50
+        limit: 50,
       });
 
       expect(result.applications).toHaveLength(1000);
       expect(mockPrisma.agentApplication.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 50,
-          skip: 0
+          skip: 0,
         })
       );
     });
@@ -611,7 +668,7 @@ describe('AgentApplicationService', () => {
       await AgentApplicationService.getApplications({
         status: AgentApplicationStatus.SUBMITTED,
         startDate: new Date('2023-01-01'),
-        endDate: new Date('2023-12-31')
+        endDate: new Date('2023-12-31'),
       });
 
       // Verify that queries are structured to use database indexes
@@ -619,8 +676,8 @@ describe('AgentApplicationService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             status: AgentApplicationStatus.SUBMITTED,
-            submittedAt: expect.any(Object)
-          })
+            submittedAt: expect.any(Object),
+          }),
         })
       );
     });
@@ -634,11 +691,12 @@ describe('AgentApplicationService', () => {
       mockPrisma.agentApplication.count.mockResolvedValue(0);
 
       await AgentApplicationService.getApplications({
-        search: maliciousSearch
+        search: maliciousSearch,
       });
 
       // Verify that the search is properly parameterized
-      const findManyCall = mockPrisma.agentApplication.findMany.mock.calls[0][0];
+      const findManyCall =
+        mockPrisma.agentApplication.findMany.mock.calls[0][0];
       expect(JSON.stringify(findManyCall)).not.toContain('DROP TABLE');
     });
 
@@ -646,7 +704,7 @@ describe('AgentApplicationService', () => {
       const xssData = {
         ...validApplicationData,
         fullName: '<script>alert("xss")</script>Ahmad',
-        reasonToJoin: 'Valid reason<img src=x onerror=alert("xss")>'
+        reasonToJoin: 'Valid reason<img src=x onerror=alert("xss")>',
       };
 
       mockPrisma.agentApplication.create.mockResolvedValue(mockApplication);

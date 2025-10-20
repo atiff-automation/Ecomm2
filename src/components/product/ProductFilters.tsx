@@ -46,7 +46,7 @@ import {
   Truck,
   ShieldCheck,
   Zap,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 export interface FilterOption {
@@ -99,7 +99,7 @@ function StarRating({
   rating,
   interactive = false,
   size = 'sm',
-  onRatingChange
+  onRatingChange,
 }: {
   rating: number;
   interactive?: boolean;
@@ -109,12 +109,12 @@ function StarRating({
   const sizeClasses = {
     sm: 'h-3 w-3',
     md: 'h-4 w-4',
-    lg: 'h-5 w-5'
+    lg: 'h-5 w-5',
   };
 
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
+      {[1, 2, 3, 4, 5].map(star => (
         <button
           key={star}
           type="button"
@@ -145,7 +145,7 @@ function ColorSwatch({
   color,
   selected,
   onClick,
-  size = 'md'
+  size = 'md',
 }: {
   color: string;
   selected: boolean;
@@ -155,7 +155,7 @@ function ColorSwatch({
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
-    lg: 'w-10 h-10'
+    lg: 'w-10 h-10',
   };
 
   return (
@@ -186,7 +186,7 @@ function ColorSwatch({
 function FilterGroupComponent({
   group,
   activeValue,
-  onChange
+  onChange,
 }: {
   group: FilterGroup;
   activeValue: any;
@@ -199,22 +199,30 @@ function FilterGroupComponent({
       case 'checkbox':
         return (
           <div className="space-y-3">
-            {group.options?.map((option) => (
-              <div key={option.id} className="flex items-center justify-between">
+            {group.options?.map(option => (
+              <div
+                key={option.id}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id={option.id}
-                    checked={Array.isArray(activeValue)
-                      ? activeValue.includes(option.value)
-                      : activeValue === option.value
+                    checked={
+                      Array.isArray(activeValue)
+                        ? activeValue.includes(option.value)
+                        : activeValue === option.value
                     }
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={checked => {
                       if (group.multiple) {
-                        const currentValues = Array.isArray(activeValue) ? activeValue : [];
+                        const currentValues = Array.isArray(activeValue)
+                          ? activeValue
+                          : [];
                         if (checked) {
                           onChange([...currentValues, option.value]);
                         } else {
-                          onChange(currentValues.filter(v => v !== option.value));
+                          onChange(
+                            currentValues.filter(v => v !== option.value)
+                          );
                         }
                       } else {
                         onChange(checked ? option.value : null);
@@ -242,8 +250,11 @@ function FilterGroupComponent({
       case 'radio':
         return (
           <div className="space-y-3">
-            {group.options?.map((option) => (
-              <div key={option.id} className="flex items-center justify-between">
+            {group.options?.map(option => (
+              <div
+                key={option.id}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -291,37 +302,51 @@ function FilterGroupComponent({
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">
-                {group.type === 'price' ? formatPrice(value[0]) : `${value[0]}${group.unit || ''}`}
+                {group.type === 'price'
+                  ? formatPrice(value[0])
+                  : `${value[0]}${group.unit || ''}`}
               </span>
               <span className="text-muted-foreground">to</span>
               <span className="font-medium">
-                {group.type === 'price' ? formatPrice(value[1]) : `${value[1]}${group.unit || ''}`}
+                {group.type === 'price'
+                  ? formatPrice(value[1])
+                  : `${value[1]}${group.unit || ''}`}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor={`${group.id}-min`} className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor={`${group.id}-min`}
+                  className="text-xs text-muted-foreground"
+                >
                   Min
                 </Label>
                 <Input
                   id={`${group.id}-min`}
                   type="number"
                   value={value[0]}
-                  onChange={(e) => onChange([parseInt(e.target.value) || min, value[1]])}
+                  onChange={e =>
+                    onChange([parseInt(e.target.value) || min, value[1]])
+                  }
                   min={min}
                   max={value[1]}
                   className="h-8 text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor={`${group.id}-max`} className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor={`${group.id}-max`}
+                  className="text-xs text-muted-foreground"
+                >
                   Max
                 </Label>
                 <Input
                   id={`${group.id}-max`}
                   type="number"
                   value={value[1]}
-                  onChange={(e) => onChange([value[0], parseInt(e.target.value) || max])}
+                  onChange={e =>
+                    onChange([value[0], parseInt(e.target.value) || max])
+                  }
                   min={value[0]}
                   max={max}
                   className="h-8 text-sm"
@@ -334,7 +359,7 @@ function FilterGroupComponent({
       case 'rating':
         return (
           <div className="space-y-3">
-            {[5, 4, 3, 2, 1].map((rating) => (
+            {[5, 4, 3, 2, 1].map(rating => (
               <button
                 key={rating}
                 type="button"
@@ -342,7 +367,8 @@ function FilterGroupComponent({
                 className={cn(
                   'flex items-center justify-between w-full p-2 rounded-md text-left transition-colors',
                   'hover:bg-muted/50',
-                  activeValue === rating && 'bg-primary/10 border border-primary/20'
+                  activeValue === rating &&
+                    'bg-primary/10 border border-primary/20'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -360,24 +386,29 @@ function FilterGroupComponent({
       case 'color':
         return (
           <div className="grid grid-cols-6 gap-2">
-            {group.options?.map((option) => (
+            {group.options?.map(option => (
               <ColorSwatch
                 key={option.id}
                 color={option.color || '#000'}
-                selected={Array.isArray(activeValue)
-                  ? activeValue.includes(option.value)
-                  : activeValue === option.value
+                selected={
+                  Array.isArray(activeValue)
+                    ? activeValue.includes(option.value)
+                    : activeValue === option.value
                 }
                 onClick={() => {
                   if (group.multiple) {
-                    const currentValues = Array.isArray(activeValue) ? activeValue : [];
+                    const currentValues = Array.isArray(activeValue)
+                      ? activeValue
+                      : [];
                     if (currentValues.includes(option.value)) {
                       onChange(currentValues.filter(v => v !== option.value));
                     } else {
                       onChange([...currentValues, option.value]);
                     }
                   } else {
-                    onChange(activeValue === option.value ? null : option.value);
+                    onChange(
+                      activeValue === option.value ? null : option.value
+                    );
                   }
                 }}
               />
@@ -391,7 +422,7 @@ function FilterGroupComponent({
             <Input
               type="text"
               value={activeValue || ''}
-              onChange={(e) => onChange(e.target.value || null)}
+              onChange={e => onChange(e.target.value || null)}
               placeholder={`Search ${group.title.toLowerCase()}...`}
               className="h-9"
             />
@@ -445,7 +476,7 @@ function ActiveFilters({
   filterGroups,
   activeFilters,
   onRemoveFilter,
-  onClearAll
+  onClearAll,
 }: {
   filterGroups: FilterGroup[];
   activeFilters: Record<string, any>;
@@ -453,18 +484,25 @@ function ActiveFilters({
   onClearAll: () => void;
 }) {
   const activeFiltersList = Object.entries(activeFilters)
-    .filter(([, value]) => value !== null && value !== undefined &&
-      (Array.isArray(value) ? value.length > 0 : true))
+    .filter(
+      ([, value]) =>
+        value !== null &&
+        value !== undefined &&
+        (Array.isArray(value) ? value.length > 0 : true)
+    )
     .map(([filterId, value]) => {
       const group = filterGroups.find(g => g.id === filterId);
-      if (!group) return null;
+      if (!group) {
+        return null;
+      }
 
       if (Array.isArray(value)) {
         return value.map(v => ({
           id: `${filterId}-${v}`,
           filterId,
-          label: group.options?.find(opt => opt.value === v)?.label || String(v),
-          group: group.title
+          label:
+            group.options?.find(opt => opt.value === v)?.label || String(v),
+          group: group.title,
         }));
       }
 
@@ -474,20 +512,24 @@ function ActiveFilters({
       } else if (group.type === 'rating') {
         label = `${value}+ stars`;
       } else if (group.options) {
-        label = group.options.find(opt => opt.value === value)?.label || String(value);
+        label =
+          group.options.find(opt => opt.value === value)?.label ||
+          String(value);
       }
 
       return {
         id: filterId,
         filterId,
         label,
-        group: group.title
+        group: group.title,
       };
     })
     .flat()
     .filter(Boolean);
 
-  if (activeFiltersList.length === 0) return null;
+  if (activeFiltersList.length === 0) {
+    return null;
+  }
 
   return (
     <div className="space-y-3">
@@ -503,7 +545,7 @@ function ActiveFilters({
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
-        {activeFiltersList.map((filter) => (
+        {activeFiltersList.map(filter => (
           <Badge
             key={filter.id}
             variant="secondary"
@@ -532,7 +574,7 @@ export function ProductFilters({
   variant = 'sidebar',
   showFilterCount = true,
   showClearAll = true,
-  className
+  className,
 }: ProductFiltersProps) {
   const [localFilters, setLocalFilters] = useState(activeFilters);
 
@@ -540,22 +582,31 @@ export function ProductFilters({
     setLocalFilters(activeFilters);
   }, [activeFilters]);
 
-  const handleFilterChange = useCallback((filterId: string, value: any) => {
-    const newFilters = { ...localFilters, [filterId]: value };
-    if (value === null || value === undefined ||
-        (Array.isArray(value) && value.length === 0)) {
-      delete newFilters[filterId];
-    }
-    setLocalFilters(newFilters);
-    onFiltersChange(newFilters);
-  }, [localFilters, onFiltersChange]);
+  const handleFilterChange = useCallback(
+    (filterId: string, value: any) => {
+      const newFilters = { ...localFilters, [filterId]: value };
+      if (
+        value === null ||
+        value === undefined ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        delete newFilters[filterId];
+      }
+      setLocalFilters(newFilters);
+      onFiltersChange(newFilters);
+    },
+    [localFilters, onFiltersChange]
+  );
 
-  const handleRemoveFilter = useCallback((filterId: string) => {
-    const newFilters = { ...localFilters };
-    delete newFilters[filterId];
-    setLocalFilters(newFilters);
-    onFiltersChange(newFilters);
-  }, [localFilters, onFiltersChange]);
+  const handleRemoveFilter = useCallback(
+    (filterId: string) => {
+      const newFilters = { ...localFilters };
+      delete newFilters[filterId];
+      setLocalFilters(newFilters);
+      onFiltersChange(newFilters);
+    },
+    [localFilters, onFiltersChange]
+  );
 
   const handleClearAll = useCallback(() => {
     setLocalFilters({});
@@ -563,10 +614,12 @@ export function ProductFilters({
     onClearAll?.();
   }, [onFiltersChange, onClearAll]);
 
-  const activeFilterCount = Object.values(localFilters)
-    .filter(value => value !== null && value !== undefined &&
-      (Array.isArray(value) ? value.length > 0 : true))
-    .length;
+  const activeFilterCount = Object.values(localFilters).filter(
+    value =>
+      value !== null &&
+      value !== undefined &&
+      (Array.isArray(value) ? value.length > 0 : true)
+  ).length;
 
   const renderFilters = () => (
     <div className="space-y-6">
@@ -584,7 +637,7 @@ export function ProductFilters({
           <FilterGroupComponent
             group={group}
             activeValue={localFilters[group.id]}
-            onChange={(value) => handleFilterChange(group.id, value)}
+            onChange={value => handleFilterChange(group.id, value)}
           />
           {index < filterGroups.length - 1 && <Separator className="mt-6" />}
         </div>
@@ -593,11 +646,7 @@ export function ProductFilters({
       {/* Clear All Button */}
       {showClearAll && activeFilterCount > 0 && (
         <div className="pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClearAll}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={handleClearAll} className="w-full">
             <RefreshCw className="mr-2 h-4 w-4" />
             Clear All Filters
           </Button>
@@ -630,9 +679,7 @@ export function ProductFilters({
               Refine your search to find exactly what you're looking for.
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6">
-            {renderFilters()}
-          </div>
+          <div className="mt-6">{renderFilters()}</div>
         </SheetContent>
       </Sheet>
     );
@@ -652,18 +699,12 @@ export function ProductFilters({
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {renderFilters()}
-        </CardContent>
+        <CardContent className="space-y-4">{renderFilters()}</CardContent>
       </Card>
     );
   }
 
-  return (
-    <div className={cn('space-y-6', className)}>
-      {renderFilters()}
-    </div>
-  );
+  return <div className={cn('space-y-6', className)}>{renderFilters()}</div>;
 }
 
 // Default filter groups for e-commerce
@@ -677,12 +718,17 @@ export const defaultProductFilterGroups: FilterGroup[] = [
     collapsible: true,
     defaultExpanded: true,
     options: [
-      { id: 'electronics', label: 'Electronics', value: 'electronics', count: 156 },
+      {
+        id: 'electronics',
+        label: 'Electronics',
+        value: 'electronics',
+        count: 156,
+      },
       { id: 'fashion', label: 'Fashion', value: 'fashion', count: 234 },
       { id: 'home', label: 'Home & Garden', value: 'home', count: 89 },
       { id: 'sports', label: 'Sports & Outdoor', value: 'sports', count: 67 },
-      { id: 'books', label: 'Books', value: 'books', count: 45 }
-    ]
+      { id: 'books', label: 'Books', value: 'books', count: 45 },
+    ],
   },
   {
     id: 'price',
@@ -693,7 +739,7 @@ export const defaultProductFilterGroups: FilterGroup[] = [
     max: 5000,
     step: 10,
     collapsible: true,
-    defaultExpanded: true
+    defaultExpanded: true,
   },
   {
     id: 'rating',
@@ -701,7 +747,7 @@ export const defaultProductFilterGroups: FilterGroup[] = [
     type: 'rating',
     icon: Star,
     collapsible: true,
-    defaultExpanded: true
+    defaultExpanded: true,
   },
   {
     id: 'brand',
@@ -715,8 +761,8 @@ export const defaultProductFilterGroups: FilterGroup[] = [
       { id: 'apple', label: 'Apple', value: 'apple', count: 45 },
       { id: 'samsung', label: 'Samsung', value: 'samsung', count: 67 },
       { id: 'nike', label: 'Nike', value: 'nike', count: 34 },
-      { id: 'adidas', label: 'Adidas', value: 'adidas', count: 28 }
-    ]
+      { id: 'adidas', label: 'Adidas', value: 'adidas', count: 28 },
+    ],
   },
   {
     id: 'features',
@@ -727,11 +773,35 @@ export const defaultProductFilterGroups: FilterGroup[] = [
     collapsible: true,
     defaultExpanded: false,
     options: [
-      { id: 'free-shipping', label: 'Free Shipping', value: 'free-shipping', icon: Truck, count: 234 },
-      { id: 'on-sale', label: 'On Sale', value: 'on-sale', icon: Percent, count: 78 },
-      { id: 'featured', label: 'Featured', value: 'featured', icon: Star, count: 56 },
-      { id: 'warranty', label: 'Warranty Included', value: 'warranty', icon: ShieldCheck, count: 123 }
-    ]
+      {
+        id: 'free-shipping',
+        label: 'Free Shipping',
+        value: 'free-shipping',
+        icon: Truck,
+        count: 234,
+      },
+      {
+        id: 'on-sale',
+        label: 'On Sale',
+        value: 'on-sale',
+        icon: Percent,
+        count: 78,
+      },
+      {
+        id: 'featured',
+        label: 'Featured',
+        value: 'featured',
+        icon: Star,
+        count: 56,
+      },
+      {
+        id: 'warranty',
+        label: 'Warranty Included',
+        value: 'warranty',
+        icon: ShieldCheck,
+        count: 123,
+      },
+    ],
   },
   {
     id: 'color',
@@ -747,9 +817,9 @@ export const defaultProductFilterGroups: FilterGroup[] = [
       { id: 'red', label: 'Red', value: 'red', color: '#EF4444' },
       { id: 'blue', label: 'Blue', value: 'blue', color: '#3B82F6' },
       { id: 'green', label: 'Green', value: 'green', color: '#10B981' },
-      { id: 'yellow', label: 'Yellow', value: 'yellow', color: '#F59E0B' }
-    ]
-  }
+      { id: 'yellow', label: 'Yellow', value: 'yellow', color: '#F59E0B' },
+    ],
+  },
 ];
 
 export default ProductFilters;

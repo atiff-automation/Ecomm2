@@ -13,7 +13,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       },
       select: {
         referralCode: true,
-      }
+      },
     });
 
     // If no referral code exists, create one
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         },
         select: {
           referralCode: true,
-        }
+        },
       });
     }
 
@@ -51,34 +51,34 @@ export async function GET(request: NextRequest) {
       completedReferrals,
       totalRewards,
       availableRewards,
-      recentReferrals
+      recentReferrals,
     ] = await Promise.all([
       // Total referrals made by this user
       prisma.memberReferral.count({
         where: {
           referrerId: session.user.id,
           referredId: { not: null }, // Only count actual referrals
-        }
+        },
       }),
-      
+
       // Pending referrals
       prisma.memberReferral.count({
         where: {
           referrerId: session.user.id,
           status: 'PENDING',
           referredId: { not: null },
-        }
+        },
       }),
-      
+
       // Completed referrals
       prisma.memberReferral.count({
         where: {
           referrerId: session.user.id,
           status: 'COMPLETED',
           referredId: { not: null },
-        }
+        },
       }),
-      
+
       // Total rewards earned
       prisma.referralReward.aggregate({
         where: {
@@ -87,9 +87,9 @@ export async function GET(request: NextRequest) {
         },
         _sum: {
           rewardAmount: true,
-        }
+        },
       }),
-      
+
       // Available rewards (not yet paid)
       prisma.referralReward.aggregate({
         where: {
@@ -98,9 +98,9 @@ export async function GET(request: NextRequest) {
         },
         _sum: {
           rewardAmount: true,
-        }
+        },
       }),
-      
+
       // Recent referrals (last 10)
       prisma.memberReferral.findMany({
         where: {
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
           referralDate: 'desc',
         },
         take: 10,
-      })
+      }),
     ]);
 
     const referralData = {
@@ -132,16 +132,17 @@ export async function GET(request: NextRequest) {
         id: referral.id,
         referredEmail: referral.referredEmail,
         status: referral.status,
-        rewardAmount: referral.referrerRewardAmount ? Number(referral.referrerRewardAmount) : undefined,
+        rewardAmount: referral.referrerRewardAmount
+          ? Number(referral.referrerRewardAmount)
+          : undefined,
         createdAt: referral.referralDate,
       })),
     };
 
     return NextResponse.json({
       success: true,
-      data: referralData
+      data: referralData,
     });
-
   } catch (error) {
     console.error('Get referral data error:', error);
     return NextResponse.json(
@@ -157,26 +158,29 @@ export async function GET(request: NextRequest) {
 async function generateUniqueReferralCode(userId: string): Promise<string> {
   const maxAttempts = 10;
   let attempts = 0;
-  
+
   while (attempts < maxAttempts) {
     // Generate code based on user ID and random suffix
     const userIdShort = userId.slice(-4).toUpperCase();
-    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const randomSuffix = Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase();
     const referralCode = `${userIdShort}${randomSuffix}`;
-    
+
     // Check if code already exists
     const existingCode = await prisma.memberReferral.findUnique({
       where: { referralCode },
-      select: { id: true }
+      select: { id: true },
     });
-    
+
     if (!existingCode) {
       return referralCode;
     }
-    
+
     attempts++;
   }
-  
+
   // Fallback to timestamp-based code if all attempts fail
   const timestamp = Date.now().toString(36).toUpperCase();
   return `REF${timestamp}`;

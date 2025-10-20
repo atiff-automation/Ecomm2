@@ -3,13 +3,20 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Info } from 'lucide-react';
 
-interface SettingsInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface SettingsInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label: React.ReactNode;
   error?: string;
   helperText?: string;
@@ -30,26 +37,35 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      
+
       <Input
         {...props}
         className={`${className} ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
         aria-invalid={!!error}
         aria-describedby={
-          error ? `${props.id}-error` : 
-          helperText ? `${props.id}-help` : undefined
+          error
+            ? `${props.id}-error`
+            : helperText
+              ? `${props.id}-help`
+              : undefined
         }
       />
-      
+
       {error && (
-        <div id={`${props.id}-error`} className="flex items-center space-x-2 text-sm text-red-600">
+        <div
+          id={`${props.id}-error`}
+          className="flex items-center space-x-2 text-sm text-red-600"
+        >
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
         </div>
       )}
-      
+
       {helperText && !error && (
-        <div id={`${props.id}-help`} className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div
+          id={`${props.id}-help`}
+          className="flex items-center space-x-2 text-sm text-muted-foreground"
+        >
           <Info className="h-4 w-4" />
           <span>{helperText}</span>
         </div>
@@ -79,7 +95,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
   helperText,
   value,
   onValueChange,
-  disabled
+  disabled,
 }) => {
   const selectId = React.useId();
 
@@ -89,23 +105,26 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      
+
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger 
+        <SelectTrigger
           id={selectId}
           className={error ? 'border-red-500 focus:ring-red-500' : ''}
           aria-invalid={!!error}
           aria-describedby={
-            error ? `${selectId}-error` : 
-            helperText ? `${selectId}-help` : undefined
+            error
+              ? `${selectId}-error`
+              : helperText
+                ? `${selectId}-help`
+                : undefined
           }
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
-            <SelectItem 
-              key={option.value} 
+          {options.map(option => (
+            <SelectItem
+              key={option.value}
               value={option.value}
               disabled={option.disabled}
             >
@@ -114,16 +133,22 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
           ))}
         </SelectContent>
       </Select>
-      
+
       {error && (
-        <div id={`${selectId}-error`} className="flex items-center space-x-2 text-sm text-red-600">
+        <div
+          id={`${selectId}-error`}
+          className="flex items-center space-x-2 text-sm text-red-600"
+        >
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
         </div>
       )}
-      
+
       {helperText && !error && (
-        <div id={`${selectId}-help`} className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div
+          id={`${selectId}-help`}
+          className="flex items-center space-x-2 text-sm text-muted-foreground"
+        >
           <Info className="h-4 w-4" />
           <span>{helperText}</span>
         </div>
@@ -132,7 +157,8 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
   );
 };
 
-interface SettingsTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface SettingsTextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: React.ReactNode;
   error?: string;
   helperText?: string;
@@ -153,26 +179,35 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      
+
       <Textarea
         {...props}
         className={`${className} ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
         aria-invalid={!!error}
         aria-describedby={
-          error ? `${props.id}-error` : 
-          helperText ? `${props.id}-help` : undefined
+          error
+            ? `${props.id}-error`
+            : helperText
+              ? `${props.id}-help`
+              : undefined
         }
       />
-      
+
       {error && (
-        <div id={`${props.id}-error`} className="flex items-center space-x2 text-sm text-red-600">
+        <div
+          id={`${props.id}-error`}
+          className="flex items-center space-x2 text-sm text-red-600"
+        >
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
         </div>
       )}
-      
+
       {helperText && !error && (
-        <div id={`${props.id}-help`} className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div
+          id={`${props.id}-help`}
+          className="flex items-center space-x-2 text-sm text-muted-foreground"
+        >
           <Info className="h-4 w-4" />
           <span>{helperText}</span>
         </div>
@@ -196,14 +231,17 @@ export const SettingsSwitch: React.FC<SettingsSwitchProps> = ({
   checked,
   onCheckedChange,
   disabled,
-  required
+  required,
 }) => {
   const switchId = React.useId();
 
   return (
     <div className="flex items-center justify-between space-x-4">
       <div className="space-y-0.5 flex-1">
-        <Label htmlFor={switchId} className="text-sm font-medium cursor-pointer">
+        <Label
+          htmlFor={switchId}
+          className="text-sm font-medium cursor-pointer"
+        >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>
@@ -228,10 +266,12 @@ interface SettingsFormActionsProps {
 
 export const SettingsFormActions: React.FC<SettingsFormActionsProps> = ({
   children,
-  className = ''
+  className = '',
 }) => {
   return (
-    <div className={`flex items-center justify-end space-x-4 pt-6 border-t ${className}`}>
+    <div
+      className={`flex items-center justify-end space-x-4 pt-6 border-t ${className}`}
+    >
       {children}
     </div>
   );

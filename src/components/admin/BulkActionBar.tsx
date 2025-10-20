@@ -54,7 +54,7 @@ export function BulkActionBar({
       {/* Selection count */}
       <div className="flex items-center gap-2">
         <Badge
-          variant={isMaxReached ? "destructive" : "secondary"}
+          variant={isMaxReached ? 'destructive' : 'secondary'}
           className="font-medium"
         >
           {selectedCount} selected
@@ -124,10 +124,12 @@ export function BulkActionSummary({
   const isMaxReached = selectedCount >= maxSelection;
 
   return (
-    <div className={cn(
-      'flex items-center justify-between p-3 bg-muted/50 rounded-lg border',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex items-center justify-between p-3 bg-muted/50 rounded-lg border',
+        className
+      )}
+    >
       <div className="flex items-center gap-3">
         <Badge variant="secondary" className="font-medium">
           {selectedCount} of {totalCount}

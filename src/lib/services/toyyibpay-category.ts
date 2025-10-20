@@ -58,7 +58,8 @@ export class ToyyibPayCategoryService {
       console.log(`🔄 Creating toyyibPay category: ${categoryName}`);
 
       // Get credentials using the same method as validateCredentials
-      const credentialsRaw = await toyyibPayCredentialsService.getCredentialsForService();
+      const credentialsRaw =
+        await toyyibPayCredentialsService.getCredentialsForService();
       if (!credentialsRaw) {
         return {
           success: false,
@@ -99,10 +100,12 @@ export class ToyyibPayCategoryService {
         catdescription: categoryDescription,
       });
 
-      // Debug: Check FormData contents  
+      // Debug: Check FormData contents
       console.log('🔍 FormData entries:');
       for (const [key, value] of formData.entries()) {
-        console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 10) + '...' : value}`);
+        console.log(
+          `  ${key}: ${typeof value === 'string' ? value.substring(0, 10) + '...' : value}`
+        );
         if (key === 'userSecretKey' && typeof value === 'string') {
           console.log(`    Full userSecretKey: '${value}'`);
           console.log(`    Length: ${value.length}`);

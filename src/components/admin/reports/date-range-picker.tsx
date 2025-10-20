@@ -41,12 +41,14 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
     return date.toLocaleDateString('en-MY', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
   const getDaysDifference = () => {
-    const diffTime = Math.abs(value.endDate.getTime() - value.startDate.getTime());
+    const diffTime = Math.abs(
+      value.endDate.getTime() - value.startDate.getTime()
+    );
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -54,7 +56,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   const applyDateRange = () => {
     const startDate = new Date(tempStartDate);
     const endDate = new Date(tempEndDate);
-    
+
     if (startDate >= endDate) {
       alert('Start date must be before end date');
       return;
@@ -62,7 +64,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
 
     // Set end date to end of day
     endDate.setHours(23, 59, 59, 999);
-    
+
     onChange({ startDate, endDate });
     setIsOpen(false);
   };
@@ -71,10 +73,10 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    
+
     // Set end date to end of day
     endDate.setHours(23, 59, 59, 999);
-    
+
     onChange({ startDate, endDate });
     setIsOpen(false);
   };
@@ -87,8 +89,8 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="justify-start text-left font-normal w-auto"
           onClick={() => {
             resetToTemp();
@@ -97,11 +99,10 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
         >
           <Calendar className="mr-2 h-4 w-4" />
           <span className="hidden sm:inline">
-            {formatDisplayDate(value.startDate)} - {formatDisplayDate(value.endDate)}
+            {formatDisplayDate(value.startDate)} -{' '}
+            {formatDisplayDate(value.endDate)}
           </span>
-          <span className="sm:hidden">
-            {getDaysDifference()}d range
-          </span>
+          <span className="sm:hidden">{getDaysDifference()}d range</span>
           <Badge variant="secondary" className="ml-2">
             {getDaysDifference()} days
           </Badge>
@@ -112,11 +113,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           {/* Header */}
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">Select Date Range</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -163,11 +160,11 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                 id="start-date"
                 type="date"
                 value={tempStartDate}
-                onChange={(e) => setTempStartDate(e.target.value)}
+                onChange={e => setTempStartDate(e.target.value)}
                 max={tempEndDate}
               />
             </div>
-            
+
             <div className="space-y-1">
               <Label htmlFor="end-date" className="text-sm font-medium">
                 End Date
@@ -176,7 +173,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
                 id="end-date"
                 type="date"
                 value={tempEndDate}
-                onChange={(e) => setTempEndDate(e.target.value)}
+                onChange={e => setTempEndDate(e.target.value)}
                 min={tempStartDate}
                 max={new Date().toISOString().split('T')[0]}
               />
@@ -187,11 +184,17 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
             <div>Preview:</div>
             <div className="font-medium">
-              {new Date(tempStartDate).toLocaleDateString('en-MY')} - {' '}
+              {new Date(tempStartDate).toLocaleDateString('en-MY')} -{' '}
               {new Date(tempEndDate).toLocaleDateString('en-MY')}
             </div>
             <div>
-              Duration: {Math.ceil((new Date(tempEndDate).getTime() - new Date(tempStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+              Duration:{' '}
+              {Math.ceil(
+                (new Date(tempEndDate).getTime() -
+                  new Date(tempStartDate).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              )}{' '}
+              days
             </div>
           </div>
 

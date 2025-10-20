@@ -19,7 +19,7 @@ interface ThrottleState {
  */
 export class Throttler {
   private state: Map<string, ThrottleState> = new Map();
-  
+
   /**
    * Check if a call can proceed - Systematic rate limiting
    */
@@ -27,7 +27,7 @@ export class Throttler {
     const config = getThrottlingConfig(feature);
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute window
-    
+
     let state = this.state.get(feature);
     if (!state) {
       state = {
@@ -38,22 +38,22 @@ export class Throttler {
       };
       this.state.set(feature, state);
     }
-    
+
     // Reset window if expired
     if (now - state.lastReset >= windowMs) {
       state.callCount = 0;
       state.lastReset = now;
     }
-    
+
     // Check rate limit
     if (state.callCount >= config.maxCallsPerMinute) {
       return false;
     }
-    
+
     state.callCount++;
     return true;
   }
-  
+
   /**
    * Add item to batch queue - DRY batching pattern
    */
@@ -63,11 +63,11 @@ export class Throttler {
       ...item,
       timestamp: Date.now(),
     });
-    
+
     // Process queue if batch size reached or debounce time passed
     this.maybeProcessQueue(feature);
   }
-  
+
   /**
    * Get current throttle status - Systematic monitoring
    */
@@ -81,7 +81,7 @@ export class Throttler {
     const state = this.getOrCreateState(feature);
     const now = Date.now();
     const windowMs = 60 * 1000;
-    
+
     return {
       callCount: state.callCount,
       remainingCalls: Math.max(0, config.maxCallsPerMinute - state.callCount),
@@ -89,29 +89,29 @@ export class Throttler {
       nextResetIn: Math.max(0, windowMs - (now - state.lastReset)),
     };
   }
-  
+
   /**
    * Force process queue - Manual control
    */
   async processQueue(feature: string): Promise<void> {
     const state = this.getOrCreateState(feature);
     const config = getThrottlingConfig(feature);
-    
+
     if (state.isProcessingQueue || state.queue.length === 0) {
       return;
     }
-    
+
     state.isProcessingQueue = true;
-    
+
     try {
       // Process in batches
       while (state.queue.length > 0) {
         const batch = state.queue.splice(0, config.batchSize);
-        
+
         if (batch.length > 0) {
           await this.processBatch(feature, batch);
         }
-        
+
         // Respect rate limits
         if (!this.canProceed(feature)) {
           // Put remaining items back in queue
@@ -123,7 +123,7 @@ export class Throttler {
       state.isProcessingQueue = false;
     }
   }
-  
+
   /**
    * Reset throttle state - Emergency control
    */
@@ -134,20 +134,20 @@ export class Throttler {
       this.state.clear();
     }
   }
-  
+
   /**
    * Get all throttle states - Monitoring dashboard
    */
   getAllStatus(): Record<string, any> {
     const status: Record<string, any> = {};
-    
+
     for (const [feature, state] of this.state.entries()) {
       status[feature] = this.getStatus(feature);
     }
-    
+
     return status;
   }
-  
+
   /**
    * Private: Get or create state
    */
@@ -164,20 +164,20 @@ export class Throttler {
     }
     return state;
   }
-  
+
   /**
    * Private: Maybe process queue based on conditions
    */
   private maybeProcessQueue(feature: string): void {
     const config = getThrottlingConfig(feature);
     const state = this.getOrCreateState(feature);
-    
+
     // Process if batch size reached
     if (state.queue.length >= config.batchSize) {
       setTimeout(() => this.processQueue(feature), 0);
       return;
     }
-    
+
     // Process after debounce time
     setTimeout(() => {
       if (state.queue.length > 0) {
@@ -185,7 +185,7 @@ export class Throttler {
       }
     }, config.debounceMs);
   }
-  
+
   /**
    * Private: Process a batch of items
    */
@@ -193,12 +193,12 @@ export class Throttler {
     try {
       // This would be implemented by the monitoring service
       console.log(`Processing batch of ${batch.length} items for ${feature}`);
-      
+
       // In real implementation, this would make API calls
       // await monitoringService.sendBatch(feature, batch);
     } catch (error) {
       console.error(`Failed to process batch for ${feature}:`, error);
-      
+
       // Re-queue failed items for retry
       const state = this.getOrCreateState(feature);
       state.queue.unshift(...batch);

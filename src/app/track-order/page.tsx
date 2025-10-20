@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -113,7 +119,8 @@ export default function TrackOrderPage() {
               Track Shipment
             </CardTitle>
             <CardDescription>
-              Enter your order number (e.g., ORD-20250821-A1B2) or tracking number
+              Enter your order number (e.g., ORD-20250821-A1B2) or tracking
+              number
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -124,7 +131,7 @@ export default function TrackOrderPage() {
                   type="text"
                   placeholder="Enter order number or tracking number"
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={e => setInput(e.target.value)}
                   disabled={loading}
                   className="flex-1"
                   autoFocus
@@ -156,7 +163,9 @@ export default function TrackOrderPage() {
               <div className="text-sm text-gray-600">
                 <p className="font-medium mb-1">Accepted formats:</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Order number: ORD-20250821-A1B2 (with or without dashes)</li>
+                  <li>
+                    Order number: ORD-20250821-A1B2 (with or without dashes)
+                  </li>
                   <li>Tracking number: EP1234567890</li>
                 </ul>
               </div>

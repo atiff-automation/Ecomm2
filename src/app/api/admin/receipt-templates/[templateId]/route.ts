@@ -26,22 +26,29 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    const template = await receiptTemplateService.getTemplateById(params.templateId);
-    
+    const template = await receiptTemplateService.getTemplateById(
+      params.templateId
+    );
+
     if (!template) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: 'Template not found' 
+          message: 'Template not found',
         },
         { status: 404 }
       );
@@ -49,15 +56,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       success: true,
-      template
+      template,
     });
-
   } catch (error) {
     console.error('GET receipt template error:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch template' 
+        message:
+          error instanceof Error ? error.message : 'Failed to fetch template',
       },
       { status: 500 }
     );
@@ -71,9 +78,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -81,14 +93,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    
+
     const updateInput: UpdateReceiptTemplateInput = {
       ...(body.name && { name: body.name }),
       ...(body.description !== undefined && { description: body.description }),
       ...(body.templateContent && { templateContent: body.templateContent }),
       ...(body.isDefault !== undefined && { isDefault: body.isDefault }),
       ...(body.isActive !== undefined && { isActive: body.isActive }),
-      ...(body.previewImage !== undefined && { previewImage: body.previewImage })
+      ...(body.previewImage !== undefined && {
+        previewImage: body.previewImage,
+      }),
     };
 
     const template = await receiptTemplateService.updateTemplate(
@@ -100,15 +114,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       template,
-      message: 'Template updated successfully'
+      message: 'Template updated successfully',
     });
-
   } catch (error) {
     console.error('PATCH receipt template error:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update template' 
+        message:
+          error instanceof Error ? error.message : 'Failed to update template',
       },
       { status: 500 }
     );
@@ -122,9 +136,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -135,15 +154,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       success: true,
-      message: 'Template deleted successfully'
+      message: 'Template deleted successfully',
     });
-
   } catch (error) {
     console.error('DELETE receipt template error:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to delete template' 
+        message:
+          error instanceof Error ? error.message : 'Failed to delete template',
       },
       { status: 500 }
     );

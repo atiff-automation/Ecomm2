@@ -15,7 +15,9 @@ export async function GET() {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

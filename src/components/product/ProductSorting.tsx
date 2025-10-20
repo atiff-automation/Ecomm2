@@ -42,7 +42,7 @@ import {
   Award,
   Eye,
   Clock,
-  Users
+  Users,
 } from 'lucide-react';
 
 export interface SortOption {
@@ -77,7 +77,7 @@ export const defaultSortOptions: SortOption[] = [
     direction: 'desc',
     icon: Zap,
     description: 'Most relevant to your search',
-    default: true
+    default: true,
   },
   {
     id: 'newest',
@@ -85,7 +85,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'createdAt',
     direction: 'desc',
     icon: Calendar,
-    description: 'Latest products first'
+    description: 'Latest products first',
   },
   {
     id: 'oldest',
@@ -93,7 +93,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'createdAt',
     direction: 'asc',
     icon: Clock,
-    description: 'Oldest products first'
+    description: 'Oldest products first',
   },
   {
     id: 'price-low',
@@ -101,7 +101,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'price',
     direction: 'asc',
     icon: DollarSign,
-    description: 'Cheapest first'
+    description: 'Cheapest first',
   },
   {
     id: 'price-high',
@@ -109,7 +109,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'price',
     direction: 'desc',
     icon: DollarSign,
-    description: 'Most expensive first'
+    description: 'Most expensive first',
   },
   {
     id: 'rating',
@@ -117,7 +117,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'rating',
     direction: 'desc',
     icon: Star,
-    description: 'Best ratings first'
+    description: 'Best ratings first',
   },
   {
     id: 'popularity',
@@ -125,7 +125,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'popularity',
     direction: 'desc',
     icon: TrendingUp,
-    description: 'Most viewed and purchased'
+    description: 'Most viewed and purchased',
   },
   {
     id: 'name-asc',
@@ -133,7 +133,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'name',
     direction: 'asc',
     icon: SortAsc,
-    description: 'Alphabetical order'
+    description: 'Alphabetical order',
   },
   {
     id: 'name-desc',
@@ -141,7 +141,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'name',
     direction: 'desc',
     icon: SortDesc,
-    description: 'Reverse alphabetical order'
+    description: 'Reverse alphabetical order',
   },
   {
     id: 'wishlist',
@@ -149,7 +149,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'wishlistCount',
     direction: 'desc',
     icon: Heart,
-    description: 'Most added to wishlists'
+    description: 'Most added to wishlists',
   },
   {
     id: 'stock',
@@ -157,7 +157,7 @@ export const defaultSortOptions: SortOption[] = [
     field: 'stock',
     direction: 'desc',
     icon: Package,
-    description: 'Highest stock first'
+    description: 'Highest stock first',
   },
   {
     id: 'discount',
@@ -165,15 +165,15 @@ export const defaultSortOptions: SortOption[] = [
     field: 'discountPercentage',
     direction: 'desc',
     icon: Award,
-    description: 'Largest savings first'
-  }
+    description: 'Largest savings first',
+  },
 ];
 
 // Sort direction toggle component
 function SortDirectionToggle({
   direction,
   onDirectionChange,
-  disabled = false
+  disabled = false,
 }: {
   direction: 'asc' | 'desc';
   onDirectionChange: (direction: 'asc' | 'desc') => void;
@@ -205,7 +205,7 @@ function SortingSelect({
   currentSort,
   onSortChange,
   showLabel,
-  className
+  className,
 }: {
   options: SortOption[];
   currentSort?: { field: string; direction: 'asc' | 'desc' };
@@ -214,7 +214,9 @@ function SortingSelect({
   className?: string;
 }) {
   const currentOption = options.find(
-    opt => opt.field === currentSort?.field && opt.direction === currentSort?.direction
+    opt =>
+      opt.field === currentSort?.field &&
+      opt.direction === currentSort?.direction
   );
 
   return (
@@ -225,8 +227,12 @@ function SortingSelect({
         </span>
       )}
       <Select
-        value={currentOption?.id || options.find(opt => opt.default)?.id || options[0]?.id}
-        onValueChange={(value) => {
+        value={
+          currentOption?.id ||
+          options.find(opt => opt.default)?.id ||
+          options[0]?.id
+        }
+        onValueChange={value => {
           const option = options.find(opt => opt.id === value);
           if (option) {
             onSortChange({ field: option.field, direction: option.direction });
@@ -237,7 +243,7 @@ function SortingSelect({
           <SelectValue placeholder="Select sorting..." />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
+          {options.map(option => (
             <SelectItem key={option.id} value={option.id}>
               <div className="flex items-center gap-2">
                 {option.icon && <option.icon className="h-4 w-4" />}
@@ -257,7 +263,7 @@ function SortingDropdown({
   currentSort,
   onSortChange,
   showLabel,
-  className
+  className,
 }: {
   options: SortOption[];
   currentSort?: { field: string; direction: 'asc' | 'desc' };
@@ -266,7 +272,9 @@ function SortingDropdown({
   className?: string;
 }) {
   const currentOption = options.find(
-    opt => opt.field === currentSort?.field && opt.direction === currentSort?.direction
+    opt =>
+      opt.field === currentSort?.field &&
+      opt.direction === currentSort?.direction
   );
 
   return (
@@ -280,7 +288,9 @@ function SortingDropdown({
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="justify-between min-w-48">
             <div className="flex items-center gap-2">
-              {currentOption?.icon && <currentOption.icon className="h-4 w-4" />}
+              {currentOption?.icon && (
+                <currentOption.icon className="h-4 w-4" />
+              )}
               <span>{currentOption?.label || 'Select sorting...'}</span>
             </div>
             <ArrowUpDown className="h-4 w-4 ml-2" />
@@ -289,16 +299,23 @@ function SortingDropdown({
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {options.map((option) => (
+          {options.map(option => (
             <DropdownMenuItem
               key={option.id}
-              onClick={() => onSortChange({ field: option.field, direction: option.direction })}
+              onClick={() =>
+                onSortChange({
+                  field: option.field,
+                  direction: option.direction,
+                })
+              }
               className={cn(
                 'flex items-start gap-3 py-3',
                 currentOption?.id === option.id && 'bg-primary/10'
               )}
             >
-              {option.icon && <option.icon className="h-4 w-4 mt-0.5 flex-shrink-0" />}
+              {option.icon && (
+                <option.icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              )}
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{option.label}</span>
@@ -309,7 +326,9 @@ function SortingDropdown({
                   )}
                 </div>
                 {option.description && (
-                  <p className="text-xs text-muted-foreground">{option.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {option.description}
+                  </p>
                 )}
               </div>
             </DropdownMenuItem>
@@ -326,7 +345,7 @@ function SortingButtons({
   currentSort,
   onSortChange,
   showLabel,
-  className
+  className,
 }: {
   options: SortOption[];
   currentSort?: { field: string; direction: 'asc' | 'desc' };
@@ -340,19 +359,30 @@ function SortingButtons({
         <h3 className="text-sm font-medium text-muted-foreground">Sort by:</h3>
       )}
       <div className="grid grid-cols-2 gap-2">
-        {options.map((option) => {
-          const isActive = currentSort?.field === option.field && currentSort?.direction === option.direction;
+        {options.map(option => {
+          const isActive =
+            currentSort?.field === option.field &&
+            currentSort?.direction === option.direction;
           return (
             <Button
               key={option.id}
-              variant={isActive ? "default" : "outline"}
+              variant={isActive ? 'default' : 'outline'}
               size="sm"
-              onClick={() => onSortChange({ field: option.field, direction: option.direction })}
+              onClick={() =>
+                onSortChange({
+                  field: option.field,
+                  direction: option.direction,
+                })
+              }
               className="justify-start h-auto p-3"
             >
               <div className="flex items-center gap-2 w-full">
-                {option.icon && <option.icon className="h-4 w-4 flex-shrink-0" />}
-                <span className="text-left flex-1 truncate">{option.label}</span>
+                {option.icon && (
+                  <option.icon className="h-4 w-4 flex-shrink-0" />
+                )}
+                <span className="text-left flex-1 truncate">
+                  {option.label}
+                </span>
                 {isActive && (
                   <Badge variant="secondary" className="text-xs">
                     Active
@@ -373,7 +403,7 @@ function SortingToggle({
   currentSort,
   onSortChange,
   showLabel,
-  className
+  className,
 }: {
   options: SortOption[];
   currentSort?: { field: string; direction: 'asc' | 'desc' };
@@ -389,21 +419,30 @@ function SortingToggle({
     return acc;
   }, [] as SortOption[]);
 
-  const handleFieldChange = useCallback((field: string) => {
-    const option = options.find(opt => opt.field === field);
-    if (option) {
-      onSortChange({
-        field: option.field,
-        direction: currentSort?.field === field ? currentSort.direction : option.direction
-      });
-    }
-  }, [options, currentSort, onSortChange]);
+  const handleFieldChange = useCallback(
+    (field: string) => {
+      const option = options.find(opt => opt.field === field);
+      if (option) {
+        onSortChange({
+          field: option.field,
+          direction:
+            currentSort?.field === field
+              ? currentSort.direction
+              : option.direction,
+        });
+      }
+    },
+    [options, currentSort, onSortChange]
+  );
 
-  const handleDirectionChange = useCallback((direction: 'asc' | 'desc') => {
-    if (currentSort?.field) {
-      onSortChange({ field: currentSort.field, direction });
-    }
-  }, [currentSort, onSortChange]);
+  const handleDirectionChange = useCallback(
+    (direction: 'asc' | 'desc') => {
+      if (currentSort?.field) {
+        onSortChange({ field: currentSort.field, direction });
+      }
+    },
+    [currentSort, onSortChange]
+  );
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -420,7 +459,7 @@ function SortingToggle({
           <SelectValue placeholder="Field..." />
         </SelectTrigger>
         <SelectContent>
-          {fieldOptions.map((option) => (
+          {fieldOptions.map(option => (
             <SelectItem key={option.field} value={option.field}>
               <div className="flex items-center gap-2">
                 {option.icon && <option.icon className="h-4 w-4" />}
@@ -446,16 +485,21 @@ export function ProductSorting({
   variant = 'select',
   showDirection = false,
   showLabel = true,
-  className
+  className,
 }: ProductSortingProps) {
   const currentOption = options.find(
-    opt => opt.field === currentSort?.field && opt.direction === currentSort?.direction
+    opt =>
+      opt.field === currentSort?.field &&
+      opt.direction === currentSort?.direction
   );
 
   // If no current sort is set, use the default option
   const effectiveCurrentSort = currentSort || {
     field: options.find(opt => opt.default)?.field || options[0]?.field || '',
-    direction: options.find(opt => opt.default)?.direction || options[0]?.direction || 'desc'
+    direction:
+      options.find(opt => opt.default)?.direction ||
+      options[0]?.direction ||
+      'desc',
   };
 
   const renderSorting = () => {
@@ -464,7 +508,7 @@ export function ProductSorting({
       currentSort: effectiveCurrentSort,
       onSortChange,
       showLabel,
-      className: ''
+      className: '',
     };
 
     switch (variant) {
@@ -486,7 +530,7 @@ export function ProductSorting({
       {showDirection && variant !== 'toggle' && currentSort && (
         <SortDirectionToggle
           direction={currentSort.direction}
-          onDirectionChange={(direction) =>
+          onDirectionChange={direction =>
             onSortChange({ field: currentSort.field, direction })
           }
         />
@@ -496,7 +540,10 @@ export function ProductSorting({
 }
 
 // Specialized sorting components
-export const CompactProductSorting = ({ className, ...props }: Omit<ProductSortingProps, 'variant' | 'showLabel'>) => (
+export const CompactProductSorting = ({
+  className,
+  ...props
+}: Omit<ProductSortingProps, 'variant' | 'showLabel'>) => (
   <ProductSorting
     variant="select"
     showLabel={false}
@@ -505,7 +552,10 @@ export const CompactProductSorting = ({ className, ...props }: Omit<ProductSorti
   />
 );
 
-export const AdvancedProductSorting = ({ className, ...props }: Omit<ProductSortingProps, 'variant' | 'showDirection'>) => (
+export const AdvancedProductSorting = ({
+  className,
+  ...props
+}: Omit<ProductSortingProps, 'variant' | 'showDirection'>) => (
   <ProductSorting
     variant="dropdown"
     showDirection={true}
@@ -514,48 +564,73 @@ export const AdvancedProductSorting = ({ className, ...props }: Omit<ProductSort
   />
 );
 
-export const MobileProductSorting = ({ className, ...props }: Omit<ProductSortingProps, 'variant'>) => (
-  <ProductSorting
-    variant="dropdown"
-    className={className}
-    {...props}
-  />
+export const MobileProductSorting = ({
+  className,
+  ...props
+}: Omit<ProductSortingProps, 'variant'>) => (
+  <ProductSorting variant="dropdown" className={className} {...props} />
 );
 
-export const SidebarProductSorting = ({ className, ...props }: Omit<ProductSortingProps, 'variant'>) => (
-  <ProductSorting
-    variant="buttons"
-    className={className}
-    {...props}
-  />
+export const SidebarProductSorting = ({
+  className,
+  ...props
+}: Omit<ProductSortingProps, 'variant'>) => (
+  <ProductSorting variant="buttons" className={className} {...props} />
 );
 
 // Quick sort buttons for common scenarios
 export function QuickSortButtons({
   onSortChange,
   currentSort,
-  className
+  className,
 }: {
   onSortChange: (sort: { field: string; direction: 'asc' | 'desc' }) => void;
   currentSort?: { field: string; direction: 'asc' | 'desc' };
   className?: string;
 }) {
   const quickSorts = [
-    { field: 'price', direction: 'asc' as const, label: 'Cheapest', icon: DollarSign },
-    { field: 'price', direction: 'desc' as const, label: 'Most Expensive', icon: DollarSign },
-    { field: 'rating', direction: 'desc' as const, label: 'Best Rated', icon: Star },
-    { field: 'popularity', direction: 'desc' as const, label: 'Popular', icon: TrendingUp },
-    { field: 'createdAt', direction: 'desc' as const, label: 'Newest', icon: Calendar }
+    {
+      field: 'price',
+      direction: 'asc' as const,
+      label: 'Cheapest',
+      icon: DollarSign,
+    },
+    {
+      field: 'price',
+      direction: 'desc' as const,
+      label: 'Most Expensive',
+      icon: DollarSign,
+    },
+    {
+      field: 'rating',
+      direction: 'desc' as const,
+      label: 'Best Rated',
+      icon: Star,
+    },
+    {
+      field: 'popularity',
+      direction: 'desc' as const,
+      label: 'Popular',
+      icon: TrendingUp,
+    },
+    {
+      field: 'createdAt',
+      direction: 'desc' as const,
+      label: 'Newest',
+      icon: Calendar,
+    },
   ];
 
   return (
     <div className={cn('flex flex-wrap gap-2', className)}>
-      {quickSorts.map((sort) => {
-        const isActive = currentSort?.field === sort.field && currentSort?.direction === sort.direction;
+      {quickSorts.map(sort => {
+        const isActive =
+          currentSort?.field === sort.field &&
+          currentSort?.direction === sort.direction;
         return (
           <Button
             key={`${sort.field}-${sort.direction}`}
-            variant={isActive ? "default" : "outline"}
+            variant={isActive ? 'default' : 'outline'}
             size="sm"
             onClick={() => onSortChange(sort)}
             className="flex items-center gap-1"

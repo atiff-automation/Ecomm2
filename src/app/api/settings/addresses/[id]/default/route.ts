@@ -9,7 +9,7 @@ import { AuditLogger } from '@/lib/security';
 import { z } from 'zod';
 
 const setDefaultSchema = z.object({
-  type: z.enum(['billing', 'shipping'])
+  type: z.enum(['billing', 'shipping']),
 });
 
 /**
@@ -21,7 +21,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -33,7 +33,7 @@ export async function POST(
 
     const addressId = params.id;
     const body = await request.json();
-    
+
     // Validate request body
     const { type } = setDefaultSchema.parse(body);
 
@@ -41,21 +41,20 @@ export async function POST(
     const existingAddress = await prisma.address.findFirst({
       where: {
         id: addressId,
-        userId: session.user.id
-      }
+        userId: session.user.id,
+      },
     });
 
     if (!existingAddress) {
-      return NextResponse.json(
-        { error: 'Address not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
     }
 
     // Verify address type matches requested type
     if (existingAddress.type !== type) {
       return NextResponse.json(
-        { error: `Address type mismatch. This is a ${existingAddress.type} address, but you requested to set it as default ${type} address.` },
+        {
+          error: `Address type mismatch. This is a ${existingAddress.type} address, but you requested to set it as default ${type} address.`,
+        },
         { status: 400 }
       );
     }
@@ -64,22 +63,22 @@ export async function POST(
     if (existingAddress.isDefault) {
       return NextResponse.json({
         success: true,
-        message: 'Address is already set as default'
+        message: 'Address is already set as default',
       });
     }
 
     // Use transaction to ensure consistency
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       // Remove default from all other addresses of the same type
       await tx.address.updateMany({
         where: {
           userId: session.user.id,
           type: type,
-          id: { not: addressId }
+          id: { not: addressId },
         },
         data: {
-          isDefault: false
-        }
+          isDefault: false,
+        },
       });
 
       // Set this address as default
@@ -87,8 +86,8 @@ export async function POST(
         where: { id: addressId },
         data: {
           isDefault: true,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
     });
 
@@ -99,25 +98,24 @@ export async function POST(
       {
         action: 'SET_DEFAULT_ADDRESS',
         addressId,
-        oldDefault: false
+        oldDefault: false,
       },
       {
         action: 'SET_DEFAULT_ADDRESS',
         addressId,
         type: type,
-        newDefault: true
+        newDefault: true,
       },
       request
     );
 
     return NextResponse.json({
       success: true,
-      message: `Default ${type} address updated successfully`
+      message: `Default ${type} address updated successfully`,
     });
-
   } catch (error) {
     console.error('Set default address error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },

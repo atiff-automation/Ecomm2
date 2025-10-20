@@ -41,6 +41,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import { PRODUCT_CONSTANTS } from '@/lib/constants/product-config';
 import { useProductBulkSelection } from '@/hooks/useBulkSelection';
 import {
   BulkSelectionCheckbox,
@@ -52,6 +53,14 @@ import {
 } from '@/components/admin/BulkActionBar';
 import { BulkDeleteModal } from '@/components/admin/BulkDeleteModal';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Product {
   id: string;
@@ -61,6 +70,7 @@ interface Product {
   regularPrice: number;
   memberPrice: number;
   stockQuantity: number;
+  lowStockAlert: number;
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
   featured: boolean;
   isPromotional: boolean;
@@ -115,10 +125,16 @@ export default function AdminProductsPage() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+
   // Initialize bulk selection hook
   const bulkSelection = useProductBulkSelection(products, {
     onMaxSelectionExceeded: () => {
-      toast.error('You can select a maximum of 100 products at once');
+      toast.error(
+        `You can select a maximum of ${PRODUCT_CONSTANTS.MAX_SELECTION} products at once`
+      );
     },
   });
 
@@ -127,7 +143,7 @@ export default function AdminProductsPage() {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '20',
+        limit: PRODUCT_CONSTANTS.PAGINATION_LIMIT.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(selectedCategory !== 'all' && { category: selectedCategory }),
         ...(selectedStatus !== 'all' && { status: selectedStatus }),
@@ -140,7 +156,6 @@ export default function AdminProductsPage() {
       const response = await fetch(`/api/admin/products?${params}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Products API Response:', data); // Debug log
         setProducts(data.products || []);
         setTotalPages(data.pagination?.totalPages || 1);
       }
@@ -164,7 +179,6 @@ export default function AdminProductsPage() {
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
-        console.log('Categories API Response:', data); // Debug log
 
         // Handle different response structures
         let categoriesData = [];
@@ -176,11 +190,6 @@ export default function AdminProductsPage() {
           categoriesData = data.data;
         }
 
-        console.log('Processed categories data:', categoriesData); // Debug log
-        console.log(
-          'Is categories data an array?',
-          Array.isArray(categoriesData)
-        ); // Debug log
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } else {
         console.error(
@@ -214,7 +223,6 @@ export default function AdminProductsPage() {
       const response = await fetch(`/api/admin/products/metrics?${params}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Metrics API Response:', data); // Debug log
         setMetrics(data);
       } else {
         console.error(
@@ -249,25 +257,34 @@ export default function AdminProductsPage() {
   }, [fetchMetrics]);
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
+    setProductToDelete(productId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/products/${productId}`, {
+      const response = await fetch(`/api/admin/products/${productToDelete}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
+        toast.success('Product deleted successfully');
         fetchProducts(); // Refresh the list
         fetchMetrics(); // Refresh metrics
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to delete product');
+        toast.error(error.message || 'Failed to delete product');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete product');
+      toast.error('Failed to delete product');
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -369,7 +386,7 @@ export default function AdminProductsPage() {
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert('Failed to export products');
+      toast.error('Failed to export products');
     }
   };
 
@@ -377,11 +394,6 @@ export default function AdminProductsPage() {
   const tabs: TabConfig[] = [
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
-    {
-      id: 'inventory',
-      label: 'Inventory Management',
-      href: '/admin/products/inventory',
-    },
     {
       id: 'import-export',
       label: 'Import/Export',
@@ -435,19 +447,11 @@ export default function AdminProductsPage() {
           {!categoriesLoading &&
             Array.isArray(categories) &&
             categories.length > 0 &&
-            (() => {
-              console.log(
-                'About to map categories:',
-                categories,
-                'isArray:',
-                Array.isArray(categories)
-              );
-              return categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ));
-            })()}
+            categories.map(category => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
           {!categoriesLoading &&
             (!Array.isArray(categories) || categories.length === 0) && (
               <SelectItem value="no-categories" disabled>
@@ -706,21 +710,24 @@ export default function AdminProductsPage() {
                                 variant={
                                   product.stockQuantity === 0
                                     ? 'destructive'
-                                    : product.stockQuantity < 10
+                                    : product.stockQuantity <=
+                                        product.lowStockAlert
                                       ? 'secondary'
                                       : 'outline'
                                 }
                                 className={
                                   product.stockQuantity === 0
                                     ? 'bg-red-100 text-red-800'
-                                    : product.stockQuantity < 10
+                                    : product.stockQuantity <=
+                                        product.lowStockAlert
                                       ? 'bg-yellow-100 text-yellow-800'
                                       : 'bg-green-100 text-green-800'
                                 }
                               >
                                 {product.stockQuantity}
                               </Badge>
-                              {product.stockQuantity < 10 &&
+                              {product.stockQuantity <=
+                                product.lowStockAlert &&
                                 product.stockQuantity > 0 && (
                                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
                                 )}
@@ -822,6 +829,30 @@ export default function AdminProductsPage() {
         onConfirm={confirmBulkDelete}
         loading={bulkDeleteLoading}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

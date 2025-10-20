@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { AdminPageLayout } from '@/components/admin/layout';
 
 interface SettingsLayoutProps {
@@ -19,7 +25,7 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
   title,
   subtitle,
   children,
-  actions
+  actions,
 }) => {
   return (
     <AdminPageLayout
@@ -44,21 +50,17 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   title,
   description,
   children,
-  className = ''
+  className = '',
 }) => {
   return (
     <Card className={className}>
       <CardHeader>
         <CardTitle className="text-xl">{title}</CardTitle>
         {description && (
-          <CardDescription className="text-sm">
-            {description}
-          </CardDescription>
+          <CardDescription className="text-sm">{description}</CardDescription>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
-        {children}
-      </CardContent>
+      <CardContent className="space-y-4">{children}</CardContent>
     </Card>
   );
 };
@@ -74,7 +76,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   title,
   subtitle,
   children,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`space-y-4 ${className}`}>
@@ -84,9 +86,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
-      <div className="space-y-4">
-        {children}
-      </div>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 };

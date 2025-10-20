@@ -144,7 +144,10 @@ export default function AdminDashboard() {
     }).format(amount);
   };
 
-  const renderPercentageChange = (change: number, direction: 'increase' | 'decrease' | 'no-change') => {
+  const renderPercentageChange = (
+    change: number,
+    direction: 'increase' | 'decrease' | 'no-change'
+  ) => {
     if (direction === 'no-change') {
       return (
         <span className="text-gray-600 flex items-center gap-1">
@@ -162,7 +165,8 @@ export default function AdminDashboard() {
     return (
       <span className={`${colorClass} flex items-center gap-1`}>
         <IconComponent className="h-3 w-3" />
-        {sign}{Math.abs(change)}% from last month
+        {sign}
+        {Math.abs(change)}% from last month
       </span>
     );
   };
@@ -292,13 +296,14 @@ export default function AdminDashboard() {
                   {formatCurrency(stats.totalRevenue)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {stats.revenueMetrics ?
+                  {stats.revenueMetrics ? (
                     renderPercentageChange(
                       stats.revenueMetrics.percentageChange,
                       stats.revenueMetrics.changeDirection
-                    ) :
+                    )
+                  ) : (
                     <span className="text-gray-600">No comparison data</span>
-                  }
+                  )}
                 </p>
               </CardContent>
             </Card>
@@ -538,7 +543,9 @@ export default function AdminDashboard() {
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   asChild
                 >
-                  <Link href="/admin/membership/analytics">View Analytics</Link>
+                  <Link href="/admin/customers?membership=members">
+                    View Members
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

@@ -5,19 +5,33 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { 
-  SettingsLayout, 
-  SettingsCard, 
+import {
+  SettingsLayout,
+  SettingsCard,
   SettingsSection,
   SettingsInput,
-  SettingsFormActions
+  SettingsFormActions,
 } from '@/components/settings';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { personalInfoSchema, passwordChangeSchema } from '@/lib/validation/settings';
-import type { PersonalInfoFormData, PasswordChangeFormData } from '@/lib/validation/settings';
-import { User, Shield, Mail, Phone, Calendar, AlertTriangle, MapPin } from 'lucide-react';
+import {
+  personalInfoSchema,
+  passwordChangeSchema,
+} from '@/lib/validation/settings';
+import type {
+  PersonalInfoFormData,
+  PasswordChangeFormData,
+} from '@/lib/validation/settings';
+import {
+  User,
+  Shield,
+  Mail,
+  Phone,
+  Calendar,
+  AlertTriangle,
+  MapPin,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function AccountSettingsPage() {
@@ -31,9 +45,9 @@ export default function AccountSettingsPage() {
     handleSubmit: handleProfileSubmit,
     formState: { errors: profileErrors, isDirty: isProfileDirty },
     reset: resetProfile,
-    setValue: setProfileValue
+    setValue: setProfileValue,
   } = useForm<PersonalInfoFormData>({
-    resolver: zodResolver(personalInfoSchema)
+    resolver: zodResolver(personalInfoSchema),
   });
 
   // Password Change Form
@@ -41,9 +55,9 @@ export default function AccountSettingsPage() {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     formState: { errors: passwordErrors },
-    reset: resetPassword
+    reset: resetPassword,
   } = useForm<PasswordChangeFormData>({
-    resolver: zodResolver(passwordChangeSchema)
+    resolver: zodResolver(passwordChangeSchema),
   });
 
   // Load user data when session is available
@@ -54,22 +68,24 @@ export default function AccountSettingsPage() {
         lastName: session.user.lastName || '',
         email: session.user.email || '',
         phone: session.user.phone || '',
-        dateOfBirth: session.user.dateOfBirth 
+        dateOfBirth: session.user.dateOfBirth
           ? new Date(session.user.dateOfBirth).toISOString().split('T')[0]
-          : ''
+          : '',
       });
     }
   }, [session, resetProfile]);
 
   const handleProfileUpdate = async (data: PersonalInfoFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsLoadingProfile(true);
     try {
       const response = await fetch('/api/settings/account', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -82,21 +98,25 @@ export default function AccountSettingsPage() {
         ...session,
         user: {
           ...session.user,
-          ...data
-        }
+          ...data,
+        },
       });
 
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Profile update error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update profile'
+      );
     } finally {
       setIsLoadingProfile(false);
     }
   };
 
   const handlePasswordChange = async (data: PasswordChangeFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsLoadingPassword(true);
     try {
@@ -105,8 +125,8 @@ export default function AccountSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentPassword: data.currentPassword,
-          newPassword: data.newPassword
-        })
+          newPassword: data.newPassword,
+        }),
       });
 
       if (!response.ok) {
@@ -118,7 +138,9 @@ export default function AccountSettingsPage() {
       resetPassword();
     } catch (error) {
       console.error('Password change error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to change password');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to change password'
+      );
     } finally {
       setIsLoadingPassword(false);
     }
@@ -134,7 +156,7 @@ export default function AccountSettingsPage() {
       subtitle="Manage your personal information and account security"
     >
       {/* Account Overview */}
-      <SettingsCard 
+      <SettingsCard
         title="Account Overview"
         description="Your account status and basic information"
       >
@@ -146,13 +168,15 @@ export default function AccountSettingsPage() {
             <div>
               <p className="text-sm font-medium text-gray-900">Account Type</p>
               <div className="flex items-center space-x-2">
-                <Badge variant={session.user.isMember ? "default" : "secondary"}>
-                  {session.user.isMember ? "Member" : "Customer"}
+                <Badge
+                  variant={session.user.isMember ? 'default' : 'secondary'}
+                >
+                  {session.user.isMember ? 'Member' : 'Customer'}
                 </Badge>
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
               <Mail className="h-5 w-5 text-green-600" />
@@ -160,8 +184,12 @@ export default function AccountSettingsPage() {
             <div>
               <p className="text-sm font-medium text-gray-900">Email Status</p>
               <div className="flex items-center space-x-2">
-                <Badge variant={session.user.emailVerified ? "default" : "destructive"}>
-                  {session.user.emailVerified ? "Verified" : "Unverified"}
+                <Badge
+                  variant={
+                    session.user.emailVerified ? 'default' : 'destructive'
+                  }
+                >
+                  {session.user.emailVerified ? 'Verified' : 'Unverified'}
                 </Badge>
               </div>
             </div>
@@ -174,10 +202,9 @@ export default function AccountSettingsPage() {
             <div>
               <p className="text-sm font-medium text-gray-900">Member Since</p>
               <p className="text-sm text-gray-500">
-                {session.user.memberSince 
+                {session.user.memberSince
                   ? new Date(session.user.memberSince).toLocaleDateString()
-                  : new Date(session.user.createdAt!).toLocaleDateString()
-                }
+                  : new Date(session.user.createdAt!).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -185,11 +212,14 @@ export default function AccountSettingsPage() {
       </SettingsCard>
 
       {/* Personal Information */}
-      <SettingsCard 
+      <SettingsCard
         title="Personal Information"
         description="Update your personal details and contact information"
       >
-        <form onSubmit={handleProfileSubmit(handleProfileUpdate)} className="space-y-6">
+        <form
+          onSubmit={handleProfileSubmit(handleProfileUpdate)}
+          className="space-y-6"
+        >
           <SettingsSection title="Basic Information">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SettingsInput
@@ -200,7 +230,7 @@ export default function AccountSettingsPage() {
                 error={profileErrors.firstName?.message}
                 placeholder="Enter your first name"
               />
-              
+
               <SettingsInput
                 label="Last Name"
                 type="text"
@@ -223,7 +253,7 @@ export default function AccountSettingsPage() {
                 placeholder="Enter your email address"
                 helperText="Your email address is used for login and notifications"
               />
-              
+
               <SettingsInput
                 label="Phone Number"
                 type="tel"
@@ -232,7 +262,7 @@ export default function AccountSettingsPage() {
                 placeholder="012-3456789"
                 helperText="Malaysian mobile number (optional)"
               />
-              
+
               <SettingsInput
                 label="Date of Birth"
                 type="date"
@@ -244,16 +274,16 @@ export default function AccountSettingsPage() {
           </SettingsSection>
 
           <SettingsFormActions>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               disabled={!isProfileDirty || isLoadingProfile}
               onClick={() => resetProfile()}
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!isProfileDirty || isLoadingProfile}
               loading={isLoadingProfile}
             >
@@ -264,7 +294,7 @@ export default function AccountSettingsPage() {
       </SettingsCard>
 
       {/* Password Security */}
-      <SettingsCard 
+      <SettingsCard
         title="Password Security"
         description="Change your account password to keep your account secure"
       >
@@ -272,7 +302,9 @@ export default function AccountSettingsPage() {
           <div className="flex items-start space-x-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
             <div>
-              <h4 className="text-sm font-medium text-amber-800">Password Requirements</h4>
+              <h4 className="text-sm font-medium text-amber-800">
+                Password Requirements
+              </h4>
               <ul className="mt-2 text-sm text-amber-700 list-disc list-inside space-y-1">
                 <li>At least 8 characters long</li>
                 <li>Contains uppercase and lowercase letters</li>
@@ -283,7 +315,10 @@ export default function AccountSettingsPage() {
           </div>
         </div>
 
-        <form onSubmit={handlePasswordSubmit(handlePasswordChange)} className="space-y-6">
+        <form
+          onSubmit={handlePasswordSubmit(handlePasswordChange)}
+          className="space-y-6"
+        >
           <SettingsSection title="Change Password">
             <div className="space-y-4">
               <SettingsInput
@@ -294,7 +329,7 @@ export default function AccountSettingsPage() {
                 error={passwordErrors.currentPassword?.message}
                 placeholder="Enter your current password"
               />
-              
+
               <SettingsInput
                 label="New Password"
                 type="password"
@@ -303,7 +338,7 @@ export default function AccountSettingsPage() {
                 error={passwordErrors.newPassword?.message}
                 placeholder="Enter your new password"
               />
-              
+
               <SettingsInput
                 label="Confirm New Password"
                 type="password"
@@ -316,15 +351,15 @@ export default function AccountSettingsPage() {
           </SettingsSection>
 
           <SettingsFormActions>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={() => resetPassword()}
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoadingPassword}
               loading={isLoadingPassword}
             >
@@ -335,7 +370,7 @@ export default function AccountSettingsPage() {
       </SettingsCard>
 
       {/* Quick Actions */}
-      <SettingsCard 
+      <SettingsCard
         title="Quick Actions"
         description="Frequently used account management tools"
       >
@@ -348,8 +383,12 @@ export default function AccountSettingsPage() {
                     <MapPin className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">Manage Addresses</h4>
-                    <p className="text-sm text-gray-500">Add, edit, or delete your shipping and billing addresses</p>
+                    <h4 className="text-sm font-medium text-gray-900">
+                      Manage Addresses
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Add, edit, or delete your shipping and billing addresses
+                    </p>
                   </div>
                 </div>
               </div>
@@ -359,26 +398,32 @@ export default function AccountSettingsPage() {
       </SettingsCard>
 
       {/* Account Actions */}
-      <SettingsCard 
+      <SettingsCard
         title="Account Actions"
         description="Manage your account status and data"
       >
         <SettingsSection title="Data Management">
           <div className="space-y-4">
             <div className="p-4 border rounded-lg">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Export Account Data</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-2">
+                Export Account Data
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
-                Download a copy of your account data, including orders, addresses, and preferences.
+                Download a copy of your account data, including orders,
+                addresses, and preferences.
               </p>
               <Button variant="outline" size="sm">
                 Request Data Export
               </Button>
             </div>
-            
+
             <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-              <h4 className="text-sm font-medium text-red-900 mb-2">Delete Account</h4>
+              <h4 className="text-sm font-medium text-red-900 mb-2">
+                Delete Account
+              </h4>
               <p className="text-sm text-red-700 mb-3">
-                Permanently delete your account and all associated data. This action cannot be undone.
+                Permanently delete your account and all associated data. This
+                action cannot be undone.
               </p>
               <Button variant="destructive" size="sm">
                 Request Account Deletion

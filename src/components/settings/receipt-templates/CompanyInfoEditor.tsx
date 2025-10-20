@@ -8,18 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { 
-  Save, 
-  Upload, 
-  X, 
-  Image as ImageIcon, 
+import {
+  Save,
+  Upload,
+  X,
+  Image as ImageIcon,
   Building2,
   Phone,
   Mail,
   MapPin,
   FileText,
   Hash,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +40,7 @@ interface CompanyInfoEditorProps {
 }
 
 export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
-  className
+  className,
 }) => {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     name: '',
@@ -51,9 +51,9 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
     sstNo: '',
     website: '',
     logoUrl: '',
-    logoEnabled: true
+    logoEnabled: true,
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -66,20 +66,22 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
   const loadCompanyInfo = async () => {
     try {
       setLoading(true);
-      
+
       // First try to load from business profile
       const businessResponse = await fetch('/api/admin/business-profile');
       let businessProfile = null;
-      
+
       if (businessResponse.ok) {
         const data = await businessResponse.json();
         businessProfile = data.profile;
       }
 
       // Also load system config for receipt-specific settings
-      const configResponse = await fetch('/api/admin/system-config?keys=receipt_company_logo_enabled,receipt_footer_message');
+      const configResponse = await fetch(
+        '/api/admin/system-config?keys=receipt_company_logo_enabled,receipt_footer_message'
+      );
       let systemConfig = {};
-      
+
       if (configResponse.ok) {
         const data = await configResponse.json();
         systemConfig = data.config;
@@ -87,17 +89,22 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
 
       // Merge data from different sources
       setCompanyInfo({
-        name: businessProfile?.legalName || process.env.NEXT_PUBLIC_COMPANY_NAME || 'JRM E-commerce Sdn Bhd',
-        address: businessProfile?.registeredAddress?.addressLine1 || 'Kuala Lumpur, Malaysia',
+        name:
+          businessProfile?.legalName ||
+          process.env.NEXT_PUBLIC_COMPANY_NAME ||
+          'JRM E-commerce Sdn Bhd',
+        address:
+          businessProfile?.registeredAddress?.addressLine1 ||
+          'Kuala Lumpur, Malaysia',
         phone: businessProfile?.primaryPhone || '+60 3-1234 5678',
         email: businessProfile?.primaryEmail || 'info@jrmecommerce.com',
         registrationNo: businessProfile?.registrationNumber || '202301234567',
         sstNo: businessProfile?.taxRegistrationNumber || 'A12-3456-78901234',
         website: businessProfile?.website || '',
         logoUrl: businessProfile?.logoUrl || '',
-        logoEnabled: systemConfig.receipt_company_logo_enabled === 'true'
+        logoEnabled: systemConfig.receipt_company_logo_enabled === 'true',
       });
-      
+
       setHasChanges(false);
     } catch (error) {
       console.error('Error loading company info:', error);
@@ -107,17 +114,24 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
     }
   };
 
-  const handleInputChange = (field: keyof CompanyInfo, value: string | boolean) => {
+  const handleInputChange = (
+    field: keyof CompanyInfo,
+    value: string | boolean
+  ) => {
     setCompanyInfo(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     setHasChanges(true);
   };
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -139,7 +153,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
 
       const response = await fetch('/api/admin/media/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
@@ -170,7 +184,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
       const businessResponse = await fetch('/api/admin/business-profile', {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           legalName: companyInfo.name,
@@ -181,20 +195,20 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
           website: companyInfo.website,
           logoUrl: companyInfo.logoUrl,
           registeredAddress: {
-            addressLine1: companyInfo.address
-          }
-        })
+            addressLine1: companyInfo.address,
+          },
+        }),
       });
 
       // Save system config for receipt-specific settings
       const configResponse = await fetch('/api/admin/system-config', {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          receipt_company_logo_enabled: companyInfo.logoEnabled.toString()
-        })
+          receipt_company_logo_enabled: companyInfo.logoEnabled.toString(),
+        }),
       });
 
       if (!businessResponse.ok && !configResponse.ok) {
@@ -245,7 +259,9 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-orange-800">
                 <FileText className="h-4 w-4" />
-                <span className="text-sm font-medium">You have unsaved changes</span>
+                <span className="text-sm font-medium">
+                  You have unsaved changes
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleReset}>
@@ -283,7 +299,9 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
             <Switch
               id="logo-enabled"
               checked={companyInfo.logoEnabled}
-              onCheckedChange={(checked) => handleInputChange('logoEnabled', checked)}
+              onCheckedChange={checked =>
+                handleInputChange('logoEnabled', checked)
+              }
             />
             <Label htmlFor="logo-enabled">Display logo on receipts</Label>
           </div>
@@ -317,10 +335,14 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
 
               {/* Upload Button */}
               <div>
-                <Label htmlFor="logo-upload" className="sr-only">Upload Logo</Label>
+                <Label htmlFor="logo-upload" className="sr-only">
+                  Upload Logo
+                </Label>
                 <Button
                   variant="outline"
-                  onClick={() => document.getElementById('logo-upload')?.click()}
+                  onClick={() =>
+                    document.getElementById('logo-upload')?.click()
+                  }
                   disabled={uploading}
                   className="w-full sm:w-auto"
                 >
@@ -364,7 +386,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
               <Input
                 id="company-name"
                 value={companyInfo.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 placeholder="Enter company name"
                 required
               />
@@ -376,7 +398,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
                 id="website"
                 type="url"
                 value={companyInfo.website}
-                onChange={(e) => handleInputChange('website', e.target.value)}
+                onChange={e => handleInputChange('website', e.target.value)}
                 placeholder="https://example.com"
               />
             </div>
@@ -387,7 +409,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
             <Textarea
               id="address"
               value={companyInfo.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
+              onChange={e => handleInputChange('address', e.target.value)}
               placeholder="Enter complete company address"
               rows={3}
               required
@@ -417,7 +439,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
                   id="phone"
                   type="tel"
                   value={companyInfo.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  onChange={e => handleInputChange('phone', e.target.value)}
                   placeholder="+60 3-1234 5678"
                   className="pl-10"
                   required
@@ -433,7 +455,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
                   id="email"
                   type="email"
                   value={companyInfo.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={e => handleInputChange('email', e.target.value)}
                   placeholder="info@company.com"
                   className="pl-10"
                   required
@@ -459,7 +481,9 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
               <Input
                 id="registration-no"
                 value={companyInfo.registrationNo}
-                onChange={(e) => handleInputChange('registrationNo', e.target.value)}
+                onChange={e =>
+                  handleInputChange('registrationNo', e.target.value)
+                }
                 placeholder="202301234567"
                 required
               />
@@ -473,7 +497,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
               <Input
                 id="sst-no"
                 value={companyInfo.sstNo}
-                onChange={(e) => handleInputChange('sstNo', e.target.value)}
+                onChange={e => handleInputChange('sstNo', e.target.value)}
                 placeholder="A12-3456-78901234"
                 required
               />

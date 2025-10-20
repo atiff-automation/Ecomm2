@@ -9,7 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -35,10 +41,10 @@ import { SettingsLayout } from '@/components/settings';
 /**
  * Customer Preferences Page - Phase 2 Customer Settings
  * Following @CLAUDE.md principles - systematic, DRY, single source of truth
- * 
+ *
  * Features from @SETTINGS_IMPLEMENTATION_GUIDE.md:
  * - Default shipping/billing addresses
- * - Preferred payment methods  
+ * - Preferred payment methods
  * - Language preference (English/Malay)
  * - Wishlist privacy settings
  */
@@ -46,7 +52,9 @@ import { SettingsLayout } from '@/components/settings';
 const preferencesSchema = z.object({
   defaultShippingAddressId: z.string().optional(),
   defaultBillingAddressId: z.string().optional(),
-  preferredPaymentMethod: z.enum(['CREDIT_CARD', 'ONLINE_BANKING', 'EWALLET', 'BANK_TRANSFER']).optional(),
+  preferredPaymentMethod: z
+    .enum(['CREDIT_CARD', 'ONLINE_BANKING', 'EWALLET', 'BANK_TRANSFER'])
+    .optional(),
   language: z.enum(['en', 'ms']),
   currency: z.enum(['MYR']),
   timezone: z.string(),
@@ -108,7 +116,7 @@ export default function PreferencesPage() {
   const fetchPreferences = async () => {
     try {
       setLoading(true);
-      
+
       const [preferencesRes, addressesRes] = await Promise.all([
         fetch('/api/settings/preferences'),
         fetch('/api/settings/addresses'),
@@ -160,7 +168,10 @@ export default function PreferencesPage() {
 
   if (loading) {
     return (
-      <SettingsLayout title="Preferences" subtitle="Customize your shopping experience">
+      <SettingsLayout
+        title="Preferences"
+        subtitle="Customize your shopping experience"
+      >
         <div className="space-y-6">
           <div className="animate-pulse space-y-4">
             <div className="h-32 bg-gray-200 rounded-lg"></div>
@@ -176,7 +187,10 @@ export default function PreferencesPage() {
   const billingAddresses = addresses.filter(addr => addr.type === 'billing');
 
   return (
-    <SettingsLayout title="Preferences" subtitle="Customize your shopping experience and account settings">
+    <SettingsLayout
+      title="Preferences"
+      subtitle="Customize your shopping experience and account settings"
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Default Addresses */}
@@ -202,7 +216,10 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Shipping Address</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ''}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select shipping address" />
@@ -210,7 +227,7 @@ export default function PreferencesPage() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="">No default address</SelectItem>
-                            {shippingAddresses.map((address) => (
+                            {shippingAddresses.map(address => (
                               <SelectItem key={address.id} value={address.id}>
                                 <div className="text-left">
                                   <div className="font-medium">
@@ -241,7 +258,10 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Billing Address</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ''}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select billing address" />
@@ -249,7 +269,7 @@ export default function PreferencesPage() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="">No default address</SelectItem>
-                            {billingAddresses.map((address) => (
+                            {billingAddresses.map(address => (
                               <SelectItem key={address.id} value={address.id}>
                                 <div className="text-left">
                                   <div className="font-medium">
@@ -278,7 +298,10 @@ export default function PreferencesPage() {
                   <MapPin className="h-4 w-4" />
                   <AlertDescription>
                     You haven't added any addresses yet. Go to{' '}
-                    <a href="/settings/account/addresses" className="font-medium text-primary hover:underline">
+                    <a
+                      href="/settings/account/addresses"
+                      className="font-medium text-primary hover:underline"
+                    >
                       Address Management
                     </a>{' '}
                     to add your first address.
@@ -309,7 +332,10 @@ export default function PreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Preferred Payment Method</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select payment method" />
@@ -317,10 +343,18 @@ export default function PreferencesPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="">No preference</SelectItem>
-                          <SelectItem value="CREDIT_CARD">Credit/Debit Card</SelectItem>
-                          <SelectItem value="ONLINE_BANKING">Online Banking (FPX)</SelectItem>
-                          <SelectItem value="EWALLET">E-Wallet (GrabPay, Touch 'n Go)</SelectItem>
-                          <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                          <SelectItem value="CREDIT_CARD">
+                            Credit/Debit Card
+                          </SelectItem>
+                          <SelectItem value="ONLINE_BANKING">
+                            Online Banking (FPX)
+                          </SelectItem>
+                          <SelectItem value="EWALLET">
+                            E-Wallet (GrabPay, Touch 'n Go)
+                          </SelectItem>
+                          <SelectItem value="BANK_TRANSFER">
+                            Bank Transfer
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -337,14 +371,19 @@ export default function PreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="MYR">Malaysian Ringgit (RM)</SelectItem>
+                          <SelectItem value="MYR">
+                            Malaysian Ringgit (RM)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -367,13 +406,19 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Auto-Apply Best Discount</FormLabel>
+                          <FormLabel className="text-base">
+                            Auto-Apply Best Discount
+                          </FormLabel>
                           <FormDescription>
-                            Automatically apply the best available discount at checkout
+                            Automatically apply the best available discount at
+                            checkout
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -385,13 +430,18 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Save Payment Methods</FormLabel>
+                          <FormLabel className="text-base">
+                            Save Payment Methods
+                          </FormLabel>
                           <FormDescription>
                             Securely save payment methods for faster checkout
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -403,13 +453,18 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Remember Shipping Preference</FormLabel>
+                          <FormLabel className="text-base">
+                            Remember Shipping Preference
+                          </FormLabel>
                           <FormDescription>
                             Remember your preferred shipping method and options
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -440,7 +495,10 @@ export default function PreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Language</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -465,17 +523,28 @@ export default function PreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Timezone</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Asia/Kuala_Lumpur">Malaysia (UTC+8)</SelectItem>
-                          <SelectItem value="Asia/Singapore">Singapore (UTC+8)</SelectItem>
-                          <SelectItem value="Asia/Bangkok">Thailand (UTC+7)</SelectItem>
-                          <SelectItem value="Asia/Jakarta">Indonesia (UTC+7)</SelectItem>
+                          <SelectItem value="Asia/Kuala_Lumpur">
+                            Malaysia (UTC+8)
+                          </SelectItem>
+                          <SelectItem value="Asia/Singapore">
+                            Singapore (UTC+8)
+                          </SelectItem>
+                          <SelectItem value="Asia/Bangkok">
+                            Thailand (UTC+7)
+                          </SelectItem>
+                          <SelectItem value="Asia/Jakarta">
+                            Indonesia (UTC+7)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -510,16 +579,25 @@ export default function PreferencesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Wishlist Privacy</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="PUBLIC">Public - Anyone can view</SelectItem>
-                          <SelectItem value="FRIENDS">Friends Only - Registered friends can view</SelectItem>
-                          <SelectItem value="PRIVATE">Private - Only you can view</SelectItem>
+                          <SelectItem value="PUBLIC">
+                            Public - Anyone can view
+                          </SelectItem>
+                          <SelectItem value="FRIENDS">
+                            Friends Only - Registered friends can view
+                          </SelectItem>
+                          <SelectItem value="PRIVATE">
+                            Private - Only you can view
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -542,13 +620,18 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Show Recently Viewed Products</FormLabel>
+                          <FormLabel className="text-base">
+                            Show Recently Viewed Products
+                          </FormLabel>
                           <FormDescription>
                             Display recently viewed products on your homepage
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -560,13 +643,19 @@ export default function PreferencesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Browser Push Notifications</FormLabel>
+                          <FormLabel className="text-base">
+                            Browser Push Notifications
+                          </FormLabel>
                           <FormDescription>
-                            Receive notifications about orders, promotions, and updates
+                            Receive notifications about orders, promotions, and
+                            updates
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}

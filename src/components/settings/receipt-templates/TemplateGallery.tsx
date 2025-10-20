@@ -5,23 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  Eye, 
-  Download, 
+import {
+  Plus,
+  Eye,
+  Download,
   Check,
   RefreshCw,
   Sparkles,
   FileText,
   Calculator,
   Printer,
-  Smartphone
+  Smartphone,
 } from 'lucide-react';
-import { 
+import {
   ReceiptTemplateType,
   TEMPLATE_TYPE_LABELS,
   DEFAULT_TEMPLATE_CONFIGS,
-  ReceiptTemplateContent 
+  ReceiptTemplateContent,
 } from '@/types/receipt-templates';
 import { TemplatePreview } from './TemplatePreview';
 import { cn } from '@/lib/utils';
@@ -47,70 +47,98 @@ const GALLERY_TEMPLATES: GalleryTemplate[] = [
   {
     type: 'THERMAL_RECEIPT',
     name: 'Thermal Receipt',
-    description: 'Compact receipt style perfect for thermal printers and point-of-sale systems.',
-    features: ['Compact layout', 'Monospace font', 'Thermal printer friendly', 'Basic styling'],
+    description:
+      'Compact receipt style perfect for thermal printers and point-of-sale systems.',
+    features: [
+      'Compact layout',
+      'Monospace font',
+      'Thermal printer friendly',
+      'Basic styling',
+    ],
     icon: Printer,
     config: DEFAULT_TEMPLATE_CONFIGS.THERMAL_RECEIPT,
     category: 'receipt',
     difficulty: 'basic',
-    recommended: true
+    recommended: true,
   },
   {
     type: 'MINIMAL_RECEIPT',
     name: 'Minimal Receipt',
-    description: 'Clean and modern receipt design with minimal styling and mobile-friendly layout.',
-    features: ['Clean design', 'Mobile responsive', 'Modern typography', 'Minimal styling'],
+    description:
+      'Clean and modern receipt design with minimal styling and mobile-friendly layout.',
+    features: [
+      'Clean design',
+      'Mobile responsive',
+      'Modern typography',
+      'Minimal styling',
+    ],
     icon: Smartphone,
     config: DEFAULT_TEMPLATE_CONFIGS.MINIMAL_RECEIPT,
     category: 'modern',
-    difficulty: 'basic'
+    difficulty: 'basic',
   },
   {
     type: 'BUSINESS_INVOICE',
     name: 'Business Invoice',
-    description: 'Professional invoice format suitable for business-to-business transactions.',
-    features: ['Professional layout', 'Company branding', 'Detailed sections', 'A4 format'],
+    description:
+      'Professional invoice format suitable for business-to-business transactions.',
+    features: [
+      'Professional layout',
+      'Company branding',
+      'Detailed sections',
+      'A4 format',
+    ],
     icon: FileText,
     config: DEFAULT_TEMPLATE_CONFIGS.BUSINESS_INVOICE,
     category: 'invoice',
     difficulty: 'intermediate',
-    recommended: true
+    recommended: true,
   },
   {
     type: 'DETAILED_INVOICE',
     name: 'Detailed Invoice',
-    description: 'Comprehensive invoice with full tax details and compliance information.',
-    features: ['Tax compliance focused', 'Detailed breakdowns', 'Multiple addresses', 'Professional appearance'],
+    description:
+      'Comprehensive invoice with full tax details and compliance information.',
+    features: [
+      'Tax compliance focused',
+      'Detailed breakdowns',
+      'Multiple addresses',
+      'Professional appearance',
+    ],
     icon: Calculator,
     config: DEFAULT_TEMPLATE_CONFIGS.DETAILED_INVOICE,
     category: 'invoice',
-    difficulty: 'advanced'
-  }
+    difficulty: 'advanced',
+  },
 ];
 
 const CATEGORIES = {
   receipt: { label: 'Receipts', color: 'bg-blue-100 text-blue-800' },
   invoice: { label: 'Invoices', color: 'bg-purple-100 text-purple-800' },
-  modern: { label: 'Modern', color: 'bg-green-100 text-green-800' }
+  modern: { label: 'Modern', color: 'bg-green-100 text-green-800' },
 };
 
 const DIFFICULTY_COLORS = {
   basic: 'bg-green-100 text-green-700',
   intermediate: 'bg-yellow-100 text-yellow-700',
-  advanced: 'bg-red-100 text-red-700'
+  advanced: 'bg-red-100 text-red-700',
 };
 
 export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
   onTemplateInstalled,
-  className
+  className,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'receipt' | 'invoice' | 'modern'>('all');
-  const [previewTemplate, setPreviewTemplate] = useState<GalleryTemplate | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<
+    'all' | 'receipt' | 'invoice' | 'modern'
+  >('all');
+  const [previewTemplate, setPreviewTemplate] =
+    useState<GalleryTemplate | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);
 
-  const filteredTemplates = selectedCategory === 'all' 
-    ? GALLERY_TEMPLATES 
-    : GALLERY_TEMPLATES.filter(t => t.category === selectedCategory);
+  const filteredTemplates =
+    selectedCategory === 'all'
+      ? GALLERY_TEMPLATES
+      : GALLERY_TEMPLATES.filter(t => t.category === selectedCategory);
 
   const handleInstallTemplate = async (template: GalleryTemplate) => {
     try {
@@ -119,7 +147,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
       const response = await fetch('/api/admin/receipt-templates', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: template.name,
@@ -127,8 +155,10 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           templateType: template.type,
           templateContent: template.config,
           isActive: true,
-          isDefault: template.recommended && filteredTemplates.filter(t => t.recommended).length === 1
-        })
+          isDefault:
+            template.recommended &&
+            filteredTemplates.filter(t => t.recommended).length === 1,
+        }),
       });
 
       if (!response.ok) {
@@ -167,7 +197,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
       createdAt: new Date(),
       updatedAt: new Date(),
       createdBy: 'system',
-      updatedBy: null
+      updatedBy: null,
     };
 
     return (
@@ -181,17 +211,16 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
             ← Back to Gallery
           </Button>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">Preview: {previewTemplate.name}</h2>
+            <h2 className="text-lg font-semibold">
+              Preview: {previewTemplate.name}
+            </h2>
             <Button onClick={() => handleInstallTemplate(previewTemplate)}>
               <Plus className="h-4 w-4 mr-2" />
               Install Template
             </Button>
           </div>
         </div>
-        <TemplatePreview 
-          template={mockTemplate}
-          onClose={handleClosePreview}
-        />
+        <TemplatePreview template={mockTemplate} onClose={handleClosePreview} />
       </div>
     );
   }
@@ -205,8 +234,9 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           Template Gallery
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Choose from our collection of professional receipt and invoice templates. 
-          Each template is designed for different business needs and use cases.
+          Choose from our collection of professional receipt and invoice
+          templates. Each template is designed for different business needs and
+          use cases.
         </p>
       </div>
 
@@ -233,14 +263,14 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template) => {
+        {filteredTemplates.map(template => {
           const Icon = template.icon;
           const categoryInfo = CATEGORIES[template.category];
           const isInstalling = installing === template.type;
 
           return (
-            <Card 
-              key={template.type} 
+            <Card
+              key={template.type}
               className={cn(
                 'relative group hover:shadow-lg transition-all duration-200',
                 template.recommended && 'ring-2 ring-primary ring-offset-2'
@@ -266,7 +296,10 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
                       <Badge className={categoryInfo.color}>
                         {categoryInfo.label}
                       </Badge>
-                      <Badge variant="outline" className={DIFFICULTY_COLORS[template.difficulty]}>
+                      <Badge
+                        variant="outline"
+                        className={DIFFICULTY_COLORS[template.difficulty]}
+                      >
                         {template.difficulty}
                       </Badge>
                     </div>
@@ -301,7 +334,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
                     <Eye className="h-3 w-3 mr-2" />
                     Preview
                   </Button>
-                  
+
                   <Button
                     size="sm"
                     onClick={() => handleInstallTemplate(template)}
@@ -332,9 +365,12 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <FileText className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Templates Found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No Templates Found
+          </h3>
           <p className="text-gray-500 mb-6">
-            No templates match the selected category. Try selecting a different category.
+            No templates match the selected category. Try selecting a different
+            category.
           </p>
           <Button variant="outline" onClick={() => setSelectedCategory('all')}>
             Show All Templates
@@ -352,13 +388,18 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
             <div className="space-y-1">
               <h4 className="font-medium">Need Help Choosing?</h4>
               <p className="text-sm text-muted-foreground">
-                • <strong>Thermal Receipt:</strong> Best for POS systems and simple receipts<br/>
-                • <strong>Minimal Receipt:</strong> Modern design for online stores<br/>
-                • <strong>Business Invoice:</strong> Professional invoices for B2B transactions<br/>
-                • <strong>Detailed Invoice:</strong> Comprehensive invoices with full tax details
+                • <strong>Thermal Receipt:</strong> Best for POS systems and
+                simple receipts
+                <br />• <strong>Minimal Receipt:</strong> Modern design for
+                online stores
+                <br />• <strong>Business Invoice:</strong> Professional invoices
+                for B2B transactions
+                <br />• <strong>Detailed Invoice:</strong> Comprehensive
+                invoices with full tax details
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                💡 <strong>Tip:</strong> You can install multiple templates and switch between them anytime.
+                💡 <strong>Tip:</strong> You can install multiple templates and
+                switch between them anytime.
               </p>
             </div>
           </div>

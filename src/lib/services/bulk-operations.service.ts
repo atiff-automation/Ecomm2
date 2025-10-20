@@ -8,7 +8,7 @@ import { prisma } from '@/lib/db/prisma';
 import {
   BULK_OPERATIONS_CONFIG,
   BulkOperationResult,
-  formatMessage
+  formatMessage,
 } from '@/lib/config/bulk-operations';
 
 export interface BulkDeleteOptions {
@@ -32,8 +32,14 @@ export class BulkOperationsService {
    * Delete multiple products in a transaction-safe manner
    * Handles all related data cleanup systematically
    */
-  async bulkDeleteProducts(options: BulkDeleteOptions): Promise<BulkOperationResult> {
-    const { productIds, userId, batchSize = BULK_OPERATIONS_CONFIG.BATCH_SIZE } = options;
+  async bulkDeleteProducts(
+    options: BulkDeleteOptions
+  ): Promise<BulkOperationResult> {
+    const {
+      productIds,
+      userId,
+      batchSize = BULK_OPERATIONS_CONFIG.BATCH_SIZE,
+    } = options;
 
     // Validate input parameters
     const validation = this.validateBulkDeleteRequest(productIds);
@@ -84,7 +90,6 @@ export class BulkOperationsService {
         failedCount: failureCount,
         errors: failedDeletions.length > 0 ? failedDeletions : undefined,
       };
-
     } catch (error) {
       console.error('Bulk delete operation failed:', error);
       return {
@@ -103,11 +108,14 @@ export class BulkOperationsService {
   private async processBatch(
     productIds: string[],
     userId: string
-  ): Promise<{ deleted: DeletedProductInfo[]; failed: Array<{ id: string; error: string }> }> {
+  ): Promise<{
+    deleted: DeletedProductInfo[];
+    failed: Array<{ id: string; error: string }>;
+  }> {
     const deleted: DeletedProductInfo[] = [];
     const failed: Array<{ id: string; error: string }> = [];
 
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async tx => {
       // First, get product information for audit logging
       const products = await tx.product.findMany({
         where: { id: { in: productIds } },
@@ -134,7 +142,6 @@ export class BulkOperationsService {
           });
 
           deleted.push(product);
-
         } catch (error) {
           console.error(`Failed to delete product ${productId}:`, error);
           failed.push({
@@ -207,7 +214,10 @@ export class BulkOperationsService {
   /**
    * Validate bulk delete request parameters
    */
-  private validateBulkDeleteRequest(productIds: string[]): { valid: boolean; error?: string } {
+  private validateBulkDeleteRequest(productIds: string[]): {
+    valid: boolean;
+    error?: string;
+  } {
     if (!Array.isArray(productIds)) {
       return { valid: false, error: 'Product IDs must be an array' };
     }
@@ -219,14 +229,19 @@ export class BulkOperationsService {
     if (productIds.length > BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE) {
       return {
         valid: false,
-        error: formatMessage(BULK_OPERATIONS_CONFIG.ERROR_MESSAGES.MAX_SELECTION_EXCEEDED, {
-          max: BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE,
-        }),
+        error: formatMessage(
+          BULK_OPERATIONS_CONFIG.ERROR_MESSAGES.MAX_SELECTION_EXCEEDED,
+          {
+            max: BULK_OPERATIONS_CONFIG.MAX_SELECTION_SIZE,
+          }
+        ),
       };
     }
 
     // Validate that all IDs are strings and not empty
-    const invalidIds = productIds.filter(id => typeof id !== 'string' || id.trim() === '');
+    const invalidIds = productIds.filter(
+      id => typeof id !== 'string' || id.trim() === ''
+    );
     if (invalidIds.length > 0) {
       return { valid: false, error: 'All product IDs must be valid strings' };
     }
@@ -237,7 +252,10 @@ export class BulkOperationsService {
   /**
    * Generate appropriate result message based on operation outcome
    */
-  private generateResultMessage(successCount: number, failureCount: number): string {
+  private generateResultMessage(
+    successCount: number,
+    failureCount: number
+  ): string {
     if (failureCount === 0) {
       return formatMessage(BULK_OPERATIONS_CONFIG.SUCCESS_MESSAGES.DELETE, {
         count: successCount,
@@ -248,10 +266,13 @@ export class BulkOperationsService {
       return 'Failed to delete any products. Please check the error details.';
     }
 
-    return formatMessage(BULK_OPERATIONS_CONFIG.SUCCESS_MESSAGES.DELETE_PARTIAL, {
-      successCount,
-      failureCount,
-    });
+    return formatMessage(
+      BULK_OPERATIONS_CONFIG.SUCCESS_MESSAGES.DELETE_PARTIAL,
+      {
+        successCount,
+        failureCount,
+      }
+    );
   }
 
   /**
@@ -275,8 +296,8 @@ export class BulkOperationsService {
           _count: {
             select: {
               orderItems: true,
-            }
-          }
+            },
+          },
         },
       });
 
@@ -300,7 +321,6 @@ export class BulkOperationsService {
         canDelete: products.length > 0,
         warnings: warnings.length > 0 ? warnings : undefined,
       };
-
     } catch (error) {
       console.error('Failed to get product deletion summary:', error);
       return {

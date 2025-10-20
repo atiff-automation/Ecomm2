@@ -137,13 +137,13 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Validate text fields
-    if (!membershipBenefitsText?.trim() || !membershipTermsText?.trim()) {
-      return NextResponse.json(
-        { message: 'Benefits and terms text are required' },
-        { status: 400 }
-      );
-    }
+    // Text fields are now optional - use defaults if not provided
+    const benefitsText =
+      membershipBenefitsText?.trim() ||
+      'Enjoy exclusive member pricing on all products and special promotions.';
+    const termsText =
+      membershipTermsText?.trim() ||
+      'Membership is activated automatically when you spend the qualifying amount.';
 
     // Configuration updates
     const configUpdates = [
@@ -164,12 +164,12 @@ export async function PUT(request: NextRequest) {
       },
       {
         key: 'membership_benefits_text',
-        value: membershipBenefitsText.trim(),
+        value: benefitsText,
         type: 'text',
       },
       {
         key: 'membership_terms_text',
-        value: membershipTermsText.trim(),
+        value: termsText,
         type: 'text',
       },
     ];
@@ -204,8 +204,8 @@ export async function PUT(request: NextRequest) {
             membershipThreshold,
             enablePromotionalExclusion,
             requireQualifyingCategories,
-            membershipBenefitsText: membershipBenefitsText.trim(),
-            membershipTermsText: membershipTermsText.trim(),
+            membershipBenefitsText: benefitsText,
+            membershipTermsText: termsText,
           },
           updatedAt: new Date().toISOString(),
         },
@@ -220,8 +220,8 @@ export async function PUT(request: NextRequest) {
         membershipThreshold,
         enablePromotionalExclusion,
         requireQualifyingCategories,
-        membershipBenefitsText: membershipBenefitsText.trim(),
-        membershipTermsText: membershipTermsText.trim(),
+        membershipBenefitsText: benefitsText,
+        membershipTermsText: termsText,
       },
     });
   } catch (error) {

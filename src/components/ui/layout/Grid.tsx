@@ -30,7 +30,7 @@ const gridColsVariants = {
   4: 'grid-cols-4',
   5: 'grid-cols-5',
   6: 'grid-cols-6',
-  12: 'grid-cols-12'
+  12: 'grid-cols-12',
 };
 
 const responsiveColsVariants = {
@@ -41,7 +41,7 @@ const responsiveColsVariants = {
     4: 'sm:grid-cols-4',
     5: 'sm:grid-cols-5',
     6: 'sm:grid-cols-6',
-    12: 'sm:grid-cols-12'
+    12: 'sm:grid-cols-12',
   },
   md: {
     1: 'md:grid-cols-1',
@@ -50,7 +50,7 @@ const responsiveColsVariants = {
     4: 'md:grid-cols-4',
     5: 'md:grid-cols-5',
     6: 'md:grid-cols-6',
-    12: 'md:grid-cols-12'
+    12: 'md:grid-cols-12',
   },
   lg: {
     1: 'lg:grid-cols-1',
@@ -59,7 +59,7 @@ const responsiveColsVariants = {
     4: 'lg:grid-cols-4',
     5: 'lg:grid-cols-5',
     6: 'lg:grid-cols-6',
-    12: 'lg:grid-cols-12'
+    12: 'lg:grid-cols-12',
   },
   xl: {
     1: 'xl:grid-cols-1',
@@ -68,16 +68,16 @@ const responsiveColsVariants = {
     4: 'xl:grid-cols-4',
     5: 'xl:grid-cols-5',
     6: 'xl:grid-cols-6',
-    12: 'xl:grid-cols-12'
-  }
+    12: 'xl:grid-cols-12',
+  },
 };
 
 const gapVariants = {
-  xs: 'gap-2',    // 8px
-  sm: 'gap-3',    // 12px
-  md: 'gap-4',    // 16px
-  lg: 'gap-6',    // 24px
-  xl: 'gap-8'     // 32px
+  xs: 'gap-2', // 8px
+  sm: 'gap-3', // 12px
+  md: 'gap-4', // 16px
+  lg: 'gap-6', // 24px
+  xl: 'gap-8', // 32px
 };
 
 export function Grid({
@@ -93,17 +93,22 @@ export function Grid({
   // Generate responsive grid classes
   const responsiveClasses = responsive
     ? Object.entries(responsive)
-        .map(([breakpoint, cols]) =>
-          responsiveColsVariants[breakpoint as keyof typeof responsiveColsVariants][cols]
+        .map(
+          ([breakpoint, cols]) =>
+            responsiveColsVariants[
+              breakpoint as keyof typeof responsiveColsVariants
+            ][cols]
         )
         .filter(Boolean)
     : [];
 
   // Handle auto-fit/auto-fill grids
   const gridTemplateColumns =
-    cols === 'auto-fit' ? `repeat(auto-fit, minmax(${minItemWidth}, 1fr))` :
-    cols === 'auto-fill' ? `repeat(auto-fill, minmax(${minItemWidth}, 1fr))` :
-    undefined;
+    cols === 'auto-fit'
+      ? `repeat(auto-fit, minmax(${minItemWidth}, 1fr))`
+      : cols === 'auto-fill'
+        ? `repeat(auto-fill, minmax(${minItemWidth}, 1fr))`
+        : undefined;
 
   return (
     <Component
@@ -132,14 +137,18 @@ export function Grid({
 }
 
 // Predefined grid layouts for common use cases
-export const ProductGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const ProductGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={2}
     responsive={{
       sm: 2,
       md: 3,
       lg: 4,
-      xl: 5
+      xl: 5,
     }}
     gap="md"
     className={className}
@@ -150,14 +159,18 @@ export const ProductGrid = ({ children, className, ...props }: Omit<GridProps, '
 );
 
 // Compact Product Grid (for sidebars, smaller spaces)
-export const CompactProductGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const CompactProductGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={2}
     responsive={{
       sm: 2,
       md: 3,
       lg: 4,
-      xl: 5
+      xl: 5,
     }}
     gap="sm"
     className={className}
@@ -168,14 +181,18 @@ export const CompactProductGrid = ({ children, className, ...props }: Omit<GridP
 );
 
 // Search Results Grid (optimized for search pages)
-export const SearchResultsGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const SearchResultsGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={2}
     responsive={{
       sm: 2,
       md: 2,
       lg: 3,
-      xl: 4
+      xl: 4,
     }}
     gap="lg"
     className={className}
@@ -186,14 +203,18 @@ export const SearchResultsGrid = ({ children, className, ...props }: Omit<GridPr
 );
 
 // Wishlist Grid (consistent with product display)
-export const WishlistGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const WishlistGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={2}
     responsive={{
       sm: 2,
       md: 2,
       lg: 3,
-      xl: 4
+      xl: 4,
     }}
     gap="md"
     className={className}
@@ -203,14 +224,18 @@ export const WishlistGrid = ({ children, className, ...props }: Omit<GridProps, 
   </Grid>
 );
 
-export const CategoryGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const CategoryGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={2}
     responsive={{
       sm: 2,
       md: 3,
       lg: 4,
-      xl: 6
+      xl: 6,
     }}
     gap="lg"
     className={className}
@@ -220,12 +245,16 @@ export const CategoryGrid = ({ children, className, ...props }: Omit<GridProps, 
   </Grid>
 );
 
-export const FeatureGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const FeatureGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={1}
     responsive={{
       md: 2,
-      lg: 3
+      lg: 3,
     }}
     gap="xl"
     className={className}
@@ -235,12 +264,16 @@ export const FeatureGrid = ({ children, className, ...props }: Omit<GridProps, '
   </Grid>
 );
 
-export const BlogGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const BlogGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={1}
     responsive={{
       md: 2,
-      xl: 3
+      xl: 3,
     }}
     gap="lg"
     className={className}
@@ -250,11 +283,15 @@ export const BlogGrid = ({ children, className, ...props }: Omit<GridProps, 'col
   </Grid>
 );
 
-export const TestimonialGrid = ({ children, className, ...props }: Omit<GridProps, 'cols' | 'responsive'>) => (
+export const TestimonialGrid = ({
+  children,
+  className,
+  ...props
+}: Omit<GridProps, 'cols' | 'responsive'>) => (
   <Grid
     cols={1}
     responsive={{
-      lg: 2
+      lg: 2,
     }}
     gap="xl"
     className={className}
@@ -321,7 +358,7 @@ const spanVariants = {
   5: 'col-span-5',
   6: 'col-span-6',
   12: 'col-span-12',
-  full: 'col-span-full'
+  full: 'col-span-full',
 };
 
 export function GridItem({

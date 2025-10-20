@@ -72,11 +72,18 @@ export default function ProductImportPage() {
         setFile(selectedFile);
         setResult(null);
       } else {
-        alert('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
+        toast.error('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
         event.target.value = '';
       }
     }
   };
+
+  interface CategoryData {
+    name: string;
+    slug: string;
+    description?: string;
+    productCount?: number;
+  }
 
   const downloadCategoryList = async () => {
     try {
@@ -85,16 +92,23 @@ export default function ProductImportPage() {
         const data = await response.json();
         const categories = data.categories;
 
-        const headers = ['categoryName', 'categorySlug', 'description', 'productCount'];
-        const csvData = categories.map((cat: any) => [
+        const headers = [
+          'categoryName',
+          'categorySlug',
+          'description',
+          'productCount',
+        ];
+        const csvData = categories.map((cat: CategoryData) => [
           cat.name,
           cat.slug,
           cat.description || '',
-          cat.productCount || 0
+          cat.productCount || 0,
         ]);
 
         const csvContent = [headers, ...csvData]
-          .map(row => row.map(cell => `"${cell}"`).join(','))
+          .map((row: (string | number)[]) =>
+            row.map((cell: string | number) => `"${cell}"`).join(',')
+          )
           .join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -190,11 +204,7 @@ export default function ProductImportPage() {
       'SEO description',
     ];
 
-    const csvContent = [
-      headers,
-      explanationRow,
-      sampleRow
-    ]
+    const csvContent = [headers, explanationRow, sampleRow]
       .map(row => row.map(cell => `"${cell}"`).join(','))
       .join('\n');
 
@@ -287,11 +297,6 @@ export default function ProductImportPage() {
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
     {
-      id: 'inventory',
-      label: 'Inventory Management',
-      href: '/admin/products/inventory',
-    },
-    {
       id: 'import-export',
       label: 'Import/Export',
       href: '/admin/products/import',
@@ -350,47 +355,106 @@ export default function ProductImportPage() {
                   <h4 className="font-medium mb-2">Before You Start</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• Download the template to see required columns</li>
-                    <li>• Download the category list to see valid category names</li>
+                    <li>
+                      • Download the category list to see valid category names
+                    </li>
                     <li>• Ensure SKUs are unique for new products</li>
-                    <li>• Use category names exactly as they appear in your store</li>
+                    <li>
+                      • Use category names exactly as they appear in your store
+                    </li>
                     <li>• Prices should be in decimal format (e.g., 29.99)</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Required vs Optional Fields</h4>
+                  <h4 className="font-medium mb-2">
+                    Required vs Optional Fields
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <h5 className="font-medium text-red-600 mb-2">✓ REQUIRED Fields</h5>
+                      <h5 className="font-medium text-red-600 mb-2">
+                        ✓ REQUIRED Fields
+                      </h5>
                       <ul className="text-gray-600 space-y-1">
-                        <li>• <span className="font-medium">sku</span> - Unique product code</li>
-                        <li>• <span className="font-medium">name</span> - Product display name</li>
-                        <li>• <span className="font-medium">categoryName</span> - Must match existing category</li>
-                        <li>• <span className="font-medium">regularPrice</span> - Price in decimal format</li>
-                        <li>• <span className="font-medium">stockQuantity</span> - Available stock number</li>
-                        <li>• <span className="font-medium">weight</span> - Product weight in kg (for shipping)</li>
+                        <li>
+                          • <span className="font-medium">sku</span> - Unique
+                          product code
+                        </li>
+                        <li>
+                          • <span className="font-medium">name</span> - Product
+                          display name
+                        </li>
+                        <li>
+                          • <span className="font-medium">categoryName</span> -
+                          Must match existing category
+                        </li>
+                        <li>
+                          • <span className="font-medium">regularPrice</span> -
+                          Price in decimal format
+                        </li>
+                        <li>
+                          • <span className="font-medium">stockQuantity</span> -
+                          Available stock number
+                        </li>
+                        <li>
+                          • <span className="font-medium">weight</span> -
+                          Product weight in kg (for shipping)
+                        </li>
                       </ul>
                     </div>
                     <div>
-                      <h5 className="font-medium text-blue-600 mb-2">○ OPTIONAL Fields</h5>
+                      <h5 className="font-medium text-blue-600 mb-2">
+                        ○ OPTIONAL Fields
+                      </h5>
                       <ul className="text-gray-600 space-y-1">
-                        <li>• <span className="font-medium">description</span> - Full product description</li>
-                        <li>• <span className="font-medium">shortDescription</span> - Brief summary</li>
-                        <li>• <span className="font-medium">memberPrice</span> - Member discount price</li>
-                        <li>• <span className="font-medium">dimensions</span> - Product size in cm (e.g., 10x10x5)</li>
-                        <li>• <span className="font-medium">featured</span> - TRUE/FALSE</li>
+                        <li>
+                          • <span className="font-medium">description</span> -
+                          Full product description
+                        </li>
+                        <li>
+                          •{' '}
+                          <span className="font-medium">shortDescription</span>{' '}
+                          - Brief summary
+                        </li>
+                        <li>
+                          • <span className="font-medium">memberPrice</span> -
+                          Member discount price
+                        </li>
+                        <li>
+                          • <span className="font-medium">dimensions</span> -
+                          Product size in cm (e.g., 10x10x5)
+                        </li>
+                        <li>
+                          • <span className="font-medium">featured</span> -
+                          TRUE/FALSE
+                        </li>
                         <li>• All promotional and SEO fields</li>
                       </ul>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">CSV Formatting Guidelines</h4>
+                  <h4 className="font-medium mb-2">
+                    CSV Formatting Guidelines
+                  </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Use double quotes for text containing commas or line breaks</li>
-                    <li>• Keep descriptions under 1000 characters for best results</li>
-                    <li>• Boolean fields: use "TRUE" or "FALSE" (case-insensitive)</li>
-                    <li>• Leave optional fields empty rather than using "N/A" or "-"</li>
-                    <li>• Save your file as CSV (UTF-8) to preserve special characters</li>
+                    <li>
+                      • Use double quotes for text containing commas or line
+                      breaks
+                    </li>
+                    <li>
+                      • Keep descriptions under 1000 characters for best results
+                    </li>
+                    <li>
+                      • Boolean fields: use "TRUE" or "FALSE" (case-insensitive)
+                    </li>
+                    <li>
+                      • Leave optional fields empty rather than using "N/A" or
+                      "-"
+                    </li>
+                    <li>
+                      • Save your file as CSV (UTF-8) to preserve special
+                      characters
+                    </li>
                     <li>• Maximum file size: 10MB</li>
                   </ul>
                 </div>
@@ -554,7 +618,9 @@ export default function ProductImportPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-red-600 font-medium">Required Fields</span>
+                  <span className="text-sm text-red-600 font-medium">
+                    Required Fields
+                  </span>
                   <Badge variant="destructive">6</Badge>
                 </div>
                 <div className="text-xs text-red-600 -mt-1">

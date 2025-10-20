@@ -14,7 +14,10 @@ import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { getShippingSettingsOrThrow } from '@/lib/shipping/shipping-settings';
 import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
-import { createEasyParcelService, EasyParcelError } from '@/lib/shipping/easyparcel-service';
+import {
+  createEasyParcelService,
+  EasyParcelError,
+} from '@/lib/shipping/easyparcel-service';
 import { calculateTotalWeight } from '@/lib/shipping/utils/weight-utils';
 import {
   COURIER_SELECTION_STRATEGIES,
@@ -61,15 +64,15 @@ export async function POST(request: NextRequest) {
     const pickupAddress = await getPickupAddressOrThrow();
 
     // Fetch product details to get weights
-    const productIds = items.map((item) => item.productId);
+    const productIds = items.map(item => item.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, weight: true },
     });
 
     // Map products to cart items with weights
-    const cartItemsWithWeight = items.map((item) => {
-      const product = products.find((p) => p.id === item.productId);
+    const cartItemsWithWeight = items.map(item => {
+      const product = products.find(p => p.id === item.productId);
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`);
       }
@@ -89,7 +92,10 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: SHIPPING_ERROR_CODES.WEIGHT_EXCEEDED,
-          message: error instanceof Error ? error.message : 'Weight calculation failed',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Weight calculation failed',
         },
         { status: 400 }
       );
@@ -100,7 +106,11 @@ export async function POST(request: NextRequest) {
     let rates;
 
     try {
-      rates = await easyParcel.getRates(pickupAddress, deliveryAddress, totalWeight);
+      rates = await easyParcel.getRates(
+        pickupAddress,
+        deliveryAddress,
+        totalWeight
+      );
     } catch (error) {
       console.error('[ShippingCalculate] Rate fetch error:', error);
 
@@ -135,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Convert EasyParcel rates to ShippingOptions
     // ✅ FIX: Use service_name (brand) instead of courier_name (legal entity)
     // This ensures consistency with EasyParcel's shipment creation response
-    let shippingOptions: ShippingOption[] = rates.map((rate) => ({
+    let shippingOptions: ShippingOption[] = rates.map(rate => ({
       serviceId: rate.service_id,
       courierName: rate.service_name, // ← Changed from courier_name to service_name
       serviceType: rate.service_type,
@@ -237,23 +247,32 @@ function applyCourierSelectionStrategy(
     case COURIER_SELECTION_STRATEGIES.SELECTED:
       // Return all selected couriers (in priority order) that are available
       if (!selectedCouriers || selectedCouriers.length === 0) {
-        console.warn('[ShippingCalculate] No couriers selected in "selected" mode, showing all');
+        console.warn(
+          '[ShippingCalculate] No couriers selected in "selected" mode, showing all'
+        );
         return options;
       }
 
       // Filter and maintain priority order (array order = priority)
       const filtered = selectedCouriers
-        .map((courierServiceId) => options.find((option) => option.serviceId === courierServiceId))
+        .map(courierServiceId =>
+          options.find(option => option.serviceId === courierServiceId)
+        )
         .filter((option): option is ShippingOption => option !== undefined);
 
       if (filtered.length === 0) {
-        console.warn('[ShippingCalculate] No selected couriers available, showing all');
+        console.warn(
+          '[ShippingCalculate] No selected couriers available, showing all'
+        );
         return options;
       }
 
       console.log('[ShippingCalculate] Selected couriers found:', {
         total: filtered.length,
-        couriers: filtered.map(c => ({ serviceId: c.serviceId, courierName: c.courierName })),
+        couriers: filtered.map(c => ({
+          serviceId: c.serviceId,
+          courierName: c.courierName,
+        })),
       });
 
       return filtered;
@@ -261,7 +280,9 @@ function applyCourierSelectionStrategy(
     case COURIER_SELECTION_STRATEGIES.PRIORITY:
       // Return highest priority courier that is available
       if (!priorityCouriers || !priorityCouriers.first) {
-        console.warn('[ShippingCalculate] No priority couriers configured, using cheapest');
+        console.warn(
+          '[ShippingCalculate] No priority couriers configured, using cheapest'
+        );
         return options.length > 0 ? [options[0]] : [];
       }
 
@@ -273,7 +294,9 @@ function applyCourierSelectionStrategy(
       ].filter(Boolean) as string[];
 
       for (const courierServiceId of priorities) {
-        const match = options.find((option) => option.serviceId === courierServiceId);
+        const match = options.find(
+          option => option.serviceId === courierServiceId
+        );
         if (match) {
           console.log('[ShippingCalculate] Priority courier found:', {
             serviceId: match.serviceId,
@@ -285,11 +308,15 @@ function applyCourierSelectionStrategy(
       }
 
       // None of the priority couriers are available - return empty array
-      console.warn('[ShippingCalculate] None of the priority couriers are available for this destination');
+      console.warn(
+        '[ShippingCalculate] None of the priority couriers are available for this destination'
+      );
       return [];
 
     default:
-      console.warn(`[ShippingCalculate] Unknown strategy: ${strategy}, using cheapest`);
+      console.warn(
+        `[ShippingCalculate] Unknown strategy: ${strategy}, using cheapest`
+      );
       return options.length > 0 ? [options[0]] : [];
   }
 }
@@ -302,17 +329,40 @@ const ShippingCalculateSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
     phone: z
       .string()
-      .regex(VALIDATION_PATTERNS.PHONE_MY, 'Phone must be in Malaysian format (+60XXXXXXXXX)'),
+      .regex(
+        VALIDATION_PATTERNS.PHONE_MY,
+        'Phone must be in Malaysian format (+60XXXXXXXXX)'
+      ),
     addressLine1: z.string().min(1, 'Address line 1 is required').max(200),
     addressLine2: z.string().max(200).optional(),
     city: z.string().min(1, 'City is required').max(100),
     state: z.enum(
-      ['jhr', 'kdh', 'ktn', 'mlk', 'nsn', 'phg', 'prk', 'pls', 'png', 'sgr', 'trg', 'kul', 'pjy', 'srw', 'sbh', 'lbn'],
+      [
+        'jhr',
+        'kdh',
+        'ktn',
+        'mlk',
+        'nsn',
+        'phg',
+        'prk',
+        'pls',
+        'png',
+        'sgr',
+        'trg',
+        'kul',
+        'pjy',
+        'srw',
+        'sbh',
+        'lbn',
+      ],
       { errorMap: () => ({ message: 'Invalid state code' }) }
     ),
     postalCode: z
       .string()
-      .regex(VALIDATION_PATTERNS.POSTAL_CODE_MY, 'Postal code must be a 5-digit number'),
+      .regex(
+        VALIDATION_PATTERNS.POSTAL_CODE_MY,
+        'Postal code must be a 5-digit number'
+      ),
     country: z.literal('MY', {
       errorMap: () => ({ message: 'Only Malaysia (MY) is supported' }),
     }),
@@ -322,7 +372,11 @@ const ShippingCalculateSchema = z.object({
     .array(
       z.object({
         productId: z.string().cuid('Invalid product ID'),
-        quantity: z.number().int().positive('Quantity must be positive').max(999),
+        quantity: z
+          .number()
+          .int()
+          .positive('Quantity must be positive')
+          .max(999),
       })
     )
     .min(1, 'At least one item is required'),

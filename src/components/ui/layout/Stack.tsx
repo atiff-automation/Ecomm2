@@ -15,9 +15,18 @@ export interface StackProps {
   justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
   wrap?: boolean;
   responsive?: {
-    sm?: { direction?: 'vertical' | 'horizontal'; spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' };
-    md?: { direction?: 'vertical' | 'horizontal'; spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' };
-    lg?: { direction?: 'vertical' | 'horizontal'; spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' };
+    sm?: {
+      direction?: 'vertical' | 'horizontal';
+      spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    };
+    md?: {
+      direction?: 'vertical' | 'horizontal';
+      spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    };
+    lg?: {
+      direction?: 'vertical' | 'horizontal';
+      spacing?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    };
   };
   children: React.ReactNode;
   className?: string;
@@ -26,31 +35,31 @@ export interface StackProps {
 
 const directionVariants = {
   vertical: 'flex-col',
-  horizontal: 'flex-row'
+  horizontal: 'flex-row',
 };
 
 const spacingVariants = {
   vertical: {
-    xs: 'space-y-2',    // 8px
-    sm: 'space-y-3',    // 12px
-    md: 'space-y-4',    // 16px
-    lg: 'space-y-6',    // 24px
-    xl: 'space-y-8'     // 32px
+    xs: 'space-y-2', // 8px
+    sm: 'space-y-3', // 12px
+    md: 'space-y-4', // 16px
+    lg: 'space-y-6', // 24px
+    xl: 'space-y-8', // 32px
   },
   horizontal: {
-    xs: 'space-x-2',    // 8px
-    sm: 'space-x-3',    // 12px
-    md: 'space-x-4',    // 16px
-    lg: 'space-x-6',    // 24px
-    xl: 'space-x-8'     // 32px
-  }
+    xs: 'space-x-2', // 8px
+    sm: 'space-x-3', // 12px
+    md: 'space-x-4', // 16px
+    lg: 'space-x-6', // 24px
+    xl: 'space-x-8', // 32px
+  },
 };
 
 const alignVariants = {
   start: 'items-start',
   center: 'items-center',
   end: 'items-end',
-  stretch: 'items-stretch'
+  stretch: 'items-stretch',
 };
 
 const justifyVariants = {
@@ -59,7 +68,7 @@ const justifyVariants = {
   end: 'justify-end',
   between: 'justify-between',
   around: 'justify-around',
-  evenly: 'justify-evenly'
+  evenly: 'justify-evenly',
 };
 
 export function Stack({
@@ -79,12 +88,15 @@ export function Stack({
     ? Object.entries(responsive).flatMap(([breakpoint, config]) => {
         const classes = [];
         if (config.direction) {
-          const prefix = breakpoint === 'sm' ? 'sm:' : breakpoint === 'md' ? 'md:' : 'lg:';
+          const prefix =
+            breakpoint === 'sm' ? 'sm:' : breakpoint === 'md' ? 'md:' : 'lg:';
           classes.push(`${prefix}${directionVariants[config.direction]}`);
 
           // Add responsive spacing
           if (config.spacing) {
-            classes.push(`${prefix}${spacingVariants[config.direction][config.spacing]}`);
+            classes.push(
+              `${prefix}${spacingVariants[config.direction][config.spacing]}`
+            );
           }
         }
         return classes;
@@ -126,24 +138,36 @@ export function Stack({
 }
 
 // Predefined stack components for common patterns
-export const VStack = ({ children, className, ...props }: Omit<StackProps, 'direction'>) => (
+export const VStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction'>) => (
   <Stack direction="vertical" className={className} {...props}>
     {children}
   </Stack>
 );
 
-export const HStack = ({ children, className, ...props }: Omit<StackProps, 'direction'>) => (
+export const HStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction'>) => (
   <Stack direction="horizontal" className={className} {...props}>
     {children}
   </Stack>
 );
 
 // Responsive stack that changes direction based on screen size
-export const ResponsiveStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'responsive'>) => (
+export const ResponsiveStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'responsive'>) => (
   <Stack
     direction="vertical"
     responsive={{
-      md: { direction: 'horizontal' }
+      md: { direction: 'horizontal' },
     }}
     className={className}
     {...props}
@@ -153,31 +177,33 @@ export const ResponsiveStack = ({ children, className, ...props }: Omit<StackPro
 );
 
 // Card stack for organizing related content
-export const CardStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'spacing'>) => (
-  <Stack
-    direction="vertical"
-    spacing="lg"
-    className={className}
-    {...props}
-  >
+export const CardStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'spacing'>) => (
+  <Stack direction="vertical" spacing="lg" className={className} {...props}>
     {children}
   </Stack>
 );
 
 // Form stack for form elements
-export const FormStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'spacing'>) => (
-  <Stack
-    direction="vertical"
-    spacing="md"
-    className={className}
-    {...props}
-  >
+export const FormStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'spacing'>) => (
+  <Stack direction="vertical" spacing="md" className={className} {...props}>
     {children}
   </Stack>
 );
 
 // Button stack for action groups
-export const ButtonStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'align'>) => (
+export const ButtonStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'align'>) => (
   <Stack
     direction="horizontal"
     align="center"
@@ -190,37 +216,34 @@ export const ButtonStack = ({ children, className, ...props }: Omit<StackProps, 
 );
 
 // Navigation stack for menu items
-export const NavStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'align'>) => (
-  <Stack
-    direction="horizontal"
-    align="center"
-    className={className}
-    {...props}
-  >
+export const NavStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'align'>) => (
+  <Stack direction="horizontal" align="center" className={className} {...props}>
     {children}
   </Stack>
 );
 
 // Content stack for text content
-export const ContentStack = ({ children, className, ...props }: Omit<StackProps, 'direction' | 'spacing'>) => (
-  <Stack
-    direction="vertical"
-    spacing="sm"
-    className={className}
-    {...props}
-  >
+export const ContentStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'direction' | 'spacing'>) => (
+  <Stack direction="vertical" spacing="sm" className={className} {...props}>
     {children}
   </Stack>
 );
 
 // Feature stack for highlighting features
-export const FeatureStack = ({ children, className, ...props }: Omit<StackProps, 'spacing' | 'align'>) => (
-  <Stack
-    spacing="xl"
-    align="center"
-    className={className}
-    {...props}
-  >
+export const FeatureStack = ({
+  children,
+  className,
+  ...props
+}: Omit<StackProps, 'spacing' | 'align'>) => (
+  <Stack spacing="xl" align="center" className={className} {...props}>
     {children}
   </Stack>
 );
@@ -237,7 +260,7 @@ export interface StackItemProps {
 const flexVariants = {
   none: 'flex-none',
   auto: 'flex-auto',
-  '1': 'flex-1'
+  '1': 'flex-1',
 };
 
 const selfAlignVariants = {
@@ -245,7 +268,7 @@ const selfAlignVariants = {
   start: 'self-start',
   center: 'self-center',
   end: 'self-end',
-  stretch: 'self-stretch'
+  stretch: 'self-stretch',
 };
 
 export function StackItem({
@@ -284,34 +307,31 @@ export interface SpacerProps {
 
 const spacerSizes = {
   vertical: {
-    xs: 'h-2',     // 8px
-    sm: 'h-3',     // 12px
-    md: 'h-4',     // 16px
-    lg: 'h-6',     // 24px
-    xl: 'h-8',     // 32px
-    auto: 'flex-1'
+    xs: 'h-2', // 8px
+    sm: 'h-3', // 12px
+    md: 'h-4', // 16px
+    lg: 'h-6', // 24px
+    xl: 'h-8', // 32px
+    auto: 'flex-1',
   },
   horizontal: {
-    xs: 'w-2',     // 8px
-    sm: 'w-3',     // 12px
-    md: 'w-4',     // 16px
-    lg: 'w-6',     // 24px
-    xl: 'w-8',     // 32px
-    auto: 'flex-1'
-  }
+    xs: 'w-2', // 8px
+    sm: 'w-3', // 12px
+    md: 'w-4', // 16px
+    lg: 'w-6', // 24px
+    xl: 'w-8', // 32px
+    auto: 'flex-1',
+  },
 };
 
 export function Spacer({
   size = 'md',
   direction = 'vertical',
-  className
+  className,
 }: SpacerProps) {
   return (
     <div
-      className={cn(
-        spacerSizes[direction][size],
-        className
-      )}
+      className={cn(spacerSizes[direction][size], className)}
       aria-hidden="true"
     />
   );

@@ -46,13 +46,10 @@ export const LazyCustomerManagement = dynamic(
   }
 );
 
-export const LazyAnalytics = dynamic(
-  () => import('@/app/admin/reports/page'),
-  {
-    loading: () => <LoadingSpinner />,
-    ssr: false,
-  }
-);
+export const LazyAnalytics = dynamic(() => import('@/app/admin/reports/page'), {
+  loading: () => <LoadingSpinner />,
+  ssr: false,
+});
 
 // Shopping cart - Load on demand when user interacts
 export const LazyShoppingCart = dynamic(
@@ -119,17 +116,14 @@ export const LazyWishlist = dynamic(
 );
 
 // Chart components - Heavy data visualization libraries
-export const LazyChart = dynamic(
-  () => import('@/components/ui/chart'),
-  {
-    loading: () => (
-      <div className="h-64 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-        <div className="text-gray-400">Loading chart...</div>
-      </div>
-    ),
-    ssr: false,
-  }
-);
+export const LazyChart = dynamic(() => import('@/components/ui/chart'), {
+  loading: () => (
+    <div className="h-64 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
+      <div className="text-gray-400">Loading chart...</div>
+    </div>
+  ),
+  ssr: false,
+});
 
 export const LazyDataTable = dynamic(
   () => import('@/components/ui/data-table'),
@@ -202,34 +196,28 @@ export const LazyPDFViewer = dynamic(
 );
 
 // Calendar component - Load for date pickers and scheduling
-export const LazyCalendar = dynamic(
-  () => import('@/components/ui/calendar'),
-  {
-    loading: () => (
-      <div className="w-80 h-80 border rounded-lg p-4 animate-pulse">
-        <div className="grid grid-cols-7 gap-2">
-          {[...Array(35)].map((_, i) => (
-            <div key={i} className="h-8 bg-gray-100 rounded"></div>
-          ))}
-        </div>
+export const LazyCalendar = dynamic(() => import('@/components/ui/calendar'), {
+  loading: () => (
+    <div className="w-80 h-80 border rounded-lg p-4 animate-pulse">
+      <div className="grid grid-cols-7 gap-2">
+        {[...Array(35)].map((_, i) => (
+          <div key={i} className="h-8 bg-gray-100 rounded"></div>
+        ))}
       </div>
-    ),
-    ssr: false,
-  }
-);
+    </div>
+  ),
+  ssr: false,
+});
 
 // Map component - Heavy mapping libraries
-export const LazyMap = dynamic(
-  () => import('@/components/ui/map'),
-  {
-    loading: () => (
-      <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-        <div className="text-gray-500">Loading map...</div>
-      </div>
-    ),
-    ssr: false,
-  }
-);
+export const LazyMap = dynamic(() => import('@/components/ui/map'), {
+  loading: () => (
+    <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+      <div className="text-gray-500">Loading map...</div>
+    </div>
+  ),
+  ssr: false,
+});
 
 // Notification center - Load when user accesses notifications
 export const LazyNotificationCenter = dynamic(

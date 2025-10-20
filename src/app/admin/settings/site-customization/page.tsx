@@ -10,7 +10,13 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { DragDropZone, FileType } from '@/components/ui/drag-drop-zone';
 import { cn } from '@/lib/utils';
@@ -27,7 +33,7 @@ import {
   RotateCcw,
   Palette,
   Settings,
-  FileText
+  FileText,
 } from 'lucide-react';
 import Image from 'next/image';
 import { HeroSliderSection } from '@/components/admin/HeroSliderSection';
@@ -109,13 +115,16 @@ interface ValidationError {
 export default function SiteCustomizationSettings() {
   // ==================== STATE MANAGEMENT ====================
   const [config, setConfig] = useState<SiteCustomizationConfig | null>(null);
-  const [originalConfig, setOriginalConfig] = useState<SiteCustomizationConfig | null>(null);
+  const [originalConfig, setOriginalConfig] =
+    useState<SiteCustomizationConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    []
+  );
 
   // ==================== LIFECYCLE ====================
 
@@ -126,7 +135,8 @@ export default function SiteCustomizationSettings() {
   useEffect(() => {
     // Check if configuration has changed
     if (config && originalConfig) {
-      const hasChanged = JSON.stringify(config) !== JSON.stringify(originalConfig);
+      const hasChanged =
+        JSON.stringify(config) !== JSON.stringify(originalConfig);
       setIsDirty(hasChanged);
     }
   }, [config, originalConfig]);
@@ -148,13 +158,13 @@ export default function SiteCustomizationSettings() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/admin/site-customization');
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setConfig(data.config);
         setOriginalConfig(JSON.parse(JSON.stringify(data.config))); // Deep copy
@@ -162,17 +172,20 @@ export default function SiteCustomizationSettings() {
       } else {
         throw new Error(data.error || 'Failed to load configuration');
       }
-
     } catch (error) {
       console.error('Error fetching configuration:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to load configuration');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to load configuration'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const saveConfiguration = async (showMessage = true) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -201,11 +214,14 @@ export default function SiteCustomizationSettings() {
         }
         throw new Error(data.error || 'Failed to save configuration');
       }
-
     } catch (error) {
       console.error('Error saving configuration:', error);
       if (showMessage) {
-        toast.error(error instanceof Error ? error.message : 'Failed to save configuration');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to save configuration'
+        );
       }
     } finally {
       setIsSaving(false);
@@ -220,15 +236,22 @@ export default function SiteCustomizationSettings() {
   }, [config, isDirty]);
 
   const resetConfiguration = async () => {
-    if (!confirm('Are you sure you want to reset to default configuration? All changes will be lost.')) {
+    if (
+      !confirm(
+        'Are you sure you want to reset to default configuration? All changes will be lost.'
+      )
+    ) {
       return;
     }
 
     try {
       setIsSaving(true);
-      const response = await fetch('/api/admin/site-customization?action=reset', {
-        method: 'POST',
-      });
+      const response = await fetch(
+        '/api/admin/site-customization?action=reset',
+        {
+          method: 'POST',
+        }
+      );
 
       const data = await response.json();
 
@@ -240,10 +263,11 @@ export default function SiteCustomizationSettings() {
       } else {
         throw new Error(data.error || 'Failed to reset configuration');
       }
-
     } catch (error) {
       console.error('Error resetting configuration:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to reset configuration');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to reset configuration'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -255,7 +279,9 @@ export default function SiteCustomizationSettings() {
     type: 'hero_background' | 'logo' | 'favicon',
     section: 'hero' | 'branding'
   ) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     try {
       // Get current file URL to extract filename
@@ -297,7 +323,6 @@ export default function SiteCustomizationSettings() {
       }
 
       toast.success('File removed successfully');
-
     } catch (error) {
       console.error('Error removing file:', error);
       toast.error('Failed to remove file from volume');
@@ -312,7 +337,9 @@ export default function SiteCustomizationSettings() {
     section: 'hero' | 'branding'
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !config) return;
+    if (!file || !config) {
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -347,7 +374,7 @@ export default function SiteCustomizationSettings() {
       formData.append('file', file);
       formData.append('type', type);
       formData.append('section', section);
-      
+
       if (type === 'logo' && config.branding.logo) {
         formData.append('width', config.branding.logo.width.toString());
         formData.append('height', config.branding.logo.height.toString());
@@ -358,10 +385,13 @@ export default function SiteCustomizationSettings() {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
-      const response = await fetch('/api/admin/site-customization?action=upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        '/api/admin/site-customization?action=upload',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -374,7 +404,6 @@ export default function SiteCustomizationSettings() {
       } else {
         throw new Error(data.error || 'Upload failed');
       }
-
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error(error instanceof Error ? error.message : 'Upload failed');
@@ -388,7 +417,9 @@ export default function SiteCustomizationSettings() {
   // ==================== CONFIGURATION UPDATES ====================
 
   const updateConfig = (path: string, value: any) => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     const updatedConfig = { ...config };
     const keys = path.split('.');
@@ -407,22 +438,27 @@ export default function SiteCustomizationSettings() {
 
   // ==================== SLIDER HANDLER ====================
 
-  const handleSliderChange = useCallback((updates: Partial<SliderConfig>) => {
-    if (!config) return;
-
-    const updatedConfig = {
-      ...config,
-      hero: {
-        ...config.hero,
-        slider: {
-          ...config.hero.slider,
-          ...updates
-        }
+  const handleSliderChange = useCallback(
+    (updates: Partial<SliderConfig>) => {
+      if (!config) {
+        return;
       }
-    };
 
-    setConfig(updatedConfig);
-  }, [config]);
+      const updatedConfig = {
+        ...config,
+        hero: {
+          ...config.hero,
+          slider: {
+            ...config.hero.slider,
+            ...updates,
+          },
+        },
+      };
+
+      setConfig(updatedConfig);
+    },
+    [config]
+  );
 
   // ==================== RENDER HELPERS ====================
 
@@ -443,42 +479,58 @@ export default function SiteCustomizationSettings() {
               <Switch
                 id="show-title"
                 checked={config?.hero.layout.showTitle || false}
-                onCheckedChange={(checked) => updateConfig('hero.layout.showTitle', checked)}
+                onCheckedChange={checked =>
+                  updateConfig('hero.layout.showTitle', checked)
+                }
               />
-              <Label htmlFor="show-title" className="text-xs">Show Title Section</Label>
+              <Label htmlFor="show-title" className="text-xs">
+                Show Title Section
+              </Label>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="hero-title" className={cn("text-xs", !config?.hero.layout.showTitle && "text-gray-400")}>
+              <Label
+                htmlFor="hero-title"
+                className={cn(
+                  'text-xs',
+                  !config?.hero.layout.showTitle && 'text-gray-400'
+                )}
+              >
                 Title
               </Label>
               <Input
                 id="hero-title"
                 value={config?.hero.title || ''}
-                onChange={(e) => updateConfig('hero.title', e.target.value)}
+                onChange={e => updateConfig('hero.title', e.target.value)}
                 placeholder="Enter hero title"
                 maxLength={100}
                 disabled={!config?.hero.layout.showTitle}
-                className={cn(!config?.hero.layout.showTitle && "opacity-60")}
+                className={cn(!config?.hero.layout.showTitle && 'opacity-60')}
               />
               <p className="text-xs text-gray-400 mt-0.5">
                 {config?.hero.title?.length || 0}/100
               </p>
             </div>
             <div>
-              <Label htmlFor="hero-subtitle" className={cn("text-xs", !config?.hero.layout.showTitle && "text-gray-400")}>
+              <Label
+                htmlFor="hero-subtitle"
+                className={cn(
+                  'text-xs',
+                  !config?.hero.layout.showTitle && 'text-gray-400'
+                )}
+              >
                 Subtitle
               </Label>
               <Input
                 id="hero-subtitle"
                 value={config?.hero.subtitle || ''}
-                onChange={(e) => updateConfig('hero.subtitle', e.target.value)}
+                onChange={e => updateConfig('hero.subtitle', e.target.value)}
                 placeholder="Enter hero subtitle"
                 maxLength={150}
                 disabled={!config?.hero.layout.showTitle}
-                className={cn(!config?.hero.layout.showTitle && "opacity-60")}
+                className={cn(!config?.hero.layout.showTitle && 'opacity-60')}
               />
               <p className="text-xs text-gray-400 mt-0.5">
                 {config?.hero.subtitle?.length || 0}/150
@@ -487,18 +539,24 @@ export default function SiteCustomizationSettings() {
           </div>
 
           <div>
-            <Label htmlFor="hero-description" className={cn("text-xs", !config?.hero.layout.showTitle && "text-gray-400")}>
+            <Label
+              htmlFor="hero-description"
+              className={cn(
+                'text-xs',
+                !config?.hero.layout.showTitle && 'text-gray-400'
+              )}
+            >
               Description
             </Label>
             <Textarea
               id="hero-description"
               value={config?.hero.description || ''}
-              onChange={(e) => updateConfig('hero.description', e.target.value)}
+              onChange={e => updateConfig('hero.description', e.target.value)}
               placeholder="Enter hero description"
               rows={3}
               maxLength={500}
               disabled={!config?.hero.layout.showTitle}
-              className={cn(!config?.hero.layout.showTitle && "opacity-60")}
+              className={cn(!config?.hero.layout.showTitle && 'opacity-60')}
             />
             <p className="text-xs text-gray-400 mt-0.5">
               {config?.hero.description?.length || 0}/500
@@ -516,26 +574,48 @@ export default function SiteCustomizationSettings() {
               <Switch
                 id="show-cta"
                 checked={config?.hero.layout.showCTA || false}
-                onCheckedChange={(checked) => updateConfig('hero.layout.showCTA', checked)}
+                onCheckedChange={checked =>
+                  updateConfig('hero.layout.showCTA', checked)
+                }
               />
-              <Label htmlFor="show-cta" className="text-xs">Show CTA Buttons</Label>
+              <Label htmlFor="show-cta" className="text-xs">
+                Show CTA Buttons
+              </Label>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className={cn("border rounded-lg p-3 bg-gray-50", !config?.hero.layout.showCTA && "opacity-60")}>
+            <div
+              className={cn(
+                'border rounded-lg p-3 bg-gray-50',
+                !config?.hero.layout.showCTA && 'opacity-60'
+              )}
+            >
               <div className="space-y-2">
-                <h5 className={cn("text-xs font-medium text-gray-700", !config?.hero.layout.showCTA && "text-gray-400")}>
+                <h5
+                  className={cn(
+                    'text-xs font-medium text-gray-700',
+                    !config?.hero.layout.showCTA && 'text-gray-400'
+                  )}
+                >
                   Primary CTA
                 </h5>
                 <div>
-                  <Label htmlFor="cta-primary-text" className={cn("text-xs", !config?.hero.layout.showCTA && "text-gray-400")}>
+                  <Label
+                    htmlFor="cta-primary-text"
+                    className={cn(
+                      'text-xs',
+                      !config?.hero.layout.showCTA && 'text-gray-400'
+                    )}
+                  >
                     Button Text
                   </Label>
                   <Input
                     id="cta-primary-text"
                     value={config?.hero.ctaPrimary.text || ''}
-                    onChange={(e) => updateConfig('hero.ctaPrimary.text', e.target.value)}
+                    onChange={e =>
+                      updateConfig('hero.ctaPrimary.text', e.target.value)
+                    }
                     placeholder="e.g., Join as Member"
                     maxLength={30}
                     className="h-8 text-xs"
@@ -543,13 +623,21 @@ export default function SiteCustomizationSettings() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cta-primary-link" className={cn("text-xs", !config?.hero.layout.showCTA && "text-gray-400")}>
+                  <Label
+                    htmlFor="cta-primary-link"
+                    className={cn(
+                      'text-xs',
+                      !config?.hero.layout.showCTA && 'text-gray-400'
+                    )}
+                  >
                     Button Link
                   </Label>
                   <Input
                     id="cta-primary-link"
                     value={config?.hero.ctaPrimary.link || ''}
-                    onChange={(e) => updateConfig('hero.ctaPrimary.link', e.target.value)}
+                    onChange={e =>
+                      updateConfig('hero.ctaPrimary.link', e.target.value)
+                    }
                     placeholder="e.g., /auth/signup"
                     className="h-8 text-xs"
                     disabled={!config?.hero.layout.showCTA}
@@ -558,19 +646,37 @@ export default function SiteCustomizationSettings() {
               </div>
             </div>
 
-            <div className={cn("border rounded-lg p-3 bg-gray-50", !config?.hero.layout.showCTA && "opacity-60")}>
+            <div
+              className={cn(
+                'border rounded-lg p-3 bg-gray-50',
+                !config?.hero.layout.showCTA && 'opacity-60'
+              )}
+            >
               <div className="space-y-2">
-                <h5 className={cn("text-xs font-medium text-gray-700", !config?.hero.layout.showCTA && "text-gray-400")}>
+                <h5
+                  className={cn(
+                    'text-xs font-medium text-gray-700',
+                    !config?.hero.layout.showCTA && 'text-gray-400'
+                  )}
+                >
                   Secondary CTA
                 </h5>
                 <div>
-                  <Label htmlFor="cta-secondary-text" className={cn("text-xs", !config?.hero.layout.showCTA && "text-gray-400")}>
+                  <Label
+                    htmlFor="cta-secondary-text"
+                    className={cn(
+                      'text-xs',
+                      !config?.hero.layout.showCTA && 'text-gray-400'
+                    )}
+                  >
                     Button Text
                   </Label>
                   <Input
                     id="cta-secondary-text"
                     value={config?.hero.ctaSecondary.text || ''}
-                    onChange={(e) => updateConfig('hero.ctaSecondary.text', e.target.value)}
+                    onChange={e =>
+                      updateConfig('hero.ctaSecondary.text', e.target.value)
+                    }
                     placeholder="e.g., Browse Products"
                     maxLength={30}
                     className="h-8 text-xs"
@@ -578,13 +684,21 @@ export default function SiteCustomizationSettings() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cta-secondary-link" className={cn("text-xs", !config?.hero.layout.showCTA && "text-gray-400")}>
+                  <Label
+                    htmlFor="cta-secondary-link"
+                    className={cn(
+                      'text-xs',
+                      !config?.hero.layout.showCTA && 'text-gray-400'
+                    )}
+                  >
                     Button Link
                   </Label>
                   <Input
                     id="cta-secondary-link"
                     value={config?.hero.ctaSecondary.link || ''}
-                    onChange={(e) => updateConfig('hero.ctaSecondary.link', e.target.value)}
+                    onChange={e =>
+                      updateConfig('hero.ctaSecondary.link', e.target.value)
+                    }
                     placeholder="e.g., /products"
                     className="h-8 text-xs"
                     disabled={!config?.hero.layout.showCTA}
@@ -602,10 +716,14 @@ export default function SiteCustomizationSettings() {
           <h4 className="font-medium text-sm">Background Media</h4>
           <DragDropZone
             type="hero_background"
-            currentFile={config?.hero.background.url ? {
-              url: config.hero.background.url
-            } : null}
-            onUpload={(e) => handleFileUpload(e, 'hero_background', 'hero')}
+            currentFile={
+              config?.hero.background.url
+                ? {
+                    url: config.hero.background.url,
+                  }
+                : null
+            }
+            onUpload={e => handleFileUpload(e, 'hero_background', 'hero')}
             onRemove={() => handleFileRemove('hero_background', 'hero')}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
@@ -613,7 +731,9 @@ export default function SiteCustomizationSettings() {
           />
 
           <div>
-            <Label htmlFor="overlay-opacity" className="text-xs">Overlay Opacity: {config?.hero.background.overlayOpacity || 0}</Label>
+            <Label htmlFor="overlay-opacity" className="text-xs">
+              Overlay Opacity: {config?.hero.background.overlayOpacity || 0}
+            </Label>
             <input
               id="overlay-opacity"
               type="range"
@@ -621,7 +741,12 @@ export default function SiteCustomizationSettings() {
               max="1"
               step="0.1"
               value={config?.hero.background.overlayOpacity || 0}
-              onChange={(e) => updateConfig('hero.background.overlayOpacity', parseFloat(e.target.value))}
+              onChange={e =>
+                updateConfig(
+                  'hero.background.overlayOpacity',
+                  parseFloat(e.target.value)
+                )
+              }
               className="w-full mt-1"
             />
           </div>
@@ -634,10 +759,14 @@ export default function SiteCustomizationSettings() {
           <h4 className="font-medium text-sm">Layout Settings</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="text-alignment" className="text-xs">Text Alignment</Label>
+              <Label htmlFor="text-alignment" className="text-xs">
+                Text Alignment
+              </Label>
               <Select
                 value={config?.hero.layout.textAlignment || 'left'}
-                onValueChange={(value) => updateConfig('hero.layout.textAlignment', value)}
+                onValueChange={value =>
+                  updateConfig('hero.layout.textAlignment', value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -671,12 +800,16 @@ export default function SiteCustomizationSettings() {
             <h4 className="font-medium text-sm">Business Logo</h4>
             <DragDropZone
               type="logo"
-              currentFile={config?.branding.logo ? {
-                url: config.branding.logo.url,
-                width: config.branding.logo.width,
-                height: config.branding.logo.height
-              } : null}
-              onUpload={(e) => handleFileUpload(e, 'logo', 'branding')}
+              currentFile={
+                config?.branding.logo
+                  ? {
+                      url: config.branding.logo.url,
+                      width: config.branding.logo.width,
+                      height: config.branding.logo.height,
+                    }
+                  : null
+              }
+              onUpload={e => handleFileUpload(e, 'logo', 'branding')}
               onRemove={() => handleFileRemove('logo', 'branding')}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
@@ -686,24 +819,38 @@ export default function SiteCustomizationSettings() {
             {/* Logo dimensions */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="logo-width" className="text-xs">Width</Label>
+                <Label htmlFor="logo-width" className="text-xs">
+                  Width
+                </Label>
                 <Input
                   id="logo-width"
                   type="number"
                   value={config?.branding.logo?.width || 120}
-                  onChange={(e) => updateConfig('branding.logo.width', parseInt(e.target.value) || 120)}
+                  onChange={e =>
+                    updateConfig(
+                      'branding.logo.width',
+                      parseInt(e.target.value) || 120
+                    )
+                  }
                   min="20"
                   max="400"
                   className="h-8 text-xs"
                 />
               </div>
               <div>
-                <Label htmlFor="logo-height" className="text-xs">Height</Label>
+                <Label htmlFor="logo-height" className="text-xs">
+                  Height
+                </Label>
                 <Input
                   id="logo-height"
                   type="number"
                   value={config?.branding.logo?.height || 40}
-                  onChange={(e) => updateConfig('branding.logo.height', parseInt(e.target.value) || 40)}
+                  onChange={e =>
+                    updateConfig(
+                      'branding.logo.height',
+                      parseInt(e.target.value) || 40
+                    )
+                  }
                   min="20"
                   max="200"
                   className="h-8 text-xs"
@@ -717,10 +864,14 @@ export default function SiteCustomizationSettings() {
             <h4 className="font-medium text-sm">Favicon</h4>
             <DragDropZone
               type="favicon"
-              currentFile={config?.branding.favicon ? {
-                url: config.branding.favicon.url
-              } : null}
-              onUpload={(e) => handleFileUpload(e, 'favicon', 'branding')}
+              currentFile={
+                config?.branding.favicon
+                  ? {
+                      url: config.branding.favicon.url,
+                    }
+                  : null
+              }
+              onUpload={e => handleFileUpload(e, 'favicon', 'branding')}
               onRemove={() => handleFileRemove('favicon', 'branding')}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
@@ -742,21 +893,35 @@ export default function SiteCustomizationSettings() {
               { key: 'primary', label: 'Primary', default: '#3B82F6' },
               { key: 'secondary', label: 'Secondary', default: '#FDE047' },
               { key: 'background', label: 'Background', default: '#F8FAFC' },
-              { key: 'text', label: 'Text', default: '#1E293B' }
+              { key: 'text', label: 'Text', default: '#1E293B' },
             ].map(({ key, label, default: defaultColor }) => (
               <div key={key} className="space-y-1">
-                <Label htmlFor={`color-${key}`} className="text-xs">{label}</Label>
+                <Label htmlFor={`color-${key}`} className="text-xs">
+                  {label}
+                </Label>
                 <div className="flex items-center gap-2">
                   <input
                     id={`color-${key}`}
                     type="color"
-                    value={config?.branding.colors?.[key as keyof typeof config.branding.colors] || defaultColor}
-                    onChange={(e) => updateConfig(`branding.colors.${key}`, e.target.value)}
+                    value={
+                      config?.branding.colors?.[
+                        key as keyof typeof config.branding.colors
+                      ] || defaultColor
+                    }
+                    onChange={e =>
+                      updateConfig(`branding.colors.${key}`, e.target.value)
+                    }
                     className="w-8 h-8 border border-gray-200 rounded cursor-pointer"
                   />
                   <Input
-                    value={config?.branding.colors?.[key as keyof typeof config.branding.colors] || defaultColor}
-                    onChange={(e) => updateConfig(`branding.colors.${key}`, e.target.value)}
+                    value={
+                      config?.branding.colors?.[
+                        key as keyof typeof config.branding.colors
+                      ] || defaultColor
+                    }
+                    onChange={e =>
+                      updateConfig(`branding.colors.${key}`, e.target.value)
+                    }
                     className="font-mono text-xs h-8"
                     placeholder={defaultColor}
                   />
@@ -785,7 +950,10 @@ export default function SiteCustomizationSettings() {
   const renderSaveStatus = () => {
     if (isSaving) {
       return (
-        <Badge variant="default" className="mr-2 bg-blue-100 text-blue-700 border-blue-200">
+        <Badge
+          variant="default"
+          className="mr-2 bg-blue-100 text-blue-700 border-blue-200"
+        >
           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           Saving...
         </Badge>
@@ -793,14 +961,20 @@ export default function SiteCustomizationSettings() {
     }
     if (isDirty) {
       return (
-        <Badge variant="secondary" className="mr-2 bg-orange-100 text-orange-700 border-orange-200">
+        <Badge
+          variant="secondary"
+          className="mr-2 bg-orange-100 text-orange-700 border-orange-200"
+        >
           <FileText className="w-3 h-3 mr-1" />
           Unsaved Changes
         </Badge>
       );
     }
     return (
-      <Badge variant="secondary" className="mr-2 bg-green-100 text-green-700 border-green-200">
+      <Badge
+        variant="secondary"
+        className="mr-2 bg-green-100 text-green-700 border-green-200"
+      >
         <Save className="w-3 h-3 mr-1" />
         All Changes Saved
       </Badge>
@@ -811,9 +985,7 @@ export default function SiteCustomizationSettings() {
     <div className="space-y-6">
       {/* Actions Bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {renderSaveStatus()}
-        </div>
+        <div className="flex items-center gap-2">{renderSaveStatus()}</div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -853,7 +1025,9 @@ export default function SiteCustomizationSettings() {
           <div className="flex items-start gap-2">
             <div className="text-red-600">⚠️</div>
             <div className="text-red-800">
-              <div className="font-medium mb-2">Configuration validation failed:</div>
+              <div className="font-medium mb-2">
+                Configuration validation failed:
+              </div>
               <ul className="list-disc list-inside space-y-1">
                 {validationErrors.map((error, index) => (
                   <li key={index} className="text-sm">
@@ -900,7 +1074,9 @@ export default function SiteCustomizationSettings() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
           <div>
-            <h4 className="font-medium text-gray-700 mb-1 text-xs">Hero Section:</h4>
+            <h4 className="font-medium text-gray-700 mb-1 text-xs">
+              Hero Section:
+            </h4>
             <ul className="list-disc list-inside space-y-0.5 leading-relaxed">
               <li>Keep titles under 100 characters</li>
               <li>Use high-quality images (min 1920×1080px)</li>
@@ -909,7 +1085,9 @@ export default function SiteCustomizationSettings() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-gray-700 mb-1 text-xs">Branding:</h4>
+            <h4 className="font-medium text-gray-700 mb-1 text-xs">
+              Branding:
+            </h4>
             <ul className="list-disc list-inside space-y-0.5 leading-relaxed">
               <li>Logo: PNG/SVG recommended (120×40px)</li>
               <li>Favicon: 32×32px PNG/ICO works best</li>

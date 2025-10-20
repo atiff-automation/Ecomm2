@@ -15,13 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Printer,
-  Truck,
-  Package,
-  MoreVertical,
-  Loader2,
-} from 'lucide-react';
+import { Printer, Truck, Package, MoreVertical, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStatus } from '@prisma/client';
 import { ORDER_STATUSES } from '@/lib/constants/order';

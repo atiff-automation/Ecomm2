@@ -28,7 +28,7 @@ export function getNextBusinessDay(fromDate: Date = new Date()): Date {
   nextDay.setDate(nextDay.getDate() + 1);
   nextDay.setHours(0, 0, 0, 0);
 
-  let currentDate = new Date(nextDay);
+  const currentDate = new Date(nextDay);
   const maxAttempts = 14; // Prevent infinite loop (check up to 2 weeks ahead)
   let attempts = 0;
 
@@ -44,7 +44,9 @@ export function getNextBusinessDay(fromDate: Date = new Date()): Date {
   }
 
   // Fallback: return tomorrow if no business day found (shouldn't happen)
-  console.error('[DateUtils] Could not find business day within 14 days, using fallback');
+  console.error(
+    '[DateUtils] Could not find business day within 14 days, using fallback'
+  );
   return nextDay;
 }
 
@@ -99,7 +101,9 @@ export function validatePickupDate(pickupDate: Date): {
   error?: string;
 } {
   const now = new Date();
-  const minDate = new Date(now.getTime() + PICKUP_CONFIG.MIN_ADVANCE_HOURS * 60 * 60 * 1000);
+  const minDate = new Date(
+    now.getTime() + PICKUP_CONFIG.MIN_ADVANCE_HOURS * 60 * 60 * 1000
+  );
   const maxDate = new Date(now);
   maxDate.setDate(maxDate.getDate() + PICKUP_CONFIG.MAX_ADVANCE_DAYS);
 
@@ -123,7 +127,8 @@ export function validatePickupDate(pickupDate: Date): {
   if (!isBusinessDay(pickupDate)) {
     return {
       isValid: false,
-      error: 'Pickup date must be a business day (not Sunday or public holiday)',
+      error:
+        'Pickup date must be a business day (not Sunday or public holiday)',
     };
   }
 
@@ -173,7 +178,9 @@ export function getPickupDateRange(): {
   maxDate: Date;
 } {
   const now = new Date();
-  const minDate = new Date(now.getTime() + PICKUP_CONFIG.MIN_ADVANCE_HOURS * 60 * 60 * 1000);
+  const minDate = new Date(
+    now.getTime() + PICKUP_CONFIG.MIN_ADVANCE_HOURS * 60 * 60 * 1000
+  );
   const maxDate = new Date(now);
   maxDate.setDate(maxDate.getDate() + PICKUP_CONFIG.MAX_ADVANCE_DAYS);
 

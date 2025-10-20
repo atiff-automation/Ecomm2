@@ -35,13 +35,13 @@ interface ImageUploadProps {
   onRemove?: (index: number) => void;
   initialImages?: UploadedImage[];
   acceptedTypes?: string[];
-  
+
   // New props to match ProductForm interface
   value?: UploadedImage[];
   onChange?: (images: UploadedImage[]) => void;
   accept?: string;
   uploadPath?: string;
-  
+
   maxFiles?: number;
   maxSize?: number; // in bytes
   className?: string;
@@ -54,13 +54,13 @@ export default function ImageUpload({
   onRemove,
   initialImages = [],
   acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'],
-  
+
   // New props
   value,
   onChange,
   accept,
   uploadPath,
-  
+
   maxFiles = 5,
   maxSize = 10 * 1024 * 1024, // Default 10MB in bytes
   className,
@@ -69,18 +69,21 @@ export default function ImageUpload({
   // Support both interfaces - prefer new props over legacy
   const currentImages = value || initialImages;
   const currentOnChange = onChange || onUpload;
-  
+
   // Parse accept prop if provided
-  const currentAcceptedTypes = accept 
-    ? accept.split(',').map(type => type.trim()).flatMap(type => {
-        // Handle wildcard patterns like "image/*"
-        if (type === 'image/*') {
-          return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        }
-        return type;
-      })
+  const currentAcceptedTypes = accept
+    ? accept
+        .split(',')
+        .map(type => type.trim())
+        .flatMap(type => {
+          // Handle wildcard patterns like "image/*"
+          if (type === 'image/*') {
+            return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+          }
+          return type;
+        })
     : acceptedTypes;
-  
+
   const [images, setImages] = useState<UploadedImage[]>(currentImages);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -98,7 +101,10 @@ export default function ImageUpload({
 
   // Update parent when images change
   useEffect(() => {
-    if (currentOnChange && JSON.stringify(images) !== JSON.stringify(currentImages)) {
+    if (
+      currentOnChange &&
+      JSON.stringify(images) !== JSON.stringify(currentImages)
+    ) {
       currentOnChange(images);
     }
   }, [images, currentOnChange]);
@@ -304,7 +310,8 @@ export default function ImageUpload({
                 Drop images here or click to upload
               </p>
               <p className="text-xs text-gray-500">
-                Max {maxFiles} images, up to {Math.round(maxSize / (1024 * 1024))}MB each
+                Max {maxFiles} images, up to{' '}
+                {Math.round(maxSize / (1024 * 1024))}MB each
               </p>
               <p className="text-xs text-gray-500">JPEG, PNG, WebP supported</p>
             </>
@@ -373,11 +380,11 @@ export default function ImageUpload({
               {(image.size > 0 || (image.width && image.height)) && (
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
                   {image.width && image.height && (
-                    <p className="truncate">{image.width} × {image.height}</p>
+                    <p className="truncate">
+                      {image.width} × {image.height}
+                    </p>
                   )}
-                  {image.size > 0 && (
-                    <p>{formatFileSize(image.size)}</p>
-                  )}
+                  {image.size > 0 && <p>{formatFileSize(image.size)}</p>}
                 </div>
               )}
 
@@ -411,9 +418,14 @@ export default function ImageUpload({
             {images.length} of {maxFiles} images uploaded
           </span>
           {(() => {
-            const totalSize = images.reduce((acc, img) => acc + (img.size || 0), 0);
-            const hasUnknownSizes = images.some(img => !img.size || img.size === 0);
-            
+            const totalSize = images.reduce(
+              (acc, img) => acc + (img.size || 0),
+              0
+            );
+            const hasUnknownSizes = images.some(
+              img => !img.size || img.size === 0
+            );
+
             if (totalSize === 0 && hasUnknownSizes) {
               return <span>Includes existing images</span>;
             } else if (hasUnknownSizes && totalSize > 0) {

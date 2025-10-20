@@ -3,7 +3,11 @@
  * Centralized template rendering system with variable injection and compilation
  */
 
-import { ReceiptTemplate, TemplateRenderOptions, ReceiptTemplateContent } from '@/types/receipt-templates';
+import {
+  ReceiptTemplate,
+  TemplateRenderOptions,
+  ReceiptTemplateContent,
+} from '@/types/receipt-templates';
 import { TaxReceiptData } from './receipt-service';
 import { businessProfileService } from './business-profile-service';
 
@@ -24,23 +28,41 @@ export class TemplateEngine {
     options: TemplateRenderOptions = {
       format: 'html',
       includeStyles: true,
-      inlineStyles: true
+      inlineStyles: true,
     }
   ): Promise<string> {
     try {
       const { templateContent } = template;
-      
+
       switch (templateContent.templateType) {
         case 'THERMAL_RECEIPT':
-          return await this.renderThermalReceipt(templateContent, receiptData, options);
+          return await this.renderThermalReceipt(
+            templateContent,
+            receiptData,
+            options
+          );
         case 'BUSINESS_INVOICE':
-          return await this.renderBusinessInvoice(templateContent, receiptData, options);
+          return await this.renderBusinessInvoice(
+            templateContent,
+            receiptData,
+            options
+          );
         case 'MINIMAL_RECEIPT':
-          return this.renderMinimalReceipt(templateContent, receiptData, options);
+          return this.renderMinimalReceipt(
+            templateContent,
+            receiptData,
+            options
+          );
         case 'DETAILED_INVOICE':
-          return await this.renderDetailedInvoice(templateContent, receiptData, options);
+          return await this.renderDetailedInvoice(
+            templateContent,
+            receiptData,
+            options
+          );
         default:
-          throw new Error(`Unsupported template type: ${templateContent.templateType}`);
+          throw new Error(
+            `Unsupported template type: ${templateContent.templateType}`
+          );
       }
     } catch (error) {
       console.error('Template rendering error:', error);
@@ -58,11 +80,13 @@ export class TemplateEngine {
   ): Promise<string> {
     const { order, customer, orderItems, shippingAddress, taxBreakdown } = data;
     const receiptNumber = `RCP-${order.orderNumber.replace('ORD-', '')}`;
-    
+
     const styles = this.generateThermalStyles(config);
-    
-    const headerHtml = config.sections.header.enabled ? await this.renderThermalHeader(config, receiptNumber) : '';
-    
+
+    const headerHtml = config.sections.header.enabled
+      ? await this.renderThermalHeader(config, receiptNumber)
+      : '';
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -104,13 +128,22 @@ export class TemplateEngine {
     data: TaxReceiptData,
     options: TemplateRenderOptions
   ): Promise<string> {
-    const { order, customer, orderItems, shippingAddress, billingAddress, taxBreakdown } = data;
+    const {
+      order,
+      customer,
+      orderItems,
+      shippingAddress,
+      billingAddress,
+      taxBreakdown,
+    } = data;
     const invoiceNumber = `INV-${order.orderNumber.replace('ORD-', '')}`;
-    
+
     const styles = this.generateBusinessStyles(config);
-    
-    const headerHtml = config.sections.header.enabled ? await this.renderBusinessHeader(config, invoiceNumber) : '';
-    
+
+    const headerHtml = config.sections.header.enabled
+      ? await this.renderBusinessHeader(config, invoiceNumber)
+      : '';
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -136,14 +169,18 @@ export class TemplateEngine {
               </div>
             </div>
             
-            ${shippingAddress ? `
+            ${
+              shippingAddress
+                ? `
             <div class="shipping-section">
               <h3>Ship To:</h3>
               <div class="shipping-info">
                 ${this.renderAddress(shippingAddress)}
               </div>
             </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
 
           ${config.sections.items.enabled ? this.renderBusinessItems(config, orderItems) : ''}
@@ -165,9 +202,9 @@ export class TemplateEngine {
   ): string {
     const { order, customer, orderItems, taxBreakdown } = data;
     const receiptNumber = `RCP-${order.orderNumber.replace('ORD-', '')}`;
-    
+
     const styles = this.generateMinimalStyles(config);
-    
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -204,13 +241,22 @@ export class TemplateEngine {
     data: TaxReceiptData,
     options: TemplateRenderOptions
   ): Promise<string> {
-    const { order, customer, orderItems, shippingAddress, billingAddress, taxBreakdown } = data;
+    const {
+      order,
+      customer,
+      orderItems,
+      shippingAddress,
+      billingAddress,
+      taxBreakdown,
+    } = data;
     const invoiceNumber = `INV-${order.orderNumber.replace('ORD-', '')}`;
-    
+
     const styles = this.generateDetailedStyles(config);
-    
-    const headerHtml = config.sections.header.enabled ? await this.renderDetailedHeader(config, invoiceNumber) : '';
-    
+
+    const headerHtml = config.sections.header.enabled
+      ? await this.renderDetailedHeader(config, invoiceNumber)
+      : '';
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -246,14 +292,18 @@ export class TemplateEngine {
               </div>
             </div>
             
-            ${shippingAddress ? `
+            ${
+              shippingAddress
+                ? `
             <div class="shipping-details">
               <h3>Ship To:</h3>
               <div class="shipping-info">
                 ${this.renderAddress(shippingAddress)}
               </div>
             </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
 
           ${config.sections.items.enabled ? this.renderDetailedItems(config, orderItems) : ''}
@@ -268,7 +318,7 @@ export class TemplateEngine {
   // Style generators for each template type
   private generateThermalStyles(config: ReceiptTemplateContent): string {
     const { colors, typography, layout } = config;
-    
+
     return `
       body {
         font-family: ${typography.fontFamily};
@@ -370,7 +420,7 @@ export class TemplateEngine {
 
   private generateBusinessStyles(config: ReceiptTemplateContent): string {
     const { colors, typography, layout } = config;
-    
+
     return `
       body {
         font-family: ${typography.fontFamily};
@@ -523,7 +573,7 @@ export class TemplateEngine {
 
   private generateMinimalStyles(config: ReceiptTemplateContent): string {
     const { colors, typography, layout } = config;
-    
+
     return `
       body {
         font-family: ${typography.fontFamily};
@@ -637,7 +687,7 @@ export class TemplateEngine {
 
   private generateDetailedStyles(config: ReceiptTemplateContent): string {
     const { colors, typography, layout } = config;
-    
+
     return `
       body {
         font-family: ${typography.fontFamily};
@@ -832,7 +882,10 @@ export class TemplateEngine {
   }
 
   // Helper methods for rendering different sections
-  private async renderThermalHeader(config: ReceiptTemplateContent, receiptNumber: string): Promise<string> {
+  private async renderThermalHeader(
+    config: ReceiptTemplateContent,
+    receiptNumber: string
+  ): Promise<string> {
     const companyInfo = await this.getCompanyInfo();
     return `
       <div class="receipt-header">
@@ -849,8 +902,13 @@ export class TemplateEngine {
     `;
   }
 
-  private renderThermalItems(config: ReceiptTemplateContent, items: any[]): string {
-    const itemsHtml = items.map(item => `
+  private renderThermalItems(
+    config: ReceiptTemplateContent,
+    items: any[]
+  ): string {
+    const itemsHtml = items
+      .map(
+        item => `
       <div class="item">
         <div style="font-weight: bold;">${item.productName}</div>
         <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 3px;">
@@ -859,7 +917,9 @@ export class TemplateEngine {
         </div>
         ${config.sections.items.showSKU && item.productSku ? `<div style="font-size: 10px; color: #666;">SKU: ${item.productSku}</div>` : ''}
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     return `
       <div class="items-section">
@@ -869,29 +929,41 @@ export class TemplateEngine {
     `;
   }
 
-  private renderThermalTotals(config: ReceiptTemplateContent, order: any, taxBreakdown: any): string {
+  private renderThermalTotals(
+    config: ReceiptTemplateContent,
+    order: any,
+    taxBreakdown: any
+  ): string {
     return `
       <div class="totals">
         <div class="total-line">
           <span>Subtotal:</span>
           <span>${this.formatCurrency(order.subtotal)}</span>
         </div>
-        ${order.discountAmount > 0 ? `
+        ${
+          order.discountAmount > 0
+            ? `
         <div class="total-line">
           <span>Discount:</span>
           <span>-${this.formatCurrency(order.discountAmount)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line">
           <span>Shipping:</span>
           <span>${this.formatCurrency(order.shippingCost)}</span>
         </div>
-        ${config.sections.totals.showTaxBreakdown ? `
+        ${
+          config.sections.totals.showTaxBreakdown
+            ? `
         <div class="total-line">
           <span>Tax (${taxBreakdown.taxRate}):</span>
           <span>${this.formatCurrency(taxBreakdown.totalTax)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line" style="font-weight: bold; border-top: 1px solid #333; margin-top: 5px; padding-top: 5px;">
           <span>Total:</span>
           <span>${this.formatCurrency(order.total)}</span>
@@ -900,7 +972,10 @@ export class TemplateEngine {
     `;
   }
 
-  private renderThermalShipping(config: ReceiptTemplateContent, address: any): string {
+  private renderThermalShipping(
+    config: ReceiptTemplateContent,
+    address: any
+  ): string {
     return `
       <div style="margin: 15px 0; font-size: 11px; border-top: 1px dashed #666; padding-top: 10px;">
         <strong>Delivery Address:</strong><br>
@@ -924,7 +999,10 @@ export class TemplateEngine {
   }
 
   // Business Invoice specific renderers
-  private async renderBusinessHeader(config: ReceiptTemplateContent, invoiceNumber: string): Promise<string> {
+  private async renderBusinessHeader(
+    config: ReceiptTemplateContent,
+    invoiceNumber: string
+  ): Promise<string> {
     const companyInfo = await this.getCompanyInfo();
     return `
       <div class="invoice-header">
@@ -944,8 +1022,13 @@ export class TemplateEngine {
     `;
   }
 
-  private renderBusinessItems(config: ReceiptTemplateContent, items: any[]): string {
-    const itemsRows = items.map(item => `
+  private renderBusinessItems(
+    config: ReceiptTemplateContent,
+    items: any[]
+  ): string {
+    const itemsRows = items
+      .map(
+        item => `
       <tr>
         <td>
           ${item.productName}
@@ -955,7 +1038,9 @@ export class TemplateEngine {
         <td style="text-align: right;">${this.formatCurrency(item.appliedPrice)}</td>
         <td style="text-align: right;">${this.formatCurrency(item.totalPrice)}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join('');
 
     return `
       <table class="items-table">
@@ -974,29 +1059,41 @@ export class TemplateEngine {
     `;
   }
 
-  private renderBusinessTotals(config: ReceiptTemplateContent, order: any, taxBreakdown: any): string {
+  private renderBusinessTotals(
+    config: ReceiptTemplateContent,
+    order: any,
+    taxBreakdown: any
+  ): string {
     return `
       <div class="totals-section">
         <div class="total-line">
           <span>Subtotal:</span>
           <span>${this.formatCurrency(order.subtotal)}</span>
         </div>
-        ${order.discountAmount > 0 ? `
+        ${
+          order.discountAmount > 0
+            ? `
         <div class="total-line">
           <span>Discount:</span>
           <span>-${this.formatCurrency(order.discountAmount)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line">
           <span>Shipping:</span>
           <span>${this.formatCurrency(order.shippingCost)}</span>
         </div>
-        ${config.sections.totals.showTaxBreakdown ? `
+        ${
+          config.sections.totals.showTaxBreakdown
+            ? `
         <div class="total-line">
           <span>Tax (${taxBreakdown.taxRate}):</span>
           <span>${this.formatCurrency(taxBreakdown.totalTax)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line final">
           <span>TOTAL:</span>
           <span>${this.formatCurrency(order.total)}</span>
@@ -1016,7 +1113,10 @@ export class TemplateEngine {
   }
 
   // Similar methods for minimal and detailed templates...
-  private renderMinimalHeader(config: ReceiptTemplateContent, receiptNumber: string): string {
+  private renderMinimalHeader(
+    config: ReceiptTemplateContent,
+    receiptNumber: string
+  ): string {
     return `
       <div class="receipt-header">
         <h1 class="receipt-title">Receipt</h1>
@@ -1025,8 +1125,13 @@ export class TemplateEngine {
     `;
   }
 
-  private renderMinimalItems(config: ReceiptTemplateContent, items: any[]): string {
-    const itemsHtml = items.map(item => `
+  private renderMinimalItems(
+    config: ReceiptTemplateContent,
+    items: any[]
+  ): string {
+    const itemsHtml = items
+      .map(
+        item => `
       <div class="item">
         <div>
           <strong>${item.productName}</strong><br>
@@ -1034,7 +1139,9 @@ export class TemplateEngine {
         </div>
         <div><strong>${this.formatCurrency(item.totalPrice)}</strong></div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     return `
       <div class="items-list">
@@ -1043,19 +1150,26 @@ export class TemplateEngine {
     `;
   }
 
-  private renderMinimalTotals(config: ReceiptTemplateContent, order: any): string {
+  private renderMinimalTotals(
+    config: ReceiptTemplateContent,
+    order: any
+  ): string {
     return `
       <div class="totals-minimal">
         <div class="total-line">
           <span>Subtotal:</span>
           <span>${this.formatCurrency(order.subtotal)}</span>
         </div>
-        ${order.discountAmount > 0 ? `
+        ${
+          order.discountAmount > 0
+            ? `
         <div class="total-line">
           <span>Discount:</span>
           <span>-${this.formatCurrency(order.discountAmount)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line">
           <span>Shipping:</span>
           <span>${this.formatCurrency(order.shippingCost)}</span>
@@ -1078,7 +1192,10 @@ export class TemplateEngine {
   }
 
   // Detailed invoice renderers (similar pattern)
-  private async renderDetailedHeader(config: ReceiptTemplateContent, invoiceNumber: string): Promise<string> {
+  private async renderDetailedHeader(
+    config: ReceiptTemplateContent,
+    invoiceNumber: string
+  ): Promise<string> {
     const companyInfo = await this.getCompanyInfo();
     return `
       <div class="invoice-header">
@@ -1100,8 +1217,13 @@ export class TemplateEngine {
     `;
   }
 
-  private renderDetailedItems(config: ReceiptTemplateContent, items: any[]): string {
-    const itemsRows = items.map(item => `
+  private renderDetailedItems(
+    config: ReceiptTemplateContent,
+    items: any[]
+  ): string {
+    const itemsRows = items
+      .map(
+        item => `
       <tr>
         <td>
           <strong>${item.productName}</strong>
@@ -1112,7 +1234,9 @@ export class TemplateEngine {
         <td style="text-align: right;">${this.formatCurrency(item.appliedPrice)}</td>
         <td style="text-align: right; font-weight: bold;">${this.formatCurrency(item.totalPrice)}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join('');
 
     return `
       <table class="items-table">
@@ -1132,7 +1256,11 @@ export class TemplateEngine {
     `;
   }
 
-  private renderDetailedTotals(config: ReceiptTemplateContent, order: any, taxBreakdown: any): string {
+  private renderDetailedTotals(
+    config: ReceiptTemplateContent,
+    order: any,
+    taxBreakdown: any
+  ): string {
     return `
       <div class="totals-detailed">
         <h3 style="margin-top: 0; color: #1E40AF;">Summary</h3>
@@ -1140,17 +1268,23 @@ export class TemplateEngine {
           <span>Subtotal:</span>
           <span>${this.formatCurrency(order.subtotal)}</span>
         </div>
-        ${order.discountAmount > 0 ? `
+        ${
+          order.discountAmount > 0
+            ? `
         <div class="total-line">
           <span>Discount:</span>
           <span>-${this.formatCurrency(order.discountAmount)}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line">
           <span>Shipping & Handling:</span>
           <span>${this.formatCurrency(order.shippingCost)}</span>
         </div>
-        ${config.sections.totals.showTaxBreakdown ? `
+        ${
+          config.sections.totals.showTaxBreakdown
+            ? `
         <div class="tax-section">
           <h4 style="margin: 0 0 10px 0;">Tax Details</h4>
           <div class="total-line">
@@ -1162,7 +1296,9 @@ export class TemplateEngine {
             <span>${this.formatCurrency(taxBreakdown.totalTax)}</span>
           </div>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="total-line final">
           <span>TOTAL AMOUNT:</span>
           <span>${this.formatCurrency(order.total)}</span>

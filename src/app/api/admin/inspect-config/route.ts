@@ -12,7 +12,10 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -22,7 +25,7 @@ export async function GET() {
     // Get raw database record
     const dbRecord = await prisma.siteCustomization.findFirst({
       where: { isActive: true },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     // Get service configuration
@@ -36,14 +39,17 @@ export async function GET() {
         dbConfigHero: dbRecord?.config ? (dbRecord.config as any).hero : null,
         serviceConfigHero: serviceConfig.hero,
         fullServiceConfig: serviceConfig,
-        rawDbConfig: dbRecord?.config
-      }
+        rawDbConfig: dbRecord?.config,
+      },
     });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

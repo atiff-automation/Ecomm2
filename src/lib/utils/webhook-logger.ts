@@ -95,7 +95,6 @@ export function getRecentWebhookLogs(days: number = 7): WebhookLogEntry[] {
   }
 
   return logs.sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 }

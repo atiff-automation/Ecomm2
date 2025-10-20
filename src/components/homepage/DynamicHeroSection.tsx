@@ -77,12 +77,16 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   // Determine if slider mode is enabled and get active slides
   const isSliderMode = sliderConfig?.enabled && sliderConfig.slides.length > 0;
   const activeSlides = isSliderMode
-    ? sliderConfig.slides.filter(slide => slide.isActive).sort((a, b) => a.order - b.order)
+    ? sliderConfig.slides
+        .filter(slide => slide.isActive)
+        .sort((a, b) => a.order - b.order)
     : [];
 
   // Auto-advance functionality
   const startAutoAdvance = useCallback(() => {
-    if (!sliderConfig?.autoAdvance || activeSlides.length <= 1) return;
+    if (!sliderConfig?.autoAdvance || activeSlides.length <= 1) {
+      return;
+    }
 
     intervalRef.current = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % activeSlides.length);
@@ -107,16 +111,20 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   }, [isPlaying, startAutoAdvance, stopAutoAdvance]);
 
   // Navigation handlers
-  const goToSlide = useCallback((index: number) => {
-    setCurrentSlide(index);
-    if (sliderConfig?.autoAdvance && isPlaying) {
-      stopAutoAdvance();
-      startAutoAdvance(); // Restart the timer
-    }
-  }, [sliderConfig?.autoAdvance, isPlaying, stopAutoAdvance, startAutoAdvance]);
+  const goToSlide = useCallback(
+    (index: number) => {
+      setCurrentSlide(index);
+      if (sliderConfig?.autoAdvance && isPlaying) {
+        stopAutoAdvance();
+        startAutoAdvance(); // Restart the timer
+      }
+    },
+    [sliderConfig?.autoAdvance, isPlaying, stopAutoAdvance, startAutoAdvance]
+  );
 
   const goToPrevious = useCallback(() => {
-    const newIndex = currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
+    const newIndex =
+      currentSlide === 0 ? activeSlides.length - 1 : currentSlide - 1;
     goToSlide(newIndex);
   }, [currentSlide, activeSlides.length, goToSlide]);
 
@@ -136,7 +144,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) {
+      return;
+    }
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;
@@ -161,7 +171,13 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
     }
 
     return stopAutoAdvance;
-  }, [sliderConfig?.autoAdvance, isPaused, activeSlides.length, startAutoAdvance, stopAutoAdvance]);
+  }, [
+    sliderConfig?.autoAdvance,
+    isPaused,
+    activeSlides.length,
+    startAutoAdvance,
+    stopAutoAdvance,
+  ]);
 
   useEffect(() => {
     // Reset current slide if it's beyond the active slides range
@@ -174,12 +190,20 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
   React.useEffect(() => {
     if (heroSection) {
       console.log('🎭 DynamicHeroSection - heroSection prop:', heroSection);
-      console.log('🖼️ DynamicHeroSection - backgroundImage:', heroSection.backgroundImage);
-      console.log('🎬 DynamicHeroSection - backgroundType:', heroSection.backgroundType);
+      console.log(
+        '🖼️ DynamicHeroSection - backgroundImage:',
+        heroSection.backgroundImage
+      );
+      console.log(
+        '🎬 DynamicHeroSection - backgroundType:',
+        heroSection.backgroundType
+      );
       console.log('✅ DynamicHeroSection - Condition check:', {
         hasBackgroundImage: !!heroSection.backgroundImage,
         isImageType: heroSection.backgroundType === 'IMAGE',
-        bothTrue: !!heroSection.backgroundImage && heroSection.backgroundType === 'IMAGE',
+        bothTrue:
+          !!heroSection.backgroundImage &&
+          heroSection.backgroundType === 'IMAGE',
       });
     } else {
       console.log('⚠️ DynamicHeroSection - heroSection is null/undefined');
@@ -253,8 +277,16 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
       onTouchStart={isSliderMode ? onTouchStart : undefined}
       onTouchMove={isSliderMode ? onTouchMove : undefined}
       onTouchEnd={isSliderMode ? onTouchEnd : undefined}
-      onMouseEnter={isSliderMode && sliderConfig?.pauseOnHover ? () => setIsPaused(true) : undefined}
-      onMouseLeave={isSliderMode && sliderConfig?.pauseOnHover ? () => setIsPaused(false) : undefined}
+      onMouseEnter={
+        isSliderMode && sliderConfig?.pauseOnHover
+          ? () => setIsPaused(true)
+          : undefined
+      }
+      onMouseLeave={
+        isSliderMode && sliderConfig?.pauseOnHover
+          ? () => setIsPaused(false)
+          : undefined
+      }
     >
       {/* Background Media */}
       {isSliderMode && activeSlides.length > 0 ? (
@@ -323,8 +355,8 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
             hero.textAlignment === 'center'
               ? 'mx-auto text-center'
               : hero.textAlignment === 'right'
-              ? 'ml-auto text-right'
-              : ''
+                ? 'ml-auto text-right'
+                : ''
           }`}
         >
           {/* Title Section - Only show if enabled */}
@@ -351,8 +383,8 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
                 hero.textAlignment === 'center'
                   ? 'justify-center'
                   : hero.textAlignment === 'right'
-                  ? 'justify-end'
-                  : ''
+                    ? 'justify-end'
+                    : ''
               }`}
             >
               {hero.ctaPrimaryText && (
@@ -363,7 +395,7 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
                     backgroundColor: theme.secondaryColor,
                     color: theme.textColor,
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={e => {
                     if (secondaryRgb) {
                       e.currentTarget.style.backgroundColor = `rgb(${Math.max(
                         secondaryRgb.r - 20,
@@ -374,8 +406,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
                       )})`;
                     }
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.secondaryColor;
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor =
+                      theme.secondaryColor;
                   }}
                 >
                   {hero.ctaPrimaryText}
@@ -428,8 +461,8 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
                   onClick={() => goToSlide(index)}
                   className={`w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50 ${
                     index === currentSlide
-                      ? "bg-white scale-125"
-                      : "bg-white/50 hover:bg-white/75"
+                      ? 'bg-white scale-125'
+                      : 'bg-white/50 hover:bg-white/75'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
@@ -442,7 +475,9 @@ export const DynamicHeroSection: React.FC<DynamicHeroSectionProps> = ({
             <button
               onClick={toggleAutoAdvance}
               className="absolute top-4 right-4 w-12 h-12 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
-              aria-label={isPlaying && !isPaused ? "Pause slideshow" : "Play slideshow"}
+              aria-label={
+                isPlaying && !isPaused ? 'Pause slideshow' : 'Play slideshow'
+              }
             >
               {isPlaying && !isPaused ? (
                 <Pause className="h-5 w-5 sm:h-5 sm:w-5" />

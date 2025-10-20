@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +29,7 @@ import {
   Pause,
   ArrowLeft,
   ArrowRight,
-  MoreHorizontal
+  MoreHorizontal,
 } from 'lucide-react';
 
 // ==================== INTERFACES ====================
@@ -58,102 +64,135 @@ interface HeroSliderSectionProps {
 export function HeroSliderSection({
   sliderConfig,
   onChange,
-  isLoading = false
+  isLoading = false,
 }: HeroSliderSectionProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // ==================== SLIDER CONFIGURATION HANDLERS ====================
 
-  const handleSliderToggle = useCallback((enabled: boolean) => {
-    onChange({ enabled });
-  }, [onChange]);
+  const handleSliderToggle = useCallback(
+    (enabled: boolean) => {
+      onChange({ enabled });
+    },
+    [onChange]
+  );
 
-  const handleAutoAdvanceToggle = useCallback((autoAdvance: boolean) => {
-    onChange({ autoAdvance });
-  }, [onChange]);
+  const handleAutoAdvanceToggle = useCallback(
+    (autoAdvance: boolean) => {
+      onChange({ autoAdvance });
+    },
+    [onChange]
+  );
 
-  const handleIntervalChange = useCallback((interval: string) => {
-    const numInterval = parseInt(interval, 10);
-    if (!isNaN(numInterval) && numInterval >= 1000 && numInterval <= 30000) {
-      onChange({ interval: numInterval });
-    }
-  }, [onChange]);
+  const handleIntervalChange = useCallback(
+    (interval: string) => {
+      const numInterval = parseInt(interval, 10);
+      if (!isNaN(numInterval) && numInterval >= 1000 && numInterval <= 30000) {
+        onChange({ interval: numInterval });
+      }
+    },
+    [onChange]
+  );
 
-  const handleNavigationChange = useCallback((field: keyof Pick<SliderConfig, 'showDots' | 'showArrows' | 'pauseOnHover'>, value: boolean) => {
-    onChange({ [field]: value });
-  }, [onChange]);
+  const handleNavigationChange = useCallback(
+    (
+      field: keyof Pick<
+        SliderConfig,
+        'showDots' | 'showArrows' | 'pauseOnHover'
+      >,
+      value: boolean
+    ) => {
+      onChange({ [field]: value });
+    },
+    [onChange]
+  );
 
   // ==================== SLIDE MANAGEMENT HANDLERS ====================
 
-  const handleSlidesChange = useCallback((slides: HeroSlide[]) => {
-    onChange({ slides });
-  }, [onChange]);
+  const handleSlidesChange = useCallback(
+    (slides: HeroSlide[]) => {
+      onChange({ slides });
+    },
+    [onChange]
+  );
 
-  const handleSlideUpload = useCallback(async (files: File[]) => {
-    setIsUploading(true);
-    setUploadProgress(0);
+  const handleSlideUpload = useCallback(
+    async (files: File[]) => {
+      setIsUploading(true);
+      setUploadProgress(0);
 
-    try {
-      // Get CSRF token from cookie for NextAuth protection
-      const csrfToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('__Host-next-auth.csrf-token=') || row.startsWith('next-auth.csrf-token='))
-        ?.split('=')[1]
-        ?.split('%')[0]; // Extract token before URL encoding
+      try {
+        // Get CSRF token from cookie for NextAuth protection
+        const csrfToken = document.cookie
+          .split('; ')
+          .find(
+            row =>
+              row.startsWith('__Host-next-auth.csrf-token=') ||
+              row.startsWith('next-auth.csrf-token=')
+          )
+          ?.split('=')[1]
+          ?.split('%')[0]; // Extract token before URL encoding
 
-      const uploadPromises = files.map(async (file, index) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('usage', 'hero_background');
+        const uploadPromises = files.map(async (file, index) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('usage', 'hero_background');
 
-        // Add CSRF token if available
-        if (csrfToken) {
-          formData.append('csrfToken', csrfToken);
-        }
+          // Add CSRF token if available
+          if (csrfToken) {
+            formData.append('csrfToken', csrfToken);
+          }
 
-        const response = await fetch('/api/admin/site-customization/media/upload', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include', // Include cookies
+          const response = await fetch(
+            '/api/admin/site-customization/media/upload',
+            {
+              method: 'POST',
+              body: formData,
+              credentials: 'include', // Include cookies
+            }
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Upload failed for ${file.name}: ${errorText}`);
+          }
+
+          const result = await response.json();
+
+          // Update progress
+          setUploadProgress(((index + 1) / files.length) * 100);
+
+          // Create new slide
+          const newSlide: HeroSlide = {
+            id: `slide_${Date.now()}_${index}`,
+            imageUrl: result.mediaUpload.url,
+            altText: `Slide ${sliderConfig.slides.length + index + 1}`,
+            order: sliderConfig.slides.length + index,
+            isActive: true,
+            mediaId: result.mediaUpload.id, // Track media ID for deletion
+          };
+
+          return newSlide;
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Upload failed for ${file.name}: ${errorText}`);
-        }
+        const newSlides = await Promise.all(uploadPromises);
+        const updatedSlides = [...sliderConfig.slides, ...newSlides].sort(
+          (a, b) => a.order - b.order
+        );
 
-        const result = await response.json();
-
-        // Update progress
-        setUploadProgress(((index + 1) / files.length) * 100);
-
-        // Create new slide
-        const newSlide: HeroSlide = {
-          id: `slide_${Date.now()}_${index}`,
-          imageUrl: result.mediaUpload.url,
-          altText: `Slide ${sliderConfig.slides.length + index + 1}`,
-          order: sliderConfig.slides.length + index,
-          isActive: true,
-          mediaId: result.mediaUpload.id // Track media ID for deletion
-        };
-
-        return newSlide;
-      });
-
-      const newSlides = await Promise.all(uploadPromises);
-      const updatedSlides = [...sliderConfig.slides, ...newSlides].sort((a, b) => a.order - b.order);
-
-      onChange({ slides: updatedSlides });
-      toast.success(`${newSlides.length} slide(s) uploaded successfully`);
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Failed to upload slides');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  }, [sliderConfig.slides, onChange]);
+        onChange({ slides: updatedSlides });
+        toast.success(`${newSlides.length} slide(s) uploaded successfully`);
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload slides');
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
+    },
+    [sliderConfig.slides, onChange]
+  );
 
   // ==================== RENDER ====================
 
@@ -165,8 +204,8 @@ export function HeroSliderSection({
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <CardTitle>Hero Slider Configuration</CardTitle>
-            <Badge variant={sliderConfig.enabled ? "default" : "secondary"}>
-              {sliderConfig.enabled ? "Enabled" : "Disabled"}
+            <Badge variant={sliderConfig.enabled ? 'default' : 'secondary'}>
+              {sliderConfig.enabled ? 'Enabled' : 'Disabled'}
             </Badge>
           </div>
         </CardHeader>
@@ -245,7 +284,9 @@ export function HeroSliderSection({
                     <Switch
                       id="show-dots"
                       checked={sliderConfig.showDots}
-                      onCheckedChange={(value) => handleNavigationChange('showDots', value)}
+                      onCheckedChange={value =>
+                        handleNavigationChange('showDots', value)
+                      }
                       disabled={isLoading}
                     />
                   </div>
@@ -259,7 +300,9 @@ export function HeroSliderSection({
                     <Switch
                       id="show-arrows"
                       checked={sliderConfig.showArrows}
-                      onCheckedChange={(value) => handleNavigationChange('showArrows', value)}
+                      onCheckedChange={value =>
+                        handleNavigationChange('showArrows', value)
+                      }
                       disabled={isLoading}
                     />
                   </div>
@@ -272,7 +315,9 @@ export function HeroSliderSection({
                     <Switch
                       id="pause-on-hover"
                       checked={sliderConfig.pauseOnHover}
-                      onCheckedChange={(value) => handleNavigationChange('pauseOnHover', value)}
+                      onCheckedChange={value =>
+                        handleNavigationChange('pauseOnHover', value)
+                      }
                       disabled={isLoading}
                     />
                   </div>
@@ -300,7 +345,7 @@ export function HeroSliderSection({
               <DragDropZone
                 type="hero_background"
                 multiple={true}
-                onUpload={async (event) => {
+                onUpload={async event => {
                   const files = Array.from(event.target.files || []);
                   await handleSlideUpload(files);
                 }}

@@ -45,7 +45,9 @@ export function getOptimalImageSize(
   const sizes = Object.entries(IMAGE_CONFIG.sizes);
 
   // Find the smallest size that's larger than or equal to target
-  for (const [sizeKey, sizeConfig] of sizes.sort((a, b) => a[1].width - b[1].width)) {
+  for (const [sizeKey, sizeConfig] of sizes.sort(
+    (a, b) => a[1].width - b[1].width
+  )) {
     if (sizeConfig.width >= targetWidth && sizeConfig.height >= targetHeight) {
       return sizeKey;
     }
@@ -116,7 +118,9 @@ export function getImageWithFallback(
  * Calculate lazy loading threshold based on viewport
  */
 export function calculateLazyLoadingThreshold(): number {
-  if (typeof window === 'undefined') return 100;
+  if (typeof window === 'undefined') {
+    return 100;
+  }
 
   const viewportHeight = window.innerHeight;
   return Math.min(viewportHeight * 0.5, 500); // 50% of viewport or 500px max
@@ -126,14 +130,17 @@ export function calculateLazyLoadingThreshold(): number {
  * Check if WebP is supported by browser
  */
 export function isWebPSupported(): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (typeof window === 'undefined') {
+    return Promise.resolve(false);
+  }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const webP = new Image();
     webP.onload = webP.onerror = function () {
       resolve(webP.height === 2);
     };
-    webP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+    webP.src =
+      'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
   });
 }
 
@@ -141,14 +148,17 @@ export function isWebPSupported(): Promise<boolean> {
  * Check if AVIF is supported by browser
  */
 export function isAvifSupported(): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (typeof window === 'undefined') {
+    return Promise.resolve(false);
+  }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const avif = new Image();
     avif.onload = avif.onerror = function () {
       resolve(avif.height === 2);
     };
-    avif.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
+    avif.src =
+      'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
   });
 }
 
@@ -185,7 +195,7 @@ export function createLazyLoadObserver(
     ...options,
   };
 
-  return new IntersectionObserver((entries) => {
+  return new IntersectionObserver(entries => {
     entries.forEach(callback);
   }, defaultOptions);
 }
@@ -193,7 +203,9 @@ export function createLazyLoadObserver(
 /**
  * Get image dimensions from URL
  */
-export function getImageDimensions(url: string): Promise<{ width: number; height: number }> {
+export function getImageDimensions(
+  url: string
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -220,9 +232,15 @@ export function calculateAspectRatio(width: number, height: number): number {
 export function getAspectRatioClass(width: number, height: number): string {
   const ratio = calculateAspectRatio(width, height);
 
-  if (Math.abs(ratio - 1) < 0.1) return 'aspect-square';
-  if (ratio > 1.5) return 'aspect-video';
-  if (ratio < 0.8) return 'aspect-[3/4]';
+  if (Math.abs(ratio - 1) < 0.1) {
+    return 'aspect-square';
+  }
+  if (ratio > 1.5) {
+    return 'aspect-video';
+  }
+  if (ratio < 0.8) {
+    return 'aspect-[3/4]';
+  }
 
   return `aspect-[${width}/${height}]`;
 }
@@ -240,7 +258,9 @@ export function generateBlurPlaceholder(
   canvas.height = height;
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
+  if (!ctx) {
+    return '';
+  }
 
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, width, height);
@@ -252,12 +272,17 @@ export function generateBlurPlaceholder(
  * Calculate bandwidth-aware image quality
  */
 export function getBandwidthAwareQuality(): number {
-  if (typeof navigator === 'undefined') return 85;
+  if (typeof navigator === 'undefined') {
+    return 85;
+  }
 
   // Check for slow connection
   const connection = (navigator as any).connection;
   if (connection) {
-    if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+    if (
+      connection.effectiveType === 'slow-2g' ||
+      connection.effectiveType === '2g'
+    ) {
       return 60; // Lower quality for slow connections
     }
     if (connection.effectiveType === '3g') {
@@ -303,7 +328,9 @@ export class ImagePerformanceMonitor {
 
   static endTiming(imageId: string): number {
     const startTime = this.metrics.get(imageId);
-    if (!startTime) return 0;
+    if (!startTime) {
+      return 0;
+    }
 
     const duration = performance.now() - startTime;
     this.metrics.delete(imageId);
@@ -313,7 +340,9 @@ export class ImagePerformanceMonitor {
 
   static getAverageLoadTime(): number {
     const times = Array.from(this.metrics.values());
-    if (times.length === 0) return 0;
+    if (times.length === 0) {
+      return 0;
+    }
 
     return times.reduce((sum, time) => sum + time, 0) / times.length;
   }

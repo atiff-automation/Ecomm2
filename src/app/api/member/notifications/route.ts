@@ -47,7 +47,10 @@ const notificationSettingsSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // CENTRALIZED SECURITY: Apply rate limiting first
-    const rateLimitResult = await RateLimiter.middleware(request, 'NOTIFICATIONS');
+    const rateLimitResult = await RateLimiter.middleware(
+      request,
+      'NOTIFICATIONS'
+    );
     if (rateLimitResult) {
       return rateLimitResult;
     }
@@ -81,7 +84,10 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // CENTRALIZED SECURITY: Apply stricter rate limiting for updates
-    const rateLimitResult = await RateLimiter.middleware(request, 'PREFERENCES_UPDATE');
+    const rateLimitResult = await RateLimiter.middleware(
+      request,
+      'PREFERENCES_UPDATE'
+    );
     if (rateLimitResult) {
       return rateLimitResult;
     }
@@ -140,7 +146,10 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // CENTRALIZED SECURITY: Apply rate limiting for initialization
-    const rateLimitResult = await RateLimiter.middleware(request, 'PREFERENCES_UPDATE');
+    const rateLimitResult = await RateLimiter.middleware(
+      request,
+      'PREFERENCES_UPDATE'
+    );
     if (rateLimitResult) {
       return rateLimitResult;
     }

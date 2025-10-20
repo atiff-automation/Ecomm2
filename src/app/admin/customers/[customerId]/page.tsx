@@ -15,7 +15,7 @@ import {
   ShoppingBag,
   DollarSign,
   Edit,
-  // Trash2, // Not currently used
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -23,6 +23,7 @@ import {
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
+import { toast } from 'sonner';
 
 interface Customer {
   id: string;
@@ -67,6 +68,7 @@ export default function AdminCustomerView({
 }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
   const fetchCustomer = useCallback(async () => {
@@ -91,6 +93,37 @@ export default function AdminCustomerView({
   useEffect(() => {
     fetchCustomer();
   }, [fetchCustomer]);
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${customer?.firstName} ${customer?.lastName}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/customers/${params.customerId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Customer deleted successfully');
+        router.push('/admin/customers');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete customer:', errorData);
+        toast.error(errorData.message || 'Failed to delete customer');
+      }
+    } catch (error) {
+      console.error('Failed to delete customer:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -184,6 +217,15 @@ export default function AdminCustomerView({
           Edit Customer
         </Button>
       </Link>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleDelete}
+        disabled={deleting}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        {deleting ? 'Deleting...' : 'Delete'}
+      </Button>
       <Badge className={getStatusColor(customer.status)}>
         {customer.status}
       </Badge>

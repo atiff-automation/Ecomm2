@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized - Login required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Login required' },
+        { status: 401 }
+      );
     }
 
     // Authorization check
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     const amount = balanceResponse.data.balance;
-    const threshold = 50.00;
+    const threshold = 50.0;
     const lowBalance = amount < threshold;
 
     return NextResponse.json({
@@ -67,7 +70,8 @@ export async function GET(request: NextRequest) {
         lowBalance,
         threshold,
         ...(lowBalance && {
-          warning: 'Your balance is running low. Top up to avoid fulfillment failures.',
+          warning:
+            'Your balance is running low. Top up to avoid fulfillment failures.',
         }),
       },
       timestamp: new Date().toISOString(),
@@ -81,7 +85,8 @@ export async function GET(request: NextRequest) {
         {
           success: false,
           error: 'NOT_CONFIGURED',
-          message: 'Shipping is not configured. Please configure shipping settings first.',
+          message:
+            'Shipping is not configured. Please configure shipping settings first.',
         },
         { status: 400 }
       );

@@ -7,8 +7,12 @@
 // CENTRALIZED CONFIGURATION - Single source of truth
 const CIRCUIT_BREAKER_CONFIG = {
   TELEGRAM: {
-    FAILURE_THRESHOLD: parseInt(process.env.TELEGRAM_CB_FAILURE_THRESHOLD || '5'),
-    SUCCESS_THRESHOLD: parseInt(process.env.TELEGRAM_CB_SUCCESS_THRESHOLD || '3'),
+    FAILURE_THRESHOLD: parseInt(
+      process.env.TELEGRAM_CB_FAILURE_THRESHOLD || '5'
+    ),
+    SUCCESS_THRESHOLD: parseInt(
+      process.env.TELEGRAM_CB_SUCCESS_THRESHOLD || '3'
+    ),
     TIMEOUT: parseInt(process.env.TELEGRAM_CB_TIMEOUT || '10000'),
     RESET_TIMEOUT: parseInt(process.env.TELEGRAM_CB_RESET_TIMEOUT || '30000'),
     MONITOR_WINDOW: parseInt(process.env.TELEGRAM_CB_MONITOR_WINDOW || '60000'),
@@ -21,18 +25,30 @@ const CIRCUIT_BREAKER_CONFIG = {
     MONITOR_WINDOW: parseInt(process.env.EMAIL_CB_MONITOR_WINDOW || '60000'),
   },
   DATABASE: {
-    FAILURE_THRESHOLD: parseInt(process.env.DATABASE_CB_FAILURE_THRESHOLD || '2'),
-    SUCCESS_THRESHOLD: parseInt(process.env.DATABASE_CB_SUCCESS_THRESHOLD || '2'),
+    FAILURE_THRESHOLD: parseInt(
+      process.env.DATABASE_CB_FAILURE_THRESHOLD || '2'
+    ),
+    SUCCESS_THRESHOLD: parseInt(
+      process.env.DATABASE_CB_SUCCESS_THRESHOLD || '2'
+    ),
     TIMEOUT: parseInt(process.env.DATABASE_CB_TIMEOUT || '5000'),
     RESET_TIMEOUT: parseInt(process.env.DATABASE_CB_RESET_TIMEOUT || '15000'),
     MONITOR_WINDOW: parseInt(process.env.DATABASE_CB_MONITOR_WINDOW || '30000'),
   },
   NOTIFICATION: {
-    FAILURE_THRESHOLD: parseInt(process.env.NOTIFICATION_CB_FAILURE_THRESHOLD || '4'),
-    SUCCESS_THRESHOLD: parseInt(process.env.NOTIFICATION_CB_SUCCESS_THRESHOLD || '2'),
+    FAILURE_THRESHOLD: parseInt(
+      process.env.NOTIFICATION_CB_FAILURE_THRESHOLD || '4'
+    ),
+    SUCCESS_THRESHOLD: parseInt(
+      process.env.NOTIFICATION_CB_SUCCESS_THRESHOLD || '2'
+    ),
     TIMEOUT: parseInt(process.env.NOTIFICATION_CB_TIMEOUT || '7000'),
-    RESET_TIMEOUT: parseInt(process.env.NOTIFICATION_CB_RESET_TIMEOUT || '20000'),
-    MONITOR_WINDOW: parseInt(process.env.NOTIFICATION_CB_MONITOR_WINDOW || '45000'),
+    RESET_TIMEOUT: parseInt(
+      process.env.NOTIFICATION_CB_RESET_TIMEOUT || '20000'
+    ),
+    MONITOR_WINDOW: parseInt(
+      process.env.NOTIFICATION_CB_MONITOR_WINDOW || '45000'
+    ),
   },
 } as const;
 
@@ -93,8 +109,10 @@ export class CircuitBreaker<T> {
     // CENTRALIZED configuration merge
     const baseConfig = CIRCUIT_BREAKER_CONFIG[type];
     this.config = {
-      failureThreshold: customConfig?.failureThreshold ?? baseConfig.FAILURE_THRESHOLD,
-      successThreshold: customConfig?.successThreshold ?? baseConfig.SUCCESS_THRESHOLD,
+      failureThreshold:
+        customConfig?.failureThreshold ?? baseConfig.FAILURE_THRESHOLD,
+      successThreshold:
+        customConfig?.successThreshold ?? baseConfig.SUCCESS_THRESHOLD,
       timeout: customConfig?.timeout ?? baseConfig.TIMEOUT,
       resetTimeout: customConfig?.resetTimeout ?? baseConfig.RESET_TIMEOUT,
       monitorWindow: customConfig?.monitorWindow ?? baseConfig.MONITOR_WINDOW,
@@ -109,7 +127,10 @@ export class CircuitBreaker<T> {
       consecuitiveSuccesses: 0,
     };
 
-    console.log(`🔧 Circuit Breaker '${this.name}' initialized with config:`, this.config);
+    console.log(
+      `🔧 Circuit Breaker '${this.name}' initialized with config:`,
+      this.config
+    );
   }
 
   /**
@@ -136,7 +157,9 @@ export class CircuitBreaker<T> {
   /**
    * SYSTEMATIC closed state handling - DRY PRINCIPLE
    */
-  private async handleClosedState(operation: () => Promise<T>): Promise<CircuitBreakerResult<T>> {
+  private async handleClosedState(
+    operation: () => Promise<T>
+  ): Promise<CircuitBreakerResult<T>> {
     try {
       // Execute with timeout protection
       const result = await this.executeWithTimeout(operation);
@@ -187,7 +210,9 @@ export class CircuitBreaker<T> {
   /**
    * SYSTEMATIC half-open state handling - DRY PRINCIPLE
    */
-  private async handleHalfOpenState(operation: () => Promise<T>): Promise<CircuitBreakerResult<T>> {
+  private async handleHalfOpenState(
+    operation: () => Promise<T>
+  ): Promise<CircuitBreakerResult<T>> {
     try {
       // Execute with timeout protection
       const result = await this.executeWithTimeout(operation);
@@ -258,7 +283,9 @@ export class CircuitBreaker<T> {
     this.requestHistory.push({ timestamp: now, success: true });
     this.cleanupRequestHistory();
 
-    console.log(`✅ Circuit Breaker '${this.name}' recorded success. Consecutive: ${this.metrics.consecuitiveSuccesses}`);
+    console.log(
+      `✅ Circuit Breaker '${this.name}' recorded success. Consecutive: ${this.metrics.consecuitiveSuccesses}`
+    );
   }
 
   /**
@@ -278,7 +305,9 @@ export class CircuitBreaker<T> {
     this.requestHistory.push({ timestamp: now, success: false });
     this.cleanupRequestHistory();
 
-    console.warn(`❌ Circuit Breaker '${this.name}' recorded failure: ${error.message}. Consecutive: ${this.metrics.consecuitiveFailures}`);
+    console.warn(
+      `❌ Circuit Breaker '${this.name}' recorded failure: ${error.message}. Consecutive: ${this.metrics.consecuitiveFailures}`
+    );
   }
 
   /**
@@ -313,19 +342,25 @@ export class CircuitBreaker<T> {
   private transitionToOpen(): void {
     this.state = CircuitState.OPEN;
     this.stateChangeTime = Date.now();
-    console.error(`🔴 Circuit Breaker '${this.name}' transitioned to OPEN state`);
+    console.error(
+      `🔴 Circuit Breaker '${this.name}' transitioned to OPEN state`
+    );
   }
 
   private transitionToHalfOpen(): void {
     this.state = CircuitState.HALF_OPEN;
     this.stateChangeTime = Date.now();
-    console.warn(`🟡 Circuit Breaker '${this.name}' transitioned to HALF_OPEN state`);
+    console.warn(
+      `🟡 Circuit Breaker '${this.name}' transitioned to HALF_OPEN state`
+    );
   }
 
   private transitionToClosed(): void {
     this.state = CircuitState.CLOSED;
     this.stateChangeTime = Date.now();
-    console.log(`🟢 Circuit Breaker '${this.name}' transitioned to CLOSED state`);
+    console.log(
+      `🟢 Circuit Breaker '${this.name}' transitioned to CLOSED state`
+    );
   }
 
   /**
@@ -333,7 +368,9 @@ export class CircuitBreaker<T> {
    */
   private cleanupRequestHistory(): void {
     const cutoff = Date.now() - this.config.monitorWindow;
-    this.requestHistory = this.requestHistory.filter(req => req.timestamp >= cutoff);
+    this.requestHistory = this.requestHistory.filter(
+      req => req.timestamp >= cutoff
+    );
   }
 
   /**

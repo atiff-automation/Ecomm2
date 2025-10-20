@@ -11,7 +11,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const { error, session } = await requireAdminRole();
-  if (error) return error;
+  if (error) {
+    return error;
+  }
 
   const status = getAuditQueueStatus();
 

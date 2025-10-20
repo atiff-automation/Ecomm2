@@ -16,16 +16,9 @@ import {
   YouTubeIcon,
   TikTokIcon,
   WhatsAppIcon,
-  LinkedInIcon
+  LinkedInIcon,
 } from '@/components/icons/SocialIcons';
-import {
-  Mail,
-  Phone,
-  MapPin,
-  ShoppingBag,
-  Heart,
-  ArrowUp
-} from 'lucide-react';
+import { Mail, Phone, MapPin, ShoppingBag, Heart, ArrowUp } from 'lucide-react';
 
 interface FooterProps {
   className?: string;
@@ -38,19 +31,22 @@ interface BusinessProfile {
   primaryPhone: string;
   secondaryPhone: string | null;
   website: string;
-  operationalAddress: string | {
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-    addressLine1?: string;
-    addressLine2?: string;
-  };
+  operationalAddress:
+    | string
+    | {
+        city?: string;
+        state?: string;
+        country?: string;
+        postalCode?: string;
+        addressLine1?: string;
+        addressLine2?: string;
+      };
 }
 
 export function Footer({ className }: FooterProps) {
   const currentYear = new Date().getFullYear();
-  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [businessProfile, setBusinessProfile] =
+    useState<BusinessProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const scrollToTop = () => {
@@ -79,8 +75,12 @@ export function Footer({ className }: FooterProps) {
   }, []);
 
   // Helper function to format address
-  const formatAddress = (address: BusinessProfile['operationalAddress']): string => {
-    if (!address) return 'Kuala Lumpur, Malaysia';
+  const formatAddress = (
+    address: BusinessProfile['operationalAddress']
+  ): string => {
+    if (!address) {
+      return 'Kuala Lumpur, Malaysia';
+    }
 
     if (typeof address === 'string') {
       return address;
@@ -90,7 +90,7 @@ export function Footer({ className }: FooterProps) {
     const parts = [
       address.city,
       address.state,
-      address.country || 'Malaysia'
+      address.country || 'Malaysia',
     ].filter(part => part && part.trim() !== '');
 
     return parts.length > 0 ? parts.join(', ') : 'Kuala Lumpur, Malaysia';
@@ -105,7 +105,7 @@ export function Footer({ className }: FooterProps) {
         { label: 'New Arrivals', href: '/products?sort=newest' },
         { label: 'Best Sellers', href: '/products?sort=popular' },
         { label: 'All Products', href: '/products' },
-      ]
+      ],
     },
     {
       title: 'Customer Service',
@@ -113,7 +113,7 @@ export function Footer({ className }: FooterProps) {
         { label: 'Track Your Order', href: '/track-order' },
         { label: 'Wishlist', href: '/wishlist' },
         { label: 'FAQs', href: '/legal/terms' },
-      ]
+      ],
     },
     {
       title: 'Account',
@@ -122,7 +122,7 @@ export function Footer({ className }: FooterProps) {
         { label: 'Order History', href: '/member/orders' },
         { label: 'Membership Benefits', href: '/join' },
         { label: 'Sign Up', href: '/auth/signup' },
-      ]
+      ],
     },
     {
       title: 'Company',
@@ -130,22 +130,62 @@ export function Footer({ className }: FooterProps) {
         { label: 'Agent Program', href: '/apply-agent' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Terms of Service', href: '/legal/terms' },
-      ]
-    }
+      ],
+    },
   ];
 
   const socialLinks = [
-    { icon: FacebookIcon, href: '#', label: 'Facebook', hoverColor: 'hover:text-blue-600' },
-    { icon: InstagramIcon, href: '#', label: 'Instagram', hoverColor: 'hover:text-pink-600' },
-    { icon: TwitterIcon, href: '#', label: 'Twitter', hoverColor: 'hover:text-blue-400' },
-    { icon: YouTubeIcon, href: '#', label: 'YouTube', hoverColor: 'hover:text-red-600' },
-    { icon: TikTokIcon, href: '#', label: 'TikTok', hoverColor: 'hover:text-black' },
-    { icon: WhatsAppIcon, href: '#', label: 'WhatsApp', hoverColor: 'hover:text-green-600' },
-    { icon: LinkedInIcon, href: '#', label: 'LinkedIn', hoverColor: 'hover:text-blue-700' },
+    {
+      icon: FacebookIcon,
+      href: '#',
+      label: 'Facebook',
+      hoverColor: 'hover:text-blue-600',
+    },
+    {
+      icon: InstagramIcon,
+      href: '#',
+      label: 'Instagram',
+      hoverColor: 'hover:text-pink-600',
+    },
+    {
+      icon: TwitterIcon,
+      href: '#',
+      label: 'Twitter',
+      hoverColor: 'hover:text-blue-400',
+    },
+    {
+      icon: YouTubeIcon,
+      href: '#',
+      label: 'YouTube',
+      hoverColor: 'hover:text-red-600',
+    },
+    {
+      icon: TikTokIcon,
+      href: '#',
+      label: 'TikTok',
+      hoverColor: 'hover:text-black',
+    },
+    {
+      icon: WhatsAppIcon,
+      href: '#',
+      label: 'WhatsApp',
+      hoverColor: 'hover:text-green-600',
+    },
+    {
+      icon: LinkedInIcon,
+      href: '#',
+      label: 'LinkedIn',
+      hoverColor: 'hover:text-blue-700',
+    },
   ];
 
   return (
-    <footer className={cn('bg-gray-900 text-gray-300 border-t border-gray-800', className)}>
+    <footer
+      className={cn(
+        'bg-gray-900 text-gray-300 border-t border-gray-800',
+        className
+      )}
+    >
       {/* Main Footer Content */}
       <Container size="xl" className="py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
@@ -161,8 +201,9 @@ export function Footer({ className }: FooterProps) {
             </div>
 
             <p className="text-gray-400 mb-6 leading-relaxed">
-              Your trusted Malaysian e-commerce platform offering quality products
-              with intelligent membership benefits and local payment solutions.
+              Your trusted Malaysian e-commerce platform offering quality
+              products with intelligent membership benefits and local payment
+              solutions.
             </p>
 
             {/* Contact Information */}
@@ -173,7 +214,9 @@ export function Footer({ className }: FooterProps) {
                   href={`mailto:${businessProfile?.supportEmail || businessProfile?.primaryEmail || 'support@jrm-ecommerce.com'}`}
                   className="hover:text-white transition-colors"
                 >
-                  {businessProfile?.supportEmail || businessProfile?.primaryEmail || 'support@jrm-ecommerce.com'}
+                  {businessProfile?.supportEmail ||
+                    businessProfile?.primaryEmail ||
+                    'support@jrm-ecommerce.com'}
                 </a>
               </div>
               <div className="flex items-center space-x-3">
@@ -197,7 +240,7 @@ export function Footer({ className }: FooterProps) {
             <div>
               <h4 className="text-white font-semibold mb-4">Follow Us</h4>
               <div className="flex space-x-3">
-                {socialLinks.map((social) => {
+                {socialLinks.map(social => {
                   const IconComponent = social.icon;
                   return (
                     <a
@@ -221,11 +264,11 @@ export function Footer({ className }: FooterProps) {
           </div>
 
           {/* Navigation Sections */}
-          {footerSections.map((section) => (
+          {footerSections.map(section => (
             <div key={section.title} className="lg:col-span-1">
               <h4 className="text-white font-semibold mb-4">{section.title}</h4>
               <ul className="space-y-3">
-                {section.links.map((link) => (
+                {section.links.map(link => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
@@ -251,7 +294,8 @@ export function Footer({ className }: FooterProps) {
                 <h4 className="text-white font-semibold">Stay Updated</h4>
               </div>
               <p className="text-gray-400 text-sm">
-                Subscribe to our newsletter for exclusive deals and new product updates.
+                Subscribe to our newsletter for exclusive deals and new product
+                updates.
               </p>
             </div>
 
@@ -274,17 +318,30 @@ export function Footer({ className }: FooterProps) {
         <Container size="xl" className="py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-400">
-              <p>© {currentYear} {businessProfile?.tradingName || 'JRM E-commerce'}. All rights reserved.</p>
+              <p>
+                © {currentYear}{' '}
+                {businessProfile?.tradingName || 'JRM E-commerce'}. All rights
+                reserved.
+              </p>
               <div className="flex items-center space-x-4">
-                <Link href="/legal/privacy" className="hover:text-white transition-colors">
+                <Link
+                  href="/legal/privacy"
+                  className="hover:text-white transition-colors"
+                >
                   Privacy Policy
                 </Link>
                 <span className="text-gray-600">•</span>
-                <Link href="/legal/terms" className="hover:text-white transition-colors">
+                <Link
+                  href="/legal/terms"
+                  className="hover:text-white transition-colors"
+                >
                   Terms of Service
                 </Link>
                 <span className="text-gray-600">•</span>
-                <Link href="/legal/cookies" className="hover:text-white transition-colors">
+                <Link
+                  href="/legal/cookies"
+                  className="hover:text-white transition-colors"
+                >
                   Cookie Policy
                 </Link>
               </div>

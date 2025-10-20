@@ -25,7 +25,7 @@ import {
   ShoppingBag,
   Layers,
   Sparkles,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 
 export interface CategoryItem {
@@ -80,7 +80,7 @@ export function CategoryShowcase({
   columns = { mobile: 2, tablet: 3, desktop: 4 },
   showProductCounts = true,
   showTrendingBadges = true,
-  className
+  className,
 }: CategoryShowcaseProps) {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const displayCategories = categories.slice(0, maxCategories);
@@ -90,7 +90,7 @@ export function CategoryShowcase({
     grid: 'text-center mb-10',
     masonry: 'text-left mb-8',
     featured: 'text-center mb-12',
-    minimal: 'text-left mb-6'
+    minimal: 'text-left mb-6',
   };
 
   const getGridClasses = () => {
@@ -108,43 +108,55 @@ export function CategoryShowcase({
   const getCategoryHeight = (index: number) => {
     if (variant === 'masonry') {
       // Create masonry effect with varying heights
-      const heights = ['h-48', 'h-56', 'h-44', 'h-52', 'h-48', 'h-60', 'h-44', 'h-56'];
+      const heights = [
+        'h-48',
+        'h-56',
+        'h-44',
+        'h-52',
+        'h-48',
+        'h-60',
+        'h-44',
+        'h-56',
+      ];
       return heights[index % heights.length];
     }
     return variant === 'featured' ? 'h-64' : 'h-48';
   };
 
   return (
-    <Section
-      variant="default"
-      className={cn('py-12 lg:py-16', className)}
-    >
+    <Section variant="default" className={cn('py-12 lg:py-16', className)}>
       <Container size="xl">
         {/* Section Header */}
         <div className={sectionHeaderClasses[variant]}>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Grid3X3 className="h-5 w-5 text-primary" />
-            <span className={cn(
-              sectionTypography.overline(),
-              'text-primary font-medium tracking-wide uppercase'
-            )}>
+            <span
+              className={cn(
+                sectionTypography.overline(),
+                'text-primary font-medium tracking-wide uppercase'
+              )}
+            >
               {subtitle}
             </span>
           </div>
 
-          <h2 className={cn(
-            sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
-            'font-bold text-foreground mb-4'
-          )}>
+          <h2
+            className={cn(
+              sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
+              'font-bold text-foreground mb-4'
+            )}
+          >
             {title}
           </h2>
 
           {description && (
-            <p className={cn(
-              sectionTypography.description(),
-              'text-muted-foreground max-w-2xl',
-              variant === 'featured' || variant === 'grid' ? 'mx-auto' : ''
-            )}>
+            <p
+              className={cn(
+                sectionTypography.description(),
+                'text-muted-foreground max-w-2xl',
+                variant === 'featured' || variant === 'grid' ? 'mx-auto' : ''
+              )}
+            >
               {description}
             </p>
           )}
@@ -194,7 +206,10 @@ export function CategoryShowcase({
                         <div className="flex items-start justify-between">
                           <div className="flex flex-col gap-2">
                             {category.featured && (
-                              <Badge variant="secondary" className="w-fit bg-white/20 text-white backdrop-blur-sm">
+                              <Badge
+                                variant="secondary"
+                                className="w-fit bg-white/20 text-white backdrop-blur-sm"
+                              >
                                 <Star className="w-3 h-3 mr-1" />
                                 Featured
                               </Badge>
@@ -206,13 +221,19 @@ export function CategoryShowcase({
                               </Badge>
                             )}
                             {category.badge && (
-                              <Badge variant={category.badge.variant || 'secondary'} className="w-fit">
+                              <Badge
+                                variant={category.badge.variant || 'secondary'}
+                                className="w-fit"
+                              >
                                 {category.badge.text}
                               </Badge>
                             )}
                           </div>
                           {category.newArrivals && category.newArrivals > 0 && (
-                            <Badge variant="outline" className="bg-white/20 text-white backdrop-blur-sm border-white/30">
+                            <Badge
+                              variant="outline"
+                              className="bg-white/20 text-white backdrop-blur-sm border-white/30"
+                            >
                               <Sparkles className="w-3 h-3 mr-1" />
                               {category.newArrivals} New
                             </Badge>
@@ -222,17 +243,21 @@ export function CategoryShowcase({
                         {/* Bottom Section - Category Info */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h3 className={cn(
-                              'font-bold text-white transition-colors duration-200',
-                              variant === 'featured' ? 'text-xl' : 'text-lg',
-                              'group-hover:text-primary-foreground'
-                            )}>
+                            <h3
+                              className={cn(
+                                'font-bold text-white transition-colors duration-200',
+                                variant === 'featured' ? 'text-xl' : 'text-lg',
+                                'group-hover:text-primary-foreground'
+                              )}
+                            >
                               {category.name}
                             </h3>
-                            <ChevronRight className={cn(
-                              'h-5 w-5 text-white transition-all duration-200',
-                              'group-hover:translate-x-1 group-hover:text-primary-foreground'
-                            )} />
+                            <ChevronRight
+                              className={cn(
+                                'h-5 w-5 text-white transition-all duration-200',
+                                'group-hover:translate-x-1 group-hover:text-primary-foreground'
+                              )}
+                            />
                           </div>
 
                           {category.description && variant === 'featured' && (
@@ -293,7 +318,7 @@ export function CategoryShowcase({
           <div className="space-y-8">
             {/* Featured Categories */}
             <div className="grid md:grid-cols-2 gap-6">
-              {displayCategories.slice(0, 2).map((category) => (
+              {displayCategories.slice(0, 2).map(category => (
                 <Link key={category.id} href={category.href}>
                   <Card className="group overflow-hidden border-2 h-80 transition-all duration-300 hover:border-primary hover:shadow-xl">
                     <div className="relative h-full w-full">
@@ -307,12 +332,18 @@ export function CategoryShowcase({
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                       <CardContent className="absolute inset-0 p-8 flex flex-col justify-end">
                         <div className="space-y-3">
-                          <h3 className="font-bold text-2xl text-white">{category.name}</h3>
+                          <h3 className="font-bold text-2xl text-white">
+                            {category.name}
+                          </h3>
                           {category.description && (
-                            <p className="text-white/80">{category.description}</p>
+                            <p className="text-white/80">
+                              {category.description}
+                            </p>
                           )}
                           <div className="flex items-center gap-4 text-white/70">
-                            <span className="font-medium">{category.productCount} items</span>
+                            <span className="font-medium">
+                              {category.productCount} items
+                            </span>
                             {category.trending && (
                               <Badge variant="destructive">
                                 <TrendingUp className="w-3 h-3 mr-1" />
@@ -331,7 +362,7 @@ export function CategoryShowcase({
             {/* Regular Categories Grid */}
             {displayCategories.length > 2 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {displayCategories.slice(2).map((category) => (
+                {displayCategories.slice(2).map(category => (
                   <Link key={category.id} href={category.href}>
                     <Card className="group overflow-hidden border-2 h-40 transition-all duration-300 hover:border-primary hover:shadow-lg">
                       <div className="relative h-full w-full">
@@ -344,8 +375,12 @@ export function CategoryShowcase({
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <CardContent className="absolute inset-0 p-4 flex flex-col justify-end">
-                          <h4 className="font-semibold text-white text-sm">{category.name}</h4>
-                          <span className="text-white/70 text-xs">{category.productCount} items</span>
+                          <h4 className="font-semibold text-white text-sm">
+                            {category.name}
+                          </h4>
+                          <span className="text-white/70 text-xs">
+                            {category.productCount} items
+                          </span>
                         </CardContent>
                       </div>
                     </Card>
@@ -361,7 +396,7 @@ export function CategoryShowcase({
           <div className="space-y-8">
             <div className="overflow-x-auto">
               <div className="flex gap-6 pb-4" style={{ width: 'max-content' }}>
-                {displayCategories.map((category) => (
+                {displayCategories.map(category => (
                   <Link key={category.id} href={category.href}>
                     <Card className="group overflow-hidden border-2 w-64 h-48 transition-all duration-300 hover:border-primary hover:shadow-xl">
                       <div className="relative h-full w-full">
@@ -383,10 +418,14 @@ export function CategoryShowcase({
                             )}
                           </div>
                           <div className="space-y-2">
-                            <h3 className="font-bold text-white text-lg">{category.name}</h3>
+                            <h3 className="font-bold text-white text-lg">
+                              {category.name}
+                            </h3>
                             <div className="flex items-center gap-2 text-white/70">
                               <Package className="h-4 w-4" />
-                              <span className="text-sm">{category.productCount} items</span>
+                              <span className="text-sm">
+                                {category.productCount} items
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -418,9 +457,12 @@ export function CategoryShowcase({
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Grid3X3 className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No Categories Available</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No Categories Available
+              </h3>
               <p className="text-muted-foreground mb-4">
-                We're organizing our categories. Check back soon for exciting collections!
+                We're organizing our categories. Check back soon for exciting
+                collections!
               </p>
               <Link href="/products">
                 <Button variant="outline">
@@ -437,7 +479,10 @@ export function CategoryShowcase({
 }
 
 // Specialized category showcase variants
-export const CompactCategoryShowcase = ({ className, ...props }: Omit<CategoryShowcaseProps, 'variant'>) => (
+export const CompactCategoryShowcase = ({
+  className,
+  ...props
+}: Omit<CategoryShowcaseProps, 'variant'>) => (
   <CategoryShowcase
     variant="minimal"
     title="Categories"
@@ -451,7 +496,10 @@ export const CompactCategoryShowcase = ({ className, ...props }: Omit<CategorySh
   />
 );
 
-export const FeaturedCategoryShowcase = ({ className, ...props }: Omit<CategoryShowcaseProps, 'variant' | 'layout'>) => (
+export const FeaturedCategoryShowcase = ({
+  className,
+  ...props
+}: Omit<CategoryShowcaseProps, 'variant' | 'layout'>) => (
   <CategoryShowcase
     variant="featured"
     layout="mixed"
@@ -478,7 +526,7 @@ export function QuickCategories({
   title = 'Quick Browse',
   maxCategories = 4,
   showProductCounts = true,
-  className
+  className,
 }: QuickCategoriesProps) {
   const displayCategories = categories.slice(0, maxCategories);
 
@@ -490,7 +538,7 @@ export function QuickCategories({
       </div>
 
       <div className="space-y-2">
-        {displayCategories.map((category) => (
+        {displayCategories.map(category => (
           <Link key={category.id} href={category.href}>
             <Card className="p-3 hover:shadow-md transition-shadow group">
               <div className="flex items-center gap-3">

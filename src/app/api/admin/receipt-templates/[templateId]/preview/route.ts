@@ -25,9 +25,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -46,13 +51,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return new Response(previewHtml, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
     });
-
   } catch (error) {
     console.error('Template preview error:', error);
-    
+
     // Return error as HTML for iframe display
     const errorHtml = `
       <!DOCTYPE html>
@@ -91,12 +95,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       </body>
       </html>
     `;
-    
+
     return new Response(errorHtml, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8'
+        'Content-Type': 'text/html; charset=utf-8',
       },
-      status: 500
+      status: 500,
     });
   }
 }

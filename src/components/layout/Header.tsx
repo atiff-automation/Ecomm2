@@ -64,7 +64,8 @@ interface NavigationItem {
 export function Header() {
   const { isLoggedIn, isMember, isLoading, signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [siteCustomization, setSiteCustomization] = useState<SiteCustomization | null>(null);
+  const [siteCustomization, setSiteCustomization] =
+    useState<SiteCustomization | null>(null);
 
   // Fetch site customization data
   useEffect(() => {

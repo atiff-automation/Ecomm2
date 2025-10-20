@@ -15,7 +15,7 @@ import { UserRole } from '@prisma/client';
 /**
  * GET /api/admin/payments/stats
  * Returns comprehensive payment statistics and metrics
- * 
+ *
  * Query Parameters:
  * - startDate: ISO date string for start of period
  * - endDate: ISO date string for end of period
@@ -50,7 +50,8 @@ export async function GET(request: NextRequest) {
     const startDateStr = searchParams.get('startDate');
     const endDateStr = searchParams.get('endDate');
     const includeTrends = searchParams.get('includeTrends') === 'true';
-    const includeMethodBreakdown = searchParams.get('includeMethodBreakdown') === 'true';
+    const includeMethodBreakdown =
+      searchParams.get('includeMethodBreakdown') === 'true';
 
     // Validate and parse dates
     let startDate: Date | undefined;
@@ -86,11 +87,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (includeMethodBreakdown) {
-      promises.push(PaymentMetricsService.getPaymentMethodStats(startDate, endDate));
+      promises.push(
+        PaymentMetricsService.getPaymentMethodStats(startDate, endDate)
+      );
     }
 
     const results = await Promise.all(promises);
-    
+
     // Structure response
     const response: any = {
       metrics: results[0],
@@ -115,18 +118,20 @@ export async function GET(request: NextRequest) {
       success: true,
       data: response,
     });
-
   } catch (error) {
     console.error('Payment stats API error:', error);
-    
+
     // Determine if this is a database connection issue
-    const isDatabaseError = error instanceof Error && 
-      (error.message.includes('database') || error.message.includes('connection'));
+    const isDatabaseError =
+      error instanceof Error &&
+      (error.message.includes('database') ||
+        error.message.includes('connection'));
 
     return NextResponse.json(
       {
         error: 'Failed to fetch payment statistics',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
         type: isDatabaseError ? 'database_error' : 'server_error',
       },
       { status: 500 }
@@ -160,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     // Force refresh of current metrics
     const refreshedMetrics = await PaymentMetricsService.getPaymentMetrics();
-    
+
     return NextResponse.json({
       success: true,
       message: 'Payment statistics refreshed successfully',
@@ -169,7 +174,6 @@ export async function POST(request: NextRequest) {
         refreshedAt: new Date().toISOString(),
       },
     });
-
   } catch (error) {
     console.error('Payment stats refresh error:', error);
     return NextResponse.json(

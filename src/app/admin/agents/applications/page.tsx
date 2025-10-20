@@ -11,7 +11,11 @@ import { redirect } from 'next/navigation';
 import { ApplicationsList } from '@/components/admin/agent-applications/ApplicationsList';
 import { AgentApplicationService } from '@/lib/services/agent-application.service';
 import { ApplicationFilters } from '@/types/agent-application';
-import { AdminPageLayout, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -54,8 +58,12 @@ async function getApplicationsData(searchParams: PageProps['searchParams']) {
       limit: searchParams.limit ? parseInt(searchParams.limit) : 10,
       status: searchParams.status as any,
       search: searchParams.search || '',
-      hasJrmExp: searchParams.hasJrmExp === 'true' ? true :
-                 searchParams.hasJrmExp === 'false' ? false : undefined,
+      hasJrmExp:
+        searchParams.hasJrmExp === 'true'
+          ? true
+          : searchParams.hasJrmExp === 'false'
+            ? false
+            : undefined,
       dateFrom: searchParams.dateFrom || undefined,
       dateTo: searchParams.dateTo || undefined,
     };
@@ -68,10 +76,15 @@ async function getApplicationsData(searchParams: PageProps['searchParams']) {
   }
 }
 
-export default async function AdminAgentApplicationsPage({ searchParams }: PageProps) {
+export default async function AdminAgentApplicationsPage({
+  searchParams,
+}: PageProps) {
   // Check authentication
   const session = await getServerSession();
-  if (!session?.user?.role || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+  if (
+    !session?.user?.role ||
+    !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+  ) {
     redirect('/auth/signin?callbackUrl=/admin/agents/applications');
   }
 
@@ -79,7 +92,9 @@ export default async function AdminAgentApplicationsPage({ searchParams }: PageP
   const initialData = await getApplicationsData(searchParams);
 
   // Define breadcrumbs for agent applications
-  const breadcrumbs: BreadcrumbItem[] = [BREADCRUMB_CONFIGS.agents.applications];
+  const breadcrumbs: BreadcrumbItem[] = [
+    BREADCRUMB_CONFIGS.agents.applications,
+  ];
 
   return (
     <AdminPageLayout

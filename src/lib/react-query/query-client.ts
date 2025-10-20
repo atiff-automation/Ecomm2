@@ -44,16 +44,19 @@ export const queryKeys = {
 
   // Membership queries
   membershipStatus: (userId?: string) =>
-    userId ? ['membership', 'status', userId] as const : ['membership', 'status'] as const,
+    userId
+      ? (['membership', 'status', userId] as const)
+      : (['membership', 'status'] as const),
 
   // Cart queries (for future migration)
   cart: (userId?: string) =>
-    userId ? ['cart', userId] as const : ['cart'] as const,
+    userId ? (['cart', userId] as const) : (['cart'] as const),
 
   // Product queries (for future migration)
   products: {
     all: ['products'] as const,
     detail: (slug: string) => ['products', 'detail', slug] as const,
-    category: (categoryId: string) => ['products', 'category', categoryId] as const,
+    category: (categoryId: string) =>
+      ['products', 'category', categoryId] as const,
   },
 } as const;

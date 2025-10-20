@@ -74,7 +74,7 @@ export default function ShippingSelector({
       return;
     }
 
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch('/api/shipping/calculate', {
@@ -108,7 +108,7 @@ export default function ShippingSelector({
         // CRITICAL: Notify parent component of selection AND weight
         onShippingSelected(selectedOption, totalWeight);
       } else {
-        setState((prev) => ({
+        setState(prev => ({
           ...prev,
           loading: false,
           error: data.message || 'Failed to calculate shipping',
@@ -117,14 +117,20 @@ export default function ShippingSelector({
       }
     } catch (error) {
       console.error('[ShippingSelector] Calculation error:', error);
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         loading: false,
         error: 'Failed to calculate shipping. Please try again.',
       }));
       onShippingSelected(null);
     }
-  }, [deliveryAddress, items, orderValue, isAddressComplete, onShippingSelected]);
+  }, [
+    deliveryAddress,
+    items,
+    orderValue,
+    isAddressComplete,
+    onShippingSelected,
+  ]);
 
   // Auto-calculate when address changes (with debounce)
   // FIXED: Removed calculateShipping from dependencies to prevent recalculation when parent re-renders
@@ -138,13 +144,25 @@ export default function ShippingSelector({
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [deliveryAddress.name, deliveryAddress.phone, deliveryAddress.addressLine1, deliveryAddress.city, deliveryAddress.state, deliveryAddress.postalCode, deliveryAddress.country, items, orderValue]); // Only recalculate when actual delivery data changes
+  }, [
+    deliveryAddress.name,
+    deliveryAddress.phone,
+    deliveryAddress.addressLine1,
+    deliveryAddress.city,
+    deliveryAddress.state,
+    deliveryAddress.postalCode,
+    deliveryAddress.country,
+    items,
+    orderValue,
+  ]); // Only recalculate when actual delivery data changes
 
   // Handle manual courier selection
   const handleCourierSelect = (serviceId: string) => {
-    const selectedOption = state.options.find((opt) => opt.serviceId === serviceId);
+    const selectedOption = state.options.find(
+      opt => opt.serviceId === serviceId
+    );
     if (selectedOption) {
-      setState((prev) => ({ ...prev, selected: selectedOption }));
+      setState(prev => ({ ...prev, selected: selectedOption }));
       // CRITICAL: Notify parent of selection change AND weight
       onShippingSelected(selectedOption, state.totalWeight);
     }
@@ -168,7 +186,9 @@ export default function ShippingSelector({
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="ml-3 text-gray-600">Calculating shipping cost...</span>
+            <span className="ml-3 text-gray-600">
+              Calculating shipping cost...
+            </span>
           </div>
           <p className="text-sm text-gray-500 text-center mt-2">
             Please wait while we check available couriers for your address.
@@ -226,52 +246,60 @@ export default function ShippingSelector({
       </CardHeader>
       <CardContent>
         {/* Cheapest and Priority strategies: Single option (auto-selected) */}
-        {(state.strategy === 'cheapest' || state.strategy === 'priority') && state.selected && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                {state.selected.freeShipping ? (
-                  <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl font-bold text-green-600">🎉 FREE SHIPPING</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-1">
-                      Via: {state.selected.courierName} ({state.selected.serviceType})
-                    </p>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Delivery: {state.selected.estimatedDays}
-                    </p>
-                    {state.selected.savedAmount && (
-                      <p className="text-sm font-semibold text-green-600">
-                        ✓ You saved RM {state.selected.savedAmount.toFixed(2)} on shipping!
+        {(state.strategy === 'cheapest' || state.strategy === 'priority') &&
+          state.selected && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  {state.selected.freeShipping ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl font-bold text-green-600">
+                          🎉 FREE SHIPPING
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-1">
+                        Via: {state.selected.courierName} (
+                        {state.selected.serviceType})
                       </p>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <p className="font-semibold text-lg mb-1">Standard Shipping</p>
-                    <p className="text-sm text-gray-700 mb-1">
-                      Via: {state.selected.courierName} ({state.selected.serviceType})
-                    </p>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Delivery: {state.selected.estimatedDays}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {state.strategy === 'cheapest'
-                        ? '(Cheapest option automatically selected)'
-                        : '(Priority courier automatically selected)'}
-                    </p>
-                  </>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-blue-600">
-                  RM {state.selected.cost.toFixed(2)}
-                </p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Delivery: {state.selected.estimatedDays}
+                      </p>
+                      {state.selected.savedAmount && (
+                        <p className="text-sm font-semibold text-green-600">
+                          ✓ You saved RM {state.selected.savedAmount.toFixed(2)}{' '}
+                          on shipping!
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold text-lg mb-1">
+                        Standard Shipping
+                      </p>
+                      <p className="text-sm text-gray-700 mb-1">
+                        Via: {state.selected.courierName} (
+                        {state.selected.serviceType})
+                      </p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Delivery: {state.selected.estimatedDays}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {state.strategy === 'cheapest'
+                          ? '(Cheapest option automatically selected)'
+                          : '(Priority courier automatically selected)'}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">
+                    RM {state.selected.cost.toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Show all / selected strategies: Multiple options with radio buttons */}
         {(state.strategy === 'all' || state.strategy === 'selected') && (
@@ -280,7 +308,7 @@ export default function ShippingSelector({
             onValueChange={handleCourierSelect}
           >
             <div className="space-y-3">
-              {state.options.map((option) => (
+              {state.options.map(option => (
                 <div
                   key={option.serviceId}
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${
@@ -303,7 +331,9 @@ export default function ShippingSelector({
                       >
                         {option.courierName}
                         {option.freeShipping && (
-                          <span className="ml-2 text-green-600 font-bold">FREE</span>
+                          <span className="ml-2 text-green-600 font-bold">
+                            FREE
+                          </span>
                         )}
                       </Label>
                       <p className="text-sm text-gray-600 mt-1">

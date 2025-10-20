@@ -31,15 +31,27 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log('🔍 [Chat Config Public API] Database configs found:', configs.length);
-    console.log('🔍 [Chat Config Public API] Raw configs:', JSON.stringify(configs, null, 2));
+    console.log(
+      '🔍 [Chat Config Public API] Database configs found:',
+      configs.length
+    );
+    console.log(
+      '🔍 [Chat Config Public API] Raw configs:',
+      JSON.stringify(configs, null, 2)
+    );
 
-    const configMap = configs.reduce((acc, config) => {
-      acc[config.key] = config.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const configMap = configs.reduce(
+      (acc, config) => {
+        acc[config.key] = config.value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
-    console.log('🔍 [Chat Config Public API] Config map:', JSON.stringify(configMap, null, 2));
+    console.log(
+      '🔍 [Chat Config Public API] Config map:',
+      JSON.stringify(configMap, null, 2)
+    );
 
     const response = {
       webhookUrl: configMap['n8n_chat_webhook_url'] || '',
@@ -48,8 +60,11 @@ export async function GET(request: NextRequest) {
       primaryColor: configMap['n8n_chat_primary_color'] || '#2563eb',
       title: configMap['n8n_chat_title'] || 'Chat Support',
       subtitle: configMap['n8n_chat_subtitle'] || "We're here to help",
-      welcomeMessage: configMap['n8n_chat_welcome_message'] || 'Hello! =K\nHow can I help you today?',
-      inputPlaceholder: configMap['n8n_chat_input_placeholder'] || 'Type your message...',
+      welcomeMessage:
+        configMap['n8n_chat_welcome_message'] ||
+        'Hello! =K\nHow can I help you today?',
+      inputPlaceholder:
+        configMap['n8n_chat_input_placeholder'] || 'Type your message...',
       botAvatarUrl: configMap['n8n_chat_bot_avatar_url'] || '',
       _debug: {
         totalConfigsFound: configs.length,
@@ -58,17 +73,24 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    console.log(' [Chat Config Public API] Returning response:', JSON.stringify(response, null, 2));
+    console.log(
+      ' [Chat Config Public API] Returning response:',
+      JSON.stringify(response, null, 2)
+    );
 
     return NextResponse.json(response, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control':
+          'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
     });
   } catch (error) {
-    console.error('L [Chat Config Public API] Error getting public chat config:', error);
+    console.error(
+      'L [Chat Config Public API] Error getting public chat config:',
+      error
+    );
     return NextResponse.json(
       {
         webhookUrl: '',

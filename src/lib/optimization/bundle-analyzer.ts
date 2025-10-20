@@ -19,7 +19,11 @@ interface BundleStats {
 }
 
 interface OptimizationSuggestion {
-  type: 'dynamic-import' | 'tree-shaking' | 'code-splitting' | 'dependency-optimization';
+  type:
+    | 'dynamic-import'
+    | 'tree-shaking'
+    | 'code-splitting'
+    | 'dependency-optimization';
   description: string;
   impact: 'high' | 'medium' | 'low';
   implementation: string;
@@ -57,7 +61,8 @@ export function analyzeBundleAndSuggest(): OptimizationSuggestion[] {
     type: 'tree-shaking',
     description: 'Replace lodash with lodash-es for better tree shaking',
     impact: 'medium',
-    implementation: 'npm install lodash-es && replace import _ from "lodash" with import { function } from "lodash-es"',
+    implementation:
+      'npm install lodash-es && replace import _ from "lodash" with import { function } from "lodash-es"',
   });
 
   // Code splitting opportunities
@@ -65,14 +70,16 @@ export function analyzeBundleAndSuggest(): OptimizationSuggestion[] {
     type: 'code-splitting',
     description: 'Split admin routes into separate chunks',
     impact: 'high',
-    implementation: 'Use dynamic imports for admin components and implement route-based code splitting',
+    implementation:
+      'Use dynamic imports for admin components and implement route-based code splitting',
   });
 
   suggestions.push({
     type: 'code-splitting',
     description: 'Create separate chunks for UI library components',
     impact: 'medium',
-    implementation: 'Group UI components into separate webpack chunks using splitChunks configuration',
+    implementation:
+      'Group UI components into separate webpack chunks using splitChunks configuration',
   });
 
   // Dependency optimization
@@ -80,14 +87,16 @@ export function analyzeBundleAndSuggest(): OptimizationSuggestion[] {
     type: 'dependency-optimization',
     description: 'Replace moment.js with date-fns for smaller bundle size',
     impact: 'medium',
-    implementation: 'npm uninstall moment && npm install date-fns, then update imports',
+    implementation:
+      'npm uninstall moment && npm install date-fns, then update imports',
   });
 
   suggestions.push({
     type: 'dependency-optimization',
     description: 'Use React.lazy for component-level code splitting',
     impact: 'high',
-    implementation: 'Wrap heavy components with React.lazy and Suspense boundaries',
+    implementation:
+      'Wrap heavy components with React.lazy and Suspense boundaries',
   });
 
   return suggestions;
@@ -98,14 +107,16 @@ export function analyzeBundleAndSuggest(): OptimizationSuggestion[] {
  */
 export function checkBundleIssues(): string[] {
   const issues: string[] = [];
-  
+
   // These would be implemented with actual bundle analysis in a real scenario
   issues.push('Large vendor chunk detected (>500KB) - consider splitting');
   issues.push('Duplicate modules found: react-dom appears in multiple chunks');
   issues.push('Heavy images not optimized - use Next.js Image component');
   issues.push('CSS not purged - unused Tailwind classes detected');
-  issues.push('JavaScript polyfills included unnecessarily for modern browsers');
-  
+  issues.push(
+    'JavaScript polyfills included unnecessarily for modern browsers'
+  );
+
   return issues;
 }
 
@@ -124,7 +135,7 @@ export function generateOptimizationReport(): {
 } {
   const suggestions = analyzeBundleAndSuggest();
   const issues = checkBundleIssues();
-  
+
   const actions = [
     'Run `npm run analyze` to visualize bundle composition',
     'Implement dynamic imports for heavy admin components',
@@ -157,24 +168,38 @@ export function estimateBundleImpact(changes: string[]): {
   userExperienceImpact: string;
 } {
   let totalReduction = 0;
-  
+
   changes.forEach(change => {
-    if (change.includes('admin')) totalReduction += 200; // KB
-    if (change.includes('chart')) totalReduction += 150;
-    if (change.includes('lodash')) totalReduction += 100;
-    if (change.includes('moment')) totalReduction += 80;
-    if (change.includes('image')) totalReduction += 50;
+    if (change.includes('admin')) {
+      totalReduction += 200;
+    } // KB
+    if (change.includes('chart')) {
+      totalReduction += 150;
+    }
+    if (change.includes('lodash')) {
+      totalReduction += 100;
+    }
+    if (change.includes('moment')) {
+      totalReduction += 80;
+    }
+    if (change.includes('image')) {
+      totalReduction += 50;
+    }
   });
 
   let performanceImpact: 'high' | 'medium' | 'low' = 'low';
-  if (totalReduction > 300) performanceImpact = 'high';
-  else if (totalReduction > 150) performanceImpact = 'medium';
+  if (totalReduction > 300) {
+    performanceImpact = 'high';
+  } else if (totalReduction > 150) {
+    performanceImpact = 'medium';
+  }
 
-  const userExperienceImpact = performanceImpact === 'high' 
-    ? 'Significant improvement in page load speed, especially for mobile users'
-    : performanceImpact === 'medium'
-    ? 'Moderate improvement in initial load time'
-    : 'Minor performance improvement';
+  const userExperienceImpact =
+    performanceImpact === 'high'
+      ? 'Significant improvement in page load speed, especially for mobile users'
+      : performanceImpact === 'medium'
+        ? 'Moderate improvement in initial load time'
+        : 'Minor performance improvement';
 
   return {
     estimatedSizeReduction: totalReduction,
@@ -189,12 +214,12 @@ export function estimateBundleImpact(changes: string[]): {
 export function createBundleAnalyzerConfig() {
   return {
     development: {
-      script: "ANALYZE=true npm run dev",
-      description: "Analyze bundle in development mode with live updates"
+      script: 'ANALYZE=true npm run dev',
+      description: 'Analyze bundle in development mode with live updates',
     },
     production: {
-      script: "npm run build && npx @next/bundle-analyzer",
-      description: "Analyze production bundle for optimization opportunities"
+      script: 'npm run build && npx @next/bundle-analyzer',
+      description: 'Analyze production bundle for optimization opportunities',
     },
     configuration: `
 // Add to next.config.js
@@ -234,28 +259,28 @@ jobs:
         with:
           github_token: \${{ secrets.GITHUB_TOKEN }}
     `.trim(),
-    
+
     packageJsonScript: {
-      "size-limit": "size-limit",
-      "size-limit:ci": "size-limit --json > bundle-size-report.json"
+      'size-limit': 'size-limit',
+      'size-limit:ci': 'size-limit --json > bundle-size-report.json',
     },
-    
+
     sizeLimitConfig: [
       {
-        name: "Main Bundle",
-        path: ".next/static/chunks/pages/**/*.js",
-        limit: "400 KB"
+        name: 'Main Bundle',
+        path: '.next/static/chunks/pages/**/*.js',
+        limit: '400 KB',
       },
       {
-        name: "Admin Bundle", 
-        path: ".next/static/chunks/admin*.js",
-        limit: "200 KB"
+        name: 'Admin Bundle',
+        path: '.next/static/chunks/admin*.js',
+        limit: '200 KB',
       },
       {
-        name: "Vendor Bundle",
-        path: ".next/static/chunks/vendors*.js", 
-        limit: "500 KB"
-      }
-    ]
+        name: 'Vendor Bundle',
+        path: '.next/static/chunks/vendors*.js',
+        limit: '500 KB',
+      },
+    ],
   };
 }

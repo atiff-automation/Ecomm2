@@ -232,7 +232,6 @@ export class PaymentRouterService {
     }
   }
 
-
   /**
    * Check payment status for any payment method
    */

@@ -48,20 +48,20 @@ function validateHeroImage(file: File): { valid: boolean; error?: string } {
     'image/png',
     'image/webp',
     'video/mp4',
-    'video/webm'
+    'video/webm',
   ];
 
   if (file.size > MAX_SIZE) {
     return {
       valid: false,
-      error: `File size too large. Maximum: ${MAX_SIZE / 1024 / 1024}MB`
+      error: `File size too large. Maximum: ${MAX_SIZE / 1024 / 1024}MB`,
     };
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`
+      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`,
     };
   }
 
@@ -91,7 +91,7 @@ export async function uploadHeroImage(
       type: file.type,
       uploadType: type,
       isProduction,
-      uploadDir: UPLOAD_DIR
+      uploadDir: UPLOAD_DIR,
     });
 
     // Validate file
@@ -113,7 +113,7 @@ export async function uploadHeroImage(
     console.log('💾 Saving file:', {
       filename,
       filepath,
-      directory: UPLOAD_DIR
+      directory: UPLOAD_DIR,
     });
 
     // Convert file to buffer and save
@@ -126,7 +126,7 @@ export async function uploadHeroImage(
       console.error('❌ File not found after write:', filepath);
       return {
         success: false,
-        error: 'File upload failed - file not found after write'
+        error: 'File upload failed - file not found after write',
       };
     }
 
@@ -136,19 +136,19 @@ export async function uploadHeroImage(
     console.log('✅ Upload successful:', {
       filename,
       url,
-      fileExists: existsSync(filepath)
+      fileExists: existsSync(filepath),
     });
 
     return {
       success: true,
       url,
-      filename
+      filename,
     };
   } catch (error) {
     console.error('❌ Hero image upload error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Upload failed'
+      error: error instanceof Error ? error.message : 'Upload failed',
     };
   }
 }
@@ -193,7 +193,7 @@ export async function getHeroImageInfo(filename: string): Promise<{
     return {
       exists: true,
       size: stats.size,
-      path: fullPath
+      path: fullPath,
     };
   } catch (error) {
     console.error('❌ Error getting hero image info:', error);

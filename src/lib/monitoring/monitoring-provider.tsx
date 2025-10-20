@@ -42,7 +42,7 @@ export function MonitoringProvider({
   useEffect(() => {
     // Initialize centralized monitoring service - DRY approach - TEMPORARILY DISABLED
     // monitoringService.initialize(); // DISABLED due to fetch interference
-    
+
     // Update legacy monitoring configuration if provided
     if (Object.keys(config).length > 0) {
       errorMonitor.updateConfig(config);
@@ -72,14 +72,18 @@ export function MonitoringProvider({
       // DRY: Use centralized monitoring service instead of duplicate API calls
       if (isFeatureEnabled('userTracking')) {
         await monitoringService.trackUserAction(action, properties);
-        
+
         // Add breadcrumb for legacy compatibility
         addBreadcrumb(`User action: ${action}`, 'user');
       }
     } catch (error) {
       console.error('Error tracking user action:', error);
       // Report error through centralized service
-      reportError(error instanceof Error ? error : new Error('User action tracking failed'));
+      reportError(
+        error instanceof Error
+          ? error
+          : new Error('User action tracking failed')
+      );
     }
   };
 

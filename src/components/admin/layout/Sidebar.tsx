@@ -3,7 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { adminNavigation, type NavigationItem } from '@/config/admin-navigation';
+import {
+  adminNavigation,
+  type NavigationItem,
+} from '@/config/admin-navigation';
 import { UserRole } from '@prisma/client';
 
 interface SidebarProps {

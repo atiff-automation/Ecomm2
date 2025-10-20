@@ -77,7 +77,6 @@ export default function ToyyibPayConfigPage() {
     categoryCode: '',
   });
 
-
   // Authentication check
   if (status === 'loading') {
     return <div>Loading...</div>;
@@ -270,175 +269,175 @@ export default function ToyyibPayConfigPage() {
       loading={loading}
     >
       <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Key className="w-5 h-5" />
-                <span>API Credentials</span>
-              </CardTitle>
-              <CardDescription>
-                Configure your toyyibPay API credentials. Credentials are
-                encrypted and stored securely.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {credentialStatus.hasCredentials && (
-                <Alert>
-                  <Info className="w-4 h-4" />
-                  <AlertDescription>
-                    <div className="space-y-1">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Key className="w-5 h-5" />
+              <span>API Credentials</span>
+            </CardTitle>
+            <CardDescription>
+              Configure your toyyibPay API credentials. Credentials are
+              encrypted and stored securely.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {credentialStatus.hasCredentials && (
+              <Alert>
+                <Info className="w-4 h-4" />
+                <AlertDescription>
+                  <div className="space-y-1">
+                    <p>
+                      <strong>Current Status:</strong>{' '}
+                      {credentialStatus.isConfigured
+                        ? 'Configured'
+                        : 'Not Configured'}
+                    </p>
+                    <p>
+                      <strong>Environment:</strong>{' '}
+                      {credentialStatus.environment}
+                    </p>
+                    <p>
+                      <strong>Secret Key:</strong>{' '}
+                      {credentialStatus.userSecretKeyMasked}
+                    </p>
+                    {credentialStatus.lastUpdated && (
                       <p>
-                        <strong>Current Status:</strong>{' '}
-                        {credentialStatus.isConfigured
-                          ? 'Configured'
-                          : 'Not Configured'}
+                        <strong>Last Updated:</strong>{' '}
+                        {new Date(
+                          credentialStatus.lastUpdated
+                        ).toLocaleString()}
                       </p>
-                      <p>
-                        <strong>Environment:</strong>{' '}
-                        {credentialStatus.environment}
-                      </p>
-                      <p>
-                        <strong>Secret Key:</strong>{' '}
-                        {credentialStatus.userSecretKeyMasked}
-                      </p>
-                      {credentialStatus.lastUpdated && (
-                        <p>
-                          <strong>Last Updated:</strong>{' '}
-                          {new Date(
-                            credentialStatus.lastUpdated
-                          ).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="userSecretKey">User Secret Key</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="userSecretKey"
-                      type={showSecret ? 'text' : 'password'}
-                      value={formData.userSecretKey}
-                      onChange={e =>
-                        setFormData(prev => ({
-                          ...prev,
-                          userSecretKey: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter your toyyibPay User Secret Key"
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setShowSecret(!showSecret)}
-                    >
-                      {showSecret ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </Button>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your secret key from toyyibPay merchant dashboard
-                  </p>
-                </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
-                <div>
-                  <Label htmlFor="environment">Environment</Label>
-                  <Select
-                    value={formData.environment}
-                    onValueChange={value => {
-                      if (credentialStatus.hasCredentials) {
-                        handleSwitchEnvironment(
-                          value as 'sandbox' | 'production'
-                        );
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                          environment: value as 'sandbox' | 'production',
-                        }));
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
-                      <SelectItem value="production">
-                        Production (Live)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formData.environment === 'sandbox'
-                      ? 'Use sandbox for testing with fake transactions'
-                      : 'Production environment for live payments'}
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="categoryCode">Category Code</Label>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label htmlFor="userSecretKey">User Secret Key</Label>
+                <div className="flex space-x-2">
                   <Input
-                    id="categoryCode"
-                    value={formData.categoryCode}
+                    id="userSecretKey"
+                    type={showSecret ? 'text' : 'password'}
+                    value={formData.userSecretKey}
                     onChange={e =>
                       setFormData(prev => ({
                         ...prev,
-                        categoryCode: e.target.value,
+                        userSecretKey: e.target.value,
                       }))
                     }
-                    placeholder="Enter toyyibPay category code (e.g., xxxx-xxxx-xxxx)"
+                    placeholder="Enter your toyyibPay User Secret Key"
+                    className="flex-1"
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your toyyibPay category code from the merchant dashboard.
-                    This is required for creating bills.
-                  </p>
-                  {credentialStatus.categoryCode && (
-                    <p className="text-sm text-green-600 mt-1">
-                      ✅ Current: {credentialStatus.categoryCode}
-                    </p>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowSecret(!showSecret)}
+                  >
+                    {showSecret ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your secret key from toyyibPay merchant dashboard
+                </p>
               </div>
 
-              <div className="flex space-x-2">
-                <Button
-                  onClick={handleSaveCredentials}
-                  disabled={saving || !formData.userSecretKey.trim()}
-                  className="flex items-center space-x-2"
+              <div>
+                <Label htmlFor="environment">Environment</Label>
+                <Select
+                  value={formData.environment}
+                  onValueChange={value => {
+                    if (credentialStatus.hasCredentials) {
+                      handleSwitchEnvironment(
+                        value as 'sandbox' | 'production'
+                      );
+                    } else {
+                      setFormData(prev => ({
+                        ...prev,
+                        environment: value as 'sandbox' | 'production',
+                      }));
+                    }
+                  }}
                 >
-                  {saving ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  <span>
-                    {credentialStatus.hasCredentials ? 'Update' : 'Save'}{' '}
-                    Credentials
-                  </span>
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                    <SelectItem value="production">
+                      Production (Live)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formData.environment === 'sandbox'
+                    ? 'Use sandbox for testing with fake transactions'
+                    : 'Production environment for live payments'}
+                </p>
+              </div>
 
-                {credentialStatus.hasCredentials && (
-                  <Button
-                    variant="destructive"
-                    onClick={handleClearCredentials}
-                    disabled={saving}
-                    className="flex items-center space-x-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Clear Credentials</span>
-                  </Button>
+              <div>
+                <Label htmlFor="categoryCode">Category Code</Label>
+                <Input
+                  id="categoryCode"
+                  value={formData.categoryCode}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      categoryCode: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter toyyibPay category code (e.g., xxxx-xxxx-xxxx)"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your toyyibPay category code from the merchant dashboard. This
+                  is required for creating bills.
+                </p>
+                {credentialStatus.categoryCode && (
+                  <p className="text-sm text-green-600 mt-1">
+                    ✅ Current: {credentialStatus.categoryCode}
+                  </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleSaveCredentials}
+                disabled={saving || !formData.userSecretKey.trim()}
+                className="flex items-center space-x-2"
+              >
+                {saving ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>
+                  {credentialStatus.hasCredentials ? 'Update' : 'Save'}{' '}
+                  Credentials
+                </span>
+              </Button>
+
+              {credentialStatus.hasCredentials && (
+                <Button
+                  variant="destructive"
+                  onClick={handleClearCredentials}
+                  disabled={saving}
+                  className="flex items-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Clear Credentials</span>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminPageLayout>
   );

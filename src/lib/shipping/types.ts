@@ -35,9 +35,9 @@ export interface ShippingSettings {
 
   // Priority Courier Configuration (only if mode === 'priority')
   priorityCouriers?: {
-    first: string;     // Required: 1st priority courier ID
-    second?: string;   // Optional: 2nd priority courier ID
-    third?: string;    // Optional: 3rd priority courier ID
+    first: string; // Required: 1st priority courier ID
+    second?: string; // Optional: 2nd priority courier ID
+    third?: string; // Optional: 3rd priority courier ID
   };
 
   // Free Shipping Configuration
@@ -58,7 +58,9 @@ export interface ShippingSettings {
 /**
  * Partial settings for updates (all fields optional except what's being changed)
  */
-export type ShippingSettingsUpdate = Partial<Omit<ShippingSettings, 'createdAt' | 'updatedAt'>>;
+export type ShippingSettingsUpdate = Partial<
+  Omit<ShippingSettings, 'createdAt' | 'updatedAt'>
+>;
 
 // ============================================================================
 // SHIPPING ADDRESS
@@ -224,7 +226,9 @@ export interface FulfillmentAction {
 /**
  * Combined fulfillment response type
  */
-export type FulfillmentResponse = FulfillmentSuccessResponse | FulfillmentErrorResponse;
+export type FulfillmentResponse =
+  | FulfillmentSuccessResponse
+  | FulfillmentErrorResponse;
 
 // ============================================================================
 // FULFILLMENT WIDGET STATE
@@ -365,8 +369,8 @@ export interface EasyParcelShipmentResponse {
     label_url: string;
     tracking_url: string;
     price?: number | null;
-    courier?: string;        // ✅ Actual courier returned by EPSubmitOrderBulk (e.g., "Pickupp")
-    courier_name?: string;   // Legacy field (may not be present)
+    courier?: string; // ✅ Actual courier returned by EPSubmitOrderBulk (e.g., "Pickupp")
+    courier_name?: string; // Legacy field (may not be present)
     service_name?: string;
   };
   error?: {
@@ -567,13 +571,17 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 /**
  * Type guard to check if response is error
  */
-export function isApiError(response: ApiResponse<unknown>): response is ApiError {
+export function isApiError(
+  response: ApiResponse<unknown>
+): response is ApiError {
   return !response.success;
 }
 
 /**
  * Type guard to check if response is success
  */
-export function isApiSuccess<T>(response: ApiResponse<T>): response is ApiSuccess<T> {
+export function isApiSuccess<T>(
+  response: ApiResponse<T>
+): response is ApiSuccess<T> {
   return response.success;
 }

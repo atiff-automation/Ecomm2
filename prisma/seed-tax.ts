@@ -19,8 +19,8 @@ async function seedTaxRates() {
         name: 'SST',
         rate: 0.06, // 6% SST
         isActive: true,
-        description: 'Sales and Service Tax - Currently active in Malaysia'
-      }
+        description: 'Sales and Service Tax - Currently active in Malaysia',
+      },
     });
 
     await prisma.taxRate.upsert({
@@ -30,8 +30,9 @@ async function seedTaxRates() {
         name: 'GST',
         rate: 0.06, // 6% GST (suspended but keeping for reference)
         isActive: false,
-        description: 'Goods and Services Tax - Suspended since 2018, replaced by SST'
-      }
+        description:
+          'Goods and Services Tax - Suspended since 2018, replaced by SST',
+      },
     });
 
     await prisma.taxRate.upsert({
@@ -41,8 +42,8 @@ async function seedTaxRates() {
         name: 'Service Tax',
         rate: 0.06, // 6% Service Tax
         isActive: true,
-        description: 'Malaysian Service Tax for applicable services'
-      }
+        description: 'Malaysian Service Tax for applicable services',
+      },
     });
 
     // Create tax exempt rate
@@ -51,10 +52,11 @@ async function seedTaxRates() {
       update: {},
       create: {
         name: 'Tax Exempt',
-        rate: 0.00,
+        rate: 0.0,
         isActive: true,
-        description: 'Tax exempt items (essential goods, medical supplies, etc.)'
-      }
+        description:
+          'Tax exempt items (essential goods, medical supplies, etc.)',
+      },
     });
 
     // Create zero-rated tax
@@ -63,14 +65,13 @@ async function seedTaxRates() {
       update: {},
       create: {
         name: 'Zero Rated',
-        rate: 0.00,
+        rate: 0.0,
         isActive: true,
-        description: 'Zero-rated items (exports, basic food items, etc.)'
-      }
+        description: 'Zero-rated items (exports, basic food items, etc.)',
+      },
     });
 
     console.log('✅ Malaysian tax rates seeded successfully');
-
   } catch (error) {
     console.error('❌ Error seeding tax rates:', error);
     throw error;
@@ -82,7 +83,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

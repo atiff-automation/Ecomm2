@@ -13,15 +13,17 @@ import { AgentApplicationStatus, SocialMediaLevel } from '@prisma/client';
 // Mock the service
 jest.mock('@/lib/services/agent-application.service');
 jest.mock('next-auth', () => ({
-  getServerSession: jest.fn()
+  getServerSession: jest.fn(),
 }));
 jest.mock('@/lib/utils/rate-limit', () => ({
   rateLimit: () => ({
-    check: jest.fn().mockResolvedValue({ success: true })
-  })
+    check: jest.fn().mockResolvedValue({ success: true }),
+  }),
 }));
 
-const mockAgentApplicationService = AgentApplicationService as jest.Mocked<typeof AgentApplicationService>;
+const mockAgentApplicationService = AgentApplicationService as jest.Mocked<
+  typeof AgentApplicationService
+>;
 const { getServerSession } = require('next-auth');
 
 describe('Agent Application API Integration Tests', () => {
@@ -46,9 +48,11 @@ describe('Agent Application API Integration Tests', () => {
     tiktokLevel: SocialMediaLevel.TIDAK_MAHIR,
     hasJrmExp: true,
     jrmProducts: 'JRM Premium Skincare, JRM Supplements',
-    reasonToJoin: 'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
-    expectations: 'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
-    finalAgreement: true
+    reasonToJoin:
+      'Ingin mengembangkan perniagaan dan membantu lebih ramai orang mendapat produk berkualiti JRM',
+    expectations:
+      'Mencapai tahap agent platinum dalam tempoh 2 tahun dan membina pasukan yang kuat',
+    finalAgreement: true,
   };
 
   const mockApplication = {
@@ -61,7 +65,7 @@ describe('Agent Application API Integration Tests', () => {
     userId: null,
     reviewedAt: null,
     reviewedBy: null,
-    adminNotes: null
+    adminNotes: null,
   };
 
   beforeEach(() => {
@@ -72,14 +76,16 @@ describe('Agent Application API Integration Tests', () => {
   describe('POST /api/agent-application', () => {
     it('should successfully submit a valid application', async () => {
       // Mock service response
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
       // Create request
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: validApplicationData
-        }
+          formData: validApplicationData,
+        },
       });
 
       // Execute request
@@ -92,19 +98,21 @@ describe('Agent Application API Integration Tests', () => {
         expect.objectContaining({
           id: mockApplication.id,
           status: mockApplication.status,
-          message: expect.any(String)
+          message: expect.any(String),
         })
       );
-      expect(mockAgentApplicationService.createApplication).toHaveBeenCalledWith({
+      expect(
+        mockAgentApplicationService.createApplication
+      ).toHaveBeenCalledWith({
         formData: validApplicationData,
-        userId: undefined
+        userId: undefined,
       });
     });
 
     it('should return 400 for missing form data', async () => {
       const { req } = createMocks({
         method: 'POST',
-        body: {}
+        body: {},
       });
 
       const response = await POST(req as any);
@@ -119,14 +127,14 @@ describe('Agent Application API Integration Tests', () => {
         ...validApplicationData,
         age: 15, // Too young
         icNumber: 'invalid-ic',
-        phoneNumber: 'invalid-phone'
+        phoneNumber: 'invalid-phone',
       };
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: invalidData
-        }
+          formData: invalidData,
+        },
       });
 
       const response = await POST(req as any);
@@ -146,8 +154,8 @@ describe('Agent Application API Integration Tests', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: validApplicationData
-        }
+          formData: validApplicationData,
+        },
       });
 
       const response = await POST(req as any);
@@ -165,15 +173,17 @@ describe('Agent Application API Integration Tests', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: validApplicationData
-        }
+          formData: validApplicationData,
+        },
       });
 
       const response = await POST(req as any);
       const data = await response.json();
 
       expect(response.status).toBe(429);
-      expect(data.error).toBe('Terlalu banyak permohonan. Sila cuba lagi kemudian.');
+      expect(data.error).toBe(
+        'Terlalu banyak permohonan. Sila cuba lagi kemudian.'
+      );
     });
 
     it('should handle duplicate application conflicts', async () => {
@@ -184,8 +194,8 @@ describe('Agent Application API Integration Tests', () => {
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: validApplicationData
-        }
+          formData: validApplicationData,
+        },
       });
 
       const response = await POST(req as any);
@@ -199,35 +209,41 @@ describe('Agent Application API Integration Tests', () => {
       const mockSession = {
         user: {
           id: 'user-123',
-          email: 'user@example.com'
-        }
+          email: 'user@example.com',
+        },
       };
       getServerSession.mockResolvedValue(mockSession);
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: validApplicationData
-        }
+          formData: validApplicationData,
+        },
       });
 
       await POST(req as any);
 
-      expect(mockAgentApplicationService.createApplication).toHaveBeenCalledWith({
+      expect(
+        mockAgentApplicationService.createApplication
+      ).toHaveBeenCalledWith({
         formData: validApplicationData,
-        userId: 'user-123'
+        userId: 'user-123',
       });
     });
   });
 
   describe('GET /api/agent-application', () => {
     it('should return application data for valid ID', async () => {
-      mockAgentApplicationService.getApplicationById.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.getApplicationById.mockResolvedValue(
+        mockApplication
+      );
 
       const { req } = createMocks({
         method: 'GET',
-        query: { id: 'app-123' }
+        query: { id: 'app-123' },
       });
 
       const response = await GET(req as any);
@@ -241,14 +257,14 @@ describe('Agent Application API Integration Tests', () => {
         reviewedAt: mockApplication.reviewedAt,
         createdAt: mockApplication.createdAt,
         fullName: mockApplication.fullName,
-        email: mockApplication.email
+        email: mockApplication.email,
       });
     });
 
     it('should return 400 for missing ID', async () => {
       const { req } = createMocks({
         method: 'GET',
-        query: {}
+        query: {},
       });
 
       const response = await GET(req as any);
@@ -263,7 +279,7 @@ describe('Agent Application API Integration Tests', () => {
 
       const { req } = createMocks({
         method: 'GET',
-        query: { id: 'non-existent' }
+        query: { id: 'non-existent' },
       });
 
       const response = await GET(req as any);
@@ -280,7 +296,7 @@ describe('Agent Application API Integration Tests', () => {
 
       const { req } = createMocks({
         method: 'GET',
-        query: { id: 'app-123' }
+        query: { id: 'app-123' },
       });
 
       const response = await GET(req as any);
@@ -296,27 +312,29 @@ describe('Agent Application API Integration Tests', () => {
       const mockSession = {
         user: {
           id: 'user-123',
-          email: 'user@example.com'
-        }
+          email: 'user@example.com',
+        },
       };
       getServerSession.mockResolvedValue(mockSession);
 
       const updatedApplication = {
         ...mockApplication,
-        fullName: 'Ahmad bin Abdullah Updated'
+        fullName: 'Ahmad bin Abdullah Updated',
       };
-      mockAgentApplicationService.updateApplication.mockResolvedValue(updatedApplication);
+      mockAgentApplicationService.updateApplication.mockResolvedValue(
+        updatedApplication
+      );
 
       const updateData = {
-        fullName: 'Ahmad bin Abdullah Updated'
+        fullName: 'Ahmad bin Abdullah Updated',
       };
 
       const { req } = createMocks({
         method: 'PATCH',
         body: {
           id: 'app-123',
-          formData: updateData
-        }
+          formData: updateData,
+        },
       });
 
       const response = await PATCH(req as any);
@@ -326,13 +344,11 @@ describe('Agent Application API Integration Tests', () => {
       expect(data).toEqual({
         id: updatedApplication.id,
         status: updatedApplication.status,
-        message: 'Permohonan telah dikemaskini'
+        message: 'Permohonan telah dikemaskini',
       });
-      expect(mockAgentApplicationService.updateApplication).toHaveBeenCalledWith(
-        'app-123',
-        updateData,
-        'user-123'
-      );
+      expect(
+        mockAgentApplicationService.updateApplication
+      ).toHaveBeenCalledWith('app-123', updateData, 'user-123');
     });
 
     it('should return 401 when not authenticated', async () => {
@@ -342,8 +358,8 @@ describe('Agent Application API Integration Tests', () => {
         method: 'PATCH',
         body: {
           id: 'app-123',
-          formData: { fullName: 'Updated Name' }
-        }
+          formData: { fullName: 'Updated Name' },
+        },
       });
 
       const response = await PATCH(req as any);
@@ -357,17 +373,17 @@ describe('Agent Application API Integration Tests', () => {
       const mockSession = {
         user: {
           id: 'user-123',
-          email: 'user@example.com'
-        }
+          email: 'user@example.com',
+        },
       };
       getServerSession.mockResolvedValue(mockSession);
 
       const { req } = createMocks({
         method: 'PATCH',
         body: {
-          id: 'app-123'
+          id: 'app-123',
           // Missing formData
-        }
+        },
       });
 
       const response = await PATCH(req as any);
@@ -381,8 +397,8 @@ describe('Agent Application API Integration Tests', () => {
       const mockSession = {
         user: {
           id: 'user-123',
-          email: 'user@example.com'
-        }
+          email: 'user@example.com',
+        },
       };
       getServerSession.mockResolvedValue(mockSession);
       mockAgentApplicationService.updateApplication.mockRejectedValue(
@@ -393,8 +409,8 @@ describe('Agent Application API Integration Tests', () => {
         method: 'PATCH',
         body: {
           id: 'app-123',
-          formData: { fullName: 'Updated Name' }
-        }
+          formData: { fullName: 'Updated Name' },
+        },
       });
 
       const response = await PATCH(req as any);
@@ -409,14 +425,14 @@ describe('Agent Application API Integration Tests', () => {
     it('should validate Malaysian IC number format', async () => {
       const invalidIcData = {
         ...validApplicationData,
-        icNumber: '12345-67-890' // Invalid format
+        icNumber: '12345-67-890', // Invalid format
       };
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: invalidIcData
-        }
+          formData: invalidIcData,
+        },
       });
 
       const response = await POST(req as any);
@@ -426,7 +442,7 @@ describe('Agent Application API Integration Tests', () => {
       expect(data.details).toContainEqual(
         expect.objectContaining({
           field: 'icNumber',
-          message: expect.stringContaining('format')
+          message: expect.stringContaining('format'),
         })
       );
     });
@@ -434,14 +450,14 @@ describe('Agent Application API Integration Tests', () => {
     it('should validate Malaysian phone number format', async () => {
       const invalidPhoneData = {
         ...validApplicationData,
-        phoneNumber: '123-456-7890' // Invalid Malaysian format
+        phoneNumber: '123-456-7890', // Invalid Malaysian format
       };
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: invalidPhoneData
-        }
+          formData: invalidPhoneData,
+        },
       });
 
       const response = await POST(req as any);
@@ -451,7 +467,7 @@ describe('Agent Application API Integration Tests', () => {
       expect(data.details).toContainEqual(
         expect.objectContaining({
           field: 'phoneNumber',
-          message: expect.stringContaining('format')
+          message: expect.stringContaining('format'),
         })
       );
     });
@@ -459,14 +475,14 @@ describe('Agent Application API Integration Tests', () => {
     it('should validate age requirements', async () => {
       const underageData = {
         ...validApplicationData,
-        age: 16 // Under 18
+        age: 16, // Under 18
       };
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: underageData
-        }
+          formData: underageData,
+        },
       });
 
       const response = await POST(req as any);
@@ -476,7 +492,7 @@ describe('Agent Application API Integration Tests', () => {
       expect(data.details).toContainEqual(
         expect.objectContaining({
           field: 'age',
-          message: expect.stringContaining('18')
+          message: expect.stringContaining('18'),
         })
       );
     });
@@ -484,14 +500,14 @@ describe('Agent Application API Integration Tests', () => {
     it('should validate social media level enum values', async () => {
       const invalidSocialData = {
         ...validApplicationData,
-        instagramLevel: 'INVALID_LEVEL' as any
+        instagramLevel: 'INVALID_LEVEL' as any,
       };
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: invalidSocialData
-        }
+          formData: invalidSocialData,
+        },
       });
 
       const response = await POST(req as any);
@@ -500,7 +516,7 @@ describe('Agent Application API Integration Tests', () => {
       expect(response.status).toBe(400);
       expect(data.details).toContainEqual(
         expect.objectContaining({
-          field: 'instagramLevel'
+          field: 'instagramLevel',
         })
       );
     });
@@ -511,44 +527,50 @@ describe('Agent Application API Integration Tests', () => {
       const xssData = {
         ...validApplicationData,
         fullName: '<script>alert("xss")</script>Ahmad',
-        reasonToJoin: 'Valid reason<img src=x onerror=alert("xss")>'
+        reasonToJoin: 'Valid reason<img src=x onerror=alert("xss")>',
       };
 
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: xssData
-        }
+          formData: xssData,
+        },
       });
 
       const response = await POST(req as any);
 
       expect(response.status).toBe(201);
       // Service should have sanitized the data
-      expect(mockAgentApplicationService.createApplication).toHaveBeenCalledWith({
+      expect(
+        mockAgentApplicationService.createApplication
+      ).toHaveBeenCalledWith({
         formData: expect.objectContaining({
           fullName: expect.not.stringContaining('<script>'),
-          reasonToJoin: expect.not.stringContaining('<img')
+          reasonToJoin: expect.not.stringContaining('<img'),
         }),
-        userId: undefined
+        userId: undefined,
       });
     });
 
     it('should handle SQL injection attempts', async () => {
       const sqlInjectionData = {
         ...validApplicationData,
-        fullName: "'; DROP TABLE agent_applications; --"
+        fullName: "'; DROP TABLE agent_applications; --",
       };
 
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: sqlInjectionData
-        }
+          formData: sqlInjectionData,
+        },
       });
 
       const response = await POST(req as any);
@@ -564,16 +586,18 @@ describe('Agent Application API Integration Tests', () => {
       const largeData = {
         ...validApplicationData,
         reasonToJoin: 'A'.repeat(1000), // Maximum allowed length
-        expectations: 'B'.repeat(1000)
+        expectations: 'B'.repeat(1000),
       };
 
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
       const { req } = createMocks({
         method: 'POST',
         body: {
-          formData: largeData
-        }
+          formData: largeData,
+        },
       });
 
       const start = Date.now();
@@ -585,20 +609,24 @@ describe('Agent Application API Integration Tests', () => {
     });
 
     it('should handle concurrent requests', async () => {
-      mockAgentApplicationService.createApplication.mockResolvedValue(mockApplication);
+      mockAgentApplicationService.createApplication.mockResolvedValue(
+        mockApplication
+      );
 
-      const requests = Array(10).fill(null).map(() => {
-        const { req } = createMocks({
-          method: 'POST',
-          body: {
-            formData: {
-              ...validApplicationData,
-              email: `test${Math.random()}@example.com` // Unique emails
-            }
-          }
+      const requests = Array(10)
+        .fill(null)
+        .map(() => {
+          const { req } = createMocks({
+            method: 'POST',
+            body: {
+              formData: {
+                ...validApplicationData,
+                email: `test${Math.random()}@example.com`, // Unique emails
+              },
+            },
+          });
+          return POST(req as any);
         });
-        return POST(req as any);
-      });
 
       const responses = await Promise.all(requests);
 

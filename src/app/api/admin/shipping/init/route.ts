@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized - Login required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Login required' },
+        { status: 401 }
+      );
     }
 
     // Authorization check
@@ -42,12 +45,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Phase 4: Parallel fetch: Settings + Pickup (no dependencies)
-    const [settings, configured, pickupAddress, pickupValidation] = await Promise.all([
-      getShippingSettings(),
-      isShippingConfigured(),
-      getPickupAddressFromBusinessProfile(),
-      validatePickupAddress(),
-    ]);
+    const [settings, configured, pickupAddress, pickupValidation] =
+      await Promise.all([
+        getShippingSettings(),
+        isShippingConfigured(),
+        getPickupAddressFromBusinessProfile(),
+        validatePickupAddress(),
+      ]);
 
     // Initialize response
     const responseData: {
@@ -99,7 +103,8 @@ export async function GET(request: NextRequest) {
             lowBalance,
             threshold,
             ...(lowBalance && {
-              warning: 'Your balance is running low. Top up to avoid fulfillment failures.',
+              warning:
+                'Your balance is running low. Top up to avoid fulfillment failures.',
             }),
           };
           responseData.balanceTimestamp = new Date().toISOString();

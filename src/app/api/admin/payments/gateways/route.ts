@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const includeStats = searchParams.get('includeStats') === 'true';
 
     // Get gateway configurations
-    const gateways = activeOnly 
+    const gateways = activeOnly
       ? await PaymentGatewayService.getActivePaymentGateways()
       : await PaymentGatewayService.getPaymentGateways();
 
@@ -55,7 +55,9 @@ export async function GET(request: NextRequest) {
       summary: {
         totalGateways: gateways.length,
         activeGateways: gateways.filter(g => g.status === 'active').length,
-        configuredGateways: gateways.filter(g => ['active', 'configured'].includes(g.status)).length,
+        configuredGateways: gateways.filter(g =>
+          ['active', 'configured'].includes(g.status)
+        ).length,
         pendingGateways: gateways.filter(g => g.status === 'pending').length,
       },
       generatedAt: new Date().toISOString(),
@@ -71,14 +73,14 @@ export async function GET(request: NextRequest) {
       success: true,
       data: response,
     });
-
   } catch (error) {
     console.error('Payment gateways API error:', error);
-    
+
     return NextResponse.json(
       {
         error: 'Failed to fetch payment gateways',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       { status: 500 }
     );

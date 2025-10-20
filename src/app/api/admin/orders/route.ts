@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -131,7 +133,7 @@ export async function GET(request: NextRequest) {
 
       // Airway bill fields
       airwayBillGenerated: order.airwayBillGenerated,
-      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
       airwayBillUrl: order.airwayBillUrl,
       airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString(),
 

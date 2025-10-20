@@ -9,7 +9,10 @@
 
 import { PrismaClient } from '@prisma/client';
 import type { ShippingSettings, ShippingSettingsUpdate } from './types';
-import { COURIER_SELECTION_STRATEGIES, DEFAULT_FREE_SHIPPING_THRESHOLD } from './constants';
+import {
+  COURIER_SELECTION_STRATEGIES,
+  DEFAULT_FREE_SHIPPING_THRESHOLD,
+} from './constants';
 import { ShippingSettingsValidationSchema } from './validation';
 
 const prisma = new PrismaClient();
@@ -68,7 +71,9 @@ export async function saveShippingSettings(
 
     const fullSettings: ShippingSettings = {
       ...settings,
-      createdAt: existingConfig ? new Date(JSON.parse(existingConfig.value).createdAt) : now,
+      createdAt: existingConfig
+        ? new Date(JSON.parse(existingConfig.value).createdAt)
+        : now,
       updatedAt: now,
     };
 
@@ -108,7 +113,9 @@ export async function updateShippingSettings(
     const currentSettings = await getShippingSettings();
 
     if (!currentSettings) {
-      throw new Error('Shipping settings not found. Please create settings first.');
+      throw new Error(
+        'Shipping settings not found. Please create settings first.'
+      );
     }
 
     // Merge updates with current settings
@@ -209,9 +216,11 @@ function validateShippingSettings(
 
   if (!result.success) {
     const errors = result.error.errors.map(
-      (err) => `${err.path.join('.')}: ${err.message}`
+      err => `${err.path.join('.')}: ${err.message}`
     );
-    throw new Error(`Shipping settings validation failed:\n${errors.join('\n')}`);
+    throw new Error(
+      `Shipping settings validation failed:\n${errors.join('\n')}`
+    );
   }
 }
 

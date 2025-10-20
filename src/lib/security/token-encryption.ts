@@ -197,7 +197,8 @@ export class TokenEncryption {
       }
 
       // CENTRALIZED timestamp validation (optional expiry check)
-      const maxAge = parseInt(process.env.TOKEN_MAX_AGE_HOURS || '24') * 60 * 60 * 1000;
+      const maxAge =
+        parseInt(process.env.TOKEN_MAX_AGE_HOURS || '24') * 60 * 60 * 1000;
       if (parsed.timestamp && Date.now() - parsed.timestamp > maxAge) {
         return { valid: false, reason: 'Token has expired' };
       }
@@ -205,7 +206,10 @@ export class TokenEncryption {
       return this.decryptToken(parsed.data);
     } catch (error) {
       console.error('Token retrieval from storage failed:', error);
-      return { valid: false, reason: 'Invalid storage format or corrupted data' };
+      return {
+        valid: false,
+        reason: 'Invalid storage format or corrupted data',
+      };
     }
   }
 

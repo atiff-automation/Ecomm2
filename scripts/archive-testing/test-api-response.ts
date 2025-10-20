@@ -73,7 +73,7 @@ async function testAPIResponse() {
     console.log('\n🆕 AWB Fields:');
     console.log(`  airwayBillGenerated: ${order.airwayBillGenerated}`);
     console.log(`  airwayBillGeneratedAt: ${order.airwayBillGeneratedAt || 'NULL'}`);
-    console.log(`  airwayBillNumber: ${order.airwayBillNumber || 'NULL'}`);
+    console.log(`  airwayBillUrl: ${order.airwayBillUrl || 'NULL'}`);
     console.log(`  airwayBillUrl: ${order.airwayBillUrl || 'NULL'}`);
     console.log(`  trackingUrl: ${order.trackingUrl || 'NULL'}`);
     console.log('\n🆕 EasyParcel Fields:');
@@ -92,7 +92,7 @@ async function testAPIResponse() {
       // AWB Information
       airwayBillGenerated: order.airwayBillGenerated,
       airwayBillGeneratedAt: order.airwayBillGeneratedAt?.toISOString() || null,
-      airwayBillNumber: order.airwayBillNumber,
+      airwayBillUrl: order.airwayBillUrl,
       airwayBillUrl: order.airwayBillUrl,
       trackingUrl: order.trackingUrl,
 

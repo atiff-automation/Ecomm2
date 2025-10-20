@@ -15,9 +15,12 @@ import { salesAnalyticsService } from '@/lib/services/sales-analytics';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Authentication and authorization check
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -25,12 +28,12 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    
+
     // Default to last 30 days if no dates provided
-    const startDate = searchParams.get('startDate') 
-      ? new Date(searchParams.get('startDate')!) 
+    const startDate = searchParams.get('startDate')
+      ? new Date(searchParams.get('startDate')!)
       : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
+
     const endDate = searchParams.get('endDate')
       ? new Date(searchParams.get('endDate')!)
       : new Date();
@@ -44,21 +47,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Get sales overview data
-    const overview = await salesAnalyticsService.getSalesOverview(startDate, endDate);
+    const overview = await salesAnalyticsService.getSalesOverview(
+      startDate,
+      endDate
+    );
 
-    return NextResponse.json({ 
-      success: true, 
-      data: overview 
+    return NextResponse.json({
+      success: true,
+      data: overview,
     });
-    
   } catch (error) {
     console.error('🚨 Sales overview API error:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      'Error stack:',
+      error instanceof Error ? error.stack : 'No stack trace'
+    );
+    console.error(
+      'Error message:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json(
       {
         message: 'Failed to fetch sales overview',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

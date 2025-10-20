@@ -153,7 +153,9 @@ class MemoryCache {
         : 0;
 
     // Estimate memory usage
-    const estimatedBytes = JSON.stringify(Array.from(this.cache.entries())).length;
+    const estimatedBytes = JSON.stringify(
+      Array.from(this.cache.entries())
+    ).length;
     const memoryMB = (estimatedBytes / (1024 * 1024)).toFixed(2);
 
     return {
@@ -269,10 +271,7 @@ export class CacheManager {
   /**
    * Get cache value
    */
-  async get<T>(
-    key: string,
-    options: CacheOptions = {}
-  ): Promise<T | null> {
+  async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
     const cacheKey = this.generateKey(key, options.namespace);
     return this.memoryCache.get<T>(cacheKey);
   }
@@ -280,10 +279,7 @@ export class CacheManager {
   /**
    * Delete cache value
    */
-  async delete(
-    key: string,
-    options: CacheOptions = {}
-  ): Promise<boolean> {
+  async delete(key: string, options: CacheOptions = {}): Promise<boolean> {
     const cacheKey = this.generateKey(key, options.namespace);
     return this.memoryCache.delete(cacheKey);
   }
@@ -291,10 +287,7 @@ export class CacheManager {
   /**
    * Check if key exists
    */
-  async exists(
-    key: string,
-    options: CacheOptions = {}
-  ): Promise<boolean> {
+  async exists(key: string, options: CacheOptions = {}): Promise<boolean> {
     const cacheKey = this.generateKey(key, options.namespace);
     return this.memoryCache.exists(cacheKey);
   }

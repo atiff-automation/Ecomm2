@@ -10,7 +10,11 @@ import { getServerSession } from 'next-auth';
 import { redirect, notFound } from 'next/navigation';
 import { ApplicationDetail } from '@/components/admin/agent-applications/ApplicationDetail';
 import { AgentApplicationService } from '@/lib/services/agent-application.service';
-import { AdminPageLayout, BreadcrumbItem, BREADCRUMB_CONFIGS } from '@/components/admin/layout';
+import {
+  AdminPageLayout,
+  BreadcrumbItem,
+  BREADCRUMB_CONFIGS,
+} from '@/components/admin/layout';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,9 +26,13 @@ interface PageProps {
   };
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   try {
-    const application = await AgentApplicationService.getApplicationById(params.id);
+    const application = await AgentApplicationService.getApplicationById(
+      params.id
+    );
 
     if (!application) {
       return {
@@ -80,11 +88,18 @@ async function getApplicationData(id: string) {
   }
 }
 
-export default async function AdminAgentApplicationDetailPage({ params }: PageProps) {
+export default async function AdminAgentApplicationDetailPage({
+  params,
+}: PageProps) {
   // Check authentication
   const session = await getServerSession();
-  if (!session?.user?.role || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-    redirect('/auth/signin?callbackUrl=/admin/agents/applications/' + params.id);
+  if (
+    !session?.user?.role ||
+    !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+  ) {
+    redirect(
+      '/auth/signin?callbackUrl=/admin/agents/applications/' + params.id
+    );
   }
 
   // Fetch application data
@@ -97,7 +112,10 @@ export default async function AdminAgentApplicationDetailPage({ params }: PagePr
   // Define breadcrumbs for application detail
   const breadcrumbs: BreadcrumbItem[] = [
     BREADCRUMB_CONFIGS.agents.applications,
-    { label: application.fullName, href: `/admin/agents/applications/${params.id}` }
+    {
+      label: application.fullName,
+      href: `/admin/agents/applications/${params.id}`,
+    },
   ];
 
   return (

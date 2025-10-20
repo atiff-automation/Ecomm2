@@ -96,8 +96,10 @@ export default function AgentApplicationsPage() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
         ...(filters.search && { search: filters.search }),
-        ...(filters.status && filters.status !== 'all' && { status: filters.status }),
-        ...(filters.hasJrmExp && filters.hasJrmExp !== 'all' && { hasJrmExp: filters.hasJrmExp }),
+        ...(filters.status &&
+          filters.status !== 'all' && { status: filters.status }),
+        ...(filters.hasJrmExp &&
+          filters.hasJrmExp !== 'all' && { hasJrmExp: filters.hasJrmExp }),
         ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
         ...(filters.dateTo && { dateTo: filters.dateTo }),
       });
@@ -141,7 +143,9 @@ export default function AgentApplicationsPage() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
+    if (!dateString) {
+      return '-';
+    }
     return new Date(dateString).toLocaleDateString('en-MY', {
       year: 'numeric',
       month: 'short',
@@ -170,14 +174,14 @@ export default function AgentApplicationsPage() {
                 <Input
                   placeholder="Search by name or email..."
                   value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onChange={e => handleFilterChange('search', e.target.value)}
                   className="pl-10"
                 />
               </div>
 
               <Select
                 value={filters.status}
-                onValueChange={(value) => handleFilterChange('status', value)}
+                onValueChange={value => handleFilterChange('status', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Status" />
@@ -193,7 +197,7 @@ export default function AgentApplicationsPage() {
 
               <Select
                 value={filters.hasJrmExp}
-                onValueChange={(value) => handleFilterChange('hasJrmExp', value)}
+                onValueChange={value => handleFilterChange('hasJrmExp', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="JRM Experience" />
@@ -208,14 +212,14 @@ export default function AgentApplicationsPage() {
               <Input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                onChange={e => handleFilterChange('dateFrom', e.target.value)}
                 placeholder="From Date"
               />
 
               <Input
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                onChange={e => handleFilterChange('dateTo', e.target.value)}
                 placeholder="To Date"
               />
             </div>
@@ -269,7 +273,7 @@ export default function AgentApplicationsPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {applications.map((application) => (
+                      {applications.map(application => (
                         <tr key={application.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
@@ -285,18 +289,36 @@ export default function AgentApplicationsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge className={`flex items-center gap-1 ${statusColors[application.status]}`}>
+                            <Badge
+                              className={`flex items-center gap-1 ${statusColors[application.status]}`}
+                            >
                               {getStatusIcon(application.status)}
                               {application.status.replace('_', ' ')}
                             </Badge>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="space-y-1">
-                              <Badge variant={application.hasBusinessExp ? "default" : "secondary"} className="text-xs">
-                                {application.hasBusinessExp ? "Business" : "No Business"}
+                              <Badge
+                                variant={
+                                  application.hasBusinessExp
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                                className="text-xs"
+                              >
+                                {application.hasBusinessExp
+                                  ? 'Business'
+                                  : 'No Business'}
                               </Badge>
-                              <Badge variant={application.hasJrmExp ? "default" : "secondary"} className="text-xs">
-                                {application.hasJrmExp ? "JRM" : "No JRM"}
+                              <Badge
+                                variant={
+                                  application.hasJrmExp
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                                className="text-xs"
+                              >
+                                {application.hasJrmExp ? 'JRM' : 'No JRM'}
                               </Badge>
                             </div>
                           </td>
@@ -307,8 +329,14 @@ export default function AgentApplicationsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <Link href={`/admin/agent-applications/${application.id}`}>
-                              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                            <Link
+                              href={`/admin/agent-applications/${application.id}`}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-1"
+                              >
                                 <Eye className="w-4 h-4" />
                                 View
                               </Button>
@@ -324,9 +352,12 @@ export default function AgentApplicationsPage() {
                 {pagination.totalPages > 1 && (
                   <div className="flex items-center justify-between mt-6 px-6">
                     <div className="text-sm text-gray-700">
-                      Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                      {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                      {pagination.total} results
+                      Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+                      {Math.min(
+                        pagination.page * pagination.limit,
+                        pagination.total
+                      )}{' '}
+                      of {pagination.total} results
                     </div>
                     <div className="flex items-center gap-2">
                       <Button

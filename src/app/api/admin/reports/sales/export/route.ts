@@ -16,9 +16,12 @@ import { businessProfileService } from '@/lib/receipts/business-profile-service'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Authentication and authorization check
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -26,11 +29,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    
-    const startDate = searchParams.get('startDate') 
-      ? new Date(searchParams.get('startDate')!) 
+
+    const startDate = searchParams.get('startDate')
+      ? new Date(searchParams.get('startDate')!)
       : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
+
     const endDate = searchParams.get('endDate')
       ? new Date(searchParams.get('endDate')!)
       : new Date();
@@ -46,7 +49,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!['overview', 'revenue', 'products', 'customers'].includes(reportType)) {
+    if (
+      !['overview', 'revenue', 'products', 'customers'].includes(reportType)
+    ) {
       return NextResponse.json(
         { message: 'Invalid report type' },
         { status: 400 }
@@ -69,22 +74,32 @@ export async function GET(request: NextRequest) {
         data = await salesAnalyticsService.getSalesOverview(startDate, endDate);
         filename = `sales-overview-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}`;
         break;
-      
+
       case 'revenue':
-        data = await salesAnalyticsService.getRevenueAnalytics(startDate, endDate);
+        data = await salesAnalyticsService.getRevenueAnalytics(
+          startDate,
+          endDate
+        );
         filename = `revenue-analytics-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}`;
         break;
-      
+
       case 'products':
-        data = await salesAnalyticsService.getProductPerformance(startDate, endDate, 50);
+        data = await salesAnalyticsService.getProductPerformance(
+          startDate,
+          endDate,
+          50
+        );
         filename = `product-performance-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}`;
         break;
-      
+
       case 'customers':
-        data = await salesAnalyticsService.getCustomerInsights(startDate, endDate);
+        data = await salesAnalyticsService.getCustomerInsights(
+          startDate,
+          endDate
+        );
         filename = `customer-insights-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}`;
         break;
-      
+
       default:
         return NextResponse.json(
           { message: 'Invalid report type' },
@@ -94,7 +109,7 @@ export async function GET(request: NextRequest) {
 
     if (format === 'csv') {
       const csv = await generateCSV(data, reportType, startDate, endDate);
-      
+
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
@@ -103,9 +118,16 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // PDF format
-      const businessProfile = await businessProfileService.getLegacyCompanyInfo();
-      const pdf = await generatePDF(data, reportType, startDate, endDate, businessProfile);
-      
+      const businessProfile =
+        await businessProfileService.getLegacyCompanyInfo();
+      const pdf = await generatePDF(
+        data,
+        reportType,
+        startDate,
+        endDate,
+        businessProfile
+      );
+
       return new NextResponse(pdf, {
         headers: {
           'Content-Type': 'application/pdf',
@@ -113,7 +135,6 @@ export async function GET(request: NextRequest) {
         },
       });
     }
-    
   } catch (error) {
     console.error('Sales export API error:', error);
     return NextResponse.json(
@@ -127,16 +148,16 @@ export async function GET(request: NextRequest) {
  * Generate CSV export
  */
 async function generateCSV(
-  data: any, 
-  reportType: string, 
-  startDate: Date, 
+  data: any,
+  reportType: string,
+  startDate: Date,
   endDate: Date
 ): Promise<string> {
   const formatCurrency = (amount: number) => `"RM ${amount.toFixed(2)}"`;
   const formatDate = (date: Date) => date.toLocaleDateString('en-MY');
-  
+
   let csv = '';
-  
+
   // Add header
   csv += `Sales Report - ${reportType.toUpperCase()}\n`;
   csv += `Period: ${formatDate(startDate)} to ${formatDate(endDate)}\n`;
@@ -167,7 +188,7 @@ async function generateCSV(
       csv += `Returning Customers,"${data.returningCustomers}"\n`;
       csv += `Member Conversion Rate,"${data.memberConversionRate.toFixed(1)}%"\n`;
       csv += `Average Customer Lifetime Value,${formatCurrency(data.avgCustomerLifetimeValue)}\n\n`;
-      
+
       if (data.topStates && data.topStates.length > 0) {
         csv += `\nTop States by Revenue\n`;
         csv += `Rank,State,State Name,Total Orders,Total Revenue\n`;

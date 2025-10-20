@@ -39,9 +39,7 @@ async function fetchMembershipStatus(
   }
 
   // Add cache busting to ensure fresh data
-  const response = await fetch(
-    `/api/auth/membership-status?t=${Date.now()}`
-  );
+  const response = await fetch(`/api/auth/membership-status?t=${Date.now()}`);
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);

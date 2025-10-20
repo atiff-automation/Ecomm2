@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const searchParams = request.nextUrl.searchParams;
     const period = searchParams.get('period') || '30';

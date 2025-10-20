@@ -52,11 +52,11 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
 
     // CRITICAL FIX: Use direct database calls in server component instead of HTTP API calls
     // Server components should not make HTTP requests to their own API
-    
+
     try {
       // Import Prisma at runtime to avoid issues
       const { prisma } = await import('@/lib/db/prisma');
-      
+
       // Build where conditions for direct database query
       const where: any = {
         status: 'ACTIVE',
@@ -66,7 +66,9 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
         where.OR = [
           { name: { contains: params.search, mode: 'insensitive' } },
           { description: { contains: params.search, mode: 'insensitive' } },
-          { shortDescription: { contains: params.search, mode: 'insensitive' } },
+          {
+            shortDescription: { contains: params.search, mode: 'insensitive' },
+          },
         ];
       }
 
@@ -80,11 +82,11 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
 
       // Get total count for pagination
       const totalCount = await prisma.product.count({ where });
-      
+
       // Calculate pagination
       const skip = (params.page - 1) * params.limit;
       const totalPages = Math.ceil(totalCount / params.limit);
-      
+
       // Build orderBy
       const orderBy: any = {};
       switch (params.sortBy) {
@@ -149,7 +151,9 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
         ...product,
         regularPrice: Number(product.regularPrice),
         memberPrice: Number(product.memberPrice),
-        promotionalPrice: product.promotionalPrice ? Number(product.promotionalPrice) : null,
+        promotionalPrice: product.promotionalPrice
+          ? Number(product.promotionalPrice)
+          : null,
         averageRating: 0, // Calculate if needed
         reviewCount: product.reviews.length,
         categories: product.categories.map(pc => ({
@@ -180,7 +184,6 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
       var products = transformedProducts;
       var pagination = productsResult.pagination;
       var categories = transformedCategories;
-      
     } catch (dbError) {
       console.error('🚨 ProductsServer: Database error:', dbError);
       throw dbError;

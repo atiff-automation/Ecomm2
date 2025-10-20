@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -30,10 +33,14 @@ export async function GET(request: NextRequest) {
     }
 
     // SINGLE SOURCE OF TRUTH: Check admin configuration
-    const ordersConfigured = await simplifiedTelegramService.isOrdersChannelConfigured();
-    const inventoryConfigured = await simplifiedTelegramService.isInventoryChannelConfigured();
-    const chatManagementConfigured = await simplifiedTelegramService.isChatManagementChannelConfigured();
-    const systemAlertsConfigured = await simplifiedTelegramService.isSystemAlertsChannelConfigured();
+    const ordersConfigured =
+      await simplifiedTelegramService.isOrdersChannelConfigured();
+    const inventoryConfigured =
+      await simplifiedTelegramService.isInventoryChannelConfigured();
+    const chatManagementConfigured =
+      await simplifiedTelegramService.isChatManagementChannelConfigured();
+    const systemAlertsConfigured =
+      await simplifiedTelegramService.isSystemAlertsChannelConfigured();
     const config = await adminTelegramConfigService.getActiveConfig();
 
     // NO HARDCODE: Dynamic channel definitions
@@ -59,7 +66,8 @@ export async function GET(request: NextRequest) {
         name: 'Chat Management',
         description: 'Chat backups, cleanup, and data management notifications',
         configured: chatManagementConfigured,
-        enabled: chatManagementConfigured && (config?.chatManagementEnabled ?? true),
+        enabled:
+          chatManagementConfigured && (config?.chatManagementEnabled ?? true),
         chatId: config?.chatManagementChatId || null,
       },
       {
@@ -67,19 +75,20 @@ export async function GET(request: NextRequest) {
         name: 'System Alerts',
         description: 'System health, job failures, and critical alerts',
         configured: systemAlertsConfigured,
-        enabled: systemAlertsConfigured && (config?.systemAlertsEnabled ?? true),
+        enabled:
+          systemAlertsConfigured && (config?.systemAlertsEnabled ?? true),
         chatId: config?.systemAlertsChatId || null,
       },
     ];
 
     // DRY: Bot configuration status
-    const botConfigured = !!(config?.botToken);
+    const botConfigured = !!config?.botToken;
 
     return NextResponse.json({
       channels,
       botConfigured,
       hasActiveConfig: !!config,
-      configId: config?.id || null
+      configId: config?.id || null,
     });
   } catch (error) {
     console.error('Error fetching simplified channel status:', error);

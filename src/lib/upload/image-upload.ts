@@ -186,18 +186,31 @@ export async function uploadProductImage(
     // Generate all size and format combinations
     for (const sizeKey of sizes) {
       const sizeConfig = getImageSize(sizeKey);
-      if (!sizeConfig) continue;
+      if (!sizeConfig) {
+        continue;
+      }
 
       for (const formatKey of formats) {
         const formatConfig = getImageFormat(formatKey);
-        if (!formatConfig) continue;
+        if (!formatConfig) {
+          continue;
+        }
 
         try {
           // Process image variant
-          const processed = await processImageVariant(buffer, sizeConfig, formatConfig);
+          const processed = await processImageVariant(
+            buffer,
+            sizeConfig,
+            formatConfig
+          );
 
           // Generate filename
-          const filename = generateImageFileName(baseName, sizeKey, formatKey, uuid);
+          const filename = generateImageFileName(
+            baseName,
+            sizeKey,
+            formatKey,
+            uuid
+          );
           const filepath = path.join(UPLOAD_DIR, filename);
 
           // Save processed image
@@ -249,7 +262,9 @@ export async function uploadProductImage(
 /**
  * Delete all variants of an uploaded image by UUID
  */
-export async function deleteProductImagesByUuid(uuid: string): Promise<boolean> {
+export async function deleteProductImagesByUuid(
+  uuid: string
+): Promise<boolean> {
   try {
     const fs = await import('fs/promises');
     const files = await fs.readdir(UPLOAD_DIR);
@@ -299,7 +314,9 @@ export async function deleteProductImage(filename: string): Promise<boolean> {
 /**
  * Get all image variants for a UUID
  */
-export async function getImageVariants(uuid: string): Promise<ProcessedImage[]> {
+export async function getImageVariants(
+  uuid: string
+): Promise<ProcessedImage[]> {
   try {
     const fs = await import('fs/promises');
     const files = await fs.readdir(UPLOAD_DIR);
@@ -380,7 +397,15 @@ export async function getImageInfo(filename: string): Promise<{
 export async function uploadProductImageLegacy(
   file: File,
   options: any = {}
-): Promise<{ success: boolean; url?: string; filename?: string; error?: string; width?: number; height?: number; size?: number }> {
+): Promise<{
+  success: boolean;
+  url?: string;
+  filename?: string;
+  error?: string;
+  width?: number;
+  height?: number;
+  size?: number;
+}> {
   // If preserveOriginal is true, skip all processing and store the original file
   if (options.preserveOriginal === true) {
     try {

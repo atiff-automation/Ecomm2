@@ -13,7 +13,7 @@ export async function GET() {
     // Get the active theme from database
     const activeTheme = await prisma.siteTheme.findFirst({
       where: {
-        isActive: true
+        isActive: true,
       },
       select: {
         logoUrl: true,
@@ -24,7 +24,7 @@ export async function GET() {
         secondaryColor: true,
         backgroundColor: true,
         textColor: true,
-      }
+      },
     });
 
     if (activeTheme) {
@@ -61,10 +61,10 @@ export async function GET() {
   } catch (error) {
     console.error('Error getting current branding:', error);
     return NextResponse.json(
-      { 
-        logoUrl: null, 
-        faviconUrl: null, 
-        logoWidth: 120, 
+      {
+        logoUrl: null,
+        faviconUrl: null,
+        logoWidth: 120,
         logoHeight: 40,
         primaryColor: '#3B82F6',
         secondaryColor: '#FDE047',

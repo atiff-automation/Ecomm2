@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       // Get from database
       businessProfile = await prisma.businessProfile.findFirst({
         where: {
-          isActive: true
+          isActive: true,
         },
         select: {
           // Only select public-safe fields
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
           secondaryPhone: true,
           website: true,
           operationalAddress: true,
-        }
+        },
       });
 
       if (businessProfile) {
@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
           primaryPhone: '+60 12-345 6789',
           secondaryPhone: null,
           website: 'https://jrm-ecommerce.com',
-          operationalAddress: 'Kuala Lumpur, Malaysia'
+          operationalAddress: 'Kuala Lumpur, Malaysia',
         },
-        message: 'Using default business profile'
+        message: 'Using default business profile',
       });
     }
 
@@ -59,18 +59,21 @@ export async function GET(request: NextRequest) {
     const publicProfile = {
       tradingName: businessProfile.tradingName || 'JRM E-commerce',
       primaryEmail: businessProfile.primaryEmail || 'support@jrm-ecommerce.com',
-      supportEmail: businessProfile.supportEmail || businessProfile.primaryEmail || 'support@jrm-ecommerce.com',
+      supportEmail:
+        businessProfile.supportEmail ||
+        businessProfile.primaryEmail ||
+        'support@jrm-ecommerce.com',
       primaryPhone: businessProfile.primaryPhone || '+60 12-345 6789',
       secondaryPhone: businessProfile.secondaryPhone,
       website: businessProfile.website || 'https://jrm-ecommerce.com',
-      operationalAddress: businessProfile.operationalAddress || 'Kuala Lumpur, Malaysia'
+      operationalAddress:
+        businessProfile.operationalAddress || 'Kuala Lumpur, Malaysia',
     };
 
     return NextResponse.json({
       success: true,
-      data: publicProfile
+      data: publicProfile,
     });
-
   } catch (error) {
     console.error('Error fetching public business profile:', error);
 
@@ -84,9 +87,9 @@ export async function GET(request: NextRequest) {
         primaryPhone: '+60 12-345 6789',
         secondaryPhone: null,
         website: 'https://jrm-ecommerce.com',
-        operationalAddress: 'Kuala Lumpur, Malaysia'
+        operationalAddress: 'Kuala Lumpur, Malaysia',
       },
-      message: 'Using fallback business profile due to error'
+      message: 'Using fallback business profile due to error',
     });
   }
 }

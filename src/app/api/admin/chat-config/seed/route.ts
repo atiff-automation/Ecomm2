@@ -13,14 +13,15 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const webhookUrl = 'https://general-n8n.l30n8p.easypanel.host/webhook/31852ca2-1581-4862-85df-a5f8a7499b88/chat';
+    const webhookUrl =
+      'https://general-n8n.l30n8p.easypanel.host/webhook/31852ca2-1581-4862-85df-a5f8a7499b88/chat';
 
     const configs = [
       { key: 'n8n_chat_webhook_url', value: webhookUrl, type: 'string' },
@@ -29,8 +30,16 @@ export async function POST(request: NextRequest) {
       { key: 'n8n_chat_primary_color', value: '#2563eb', type: 'string' },
       { key: 'n8n_chat_title', value: 'Chat Support', type: 'string' },
       { key: 'n8n_chat_subtitle', value: "We're here to help", type: 'string' },
-      { key: 'n8n_chat_welcome_message', value: 'Hello! 👋\\nHow can I help you today?', type: 'string' },
-      { key: 'n8n_chat_input_placeholder', value: 'Type your message...', type: 'string' },
+      {
+        key: 'n8n_chat_welcome_message',
+        value: 'Hello! 👋\\nHow can I help you today?',
+        type: 'string',
+      },
+      {
+        key: 'n8n_chat_input_placeholder',
+        value: 'Type your message...',
+        type: 'string',
+      },
     ];
 
     const results = [];
@@ -65,7 +74,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Failed to seed configuration',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

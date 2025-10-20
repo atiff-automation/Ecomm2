@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const codes = await prisma.discountCode.findMany({
       select: {
@@ -76,7 +78,9 @@ export async function POST(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
 

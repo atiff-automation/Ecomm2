@@ -45,15 +45,15 @@ export const StatusUpdate = ({
   contactInfo = {
     email: 'support@jrm.com.my',
     phone: '+60 12-345 6789',
-    whatsapp: '+60 12-345 6789'
-  }
+    whatsapp: '+60 12-345 6789',
+  },
 }: StatusUpdateProps) => {
   const formattedDate = reviewedDate.toLocaleDateString('ms-MY', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
   const getStatusConfig = (status: string) => {
@@ -61,42 +61,46 @@ export const StatusUpdate = ({
       case 'APPROVED':
         return {
           title: 'Permohonan Diluluskan! 🎉',
-          message: 'Tahniah! Permohonan anda untuk menjadi agen JRM telah diluluskan.',
+          message:
+            'Tahniah! Permohonan anda untuk menjadi agen JRM telah diluluskan.',
           color: '#059669',
           backgroundColor: '#ecfdf5',
           borderColor: '#10b981',
           icon: '✅',
-          actionText: 'Mula Sebagai Agen'
+          actionText: 'Mula Sebagai Agen',
         };
       case 'REJECTED':
         return {
           title: 'Update Status Permohonan',
-          message: 'Terima kasih atas minat anda. Setelah semakan teliti, kami tidak dapat meneruskan permohonan anda pada masa ini.',
+          message:
+            'Terima kasih atas minat anda. Setelah semakan teliti, kami tidak dapat meneruskan permohonan anda pada masa ini.',
           color: '#dc2626',
           backgroundColor: '#fef2f2',
           borderColor: '#ef4444',
           icon: '❌',
-          actionText: 'Mohon Semula'
+          actionText: 'Mohon Semula',
         };
       case 'UNDER_REVIEW':
         return {
           title: 'Permohonan Dalam Semakan',
-          message: 'Permohonan anda sedang dalam proses semakan mendalam oleh pasukan kami.',
+          message:
+            'Permohonan anda sedang dalam proses semakan mendalam oleh pasukan kami.',
           color: '#d97706',
           backgroundColor: '#fffbeb',
           borderColor: '#f59e0b',
           icon: '⏳',
-          actionText: 'Semak Status'
+          actionText: 'Semak Status',
         };
       case 'NEEDS_MORE_INFO':
         return {
           title: 'Maklumat Tambahan Diperlukan',
-          message: 'Kami memerlukan maklumat tambahan untuk melengkapkan semakan permohonan anda.',
+          message:
+            'Kami memerlukan maklumat tambahan untuk melengkapkan semakan permohonan anda.',
           color: '#2563eb',
           backgroundColor: '#eff6ff',
           borderColor: '#3b82f6',
           icon: '📋',
-          actionText: 'Kemaskini Permohonan'
+          actionText: 'Kemaskini Permohonan',
         };
       default:
         return {
@@ -106,7 +110,7 @@ export const StatusUpdate = ({
           backgroundColor: '#f9fafb',
           borderColor: '#9ca3af',
           icon: '📄',
-          actionText: 'Lihat Permohonan'
+          actionText: 'Lihat Permohonan',
         };
     }
   };
@@ -133,23 +137,21 @@ export const StatusUpdate = ({
           {/* Main Content */}
           <Section style={content}>
             {/* Status Banner */}
-            <Section style={{
-              ...statusBanner,
-              backgroundColor: statusConfig.backgroundColor,
-              borderColor: statusConfig.borderColor,
-              color: statusConfig.color
-            }}>
+            <Section
+              style={{
+                ...statusBanner,
+                backgroundColor: statusConfig.backgroundColor,
+                borderColor: statusConfig.borderColor,
+                color: statusConfig.color,
+              }}
+            >
               <Text style={statusIcon}>{statusConfig.icon}</Text>
               <Text style={statusTitle}>{statusConfig.title}</Text>
             </Section>
 
-            <Text style={greeting}>
-              Salam sejahtera {applicantName},
-            </Text>
+            <Text style={greeting}>Salam sejahtera {applicantName},</Text>
 
-            <Text style={paragraph}>
-              {statusConfig.message}
-            </Text>
+            <Text style={paragraph}>{statusConfig.message}</Text>
 
             {/* Application Details */}
             <Section style={detailsBox}>
@@ -167,10 +169,12 @@ export const StatusUpdate = ({
                   <Text style={label}>Status Terkini:</Text>
                 </Column>
                 <Column>
-                  <Text style={{
-                    ...statusValue,
-                    color: statusConfig.color
-                  }}>
+                  <Text
+                    style={{
+                      ...statusValue,
+                      color: statusConfig.color,
+                    }}
+                  >
                     {status === 'APPROVED' && 'DILULUSKAN'}
                     {status === 'REJECTED' && 'TIDAK DILULUSKAN'}
                     {status === 'UNDER_REVIEW' && 'DALAM SEMAKAN'}
@@ -214,31 +218,61 @@ export const StatusUpdate = ({
                 <Text style={stepsTitle}>Langkah Seterusnya</Text>
                 {status === 'APPROVED' && (
                   <>
-                    <Text style={stepItem}>1. Kami akan menghubungi anda dalam tempoh 1-2 hari bekerja</Text>
-                    <Text style={stepItem}>2. Sesi orientasi dan latihan akan dijadualkan</Text>
-                    <Text style={stepItem}>3. Anda akan menerima kit permulaan agen JRM</Text>
-                    <Text style={stepItem}>4. Mula perjalanan sebagai agen JRM bersertifikat</Text>
+                    <Text style={stepItem}>
+                      1. Kami akan menghubungi anda dalam tempoh 1-2 hari
+                      bekerja
+                    </Text>
+                    <Text style={stepItem}>
+                      2. Sesi orientasi dan latihan akan dijadualkan
+                    </Text>
+                    <Text style={stepItem}>
+                      3. Anda akan menerima kit permulaan agen JRM
+                    </Text>
+                    <Text style={stepItem}>
+                      4. Mula perjalanan sebagai agen JRM bersertifikat
+                    </Text>
                   </>
                 )}
                 {status === 'REJECTED' && (
                   <>
-                    <Text style={stepItem}>1. Anda boleh memohon semula selepas 6 bulan</Text>
-                    <Text style={stepItem}>2. Pertimbangkan untuk menambah pengalaman dalam bidang berkaitan</Text>
-                    <Text style={stepItem}>3. Hubungi kami jika ada pertanyaan mengenai keputusan ini</Text>
+                    <Text style={stepItem}>
+                      1. Anda boleh memohon semula selepas 6 bulan
+                    </Text>
+                    <Text style={stepItem}>
+                      2. Pertimbangkan untuk menambah pengalaman dalam bidang
+                      berkaitan
+                    </Text>
+                    <Text style={stepItem}>
+                      3. Hubungi kami jika ada pertanyaan mengenai keputusan ini
+                    </Text>
                   </>
                 )}
                 {status === 'UNDER_REVIEW' && (
                   <>
-                    <Text style={stepItem}>1. Tiada tindakan diperlukan dari anda pada masa ini</Text>
-                    <Text style={stepItem}>2. Kami akan menghubungi anda jika diperlukan maklumat tambahan</Text>
-                    <Text style={stepItem}>3. Keputusan akhir akan dimaklumkan dalam tempoh 5-7 hari bekerja</Text>
+                    <Text style={stepItem}>
+                      1. Tiada tindakan diperlukan dari anda pada masa ini
+                    </Text>
+                    <Text style={stepItem}>
+                      2. Kami akan menghubungi anda jika diperlukan maklumat
+                      tambahan
+                    </Text>
+                    <Text style={stepItem}>
+                      3. Keputusan akhir akan dimaklumkan dalam tempoh 5-7 hari
+                      bekerja
+                    </Text>
                   </>
                 )}
                 {status === 'NEEDS_MORE_INFO' && (
                   <>
-                    <Text style={stepItem}>1. Sila semak nota dari pasukan kami di atas</Text>
-                    <Text style={stepItem}>2. Kemaskini permohonan anda dengan maklumat yang diminta</Text>
-                    <Text style={stepItem}>3. Hantar maklumat tambahan dalam tempoh 7 hari</Text>
+                    <Text style={stepItem}>
+                      1. Sila semak nota dari pasukan kami di atas
+                    </Text>
+                    <Text style={stepItem}>
+                      2. Kemaskini permohonan anda dengan maklumat yang diminta
+                    </Text>
+                    <Text style={stepItem}>
+                      3. Hantar maklumat tambahan dalam tempoh 7 hari
+                    </Text>
                   </>
                 )}
               </Section>
@@ -249,7 +283,7 @@ export const StatusUpdate = ({
               <Button
                 style={{
                   ...actionButton,
-                  backgroundColor: statusConfig.color
+                  backgroundColor: statusConfig.color,
                 }}
                 href={`${process.env.NEXTAUTH_URL}/apply-agent/status?id=${applicationId}`}
               >
@@ -262,19 +296,23 @@ export const StatusUpdate = ({
             {/* Contact Information */}
             <Text style={contactTitle}>Perlu Bantuan?</Text>
             <Text style={paragraph}>
-              Jika anda mempunyai sebarang pertanyaan mengenai status permohonan ini,
-              jangan teragak-agak untuk menghubungi kami:
+              Jika anda mempunyai sebarang pertanyaan mengenai status permohonan
+              ini, jangan teragak-agak untuk menghubungi kami:
             </Text>
 
             <Text style={contactInfo}>
-              📧 Email: {contactInfo.email}<br />
-              📱 Telefon: {contactInfo.phone}<br />
-              💬 WhatsApp: {contactInfo.whatsapp}<br />
+              📧 Email: {contactInfo.email}
+              <br />
+              📱 Telefon: {contactInfo.phone}
+              <br />
+              💬 WhatsApp: {contactInfo.whatsapp}
+              <br />
               🕒 Waktu Operasi: 9:00 AM - 6:00 PM (Isnin - Jumaat)
             </Text>
 
             <Text style={signature}>
-              Terima kasih atas kesabaran anda.<br />
+              Terima kasih atas kesabaran anda.
+              <br />
               <strong>Pasukan JRM</strong>
             </Text>
           </Section>
@@ -298,7 +336,8 @@ export const StatusUpdate = ({
 // Styles
 const main = {
   backgroundColor: '#f6f9fc',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {

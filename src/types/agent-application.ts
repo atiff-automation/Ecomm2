@@ -4,7 +4,13 @@
  * Following CLAUDE.md principles: Single source of truth for types
  */
 
-import { AgentApplication, AgentApplicationReview, User, AgentApplicationStatus, ApplicationDecision } from '@prisma/client';
+import {
+  AgentApplication,
+  AgentApplicationReview,
+  User,
+  AgentApplicationStatus,
+  ApplicationDecision,
+} from '@prisma/client';
 
 // Local type definition for SocialMediaLevel to avoid Prisma client-side issues
 export type SocialMediaLevel = 'TIDAK_MAHIR' | 'MAHIR' | 'SANGAT_MAHIR';
@@ -227,7 +233,11 @@ export interface FormStepProps {
 
 export interface AdminApplicationCardProps {
   application: AgentApplicationWithRelations;
-  onStatusUpdate: (id: string, status: AgentApplicationStatus, notes?: string) => Promise<void>;
+  onStatusUpdate: (
+    id: string,
+    status: AgentApplicationStatus,
+    notes?: string
+  ) => Promise<void>;
   onView: (id: string) => void;
 }
 
@@ -236,38 +246,44 @@ export enum BusinessType {
   KEDAI = 'KEDAI',
   MUDAH = 'MUDAH',
   TIDAK_BERKAITAN = 'TIDAK_BERKAITAN',
-  LAIN_LAIN = 'LAIN_LAIN'
+  LAIN_LAIN = 'LAIN_LAIN',
 }
 
-export const APPLICATION_STATUS_LABELS: Record<AgentApplicationStatus, string> = {
-  DRAFT: 'Draf',
-  SUBMITTED: 'Dihantar',
-  UNDER_REVIEW: 'Dalam Semakan',
-  APPROVED: 'Diluluskan',
-  REJECTED: 'Ditolak'
-};
+export const APPLICATION_STATUS_LABELS: Record<AgentApplicationStatus, string> =
+  {
+    DRAFT: 'Draf',
+    SUBMITTED: 'Dihantar',
+    UNDER_REVIEW: 'Dalam Semakan',
+    APPROVED: 'Diluluskan',
+    REJECTED: 'Ditolak',
+    INTERVIEW_SCHEDULED: 'Temu Duga Dijadualkan',
+    WITHDRAWN: 'Ditarik Balik',
+  };
 
 export const SOCIAL_MEDIA_LEVEL_LABELS: Record<SocialMediaLevel, string> = {
   TIDAK_MAHIR: 'Tidak mahir',
   MAHIR: 'Mahir',
-  SANGAT_MAHIR: 'Sangat mahir'
+  SANGAT_MAHIR: 'Sangat mahir',
 };
 
-export const APPLICATION_DECISION_LABELS: Record<ApplicationDecision, string> = {
-  APPROVED: 'Diluluskan',
-  REJECTED: 'Ditolak',
-  NEEDS_MORE_INFO: 'Memerlukan Maklumat Tambahan'
-};
+export const APPLICATION_DECISION_LABELS: Record<ApplicationDecision, string> =
+  {
+    APPROVED: 'Diluluskan',
+    REJECTED: 'Ditolak',
+    NEEDS_MORE_INFO: 'Memerlukan Maklumat Tambahan',
+  };
 
 export const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
   KEDAI: 'Kedai',
   MUDAH: 'Mudah',
   TIDAK_BERKAITAN: 'Tidak berkaitan',
-  LAIN_LAIN: 'Lain-lain'
+  LAIN_LAIN: 'Lain-lain',
 };
 
 // Utility type guards
-export const isValidAgentApplication = (data: any): data is AgentApplicationFormData => {
+export const isValidAgentApplication = (
+  data: any
+): data is AgentApplicationFormData => {
   return (
     typeof data === 'object' &&
     typeof data.acceptTerms === 'boolean' &&
@@ -287,6 +303,8 @@ export const isValidAgentApplication = (data: any): data is AgentApplicationForm
   );
 };
 
-export const isCompletedApplication = (data: Partial<AgentApplicationFormData>): data is AgentApplicationFormData => {
+export const isCompletedApplication = (
+  data: Partial<AgentApplicationFormData>
+): data is AgentApplicationFormData => {
   return isValidAgentApplication(data) && data.finalAgreement === true;
 };

@@ -26,43 +26,51 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
           pickup: {
             postalCode: pickup.postalCode,
             state: pickup.state,
-            country: pickup.country
+            country: pickup.country,
           },
           delivery: {
             postalCode: delivery.postalCode,
             state: delivery.state,
-            country: delivery.country
+            country: delivery.country,
           },
-          weight
+          weight,
         }
       );
 
-      orderFlowLogger.logRequest('EasyParcel: Rate Request', 'EPRateCheckingBulk', {
-        pickup: pickup.postalCode,
-        delivery: delivery.postalCode,
-        weight
-      });
+      orderFlowLogger.logRequest(
+        'EasyParcel: Rate Request',
+        'EPRateCheckingBulk',
+        {
+          pickup: pickup.postalCode,
+          delivery: delivery.postalCode,
+          weight,
+        }
+      );
 
       try {
         const rates = await service.getRates(pickup, delivery, weight);
 
-        orderFlowLogger.logResponse('EasyParcel: Rate Response', 'EPRateCheckingBulk', {
-          ratesCount: rates.length,
-          rates: rates.map(r => ({
-            serviceId: r.service_id,
-            courier: r.courier_name,
-            service: r.service_name,
-            price: r.price,
-            delivery: r.estimated_delivery_days
-          }))
-        });
+        orderFlowLogger.logResponse(
+          'EasyParcel: Rate Response',
+          'EPRateCheckingBulk',
+          {
+            ratesCount: rates.length,
+            rates: rates.map(r => ({
+              serviceId: r.service_id,
+              courier: r.courier_name,
+              service: r.service_name,
+              price: r.price,
+              delivery: r.estimated_delivery_days,
+            })),
+          }
+        );
 
         return rates;
       } catch (error) {
         orderFlowLogger.logError('EasyParcel: Rate Check Failed', error, {
           pickup: pickup.postalCode,
           delivery: delivery.postalCode,
-          weight
+          weight,
         });
         throw error;
       }
@@ -74,41 +82,49 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
         '⚠️ PAID OPERATION - Creating shipment (this will use credits!)'
       );
 
-      orderFlowLogger.logRequest('EasyParcel: Shipment Request', 'EPMakeOrderBulk', {
-        serviceId: request.service_id,
-        reference: request.reference,
-        pickup: {
-          name: request.pickup.name,
-          postalCode: request.pickup.postcode,
-          state: request.pickup.state
-        },
-        delivery: {
-          name: request.delivery.name,
-          postalCode: request.delivery.postcode,
-          state: request.delivery.state
-        },
-        parcel: request.parcel,
-        pickupDate: request.pickup.pickup_date,
-        whatsappTracking: request.addon_whatsapp_tracking_enabled
-      });
+      orderFlowLogger.logRequest(
+        'EasyParcel: Shipment Request',
+        'EPMakeOrderBulk',
+        {
+          serviceId: request.service_id,
+          reference: request.reference,
+          pickup: {
+            name: request.pickup.name,
+            postalCode: request.pickup.postcode,
+            state: request.pickup.state,
+          },
+          delivery: {
+            name: request.delivery.name,
+            postalCode: request.delivery.postcode,
+            state: request.delivery.state,
+          },
+          parcel: request.parcel,
+          pickupDate: request.pickup.pickup_date,
+          whatsappTracking: request.addon_whatsapp_tracking_enabled,
+        }
+      );
 
       try {
         const result = await service.createShipment(request);
 
-        orderFlowLogger.logResponse('EasyParcel: Shipment Response', 'EPMakeOrderBulk', {
-          shipmentId: result.data.shipment_id,
-          trackingNumber: result.data.tracking_number,
-          awbNumber: result.data.awb_number,
-          labelUrl: result.data.label_url,
-          estimatedCost: result.data.price || 'Unknown'
-        });
+        orderFlowLogger.logResponse(
+          'EasyParcel: Shipment Response',
+          'EPMakeOrderBulk',
+          {
+            shipmentId: result.data.shipment_id,
+            trackingNumber: result.data.tracking_number,
+            awbNumber: result.data.awb_number,
+            labelUrl: result.data.label_url,
+            estimatedCost: result.data.price || 'Unknown',
+          }
+        );
 
         orderFlowLogger.logInfo(
           'EasyParcel: Shipment Created',
           '💰 Credits have been deducted from your account',
           {
             trackingNumber: result.data.tracking_number,
-            cost: result.data.price || 'Unknown'
+            cost: result.data.price || 'Unknown',
           }
         );
 
@@ -116,22 +132,29 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
       } catch (error) {
         orderFlowLogger.logError('EasyParcel: Shipment Booking Failed', error, {
           serviceId: request.service_id,
-          reference: request.reference
+          reference: request.reference,
         });
         throw error;
       }
     },
 
     async getBalance() {
-      orderFlowLogger.logInfo('EasyParcel: Balance Check', 'Checking account balance');
+      orderFlowLogger.logInfo(
+        'EasyParcel: Balance Check',
+        'Checking account balance'
+      );
 
       try {
         const result = await service.getBalance();
 
-        orderFlowLogger.logResponse('EasyParcel: Balance', 'EPCheckCreditBalance', {
-          balance: result.data.balance,
-          currency: result.data.currency
-        });
+        orderFlowLogger.logResponse(
+          'EasyParcel: Balance',
+          'EPCheckCreditBalance',
+          {
+            balance: result.data.balance,
+            currency: result.data.currency,
+          }
+        );
 
         return result;
       } catch (error) {
@@ -146,15 +169,19 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
         '💳 CRITICAL OPERATION - Processing payment for shipment',
         {
           easyparcelOrderNumber: orderNumber,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }
       );
 
-      orderFlowLogger.logRequest('EasyParcel: Payment Request', 'EPPayOrderBulk', {
-        orderNumber,
-        operation: 'PAYMENT_DEDUCTION',
-        note: 'This will deduct from EasyParcel credit balance'
-      });
+      orderFlowLogger.logRequest(
+        'EasyParcel: Payment Request',
+        'EPPayOrderBulk',
+        {
+          orderNumber,
+          operation: 'PAYMENT_DEDUCTION',
+          note: 'This will deduct from EasyParcel credit balance',
+        }
+      );
 
       try {
         const result = await service.payOrder(orderNumber);
@@ -176,8 +203,8 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
               tracking_url: p.tracking_url,
               hasAwb: !!p.awb,
               hasAwbLink: !!p.awb_id_link,
-              hasTrackingUrl: !!p.tracking_url
-            }))
+              hasTrackingUrl: !!p.tracking_url,
+            })),
           }
         );
 
@@ -188,7 +215,7 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
             orderNumber: result.data.order_number,
             paymentStatus: result.data.payment_status,
             awbGenerated: result.data.parcels.length > 0,
-            firstParcelAwb: result.data.parcels[0]?.awb || 'N/A'
+            firstParcelAwb: result.data.parcels[0]?.awb || 'N/A',
           }
         );
 
@@ -201,8 +228,9 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
             orderNumber,
             timestamp: new Date().toISOString(),
             errorType: error instanceof Error ? error.name : 'Unknown',
-            errorMessage: error instanceof Error ? error.message : 'Unknown error',
-            errorDetails: error
+            errorMessage:
+              error instanceof Error ? error.message : 'Unknown error',
+            errorDetails: error,
           }
         );
         throw error;
@@ -210,26 +238,34 @@ export function createLoggedEasyParcelService(settings: ShippingSettings) {
     },
 
     async getTracking(trackingNumber: string) {
-      orderFlowLogger.logInfo('EasyParcel: Tracking', 'Fetching tracking information', {
-        trackingNumber
-      });
+      orderFlowLogger.logInfo(
+        'EasyParcel: Tracking',
+        'Fetching tracking information',
+        {
+          trackingNumber,
+        }
+      );
 
       try {
         const result = await service.getTracking(trackingNumber);
 
-        orderFlowLogger.logResponse('EasyParcel: Tracking Response', 'EPTracking', {
-          trackingNumber: result.data.tracking_number,
-          status: result.data.current_status,
-          eventsCount: result.data.events?.length || 0
-        });
+        orderFlowLogger.logResponse(
+          'EasyParcel: Tracking Response',
+          'EPTracking',
+          {
+            trackingNumber: result.data.tracking_number,
+            status: result.data.current_status,
+            eventsCount: result.data.events?.length || 0,
+          }
+        );
 
         return result;
       } catch (error) {
         orderFlowLogger.logError('EasyParcel: Tracking Failed', error, {
-          trackingNumber
+          trackingNumber,
         });
         throw error;
       }
-    }
+    },
   };
 }

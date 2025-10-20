@@ -106,63 +106,116 @@ export interface SiteCustomizationResponse {
 const HeroSlideValidationSchema = z.object({
   id: z.string().cuid(),
   imageUrl: z.string().url('Must be a valid image URL'),
-  altText: z.string().max(200, 'Alt text must be under 200 characters').optional(),
+  altText: z
+    .string()
+    .max(200, 'Alt text must be under 200 characters')
+    .optional(),
   order: z.number().int().min(0, 'Order must be a non-negative integer'),
   isActive: z.boolean(),
-  mediaId: z.string().optional() // Track media upload ID for deletion
+  mediaId: z.string().optional(), // Track media upload ID for deletion
 });
 
 const SliderValidationSchema = z.object({
   enabled: z.boolean(),
   autoAdvance: z.boolean(),
-  interval: z.number().min(1000, 'Interval must be at least 1 second').max(30000, 'Interval must not exceed 30 seconds'),
+  interval: z
+    .number()
+    .min(1000, 'Interval must be at least 1 second')
+    .max(30000, 'Interval must not exceed 30 seconds'),
   showDots: z.boolean(),
   showArrows: z.boolean(),
   pauseOnHover: z.boolean(),
-  slides: z.array(HeroSlideValidationSchema).max(10, 'Maximum 10 slides allowed')
+  slides: z
+    .array(HeroSlideValidationSchema)
+    .max(10, 'Maximum 10 slides allowed'),
 });
 
 const ValidationRules = z.object({
   hero: z.object({
-    title: z.string().min(1, 'Title is required').max(100, 'Title must be under 100 characters'),
+    title: z
+      .string()
+      .min(1, 'Title is required')
+      .max(100, 'Title must be under 100 characters'),
     subtitle: z.string().max(150, 'Subtitle must be under 150 characters'),
-    description: z.string().max(500, 'Description must be under 500 characters'),
+    description: z
+      .string()
+      .max(500, 'Description must be under 500 characters'),
     ctaPrimary: z.object({
-      text: z.string().min(1, 'Primary CTA text is required').max(30, 'CTA text must be under 30 characters'),
-      link: z.string().min(1, 'Primary CTA link is required').url('Must be a valid URL or relative path').or(z.string().startsWith('/'))
+      text: z
+        .string()
+        .min(1, 'Primary CTA text is required')
+        .max(30, 'CTA text must be under 30 characters'),
+      link: z
+        .string()
+        .min(1, 'Primary CTA link is required')
+        .url('Must be a valid URL or relative path')
+        .or(z.string().startsWith('/')),
     }),
     ctaSecondary: z.object({
-      text: z.string().min(1, 'Secondary CTA text is required').max(30, 'CTA text must be under 30 characters'),
-      link: z.string().min(1, 'Secondary CTA link is required').url('Must be a valid URL or relative path').or(z.string().startsWith('/'))
+      text: z
+        .string()
+        .min(1, 'Secondary CTA text is required')
+        .max(30, 'CTA text must be under 30 characters'),
+      link: z
+        .string()
+        .min(1, 'Secondary CTA link is required')
+        .url('Must be a valid URL or relative path')
+        .or(z.string().startsWith('/')),
     }),
     background: z.object({
       type: z.enum(['IMAGE', 'VIDEO']),
       url: z.string().optional(),
-      overlayOpacity: z.number().min(0).max(1)
+      overlayOpacity: z.number().min(0).max(1),
     }),
     layout: z.object({
       textAlignment: z.enum(['left', 'center', 'right']),
       showTitle: z.boolean(),
-      showCTA: z.boolean()
+      showCTA: z.boolean(),
     }),
-    slider: SliderValidationSchema
+    slider: SliderValidationSchema,
   }),
   branding: z.object({
-    logo: z.object({
-      url: z.string(),
-      width: z.number().min(20, 'Logo width must be at least 20px').max(400, 'Logo width must not exceed 400px'),
-      height: z.number().min(20, 'Logo height must be at least 20px').max(200, 'Logo height must not exceed 200px')
-    }).optional(),
-    favicon: z.object({
-      url: z.string()
-    }).optional(),
-    colors: z.object({
-      primary: z.string().regex(/^#[0-9A-F]{6}$/i, 'Primary color must be a valid hex color'),
-      secondary: z.string().regex(/^#[0-9A-F]{6}$/i, 'Secondary color must be a valid hex color'),
-      background: z.string().regex(/^#[0-9A-F]{6}$/i, 'Background color must be a valid hex color'),
-      text: z.string().regex(/^#[0-9A-F]{6}$/i, 'Text color must be a valid hex color')
-    }).optional()
-  })
+    logo: z
+      .object({
+        url: z.string(),
+        width: z
+          .number()
+          .min(20, 'Logo width must be at least 20px')
+          .max(400, 'Logo width must not exceed 400px'),
+        height: z
+          .number()
+          .min(20, 'Logo height must be at least 20px')
+          .max(200, 'Logo height must not exceed 200px'),
+      })
+      .optional(),
+    favicon: z
+      .object({
+        url: z.string(),
+      })
+      .optional(),
+    colors: z
+      .object({
+        primary: z
+          .string()
+          .regex(/^#[0-9A-F]{6}$/i, 'Primary color must be a valid hex color'),
+        secondary: z
+          .string()
+          .regex(
+            /^#[0-9A-F]{6}$/i,
+            'Secondary color must be a valid hex color'
+          ),
+        background: z
+          .string()
+          .regex(
+            /^#[0-9A-F]{6}$/i,
+            'Background color must be a valid hex color'
+          ),
+        text: z
+          .string()
+          .regex(/^#[0-9A-F]{6}$/i, 'Text color must be a valid hex color'),
+      })
+      .optional(),
+  }),
 });
 
 // ==================== SITE CUSTOMIZATION SERVICE ====================
@@ -189,44 +242,44 @@ export class SiteCustomizationService {
         description: '',
         ctaPrimary: {
           text: '',
-          link: ''
+          link: '',
         },
         ctaSecondary: {
           text: '',
-          link: ''
+          link: '',
         },
         background: {
           type: 'IMAGE',
-          overlayOpacity: 0.1
+          overlayOpacity: 0.1,
         },
         layout: {
           textAlignment: 'left',
-          showTitle: false,  // Default to false when fields are empty
-          showCTA: false     // Default to false when CTA fields are empty
+          showTitle: false, // Default to false when fields are empty
+          showCTA: false, // Default to false when CTA fields are empty
         },
         slider: {
-          enabled: false,           // Disabled by default (backward compatibility)
-          autoAdvance: true,        // Auto-advance enabled by default
-          interval: 5000,           // 5 second intervals
-          showDots: true,           // Show navigation dots
-          showArrows: true,         // Show navigation arrows
-          pauseOnHover: true,       // Pause on hover
-          slides: []                // Empty slides array
-        }
+          enabled: false, // Disabled by default (backward compatibility)
+          autoAdvance: true, // Auto-advance enabled by default
+          interval: 5000, // 5 second intervals
+          showDots: true, // Show navigation dots
+          showArrows: true, // Show navigation arrows
+          pauseOnHover: true, // Pause on hover
+          slides: [], // Empty slides array
+        },
       },
       branding: {
         colors: {
           primary: '#3B82F6',
           secondary: '#FDE047',
           background: '#F8FAFC',
-          text: '#1E293B'
-        }
+          text: '#1E293B',
+        },
       },
       metadata: {
         lastUpdated: new Date(),
         updatedBy: 'system',
-        version: 1
-      }
+        version: 1,
+      },
     };
   }
 
@@ -240,17 +293,21 @@ export class SiteCustomizationService {
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, email: true }
+        select: { id: true, email: true },
       });
 
       if (!user) {
-        throw new Error(`User not found in database. Please log out and log back in. (User ID: ${userId})`);
+        throw new Error(
+          `User not found in database. Please log out and log back in. (User ID: ${userId})`
+        );
       }
 
       return userId;
     } catch (error) {
       console.error('Authentication validation failed:', error);
-      throw new Error(`Authentication error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Authentication error: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -268,10 +325,10 @@ export class SiteCustomizationService {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       if (!activeConfig) {
@@ -281,7 +338,7 @@ export class SiteCustomizationService {
 
       // Parse and validate the JSON configuration
       const config = activeConfig.config as any;
-      
+
       // Handle legacy configuration format
       if (config && !config.hero) {
         console.log('Legacy configuration detected, migrating to new format');
@@ -296,15 +353,18 @@ export class SiteCustomizationService {
 
       // Handle missing slider configuration (backward compatibility)
       if (!config.hero.slider) {
-        console.log('Missing slider configuration, adding default slider config for backward compatibility');
+        console.log(
+          'Missing slider configuration, adding default slider config for backward compatibility'
+        );
         config.hero.slider = this.getDefaultConfiguration().hero.slider;
       }
-      
+
       // Ensure metadata is up to date
       config.metadata = {
         lastUpdated: activeConfig.updatedAt,
-        updatedBy: activeConfig.creator?.email || activeConfig.createdBy || 'unknown',
-        version: activeConfig.version
+        updatedBy:
+          activeConfig.creator?.email || activeConfig.createdBy || 'unknown',
+        version: activeConfig.version,
       };
 
       return config;
@@ -330,25 +390,34 @@ export class SiteCustomizationService {
       const currentConfig = await this.getConfiguration();
 
       // Debug logging
-      console.log('🔧 Service - Incoming config update:', JSON.stringify(config, null, 2));
-      console.log('🔧 Service - Current config hero.background:', currentConfig.hero.background);
+      console.log(
+        '🔧 Service - Incoming config update:',
+        JSON.stringify(config, null, 2)
+      );
+      console.log(
+        '🔧 Service - Current config hero.background:',
+        currentConfig.hero.background
+      );
 
       // Deep merge configurations
       const mergedConfig = this.deepMerge(currentConfig, config);
 
-      console.log('🔧 Service - Merged config hero.background:', mergedConfig.hero.background);
-      
+      console.log(
+        '🔧 Service - Merged config hero.background:',
+        mergedConfig.hero.background
+      );
+
       // Validate the merged configuration
       const validation = this.validateConfiguration(mergedConfig);
-      
+
       if (!validation.isValid) {
         return {
           config: mergedConfig,
           validation,
           preview: {
             heroPreviewUrl: '',
-            headerPreviewUrl: ''
-          }
+            headerPreviewUrl: '',
+          },
         };
       }
 
@@ -356,13 +425,13 @@ export class SiteCustomizationService {
       mergedConfig.metadata = {
         lastUpdated: new Date(),
         updatedBy,
-        version: currentConfig.metadata.version + 1
+        version: currentConfig.metadata.version + 1,
       };
 
       // Deactivate current active configuration
       await prisma.siteCustomization.updateMany({
         where: { isActive: true },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       // Create new active configuration
@@ -371,7 +440,7 @@ export class SiteCustomizationService {
           config: mergedConfig as any,
           version: mergedConfig.metadata.version,
           isActive: true,
-          createdBy: validUserId
+          createdBy: validUserId,
         },
         include: {
           creator: {
@@ -379,10 +448,10 @@ export class SiteCustomizationService {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       // Create audit log
@@ -393,9 +462,8 @@ export class SiteCustomizationService {
       return {
         config: mergedConfig,
         validation,
-        preview
+        preview,
       };
-
     } catch (error) {
       console.error('Error updating site customization:', error);
       throw new Error('Failed to update site customization');
@@ -408,7 +476,7 @@ export class SiteCustomizationService {
   async resetToDefault(updatedBy: string): Promise<SiteCustomizationResponse> {
     const defaultConfig = this.getDefaultConfiguration();
     defaultConfig.metadata.updatedBy = updatedBy;
-    
+
     return await this.updateConfiguration(defaultConfig, updatedBy);
   }
 
@@ -429,19 +497,18 @@ export class SiteCustomizationService {
 
       // Additional business logic validations
       this.validateBusinessRules(config, errors, warnings);
-
     } catch (error) {
       errors.push({
         field: 'configuration',
         message: 'Configuration validation failed',
-        value: error
+        value: error,
       });
     }
 
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
@@ -458,13 +525,13 @@ export class SiteCustomizationService {
         errors.push({
           field: 'hero.title',
           message: 'Title is required when title section is enabled',
-          value: hero.title
+          value: hero.title,
         });
       } else if (hero.title.length > 100) {
         errors.push({
           field: 'hero.title',
           message: 'Title must be under 100 characters',
-          value: hero.title
+          value: hero.title,
         });
       }
 
@@ -472,7 +539,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'hero.subtitle',
           message: 'Subtitle must be under 150 characters',
-          value: hero.subtitle
+          value: hero.subtitle,
         });
       }
 
@@ -480,7 +547,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'hero.description',
           message: 'Description must be under 500 characters',
-          value: hero.description
+          value: hero.description,
         });
       }
     }
@@ -491,13 +558,13 @@ export class SiteCustomizationService {
         errors.push({
           field: 'hero.ctaPrimary.text',
           message: 'Primary CTA text is required when CTA buttons are enabled',
-          value: hero.ctaPrimary.text
+          value: hero.ctaPrimary.text,
         });
       } else if (hero.ctaPrimary.text.length > 30) {
         errors.push({
           field: 'hero.ctaPrimary.text',
           message: 'CTA text must be under 30 characters',
-          value: hero.ctaPrimary.text
+          value: hero.ctaPrimary.text,
         });
       }
 
@@ -505,29 +572,37 @@ export class SiteCustomizationService {
         errors.push({
           field: 'hero.ctaPrimary.link',
           message: 'Primary CTA link is required when CTA buttons are enabled',
-          value: hero.ctaPrimary.link
+          value: hero.ctaPrimary.link,
         });
       }
 
-      if (!hero.ctaSecondary.text || hero.ctaSecondary.text.trim().length === 0) {
+      if (
+        !hero.ctaSecondary.text ||
+        hero.ctaSecondary.text.trim().length === 0
+      ) {
         errors.push({
           field: 'hero.ctaSecondary.text',
-          message: 'Secondary CTA text is required when CTA buttons are enabled',
-          value: hero.ctaSecondary.text
+          message:
+            'Secondary CTA text is required when CTA buttons are enabled',
+          value: hero.ctaSecondary.text,
         });
       } else if (hero.ctaSecondary.text.length > 30) {
         errors.push({
           field: 'hero.ctaSecondary.text',
           message: 'CTA text must be under 30 characters',
-          value: hero.ctaSecondary.text
+          value: hero.ctaSecondary.text,
         });
       }
 
-      if (!hero.ctaSecondary.link || hero.ctaSecondary.link.trim().length === 0) {
+      if (
+        !hero.ctaSecondary.link ||
+        hero.ctaSecondary.link.trim().length === 0
+      ) {
         errors.push({
           field: 'hero.ctaSecondary.link',
-          message: 'Secondary CTA link is required when CTA buttons are enabled',
-          value: hero.ctaSecondary.link
+          message:
+            'Secondary CTA link is required when CTA buttons are enabled',
+          value: hero.ctaSecondary.link,
         });
       }
     }
@@ -537,15 +612,18 @@ export class SiteCustomizationService {
       errors.push({
         field: 'hero.background.type',
         message: 'Background type must be IMAGE or VIDEO',
-        value: hero.background.type
+        value: hero.background.type,
       });
     }
 
-    if (hero.background.overlayOpacity < 0 || hero.background.overlayOpacity > 1) {
+    if (
+      hero.background.overlayOpacity < 0 ||
+      hero.background.overlayOpacity > 1
+    ) {
       errors.push({
         field: 'hero.background.overlayOpacity',
         message: 'Overlay opacity must be between 0 and 1',
-        value: hero.background.overlayOpacity
+        value: hero.background.overlayOpacity,
       });
     }
 
@@ -554,7 +632,7 @@ export class SiteCustomizationService {
       errors.push({
         field: 'hero.layout.textAlignment',
         message: 'Text alignment must be left, center, or right',
-        value: hero.layout.textAlignment
+        value: hero.layout.textAlignment,
       });
     }
   }
@@ -572,7 +650,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'branding.logo.url',
           message: 'Logo URL is required when logo is provided',
-          value: branding.logo.url
+          value: branding.logo.url,
         });
       }
 
@@ -580,7 +658,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'branding.logo.width',
           message: 'Logo width must be between 20px and 400px',
-          value: branding.logo.width
+          value: branding.logo.width,
         });
       }
 
@@ -588,7 +666,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'branding.logo.height',
           message: 'Logo height must be between 20px and 200px',
-          value: branding.logo.height
+          value: branding.logo.height,
         });
       }
     }
@@ -599,7 +677,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'branding.favicon.url',
           message: 'Favicon URL is required when favicon is provided',
-          value: branding.favicon.url
+          value: branding.favicon.url,
         });
       }
     }
@@ -608,27 +686,36 @@ export class SiteCustomizationService {
     if (branding.colors) {
       const hexColorRegex = /^#[0-9A-F]{6}$/i;
 
-      if (branding.colors.primary && !hexColorRegex.test(branding.colors.primary)) {
+      if (
+        branding.colors.primary &&
+        !hexColorRegex.test(branding.colors.primary)
+      ) {
         errors.push({
           field: 'branding.colors.primary',
           message: 'Primary color must be a valid hex color',
-          value: branding.colors.primary
+          value: branding.colors.primary,
         });
       }
 
-      if (branding.colors.secondary && !hexColorRegex.test(branding.colors.secondary)) {
+      if (
+        branding.colors.secondary &&
+        !hexColorRegex.test(branding.colors.secondary)
+      ) {
         errors.push({
           field: 'branding.colors.secondary',
           message: 'Secondary color must be a valid hex color',
-          value: branding.colors.secondary
+          value: branding.colors.secondary,
         });
       }
 
-      if (branding.colors.background && !hexColorRegex.test(branding.colors.background)) {
+      if (
+        branding.colors.background &&
+        !hexColorRegex.test(branding.colors.background)
+      ) {
         errors.push({
           field: 'branding.colors.background',
           message: 'Background color must be a valid hex color',
-          value: branding.colors.background
+          value: branding.colors.background,
         });
       }
 
@@ -636,7 +723,7 @@ export class SiteCustomizationService {
         errors.push({
           field: 'branding.colors.text',
           message: 'Text color must be a valid hex color',
-          value: branding.colors.text
+          value: branding.colors.text,
         });
       }
     }
@@ -648,26 +735,30 @@ export class SiteCustomizationService {
     warnings: ValidationWarning[]
   ): void {
     // Validate CTA links are accessible (only if CTA is enabled and link exists)
-    if (config.hero.layout.showCTA &&
-        config.hero.ctaPrimary.link &&
-        config.hero.ctaPrimary.link.startsWith('/') &&
-        !this.isValidInternalPath(config.hero.ctaPrimary.link)) {
+    if (
+      config.hero.layout.showCTA &&
+      config.hero.ctaPrimary.link &&
+      config.hero.ctaPrimary.link.startsWith('/') &&
+      !this.isValidInternalPath(config.hero.ctaPrimary.link)
+    ) {
       warnings.push({
         field: 'hero.ctaPrimary.link',
         message: 'Internal link may not exist',
-        suggestion: 'Verify that this page exists in your application'
+        suggestion: 'Verify that this page exists in your application',
       });
     }
 
     // Validate secondary CTA link if enabled and exists
-    if (config.hero.layout.showCTA &&
-        config.hero.ctaSecondary.link &&
-        config.hero.ctaSecondary.link.startsWith('/') &&
-        !this.isValidInternalPath(config.hero.ctaSecondary.link)) {
+    if (
+      config.hero.layout.showCTA &&
+      config.hero.ctaSecondary.link &&
+      config.hero.ctaSecondary.link.startsWith('/') &&
+      !this.isValidInternalPath(config.hero.ctaSecondary.link)
+    ) {
       warnings.push({
         field: 'hero.ctaSecondary.link',
         message: 'Internal link may not exist',
-        suggestion: 'Verify that this page exists in your application'
+        suggestion: 'Verify that this page exists in your application',
       });
     }
 
@@ -681,19 +772,24 @@ export class SiteCustomizationService {
         warnings.push({
           field: 'branding.colors',
           message: 'Low contrast ratio between text and background colors',
-          suggestion: 'Consider using colors with better contrast for accessibility'
+          suggestion:
+            'Consider using colors with better contrast for accessibility',
         });
       }
     }
 
     // Validate logo dimensions ratio
-    if (config.branding.logo && config.branding.logo.width && config.branding.logo.height) {
+    if (
+      config.branding.logo &&
+      config.branding.logo.width &&
+      config.branding.logo.height
+    ) {
       const ratio = config.branding.logo.width / config.branding.logo.height;
       if (ratio > 5 || ratio < 0.2) {
         warnings.push({
           field: 'branding.logo',
           message: 'Logo has unusual aspect ratio',
-          suggestion: 'Consider using a logo with a more standard aspect ratio'
+          suggestion: 'Consider using a logo with a more standard aspect ratio',
         });
       }
     }
@@ -701,7 +797,10 @@ export class SiteCustomizationService {
 
   // ==================== MIGRATION ====================
 
-  private migrateLegacyConfig(legacyConfig: any, activeConfig: any): SiteCustomizationConfig {
+  private migrateLegacyConfig(
+    legacyConfig: any,
+    activeConfig: any
+  ): SiteCustomizationConfig {
     const defaultConfig = this.getDefaultConfiguration();
 
     // Migrate legacy config to new format
@@ -714,21 +813,28 @@ export class SiteCustomizationService {
         ctaSecondary: defaultConfig.hero.ctaSecondary,
         background: defaultConfig.hero.background,
         layout: defaultConfig.hero.layout,
-        slider: defaultConfig.hero.slider  // Add default slider configuration
+        slider: defaultConfig.hero.slider, // Add default slider configuration
       },
       branding: {
         colors: {
-          primary: legacyConfig.theme?.primaryColor || defaultConfig.branding.colors?.primary || '#3B82F6',
-          secondary: legacyConfig.theme?.secondaryColor || defaultConfig.branding.colors?.secondary || '#FDE047',
+          primary:
+            legacyConfig.theme?.primaryColor ||
+            defaultConfig.branding.colors?.primary ||
+            '#3B82F6',
+          secondary:
+            legacyConfig.theme?.secondaryColor ||
+            defaultConfig.branding.colors?.secondary ||
+            '#FDE047',
           background: defaultConfig.branding.colors?.background || '#F8FAFC',
-          text: defaultConfig.branding.colors?.text || '#1E293B'
-        }
+          text: defaultConfig.branding.colors?.text || '#1E293B',
+        },
       },
       metadata: {
         lastUpdated: activeConfig.updatedAt,
-        updatedBy: activeConfig.creator?.email || activeConfig.createdBy || 'system',
-        version: activeConfig.version
-      }
+        updatedBy:
+          activeConfig.creator?.email || activeConfig.createdBy || 'system',
+        version: activeConfig.version,
+      },
     };
 
     // Add logo information if available from legacy config
@@ -736,7 +842,7 @@ export class SiteCustomizationService {
       migratedConfig.branding.logo = {
         url: legacyConfig.branding.logoUrl,
         width: 120,
-        height: 40
+        height: 40,
       };
     }
 
@@ -748,7 +854,10 @@ export class SiteCustomizationService {
   /**
    * Add a new slide to the slider
    */
-  async addSlide(slideData: Omit<HeroSlide, 'id'>, updatedBy: string): Promise<HeroSlide> {
+  async addSlide(
+    slideData: Omit<HeroSlide, 'id'>,
+    updatedBy: string
+  ): Promise<HeroSlide> {
     try {
       const config = await this.getConfiguration();
 
@@ -760,7 +869,7 @@ export class SiteCustomizationService {
         imageUrl: slideData.imageUrl,
         order: slideData.order,
         isActive: slideData.isActive,
-        ...(slideData.altText && { altText: slideData.altText })
+        ...(slideData.altText && { altText: slideData.altText }),
       };
 
       // Validate the new slide
@@ -781,29 +890,42 @@ export class SiteCustomizationService {
       return newSlide;
     } catch (error) {
       console.error('Error adding slide:', error);
-      throw new Error(`Failed to add slide: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to add slide: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   /**
    * Update an existing slide
    */
-  async updateSlide(slideId: string, updates: Partial<HeroSlide>, updatedBy: string): Promise<void> {
+  async updateSlide(
+    slideId: string,
+    updates: Partial<HeroSlide>,
+    updatedBy: string
+  ): Promise<void> {
     try {
       const config = await this.getConfiguration();
 
-      const slideIndex = config.hero.slider.slides.findIndex(slide => slide.id === slideId);
+      const slideIndex = config.hero.slider.slides.findIndex(
+        slide => slide.id === slideId
+      );
       if (slideIndex === -1) {
         throw new Error(`Slide with ID ${slideId} not found`);
       }
 
       // Apply updates to the slide
-      const updatedSlide = { ...config.hero.slider.slides[slideIndex], ...updates };
+      const updatedSlide = {
+        ...config.hero.slider.slides[slideIndex],
+        ...updates,
+      };
 
       // Validate the updated slide
       const slideValidation = HeroSlideValidationSchema.safeParse(updatedSlide);
       if (!slideValidation.success) {
-        throw new Error(`Invalid slide updates: ${slideValidation.error.message}`);
+        throw new Error(
+          `Invalid slide updates: ${slideValidation.error.message}`
+        );
       }
 
       // Update the slide in the array
@@ -818,7 +940,9 @@ export class SiteCustomizationService {
       await this.updateConfiguration(config, updatedBy);
     } catch (error) {
       console.error('Error updating slide:', error);
-      throw new Error(`Failed to update slide: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to update slide: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -829,7 +953,9 @@ export class SiteCustomizationService {
     try {
       const config = await this.getConfiguration();
 
-      const slideIndex = config.hero.slider.slides.findIndex(slide => slide.id === slideId);
+      const slideIndex = config.hero.slider.slides.findIndex(
+        slide => slide.id === slideId
+      );
       if (slideIndex === -1) {
         throw new Error(`Slide with ID ${slideId} not found`);
       }
@@ -841,7 +967,9 @@ export class SiteCustomizationService {
       await this.updateConfiguration(config, updatedBy);
     } catch (error) {
       console.error('Error deleting slide:', error);
-      throw new Error(`Failed to delete slide: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to delete slide: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -854,7 +982,9 @@ export class SiteCustomizationService {
 
       // Validate that all slide IDs exist
       const existingSlideIds = config.hero.slider.slides.map(slide => slide.id);
-      const missingSlides = slideIds.filter(id => !existingSlideIds.includes(id));
+      const missingSlides = slideIds.filter(
+        id => !existingSlideIds.includes(id)
+      );
       if (missingSlides.length > 0) {
         throw new Error(`Slides not found: ${missingSlides.join(', ')}`);
       }
@@ -876,14 +1006,19 @@ export class SiteCustomizationService {
       await this.updateConfiguration(config, updatedBy);
     } catch (error) {
       console.error('Error reordering slides:', error);
-      throw new Error(`Failed to reorder slides: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to reorder slides: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   /**
    * Update slider configuration
    */
-  async updateSliderConfig(sliderConfig: Partial<SliderConfig>, updatedBy: string): Promise<void> {
+  async updateSliderConfig(
+    sliderConfig: Partial<SliderConfig>,
+    updatedBy: string
+  ): Promise<void> {
     try {
       const config = await this.getConfiguration();
 
@@ -891,9 +1026,12 @@ export class SiteCustomizationService {
       const updatedSliderConfig = { ...config.hero.slider, ...sliderConfig };
 
       // Validate the updated slider configuration
-      const sliderValidation = SliderValidationSchema.safeParse(updatedSliderConfig);
+      const sliderValidation =
+        SliderValidationSchema.safeParse(updatedSliderConfig);
       if (!sliderValidation.success) {
-        throw new Error(`Invalid slider configuration: ${sliderValidation.error.message}`);
+        throw new Error(
+          `Invalid slider configuration: ${sliderValidation.error.message}`
+        );
       }
 
       // Update slider configuration
@@ -903,7 +1041,9 @@ export class SiteCustomizationService {
       await this.updateConfiguration(config, updatedBy);
     } catch (error) {
       console.error('Error updating slider configuration:', error);
-      throw new Error(`Failed to update slider configuration: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to update slider configuration: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -919,25 +1059,38 @@ export class SiteCustomizationService {
 
   private deepMerge(target: any, source: any): any {
     const result = { ...target };
-    
+
     for (const key in source) {
-      if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (
+        source[key] !== null &&
+        typeof source[key] === 'object' &&
+        !Array.isArray(source[key])
+      ) {
         result[key] = this.deepMerge(result[key] || {}, source[key]);
       } else {
         result[key] = source[key];
       }
     }
-    
+
     return result;
   }
 
   private isValidInternalPath(path: string): boolean {
     // List of known valid internal paths
     const validPaths = [
-      '/', '/products', '/auth/signup', '/auth/login', '/cart', '/checkout',
-      '/account', '/about', '/contact', '/privacy', '/terms'
+      '/',
+      '/products',
+      '/auth/signup',
+      '/auth/login',
+      '/cart',
+      '/checkout',
+      '/account',
+      '/about',
+      '/contact',
+      '/privacy',
+      '/terms',
     ];
-    
+
     return validPaths.includes(path) || path.startsWith('/products/');
   }
 
@@ -949,12 +1102,12 @@ export class SiteCustomizationService {
       const r = (rgb >> 16) & 0xff;
       const g = (rgb >> 8) & 0xff;
       const b = (rgb >> 0) & 0xff;
-      
+
       const [rs, gs, bs] = [r, g, b].map(c => {
         c = c / 255;
         return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
       });
-      
+
       return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
     };
 
@@ -962,7 +1115,7 @@ export class SiteCustomizationService {
     const l2 = getLuminance(color2);
     const lighter = Math.max(l1, l2);
     const darker = Math.min(l1, l2);
-    
+
     return (lighter + 0.05) / (darker + 0.05);
   }
 
@@ -974,7 +1127,7 @@ export class SiteCustomizationService {
     // This would integrate with your preview generation system
     return {
       heroPreviewUrl: `/api/preview/hero?v=${config.metadata.version}`,
-      headerPreviewUrl: `/api/preview/header?v=${config.metadata.version}`
+      headerPreviewUrl: `/api/preview/header?v=${config.metadata.version}`,
     };
   }
 
@@ -990,13 +1143,15 @@ export class SiteCustomizationService {
           userId,
           action: `SITE_CUSTOMIZATION_${action}`,
           resource: 'SITE_CUSTOMIZATION',
-          details: JSON.parse(JSON.stringify({
-            action,
-            version: fullConfig.metadata.version,
-            changes,
-            timestamp: new Date().toISOString()
-          }))
-        }
+          details: JSON.parse(
+            JSON.stringify({
+              action,
+              version: fullConfig.metadata.version,
+              changes,
+              timestamp: new Date().toISOString(),
+            })
+          ),
+        },
       });
     } catch (error) {
       console.error('Error creating audit log:', error);
@@ -1040,13 +1195,13 @@ export class SiteCustomizationService {
         hasLogo: !!config.branding.logo,
         hasFavicon: !!config.branding.favicon,
         validationErrors: validation.errors.length,
-        validationWarnings: validation.warnings.length
+        validationWarnings: validation.warnings.length,
       };
     } catch (error) {
       return {
         isConfigured: false,
         isValid: false,
-        error: 'Failed to retrieve configuration status'
+        error: 'Failed to retrieve configuration status',
       };
     }
   }

@@ -21,23 +21,23 @@ export function useFormPersistence() {
   /**
    * Save form data to localStorage
    */
-  const saveFormData = useCallback((
-    data: Partial<AgentApplicationFormData>,
-    currentStep: number
-  ) => {
-    try {
-      const persistedData: PersistedFormData = {
-        version: STORAGE_VERSION,
-        data,
-        lastSaved: new Date().toISOString(),
-        currentStep
-      };
+  const saveFormData = useCallback(
+    (data: Partial<AgentApplicationFormData>, currentStep: number) => {
+      try {
+        const persistedData: PersistedFormData = {
+          version: STORAGE_VERSION,
+          data,
+          lastSaved: new Date().toISOString(),
+          currentStep,
+        };
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
-    } catch (error) {
-      console.warn('Failed to save form data to localStorage:', error);
-    }
-  }, []);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
+      } catch (error) {
+        console.warn('Failed to save form data to localStorage:', error);
+      }
+    },
+    []
+  );
 
   /**
    * Load form data from localStorage
@@ -48,7 +48,9 @@ export function useFormPersistence() {
   } | null => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return null;
+      if (!stored) {
+        return null;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
 
@@ -71,7 +73,7 @@ export function useFormPersistence() {
 
       return {
         data: persistedData.data,
-        currentStep: persistedData.currentStep
+        currentStep: persistedData.currentStep,
       };
     } catch (error) {
       console.warn('Failed to load form data from localStorage:', error);
@@ -97,7 +99,9 @@ export function useFormPersistence() {
   const hasSavedData = useCallback((): boolean => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return false;
+      if (!stored) {
+        return false;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
       return persistedData.version === STORAGE_VERSION;
@@ -137,7 +141,9 @@ export function useFormPersistence() {
   const getStorageInfo = useCallback(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return null;
+      if (!stored) {
+        return null;
+      }
 
       const persistedData: PersistedFormData = JSON.parse(stored);
       return {
@@ -145,7 +151,7 @@ export function useFormPersistence() {
         lastSaved: persistedData.lastSaved,
         currentStep: persistedData.currentStep,
         dataKeys: Object.keys(persistedData.data),
-        size: stored.length
+        size: stored.length,
       };
     } catch {
       return null;
@@ -158,6 +164,6 @@ export function useFormPersistence() {
     clearFormData,
     hasSavedData,
     useAutoSave,
-    getStorageInfo
+    getStorageInfo,
   };
 }

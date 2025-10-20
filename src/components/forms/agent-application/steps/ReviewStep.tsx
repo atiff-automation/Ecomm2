@@ -25,31 +25,44 @@ import {
   Heart,
   Target,
   FileText,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
-import { FIELD_LABELS, SOCIAL_MEDIA_LEVELS } from '@/lib/config/agent-application-form';
+import {
+  FIELD_LABELS,
+  SOCIAL_MEDIA_LEVELS,
+} from '@/lib/config/agent-application-form';
 
 interface ReviewStepProps {
   form: UseFormReturn<AgentApplicationFormData>;
 }
 
 export function ReviewStep({ form }: ReviewStepProps) {
-  const { watch, setValue, formState: { errors } } = form;
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = form;
 
   const formData = watch();
   const finalAgreement = watch('finalAgreement');
 
   const getSocialMediaIcon = (platform: string) => {
     switch (platform) {
-      case 'instagram': return <Instagram className="w-4 h-4 text-pink-600" />;
-      case 'facebook': return <Facebook className="w-4 h-4 text-blue-600" />;
-      case 'tiktok': return <Music className="w-4 h-4 text-gray-900" />;
-      default: return null;
+      case 'instagram':
+        return <Instagram className="w-4 h-4 text-pink-600" />;
+      case 'facebook':
+        return <Facebook className="w-4 h-4 text-blue-600" />;
+      case 'tiktok':
+        return <Music className="w-4 h-4 text-gray-900" />;
+      default:
+        return null;
     }
   };
 
   const formatPhoneNumber = (phone: string) => {
-    if (!phone) return '';
+    if (!phone) {
+      return '';
+    }
     // Format Malaysian phone numbers
     return phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
   };
@@ -80,13 +93,17 @@ export function ReviewStep({ form }: ReviewStepProps) {
             </div>
             <div>
               <p className="text-sm text-gray-600">Umur</p>
-              <p className="font-medium">{formData.age ? `${formData.age} tahun` : '-'}</p>
+              <p className="font-medium">
+                {formData.age ? `${formData.age} tahun` : '-'}
+              </p>
             </div>
             <div className="flex items-center space-x-2">
               <Phone className="w-4 h-4 text-gray-500" />
               <div>
                 <p className="text-sm text-gray-600">No. Telefon</p>
-                <p className="font-medium">{formatPhoneNumber(formData.phoneNumber || '')}</p>
+                <p className="font-medium">
+                  {formatPhoneNumber(formData.phoneNumber || '')}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -119,24 +136,36 @@ export function ReviewStep({ form }: ReviewStepProps) {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className={`w-4 h-4 ${formData.hasBusinessExp ? 'text-green-600' : 'text-gray-400'}`} />
+              <CheckCircle
+                className={`w-4 h-4 ${formData.hasBusinessExp ? 'text-green-600' : 'text-gray-400'}`}
+              />
               <div>
                 <p className="text-sm text-gray-600">Pengalaman Perniagaan</p>
-                <p className="font-medium">{formData.hasBusinessExp ? 'Ya' : 'Tidak'}</p>
+                <p className="font-medium">
+                  {formData.hasBusinessExp ? 'Ya' : 'Tidak'}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className={`w-4 h-4 ${formData.hasTeamLeadExp ? 'text-green-600' : 'text-gray-400'}`} />
+              <CheckCircle
+                className={`w-4 h-4 ${formData.hasTeamLeadExp ? 'text-green-600' : 'text-gray-400'}`}
+              />
               <div>
                 <p className="text-sm text-gray-600">Pengalaman Memimpin</p>
-                <p className="font-medium">{formData.hasTeamLeadExp ? 'Ya' : 'Tidak'}</p>
+                <p className="font-medium">
+                  {formData.hasTeamLeadExp ? 'Ya' : 'Tidak'}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className={`w-4 h-4 ${formData.isRegistered ? 'text-green-600' : 'text-gray-400'}`} />
+              <CheckCircle
+                className={`w-4 h-4 ${formData.isRegistered ? 'text-green-600' : 'text-gray-400'}`}
+              />
               <div>
                 <p className="text-sm text-gray-600">Perniagaan Berdaftar</p>
-                <p className="font-medium">{formData.isRegistered ? 'Ya' : 'Tidak'}</p>
+                <p className="font-medium">
+                  {formData.isRegistered ? 'Ya' : 'Tidak'}
+                </p>
               </div>
             </div>
           </div>
@@ -168,12 +197,16 @@ export function ReviewStep({ form }: ReviewStepProps) {
               <div>
                 <p className="font-medium">Instagram</p>
                 <p className="text-sm text-gray-600">
-                  {formData.instagramHandle ? `@${formData.instagramHandle}` : 'Not specified'}
+                  {formData.instagramHandle
+                    ? `@${formData.instagramHandle}`
+                    : 'Not specified'}
                 </p>
               </div>
             </div>
             <Badge className="bg-white/50">
-              {formData.instagramLevel ? SOCIAL_MEDIA_LEVELS[formData.instagramLevel] : '-'}
+              {formData.instagramLevel
+                ? SOCIAL_MEDIA_LEVELS[formData.instagramLevel]
+                : '-'}
             </Badge>
           </div>
 
@@ -189,7 +222,9 @@ export function ReviewStep({ form }: ReviewStepProps) {
               </div>
             </div>
             <Badge className="bg-white/50">
-              {formData.facebookLevel ? SOCIAL_MEDIA_LEVELS[formData.facebookLevel] : '-'}
+              {formData.facebookLevel
+                ? SOCIAL_MEDIA_LEVELS[formData.facebookLevel]
+                : '-'}
             </Badge>
           </div>
 
@@ -200,12 +235,16 @@ export function ReviewStep({ form }: ReviewStepProps) {
               <div>
                 <p className="font-medium">TikTok</p>
                 <p className="text-sm text-gray-600">
-                  {formData.tiktokHandle ? `@${formData.tiktokHandle}` : 'Not specified'}
+                  {formData.tiktokHandle
+                    ? `@${formData.tiktokHandle}`
+                    : 'Not specified'}
                 </p>
               </div>
             </div>
             <Badge className="bg-white/50">
-              {formData.tiktokLevel ? SOCIAL_MEDIA_LEVELS[formData.tiktokLevel] : '-'}
+              {formData.tiktokLevel
+                ? SOCIAL_MEDIA_LEVELS[formData.tiktokLevel]
+                : '-'}
             </Badge>
           </div>
         </CardContent>
@@ -222,16 +261,24 @@ export function ReviewStep({ form }: ReviewStepProps) {
         <CardContent className="space-y-4">
           {/* JRM Experience */}
           <div className="flex items-center space-x-2">
-            <CheckCircle className={`w-4 h-4 ${formData.hasJrmExp ? 'text-green-600' : 'text-gray-400'}`} />
+            <CheckCircle
+              className={`w-4 h-4 ${formData.hasJrmExp ? 'text-green-600' : 'text-gray-400'}`}
+            />
             <div>
-              <p className="text-sm text-gray-600">Pengalaman dengan Produk JRM</p>
-              <p className="font-medium">{formData.hasJrmExp ? 'Ya' : 'Tidak'}</p>
+              <p className="text-sm text-gray-600">
+                Pengalaman dengan Produk JRM
+              </p>
+              <p className="font-medium">
+                {formData.hasJrmExp ? 'Ya' : 'Tidak'}
+              </p>
             </div>
           </div>
 
           {formData.hasJrmExp && formData.jrmProducts && (
             <div className="bg-yellow-50 p-3 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Produk JRM yang Pernah Digunakan</p>
+              <p className="text-sm text-gray-600 mb-1">
+                Produk JRM yang Pernah Digunakan
+              </p>
               <p className="text-sm">{formData.jrmProducts}</p>
             </div>
           )}
@@ -263,13 +310,17 @@ export function ReviewStep({ form }: ReviewStepProps) {
       </Card>
 
       {/* Final Agreement */}
-      <Card className={`border-2 ${errors.finalAgreement ? 'border-red-300 bg-red-50' : 'border-green-200 bg-green-50'}`}>
+      <Card
+        className={`border-2 ${errors.finalAgreement ? 'border-red-300 bg-red-50' : 'border-green-200 bg-green-50'}`}
+      >
         <CardContent className="p-6">
           <div className="flex items-start space-x-3">
             <Checkbox
               id="finalAgreement"
               checked={finalAgreement || false}
-              onCheckedChange={(checked) => setValue('finalAgreement', checked as boolean)}
+              onCheckedChange={checked =>
+                setValue('finalAgreement', checked as boolean)
+              }
               className="mt-1"
             />
             <div className="flex-1">
@@ -279,16 +330,20 @@ export function ReviewStep({ form }: ReviewStepProps) {
               >
                 <FileText className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span>
-                  Saya dengan ini mengesahkan bahawa semua maklumat yang telah saya berikan adalah benar dan tepat.
-                  Saya faham bahawa sebarang maklumat palsu boleh menyebabkan permohonan saya ditolak.
-                  Saya bersetuju untuk mematuhi semua syarat dan terma JRM dan komited untuk menjadi ejen yang berjaya.
+                  Saya dengan ini mengesahkan bahawa semua maklumat yang telah
+                  saya berikan adalah benar dan tepat. Saya faham bahawa
+                  sebarang maklumat palsu boleh menyebabkan permohonan saya
+                  ditolak. Saya bersetuju untuk mematuhi semua syarat dan terma
+                  JRM dan komited untuk menjadi ejen yang berjaya.
                 </span>
               </Label>
 
               {errors.finalAgreement && (
                 <p className="text-sm text-red-600 mt-2 flex items-center space-x-1">
                   <AlertTriangle className="w-4 h-4" />
-                  <span>You must confirm the information to submit the application</span>
+                  <span>
+                    You must confirm the information to submit the application
+                  </span>
                 </p>
               )}
             </div>
@@ -305,7 +360,9 @@ export function ReviewStep({ form }: ReviewStepProps) {
             <ul className="list-disc list-inside space-y-1">
               <li>Your application will be reviewed within 3-5 working days</li>
               <li>We will contact you via email and phone</li>
-              <li>If accepted, you will be invited for an orientation session</li>
+              <li>
+                If accepted, you will be invited for an orientation session
+              </li>
               <li>Comprehensive training will be provided for new agents</li>
             </ul>
           </div>

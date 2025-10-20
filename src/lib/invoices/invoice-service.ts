@@ -87,12 +87,18 @@ export class ReceiptService {
     const logo = siteCustomization.branding?.logo || businessInfo.logo;
 
     console.log('📋 Company Info Source:');
-    console.log('- Using site customization logo:', !!siteCustomization.branding?.logo);
-    console.log('- Fallback to business profile logo:', !siteCustomization.branding?.logo && !!businessInfo.logo);
+    console.log(
+      '- Using site customization logo:',
+      !!siteCustomization.branding?.logo
+    );
+    console.log(
+      '- Fallback to business profile logo:',
+      !siteCustomization.branding?.logo && !!businessInfo.logo
+    );
 
     return {
       ...businessInfo,
-      logo: logo
+      logo: logo,
     };
   }
 
@@ -253,8 +259,14 @@ export class ReceiptService {
    * Generate HTML receipt template
    */
   async generateReceiptHTML(receiptData: ReceiptData): Promise<string> {
-    const { order, customer, orderItems, shippingAddress, billingAddress, taxBreakdown } =
-      receiptData;
+    const {
+      order,
+      customer,
+      orderItems,
+      shippingAddress,
+      billingAddress,
+      taxBreakdown,
+    } = receiptData;
 
     // Get company info from business profile
     const companyInfo = await this.getCompanyInfo();
@@ -272,10 +284,16 @@ export class ReceiptService {
     console.log('- Logo converted to base64:', !!logoDataUri);
     if (companyInfo.logo) {
       console.log('- Logo URL:', companyInfo.logo.url);
-      console.log('- Logo dimensions:', `${companyInfo.logo.width}x${companyInfo.logo.height}`);
+      console.log(
+        '- Logo dimensions:',
+        `${companyInfo.logo.width}x${companyInfo.logo.height}`
+      );
     }
     if (billingAddress) {
-      console.log('- Billing address:', `${billingAddress.firstName} ${billingAddress.lastName}, ${billingAddress.city}`);
+      console.log(
+        '- Billing address:',
+        `${billingAddress.firstName} ${billingAddress.lastName}, ${billingAddress.city}`
+      );
     }
 
     const formatDate = (date: Date) => {

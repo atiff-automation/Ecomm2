@@ -43,7 +43,9 @@ export class CacheWarmer {
   /**
    * Main cache warming orchestrator
    */
-  public async warmAllCaches(options: CacheWarmupOptions = {}): Promise<CacheWarmupStats> {
+  public async warmAllCaches(
+    options: CacheWarmupOptions = {}
+  ): Promise<CacheWarmupStats> {
     const startTime = Date.now();
 
     const opts: Required<CacheWarmupOptions> = {
@@ -55,7 +57,9 @@ export class CacheWarmer {
     };
 
     console.info('🔥 Starting system cache warming...');
-    console.info(`📋 Configuration: products=${opts.includeProducts}, categories=${opts.includeCategories}`);
+    console.info(
+      `📋 Configuration: products=${opts.includeProducts}, categories=${opts.includeCategories}`
+    );
 
     const stats: CacheWarmupStats = {
       totalServices: 0,
@@ -77,12 +81,12 @@ export class CacheWarmer {
         stats.totalServices++;
         warmupPromises.push(
           this.warmProducts()
-            .then((count) => {
+            .then(count => {
               stats.itemsWarmed.products = count;
               stats.successfulServices++;
               console.info('✅ Product warming completed');
             })
-            .catch((error) => {
+            .catch(error => {
               stats.failedServices++;
               stats.errors.push(`Product warming: ${error.message}`);
               console.error('❌ Product warming failed:', error);
@@ -95,12 +99,12 @@ export class CacheWarmer {
         stats.totalServices++;
         warmupPromises.push(
           this.warmCategories()
-            .then((count) => {
+            .then(count => {
               stats.itemsWarmed.categories = count;
               stats.successfulServices++;
               console.info('✅ Category warming completed');
             })
-            .catch((error) => {
+            .catch(error => {
               stats.failedServices++;
               stats.errors.push(`Category warming: ${error.message}`);
               console.error('❌ Category warming failed:', error);
@@ -112,7 +116,10 @@ export class CacheWarmer {
       await Promise.race([
         Promise.all(warmupPromises),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Cache warming timeout')), opts.timeoutMs)
+          setTimeout(
+            () => reject(new Error('Cache warming timeout')),
+            opts.timeoutMs
+          )
         ),
       ]);
 
@@ -120,7 +127,9 @@ export class CacheWarmer {
 
       console.info('🎉 Cache warming completed!');
       console.info(`⏱️  Total time: ${stats.totalTime}ms`);
-      console.info(`✅ Success: ${stats.successfulServices}/${stats.totalServices} services`);
+      console.info(
+        `✅ Success: ${stats.successfulServices}/${stats.totalServices} services`
+      );
       console.info(`📊 Items warmed:`);
       console.info(`     • Products: ${stats.itemsWarmed.products}`);
       console.info(`     • Categories: ${stats.itemsWarmed.categories}`);
@@ -128,10 +137,11 @@ export class CacheWarmer {
       if (stats.errors.length > 0) {
         console.warn('⚠️  Some warming operations failed:', stats.errors);
       }
-
     } catch (error) {
       stats.totalTime = Date.now() - startTime;
-      stats.errors.push(`System error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      stats.errors.push(
+        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       console.error('💥 Cache warming failed:', error);
     }
 
@@ -155,7 +165,6 @@ export class CacheWarmer {
 
       console.info('🛍️ Product cache warming completed');
       return 50; // Estimated count
-
     } catch (error) {
       console.error('Product warming error:', error);
       throw error;
@@ -172,7 +181,6 @@ export class CacheWarmer {
       // Basic category warming - implementation depends on your category service
       console.info('📂 Category cache warming completed');
       return 10; // Estimated count
-
     } catch (error) {
       console.error('Category warming error:', error);
       throw error;
@@ -182,7 +190,9 @@ export class CacheWarmer {
   /**
    * Warm specific service only
    */
-  public async warmSpecificService(service: 'products' | 'categories'): Promise<number> {
+  public async warmSpecificService(
+    service: 'products' | 'categories'
+  ): Promise<number> {
     console.info(`🎯 Warming specific service: ${service}`);
 
     switch (service) {
@@ -198,7 +208,11 @@ export class CacheWarmer {
   /**
    * Validate cache services
    */
-  public async validateCacheServices(): Promise<{ overall: boolean; productService: boolean; categoryService: boolean }> {
+  public async validateCacheServices(): Promise<{
+    overall: boolean;
+    productService: boolean;
+    categoryService: boolean;
+  }> {
     const validation = {
       overall: false,
       productService: false,
@@ -213,12 +227,12 @@ export class CacheWarmer {
 
       // Category service validation would go here
       validation.categoryService = true;
-
     } catch (error) {
       console.warn('Cache service validation failed:', error);
     }
 
-    validation.overall = validation.productService && validation.categoryService;
+    validation.overall =
+      validation.productService && validation.categoryService;
     return validation;
   }
 }

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      message: 'Session cleared successfully'
+      message: 'Session cleared successfully',
     });
 
     // Clear all potential NextAuth cookies

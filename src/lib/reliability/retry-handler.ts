@@ -94,7 +94,9 @@ export class RetryHandler {
 
         // SYSTEMATIC success logging
         if (attempt > 1) {
-          console.log(`✅ Operation succeeded on attempt ${attempt}/${maxAttempts} after ${Date.now() - startTime}ms`);
+          console.log(
+            `✅ Operation succeeded on attempt ${attempt}/${maxAttempts} after ${Date.now() - startTime}ms`
+          );
         }
 
         return result;
@@ -102,7 +104,14 @@ export class RetryHandler {
         lastError = error as Error;
 
         // CENTRALIZED retry condition check
-        if (!this.shouldRetry(lastError, attempt, maxAttempts, options.retryCondition)) {
+        if (
+          !this.shouldRetry(
+            lastError,
+            attempt,
+            maxAttempts,
+            options.retryCondition
+          )
+        ) {
           break;
         }
 
@@ -112,9 +121,18 @@ export class RetryHandler {
         }
 
         // CENTRALIZED delay calculation with exponential backoff
-        const delay = this.calculateDelay(attempt, baseDelay, maxDelay, jitter, lastError);
+        const delay = this.calculateDelay(
+          attempt,
+          baseDelay,
+          maxDelay,
+          jitter,
+          lastError
+        );
 
-        console.warn(`⚠️ Operation failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms:`, lastError.message);
+        console.warn(
+          `⚠️ Operation failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms:`,
+          lastError.message
+        );
 
         // SYSTEMATIC delay implementation
         await this.sleep(delay);
@@ -123,7 +141,10 @@ export class RetryHandler {
 
     // SYSTEMATIC final failure handling
     const totalDuration = Date.now() - startTime;
-    console.error(`❌ Operation failed after ${maxAttempts} attempts over ${totalDuration}ms:`, lastError.message);
+    console.error(
+      `❌ Operation failed after ${maxAttempts} attempts over ${totalDuration}ms:`,
+      lastError.message
+    );
 
     if (options.onFinalFailure) {
       options.onFinalFailure(lastError, attempt);
@@ -175,7 +196,9 @@ export class RetryHandler {
     ];
 
     const errorMessage = error.message.toLowerCase();
-    const isNonRetryable = nonRetryablePatterns.some(pattern => pattern.test(errorMessage));
+    const isNonRetryable = nonRetryablePatterns.some(pattern =>
+      pattern.test(errorMessage)
+    );
 
     if (isNonRetryable) {
       return false;
@@ -193,7 +216,9 @@ export class RetryHandler {
       /temporary/i,
     ];
 
-    const isRetryable = retryablePatterns.some(pattern => pattern.test(errorMessage));
+    const isRetryable = retryablePatterns.some(pattern =>
+      pattern.test(errorMessage)
+    );
 
     // Default to retry for unknown errors
     return isRetryable || !isNonRetryable;
@@ -320,7 +345,7 @@ export class RetryHandler {
       configType,
       {
         ...options,
-        retryCondition: (error) => {
+        retryCondition: error => {
           // Don't retry if circuit breaker is open
           if (error.message.includes('Circuit breaker is OPEN')) {
             return false;

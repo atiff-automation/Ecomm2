@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import {
   Search,
-  Download,
   Eye,
   Edit,
   Mail,
@@ -24,14 +23,18 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  Target,
+  TrendingUp,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
   AdminPageLayout,
-  TabConfig,
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
+import { toast } from 'sonner';
 
 interface Customer {
   id: string;
@@ -54,10 +57,20 @@ interface CustomerFilters {
   search?: string;
 }
 
+interface MembershipStats {
+  memberConversionRate: number;
+  retentionRate: number;
+}
+
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CustomerFilters>({});
+  const [membershipStats, setMembershipStats] = useState<MembershipStats>({
+    memberConversionRate: 0,
+    retentionRate: 0,
+  });
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 25,
@@ -76,15 +89,28 @@ export default function AdminCustomers() {
         ),
       });
 
-      const response = await fetch(`/api/admin/customers?${queryParams}`);
-      if (response.ok) {
-        const data = await response.json();
+      // Fetch customers and membership stats in parallel
+      const [customersResponse, statsResponse] = await Promise.all([
+        fetch(`/api/admin/customers?${queryParams}`),
+        fetch('/api/admin/membership/stats'),
+      ]);
+
+      if (customersResponse.ok) {
+        const data = await customersResponse.json();
         setCustomers(data.customers);
         setPagination(prev => ({
           ...prev,
           total: data.total,
           totalPages: data.totalPages,
         }));
+      }
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setMembershipStats({
+          memberConversionRate: statsData.stats.memberConversionRate,
+          retentionRate: statsData.stats.retentionRate,
+        });
       }
     } catch (error) {
       console.error('Failed to fetch customers:', error);
@@ -97,31 +123,35 @@ export default function AdminCustomers() {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  const handleExport = async () => {
+  const handleDelete = async (customer: Customer) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${customer.firstName} ${customer.lastName}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(customer.id);
     try {
-      const queryParams = new URLSearchParams({
-        export: 'true',
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([, value]) => value && value !== '')
-        ),
+      const response = await fetch(`/api/admin/customers/${customer.id}`, {
+        method: 'DELETE',
       });
 
-      const response = await fetch(
-        `/api/admin/customers/export?${queryParams}`
-      );
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        toast.success('Customer deleted successfully');
+        // Refresh the customer list
+        fetchCustomers();
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete customer:', errorData);
+        toast.error(errorData.message || 'Failed to delete customer');
       }
     } catch (error) {
-      console.error('Failed to export customers:', error);
+      console.error('Failed to delete customer:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -130,6 +160,10 @@ export default function AdminCustomers() {
       style: 'currency',
       currency: 'MYR',
     }).format(amount);
+  };
+
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(1)}%`;
   };
 
   const getStatusColor = (status: string) => {
@@ -145,19 +179,14 @@ export default function AdminCustomers() {
     }
   };
 
-  // Define contextual tabs following ADMIN_LAYOUT_STANDARD.md for Customers
-  const tabs: TabConfig[] = [
-    { id: 'directory', label: 'Directory', href: '/admin/customers' },
-    { id: 'membership', label: 'Membership', href: '/admin/membership' },
-    { id: 'referrals', label: 'Referrals', href: '/admin/member-promotions' },
-  ];
-
-  // Extract page actions
+  // Page actions with membership settings access
   const pageActions = (
-    <Button onClick={handleExport}>
-      <Download className="w-4 h-4 mr-2" />
-      Export Customers
-    </Button>
+    <Link href="/admin/membership/config">
+      <Button size="sm">
+        <Settings className="h-4 w-4 mr-2" />
+        Membership Settings
+      </Button>
+    </Link>
   );
 
   // Extract filters component
@@ -219,68 +248,71 @@ export default function AdminCustomers() {
 
   return (
     <AdminPageLayout
-      title="Customer Management"
-      subtitle="Manage customer accounts and membership status"
+      title="Customer & Membership Management"
+      subtitle="Manage customer accounts, memberships, and program settings"
       actions={pageActions}
-      tabs={tabs}
       filters={filtersComponent}
       breadcrumbs={breadcrumbs}
       loading={loading}
     >
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Customers
-            </CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pagination.total}</div>
+      {/* Quick Stats - Very Compact Layout */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+        <Card className="border-l-2 border-l-blue-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Customers</p>
+            <p className="text-lg font-bold">{pagination.total}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Members</CardTitle>
-            <Crown className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+        <Card className="border-l-2 border-l-yellow-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Members</p>
+            <p className="text-lg font-bold text-yellow-600">
               {customers.filter(c => c.isMember).length}
-            </div>
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Orders</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+        <Card className="border-l-2 border-l-green-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Revenue</p>
+            <p className="text-lg font-bold text-green-600">
+              {formatCurrency(
+                customers.reduce((sum, c) => sum + c.totalSpent, 0)
+              )}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-2 border-l-gray-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Avg Orders</p>
+            <p className="text-lg font-bold">
               {customers.length > 0
                 ? (
                     customers.reduce((sum, c) => sum + c.totalOrders, 0) /
                     customers.length
                   ).toFixed(1)
                 : '0'}
-            </div>
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <Crown className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(
-                customers.reduce((sum, c) => sum + c.totalSpent, 0)
-              )}
-            </div>
+        <Card className="border-l-2 border-l-blue-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Conversion</p>
+            <p className="text-lg font-bold text-blue-600">
+              {formatPercentage(membershipStats.memberConversionRate)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-2 border-l-purple-500">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Retention</p>
+            <p className="text-lg font-bold text-purple-600">
+              {formatPercentage(membershipStats.retentionRate)}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -410,6 +442,14 @@ export default function AdminCustomers() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(customer)}
+                              disabled={deletingId === customer.id}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>

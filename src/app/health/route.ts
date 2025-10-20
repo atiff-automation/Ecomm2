@@ -8,12 +8,15 @@ export async function GET() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       port: process.env.PORT || 'undefined',
-      node_env: process.env.NODE_ENV || 'undefined'
+      node_env: process.env.NODE_ENV || 'undefined',
     });
   } catch (error) {
-    return NextResponse.json({
-      status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

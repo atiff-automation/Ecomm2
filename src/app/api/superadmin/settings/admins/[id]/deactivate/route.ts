@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -49,8 +49,8 @@ export async function POST(
     const adminUser = await prisma.user.findFirst({
       where: {
         id: adminId,
-        role: 'ADMIN'
-      }
+        role: 'ADMIN',
+      },
     });
 
     if (!adminUser) {
@@ -64,7 +64,7 @@ export async function POST(
     if (adminUser.status === 'INACTIVE') {
       return NextResponse.json({
         success: true,
-        message: 'Admin account is already inactive'
+        message: 'Admin account is already inactive',
       });
     }
 
@@ -74,8 +74,8 @@ export async function POST(
       data: {
         status: 'INACTIVE',
         updatedAt: new Date(),
-        updatedBy: session.user.id
-      }
+        updatedBy: session.user.id,
+      },
     });
 
     // Log the deactivation for audit
@@ -87,7 +87,7 @@ export async function POST(
         targetAdminId: adminId,
         targetAdminEmail: adminUser.email,
         previousStatus: adminUser.status,
-        reason: reason.trim()
+        reason: reason.trim(),
       },
       {
         action: 'DEACTIVATE_ADMIN_ACCOUNT',
@@ -95,7 +95,7 @@ export async function POST(
         targetAdminEmail: adminUser.email,
         newStatus: 'INACTIVE',
         reason: reason.trim(),
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       request
     );
@@ -111,10 +111,9 @@ export async function POST(
         id: updatedAdmin.id,
         email: updatedAdmin.email,
         status: updatedAdmin.status,
-        reason: reason.trim()
-      }
+        reason: reason.trim(),
+      },
     });
-
   } catch (error) {
     console.error('Deactivate admin account error:', error);
     return NextResponse.json(

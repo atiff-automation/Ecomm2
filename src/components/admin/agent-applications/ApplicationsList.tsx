@@ -8,12 +8,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { AgentApplicationStatus } from '@prisma/client';
-import { AgentApplicationWithRelations, ApplicationFilters } from '@/types/agent-application';
+import {
+  AgentApplicationWithRelations,
+  ApplicationFilters,
+} from '@/types/agent-application';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Pagination } from '@/components/ui/pagination';
 import { ApplicationCard } from './ApplicationCard';
 import { ApplicationStats } from './ApplicationStats';
@@ -34,15 +43,15 @@ interface ApplicationsListProps {
 }
 
 export function ApplicationsList({ initialData }: ApplicationsListProps) {
-  const [applications, setApplications] = useState<AgentApplicationWithRelations[]>(
-    initialData?.applications || []
-  );
+  const [applications, setApplications] = useState<
+    AgentApplicationWithRelations[]
+  >(initialData?.applications || []);
   const [pagination, setPagination] = useState(
     initialData?.pagination || {
       page: 1,
       limit: 10,
       total: 0,
-      totalPages: 0
+      totalPages: 0,
     }
   );
   const [filters, setFilters] = useState<ApplicationFilters>({
@@ -52,13 +61,15 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
     search: '',
     hasJrmExp: undefined,
     dateFrom: undefined,
-    dateTo: undefined
+    dateTo: undefined,
   });
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch applications
-  const fetchApplications = async (newFilters?: Partial<ApplicationFilters>) => {
+  const fetchApplications = async (
+    newFilters?: Partial<ApplicationFilters>
+  ) => {
     setLoading(true);
     try {
       const queryFilters = { ...filters, ...newFilters };
@@ -70,7 +81,9 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
         }
       });
 
-      const response = await fetch(`/api/admin/agent-applications?${queryParams}`);
+      const response = await fetch(
+        `/api/admin/agent-applications?${queryParams}`
+      );
 
       if (!response.ok) {
         throw new Error('Gagal mengambil data permohonan');
@@ -80,7 +93,6 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
       setApplications(data.applications);
       setPagination(data.pagination);
       setFilters(queryFilters);
-
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Gagal mengambil data permohonan');
@@ -98,7 +110,7 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
   const handleStatusFilter = (status: AgentApplicationStatus | 'all') => {
     fetchApplications({
       status: status === 'all' ? undefined : status,
-      page: 1
+      page: 1,
     });
   };
 
@@ -128,7 +140,9 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
         }
       });
 
-      const response = await fetch(`/api/admin/agent-applications/export?${queryParams}`);
+      const response = await fetch(
+        `/api/admin/agent-applications/export?${queryParams}`
+      );
 
       if (!response.ok) {
         throw new Error('Gagal mengeksport data');
@@ -173,14 +187,12 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
             onClick={handleRefresh}
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+            />
             Refresh
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-          >
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -200,8 +212,12 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
               <Input
                 placeholder="Cari nama, email, atau IC..."
                 value={filters.search || ''}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch(filters.search || '')}
+                onChange={e =>
+                  setFilters(prev => ({ ...prev, search: e.target.value }))
+                }
+                onKeyPress={e =>
+                  e.key === 'Enter' && handleSearch(filters.search || '')
+                }
                 className="pl-10"
               />
             </div>
@@ -255,7 +271,7 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
               search: '',
               hasJrmExp: undefined,
               dateFrom: undefined,
-              dateTo: undefined
+              dateTo: undefined,
             });
             fetchApplications({
               page: 1,
@@ -264,7 +280,7 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
               search: '',
               hasJrmExp: undefined,
               dateFrom: undefined,
-              dateTo: undefined
+              dateTo: undefined,
             });
           }}
         />
@@ -273,7 +289,8 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
       {/* Results Summary */}
       <div className="flex justify-between items-center text-sm text-gray-600">
         <span>
-          Menunjukkan {applications.length} daripada {pagination.total} permohonan
+          Menunjukkan {applications.length} daripada {pagination.total}{' '}
+          permohonan
         </span>
         <span>
           Halaman {pagination.page} daripada {pagination.totalPages}
@@ -296,7 +313,7 @@ export function ApplicationsList({ initialData }: ApplicationsListProps) {
         </Card>
       ) : (
         <div className="space-y-4">
-          {applications.map((application) => (
+          {applications.map(application => (
             <ApplicationCard
               key={application.id}
               application={application}

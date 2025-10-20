@@ -57,13 +57,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(application);
-
   } catch (error) {
     console.error('Admin get application error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

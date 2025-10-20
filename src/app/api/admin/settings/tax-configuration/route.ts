@@ -14,7 +14,7 @@ import { AuditLogger } from '@/lib/security';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
     // Get active tax configurations
     const taxConfigurations = await prisma.taxConfiguration.findMany({
       where: { isActive: true },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!taxConfigurations || taxConfigurations.length === 0) {
       return NextResponse.json({
         success: true,
         data: null,
-        message: 'No tax configuration found'
+        message: 'No tax configuration found',
       });
     }
 
@@ -45,24 +45,31 @@ export async function GET(request: NextRequest) {
     // Transform to match frontend expected format
     const configData = {
       id: primaryConfig.id,
-      gstRegistered: primaryConfig.taxType === 'GST' || taxConfigurations.some(c => c.taxType === 'GST'),
-      gstNumber: taxConfigurations.find(c => c.taxType === 'GST')?.taxNumber || '',
-      sstRegistered: primaryConfig.taxType === 'SST' || taxConfigurations.some(c => c.taxType === 'SST'),
-      sstNumber: taxConfigurations.find(c => c.taxType === 'SST')?.taxNumber || '',
-      defaultGstRate: taxConfigurations.find(c => c.taxType === 'GST')?.rate || 6.0,
-      defaultSstRate: taxConfigurations.find(c => c.taxType === 'SST')?.rate || 10.0,
+      gstRegistered:
+        primaryConfig.taxType === 'GST' ||
+        taxConfigurations.some(c => c.taxType === 'GST'),
+      gstNumber:
+        taxConfigurations.find(c => c.taxType === 'GST')?.taxNumber || '',
+      sstRegistered:
+        primaryConfig.taxType === 'SST' ||
+        taxConfigurations.some(c => c.taxType === 'SST'),
+      sstNumber:
+        taxConfigurations.find(c => c.taxType === 'SST')?.taxNumber || '',
+      defaultGstRate:
+        taxConfigurations.find(c => c.taxType === 'GST')?.rate || 6.0,
+      defaultSstRate:
+        taxConfigurations.find(c => c.taxType === 'SST')?.rate || 10.0,
       taxInclusivePricing: primaryConfig.settings?.taxInclusivePricing || false,
       autoCalculateTax: primaryConfig.settings?.autoCalculateTax !== false,
       taxRates: [], // We'll implement custom tax rates in a future update
       createdAt: primaryConfig.createdAt,
-      updatedAt: primaryConfig.updatedAt
+      updatedAt: primaryConfig.updatedAt,
     };
 
     return NextResponse.json({
       success: true,
-      data: configData
+      data: configData,
     });
-
   } catch (error) {
     console.error('Get tax configuration error:', error);
     return NextResponse.json(
@@ -78,7 +85,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -89,25 +96,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate request body
     const validatedData = taxConfigurationSchema.parse(body);
 
     // Get current configurations for audit logging
     const currentConfigs = await prisma.taxConfiguration.findMany({
-      where: { isActive: true }
+      where: { isActive: true },
     });
 
     // Deactivate existing configurations in a transaction
-    const updatedConfigs = await prisma.$transaction(async (tx) => {
+    const updatedConfigs = await prisma.$transaction(async tx => {
       // Deactivate all current configurations
       await tx.taxConfiguration.updateMany({
         where: { isActive: true },
-        data: { 
+        data: {
           isActive: false,
           updatedAt: new Date(),
-          updatedBy: session.user.id
-        }
+          updatedBy: session.user.id,
+        },
       });
 
       const newConfigs = [];
@@ -122,13 +129,13 @@ export async function PUT(request: NextRequest) {
             isActive: true,
             settings: {
               taxInclusivePricing: validatedData.taxInclusivePricing,
-              autoCalculateTax: validatedData.autoCalculateTax
+              autoCalculateTax: validatedData.autoCalculateTax,
             },
             createdBy: session.user.id,
             updatedBy: session.user.id,
             createdAt: new Date(),
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
         newConfigs.push(gstConfig);
       }
@@ -143,13 +150,13 @@ export async function PUT(request: NextRequest) {
             isActive: true,
             settings: {
               taxInclusivePricing: validatedData.taxInclusivePricing,
-              autoCalculateTax: validatedData.autoCalculateTax
+              autoCalculateTax: validatedData.autoCalculateTax,
             },
             createdBy: session.user.id,
             updatedBy: session.user.id,
             createdAt: new Date(),
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
         newConfigs.push(sstConfig);
       }
@@ -164,13 +171,13 @@ export async function PUT(request: NextRequest) {
             isActive: true,
             settings: {
               taxInclusivePricing: validatedData.taxInclusivePricing,
-              autoCalculateTax: validatedData.autoCalculateTax
+              autoCalculateTax: validatedData.autoCalculateTax,
             },
             createdBy: session.user.id,
             updatedBy: session.user.id,
             createdAt: new Date(),
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
         newConfigs.push(defaultConfig);
       }
@@ -187,18 +194,18 @@ export async function PUT(request: NextRequest) {
         oldConfigs: currentConfigs.map(config => ({
           taxType: config.taxType,
           rate: config.rate,
-          isActive: config.isActive
-        }))
+          isActive: config.isActive,
+        })),
       },
       {
         action: 'UPDATE_TAX_CONFIGURATION',
         newConfigs: updatedConfigs.map(config => ({
           taxType: config.taxType,
           rate: config.rate,
-          isActive: config.isActive
+          isActive: config.isActive,
         })),
         gstRegistered: validatedData.gstRegistered,
-        sstRegistered: validatedData.sstRegistered
+        sstRegistered: validatedData.sstRegistered,
       },
       request
     );
@@ -209,13 +216,12 @@ export async function PUT(request: NextRequest) {
       data: {
         configurationsCreated: updatedConfigs.length,
         gstEnabled: validatedData.gstRegistered,
-        sstEnabled: validatedData.sstRegistered
-      }
+        sstEnabled: validatedData.sstRegistered,
+      },
     });
-
   } catch (error) {
     console.error('Update tax configuration error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },

@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
           error: 'Data permohonan tidak sah',
           details: validationResult.error.errors.map(err => ({
             field: err.path.join('.'),
-            message: err.message
-          }))
+            message: err.message,
+          })),
         },
         { status: 400 }
       );
@@ -62,11 +62,10 @@ export async function POST(request: NextRequest) {
     // Create application
     const result = await AgentApplicationService.createApplication({
       formData: body.formData,
-      userId
+      userId,
     });
 
     return NextResponse.json(result, { status: 201 });
-
   } catch (error) {
     console.error('Agent application submission error:', error);
 
@@ -79,26 +78,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle validation errors
-    if (error instanceof Error && error.message.includes('sudah mempunyai permohonan')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 409 }
-      );
+    if (
+      error instanceof Error &&
+      error.message.includes('sudah mempunyai permohonan')
+    ) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
 
     if (error instanceof Error && error.message.includes('telah digunakan')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
 
     // Generic error
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -136,18 +130,15 @@ export async function GET(request: NextRequest) {
       reviewedAt: application.reviewedAt,
       createdAt: application.createdAt,
       fullName: application.fullName, // For confirmation
-      email: application.email // For confirmation
+      email: application.email, // For confirmation
     };
 
     return NextResponse.json(publicData);
-
   } catch (error) {
     console.error('Get application error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -186,15 +177,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       id: updatedApplication.id,
       status: updatedApplication.status,
-      message: 'Permohonan telah dikemaskini'
+      message: 'Permohonan telah dikemaskini',
     });
-
   } catch (error) {
     console.error('Update application error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

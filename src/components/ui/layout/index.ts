@@ -14,7 +14,7 @@ export {
   FullContainer,
   PageContainer,
   SectionContainer,
-  HeroContainer
+  HeroContainer,
 } from './Container';
 export type { ContainerProps, ContainerSize } from './Container';
 
@@ -31,9 +31,15 @@ export {
   BlogGrid,
   TestimonialGrid,
   AutoFitGrid,
-  AutoFillGrid
+  AutoFillGrid,
 } from './Grid';
-export type { GridProps, GridItemProps, GridCols, GridGap, GridItemSpan } from './Grid';
+export type {
+  GridProps,
+  GridItemProps,
+  GridCols,
+  GridGap,
+  GridItemSpan,
+} from './Grid';
 
 // Section exports
 export {
@@ -46,7 +52,7 @@ export {
   ProductSection,
   TestimonialSection,
   CallToActionSection,
-  FooterSection
+  FooterSection,
 } from './Section';
 export type {
   SectionProps,
@@ -55,7 +61,7 @@ export type {
   SectionWithContainerProps,
   SectionVariant,
   SectionSize,
-  SectionDecoration
+  SectionDecoration,
 } from './Section';
 
 // Stack exports
@@ -71,7 +77,7 @@ export {
   ButtonStack,
   NavStack,
   ContentStack,
-  FeatureStack
+  FeatureStack,
 } from './Stack';
 export type {
   StackProps,
@@ -80,7 +86,7 @@ export type {
   StackDirection,
   StackSpacing,
   StackAlign,
-  StackJustify
+  StackJustify,
 } from './Stack';
 
 // Layout composition utilities
@@ -107,7 +113,8 @@ export const layoutUtils = {
 
   // Grid helpers
   autoGrid: 'grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6',
-  responsiveGrid: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+  responsiveGrid:
+    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
 } as const;
 
 // Layout breakpoints for programmatic use
@@ -117,7 +124,7 @@ export const layoutBreakpoints = {
   md: 768,
   lg: 1024,
   xl: 1280,
-  '2xl': 1536
+  '2xl': 1536,
 } as const;
 
 // Common layout configurations
@@ -126,28 +133,28 @@ export const layoutConfigs = {
   defaultPage: {
     container: 'xl' as const,
     section: 'md' as const,
-    spacing: 'lg' as const
+    spacing: 'lg' as const,
   },
 
   // Product layouts
   productGrid: {
     cols: { xs: 1, sm: 2, md: 3, lg: 4, xl: 5 },
     gap: 'md' as const,
-    spacing: 'lg' as const
+    spacing: 'lg' as const,
   },
 
   // Feature layouts
   featureGrid: {
     cols: { xs: 1, md: 2, lg: 3 },
     gap: 'xl' as const,
-    spacing: 'xl' as const
+    spacing: 'xl' as const,
   },
 
   // Content layouts
   contentStack: {
     spacing: 'md' as const,
-    align: 'stretch' as const
-  }
+    align: 'stretch' as const,
+  },
 } as const;
 
 // Export layout types

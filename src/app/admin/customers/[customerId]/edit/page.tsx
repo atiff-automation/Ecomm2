@@ -14,13 +14,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Crown } from 'lucide-react';
+import { ArrowLeft, Save, Crown, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   AdminPageLayout,
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
+import { toast } from 'sonner';
 
 interface CustomerFormData {
   firstName: string;
@@ -58,6 +59,7 @@ export default function AdminCustomerEdit({
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
@@ -156,17 +158,56 @@ export default function AdminCustomerEdit({
       );
 
       if (response.ok) {
+        toast.success('Customer updated successfully');
         router.push(`/admin/customers/${params.customerId}`);
       } else {
         const errorData = await response.json();
         console.error('Failed to update customer:', errorData);
-        setErrors({ submit: errorData.message || 'Failed to update customer' });
+        const errorMessage = errorData.message || 'Failed to update customer';
+        toast.error(errorMessage);
+        setErrors({ submit: errorMessage });
       }
     } catch (error) {
       console.error('Failed to update customer:', error);
-      setErrors({ submit: 'An unexpected error occurred' });
+      const errorMessage = 'An unexpected error occurred';
+      toast.error(errorMessage);
+      setErrors({ submit: errorMessage });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${customer?.firstName} ${customer?.lastName}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/admin/customers/${params.customerId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (response.ok) {
+        toast.success('Customer deleted successfully');
+        router.push('/admin/customers');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete customer:', errorData);
+        toast.error(errorData.message || 'Failed to delete customer');
+      }
+    } catch (error) {
+      console.error('Failed to delete customer:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -221,6 +262,15 @@ export default function AdminCustomerEdit({
   const pageActions = (
     <div className="flex items-center gap-2">
       {customer.isMember && <Crown className="h-5 w-5 text-yellow-500" />}
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleDelete}
+        disabled={deleting}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        {deleting ? 'Deleting...' : 'Delete Customer'}
+      </Button>
     </div>
   );
 
@@ -234,166 +284,159 @@ export default function AdminCustomerEdit({
       showBackButton={true}
       className="max-w-2xl mx-auto"
     >
-
-        {/* Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={e =>
-                      handleInputChange('firstName', e.target.value)
-                    }
-                    className={errors.firstName ? 'border-red-500' : ''}
-                    required
-                  />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.firstName}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={e =>
-                      handleInputChange('lastName', e.target.value)
-                    }
-                    className={errors.lastName ? 'border-red-500' : ''}
-                    required
-                  />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.lastName}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact Information */}
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Customer Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="firstName">First Name *</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={e => handleInputChange('email', e.target.value)}
-                  className={errors.email ? 'border-red-500' : ''}
+                  id="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={e => handleInputChange('firstName', e.target.value)}
+                  className={errors.firstName ? 'border-red-500' : ''}
                   required
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                {errors.firstName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.firstName}
+                  </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="lastName">Last Name *</Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={e => handleInputChange('phone', e.target.value)}
-                  className={errors.phone ? 'border-red-500' : ''}
-                  placeholder="+60123456789"
+                  id="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={e => handleInputChange('lastName', e.target.value)}
+                  className={errors.lastName ? 'border-red-500' : ''}
+                  required
                 />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                {errors.lastName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
                 )}
               </div>
+            </div>
 
-              {/* Account Status */}
-              <div>
-                <Label htmlFor="status">Account Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={value => handleInputChange('status', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Contact Information */}
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={e => handleInputChange('email', e.target.value)}
+                className={errors.email ? 'border-red-500' : ''}
+                required
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={e => handleInputChange('phone', e.target.value)}
+                className={errors.phone ? 'border-red-500' : ''}
+                placeholder="+60123456789"
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+
+            {/* Account Status */}
+            <div>
+              <Label htmlFor="status">Account Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={value => handleInputChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Membership Status */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base">Membership Status</Label>
+                <p className="text-sm text-muted-foreground">
+                  Grant or revoke membership privileges
+                </p>
               </div>
-
-              {/* Membership Status */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Membership Status</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Grant or revoke membership privileges
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={formData.isMember}
-                    onCheckedChange={checked =>
-                      handleInputChange('isMember', checked)
-                    }
-                  />
-                  <Crown
-                    className={`h-5 w-5 ${formData.isMember ? 'text-yellow-500' : 'text-gray-400'}`}
-                  />
-                </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={formData.isMember}
+                  onCheckedChange={checked =>
+                    handleInputChange('isMember', checked)
+                  }
+                />
+                <Crown
+                  className={`h-5 w-5 ${formData.isMember ? 'text-yellow-500' : 'text-gray-400'}`}
+                />
               </div>
+            </div>
 
-              {formData.isMember && !customer.isMember && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800 text-sm">
-                    <strong>Note:</strong> Granting membership status will apply
-                    member pricing and benefits to this customer&apos;s future
-                    orders.
-                  </p>
-                </div>
-              )}
+            {formData.isMember && !customer.isMember && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-yellow-800 text-sm">
+                  <strong>Note:</strong> Granting membership status will apply
+                  member pricing and benefits to this customer&apos;s future
+                  orders.
+                </p>
+              </div>
+            )}
 
-              {!formData.isMember && customer.isMember && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm">
-                    <strong>Warning:</strong> Removing membership status will
-                    revoke member pricing and benefits. This action cannot be
-                    undone automatically.
-                  </p>
-                </div>
-              )}
+            {!formData.isMember && customer.isMember && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 text-sm">
+                  <strong>Warning:</strong> Removing membership status will
+                  revoke member pricing and benefits. This action cannot be
+                  undone automatically.
+                </p>
+              </div>
+            )}
 
-              {errors.submit && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm">{errors.submit}</p>
-                </div>
-              )}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 text-sm">{errors.submit}</p>
+              </div>
+            )}
 
-              {/* Submit Button */}
-              <div className="flex gap-4 pt-4">
-                <Button type="submit" disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save Changes'}
+            {/* Submit Button */}
+            <div className="flex gap-4 pt-4">
+              <Button type="submit" disabled={saving}>
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Link href={`/admin/customers/${customer.id}`}>
+                <Button type="button" variant="outline">
+                  Cancel
                 </Button>
-                <Link href={`/admin/customers/${customer.id}`}>
-                  <Button type="button" variant="outline">
-                    Cancel
-                  </Button>
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </AdminPageLayout>
   );
 }

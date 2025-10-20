@@ -5,23 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Star, 
-  StarOff, 
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Star,
+  StarOff,
   Download,
   Upload,
   Settings,
   RefreshCw,
-  Receipt
+  Receipt,
 } from 'lucide-react';
-import { 
-  ReceiptTemplate, 
+import {
+  ReceiptTemplate,
   ReceiptTemplateType,
-  TEMPLATE_TYPE_LABELS 
+  TEMPLATE_TYPE_LABELS,
 } from '@/types/receipt-templates';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateSelector } from './TemplateSelector';
@@ -34,12 +34,15 @@ interface ReceiptTemplateManagerProps {
 }
 
 export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
-  className
+  className,
 }) => {
   const [templates, setTemplates] = useState<ReceiptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<ReceiptTemplate | null>(null);
-  const [activeView, setActiveView] = useState<'list' | 'preview' | 'gallery' | 'settings'>('list');
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<ReceiptTemplate | null>(null);
+  const [activeView, setActiveView] = useState<
+    'list' | 'preview' | 'gallery' | 'settings'
+  >('list');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Load templates on mount and when refresh is triggered
@@ -66,9 +69,12 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
 
   const handleSetDefault = async (templateId: string) => {
     try {
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}/set-default`, {
-        method: 'PATCH'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}/set-default`,
+        {
+          method: 'PATCH',
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to set default template');
@@ -83,14 +89,21 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this template? This action cannot be undone.'
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -99,7 +112,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
 
       toast.success('Template deleted successfully');
       setRefreshTrigger(prev => prev + 1);
-      
+
       // Clear selected template if it was deleted
       if (selectedTemplate?.id === templateId) {
         setSelectedTemplate(null);
@@ -113,19 +126,24 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
 
   const handleToggleActive = async (templateId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/admin/receipt-templates/${templateId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ isActive })
-      });
+      const response = await fetch(
+        `/api/admin/receipt-templates/${templateId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ isActive }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to update template status');
       }
 
-      toast.success(`Template ${isActive ? 'activated' : 'deactivated'} successfully`);
+      toast.success(
+        `Template ${isActive ? 'activated' : 'deactivated'} successfully`
+      );
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error updating template status:', error);
@@ -141,7 +159,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
   const handleInitializeDefaults = async () => {
     try {
       const response = await fetch('/api/admin/receipt-templates/initialize', {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -171,7 +189,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
       THERMAL_RECEIPT: 'bg-blue-100 text-blue-800',
       BUSINESS_INVOICE: 'bg-purple-100 text-purple-800',
       MINIMAL_RECEIPT: 'bg-green-100 text-green-800',
-      DETAILED_INVOICE: 'bg-orange-100 text-orange-800'
+      DETAILED_INVOICE: 'bg-orange-100 text-orange-800',
     };
     return colors[templateType] || 'bg-gray-100 text-gray-800';
   };
@@ -187,9 +205,11 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
           >
             ← Back to Templates
           </Button>
-          <h2 className="text-lg font-semibold">Preview: {selectedTemplate.name}</h2>
+          <h2 className="text-lg font-semibold">
+            Preview: {selectedTemplate.name}
+          </h2>
         </div>
-        <TemplatePreview 
+        <TemplatePreview
           template={selectedTemplate}
           onClose={() => setActiveView('list')}
         />
@@ -210,7 +230,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
           </Button>
           <h2 className="text-lg font-semibold">Template Gallery</h2>
         </div>
-        <TemplateGallery 
+        <TemplateGallery
           onTemplateInstalled={() => {
             setRefreshTrigger(prev => prev + 1);
             setActiveView('list');
@@ -268,10 +288,10 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
             disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             Refresh
           </Button>
-          
+
           {templates.length === 0 && !loading && (
             <Button
               variant="outline"
@@ -309,15 +329,21 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
             <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Receipt className="h-6 w-6 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Templates Found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Templates Found
+            </h3>
             <p className="text-gray-500 mb-6">
-              Get started by creating your first receipt template or initializing with default templates.
+              Get started by creating your first receipt template or
+              initializing with default templates.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button onClick={handleInitializeDefaults}>
                 Initialize Default Templates
               </Button>
-              <Button variant="outline" onClick={() => setActiveView('gallery')}>
+              <Button
+                variant="outline"
+                onClick={() => setActiveView('gallery')}
+              >
                 Browse Template Gallery
               </Button>
             </div>
@@ -325,8 +351,11 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {templates.map((template) => (
-            <Card key={template.id} className="relative group hover:shadow-md transition-shadow">
+          {templates.map(template => (
+            <Card
+              key={template.id}
+              className="relative group hover:shadow-md transition-shadow"
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
@@ -338,22 +367,28 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
                       {getStatusBadge(template)}
                     </div>
                   </div>
-                  
+
                   {template.isDefault && (
                     <Star className="h-5 w-5 text-yellow-500 fill-current" />
                   )}
                 </div>
                 {template.description && (
-                  <p className="text-sm text-muted-foreground">{template.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {template.description}
+                  </p>
                 )}
               </CardHeader>
-              
+
               <CardContent className="pt-0">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                  <span>Created {new Date(template.createdAt).toLocaleDateString()}</span>
-                  <span>Updated {new Date(template.updatedAt).toLocaleDateString()}</span>
+                  <span>
+                    Created {new Date(template.createdAt).toLocaleDateString()}
+                  </span>
+                  <span>
+                    Updated {new Date(template.updatedAt).toLocaleDateString()}
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -364,7 +399,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
                     <Eye className="h-3 w-3" />
                     Preview
                   </Button>
-                  
+
                   {!template.isDefault && (
                     <Button
                       variant="outline"
@@ -377,18 +412,20 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
                       Set Default
                     </Button>
                   )}
-                  
+
                   <div className="ml-auto flex items-center gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleToggleActive(template.id, !template.isActive)}
+                      onClick={() =>
+                        handleToggleActive(template.id, !template.isActive)
+                      }
                       className="h-8 w-8 p-0"
                       title={template.isActive ? 'Deactivate' : 'Activate'}
                     >
                       {template.isActive ? '⏸️' : '▶️'}
                     </Button>
-                    
+
                     {!template.isDefault && (
                       <Button
                         variant="ghost"

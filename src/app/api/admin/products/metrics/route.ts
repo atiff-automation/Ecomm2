@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -75,17 +77,14 @@ export async function GET(request: NextRequest) {
 
       // Active products (with filters applied)
       prisma.product.count({
-        where: { ...where, status: 'ACTIVE' }
+        where: { ...where, status: 'ACTIVE' },
       }),
 
       // Low stock products (with filters applied)
       prisma.product.count({
         where: {
           ...where,
-          AND: [
-            { stockQuantity: { lte: 10 } },
-            { stockQuantity: { gt: 0 } },
-          ],
+          AND: [{ stockQuantity: { lte: 10 } }, { stockQuantity: { gt: 0 } }],
         },
       }),
 

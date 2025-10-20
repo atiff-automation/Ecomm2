@@ -37,12 +37,14 @@ export async function GET(request: NextRequest) {
     const filters = {
       status: searchParams.get('status') || undefined,
       search: searchParams.get('search') || undefined,
-      hasJrmExp: searchParams.get('hasJrmExp') ? searchParams.get('hasJrmExp') === 'true' : undefined,
+      hasJrmExp: searchParams.get('hasJrmExp')
+        ? searchParams.get('hasJrmExp') === 'true'
+        : undefined,
       socialMediaLevel: searchParams.get('socialMediaLevel') || undefined,
       dateFrom: searchParams.get('dateFrom') || undefined,
       dateTo: searchParams.get('dateTo') || undefined,
       page: parseInt(searchParams.get('page') || '1'),
-      limit: parseInt(searchParams.get('limit') || '10')
+      limit: parseInt(searchParams.get('limit') || '10'),
     };
 
     // Validate filters
@@ -51,23 +53,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Parameter tidak sah',
-          details: validationResult.error.errors
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
     }
 
     // Get applications
-    const result = await AgentApplicationService.getApplications(validationResult.data);
+    const result = await AgentApplicationService.getApplications(
+      validationResult.data
+    );
 
     return NextResponse.json(result);
-
   } catch (error) {
     console.error('Admin get applications error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

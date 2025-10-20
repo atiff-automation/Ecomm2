@@ -46,7 +46,9 @@ export function getGuestCart(): GuestCart {
       // Filter out invalid items
       const validItems = cart.items.filter(
         (item: any) =>
-          item.productId && typeof item.quantity === 'number' && item.quantity > 0
+          item.productId &&
+          typeof item.quantity === 'number' &&
+          item.quantity > 0
       );
 
       return {

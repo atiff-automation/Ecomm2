@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -30,12 +33,12 @@ export async function GET(request: NextRequest) {
 
     // SINGLE SOURCE OF TRUTH: Get active configuration
     const config = await adminTelegramConfigService.getActiveConfig();
-    
+
     if (!config) {
       return NextResponse.json({
         configured: false,
         config: null,
-        message: 'No telegram configuration found'
+        message: 'No telegram configuration found',
       });
     }
 
@@ -55,8 +58,8 @@ export async function GET(request: NextRequest) {
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
-        updatedAt: config.updatedAt
-      }
+        updatedAt: config.updatedAt,
+      },
     });
   } catch (error) {
     console.error('Error getting admin telegram config:', error);
@@ -76,7 +79,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
       chatManagementEnabled = true,
       systemAlertsEnabled = true,
       dailySummaryEnabled = true,
-      timezone = 'Asia/Kuala_Lumpur'
+      timezone = 'Asia/Kuala_Lumpur',
     } = body;
 
     // NO HARDCODE: Validate required fields
@@ -128,7 +134,7 @@ export async function POST(request: NextRequest) {
         chatManagementEnabled,
         systemAlertsEnabled,
         dailySummaryEnabled,
-        timezone
+        timezone,
       },
       session.user?.id
     );
@@ -149,8 +155,8 @@ export async function POST(request: NextRequest) {
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
-        updatedAt: config.updatedAt
-      }
+        updatedAt: config.updatedAt,
+      },
     });
   } catch (error) {
     console.error('Error saving admin telegram config:', error);
@@ -170,7 +176,10 @@ export async function PUT(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -178,11 +187,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { botToken, ordersChatId, inventoryChatId, chatManagementChatId, systemAlertsChatId } = body;
+    const {
+      botToken,
+      ordersChatId,
+      inventoryChatId,
+      chatManagementChatId,
+      systemAlertsChatId,
+    } = body;
 
     // Check if configuration already exists to use saved bot token
     const existingConfig = await adminTelegramConfigService.getActiveConfig();
-    
+
     // NO HARDCODE: Validate required fields
     if (!botToken?.trim() && !existingConfig?.botToken) {
       return NextResponse.json(
@@ -204,7 +219,7 @@ export async function PUT(request: NextRequest) {
       ordersChatId: ordersChatId.trim(),
       inventoryChatId: inventoryChatId?.trim(),
       chatManagementChatId: chatManagementChatId?.trim(),
-      systemAlertsChatId: systemAlertsChatId?.trim()
+      systemAlertsChatId: systemAlertsChatId?.trim(),
     });
 
     return NextResponse.json(testResult);
@@ -226,7 +241,10 @@ export async function PATCH(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -234,12 +252,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Force service reload
-    const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
+    const { simplifiedTelegramService } = await import(
+      '@/lib/telegram/simplified-telegram-service'
+    );
     await simplifiedTelegramService.reloadConfiguration();
 
     return NextResponse.json({
       success: true,
-      message: 'Service configuration reloaded successfully'
+      message: 'Service configuration reloaded successfully',
     });
   } catch (error) {
     console.error('Error reloading telegram service:', error);
@@ -259,7 +279,10 @@ export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -282,7 +305,7 @@ export async function DELETE(request: NextRequest) {
     if (success) {
       return NextResponse.json({
         success: true,
-        message: 'Telegram configuration deleted successfully'
+        message: 'Telegram configuration deleted successfully',
       });
     } else {
       return NextResponse.json(

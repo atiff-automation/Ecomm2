@@ -14,7 +14,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getShippingSettings } from '@/lib/shipping/shipping-settings';
-import { createEasyParcelService, EasyParcelError } from '@/lib/shipping/easyparcel-service';
+import {
+  createEasyParcelService,
+  EasyParcelError,
+} from '@/lib/shipping/easyparcel-service';
 import { SHIPPING_ERROR_CODES } from '@/lib/shipping/constants';
 import type { DeliveryAddress } from '@/lib/shipping/types';
 import { getPickupAddressOrThrow } from '@/lib/shipping/business-profile-integration';
@@ -48,7 +51,9 @@ export async function GET(
       );
     }
 
-    console.log(`[ShippingOptions] Fetching options for order ${params.orderId}`);
+    console.log(
+      `[ShippingOptions] Fetching options for order ${params.orderId}`
+    );
 
     // Step 2: Fetch order with shipping address
     const order = await prisma.order.findUnique({
@@ -89,7 +94,8 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          message: 'Invalid shipping weight. Cannot fetch shipping options without weight.',
+          message:
+            'Invalid shipping weight. Cannot fetch shipping options without weight.',
           code: SHIPPING_ERROR_CODES.INVALID_WEIGHT,
         },
         { status: 400 }
@@ -103,7 +109,8 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          message: 'Shipping settings not configured. Please configure in admin settings.',
+          message:
+            'Shipping settings not configured. Please configure in admin settings.',
           code: SHIPPING_ERROR_CODES.NOT_CONFIGURED,
         },
         { status: 400 }
@@ -114,13 +121,18 @@ export async function GET(
     let pickupAddress;
     try {
       pickupAddress = await getPickupAddressOrThrow();
-      console.log('[ShippingOptions] Pickup address retrieved from BusinessProfile');
+      console.log(
+        '[ShippingOptions] Pickup address retrieved from BusinessProfile'
+      );
     } catch (error) {
       console.error('[ShippingOptions] Failed to get pickup address:', error);
       return NextResponse.json(
         {
           success: false,
-          message: error instanceof Error ? error.message : 'Failed to retrieve pickup address from Business Profile',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to retrieve pickup address from Business Profile',
           code: SHIPPING_ERROR_CODES.INVALID_ADDRESS,
         },
         { status: 400 }
@@ -160,7 +172,11 @@ export async function GET(
 
     let rates;
     try {
-      rates = await easyParcelService.getRates(pickupAddress, deliveryAddress, shippingWeight);
+      rates = await easyParcelService.getRates(
+        pickupAddress,
+        deliveryAddress,
+        shippingWeight
+      );
     } catch (error) {
       console.error('[ShippingOptions] EasyParcel API error:', error);
 
@@ -189,7 +205,7 @@ export async function GET(
     }
 
     // Step 9: Format response for FulfillmentWidget
-    const courierOptions = rates.map((rate) => ({
+    const courierOptions = rates.map(rate => ({
       serviceId: rate.service_id,
       courierName: rate.courier_name,
       serviceType: rate.service_type,
@@ -203,7 +219,8 @@ export async function GET(
     console.log('[ShippingOptions] Options fetched successfully:', {
       count: courierOptions.length,
       cheapest: courierOptions[0]?.cost,
-      customerChoice: courierOptions.find((opt) => opt.isCustomerChoice)?.courierName || 'None',
+      customerChoice:
+        courierOptions.find(opt => opt.isCustomerChoice)?.courierName || 'None',
     });
 
     // Step 10: Return success response

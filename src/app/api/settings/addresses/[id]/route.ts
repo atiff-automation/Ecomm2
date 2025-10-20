@@ -17,7 +17,7 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -29,7 +29,7 @@ export async function PUT(
 
     const addressId = params.id;
     const body = await request.json();
-    
+
     // Validate request body
     const validatedData = addressSchema.parse(body);
 
@@ -37,15 +37,12 @@ export async function PUT(
     const existingAddress = await prisma.address.findFirst({
       where: {
         id: addressId,
-        userId: session.user.id
-      }
+        userId: session.user.id,
+      },
     });
 
     if (!existingAddress) {
-      return NextResponse.json(
-        { error: 'Address not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
     }
 
     // If this is set as default, remove default from other addresses of same type
@@ -54,11 +51,11 @@ export async function PUT(
         where: {
           userId: session.user.id,
           type: validatedData.type,
-          id: { not: addressId }
+          id: { not: addressId },
         },
         data: {
-          isDefault: false
-        }
+          isDefault: false,
+        },
       });
     }
 
@@ -78,8 +75,8 @@ export async function PUT(
         country: validatedData.country,
         phone: validatedData.phone || null,
         isDefault: validatedData.isDefault,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     // Log the change for audit
@@ -93,8 +90,8 @@ export async function PUT(
           type: existingAddress.type,
           city: existingAddress.city,
           state: existingAddress.state,
-          isDefault: existingAddress.isDefault
-        }
+          isDefault: existingAddress.isDefault,
+        },
       },
       {
         action: 'UPDATE_ADDRESS',
@@ -103,8 +100,8 @@ export async function PUT(
           type: validatedData.type,
           city: validatedData.city,
           state: validatedData.state,
-          isDefault: validatedData.isDefault
-        }
+          isDefault: validatedData.isDefault,
+        },
       },
       request
     );
@@ -112,12 +109,11 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: 'Address updated successfully',
-      data: updatedAddress
+      data: updatedAddress,
     });
-
   } catch (error) {
     console.error('Update address error:', error);
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid input data', details: error },
@@ -141,7 +137,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -157,32 +153,26 @@ export async function DELETE(
     const existingAddress = await prisma.address.findFirst({
       where: {
         id: addressId,
-        userId: session.user.id
-      }
+        userId: session.user.id,
+      },
     });
 
     if (!existingAddress) {
-      return NextResponse.json(
-        { error: 'Address not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
     }
 
     // Check if address is being used in any orders
     const ordersUsingAddress = await prisma.order.count({
       where: {
-        OR: [
-          { shippingAddressId: addressId },
-          { billingAddressId: addressId }
-        ]
-      }
+        OR: [{ shippingAddressId: addressId }, { billingAddressId: addressId }],
+      },
     });
 
     if (ordersUsingAddress > 0) {
       return NextResponse.json(
-        { 
+        {
           error: 'Cannot delete address that has been used in orders',
-          details: `This address is associated with ${ordersUsingAddress} order(s)`
+          details: `This address is associated with ${ordersUsingAddress} order(s)`,
         },
         { status: 409 }
       );
@@ -190,7 +180,7 @@ export async function DELETE(
 
     // Delete address
     await prisma.address.delete({
-      where: { id: addressId }
+      where: { id: addressId },
     });
 
     // Log the deletion for audit
@@ -203,22 +193,21 @@ export async function DELETE(
         deletedData: {
           type: existingAddress.type,
           city: existingAddress.city,
-          state: existingAddress.state
-        }
+          state: existingAddress.state,
+        },
       },
       {
         action: 'DELETE_ADDRESS',
         addressId,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       request
     );
 
     return NextResponse.json({
       success: true,
-      message: 'Address deleted successfully'
+      message: 'Address deleted successfully',
     });
-
   } catch (error) {
     console.error('Delete address error:', error);
     return NextResponse.json(

@@ -4,7 +4,13 @@
  */
 
 import crypto from 'crypto';
-import { EncryptedData } from '@/lib/types/telegram-config.types';
+
+// Type definition for encrypted data structure
+export interface EncryptedData {
+  encrypted: string;
+  iv: string;
+  algorithm: string;
+}
 
 // Encryption configuration (Single Source of Truth)
 const ENCRYPTION_CONFIG = {
@@ -22,28 +28,28 @@ const ENCRYPTION_CONFIG = {
  */
 function getEncryptionKey(): string {
   const key = process.env.TELEGRAM_CONFIG_ENCRYPTION_KEY;
-  
+
   if (!key) {
     throw new Error(
       'TELEGRAM_CONFIG_ENCRYPTION_KEY environment variable is required for secure token storage'
     );
   }
-  
+
   // Validate key format (should be base64 encoded)
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(key)) {
     throw new Error(
       'TELEGRAM_CONFIG_ENCRYPTION_KEY must be a valid base64 encoded key'
     );
   }
-  
+
   const keyBuffer = Buffer.from(key, 'base64');
-  
+
   if (keyBuffer.length !== ENCRYPTION_CONFIG.KEY_LENGTH) {
     throw new Error(
       `TELEGRAM_CONFIG_ENCRYPTION_KEY must be ${ENCRYPTION_CONFIG.KEY_LENGTH} bytes when decoded from base64`
     );
   }
-  
+
   return key;
 }
 
@@ -65,30 +71,32 @@ export function encryptSensitiveData(plaintext: string): EncryptedData {
     // Get encryption key
     const keyBase64 = getEncryptionKey();
     const key = Buffer.from(keyBase64, 'base64');
-    
+
     // Generate random IV
     const iv = crypto.randomBytes(ENCRYPTION_CONFIG.IV_LENGTH);
-    
-    // Create cipher with proper GCM method
-    const cipher = crypto.createCipherGCM(ENCRYPTION_CONFIG.ALGORITHM, key, iv);
-    
+
+    // Create cipher with proper method
+    const cipher = crypto.createCipheriv(ENCRYPTION_CONFIG.ALGORITHM, key, iv);
+
     // Encrypt the data
     let encrypted = cipher.update(plaintext, 'utf8');
     encrypted = Buffer.concat([encrypted, cipher.final()]);
-    
+
     // Get authentication tag for GCM mode
     const tag = cipher.getAuthTag();
-    
+
     // Combine encrypted data and tag
     const encryptedWithTag = Buffer.concat([encrypted, tag]);
-    
+
     return {
       encrypted: encryptedWithTag.toString('base64'),
       iv: iv.toString('base64'),
       algorithm: ENCRYPTION_CONFIG.ALGORITHM,
     };
   } catch (error) {
-    throw new Error(`Failed to encrypt sensitive data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to encrypt sensitive data: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -99,37 +107,54 @@ export function encryptSensitiveData(plaintext: string): EncryptedData {
 export function decryptSensitiveData(encryptedData: EncryptedData): string {
   try {
     // Validate input
-    if (!encryptedData.encrypted || !encryptedData.iv || !encryptedData.algorithm) {
+    if (
+      !encryptedData.encrypted ||
+      !encryptedData.iv ||
+      !encryptedData.algorithm
+    ) {
       throw new Error('Invalid encrypted data format');
     }
-    
+
     if (encryptedData.algorithm !== ENCRYPTION_CONFIG.ALGORITHM) {
-      throw new Error(`Unsupported encryption algorithm: ${encryptedData.algorithm}`);
+      throw new Error(
+        `Unsupported encryption algorithm: ${encryptedData.algorithm}`
+      );
     }
-    
+
     // Get encryption key
     const keyBase64 = getEncryptionKey();
     const key = Buffer.from(keyBase64, 'base64');
-    
+
     // Parse encrypted data and tag
     const encryptedBuffer = Buffer.from(encryptedData.encrypted, 'base64');
-    const encrypted = encryptedBuffer.subarray(0, encryptedBuffer.length - ENCRYPTION_CONFIG.TAG_LENGTH);
-    const tag = encryptedBuffer.subarray(encryptedBuffer.length - ENCRYPTION_CONFIG.TAG_LENGTH);
-    
+    const encrypted = encryptedBuffer.subarray(
+      0,
+      encryptedBuffer.length - ENCRYPTION_CONFIG.TAG_LENGTH
+    );
+    const tag = encryptedBuffer.subarray(
+      encryptedBuffer.length - ENCRYPTION_CONFIG.TAG_LENGTH
+    );
+
     // Parse IV
     const iv = Buffer.from(encryptedData.iv, 'base64');
-    
-    // Create decipher with proper GCM method
-    const decipher = crypto.createDecipherGCM(ENCRYPTION_CONFIG.ALGORITHM, key, iv);
+
+    // Create decipher with proper method
+    const decipher = crypto.createDecipheriv(
+      ENCRYPTION_CONFIG.ALGORITHM,
+      key,
+      iv
+    );
     decipher.setAuthTag(tag);
-    
+
     // Decrypt the data
     let decrypted = decipher.update(encrypted, undefined, 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   } catch (error) {
-    throw new Error(`Failed to decrypt sensitive data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to decrypt sensitive data: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -152,8 +177,10 @@ export function isEncryptedData(value: any): value is EncryptedData {
  * Returns null instead of throwing for invalid inputs
  */
 export function safeEncrypt(plaintext: string | null): EncryptedData | null {
-  if (!plaintext) return null;
-  
+  if (!plaintext) {
+    return null;
+  }
+
   try {
     return encryptSensitiveData(plaintext);
   } catch (error) {
@@ -166,9 +193,13 @@ export function safeEncrypt(plaintext: string | null): EncryptedData | null {
  * Safe decryption wrapper that handles errors gracefully
  * Returns null instead of throwing for invalid inputs
  */
-export function safeDecrypt(encryptedData: EncryptedData | null): string | null {
-  if (!encryptedData) return null;
-  
+export function safeDecrypt(
+  encryptedData: EncryptedData | null
+): string | null {
+  if (!encryptedData) {
+    return null;
+  }
+
   try {
     return decryptSensitiveData(encryptedData);
   } catch (error) {
@@ -182,10 +213,7 @@ export function safeDecrypt(encryptedData: EncryptedData | null): string | null 
  * Used for change detection without storing plaintext
  */
 export function hashSensitiveData(data: string): string {
-  return crypto
-    .createHash('sha256')
-    .update(data)
-    .digest('hex');
+  return crypto.createHash('sha256').update(data).digest('hex');
 }
 
 /**
@@ -199,25 +227,27 @@ export function validateEncryptionKey(key: string): {
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-  
+
   // Check format
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(key)) {
     errors.push('Key must be valid base64 encoded string');
   } else {
     const keyBuffer = Buffer.from(key, 'base64');
-    
+
     // Check length
     if (keyBuffer.length !== ENCRYPTION_CONFIG.KEY_LENGTH) {
-      errors.push(`Key must be ${ENCRYPTION_CONFIG.KEY_LENGTH} bytes when decoded`);
+      errors.push(
+        `Key must be ${ENCRYPTION_CONFIG.KEY_LENGTH} bytes when decoded`
+      );
     }
-    
+
     // Check entropy (basic)
     const uniqueBytes = new Set(keyBuffer).size;
     if (uniqueBytes < 16) {
       warnings.push('Key appears to have low entropy - consider regenerating');
     }
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
@@ -234,7 +264,7 @@ export function getEncryptionSetupInstructions(): {
   instructions: string[];
 } {
   const newKey = generateEncryptionKey();
-  
+
   return {
     keyGenerated: newKey,
     instructions: [

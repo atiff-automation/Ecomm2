@@ -21,16 +21,16 @@ export function useBranding() {
 
   useEffect(() => {
     fetchBranding();
-    
+
     // Listen for branding updates from admin panel
     const handleBrandingUpdate = () => {
       setTimeout(() => {
         fetchBranding();
       }, 1000); // Wait 1 second to ensure API is updated
     };
-    
+
     window.addEventListener('brandingUpdated', handleBrandingUpdate);
-    
+
     return () => {
       window.removeEventListener('brandingUpdated', handleBrandingUpdate);
     };
@@ -40,13 +40,13 @@ export function useBranding() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Fetch branding from API
       const response = await fetch('/api/branding/current');
       if (!response.ok) {
         throw new Error('Failed to fetch branding');
       }
-      
+
       const data = await response.json();
       setBranding({
         logoUrl: data.logoUrl || undefined,
@@ -64,7 +64,7 @@ export function useBranding() {
   // Helper function to update branding (can be called after upload)
   const updateBranding = (newBranding: Partial<BrandingAssets>) => {
     setBranding(prev => ({ ...prev, ...newBranding }));
-    
+
     // Refetch from API to get latest data after a brief delay
     setTimeout(() => {
       fetchBranding();

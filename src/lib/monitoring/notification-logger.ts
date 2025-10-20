@@ -15,7 +15,9 @@ const LOGGING_CONFIG = {
   RETENTION_DAYS: parseInt(process.env.LOG_RETENTION_DAYS || '30'),
   BATCH_SIZE: parseInt(process.env.LOG_BATCH_SIZE || '100'),
   ALERT_THRESHOLD: parseInt(process.env.LOG_ALERT_THRESHOLD || '10'),
-  PERFORMANCE_THRESHOLD_MS: parseInt(process.env.PERFORMANCE_THRESHOLD_MS || '5000'),
+  PERFORMANCE_THRESHOLD_MS: parseInt(
+    process.env.PERFORMANCE_THRESHOLD_MS || '5000'
+  ),
   ERROR_ESCALATION_COUNT: parseInt(process.env.ERROR_ESCALATION_COUNT || '5'),
 } as const;
 
@@ -114,7 +116,9 @@ export class NotificationLogger {
     } = {}
   ): Promise<void> {
     const logLevel = LogLevel[level];
-    const configLevel = LogLevel[LOGGING_CONFIG.LEVEL.toUpperCase() as keyof typeof LogLevel] || LogLevel.INFO;
+    const configLevel =
+      LogLevel[LOGGING_CONFIG.LEVEL.toUpperCase() as keyof typeof LogLevel] ||
+      LogLevel.INFO;
 
     // CENTRALIZED level filtering
     if (logLevel > configLevel) {
@@ -155,8 +159,12 @@ export class NotificationLogger {
   /**
    * SYSTEMATIC console logging - DRY PRINCIPLE
    */
-  private static async logToConsole(entry: NotificationLogEntry): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_CONSOLE_LOGGING) return;
+  private static async logToConsole(
+    entry: NotificationLogEntry
+  ): Promise<void> {
+    if (!LOGGING_CONFIG.ENABLE_CONSOLE_LOGGING) {
+      return;
+    }
 
     const timestamp = entry.timestamp.toISOString();
     const levelName = LogLevel[entry.level];
@@ -185,8 +193,12 @@ export class NotificationLogger {
   /**
    * CENTRALIZED database logging buffer - Performance optimized
    */
-  private static async bufferForDatabase(entry: NotificationLogEntry): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_DATABASE_LOGGING) return;
+  private static async bufferForDatabase(
+    entry: NotificationLogEntry
+  ): Promise<void> {
+    if (!LOGGING_CONFIG.ENABLE_DATABASE_LOGGING) {
+      return;
+    }
 
     this.logBuffer.push(entry);
 
@@ -203,7 +215,9 @@ export class NotificationLogger {
    * SYSTEMATIC database flushing - DRY PRINCIPLE
    */
   private static async flushToDatabase(): Promise<void> {
-    if (this.logBuffer.length === 0) return;
+    if (this.logBuffer.length === 0) {
+      return;
+    }
 
     const logsToFlush = [...this.logBuffer];
     this.logBuffer = [];
@@ -232,7 +246,9 @@ export class NotificationLogger {
         })),
       });
 
-      console.log(`📊 Flushed ${logsToFlush.length} notification logs to database`);
+      console.log(
+        `📊 Flushed ${logsToFlush.length} notification logs to database`
+      );
     } catch (error) {
       console.error('❌ Failed to flush logs to database:', error);
       // Re-add failed logs to buffer for retry
@@ -243,8 +259,12 @@ export class NotificationLogger {
   /**
    * CENTRALIZED metrics collection - Single source of truth
    */
-  private static async updateMetrics(entry: NotificationLogEntry): Promise<void> {
-    if (!LOGGING_CONFIG.ENABLE_METRICS) return;
+  private static async updateMetrics(
+    entry: NotificationLogEntry
+  ): Promise<void> {
+    if (!LOGGING_CONFIG.ENABLE_METRICS) {
+      return;
+    }
 
     // Invalidate cache on new events to ensure fresh metrics
     this.metricsCache = null;
@@ -253,7 +273,9 @@ export class NotificationLogger {
   /**
    * SYSTEMATIC alert condition checking - NO HARDCODE
    */
-  private static async checkAlertConditions(entry: NotificationLogEntry): Promise<void> {
+  private static async checkAlertConditions(
+    entry: NotificationLogEntry
+  ): Promise<void> {
     // CENTRALIZED alert conditions
     const alertConditions: AlertCondition[] = [
       {
@@ -295,7 +317,9 @@ export class NotificationLogger {
     condition: AlertCondition
   ): Promise<void> {
     try {
-      const timeWindow = new Date(Date.now() - condition.timeWindow * 60 * 1000);
+      const timeWindow = new Date(
+        Date.now() - condition.timeWindow * 60 * 1000
+      );
 
       switch (condition.type) {
         case 'ERROR_RATE':
@@ -319,7 +343,10 @@ export class NotificationLogger {
   /**
    * SYSTEMATIC error rate monitoring - Single source of truth
    */
-  private static async checkErrorRate(timeWindow: Date, condition: AlertCondition): Promise<void> {
+  private static async checkErrorRate(
+    timeWindow: Date,
+    condition: AlertCondition
+  ): Promise<void> {
     const recentLogs = await prisma.notificationLog.findMany({
       where: {
         timestamp: { gte: timeWindow },
@@ -329,55 +356,78 @@ export class NotificationLogger {
       },
     });
 
-    if (recentLogs.length === 0) return;
+    if (recentLogs.length === 0) {
+      return;
+    }
 
     const errorCount = recentLogs.filter(log => log.level === 'ERROR').length;
     const errorRate = errorCount / recentLogs.length;
 
     if (errorRate >= condition.threshold) {
-      await this.triggerAlert('ERROR_RATE', {
-        errorRate: (errorRate * 100).toFixed(2),
-        errorCount,
-        totalLogs: recentLogs.length,
-        timeWindow: condition.timeWindow,
-      }, condition.escalate);
+      await this.triggerAlert(
+        'ERROR_RATE',
+        {
+          errorRate: (errorRate * 100).toFixed(2),
+          errorCount,
+          totalLogs: recentLogs.length,
+          timeWindow: condition.timeWindow,
+        },
+        condition.escalate
+      );
     }
   }
 
   /**
    * CENTRALIZED performance monitoring - DRY PRINCIPLE
    */
-  private static async checkPerformance(entry: NotificationLogEntry, condition: AlertCondition): Promise<void> {
+  private static async checkPerformance(
+    entry: NotificationLogEntry,
+    condition: AlertCondition
+  ): Promise<void> {
     if (entry.duration && entry.duration > condition.threshold) {
-      await this.triggerAlert('PERFORMANCE', {
-        duration: entry.duration,
-        threshold: condition.threshold,
-        channel: entry.channel,
-        event: entry.event,
-        notificationId: entry.notificationId,
-      }, condition.escalate);
+      await this.triggerAlert(
+        'PERFORMANCE',
+        {
+          duration: entry.duration,
+          threshold: condition.threshold,
+          channel: entry.channel,
+          event: entry.event,
+          notificationId: entry.notificationId,
+        },
+        condition.escalate
+      );
     }
   }
 
   /**
    * SYSTEMATIC security violation monitoring - Single source of truth
    */
-  private static async checkSecurity(entry: NotificationLogEntry, condition: AlertCondition): Promise<void> {
+  private static async checkSecurity(
+    entry: NotificationLogEntry,
+    condition: AlertCondition
+  ): Promise<void> {
     if (entry.event === NotificationEvent.SECURITY_VIOLATION) {
-      await this.triggerAlert('SECURITY', {
-        event: entry.event,
-        message: entry.message,
-        userId: entry.userId,
-        context: entry.context,
-        metadata: entry.metadata,
-      }, condition.escalate);
+      await this.triggerAlert(
+        'SECURITY',
+        {
+          event: entry.event,
+          message: entry.message,
+          userId: entry.userId,
+          context: entry.context,
+          metadata: entry.metadata,
+        },
+        condition.escalate
+      );
     }
   }
 
   /**
    * CENTRALIZED volume monitoring - DRY PRINCIPLE
    */
-  private static async checkVolume(timeWindow: Date, condition: AlertCondition): Promise<void> {
+  private static async checkVolume(
+    timeWindow: Date,
+    condition: AlertCondition
+  ): Promise<void> {
     const volumeCount = await prisma.notificationLog.count({
       where: {
         timestamp: { gte: timeWindow },
@@ -385,11 +435,15 @@ export class NotificationLogger {
     });
 
     if (volumeCount >= condition.threshold) {
-      await this.triggerAlert('VOLUME', {
-        count: volumeCount,
-        threshold: condition.threshold,
-        timeWindow: condition.timeWindow,
-      }, condition.escalate);
+      await this.triggerAlert(
+        'VOLUME',
+        {
+          count: volumeCount,
+          threshold: condition.threshold,
+          timeWindow: condition.timeWindow,
+        },
+        condition.escalate
+      );
     }
   }
 
@@ -406,14 +460,22 @@ export class NotificationLogger {
     console.error(alertMessage, data);
 
     // CENTRALIZED alert logging
-    await this.log('ERROR', NotificationEvent.SECURITY_VIOLATION, 'IN_APP', alertMessage, {
-      metadata: { alertType: type, alertData: data, escalate },
-    });
+    await this.log(
+      'ERROR',
+      NotificationEvent.SECURITY_VIOLATION,
+      'IN_APP',
+      alertMessage,
+      {
+        metadata: { alertType: type, alertData: data, escalate },
+      }
+    );
 
     // SYSTEMATIC alert escalation
     if (escalate) {
       try {
-        const { simplifiedTelegramService } = await import('@/lib/telegram/simplified-telegram-service');
+        const { simplifiedTelegramService } = await import(
+          '@/lib/telegram/simplified-telegram-service'
+        );
         await simplifiedTelegramService.sendSystemAlertNotification(
           alertMessage,
           JSON.stringify(data, null, 2),
@@ -428,45 +490,48 @@ export class NotificationLogger {
   /**
    * CENTRALIZED metrics collection - Single source of truth
    */
-  static async getMetrics(timeWindow: Date = new Date(Date.now() - 24 * 60 * 60 * 1000)): Promise<LogMetrics> {
+  static async getMetrics(
+    timeWindow: Date = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  ): Promise<LogMetrics> {
     if (this.metricsCache && Date.now() - this.lastFlush < 60000) {
       return this.metricsCache;
     }
 
     try {
-      const [totalLogs, errorLogs, performanceLogs, channelStats, topErrors] = await Promise.all([
-        prisma.notificationLog.count({
-          where: { timestamp: { gte: timeWindow } },
-        }),
-        prisma.notificationLog.count({
-          where: {
-            timestamp: { gte: timeWindow },
-            level: 'ERROR',
-          },
-        }),
-        prisma.notificationLog.count({
-          where: {
-            timestamp: { gte: timeWindow },
-            duration: { gt: LOGGING_CONFIG.PERFORMANCE_THRESHOLD_MS },
-          },
-        }),
-        prisma.notificationLog.groupBy({
-          by: ['channel'],
-          where: { timestamp: { gte: timeWindow } },
-          _count: true,
-        }),
-        prisma.notificationLog.groupBy({
-          by: ['errorMessage'],
-          where: {
-            timestamp: { gte: timeWindow },
-            level: 'ERROR',
-            errorMessage: { not: null },
-          },
-          _count: true,
-          orderBy: { _count: { errorMessage: 'desc' } },
-          take: 10,
-        }),
-      ]);
+      const [totalLogs, errorLogs, performanceLogs, channelStats, topErrors] =
+        await Promise.all([
+          prisma.notificationLog.count({
+            where: { timestamp: { gte: timeWindow } },
+          }),
+          prisma.notificationLog.count({
+            where: {
+              timestamp: { gte: timeWindow },
+              level: 'ERROR',
+            },
+          }),
+          prisma.notificationLog.count({
+            where: {
+              timestamp: { gte: timeWindow },
+              duration: { gt: LOGGING_CONFIG.PERFORMANCE_THRESHOLD_MS },
+            },
+          }),
+          prisma.notificationLog.groupBy({
+            by: ['channel'],
+            where: { timestamp: { gte: timeWindow } },
+            _count: true,
+          }),
+          prisma.notificationLog.groupBy({
+            by: ['errorMessage'],
+            where: {
+              timestamp: { gte: timeWindow },
+              level: 'ERROR',
+              errorMessage: { not: null },
+            },
+            _count: true,
+            orderBy: { _count: { errorMessage: 'desc' } },
+            take: 10,
+          }),
+        ]);
 
       const avgDuration = await prisma.notificationLog.aggregate({
         where: {
@@ -489,10 +554,13 @@ export class NotificationLogger {
         failedNotifications: errorLogs,
         averageDeliveryTime: avgDuration._avg.duration || 0,
         errorRate: totalLogs > 0 ? (errorLogs / totalLogs) * 100 : 0,
-        channelBreakdown: channelStats.reduce((acc, stat) => {
-          acc[stat.channel] = stat._count;
-          return acc;
-        }, {} as Record<string, number>),
+        channelBreakdown: channelStats.reduce(
+          (acc, stat) => {
+            acc[stat.channel] = stat._count;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
         topErrors: topErrors.map(error => ({
           error: error.errorMessage || 'Unknown Error',
           count: error._count,
@@ -512,7 +580,9 @@ export class NotificationLogger {
    * SYSTEMATIC log cleanup - DRY PRINCIPLE
    */
   static async cleanup(): Promise<number> {
-    const cutoffDate = new Date(Date.now() - LOGGING_CONFIG.RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date(
+      Date.now() - LOGGING_CONFIG.RETENTION_DAYS * 24 * 60 * 60 * 1000
+    );
 
     const deletedCount = await prisma.notificationLog.deleteMany({
       where: {
@@ -520,7 +590,9 @@ export class NotificationLogger {
       },
     });
 
-    console.log(`🧹 Notification logs cleanup: removed ${deletedCount.count} old records`);
+    console.log(
+      `🧹 Notification logs cleanup: removed ${deletedCount.count} old records`
+    );
     return deletedCount.count;
   }
 
@@ -539,15 +611,29 @@ export class NotificationLogger {
   }) {
     const where: any = {};
 
-    if (criteria.level) where.level = criteria.level;
-    if (criteria.event) where.event = criteria.event;
-    if (criteria.channel) where.channel = criteria.channel;
-    if (criteria.userId) where.userId = criteria.userId;
-    if (criteria.errorMessage) where.errorMessage = { contains: criteria.errorMessage };
+    if (criteria.level) {
+      where.level = criteria.level;
+    }
+    if (criteria.event) {
+      where.event = criteria.event;
+    }
+    if (criteria.channel) {
+      where.channel = criteria.channel;
+    }
+    if (criteria.userId) {
+      where.userId = criteria.userId;
+    }
+    if (criteria.errorMessage) {
+      where.errorMessage = { contains: criteria.errorMessage };
+    }
     if (criteria.timeFrom || criteria.timeTo) {
       where.timestamp = {};
-      if (criteria.timeFrom) where.timestamp.gte = criteria.timeFrom;
-      if (criteria.timeTo) where.timestamp.lte = criteria.timeTo;
+      if (criteria.timeFrom) {
+        where.timestamp.gte = criteria.timeFrom;
+      }
+      if (criteria.timeTo) {
+        where.timestamp.lte = criteria.timeTo;
+      }
     }
 
     return await prisma.notificationLog.findMany({

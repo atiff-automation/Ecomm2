@@ -42,11 +42,24 @@ interface ProductFormData {
   }>;
 }
 
+interface ProductCategory {
+  category: {
+    id: string;
+    name: string;
+  };
+}
+
+interface ProductImage {
+  url: string;
+  altText?: string;
+  isPrimary?: boolean;
+}
+
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  
+
   const [loading, setLoading] = useState(true);
   const [initialData, setInitialData] = useState<Partial<ProductFormData>>({});
 
@@ -56,12 +69,9 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
-      console.log('🔍 Fetching product:', productId);
       const response = await fetch(`/api/admin/products/${productId}`);
-      console.log('📡 Product API response:', response.status, response.statusText);
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Product data received:', data);
         const product = data.product;
 
         // Transform the product data to match our form structure
@@ -72,10 +82,8 @@ export default function EditProductPage() {
           shortDescription: product.shortDescription || '',
           sku: product.sku || '',
           barcode: product.barcode || '',
-          categoryIds: product.categories?.map((cat: any) => {
-            console.log('🏷️ Processing category:', cat);
-            return cat.category.id;
-          }) || [],
+          categoryIds:
+            product.categories?.map((cat: ProductCategory) => cat.category.id) || [],
           regularPrice: product.regularPrice || '',
           memberPrice: product.memberPrice || '',
           stockQuantity: product.stockQuantity || 0,
@@ -89,24 +97,31 @@ export default function EditProductPage() {
           isPromotional: product.isPromotional || false,
           isQualifyingForMembership: product.isQualifyingForMembership || false,
           promotionalPrice: product.promotionalPrice || 0,
-          promotionStartDate: product.promotionStartDate ? new Date(product.promotionStartDate) : undefined,
-          promotionEndDate: product.promotionEndDate ? new Date(product.promotionEndDate) : undefined,
-          memberOnlyUntil: product.memberOnlyUntil ? new Date(product.memberOnlyUntil) : undefined,
-          earlyAccessStart: product.earlyAccessStart ? new Date(product.earlyAccessStart) : undefined,
-          images: product.images?.map((img: any, index: number) => ({
-            url: img.url,
-            altText: img.altText || product.name,
-            isPrimary: index === 0,
-            // Add missing properties for existing images
-            filename: img.url?.split('/').pop() || 'unknown',
-            size: 0, // Unknown size for existing images
-            width: 0, // Unknown dimensions for existing images
-            height: 0,
-          })) || [],
+          promotionStartDate: product.promotionStartDate
+            ? new Date(product.promotionStartDate)
+            : undefined,
+          promotionEndDate: product.promotionEndDate
+            ? new Date(product.promotionEndDate)
+            : undefined,
+          memberOnlyUntil: product.memberOnlyUntil
+            ? new Date(product.memberOnlyUntil)
+            : undefined,
+          earlyAccessStart: product.earlyAccessStart
+            ? new Date(product.earlyAccessStart)
+            : undefined,
+          images:
+            product.images?.map((img: ProductImage, index: number) => ({
+              url: img.url,
+              altText: img.altText || product.name,
+              isPrimary: index === 0,
+              // Add missing properties for existing images
+              filename: img.url?.split('/').pop() || 'unknown',
+              size: 0, // Unknown size for existing images
+              width: 0, // Unknown dimensions for existing images
+              height: 0,
+            })) || [],
         };
 
-        console.log('🎯 Final productData for form:', productData);
-        console.log('📂 CategoryIds specifically:', productData.categoryIds);
         setInitialData(productData);
       } else {
         toast.error('Product not found');
@@ -123,20 +138,38 @@ export default function EditProductPage() {
 
   const handleSubmit = async (formData: ProductFormData) => {
     // Process form data to match API expectations
-    const filteredCategoryIds = formData.categoryIds?.filter(id => id && id.trim() !== '') || [];
-    
+    const filteredCategoryIds =
+      formData.categoryIds?.filter(id => id && id.trim() !== '') || [];
+
     const processedFormData = {
       ...formData,
       // Only include categoryIds if there are valid categories, otherwise exclude the field
-      ...(filteredCategoryIds.length > 0 && { categoryIds: filteredCategoryIds }),
-      regularPrice: formData.regularPrice && formData.regularPrice !== '' ? parseFloat(formData.regularPrice.toString()) : 0,
-      memberPrice: formData.memberPrice && formData.memberPrice !== '' ? parseFloat(formData.memberPrice.toString()) : null,
+      ...(filteredCategoryIds.length > 0 && {
+        categoryIds: filteredCategoryIds,
+      }),
+      regularPrice:
+        formData.regularPrice && formData.regularPrice !== ''
+          ? parseFloat(formData.regularPrice.toString())
+          : 0,
+      memberPrice:
+        formData.memberPrice && formData.memberPrice !== ''
+          ? parseFloat(formData.memberPrice.toString())
+          : null,
       weight: parseFloat(formData.weight.toString()),
       // Convert dimensions object to JSON string as expected by API
       dimensions: JSON.stringify({
-        length: formData.length && formData.length !== '' ? parseFloat(formData.length.toString()) : null,
-        width: formData.width && formData.width !== '' ? parseFloat(formData.width.toString()) : null,
-        height: formData.height && formData.height !== '' ? parseFloat(formData.height.toString()) : null,
+        length:
+          formData.length && formData.length !== ''
+            ? parseFloat(formData.length.toString())
+            : null,
+        width:
+          formData.width && formData.width !== ''
+            ? parseFloat(formData.width.toString())
+            : null,
+        height:
+          formData.height && formData.height !== ''
+            ? parseFloat(formData.height.toString())
+            : null,
       }),
       images: formData.images.map((img, index) => ({
         url: img.url,

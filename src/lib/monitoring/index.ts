@@ -24,7 +24,11 @@ export {
 } from './monitoring-service';
 
 export { throttler, Throttler } from './throttler';
-export { circuitBreaker, CircuitBreaker, CircuitState } from './circuit-breaker';
+export {
+  circuitBreaker,
+  CircuitBreaker,
+  CircuitState,
+} from './circuit-breaker';
 
 // Legacy monitoring (will be refactored in Phase 3)
 export { errorMonitor, useErrorMonitor } from './error-monitor';
@@ -41,18 +45,11 @@ export type {
   MonitoringConfig,
 } from './error-monitor';
 
-export type {
-  MonitoringConfig as NewMonitoringConfig,
-} from './monitoring-config';
+export type { MonitoringConfig as NewMonitoringConfig } from './monitoring-config';
 
-export type {
-  MonitoringData,
-  SendDataOptions,
-} from './monitoring-service';
+export type { MonitoringData, SendDataOptions } from './monitoring-service';
 
-export type {
-  CircuitBreakerState,
-} from './circuit-breaker';
+export type { CircuitBreakerState } from './circuit-breaker';
 
 // Integration helpers (will be updated in Phase 3)
 export { MonitoringProvider, useMonitoring } from './monitoring-provider';

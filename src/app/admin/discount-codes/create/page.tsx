@@ -34,10 +34,7 @@ import {
   DollarSign,
   Truck,
 } from 'lucide-react';
-import {
-  AdminPageLayout,
-  BreadcrumbItem,
-} from '@/components/admin/layout';
+import { AdminPageLayout, BreadcrumbItem } from '@/components/admin/layout';
 
 interface CreateDiscountCodeForm {
   code: string;

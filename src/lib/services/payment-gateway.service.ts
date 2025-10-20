@@ -4,10 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import {
-  Smartphone,
-  LucideIcon,
-} from 'lucide-react';
+import { Smartphone, LucideIcon } from 'lucide-react';
 
 export interface PaymentGateway {
   id: string;
@@ -29,12 +26,12 @@ export interface PaymentGateway {
 
 /**
  * Payment Gateway Status Hierarchy (Priority Order):
- * 
+ *
  * 1. 'active' - All required credentials present AND enabled=true
  * 2. 'configured' - All required credentials present BUT enabled=false/unset
  * 3. 'inactive' - Some credentials present but missing required ones
  * 4. 'pending' - No credentials configured at all
- * 
+ *
  * This ensures proper status determination without hardcoded fallbacks.
  */
 
@@ -42,12 +39,16 @@ export interface PaymentGateway {
  * Payment Gateway Service - Single source of truth for gateway configuration
  */
 export class PaymentGatewayService {
-  private static readonly GATEWAY_DEFINITIONS: Omit<PaymentGateway, 'status' | 'isEnabled' | 'credentials'>[] = [
+  private static readonly GATEWAY_DEFINITIONS: Omit<
+    PaymentGateway,
+    'status' | 'isEnabled' | 'credentials'
+  >[] = [
     {
       id: 'toyyibpay',
       name: 'toyyibPay',
       type: 'toyyibpay',
-      description: 'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
+      description:
+        'Malaysian payment gateway supporting FPX, Credit Cards, and e-wallets',
       icon: Smartphone,
       configPath: '/admin/payments/toyyibpay',
       features: [
@@ -64,10 +65,10 @@ export class PaymentGatewayService {
    */
   static async getPaymentGateways(): Promise<PaymentGateway[]> {
     const gateways = await Promise.all(
-      this.GATEWAY_DEFINITIONS.map(async (gateway) => {
+      this.GATEWAY_DEFINITIONS.map(async gateway => {
         const status = await this.getGatewayStatus(gateway.id);
         const credentials = await this.getGatewayCredentials(gateway.id);
-        
+
         return {
           ...gateway,
           status,
@@ -86,36 +87,43 @@ export class PaymentGatewayService {
    * Get configuration status for a specific payment gateway
    * Priority: credentials -> enabled status -> config existence
    */
-  static async getGatewayStatus(gatewayId: string): Promise<PaymentGateway['status']> {
+  static async getGatewayStatus(
+    gatewayId: string
+  ): Promise<PaymentGateway['status']> {
     try {
       // First, check if gateway has required credentials (most important)
       const hasCredentials = await this.validateGatewayCredentials(gatewayId);
       const credentials = await this.getGatewayCredentials(gatewayId);
-      
+
       // If no credentials at all, status is pending
       if (!hasCredentials) {
         // Check if there are partial credentials (inactive) vs no credentials at all (pending)
-        const hasAnyCredential = this.hasPartialCredentials(credentials, gatewayId);
+        const hasAnyCredential = this.hasPartialCredentials(
+          credentials,
+          gatewayId
+        );
         return hasAnyCredential ? 'inactive' : 'pending';
       }
 
       // If we have all required credentials, check configuration and enabled status
       const config = await this.getGatewayConfig(gatewayId);
-      
+
       // Default to configured if no explicit config found but credentials exist
       const isEnabled = config?.enabled === true || config?.enabled === 'true';
-      
+
       return isEnabled ? 'active' : 'configured';
-      
     } catch (error) {
       console.error(`Error checking gateway status for ${gatewayId}:`, error);
-      
+
       // On error, try to determine status based on credentials only
       try {
         const hasCredentials = await this.validateGatewayCredentials(gatewayId);
         return hasCredentials ? 'configured' : 'pending';
       } catch (credentialError) {
-        console.error(`Error checking credentials for ${gatewayId}:`, credentialError);
+        console.error(
+          `Error checking credentials for ${gatewayId}:`,
+          credentialError
+        );
         return 'inactive'; // Conservative fallback - indicates needs attention
       }
     }
@@ -124,19 +132,29 @@ export class PaymentGatewayService {
   /**
    * Get gateway credentials status (without exposing actual values)
    */
-  private static async getGatewayCredentials(gatewayId: string): Promise<PaymentGateway['credentials']> {
+  private static async getGatewayCredentials(
+    gatewayId: string
+  ): Promise<PaymentGateway['credentials']> {
     try {
       if (gatewayId === 'toyyibpay') {
         const [userSecretKey, categoryCode, enabled] = await Promise.all([
-          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_user_secret_key_encrypted' } }),
-          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_category_code' } }),
-          prisma.systemConfig.findUnique({ where: { key: 'toyyibpay_credentials_enabled' } }),
+          prisma.systemConfig.findUnique({
+            where: { key: 'toyyibpay_user_secret_key_encrypted' },
+          }),
+          prisma.systemConfig.findUnique({
+            where: { key: 'toyyibpay_category_code' },
+          }),
+          prisma.systemConfig.findUnique({
+            where: { key: 'toyyibpay_credentials_enabled' },
+          }),
         ]);
 
         // Check if credentials are enabled and exist
         const isEnabled = enabled?.value === 'true';
         const hasUserSecretKey = !!(userSecretKey?.value && isEnabled);
-        const hasCategoryCode = !!(categoryCode?.value && categoryCode.value.trim());
+        const hasCategoryCode = !!(
+          categoryCode?.value && categoryCode.value.trim()
+        );
 
         return {
           hasApiKey: false, // ToyyibPay doesn't use API key
@@ -150,7 +168,6 @@ export class PaymentGatewayService {
         hasApiKey: false,
         hasSecretKey: false,
       };
-
     } catch (error) {
       console.error(`Error checking credentials for ${gatewayId}:`, error);
       return {
@@ -174,12 +191,18 @@ export class PaymentGatewayService {
   /**
    * Validate that gateway has required credentials
    */
-  private static async validateGatewayCredentials(gatewayId: string): Promise<boolean> {
+  private static async validateGatewayCredentials(
+    gatewayId: string
+  ): Promise<boolean> {
     const credentials = await this.getGatewayCredentials(gatewayId);
 
     switch (gatewayId) {
       case 'toyyibpay':
-        return !!(credentials?.hasSecretKey && credentials?.hasUserKey && credentials?.hasCategoryCode);
+        return !!(
+          credentials?.hasSecretKey &&
+          credentials?.hasUserKey &&
+          credentials?.hasCategoryCode
+        );
       default:
         return false;
     }
@@ -188,14 +211,27 @@ export class PaymentGatewayService {
   /**
    * Check if gateway has any partial credentials (not all required but some exist)
    */
-  private static hasPartialCredentials(credentials: PaymentGateway['credentials'], gatewayId: string): boolean {
-    if (!credentials) return false;
+  private static hasPartialCredentials(
+    credentials: PaymentGateway['credentials'],
+    gatewayId: string
+  ): boolean {
+    if (!credentials) {
+      return false;
+    }
 
     switch (gatewayId) {
       case 'toyyibpay':
         // Has some credentials but not all required ones
-        const hasAnyToyyibCredential = !!(credentials.hasSecretKey || credentials.hasUserKey || credentials.hasCategoryCode);
-        const hasAllToyyibCredentials = !!(credentials.hasSecretKey && credentials.hasUserKey && credentials.hasCategoryCode);
+        const hasAnyToyyibCredential = !!(
+          credentials.hasSecretKey ||
+          credentials.hasUserKey ||
+          credentials.hasCategoryCode
+        );
+        const hasAllToyyibCredentials = !!(
+          credentials.hasSecretKey &&
+          credentials.hasUserKey &&
+          credentials.hasCategoryCode
+        );
         return hasAnyToyyibCredential && !hasAllToyyibCredentials;
       default:
         return !!(credentials.hasApiKey || credentials.hasSecretKey);
@@ -223,11 +259,15 @@ export class PaymentGatewayService {
    */
   static async getGatewayStats(startDate?: Date, endDate?: Date) {
     const whereClause: any = {};
-    
+
     if (startDate || endDate) {
       whereClause.createdAt = {};
-      if (startDate) whereClause.createdAt.gte = startDate;
-      if (endDate) whereClause.createdAt.lte = endDate;
+      if (startDate) {
+        whereClause.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = endDate;
+      }
     }
 
     const stats = await prisma.order.groupBy({

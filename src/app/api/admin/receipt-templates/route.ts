@@ -20,9 +20,14 @@ import { CreateReceiptTemplateInput } from '@/types/receipt-templates';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -35,21 +40,21 @@ export async function GET(request: NextRequest) {
 
     const templates = await receiptTemplateService.getAvailableTemplates({
       activeOnly,
-      templateType
+      templateType,
     });
 
     return NextResponse.json({
       success: true,
       templates,
-      count: templates.length
+      count: templates.length,
     });
-
   } catch (error) {
     console.error('GET receipt templates error:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch templates' 
+        message:
+          error instanceof Error ? error.message : 'Failed to fetch templates',
       },
       { status: 500 }
     );
@@ -63,9 +68,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check admin authentication
-    if (!session?.user || ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(session.user.role as UserRole)) {
+    if (
+      !session?.user ||
+      ![UserRole.ADMIN, UserRole.SUPERADMIN].includes(
+        session.user.role as UserRole
+      )
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -73,13 +83,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.name || !body.templateType || !body.templateContent) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: 'Name, templateType, and templateContent are required' 
+          message: 'Name, templateType, and templateContent are required',
         },
         { status: 400 }
       );
@@ -92,26 +102,29 @@ export async function POST(request: NextRequest) {
       templateContent: body.templateContent,
       isDefault: body.isDefault || false,
       isActive: body.isActive !== undefined ? body.isActive : true,
-      previewImage: body.previewImage
+      previewImage: body.previewImage,
     };
 
     const template = await receiptTemplateService.createTemplate(
-      templateInput, 
+      templateInput,
       session.user.id
     );
 
-    return NextResponse.json({
-      success: true,
-      template,
-      message: 'Template created successfully'
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        template,
+        message: 'Template created successfully',
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('POST receipt template error:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to create template' 
+        message:
+          error instanceof Error ? error.message : 'Failed to create template',
       },
       { status: 500 }
     );

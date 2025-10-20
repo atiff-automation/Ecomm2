@@ -528,7 +528,10 @@ export default function OrderDetailPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {order.shipment.trackingEvents.map((event, index) => (
-                      <div key={index} className="border-l-2 border-gray-200 pl-4">
+                      <div
+                        key={index}
+                        className="border-l-2 border-gray-200 pl-4"
+                      >
                         <p className="font-medium">{event.eventName}</p>
                         <p className="text-sm text-muted-foreground">
                           {event.description}

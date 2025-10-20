@@ -13,16 +13,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Settings,
-  Users,
   Save,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   AdminPageLayout,
@@ -34,8 +32,6 @@ interface MembershipConfig {
   membershipThreshold: number;
   enablePromotionalExclusion: boolean;
   requireQualifyingCategories: boolean;
-  membershipBenefitsText: string;
-  membershipTermsText: string;
 }
 
 export default function MembershipConfigPage() {
@@ -46,8 +42,6 @@ export default function MembershipConfigPage() {
     membershipThreshold: 80,
     enablePromotionalExclusion: true,
     requireQualifyingCategories: true,
-    membershipBenefitsText: '',
-    membershipTermsText: '',
   });
 
   const [originalConfig, setOriginalConfig] = useState<MembershipConfig | null>(
@@ -163,12 +157,20 @@ export default function MembershipConfigPage() {
   }
 
   const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Membership', href: '/admin/membership' },
-    { label: 'Configuration', href: '/admin/membership/config' },
+    BREADCRUMB_CONFIGS.customers.main,
+    { label: 'Membership Settings', href: '/admin/membership/config' },
   ];
 
   const pageActions = (
     <div className="flex gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push('/admin/customers')}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Customers
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -178,11 +180,7 @@ export default function MembershipConfigPage() {
         <RefreshCw className="h-4 w-4 mr-2" />
         Reset
       </Button>
-      <Button
-        size="sm"
-        onClick={handleSave}
-        disabled={!hasChanges || saving}
-      >
+      <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
         <Save className="h-4 w-4 mr-2" />
         {saving ? 'Saving...' : 'Save'}
       </Button>
@@ -191,10 +189,11 @@ export default function MembershipConfigPage() {
 
   return (
     <AdminPageLayout
-      title="Membership Configuration"
-      subtitle="Configure membership settings and requirements"
+      title="Membership Settings"
+      subtitle="Configure membership qualification rules and thresholds"
       actions={pageActions}
       breadcrumbs={breadcrumbs}
+      parentSection={{ label: 'Customers', href: '/admin/customers' }}
       loading={loading}
     >
       {/* Message Alert */}
@@ -214,10 +213,15 @@ export default function MembershipConfigPage() {
 
       {/* Configuration Settings */}
       <div className="space-y-6">
-        {/* Membership Settings */}
+        {/* Membership Qualification Rules */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Membership Settings</CardTitle>
+            <CardTitle className="text-lg">
+              Membership Qualification Rules
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure how customers qualify for automatic membership activation
+            </p>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Threshold Setting */}
@@ -254,7 +258,7 @@ export default function MembershipConfigPage() {
                     Exclude Promotional Items
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Promotional items won't count towards membership
+                    Promotional items won&apos;t count towards membership
                   </p>
                 </div>
                 <Switch
@@ -287,52 +291,6 @@ export default function MembershipConfigPage() {
                   }
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content & Messaging */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Content & Messaging</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="benefits">Membership Benefits</Label>
-              <Textarea
-                id="benefits"
-                rows={3}
-                value={config.membershipBenefitsText}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    membershipBenefitsText: e.target.value,
-                  })
-                }
-                placeholder="Describe the benefits members receive..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Displayed to customers explaining membership benefits
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="terms">Terms & Conditions</Label>
-              <Textarea
-                id="terms"
-                rows={3}
-                value={config.membershipTermsText}
-                onChange={e =>
-                  setConfig({
-                    ...config,
-                    membershipTermsText: e.target.value,
-                  })
-                }
-                placeholder="Explain how membership activation works..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Terms and conditions for membership activation
-              </p>
             </div>
           </CardContent>
         </Card>

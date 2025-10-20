@@ -12,7 +12,10 @@ export async function GET() {
 
     // Authorization check
     const { error, session } = await requireAdminRole();
-    console.log('[Dashboard Stats] Auth check:', { hasError: !!error, hasSession: !!session });
+    console.log('[Dashboard Stats] Auth check:', {
+      hasError: !!error,
+      hasSession: !!session,
+    });
 
     if (error) {
       console.log('[Dashboard Stats] Auth error, returning:', error);
@@ -124,12 +127,19 @@ export async function GET() {
     const previousRevenue = lastMonthRevenue._sum.total || 0;
 
     let revenuePercentageChange = 0;
-    let revenueChangeDirection: 'increase' | 'decrease' | 'no-change' = 'no-change';
+    let revenueChangeDirection: 'increase' | 'decrease' | 'no-change' =
+      'no-change';
 
     if (previousRevenue > 0) {
-      revenuePercentageChange = Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100);
-      revenueChangeDirection = currentRevenue > previousRevenue ? 'increase' :
-                              currentRevenue < previousRevenue ? 'decrease' : 'no-change';
+      revenuePercentageChange = Math.round(
+        ((currentRevenue - previousRevenue) / previousRevenue) * 100
+      );
+      revenueChangeDirection =
+        currentRevenue > previousRevenue
+          ? 'increase'
+          : currentRevenue < previousRevenue
+            ? 'decrease'
+            : 'no-change';
     } else if (currentRevenue > 0) {
       revenuePercentageChange = 100; // New revenue this month
       revenueChangeDirection = 'increase';
@@ -192,11 +202,20 @@ export async function GET() {
     return NextResponse.json(dashboardStats);
   } catch (error) {
     console.error('[Dashboard Stats] ERROR:', error);
-    console.error('[Dashboard Stats] Error stack:', error instanceof Error ? error.stack : 'No stack');
-    console.error('[Dashboard Stats] Error message:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[Dashboard Stats] Error stack:',
+      error instanceof Error ? error.stack : 'No stack'
+    );
+    console.error(
+      '[Dashboard Stats] Error message:',
+      error instanceof Error ? error.message : String(error)
+    );
 
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard statistics', details: error instanceof Error ? error.message : String(error) },
+      {
+        error: 'Failed to fetch dashboard statistics',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

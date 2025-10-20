@@ -23,7 +23,6 @@ export interface StockLevel {
 }
 
 export class SocialProofService {
-  private readonly LOW_STOCK_THRESHOLD = 10;
   private readonly RECENT_PURCHASES_HOURS = 24;
   private readonly MAX_RECENT_PURCHASES = 5;
 
@@ -104,13 +103,14 @@ export class SocialProofService {
         select: {
           id: true,
           stockQuantity: true,
+          lowStockAlert: true,
         },
       });
 
       const stockLevels: Record<string, StockLevel> = {};
 
       products.forEach(product => {
-        const threshold = this.LOW_STOCK_THRESHOLD;
+        const threshold = product.lowStockAlert;
         const stock = product.stockQuantity;
 
         stockLevels[product.id] = {

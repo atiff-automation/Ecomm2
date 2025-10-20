@@ -58,48 +58,54 @@ export class PaymentMetricsService {
     ] = await Promise.all([
       // Total transaction count
       prisma.order.count({ where: whereClause }),
-      
+
       // Successful payments
       prisma.order.count({
         where: { ...whereClause, paymentStatus: PaymentStatus.PAID },
       }),
-      
+
       // Failed payments
       prisma.order.count({
         where: { ...whereClause, paymentStatus: PaymentStatus.FAILED },
       }),
-      
+
       // Refunded orders
       prisma.order.count({
         where: { ...whereClause, paymentStatus: PaymentStatus.REFUNDED },
       }),
-      
+
       // Partially refunded orders
       prisma.order.count({
-        where: { ...whereClause, paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+        where: {
+          ...whereClause,
+          paymentStatus: PaymentStatus.PARTIALLY_REFUNDED,
+        },
       }),
-      
+
       // Pending payments
       prisma.order.count({
         where: { ...whereClause, paymentStatus: PaymentStatus.PENDING },
       }),
-      
+
       // Total revenue (only from paid orders)
       prisma.order.aggregate({
         where: { ...whereClause, paymentStatus: PaymentStatus.PAID },
         _sum: { total: true },
         _avg: { total: true },
       }),
-      
+
       // Total refunded amount
       prisma.order.aggregate({
         where: { ...whereClause, paymentStatus: PaymentStatus.REFUNDED },
         _sum: { total: true },
       }),
-      
+
       // Partially refunded amount (approximation - would need refund tracking table for precision)
       prisma.order.aggregate({
-        where: { ...whereClause, paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+        where: {
+          ...whereClause,
+          paymentStatus: PaymentStatus.PARTIALLY_REFUNDED,
+        },
         _sum: { total: true },
       }),
     ]);
@@ -108,12 +114,11 @@ export class PaymentMetricsService {
     const refundedAmount = Number(refundStats._sum.total || 0);
     const partiallyRefundedAmount = Number(partialRefundStats._sum.total || 0);
     const averageOrderValue = Number(revenueStats._avg.total || 0);
-    
+
     // Calculate success rate (paid orders / total non-pending orders)
     const nonPendingOrders = totalOrders - pendingOrders;
-    const successRate = nonPendingOrders > 0 
-      ? (paidOrders / nonPendingOrders) * 100 
-      : 0;
+    const successRate =
+      nonPendingOrders > 0 ? (paidOrders / nonPendingOrders) * 100 : 0;
 
     return {
       totalTransactions: totalOrders,
@@ -148,7 +153,7 @@ export class PaymentMetricsService {
 
     // Get success rates for each method
     const methodsWithStats = await Promise.all(
-      methodStats.map(async (stat) => {
+      methodStats.map(async stat => {
         const totalForMethod = stat._count.paymentMethod;
         const successfulForMethod = await prisma.order.count({
           where: {
@@ -162,9 +167,10 @@ export class PaymentMetricsService {
           method: stat.paymentMethod || 'Unknown',
           count: totalForMethod,
           revenue: Number(stat._sum.total || 0),
-          successRate: totalForMethod > 0 
-            ? Math.round((successfulForMethod / totalForMethod) * 1000) / 10 
-            : 0,
+          successRate:
+            totalForMethod > 0
+              ? Math.round((successfulForMethod / totalForMethod) * 1000) / 10
+              : 0,
         };
       })
     );
@@ -180,9 +186,9 @@ export class PaymentMetricsService {
     periodsCount: number = 6
   ): Promise<PaymentPeriodStats[]> {
     const periods = this.generatePeriods(periodType, periodsCount);
-    
+
     const trends = await Promise.all(
-      periods.map(async (period) => {
+      periods.map(async period => {
         const metrics = await this.getPaymentMetrics(period.start, period.end);
         return {
           ...metrics,
@@ -201,13 +207,17 @@ export class PaymentMetricsService {
    */
   private static buildDateWhereClause(startDate?: Date, endDate?: Date) {
     const whereClause: any = {};
-    
+
     if (startDate || endDate) {
       whereClause.createdAt = {};
-      if (startDate) whereClause.createdAt.gte = startDate;
-      if (endDate) whereClause.createdAt.lte = endDate;
+      if (startDate) {
+        whereClause.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = endDate;
+      }
     }
-    
+
     return whereClause;
   }
 
@@ -220,28 +230,35 @@ export class PaymentMetricsService {
   ) {
     const periods = [];
     const now = new Date();
-    
+
     for (let i = count - 1; i >= 0; i--) {
       let start: Date, end: Date, label: string;
-      
+
       if (type === 'daily') {
         start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - i + 1
+        );
         label = start.toLocaleDateString('en-MY');
       } else if (type === 'weekly') {
-        const startOfWeek = now.getDate() - now.getDay() - (i * 7);
+        const startOfWeek = now.getDate() - now.getDay() - i * 7;
         start = new Date(now.getFullYear(), now.getMonth(), startOfWeek);
         end = new Date(now.getFullYear(), now.getMonth(), startOfWeek + 7);
         label = `Week ${start.toLocaleDateString('en-MY')}`;
       } else {
         start = new Date(now.getFullYear(), now.getMonth() - i, 1);
         end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-        label = start.toLocaleDateString('en-MY', { year: 'numeric', month: 'short' });
+        label = start.toLocaleDateString('en-MY', {
+          year: 'numeric',
+          month: 'short',
+        });
       }
-      
+
       periods.push({ start, end, label });
     }
-    
+
     return periods;
   }
 }

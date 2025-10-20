@@ -173,19 +173,25 @@ export async function POST(
     let pickupAddress;
     try {
       pickupAddress = await getPickupAddressOrThrow();
-      console.log('[Fulfillment] Pickup address retrieved from BusinessProfile:', {
-        businessName: pickupAddress.businessName,
-        phone: pickupAddress.phone,
-        city: pickupAddress.city,
-        state: pickupAddress.state,
-        postalCode: pickupAddress.postalCode,
-      });
+      console.log(
+        '[Fulfillment] Pickup address retrieved from BusinessProfile:',
+        {
+          businessName: pickupAddress.businessName,
+          phone: pickupAddress.phone,
+          city: pickupAddress.city,
+          state: pickupAddress.state,
+          postalCode: pickupAddress.postalCode,
+        }
+      );
     } catch (error) {
       console.error('[Fulfillment] Failed to get pickup address:', error);
       return NextResponse.json(
         {
           success: false,
-          message: error instanceof Error ? error.message : 'Failed to retrieve pickup address from Business Profile',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to retrieve pickup address from Business Profile',
           code: SHIPPING_ERROR_CODES.INVALID_ADDRESS,
         },
         { status: 400 }
@@ -242,7 +248,9 @@ export async function POST(
         // height: 10,
       },
       // WhatsApp tracking notification (from global settings)
-      addon_whatsapp_tracking_enabled: settings.whatsappNotificationsEnabled ? 1 : 0,
+      addon_whatsapp_tracking_enabled: settings.whatsappNotificationsEnabled
+        ? 1
+        : 0,
     };
 
     console.log('[Fulfillment] Shipment request:', {
@@ -348,9 +356,14 @@ export async function POST(
     // Step 10.5: Pay for the order to get AWB and tracking details
     let paymentResponse;
     try {
-      console.log('[Fulfillment] Shipment created, now processing payment for order:', shipmentResponse.data.shipment_id);
+      console.log(
+        '[Fulfillment] Shipment created, now processing payment for order:',
+        shipmentResponse.data.shipment_id
+      );
 
-      paymentResponse = await easyParcelService.payOrder(shipmentResponse.data.shipment_id);
+      paymentResponse = await easyParcelService.payOrder(
+        shipmentResponse.data.shipment_id
+      );
 
       if (!paymentResponse.success || !paymentResponse.data) {
         throw new EasyParcelError(
@@ -464,8 +477,12 @@ export async function POST(
 
         // ✅ FIX: ALWAYS trust EasyParcel's courier response (fixes Dropicks/Pickupp mismatch)
         // EasyParcel returns 'courier' field in EPSubmitOrderBulk response
-        courierName: shipmentResponse.data.courier || shipmentResponse.data.courier_name || order.courierName,
-        courierServiceType: shipmentResponse.data.service_name || order.courierServiceType,
+        courierName:
+          shipmentResponse.data.courier ||
+          shipmentResponse.data.courier_name ||
+          order.courierName,
+        courierServiceType:
+          shipmentResponse.data.service_name || order.courierServiceType,
         selectedCourierServiceId: validatedData.serviceId,
         // Scheduled pickup date
         scheduledPickupDate: new Date(validatedData.pickupDate),

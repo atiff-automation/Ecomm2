@@ -18,7 +18,7 @@ import {
   AlertTriangle,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
 } from 'lucide-react';
 
 interface ApplicationStatsData {
@@ -87,7 +87,7 @@ export function ApplicationStats() {
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100',
       badge: stats.submitted + stats.underReview > 0 ? 'Perlu Tindakan' : null,
-      badgeColor: 'bg-yellow-200 text-yellow-800'
+      badgeColor: 'bg-yellow-200 text-yellow-800',
     },
     {
       title: 'Diluluskan',
@@ -106,14 +106,22 @@ export function ApplicationStats() {
   ];
 
   const getGrowthIcon = () => {
-    if (stats.growth > 0) return TrendingUp;
-    if (stats.growth < 0) return TrendingDown;
+    if (stats.growth > 0) {
+      return TrendingUp;
+    }
+    if (stats.growth < 0) {
+      return TrendingDown;
+    }
     return Minus;
   };
 
   const getGrowthColor = () => {
-    if (stats.growth > 0) return 'text-green-600';
-    if (stats.growth < 0) return 'text-red-600';
+    if (stats.growth > 0) {
+      return 'text-green-600';
+    }
+    if (stats.growth < 0) {
+      return 'text-red-600';
+    }
     return 'text-gray-600';
   };
 
@@ -131,14 +139,18 @@ export function ApplicationStats() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
                     {stat.badge && (
                       <Badge className={`mt-2 text-xs ${stat.badgeColor}`}>
                         {stat.badge}
                       </Badge>
                     )}
                   </div>
-                  <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
+                  <div
+                    className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}
+                  >
                     <Icon className={`w-6 h-6 ${stat.color}`} />
                   </div>
                 </div>
@@ -159,20 +171,29 @@ export function ApplicationStats() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Bulan Ini</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.thisMonth}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.thisMonth}
+                </p>
                 <p className="text-sm text-gray-600 mt-1">
                   Bulan lepas: {stats.lastMonth}
                 </p>
               </div>
               <div className="text-right">
-                <div className={`flex items-center space-x-1 ${getGrowthColor()}`}>
+                <div
+                  className={`flex items-center space-x-1 ${getGrowthColor()}`}
+                >
                   <GrowthIcon className="w-5 h-5" />
                   <span className="font-semibold">
-                    {stats.growth > 0 ? '+' : ''}{stats.growth.toFixed(1)}%
+                    {stats.growth > 0 ? '+' : ''}
+                    {stats.growth.toFixed(1)}%
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {stats.growth > 0 ? 'Meningkat' : stats.growth < 0 ? 'Menurun' : 'Sama'}
+                  {stats.growth > 0
+                    ? 'Meningkat'
+                    : stats.growth < 0
+                      ? 'Menurun'
+                      : 'Sama'}
                 </p>
               </div>
             </div>
@@ -227,7 +248,7 @@ export function ApplicationStats() {
       </div>
 
       {/* Quick Insights */}
-      {(stats.submitted + stats.underReview > 5) && (
+      {stats.submitted + stats.underReview > 5 && (
         <Card className="bg-amber-50 border-amber-200">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
@@ -235,8 +256,10 @@ export function ApplicationStats() {
               <div className="text-sm text-amber-800">
                 <p className="font-medium">Perhatian Diperlukan</p>
                 <p>
-                  Terdapat {stats.submitted + stats.underReview} permohonan yang menunggu untuk disemak.
-                  Sila semak dan kemaskini status secepat mungkin untuk memastikan pengalaman yang baik untuk pemohon.
+                  Terdapat {stats.submitted + stats.underReview} permohonan yang
+                  menunggu untuk disemak. Sila semak dan kemaskini status
+                  secepat mungkin untuk memastikan pengalaman yang baik untuk
+                  pemohon.
                 </p>
               </div>
             </div>

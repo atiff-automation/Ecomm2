@@ -41,7 +41,7 @@ export class BusinessProfileCache {
     try {
       const profile = await prisma.businessProfile.findFirst({
         where: { isActive: true },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
 
       return profile;
@@ -88,7 +88,7 @@ export class BusinessProfileCache {
     return {
       isConnected: false,
       cacheHit: false,
-      ttl: 0
+      ttl: 0,
     };
   }
 

@@ -25,7 +25,9 @@ export async function GET(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const customer = await prisma.user.findUnique({
       where: {
@@ -128,7 +130,9 @@ export async function PUT(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
 
@@ -229,13 +233,10 @@ export async function DELETE(
   { params }: { params: { customerId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
+    // Authorization check
+    const { error, session } = await requireAdminRole();
+    if (error) {
+      return error;
     }
 
     // Check if customer exists

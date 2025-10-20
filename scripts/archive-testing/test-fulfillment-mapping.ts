@@ -138,7 +138,7 @@ async function testFulfillmentMapping() {
     const databaseUpdate = {
       status: 'READY_TO_SHIP' as const,
       trackingNumber: parcelDetails.awb,              // ✅ CORRECTED: Use AWB
-      airwayBillNumber: parcelDetails.awb,            // ✅ CORRECTED: Use AWB
+      airwayBillUrl: parcelDetails.awb,            // ✅ CORRECTED: Use AWB
       airwayBillUrl: parcelDetails.awb_id_link,
       trackingUrl: parcelDetails.tracking_url,
       airwayBillGenerated: true,
@@ -150,7 +150,7 @@ async function testFulfillmentMapping() {
     console.log('Database update payload:');
     console.log('  - status:', databaseUpdate.status);
     console.log('  - trackingNumber:', databaseUpdate.trackingNumber, '✅ Correct AWB');
-    console.log('  - airwayBillNumber:', databaseUpdate.airwayBillNumber, '✅ Same as tracking');
+    console.log('  - airwayBillUrl:', databaseUpdate.airwayBillUrl, '✅ Same as tracking');
     console.log('  - airwayBillUrl:', databaseUpdate.airwayBillUrl);
     console.log('  - trackingUrl:', databaseUpdate.trackingUrl);
     console.log('  - airwayBillGenerated:', databaseUpdate.airwayBillGenerated);
@@ -164,8 +164,8 @@ async function testFulfillmentMapping() {
 
     const checks = {
       'Tracking number is AWB (not parcel_number)': databaseUpdate.trackingNumber === '631867054753',
-      'AWB number matches tracking number': databaseUpdate.airwayBillNumber === databaseUpdate.trackingNumber,
-      'AWB number is NOT EP-A2V318': databaseUpdate.airwayBillNumber !== 'EP-A2V318',
+      'AWB number matches tracking number': databaseUpdate.airwayBillUrl === databaseUpdate.trackingNumber,
+      'AWB number is NOT EP-A2V318': databaseUpdate.airwayBillUrl !== 'EP-A2V318',
       'Tracking number matches WhatsApp': databaseUpdate.trackingNumber === '631867054753',
       'AWB PDF link exists': databaseUpdate.airwayBillUrl.includes('pdf'),
       'Tracking URL exists': databaseUpdate.trackingUrl.includes('tracking'),
@@ -196,12 +196,12 @@ async function testFulfillmentMapping() {
     console.log('───────────────────────────────────────────────────');
     console.log('BEFORE FIX (WRONG):');
     console.log('  trackingNumber: EP-A2V318 ❌ (parcel_number - not a real tracking number)');
-    console.log('  airwayBillNumber: 631867054753 ✅ (awb - correct)');
+    console.log('  airwayBillUrl: 631867054753 ✅ (awb - correct)');
     console.log('  Result: Inconsistent! Tracking number doesn\'t work with couriers');
     console.log('');
     console.log('AFTER FIX (CORRECT):');
     console.log('  trackingNumber: 631867054753 ✅ (awb - the REAL tracking number)');
-    console.log('  airwayBillNumber: 631867054753 ✅ (awb - same value)');
+    console.log('  airwayBillUrl: 631867054753 ✅ (awb - same value)');
     console.log('  Result: Consistent! This is the number J&T Express uses for tracking');
     console.log('');
 
@@ -216,7 +216,7 @@ async function testFulfillmentMapping() {
     console.log('Key Takeaways:');
     console.log('  1. parcel_number (EP-A2V318) is just EasyParcel\'s internal reference');
     console.log('  2. awb (631867054753) is the ACTUAL courier tracking number');
-    console.log('  3. Both trackingNumber and airwayBillNumber should use the AWB');
+    console.log('  3. Both trackingNumber and airwayBillUrl should use the AWB');
     console.log('  4. This matches what was sent via WhatsApp: 631867054753');
 
   } catch (error) {

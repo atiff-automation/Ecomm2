@@ -236,9 +236,16 @@ export function generateSrcSet(
   return sizeKeys
     .map(sizeKey => {
       const size = getImageSize(sizeKey);
-      if (!size) return '';
+      if (!size) {
+        return '';
+      }
 
-      const fileName = generateImageFileName(baseName, sizeKey, formatKey, uuid);
+      const fileName = generateImageFileName(
+        baseName,
+        sizeKey,
+        formatKey,
+        uuid
+      );
       return `${getImageUrl(fileName)} ${size.width}w`;
     })
     .filter(Boolean)
@@ -265,7 +272,10 @@ export function getImageUrl(fileName: string): string {
 /**
  * Validate file against upload configuration
  */
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
+export function validateImageFile(file: File): {
+  valid: boolean;
+  error?: string;
+} {
   if (!file) {
     return { valid: false, error: 'No file provided' };
   }
@@ -281,7 +291,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
     const maxSizeMB = IMAGE_CONFIG.upload.maxFileSize / (1024 * 1024);
     return {
       valid: false,
-      error: `File size exceeds ${maxSizeMB}MB limit`
+      error: `File size exceeds ${maxSizeMB}MB limit`,
     };
   }
 
@@ -291,7 +301,11 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
 /**
  * Get optimal sizes for responsive images
  */
-export function getResponsiveSizes(): { mobile: string[]; tablet: string[]; desktop: string[] } {
+export function getResponsiveSizes(): {
+  mobile: string[];
+  tablet: string[];
+  desktop: string[];
+} {
   return {
     mobile: ['small', 'medium'],
     tablet: ['medium', 'large'],

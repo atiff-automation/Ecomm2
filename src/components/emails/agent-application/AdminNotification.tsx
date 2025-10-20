@@ -40,14 +40,14 @@ export const AdminNotification = ({
   applicantEmail,
   submissionDate,
   reviewUrl = `${process.env.NEXTAUTH_URL}/admin/agents/applications/${applicationId}`,
-  applicantDetails
+  applicantDetails,
 }: AdminNotificationProps) => {
   const formattedDate = submissionDate.toLocaleDateString('ms-MY', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
   return (
@@ -69,17 +69,14 @@ export const AdminNotification = ({
 
           {/* Main Content */}
           <Section style={content}>
-            <Text style={alertBadge}>
-              🔔 New Agent Application
-            </Text>
+            <Text style={alertBadge}>🔔 New Agent Application</Text>
 
-            <Text style={greeting}>
-              Dear Admin Team,
-            </Text>
+            <Text style={greeting}>Dear Admin Team,</Text>
 
             <Text style={paragraph}>
-              A new agent application has been submitted and requires your review.
-              Please review the application details below and take appropriate action.
+              A new agent application has been submitted and requires your
+              review. Please review the application details below and take
+              appropriate action.
             </Text>
 
             {/* Application Summary Box */}
@@ -151,15 +148,21 @@ export const AdminNotification = ({
                 <Row>
                   <Column style={insightColumn}>
                     <Text style={insightLabel}>Age</Text>
-                    <Text style={insightValue}>{applicantDetails.age || 'N/A'}</Text>
+                    <Text style={insightValue}>
+                      {applicantDetails.age || 'N/A'}
+                    </Text>
                   </Column>
                   <Column style={insightColumn}>
                     <Text style={insightLabel}>Business Experience</Text>
-                    <Text style={insightValue}>{applicantDetails.hasBusinessExp ? '✅ Yes' : '❌ No'}</Text>
+                    <Text style={insightValue}>
+                      {applicantDetails.hasBusinessExp ? '✅ Yes' : '❌ No'}
+                    </Text>
                   </Column>
                   <Column style={insightColumn}>
                     <Text style={insightLabel}>JRM Experience</Text>
-                    <Text style={insightValue}>{applicantDetails.hasJrmExp ? '✅ Yes' : '❌ No'}</Text>
+                    <Text style={insightValue}>
+                      {applicantDetails.hasJrmExp ? '✅ Yes' : '❌ No'}
+                    </Text>
                   </Column>
                 </Row>
 
@@ -167,7 +170,9 @@ export const AdminNotification = ({
                   <Row>
                     <Column>
                       <Text style={insightLabel}>Business Location</Text>
-                      <Text style={insightValue}>{applicantDetails.businessLocation}</Text>
+                      <Text style={insightValue}>
+                        {applicantDetails.businessLocation}
+                      </Text>
                     </Column>
                   </Row>
                 )}
@@ -178,14 +183,13 @@ export const AdminNotification = ({
             <Section style={actionBox}>
               <Text style={actionTitle}>Action Required</Text>
               <Text style={actionText}>
-                Please review this application within <strong>3 business days</strong> to maintain our service standards.
+                Please review this application within{' '}
+                <strong>3 business days</strong> to maintain our service
+                standards.
               </Text>
 
               <Section style={buttonContainer}>
-                <Button
-                  style={reviewButton}
-                  href={reviewUrl}
-                >
+                <Button style={reviewButton} href={reviewUrl}>
                   Review Application
                 </Button>
               </Section>
@@ -197,24 +201,30 @@ export const AdminNotification = ({
             <Text style={guidelinesTitle}>Review Guidelines</Text>
 
             <Text style={guideline}>
-              ✅ <strong>Approve if:</strong> Applicant meets age requirements, has relevant experience, and shows genuine interest
+              ✅ <strong>Approve if:</strong> Applicant meets age requirements,
+              has relevant experience, and shows genuine interest
             </Text>
 
             <Text style={guideline}>
-              ⏳ <strong>Request more info if:</strong> Application lacks crucial details or requires clarification
+              ⏳ <strong>Request more info if:</strong> Application lacks
+              crucial details or requires clarification
             </Text>
 
             <Text style={guideline}>
-              ❌ <strong>Reject if:</strong> Applicant doesn't meet basic criteria or shows inappropriate intent
+              ❌ <strong>Reject if:</strong> Applicant doesn't meet basic
+              criteria or shows inappropriate intent
             </Text>
 
             <Hr style={hr} />
 
             {/* System Information */}
             <Text style={systemInfo}>
-              <strong>System Information:</strong><br />
-              Notification sent at: {new Date().toLocaleString('ms-MY')}<br />
-              Application tracking: {applicationId}<br />
+              <strong>System Information:</strong>
+              <br />
+              Notification sent at: {new Date().toLocaleString('ms-MY')}
+              <br />
+              Application tracking: {applicationId}
+              <br />
               Review dashboard: Admin Portal → Agent Applications
             </Text>
           </Section>
@@ -238,7 +248,8 @@ export const AdminNotification = ({
 // Styles
 const main = {
   backgroundColor: '#f6f9fc',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {

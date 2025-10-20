@@ -58,13 +58,16 @@ export class BusinessProfileService {
   async getBusinessProfile(): Promise<BusinessProfileData> {
     try {
       // Return cached profile if still fresh
-      if (this.cachedProfile && (Date.now() - this.lastFetchTime) < this.CACHE_DURATION) {
+      if (
+        this.cachedProfile &&
+        Date.now() - this.lastFetchTime < this.CACHE_DURATION
+      ) {
         return this.cachedProfile;
       }
 
       // Fetch from database
       const profile = await prisma.businessProfile.findFirst({
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
 
       if (!profile) {
@@ -72,16 +75,19 @@ export class BusinessProfileService {
       }
 
       const businessProfile: BusinessProfileData = {
-        name: profile.legalName || profile.tradingName || 'JRM E-commerce Sdn Bhd',
+        name:
+          profile.legalName || profile.tradingName || 'JRM E-commerce Sdn Bhd',
         tradingName: profile.tradingName || undefined,
         registrationNumber: profile.registrationNumber || 'Not Registered',
         taxRegistrationNumber: profile.taxRegistrationNumber || undefined,
         businessType: profile.businessType || 'SDN_BHD',
-        logo: profile.logoUrl ? {
-          url: profile.logoUrl,
-          width: profile.logoWidth || 120,
-          height: profile.logoHeight || 40
-        } : undefined,
+        logo: profile.logoUrl
+          ? {
+              url: profile.logoUrl,
+              width: profile.logoWidth || 120,
+              height: profile.logoHeight || 40,
+            }
+          : undefined,
         address: {
           line1: profile.registeredAddress?.addressLine1 || 'Address Line 1',
           line2: profile.registeredAddress?.addressLine2,
@@ -90,26 +96,29 @@ export class BusinessProfileService {
           postalCode: profile.registeredAddress?.postalCode || '50000',
           country: profile.registeredAddress?.country || 'Malaysia',
           full: this.formatAddress({
-            addressLine1: profile.registeredAddress?.addressLine1 || 'Address Line 1',
+            addressLine1:
+              profile.registeredAddress?.addressLine1 || 'Address Line 1',
             addressLine2: profile.registeredAddress?.addressLine2,
             city: profile.registeredAddress?.city || 'Kuala Lumpur',
             state: profile.registeredAddress?.state || 'KUL',
             postalCode: profile.registeredAddress?.postalCode || '50000',
-            country: profile.registeredAddress?.country || 'Malaysia'
-          })
+            country: profile.registeredAddress?.country || 'Malaysia',
+          }),
         },
         contact: {
           primaryPhone: profile.primaryPhone || '+60 3-1234 5678',
           secondaryPhone: profile.secondaryPhone || undefined,
           primaryEmail: profile.primaryEmail || 'info@jrmecommerce.com',
           supportEmail: profile.supportEmail || undefined,
-          website: profile.website || undefined
+          website: profile.website || undefined,
         },
-        banking: profile.banking ? {
-          bankName: profile.banking.bankName,
-          accountNumber: profile.banking.bankAccountNumber,
-          accountHolder: profile.banking.bankAccountHolder
-        } : undefined
+        banking: profile.banking
+          ? {
+              bankName: profile.banking.bankName,
+              accountNumber: profile.banking.bankAccountNumber,
+              accountHolder: profile.banking.bankAccountHolder,
+            }
+          : undefined,
       };
 
       // Cache the result
@@ -138,12 +147,12 @@ export class BusinessProfileService {
         state: 'KUL',
         postalCode: '50000',
         country: 'Malaysia',
-        full: process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia'
+        full: process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia',
       },
       contact: {
         primaryPhone: process.env.COMPANY_PHONE || '+60 3-1234 5678',
-        primaryEmail: process.env.COMPANY_EMAIL || 'info@jrmecommerce.com'
-      }
+        primaryEmail: process.env.COMPANY_EMAIL || 'info@jrmecommerce.com',
+      },
     };
   }
 
@@ -155,9 +164,9 @@ export class BusinessProfileService {
       address.addressLine1,
       address.addressLine2,
       `${address.city}, ${address.state} ${address.postalCode}`,
-      address.country
+      address.country,
     ].filter(Boolean);
-    
+
     return parts.join(', ');
   }
 
@@ -174,7 +183,7 @@ export class BusinessProfileService {
    */
   async getLegacyCompanyInfo() {
     const profile = await this.getBusinessProfile();
-    
+
     return {
       name: profile.name,
       address: profile.address.full,
@@ -182,7 +191,7 @@ export class BusinessProfileService {
       email: profile.contact.primaryEmail,
       registrationNo: profile.registrationNumber,
       sstNo: profile.taxRegistrationNumber || 'Not Registered',
-      logo: profile.logo // Include logo data
+      logo: profile.logo, // Include logo data
     };
   }
 }

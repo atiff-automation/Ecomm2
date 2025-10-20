@@ -11,7 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, TrendingUp, BarChart3, Users, CreditCard } from 'lucide-react';
+import {
+  AlertCircle,
+  TrendingUp,
+  BarChart3,
+  Users,
+  CreditCard,
+} from 'lucide-react';
 import type { RevenueAnalytics } from '@/lib/types/sales-reports';
 
 interface RevenueChartProps {
@@ -31,21 +37,23 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
   const fetchRevenueAnalytics = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
       });
 
-      const response = await fetch(`/api/admin/reports/sales/revenue?${params}`);
-      
+      const response = await fetch(
+        `/api/admin/reports/sales/revenue?${params}`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to fetch revenue analytics');
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         setAnalytics(result.data);
       } else {
@@ -53,7 +61,9 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
       }
     } catch (error) {
       console.error('Failed to fetch revenue analytics:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      setError(
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+      );
     } finally {
       setLoading(false);
     }
@@ -63,7 +73,7 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
     return new Intl.NumberFormat('ms-MY', {
       style: 'currency',
       currency: 'MYR',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -72,7 +82,9 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
   };
 
   const getMaxRevenue = () => {
-    if (!analytics?.daily.length) return 0;
+    if (!analytics?.daily.length) {
+      return 0;
+    }
     return Math.max(...analytics.daily.map(point => point.revenue));
   };
 
@@ -102,7 +114,9 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground">No revenue data found</h3>
+        <h3 className="text-lg font-medium text-muted-foreground">
+          No revenue data found
+        </h3>
         <p className="text-sm text-muted-foreground">
           No revenue data available for the selected period.
         </p>
@@ -111,8 +125,14 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
   }
 
   const maxRevenue = getMaxRevenue();
-  const totalRevenue = analytics.daily.reduce((sum, point) => sum + point.revenue, 0);
-  const totalOrders = analytics.daily.reduce((sum, point) => sum + point.orders, 0);
+  const totalRevenue = analytics.daily.reduce(
+    (sum, point) => sum + point.revenue,
+    0
+  );
+  const totalOrders = analytics.daily.reduce(
+    (sum, point) => sum + point.orders,
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -135,19 +155,27 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
                 <div className="text-2xl font-bold text-green-600">
                   {formatCurrency(totalRevenue)}
                 </div>
-                <div className="text-xs text-muted-foreground">Total Revenue</div>
+                <div className="text-xs text-muted-foreground">
+                  Total Revenue
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
                   {formatNumber(totalOrders)}
                 </div>
-                <div className="text-xs text-muted-foreground">Total Orders</div>
+                <div className="text-xs text-muted-foreground">
+                  Total Orders
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(totalOrders > 0 ? totalRevenue / totalOrders : 0)}
+                  {formatCurrency(
+                    totalOrders > 0 ? totalRevenue / totalOrders : 0
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground">Avg Order Value</div>
+                <div className="text-xs text-muted-foreground">
+                  Avg Order Value
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
@@ -162,9 +190,9 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
               {analytics.daily.map((point, index) => (
                 <div key={point.date} className="flex items-center space-x-3">
                   <div className="text-xs font-mono text-muted-foreground w-20">
-                    {new Date(point.date).toLocaleDateString('en-MY', { 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {new Date(point.date).toLocaleDateString('en-MY', {
+                      month: 'short',
+                      day: 'numeric',
                     })}
                   </div>
                   <div className="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
@@ -172,7 +200,7 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
                     <div
                       className="h-full bg-blue-500 absolute left-0 top-0"
                       style={{
-                        width: `${maxRevenue > 0 ? (point.memberRevenue / maxRevenue) * 100 : 0}%`
+                        width: `${maxRevenue > 0 ? (point.memberRevenue / maxRevenue) * 100 : 0}%`,
                       }}
                     />
                     {/* Non-Member Revenue */}
@@ -180,7 +208,7 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
                       className="h-full bg-green-500 absolute top-0"
                       style={{
                         left: `${maxRevenue > 0 ? (point.memberRevenue / maxRevenue) * 100 : 0}%`,
-                        width: `${maxRevenue > 0 ? (point.nonMemberRevenue / maxRevenue) * 100 : 0}%`
+                        width: `${maxRevenue > 0 ? (point.nonMemberRevenue / maxRevenue) * 100 : 0}%`,
                       }}
                     />
                     {/* Revenue Text */}
@@ -227,10 +255,11 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
           <CardContent>
             <div className="space-y-4">
               {analytics.paymentMethods.map((method, index) => (
-                <div key={method.method} className="flex items-center space-x-4">
-                  <div className="w-20 text-sm font-medium">
-                    #{index + 1}
-                  </div>
+                <div
+                  key={method.method}
+                  className="flex items-center space-x-4"
+                >
+                  <div className="w-20 text-sm font-medium">#{index + 1}</div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium">{method.method}</span>
@@ -262,10 +291,13 @@ export function RevenueChart({ startDate, endDate }: RevenueChartProps) {
           <div className="flex items-start space-x-3">
             <BarChart3 className="h-5 w-5 text-yellow-600 mt-0.5" />
             <div>
-              <h4 className="font-medium text-yellow-800">Chart Enhancement Available</h4>
+              <h4 className="font-medium text-yellow-800">
+                Chart Enhancement Available
+              </h4>
               <p className="text-sm text-yellow-700 mt-1">
-                For advanced visualizations, integrate with libraries like Recharts or Chart.js. 
-                Current implementation provides basic trend analysis suitable for business reporting.
+                For advanced visualizations, integrate with libraries like
+                Recharts or Chart.js. Current implementation provides basic
+                trend analysis suitable for business reporting.
               </p>
             </div>
           </div>

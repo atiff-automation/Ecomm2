@@ -89,6 +89,8 @@ export default function AdminCategoriesPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -219,16 +221,17 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (categoryId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this category? This cannot be undone.'
-      )
-    ) {
+    setCategoryToDelete(categoryId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/categories/${categoryId}`, {
+      const response = await fetch(`/api/categories/${categoryToDelete}`, {
         method: 'DELETE',
       });
 
@@ -242,6 +245,9 @@ export default function AdminCategoriesPage() {
     } catch (error) {
       console.error('Error deleting category:', error);
       toast.error('Failed to delete category');
+    } finally {
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -261,11 +267,6 @@ export default function AdminCategoriesPage() {
   const tabs: TabConfig[] = [
     { id: 'catalog', label: 'Product Catalog', href: '/admin/products' },
     { id: 'categories', label: 'Categories', href: '/admin/categories' },
-    {
-      id: 'inventory',
-      label: 'Inventory Management',
-      href: '/admin/products/inventory',
-    },
     {
       id: 'import-export',
       label: 'Import/Export',
@@ -497,6 +498,32 @@ export default function AdminCategoriesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete this category? This action cannot
+              be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminPageLayout>
   );
 }

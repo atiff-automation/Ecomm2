@@ -283,17 +283,23 @@ function ThankYouContent() {
         apiResponse.data.paymentStatus === 'PENDING' &&
         pollCount < 10 // Max 10 polls (30 seconds)
       ) {
-        console.log('⏳ Payment successful but order pending, polling for webhook update...', {
-          pollCount: pollCount + 1,
-          maxPolls: 10,
-        });
+        console.log(
+          '⏳ Payment successful but order pending, polling for webhook update...',
+          {
+            pollCount: pollCount + 1,
+            maxPolls: 10,
+          }
+        );
 
         // Poll again after 3 seconds
         setTimeout(() => {
           setPollCount(prev => prev + 1);
         }, 3000);
       } else if (apiResponse.data.paymentStatus === 'PAID') {
-        console.log('✅ Order payment confirmed:', apiResponse.data.orderNumber);
+        console.log(
+          '✅ Order payment confirmed:',
+          apiResponse.data.orderNumber
+        );
         setPollCount(0); // Reset poll count
       }
     } catch (error) {

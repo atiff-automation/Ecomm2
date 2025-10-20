@@ -32,14 +32,14 @@ export const ApplicationConfirmation = ({
   applicantName,
   applicantEmail,
   submissionDate,
-  trackingUrl = `${process.env.NEXTAUTH_URL}/apply-agent/status?id=${applicationId}`
+  trackingUrl = `${process.env.NEXTAUTH_URL}/apply-agent/status?id=${applicationId}`,
 }: ApplicationConfirmationProps) => {
   const formattedDate = submissionDate.toLocaleDateString('ms-MY', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
   return (
@@ -61,13 +61,12 @@ export const ApplicationConfirmation = ({
 
           {/* Main Content */}
           <Section style={content}>
-            <Text style={greeting}>
-              Salam sejahtera {applicantName},
-            </Text>
+            <Text style={greeting}>Salam sejahtera {applicantName},</Text>
 
             <Text style={paragraph}>
               Terima kasih kerana menghantar permohonan untuk menjadi agen JRM.
-              Permohonan anda telah berjaya diterima dan sedang dalam proses semakan.
+              Permohonan anda telah berjaya diterima dan sedang dalam proses
+              semakan.
             </Text>
 
             {/* Application Details Box */}
@@ -112,21 +111,21 @@ export const ApplicationConfirmation = ({
             </Text>
 
             <Text style={listItem}>
-              • Pasukan kami akan menyemak permohonan anda dalam tempoh 3-5 hari bekerja
+              • Pasukan kami akan menyemak permohonan anda dalam tempoh 3-5 hari
+              bekerja
             </Text>
             <Text style={listItem}>
-              • Anda akan menerima makluman email apabila status permohonan dikemaskini
+              • Anda akan menerima makluman email apabila status permohonan
+              dikemaskini
             </Text>
             <Text style={listItem}>
-              • Jika permohonan diluluskan, kami akan menghubungi anda untuk sesi orientasi
+              • Jika permohonan diluluskan, kami akan menghubungi anda untuk
+              sesi orientasi
             </Text>
 
             {/* Track Application Button */}
             <Section style={buttonContainer}>
-              <Button
-                style={button}
-                href={trackingUrl}
-              >
+              <Button style={button} href={trackingUrl}>
                 Semak Status Permohonan
               </Button>
             </Section>
@@ -143,8 +142,10 @@ export const ApplicationConfirmation = ({
             </Text>
 
             <Text style={contactInfo}>
-              📧 Email: support@jrm.com.my<br />
-              📱 WhatsApp: +60 12-345 6789<br />
+              📧 Email: support@jrm.com.my
+              <br />
+              📱 WhatsApp: +60 12-345 6789
+              <br />
               🕒 Waktu Operasi: 9:00 AM - 6:00 PM (Isnin - Jumaat)
             </Text>
 
@@ -153,7 +154,8 @@ export const ApplicationConfirmation = ({
             </Text>
 
             <Text style={signature}>
-              Salam hormat,<br />
+              Salam hormat,
+              <br />
               <strong>Pasukan JRM</strong>
             </Text>
           </Section>
@@ -161,8 +163,9 @@ export const ApplicationConfirmation = ({
           {/* Footer */}
           <Section style={footerSection}>
             <Text style={disclaimer}>
-              Email ini dihantar secara automatik. Sila jangan balas terus ke email ini.
-              Untuk sebarang pertanyaan, gunakan maklumat hubungan di atas.
+              Email ini dihantar secara automatik. Sila jangan balas terus ke
+              email ini. Untuk sebarang pertanyaan, gunakan maklumat hubungan di
+              atas.
             </Text>
             <Text style={copyright}>
               © 2024 JRM Enterprise. Hak cipta terpelihara.
@@ -177,7 +180,8 @@ export const ApplicationConfirmation = ({
 // Styles
 const main = {
   backgroundColor: '#f6f9fc',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 const container = {

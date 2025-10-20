@@ -167,15 +167,26 @@ export default function CheckoutPage() {
   });
 
   // Shipping state (new simplified implementation)
-  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
+  const [selectedShipping, setSelectedShipping] =
+    useState<ShippingOption | null>(null);
   const [calculatedWeight, setCalculatedWeight] = useState<number>(0);
   const [shippingCost, setShippingCost] = useState(0);
   const [freeShippingApplied, setFreeShippingApplied] = useState(false);
 
   // Postcode validation state
   const [postcodeValidation, setPostcodeValidation] = useState<{
-    shipping: { valid: boolean; error?: string; loading?: boolean; manualEntry?: boolean };
-    billing: { valid: boolean; error?: string; loading?: boolean; manualEntry?: boolean };
+    shipping: {
+      valid: boolean;
+      error?: string;
+      loading?: boolean;
+      manualEntry?: boolean;
+    };
+    billing: {
+      valid: boolean;
+      error?: string;
+      loading?: boolean;
+      manualEntry?: boolean;
+    };
   }>({
     shipping: { valid: true },
     billing: { valid: true },
@@ -447,48 +458,54 @@ export default function CheckoutPage() {
 
   // Handle shipping selection from ShippingSelector component
   // FIXED: Removed fieldErrors dependency to prevent unnecessary recalculations during order submission
-  const handleShippingSelected = useCallback((option: ShippingOption | null, weight?: number) => {
-    setSelectedShipping(option);
-    setShippingCost(option?.cost || 0);
-    setFreeShippingApplied(option?.freeShipping || false);
+  const handleShippingSelected = useCallback(
+    (option: ShippingOption | null, weight?: number) => {
+      setSelectedShipping(option);
+      setShippingCost(option?.cost || 0);
+      setFreeShippingApplied(option?.freeShipping || false);
 
-    // CRITICAL: Update calculated weight from API response
-    if (weight !== undefined) {
-      setCalculatedWeight(weight);
-      console.log('✅ Weight updated from shipping calculation:', weight);
-    }
-
-    // Clear shipping error if exists - using functional update to avoid dependency
-    setFieldErrors(prev => {
-      if (prev['shipping']) {
-        const newErrors = { ...prev };
-        delete newErrors['shipping'];
-        return newErrors;
+      // CRITICAL: Update calculated weight from API response
+      if (weight !== undefined) {
+        setCalculatedWeight(weight);
+        console.log('✅ Weight updated from shipping calculation:', weight);
       }
-      return prev;
-    });
-  }, []); // Empty dependencies - all state updates use functional form
+
+      // Clear shipping error if exists - using functional update to avoid dependency
+      setFieldErrors(prev => {
+        if (prev['shipping']) {
+          const newErrors = { ...prev };
+          delete newErrors['shipping'];
+          return newErrors;
+        }
+        return prev;
+      });
+    },
+    []
+  ); // Empty dependencies - all state updates use functional form
 
   // Memoize deliveryAddress to prevent recreation on every render
-  const memoizedDeliveryAddress = useMemo(() => ({
-    name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-    phone: shippingAddress.phone,
-    addressLine1: shippingAddress.address,
-    addressLine2: shippingAddress.address2 || '',
-    city: shippingAddress.city,
-    state: shippingAddress.state as DeliveryAddress['state'],
-    postalCode: shippingAddress.postcode,
-    country: 'MY' as const,
-  }), [
-    shippingAddress.firstName,
-    shippingAddress.lastName,
-    shippingAddress.phone,
-    shippingAddress.address,
-    shippingAddress.address2,
-    shippingAddress.city,
-    shippingAddress.state,
-    shippingAddress.postcode,
-  ]);
+  const memoizedDeliveryAddress = useMemo(
+    () => ({
+      name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+      phone: shippingAddress.phone,
+      addressLine1: shippingAddress.address,
+      addressLine2: shippingAddress.address2 || '',
+      city: shippingAddress.city,
+      state: shippingAddress.state as DeliveryAddress['state'],
+      postalCode: shippingAddress.postcode,
+      country: 'MY' as const,
+    }),
+    [
+      shippingAddress.firstName,
+      shippingAddress.lastName,
+      shippingAddress.phone,
+      shippingAddress.address,
+      shippingAddress.address2,
+      shippingAddress.city,
+      shippingAddress.state,
+      shippingAddress.postcode,
+    ]
+  );
 
   // Handle payment method change - wrapped in useCallback to prevent re-renders
   const handlePaymentMethodChange = useCallback((method: string) => {
@@ -545,7 +562,10 @@ export default function CheckoutPage() {
       }
       if (!shippingAddress.postcode.trim()) {
         errors['shippingAddress.postcode'] = 'Postcode is required';
-      } else if (!postcodeValidation.shipping.valid && !postcodeValidation.shipping.manualEntry) {
+      } else if (
+        !postcodeValidation.shipping.valid &&
+        !postcodeValidation.shipping.manualEntry
+      ) {
         errors['shippingAddress.postcode'] =
           'Please enter a valid Malaysian postcode for accurate shipping calculation';
       }
@@ -572,7 +592,10 @@ export default function CheckoutPage() {
         }
         if (!billingAddress.postcode.trim()) {
           errors['billingAddress.postcode'] = 'Postcode is required';
-        } else if (!postcodeValidation.billing.valid && !postcodeValidation.billing.manualEntry) {
+        } else if (
+          !postcodeValidation.billing.valid &&
+          !postcodeValidation.billing.manualEntry
+        ) {
           errors['billingAddress.postcode'] =
             'Please enter a valid Malaysian postcode';
         }
@@ -1063,8 +1086,12 @@ export default function CheckoutPage() {
                     onChange={e =>
                       handleAddressChange('shipping', 'city', e.target.value)
                     }
-                    placeholder={postcodeValidation.shipping.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
-                    className={`h-12 md:h-10 ${postcodeValidation.shipping.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}`}
+                    placeholder={
+                      postcodeValidation.shipping.manualEntry
+                        ? 'Enter city manually'
+                        : 'Auto-filled from postcode'
+                    }
+                    className={`h-12 md:h-10 ${postcodeValidation.shipping.manualEntry ? 'border-orange-300 focus:border-orange-500' : ''}`}
                     required
                   />
                 </div>
@@ -1293,8 +1320,12 @@ export default function CheckoutPage() {
                       onChange={e =>
                         handleAddressChange('billing', 'city', e.target.value)
                       }
-                      placeholder={postcodeValidation.billing.manualEntry ? "Enter city manually" : "Auto-filled from postcode"}
-                      className={`h-12 md:h-10 ${postcodeValidation.billing.manualEntry ? "border-orange-300 focus:border-orange-500" : ""}`}
+                      placeholder={
+                        postcodeValidation.billing.manualEntry
+                          ? 'Enter city manually'
+                          : 'Auto-filled from postcode'
+                      }
+                      className={`h-12 md:h-10 ${postcodeValidation.billing.manualEntry ? 'border-orange-300 focus:border-orange-500' : ''}`}
                       required
                     />
                   </div>
@@ -1347,7 +1378,6 @@ export default function CheckoutPage() {
               </AlertDescription>
             </Alert>
           )}
-
         </div>
 
         {/* Order Summary Sidebar */}

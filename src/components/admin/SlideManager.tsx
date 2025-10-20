@@ -32,9 +32,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   GripVertical,
@@ -42,7 +40,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -73,7 +71,12 @@ interface SortableSlideProps {
 
 // ==================== SORTABLE SLIDE COMPONENT ====================
 
-function SortableSlide({ slide, onEdit, onDelete, onToggleActive }: SortableSlideProps) {
+function SortableSlide({
+  slide,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: SortableSlideProps) {
   const {
     attributes,
     listeners,
@@ -93,9 +96,9 @@ function SortableSlide({ slide, onEdit, onDelete, onToggleActive }: SortableSlid
       ref={setNodeRef}
       style={style}
       className={cn(
-        "bg-white border rounded-lg p-4 space-y-3",
-        isDragging && "opacity-50",
-        !slide.isActive && "opacity-75 bg-muted/20"
+        'bg-white border rounded-lg p-4 space-y-3',
+        isDragging && 'opacity-50',
+        !slide.isActive && 'opacity-75 bg-muted/20'
       )}
     >
       <div className="flex items-center gap-3 w-full">
@@ -125,8 +128,11 @@ function SortableSlide({ slide, onEdit, onDelete, onToggleActive }: SortableSlid
             <h4 className="font-medium text-sm truncate">
               Slide {slide.order + 1}
             </h4>
-            <Badge variant={slide.isActive ? "default" : "secondary"} className="text-xs">
-              {slide.isActive ? "Active" : "Hidden"}
+            <Badge
+              variant={slide.isActive ? 'default' : 'secondary'}
+              className="text-xs"
+            >
+              {slide.isActive ? 'Active' : 'Hidden'}
             </Badge>
           </div>
           {slide.altText && (
@@ -143,7 +149,7 @@ function SortableSlide({ slide, onEdit, onDelete, onToggleActive }: SortableSlid
             size="sm"
             onClick={() => onToggleActive(slide.id, !slide.isActive)}
             className="h-8 w-8 p-0 hover:bg-muted"
-            title={slide.isActive ? "Hide slide" : "Show slide"}
+            title={slide.isActive ? 'Hide slide' : 'Show slide'}
           >
             {slide.isActive ? (
               <Eye className="h-4 w-4" />
@@ -166,9 +172,11 @@ function SortableSlide({ slide, onEdit, onDelete, onToggleActive }: SortableSlid
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (window.confirm(
-                'Are you sure you want to delete this slide? This action cannot be undone and will also remove the image file from the server.'
-              )) {
+              if (
+                window.confirm(
+                  'Are you sure you want to delete this slide? This action cannot be undone and will also remove the image file from the server.'
+                )
+              ) {
                 onDelete(slide.id);
               }
             }}
@@ -192,7 +200,12 @@ interface SlideEditDialogProps {
   onSave: (slide: HeroSlide) => void;
 }
 
-function SlideEditDialog({ slide, open, onOpenChange, onSave }: SlideEditDialogProps) {
+function SlideEditDialog({
+  slide,
+  open,
+  onOpenChange,
+  onSave,
+}: SlideEditDialogProps) {
   const [altText, setAltText] = useState(slide?.altText || '');
 
   React.useEffect(() => {
@@ -200,18 +213,22 @@ function SlideEditDialog({ slide, open, onOpenChange, onSave }: SlideEditDialogP
   }, [slide]);
 
   const handleSave = useCallback(() => {
-    if (!slide) return;
+    if (!slide) {
+      return;
+    }
 
     const updatedSlide: HeroSlide = {
       ...slide,
-      altText: altText.trim() || undefined
+      altText: altText.trim() || undefined,
     };
 
     onSave(updatedSlide);
     onOpenChange(false);
   }, [slide, altText, onSave, onOpenChange]);
 
-  if (!slide) return null;
+  if (!slide) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -238,12 +255,14 @@ function SlideEditDialog({ slide, open, onOpenChange, onSave }: SlideEditDialogP
           <div className="space-y-2">
             <Label htmlFor="alt-text">
               Alt Text
-              <span className="text-xs text-muted-foreground ml-1">(optional)</span>
+              <span className="text-xs text-muted-foreground ml-1">
+                (optional)
+              </span>
             </Label>
             <Input
               id="alt-text"
               value={altText}
-              onChange={(e) => setAltText(e.target.value)}
+              onChange={e => setAltText(e.target.value)}
               placeholder={`Slide ${slide.order + 1} description`}
               maxLength={200}
             />
@@ -257,9 +276,7 @@ function SlideEditDialog({ slide, open, onOpenChange, onSave }: SlideEditDialogP
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Changes
-          </Button>
+          <Button onClick={handleSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -268,7 +285,11 @@ function SlideEditDialog({ slide, open, onOpenChange, onSave }: SlideEditDialogP
 
 // ==================== MAIN COMPONENT ====================
 
-export function SlideManager({ slides, onChange, isLoading = false }: SlideManagerProps) {
+export function SlideManager({
+  slides,
+  onChange,
+  isLoading = false,
+}: SlideManagerProps) {
   const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -281,71 +302,85 @@ export function SlideManager({ slides, onChange, isLoading = false }: SlideManag
 
   // ==================== HANDLERS ====================
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = slides.findIndex(slide => slide.id === active.id);
-      const newIndex = slides.findIndex(slide => slide.id === over.id);
+      if (over && active.id !== over.id) {
+        const oldIndex = slides.findIndex(slide => slide.id === active.id);
+        const newIndex = slides.findIndex(slide => slide.id === over.id);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedSlides = arrayMove(slides, oldIndex, newIndex).map(
-          (slide, index) => ({ ...slide, order: index })
-        );
-        onChange(reorderedSlides);
-        toast.success('Slides reordered successfully');
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reorderedSlides = arrayMove(slides, oldIndex, newIndex).map(
+            (slide, index) => ({ ...slide, order: index })
+          );
+          onChange(reorderedSlides);
+          toast.success('Slides reordered successfully');
+        }
       }
-    }
-  }, [slides, onChange]);
+    },
+    [slides, onChange]
+  );
 
   const handleEditSlide = useCallback((slide: HeroSlide) => {
     setEditingSlide(slide);
     setIsEditDialogOpen(true);
   }, []);
 
-  const handleSaveSlide = useCallback((updatedSlide: HeroSlide) => {
-    const updatedSlides = slides.map(slide =>
-      slide.id === updatedSlide.id ? updatedSlide : slide
-    );
-    onChange(updatedSlides);
-    toast.success('Slide updated successfully');
-  }, [slides, onChange]);
+  const handleSaveSlide = useCallback(
+    (updatedSlide: HeroSlide) => {
+      const updatedSlides = slides.map(slide =>
+        slide.id === updatedSlide.id ? updatedSlide : slide
+      );
+      onChange(updatedSlides);
+      toast.success('Slide updated successfully');
+    },
+    [slides, onChange]
+  );
 
-  const handleDeleteSlide = useCallback(async (slideId: string) => {
-    const slideToDelete = slides.find(slide => slide.id === slideId);
+  const handleDeleteSlide = useCallback(
+    async (slideId: string) => {
+      const slideToDelete = slides.find(slide => slide.id === slideId);
 
-    if (slideToDelete?.mediaId) {
-      try {
-        // Delete the media file from server
-        const response = await fetch(
-          `/api/admin/site-customization/media/upload?id=${slideToDelete.mediaId}`,
-          { method: 'DELETE' }
-        );
+      if (slideToDelete?.mediaId) {
+        try {
+          // Delete the media file from server
+          const response = await fetch(
+            `/api/admin/site-customization/media/upload?id=${slideToDelete.mediaId}`,
+            { method: 'DELETE' }
+          );
 
-        if (!response.ok) {
-          console.warn('Failed to delete media file, but continuing with slide removal');
+          if (!response.ok) {
+            console.warn(
+              'Failed to delete media file, but continuing with slide removal'
+            );
+          }
+        } catch (error) {
+          console.warn('Error deleting media file:', error);
+          // Continue with slide removal even if media deletion fails
         }
-      } catch (error) {
-        console.warn('Error deleting media file:', error);
-        // Continue with slide removal even if media deletion fails
       }
-    }
 
-    // Remove slide from configuration
-    const updatedSlides = slides
-      .filter(slide => slide.id !== slideId)
-      .map((slide, index) => ({ ...slide, order: index }));
-    onChange(updatedSlides);
-    toast.success('Slide deleted successfully');
-  }, [slides, onChange]);
+      // Remove slide from configuration
+      const updatedSlides = slides
+        .filter(slide => slide.id !== slideId)
+        .map((slide, index) => ({ ...slide, order: index }));
+      onChange(updatedSlides);
+      toast.success('Slide deleted successfully');
+    },
+    [slides, onChange]
+  );
 
-  const handleToggleActive = useCallback((slideId: string, isActive: boolean) => {
-    const updatedSlides = slides.map(slide =>
-      slide.id === slideId ? { ...slide, isActive } : slide
-    );
-    onChange(updatedSlides);
-    toast.success(`Slide ${isActive ? 'shown' : 'hidden'} successfully`);
-  }, [slides, onChange]);
+  const handleToggleActive = useCallback(
+    (slideId: string, isActive: boolean) => {
+      const updatedSlides = slides.map(slide =>
+        slide.id === slideId ? { ...slide, isActive } : slide
+      );
+      onChange(updatedSlides);
+      toast.success(`Slide ${isActive ? 'shown' : 'hidden'} successfully`);
+    },
+    [slides, onChange]
+  );
 
   // ==================== RENDER ====================
 
@@ -368,7 +403,9 @@ export function SlideManager({ slides, onChange, isLoading = false }: SlideManag
             <div className="flex items-center gap-2">
               <Badge variant="default">{activeSlides.length} Active</Badge>
               {inactiveSlides.length > 0 && (
-                <Badge variant="secondary">{inactiveSlides.length} Hidden</Badge>
+                <Badge variant="secondary">
+                  {inactiveSlides.length} Hidden
+                </Badge>
               )}
             </div>
           </div>
@@ -376,7 +413,8 @@ export function SlideManager({ slides, onChange, isLoading = false }: SlideManag
         <CardContent>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Drag slides to reorder them. Click the eye icon to show/hide slides.
+              Drag slides to reorder them. Click the eye icon to show/hide
+              slides.
             </div>
 
             <DndContext
@@ -389,7 +427,7 @@ export function SlideManager({ slides, onChange, isLoading = false }: SlideManag
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {slides.map((slide) => (
+                  {slides.map(slide => (
                     <SortableSlide
                       key={slide.id}
                       slide={slide}

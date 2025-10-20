@@ -6,20 +6,20 @@ import { toast } from 'sonner';
 import {
   SettingsLayout,
   SettingsCard,
-  SettingsSection
+  SettingsSection,
 } from '@/components/settings';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Users, 
-  Shield, 
-  Clock, 
+import {
+  Users,
+  Shield,
+  Clock,
   AlertTriangle,
   CheckCircle,
   Mail,
   Calendar,
-  Activity
+  Activity,
 } from 'lucide-react';
 
 interface AdminAccount {
@@ -74,10 +74,13 @@ export default function SuperadminAdminManagementPage() {
 
     setIsActionLoading(adminId);
     try {
-      const response = await fetch(`/api/superadmin/settings/admins/${adminId}/activate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await fetch(
+        `/api/superadmin/settings/admins/${adminId}/activate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -86,33 +89,45 @@ export default function SuperadminAdminManagementPage() {
 
       toast.success('Admin account activated successfully');
       await loadAdmins(); // Reload the list
-
     } catch (error) {
       console.error('Activate admin error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to activate admin account');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to activate admin account'
+      );
     } finally {
       setIsActionLoading(null);
     }
   };
 
   const handleDeactivateAdmin = async (adminId: string) => {
-    const reason = prompt('Please provide a reason for deactivating this admin account:');
+    const reason = prompt(
+      'Please provide a reason for deactivating this admin account:'
+    );
     if (!reason || reason.trim() === '') {
       toast.error('Deactivation reason is required');
       return;
     }
 
-    if (!confirm('Are you sure you want to deactivate this admin account? They will lose access immediately.')) {
+    if (
+      !confirm(
+        'Are you sure you want to deactivate this admin account? They will lose access immediately.'
+      )
+    ) {
       return;
     }
 
     setIsActionLoading(adminId);
     try {
-      const response = await fetch(`/api/superadmin/settings/admins/${adminId}/deactivate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: reason.trim() })
-      });
+      const response = await fetch(
+        `/api/superadmin/settings/admins/${adminId}/deactivate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: reason.trim() }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -121,10 +136,13 @@ export default function SuperadminAdminManagementPage() {
 
       toast.success('Admin account deactivated successfully');
       await loadAdmins(); // Reload the list
-
     } catch (error) {
       console.error('Deactivate admin error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to deactivate admin account');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to deactivate admin account'
+      );
     } finally {
       setIsActionLoading(null);
     }
@@ -146,11 +164,23 @@ export default function SuperadminAdminManagementPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            Active
+          </Badge>
+        );
       case 'INACTIVE':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Inactive</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+            Inactive
+          </Badge>
+        );
       case 'SUSPENDED':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800">Suspended</Badge>;
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-800">
+            Suspended
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
@@ -192,7 +222,7 @@ export default function SuperadminAdminManagementPage() {
               <p className="text-2xl font-semibold">{totalAdmins}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -209,7 +239,10 @@ export default function SuperadminAdminManagementPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">Your Role</p>
-              <Badge variant="default" className="bg-purple-100 text-purple-800">
+              <Badge
+                variant="default"
+                className="bg-purple-100 text-purple-800"
+              >
                 Superadmin
               </Badge>
             </div>
@@ -230,14 +263,14 @@ export default function SuperadminAdminManagementPage() {
                 <p className="text-gray-500">No admin accounts found</p>
               </div>
             ) : (
-              admins.map((admin) => (
+              admins.map(admin => (
                 <div key={admin.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-start space-x-4">
                       <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <Users className="h-6 w-6 text-blue-600" />
                       </div>
-                      
+
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-medium text-gray-900">
@@ -246,31 +279,43 @@ export default function SuperadminAdminManagementPage() {
                           {getStatusIcon(admin.status)}
                           {getStatusBadge(admin.status)}
                         </div>
-                        
+
                         <div className="mt-1 space-y-1">
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <Mail className="h-4 w-4" />
                             <span>{admin.email}</span>
                           </div>
-                          
+
                           <div className="flex items-center space-x-4 text-sm text-gray-500">
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
-                              <span>Created: {new Date(admin.createdAt).toLocaleDateString()}</span>
+                              <span>
+                                Created:{' '}
+                                {new Date(admin.createdAt).toLocaleDateString()}
+                              </span>
                             </div>
-                            
+
                             {admin.lastLoginAt && (
                               <div className="flex items-center space-x-1">
                                 <Activity className="h-4 w-4" />
-                                <span>Last login: {new Date(admin.lastLoginAt).toLocaleDateString()}</span>
+                                <span>
+                                  Last login:{' '}
+                                  {new Date(
+                                    admin.lastLoginAt
+                                  ).toLocaleDateString()}
+                                </span>
                               </div>
                             )}
                           </div>
-                          
+
                           {admin._count && (
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <span>Orders processed: {admin._count.createdOrders}</span>
-                              <span>Activities logged: {admin._count.auditLogs}</span>
+                              <span>
+                                Orders processed: {admin._count.createdOrders}
+                              </span>
+                              <span>
+                                Activities logged: {admin._count.auditLogs}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -307,9 +352,12 @@ export default function SuperadminAdminManagementPage() {
                       <div className="flex items-start space-x-2">
                         <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium text-red-800">Account Suspended</p>
+                          <p className="text-sm font-medium text-red-800">
+                            Account Suspended
+                          </p>
                           <p className="text-sm text-red-700">
-                            This admin account has been suspended and cannot access the system.
+                            This admin account has been suspended and cannot
+                            access the system.
                           </p>
                         </div>
                       </div>
@@ -332,25 +380,34 @@ export default function SuperadminAdminManagementPage() {
             <div className="flex items-start space-x-3">
               <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-amber-800">Admin Account Security</h4>
+                <h4 className="text-sm font-medium text-amber-800">
+                  Admin Account Security
+                </h4>
                 <ul className="mt-2 text-sm text-amber-700 list-disc list-inside space-y-1">
-                  <li>Deactivating an admin account immediately revokes all access</li>
+                  <li>
+                    Deactivating an admin account immediately revokes all access
+                  </li>
                   <li>All admin actions are logged and audited</li>
                   <li>Only superadmin accounts can manage admin access</li>
-                  <li>Admin accounts are automatically logged out when deactivated</li>
+                  <li>
+                    Admin accounts are automatically logged out when deactivated
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
-          
+
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-start space-x-3">
               <Activity className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-blue-800">Audit Trail</h4>
+                <h4 className="text-sm font-medium text-blue-800">
+                  Audit Trail
+                </h4>
                 <p className="text-sm text-blue-700">
-                  All admin status changes are logged with timestamps, reasons, and responsible superadmin details. 
-                  These logs are maintained for compliance and security purposes.
+                  All admin status changes are logged with timestamps, reasons,
+                  and responsible superadmin details. These logs are maintained
+                  for compliance and security purposes.
                 </p>
               </div>
             </div>

@@ -28,7 +28,8 @@ interface TrackingDisplayProps {
  * @param order - Order data from API
  */
 export function TrackingDisplay({ order }: TrackingDisplayProps) {
-  const { orderNumber, status, courierName, trackingNumber, trackingUrl } = order;
+  const { orderNumber, status, courierName, trackingNumber, trackingUrl } =
+    order;
 
   // Handle special statuses
   if (status === 'PENDING') {
@@ -60,7 +61,10 @@ export function TrackingDisplay({ order }: TrackingDisplayProps) {
     return (
       <Card>
         <CardContent className="pt-6 text-center">
-          <Badge variant="outline" className="mb-4 text-base px-4 py-2 border-orange-500 text-orange-700">
+          <Badge
+            variant="outline"
+            className="mb-4 text-base px-4 py-2 border-orange-500 text-orange-700"
+          >
             {TRACKING_MESSAGES.REFUNDED}
           </Badge>
           <h3 className="text-lg font-semibold">Order #{orderNumber}</h3>
@@ -91,9 +95,7 @@ export function TrackingDisplay({ order }: TrackingDisplayProps) {
           {/* Courier Name */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Courier:</span>
-            <span className="font-medium">
-              {courierName || '—'}
-            </span>
+            <span className="font-medium">{courierName || '—'}</span>
           </div>
 
           {/* Tracking Number */}
@@ -109,7 +111,9 @@ export function TrackingDisplay({ order }: TrackingDisplayProps) {
         {trackingUrl ? (
           <Button
             className="w-full"
-            onClick={() => window.open(trackingUrl, '_blank', 'noopener,noreferrer')}
+            onClick={() =>
+              window.open(trackingUrl, '_blank', 'noopener,noreferrer')
+            }
           >
             <Truck className="w-4 h-4 mr-2" />
             Track with EasyParcel

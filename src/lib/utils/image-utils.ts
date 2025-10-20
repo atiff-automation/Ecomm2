@@ -10,14 +10,19 @@
  * @param imageUrl - The URL of the image to convert
  * @returns Base64 data URI string or null if conversion fails
  */
-export async function imageUrlToBase64(imageUrl: string): Promise<string | null> {
+export async function imageUrlToBase64(
+  imageUrl: string
+): Promise<string | null> {
   try {
     // Handle relative URLs by converting to absolute
     let absoluteUrl = imageUrl;
 
     // If it's a relative URL, we need the base URL from environment
     if (imageUrl.startsWith('/')) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.VERCEL_URL ||
+        'http://localhost:3000';
       absoluteUrl = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}${imageUrl}`;
     }
 
@@ -27,7 +32,9 @@ export async function imageUrlToBase64(imageUrl: string): Promise<string | null>
     const response = await fetch(absoluteUrl);
 
     if (!response.ok) {
-      console.error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      console.error(
+        `Failed to fetch image: ${response.status} ${response.statusText}`
+      );
       return null;
     }
 
@@ -43,7 +50,9 @@ export async function imageUrlToBase64(imageUrl: string): Promise<string | null>
     // Create data URI
     const dataUri = `data:${contentType};base64,${base64}`;
 
-    console.log(`✅ Image converted to base64 (${Math.round(base64.length / 1024)}KB)`);
+    console.log(
+      `✅ Image converted to base64 (${Math.round(base64.length / 1024)}KB)`
+    );
 
     return dataUri;
   } catch (error) {
@@ -58,7 +67,9 @@ export async function imageUrlToBase64(imageUrl: string): Promise<string | null>
  * @param imageUrl - The URL of the image
  * @returns Object with width and height or null if it fails
  */
-export async function getImageDimensions(imageUrl: string): Promise<{ width: number; height: number } | null> {
+export async function getImageDimensions(
+  imageUrl: string
+): Promise<{ width: number; height: number } | null> {
   try {
     const response = await fetch(imageUrl);
 
@@ -70,7 +81,12 @@ export async function getImageDimensions(imageUrl: string): Promise<{ width: num
     const buffer = Buffer.from(arrayBuffer);
 
     // Simple PNG dimension detection (bytes 16-23)
-    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+    if (
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4e &&
+      buffer[3] === 0x47
+    ) {
       const width = buffer.readUInt32BE(16);
       const height = buffer.readUInt32BE(20);
       return { width, height };
@@ -92,9 +108,19 @@ export async function getImageDimensions(imageUrl: string): Promise<{ width: num
  * @returns true if the URL appears to be an image
  */
 export function isValidImageUrl(url: string): boolean {
-  if (!url) return false;
+  if (!url) {
+    return false;
+  }
 
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.bmp'];
+  const imageExtensions = [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.svg',
+    '.webp',
+    '.bmp',
+  ];
   const lowerUrl = url.toLowerCase();
 
   return imageExtensions.some(ext => lowerUrl.includes(ext));

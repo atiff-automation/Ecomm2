@@ -37,7 +37,9 @@ export default function PaymentMethodSelection({
 
   // Auto-select default method and notify parent when data loads
   useEffect(() => {
-    if (!data) return;
+    if (!data) {
+      return;
+    }
 
     // Auto-select default method if available and no method selected
     if (!selectedMethod && data.defaultMethod) {

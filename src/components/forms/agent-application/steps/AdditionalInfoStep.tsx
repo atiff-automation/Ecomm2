@@ -13,15 +13,30 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Target, Package, Lightbulb, Star, CheckCircle } from 'lucide-react';
-import { FIELD_LABELS, PLACEHOLDERS } from '@/lib/config/agent-application-form';
+import {
+  Heart,
+  Target,
+  Package,
+  Lightbulb,
+  Star,
+  CheckCircle,
+} from 'lucide-react';
+import {
+  FIELD_LABELS,
+  PLACEHOLDERS,
+} from '@/lib/config/agent-application-form';
 
 interface AdditionalInfoStepProps {
   form: UseFormReturn<AgentApplicationFormData>;
 }
 
 export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
-  const { register, watch, setValue, formState: { errors } } = form;
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = form;
 
   const hasJrmExp = watch('hasJrmExp');
   const jrmProducts = watch('jrmProducts');
@@ -50,9 +65,14 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
             <Checkbox
               id="hasJrmExp"
               checked={hasJrmExp || false}
-              onCheckedChange={(checked) => setValue('hasJrmExp', checked as boolean)}
+              onCheckedChange={checked =>
+                setValue('hasJrmExp', checked as boolean)
+              }
             />
-            <Label htmlFor="hasJrmExp" className="text-sm font-medium cursor-pointer">
+            <Label
+              htmlFor="hasJrmExp"
+              className="text-sm font-medium cursor-pointer"
+            >
               {FIELD_LABELS.hasJrmExp}
             </Label>
           </div>
@@ -60,7 +80,10 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
           {/* JRM Products - conditional */}
           {hasJrmExp && (
             <div>
-              <Label htmlFor="jrmProducts" className="text-sm font-medium flex items-center space-x-1">
+              <Label
+                htmlFor="jrmProducts"
+                className="text-sm font-medium flex items-center space-x-1"
+              >
                 <Package className="w-4 h-4" />
                 <span>{FIELD_LABELS.jrmProducts}</span>
               </Label>
@@ -72,7 +95,9 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
                 rows={3}
               />
               {errors.jrmProducts && (
-                <p className="text-sm text-red-600 mt-1">{errors.jrmProducts.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.jrmProducts.message}
+                </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
                 Nyatakan produk JRM yang pernah anda beli atau gunakan
@@ -93,9 +118,15 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
         <CardContent className="space-y-4">
           {/* Reason to Join */}
           <div>
-            <Label htmlFor="reasonToJoin" className="text-sm font-medium flex items-center space-x-1">
+            <Label
+              htmlFor="reasonToJoin"
+              className="text-sm font-medium flex items-center space-x-1"
+            >
               <Lightbulb className="w-4 h-4" />
-              <span>{FIELD_LABELS.reasonToJoin} <span className="text-red-500">*</span></span>
+              <span>
+                {FIELD_LABELS.reasonToJoin}{' '}
+                <span className="text-red-500">*</span>
+              </span>
             </Label>
             <Textarea
               id="reasonToJoin"
@@ -105,18 +136,27 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
               rows={4}
             />
             {errors.reasonToJoin && (
-              <p className="text-sm text-red-600 mt-1">{errors.reasonToJoin.message}</p>
+              <p className="text-sm text-red-600 mt-1">
+                {errors.reasonToJoin.message}
+              </p>
             )}
             <p className="text-xs text-gray-500 mt-1">
-              Kongsikan cerita dan motivasi anda untuk menyertai program ejen JRM
+              Kongsikan cerita dan motivasi anda untuk menyertai program ejen
+              JRM
             </p>
           </div>
 
           {/* Expectations */}
           <div>
-            <Label htmlFor="expectations" className="text-sm font-medium flex items-center space-x-1">
+            <Label
+              htmlFor="expectations"
+              className="text-sm font-medium flex items-center space-x-1"
+            >
               <Target className="w-4 h-4" />
-              <span>{FIELD_LABELS.expectations} <span className="text-red-500">*</span></span>
+              <span>
+                {FIELD_LABELS.expectations}{' '}
+                <span className="text-red-500">*</span>
+              </span>
             </Label>
             <Textarea
               id="expectations"
@@ -126,7 +166,9 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
               rows={4}
             />
             {errors.expectations && (
-              <p className="text-sm text-red-600 mt-1">{errors.expectations.message}</p>
+              <p className="text-sm text-red-600 mt-1">
+                {errors.expectations.message}
+              </p>
             )}
             <p className="text-xs text-gray-500 mt-1">
               Nyatakan matlamat dan jangkaan anda sebagai ejen JRM
@@ -152,7 +194,9 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
               </Badge>
               <div>
                 <p className="font-medium">Pendapatan RM15,000/bulan</p>
-                <p className="text-xs">"Dari ibu rumah kepada jutawan - JRM ubah hidup saya!"</p>
+                <p className="text-xs">
+                  "Dari ibu rumah kepada jutawan - JRM ubah hidup saya!"
+                </p>
               </div>
             </div>
 
@@ -163,7 +207,9 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
               </Badge>
               <div>
                 <p className="font-medium">Team 500+ ejen aktif</p>
-                <p className="text-xs">"Bina empire downline yang kukuh dalam 2 tahun!"</p>
+                <p className="text-xs">
+                  "Bina empire downline yang kukuh dalam 2 tahun!"
+                </p>
               </div>
             </div>
 
@@ -174,7 +220,9 @@ export function AdditionalInfoStep({ form }: AdditionalInfoStepProps) {
               </Badge>
               <div>
                 <p className="font-medium">Pencen awal pada umur 45</p>
-                <p className="text-xs">"Passive income JRM membolehkan saya fokus pada keluarga!"</p>
+                <p className="text-xs">
+                  "Passive income JRM membolehkan saya fokus pada keluarga!"
+                </p>
               </div>
             </div>
           </div>

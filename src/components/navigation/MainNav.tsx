@@ -57,14 +57,11 @@ export function MainNav({ items, className }: MainNavProps) {
 
   return (
     <nav
-      className={cn(
-        'hidden md:flex items-center space-x-1',
-        className
-      )}
+      className={cn('hidden md:flex items-center space-x-1', className)}
       role="navigation"
       aria-label="Main navigation"
     >
-      {items.map((item) => {
+      {items.map(item => {
         const hasChildren = item.children && item.children.length > 0;
         const active = isActive(item.href);
 
@@ -72,7 +69,7 @@ export function MainNav({ items, className }: MainNavProps) {
           return (
             <DropdownMenu
               key={item.label}
-              onOpenChange={(isOpen) => handleDropdownChange(item.label, isOpen)}
+              onOpenChange={isOpen => handleDropdownChange(item.label, isOpen)}
             >
               <DropdownMenuTrigger asChild>
                 <Button
@@ -89,14 +86,14 @@ export function MainNav({ items, className }: MainNavProps) {
                   aria-haspopup="menu"
                 >
                   <span className="flex items-center gap-1">
-                    {item.icon && (
-                      <item.icon className="h-4 w-4" />
-                    )}
+                    {item.icon && <item.icon className="h-4 w-4" />}
                     {item.label}
-                    <ChevronDown className={cn(
-                      'h-3 w-3 transition-transform duration-200',
-                      openDropdown === item.label && 'rotate-180'
-                    )} />
+                    <ChevronDown
+                      className={cn(
+                        'h-3 w-3 transition-transform duration-200',
+                        openDropdown === item.label && 'rotate-180'
+                      )}
+                    />
                   </span>
                   {item.badge && (
                     <Badge
@@ -121,7 +118,7 @@ export function MainNav({ items, className }: MainNavProps) {
                 align="start"
                 sideOffset={4}
               >
-                {item.children.map((child) => (
+                {item.children.map(child => (
                   <DropdownMenuItem key={child.href} asChild className="p-0">
                     <Link
                       href={child.href}
@@ -130,7 +127,8 @@ export function MainNav({ items, className }: MainNavProps) {
                         'text-sm transition-colors duration-200',
                         'hover:bg-primary/5 hover:text-primary',
                         'focus:bg-primary/5 focus:text-primary',
-                        isActive(child.href) && 'bg-primary/10 text-primary font-medium'
+                        isActive(child.href) &&
+                          'bg-primary/10 text-primary font-medium'
                       )}
                     >
                       {child.icon && (
@@ -179,9 +177,7 @@ export function MainNav({ items, className }: MainNavProps) {
               'flex items-center gap-2'
             )}
           >
-            {item.icon && (
-              <item.icon className="h-4 w-4" />
-            )}
+            {item.icon && <item.icon className="h-4 w-4" />}
             <span>{item.label}</span>
             {item.badge && (
               <Badge
@@ -215,29 +211,29 @@ export const defaultNavigationItems: NavigationItem[] = [
       {
         label: 'All Products',
         href: '/products',
-        description: 'Browse our complete collection'
+        description: 'Browse our complete collection',
       },
       {
         label: 'New Arrivals',
         href: '/products/new',
         featured: true,
         description: 'Latest additions to our store',
-        badge: { text: 'New', variant: 'destructive' }
+        badge: { text: 'New', variant: 'destructive' },
       },
       {
         label: 'Best Sellers',
         href: '/products/bestsellers',
         featured: true,
         description: 'Most popular items',
-        icon: Star
+        icon: Star,
       },
       {
         label: 'On Sale',
         href: '/products/sale',
         description: 'Discounted items',
-        badge: { text: 'Sale', variant: 'destructive' }
-      }
-    ]
+        badge: { text: 'Sale', variant: 'destructive' },
+      },
+    ],
   },
   {
     label: 'Categories',
@@ -246,34 +242,34 @@ export const defaultNavigationItems: NavigationItem[] = [
       {
         label: 'Electronics',
         href: '/categories/electronics',
-        description: 'Phones, laptops, accessories'
+        description: 'Phones, laptops, accessories',
       },
       {
         label: 'Fashion',
         href: '/categories/fashion',
-        description: 'Clothing, shoes, accessories'
+        description: 'Clothing, shoes, accessories',
       },
       {
         label: 'Home & Garden',
         href: '/categories/home-garden',
-        description: 'Furniture, decor, gardening'
+        description: 'Furniture, decor, gardening',
       },
       {
         label: 'Sports & Outdoor',
         href: '/categories/sports',
-        description: 'Fitness, outdoor activities'
-      }
-    ]
+        description: 'Fitness, outdoor activities',
+      },
+    ],
   },
   {
     label: 'Track Order',
     href: '/track-order',
-    icon: Truck
+    icon: Truck,
   },
   {
     label: 'About',
-    href: '/about'
-  }
+    href: '/about',
+  },
 ];
 
 export default MainNav;

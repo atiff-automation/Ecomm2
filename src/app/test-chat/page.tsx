@@ -10,12 +10,12 @@ export default function TestChatPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Chat System Test Page
         </h1>
-        
+
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Phase 3: Real-time Enhancement - IN PROGRESS
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-lg font-medium text-green-700 mb-3">
@@ -34,7 +34,7 @@ export default function TestChatPage() {
                 <li>• Socket.io dependencies installed</li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="text-lg font-medium text-blue-700 mb-3">
                 🚧 In Progress
@@ -51,24 +51,27 @@ export default function TestChatPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
           <h3 className="text-lg font-medium text-blue-800 mb-2">
             Test Instructions - Phase 3
           </h3>
           <div className="text-blue-700 space-y-2">
             <p>
-              1. <strong>Start WebSocket server:</strong> <code className="bg-blue-100 px-2 py-1 rounded">npm run chat:websocket</code>
+              1. <strong>Start WebSocket server:</strong>{' '}
+              <code className="bg-blue-100 px-2 py-1 rounded">
+                npm run chat:websocket
+              </code>
             </p>
             <p>
-              2. The chat widget appears as a floating bubble in the bottom-right corner with WebSocket enabled
+              2. The chat widget appears as a floating bubble in the
+              bottom-right corner with WebSocket enabled
             </p>
             <p>
-              3. Real-time features: instant messaging, typing indicators, connection status
+              3. Real-time features: instant messaging, typing indicators,
+              connection status
             </p>
-            <p>
-              4. Check browser console for WebSocket connection logs
-            </p>
+            <p>4. Check browser console for WebSocket connection logs</p>
           </div>
         </div>
 
@@ -77,8 +80,10 @@ export default function TestChatPage() {
             Phase 3 Progress: Real-time Enhancement
           </h3>
           <p className="text-green-700">
-            ✅ WebSocket server infrastructure complete<br/>
-            ✅ Client integration complete<br/>
+            ✅ WebSocket server infrastructure complete
+            <br />
+            ✅ Client integration complete
+            <br />
             🚧 Advanced features in progress
           </p>
         </div>

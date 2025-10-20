@@ -133,7 +133,10 @@ export default function BusinessProfilePage() {
       });
 
       console.log('[Business Profile] Load response status:', response.status);
-      console.log('[Business Profile] Load response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        '[Business Profile] Load response headers:',
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -198,7 +201,9 @@ export default function BusinessProfilePage() {
   };
 
   const handleSaveProfile = async (data: BusinessProfileFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -215,7 +220,10 @@ export default function BusinessProfilePage() {
       });
 
       console.log('[Business Profile] Response status:', response.status);
-      console.log('[Business Profile] Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        '[Business Profile] Response headers:',
+        Object.fromEntries(response.headers.entries())
+      );
 
       // Get response text first to debug
       const responseText = await response.text();
@@ -1070,7 +1078,9 @@ export default function BusinessProfilePage() {
  * Calculate business profile completeness percentage
  */
 function calculateCompleteness(profile: any): number {
-  if (!profile) return 0;
+  if (!profile) {
+    return 0;
+  }
 
   const requiredFields = [
     'legalName',
@@ -1097,18 +1107,28 @@ function calculateCompleteness(profile: any): number {
   }
 
   // Optional bonus points for additional info
-  if (profile.tradingName) totalFields += 0.5;
-  if (profile.taxRegistrationNumber) totalFields += 0.5;
-  if (profile.operationalAddress?.addressLine1) totalFields += 0.5;
+  if (profile.tradingName) {
+    totalFields += 0.5;
+  }
+  if (profile.taxRegistrationNumber) {
+    totalFields += 0.5;
+  }
+  if (profile.operationalAddress?.addressLine1) {
+    totalFields += 0.5;
+  }
 
-  if (profile.tradingName && profile.tradingName.trim() !== '')
+  if (profile.tradingName && profile.tradingName.trim() !== '') {
     completedFields += 0.5;
+  }
   if (
     profile.taxRegistrationNumber &&
     profile.taxRegistrationNumber.trim() !== ''
-  )
+  ) {
     completedFields += 0.5;
-  if (profile.operationalAddress?.addressLine1) completedFields += 0.5;
+  }
+  if (profile.operationalAddress?.addressLine1) {
+    completedFields += 0.5;
+  }
 
   return Math.round((completedFields / totalFields) * 100);
 }

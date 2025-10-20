@@ -1,64 +1,64 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { Check, ChevronDown, X } from "lucide-react"
+import * as React from 'react';
+import { Check, ChevronDown, X } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from '@/components/ui/popover';
 
 export interface Option {
-  label: string
-  value: string
-  icon?: React.ComponentType<{ className?: string }>
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface MultiSelectProps {
-  options: Option[]
-  selected: string[]
-  onChange: (values: string[]) => void
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  maxCount?: number
-  searchPlaceholder?: string
+  options: Option[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  maxCount?: number;
+  searchPlaceholder?: string;
 }
 
 export function MultiSelect({
   options,
   selected,
   onChange,
-  placeholder = "Select items",
+  placeholder = 'Select items',
   className,
   disabled = false,
   maxCount = 3,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
 }: MultiSelectProps) {
-  const [open, setOpen] = React.useState(false)
-  const [searchValue, setSearchValue] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState('');
 
   const handleUnselect = (value: string) => {
-    onChange(selected.filter((item) => item !== value))
-  }
+    onChange(selected.filter(item => item !== value));
+  };
 
   const handleSelect = (value: string) => {
     if (selected.includes(value)) {
-      onChange(selected.filter((item) => item !== value))
+      onChange(selected.filter(item => item !== value));
     } else {
-      onChange([...selected, value])
+      onChange([...selected, value]);
     }
-  }
+  };
 
   const filteredOptions = options.filter(option =>
     option.label.toLowerCase().includes(searchValue.toLowerCase())
-  )
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -68,49 +68,46 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between text-left font-normal h-auto min-h-[40px]",
-            !selected.length && "text-muted-foreground",
+            'w-full justify-between text-left font-normal h-auto min-h-[40px]',
+            !selected.length && 'text-muted-foreground',
             className
           )}
           disabled={disabled}
         >
           <div className="flex gap-1 flex-wrap">
             {selected.length === 0 && placeholder}
-            {selected.length > 0 && selected.length <= maxCount &&
-              selected.map((value) => {
-                const option = options.find((option) => option.value === value)
+            {selected.length > 0 &&
+              selected.length <= maxCount &&
+              selected.map(value => {
+                const option = options.find(option => option.value === value);
                 return (
-                  <Badge
-                    variant="secondary"
-                    key={value}
-                    className="mr-1 mb-1"
-                  >
+                  <Badge variant="secondary" key={value} className="mr-1 mb-1">
                     {option?.label}
                     <span
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:bg-muted"
                       tabIndex={0}
                       role="button"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleUnselect(value)
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleUnselect(value);
                         }
                       }}
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleUnselect(value)
+                      onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleUnselect(value);
                       }}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                     </span>
                   </Badge>
-                )
+                );
               })}
             {selected.length > maxCount && (
               <Badge variant="secondary" className="mr-1 mb-1">
@@ -126,7 +123,7 @@ export function MultiSelect({
           <Input
             placeholder={searchPlaceholder}
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={e => setSearchValue(e.target.value)}
             className="h-8"
           />
         </div>
@@ -136,7 +133,7 @@ export function MultiSelect({
               No items found.
             </div>
           ) : (
-            filteredOptions.map((option) => (
+            filteredOptions.map(option => (
               <div
                 key={option.value}
                 className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
@@ -156,5 +153,5 @@ export function MultiSelect({
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

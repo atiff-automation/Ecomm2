@@ -14,7 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Container, Section } from '@/components/ui/layout';
-import { ProductCard, ProductCardGrid, type ProductCardProps } from '@/components/product/ProductCard';
+import {
+  ProductCard,
+  ProductCardGrid,
+  type ProductCardProps,
+} from '@/components/product/ProductCard';
 import { ArrowRight, Star, TrendingUp, Zap } from 'lucide-react';
 
 export interface FeaturedProductsProps {
@@ -52,47 +56,50 @@ export function FeaturedProducts({
   onAddToCart,
   onToggleWishlist,
   onQuickView,
-  className
+  className,
 }: FeaturedProductsProps) {
   const displayProducts = products.slice(0, maxProducts);
 
   const sectionHeaderClasses = {
     default: 'text-center mb-8',
     compact: 'text-left mb-6',
-    featured: 'text-center mb-12'
+    featured: 'text-center mb-12',
   };
 
   return (
-    <Section
-      variant="default"
-      className={cn('py-12 lg:py-16', className)}
-    >
+    <Section variant="default" className={cn('py-12 lg:py-16', className)}>
       <Container size="xl">
         {/* Section Header */}
         <div className={sectionHeaderClasses[variant]}>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Star className="h-5 w-5 text-primary" />
-            <span className={cn(
-              sectionTypography.overline(),
-              'text-primary font-medium tracking-wide uppercase'
-            )}>
+            <span
+              className={cn(
+                sectionTypography.overline(),
+                'text-primary font-medium tracking-wide uppercase'
+              )}
+            >
               {subtitle}
             </span>
           </div>
 
-          <h2 className={cn(
-            sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
-            'font-bold text-foreground mb-4'
-          )}>
+          <h2
+            className={cn(
+              sectionTypography.title(variant === 'featured' ? 'xl' : 'lg'),
+              'font-bold text-foreground mb-4'
+            )}
+          >
             {title}
           </h2>
 
           {description && (
-            <p className={cn(
-              sectionTypography.description(),
-              'text-muted-foreground max-w-2xl',
-              variant === 'featured' ? 'mx-auto' : ''
-            )}>
+            <p
+              className={cn(
+                sectionTypography.description(),
+                'text-muted-foreground max-w-2xl',
+                variant === 'featured' ? 'mx-auto' : ''
+              )}
+            >
               {description}
             </p>
           )}
@@ -138,7 +145,7 @@ export function FeaturedProducts({
           <div className="space-y-8">
             <div className="overflow-x-auto">
               <div className="flex gap-6 pb-4" style={{ width: 'max-content' }}>
-                {displayProducts.map((product) => (
+                {displayProducts.map(product => (
                   <div key={product.id} className="w-72 flex-shrink-0">
                     <ProductCard
                       product={product}
@@ -173,14 +180,15 @@ export function FeaturedProducts({
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No Featured Products</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No Featured Products
+              </h3>
               <p className="text-muted-foreground mb-4">
-                We're currently updating our featured products selection. Check back soon!
+                We're currently updating our featured products selection. Check
+                back soon!
               </p>
               <Link href="/products">
-                <Button variant="outline">
-                  Browse All Products
-                </Button>
+                <Button variant="outline">Browse All Products</Button>
               </Link>
             </CardContent>
           </Card>
@@ -191,7 +199,10 @@ export function FeaturedProducts({
 }
 
 // Specialized featured product variants
-export const CompactFeaturedProducts = ({ className, ...props }: Omit<FeaturedProductsProps, 'variant'>) => (
+export const CompactFeaturedProducts = ({
+  className,
+  ...props
+}: Omit<FeaturedProductsProps, 'variant'>) => (
   <FeaturedProducts
     variant="compact"
     title="Featured"
@@ -203,7 +214,10 @@ export const CompactFeaturedProducts = ({ className, ...props }: Omit<FeaturedPr
   />
 );
 
-export const HeroFeaturedProducts = ({ className, ...props }: Omit<FeaturedProductsProps, 'variant'>) => (
+export const HeroFeaturedProducts = ({
+  className,
+  ...props
+}: Omit<FeaturedProductsProps, 'variant'>) => (
   <FeaturedProducts
     variant="featured"
     title="Trending Now"
@@ -230,7 +244,7 @@ export function QuickFeaturedProducts({
   title = 'Featured Products',
   maxProducts = 3,
   onAddToCart,
-  className
+  className,
 }: QuickFeaturedProductsProps) {
   const displayProducts = products.slice(0, maxProducts);
 
@@ -242,7 +256,7 @@ export function QuickFeaturedProducts({
       </div>
 
       <div className="space-y-3">
-        {displayProducts.map((product) => (
+        {displayProducts.map(product => (
           <Link key={product.id} href={`/products/${product.slug}`}>
             <Card className="p-3 hover:shadow-md transition-shadow group">
               <div className="flex items-center gap-3">

@@ -18,14 +18,14 @@ interface MetricCardProps {
   className?: string;
 }
 
-export function MetricCard({ 
-  title, 
-  value, 
-  change, 
+export function MetricCard({
+  title,
+  value,
+  change,
   description,
   formatAsCurrency = false,
   icon,
-  className
+  className,
 }: MetricCardProps) {
   const formatValue = (val: string | number) => {
     if (formatAsCurrency && typeof val === 'number') {
@@ -33,20 +33,24 @@ export function MetricCard({
         style: 'currency',
         currency: 'MYR',
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }).format(val);
     }
-    
+
     if (typeof val === 'number') {
       return new Intl.NumberFormat('ms-MY').format(val);
     }
-    
+
     return val;
   };
 
   const getChangeColor = (changeValue: number) => {
-    if (changeValue > 0) return 'text-green-600 bg-green-50';
-    if (changeValue < 0) return 'text-red-600 bg-red-50';
+    if (changeValue > 0) {
+      return 'text-green-600 bg-green-50';
+    }
+    if (changeValue < 0) {
+      return 'text-red-600 bg-red-50';
+    }
     return 'text-gray-600 bg-gray-50';
   };
 
@@ -60,11 +64,12 @@ export function MetricCard({
           </CardTitle>
         </div>
         {change !== undefined && (
-          <Badge 
-            variant="secondary" 
-            className={cn("text-xs", getChangeColor(change))}
+          <Badge
+            variant="secondary"
+            className={cn('text-xs', getChangeColor(change))}
           >
-            {change >= 0 ? '+' : ''}{change.toFixed(1)}%
+            {change >= 0 ? '+' : ''}
+            {change.toFixed(1)}%
           </Badge>
         )}
       </CardHeader>

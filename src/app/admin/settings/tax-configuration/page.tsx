@@ -10,24 +10,24 @@ import {
   SettingsSection,
   SettingsInput,
   SettingsSwitch,
-  SettingsFormActions
+  SettingsFormActions,
 } from '@/components/settings';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { taxConfigurationSchema } from '@/lib/validation/settings';
 import type { TaxConfigurationFormData } from '@/lib/validation/settings';
-import { 
-  Calculator, 
-  Percent, 
-  DollarSign, 
+import {
+  Calculator,
+  Percent,
+  DollarSign,
   AlertCircle,
   CheckCircle,
   Plus,
   Trash2,
   Info,
   Building2,
-  FileText
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,7 +44,7 @@ export default function TaxConfigurationPage() {
     reset,
     setValue,
     watch,
-    control
+    control,
   } = useForm<TaxConfigurationFormData>({
     resolver: zodResolver(taxConfigurationSchema),
     defaultValues: {
@@ -55,13 +55,17 @@ export default function TaxConfigurationPage() {
       defaultGstRate: 6.0,
       defaultSstRate: 10.0,
       taxInclusivePricing: false,
-      autoCalculateTax: true
-    }
+      autoCalculateTax: true,
+    },
   });
 
-  const { fields: taxRateFields, append: addTaxRate, remove: removeTaxRate } = useFieldArray({
+  const {
+    fields: taxRateFields,
+    append: addTaxRate,
+    remove: removeTaxRate,
+  } = useFieldArray({
     control,
-    name: 'taxRates'
+    name: 'taxRates',
   });
 
   const watchedValues = watch();
@@ -78,7 +82,7 @@ export default function TaxConfigurationPage() {
         if (data.data) {
           const configData = data.data;
           setTaxConfig(configData);
-          
+
           // Transform the data to match form structure
           const formData = {
             gstRegistered: configData.gstRegistered || false,
@@ -89,9 +93,9 @@ export default function TaxConfigurationPage() {
             defaultSstRate: configData.defaultSstRate || 10.0,
             taxInclusivePricing: configData.taxInclusivePricing || false,
             autoCalculateTax: configData.autoCalculateTax !== false, // Default to true
-            taxRates: configData.taxRates || []
+            taxRates: configData.taxRates || [],
           };
-          
+
           reset(formData);
         }
       } else if (response.status === 404) {
@@ -108,14 +112,16 @@ export default function TaxConfigurationPage() {
   };
 
   const handleSaveTaxConfig = async (data: TaxConfigurationFormData) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/admin/settings/tax-configuration', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -125,13 +131,16 @@ export default function TaxConfigurationPage() {
 
       const result = await response.json();
       toast.success('Tax configuration saved successfully');
-      
+
       // Reload the configuration to get updated data
       await loadTaxConfiguration();
-
     } catch (error) {
       console.error('Save tax configuration error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save tax configuration');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save tax configuration'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +152,7 @@ export default function TaxConfigurationPage() {
       rate: 0,
       type: 'GST',
       description: '',
-      isActive: true
+      isActive: true,
     });
   };
 
@@ -172,21 +181,25 @@ export default function TaxConfigurationPage() {
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">GST Registration</p>
-              <Badge variant={hasGstRegistration ? "default" : "secondary"}>
-                {hasGstRegistration ? "Registered" : "Not Registered"}
+              <p className="text-sm font-medium text-gray-900">
+                GST Registration
+              </p>
+              <Badge variant={hasGstRegistration ? 'default' : 'secondary'}>
+                {hasGstRegistration ? 'Registered' : 'Not Registered'}
               </Badge>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
               <Calculator className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">SST Registration</p>
-              <Badge variant={hasSstRegistration ? "default" : "secondary"}>
-                {hasSstRegistration ? "Registered" : "Not Registered"}
+              <p className="text-sm font-medium text-gray-900">
+                SST Registration
+              </p>
+              <Badge variant={hasSstRegistration ? 'default' : 'secondary'}>
+                {hasSstRegistration ? 'Registered' : 'Not Registered'}
               </Badge>
             </div>
           </div>
@@ -196,9 +209,15 @@ export default function TaxConfigurationPage() {
               <CheckCircle className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Auto Calculate</p>
-              <Badge variant={watchedValues.autoCalculateTax ? "default" : "secondary"}>
-                {watchedValues.autoCalculateTax ? "Enabled" : "Disabled"}
+              <p className="text-sm font-medium text-gray-900">
+                Auto Calculate
+              </p>
+              <Badge
+                variant={
+                  watchedValues.autoCalculateTax ? 'default' : 'secondary'
+                }
+              >
+                {watchedValues.autoCalculateTax ? 'Enabled' : 'Disabled'}
               </Badge>
             </div>
           </div>
@@ -217,9 +236,9 @@ export default function TaxConfigurationPage() {
                 label="GST Registered"
                 description="Enable if your business is registered for GST"
                 checked={watchedValues.gstRegistered}
-                onCheckedChange={(checked) => setValue('gstRegistered', checked)}
+                onCheckedChange={checked => setValue('gstRegistered', checked)}
               />
-              
+
               {hasGstRegistration && (
                 <div className="space-y-4 ml-6">
                   <SettingsInput
@@ -230,7 +249,7 @@ export default function TaxConfigurationPage() {
                     placeholder="e.g., C12345678901"
                     helperText="Format: C followed by 11 digits"
                   />
-                  
+
                   <SettingsInput
                     label="Default GST Rate (%)"
                     type="number"
@@ -252,9 +271,12 @@ export default function TaxConfigurationPage() {
               <div className="flex items-start space-x-3">
                 <Info className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-medium text-blue-800">GST Information</h4>
+                  <h4 className="text-sm font-medium text-blue-800">
+                    GST Information
+                  </h4>
                   <p className="text-sm text-blue-700">
-                    Malaysia's standard GST rate is 6%. Zero-rated and exempt supplies have different treatment under GST law.
+                    Malaysia's standard GST rate is 6%. Zero-rated and exempt
+                    supplies have different treatment under GST law.
                   </p>
                 </div>
               </div>
@@ -273,9 +295,9 @@ export default function TaxConfigurationPage() {
                 label="SST Registered"
                 description="Enable if your business is registered for SST"
                 checked={watchedValues.sstRegistered}
-                onCheckedChange={(checked) => setValue('sstRegistered', checked)}
+                onCheckedChange={checked => setValue('sstRegistered', checked)}
               />
-              
+
               {hasSstRegistration && (
                 <div className="space-y-4 ml-6">
                   <SettingsInput
@@ -286,7 +308,7 @@ export default function TaxConfigurationPage() {
                     placeholder="SST registration number"
                     helperText="Your SST registration number as issued by authorities"
                   />
-                  
+
                   <SettingsInput
                     label="Default SST Rate (%)"
                     type="number"
@@ -308,9 +330,12 @@ export default function TaxConfigurationPage() {
               <div className="flex items-start space-x-3">
                 <Info className="h-5 w-5 text-green-600 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-medium text-green-800">SST Information</h4>
+                  <h4 className="text-sm font-medium text-green-800">
+                    SST Information
+                  </h4>
                   <p className="text-sm text-green-700">
-                    SST applies to taxable goods and services. Sales tax is typically 10% and service tax is 6%.
+                    SST applies to taxable goods and services. Sales tax is
+                    typically 10% and service tax is 6%.
                   </p>
                 </div>
               </div>
@@ -329,14 +354,18 @@ export default function TaxConfigurationPage() {
                 label="Tax Inclusive Pricing"
                 description="Show prices with tax included by default"
                 checked={watchedValues.taxInclusivePricing}
-                onCheckedChange={(checked) => setValue('taxInclusivePricing', checked)}
+                onCheckedChange={checked =>
+                  setValue('taxInclusivePricing', checked)
+                }
               />
-              
+
               <SettingsSwitch
                 label="Auto Calculate Tax"
                 description="Automatically calculate tax on orders and invoices"
                 checked={watchedValues.autoCalculateTax}
-                onCheckedChange={(checked) => setValue('autoCalculateTax', checked)}
+                onCheckedChange={checked =>
+                  setValue('autoCalculateTax', checked)
+                }
               />
             </div>
           </SettingsSection>
@@ -345,9 +374,12 @@ export default function TaxConfigurationPage() {
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-amber-800">Tax Calculation Impact</h4>
+                <h4 className="text-sm font-medium text-amber-800">
+                  Tax Calculation Impact
+                </h4>
                 <p className="text-sm text-amber-700">
-                  Changes to tax settings will affect new orders and invoices. Existing records remain unchanged.
+                  Changes to tax settings will affect new orders and invoices.
+                  Existing records remain unchanged.
                 </p>
               </div>
             </div>
@@ -363,9 +395,14 @@ export default function TaxConfigurationPage() {
             <SettingsSection title="Tax Rate Rules">
               <div className="space-y-4">
                 {taxRateFields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg bg-gray-50">
+                  <div
+                    key={field.id}
+                    className="p-4 border rounded-lg bg-gray-50"
+                  >
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900">Tax Rate #{index + 1}</h4>
+                      <h4 className="font-medium text-gray-900">
+                        Tax Rate #{index + 1}
+                      </h4>
                       <Button
                         type="button"
                         variant="outline"
@@ -375,7 +412,7 @@ export default function TaxConfigurationPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <SettingsInput
                         label="Rate Name"
@@ -383,18 +420,20 @@ export default function TaxConfigurationPage() {
                         {...register(`taxRates.${index}.name`)}
                         placeholder="e.g., Zero Rate, Exempt"
                       />
-                      
+
                       <SettingsInput
                         label="Rate (%)"
                         type="number"
                         step="0.01"
                         min="0"
                         max="100"
-                        {...register(`taxRates.${index}.rate`, { valueAsNumber: true })}
+                        {...register(`taxRates.${index}.rate`, {
+                          valueAsNumber: true,
+                        })}
                         placeholder="0.00"
                       />
                     </div>
-                    
+
                     <div className="mt-4">
                       <SettingsInput
                         label="Description"
@@ -405,7 +444,7 @@ export default function TaxConfigurationPage() {
                     </div>
                   </div>
                 ))}
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -422,16 +461,16 @@ export default function TaxConfigurationPage() {
 
         {/* Save Actions */}
         <SettingsFormActions>
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="outline"
             disabled={!isDirty || isSubmitting}
             onClick={() => loadTaxConfiguration()}
           >
             Reset Changes
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!isDirty || isSubmitting}
             loading={isSubmitting}
           >
@@ -447,23 +486,28 @@ export default function TaxConfigurationPage() {
       >
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">GST Registration Threshold</h4>
+            <h4 className="font-medium text-gray-900 mb-2">
+              GST Registration Threshold
+            </h4>
             <p className="text-sm text-gray-600">
-              Businesses with annual taxable turnover of RM 500,000 or more must register for GST.
-              Voluntary registration is available for businesses below this threshold.
+              Businesses with annual taxable turnover of RM 500,000 or more must
+              register for GST. Voluntary registration is available for
+              businesses below this threshold.
             </p>
           </div>
-          
+
           <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">SST Registration Requirements</h4>
+            <h4 className="font-medium text-gray-900 mb-2">
+              SST Registration Requirements
+            </h4>
             <p className="text-sm text-gray-600">
-              Manufacturers with annual turnover exceeding RM 500,000 must register for Sales Tax.
-              Service providers with annual turnover exceeding RM 150,000 must register for Service Tax.
+              Manufacturers with annual turnover exceeding RM 500,000 must
+              register for Sales Tax. Service providers with annual turnover
+              exceeding RM 150,000 must register for Service Tax.
             </p>
           </div>
         </div>
       </SettingsCard>
-
     </div>
   );
 }

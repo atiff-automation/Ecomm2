@@ -233,7 +233,7 @@ async function performComprehensiveTest(
     try {
       // Test using direct credential validation approach (same as basic test)
       const testCategoryName = `TEST_${Date.now()}`;
-      
+
       // Use the exact same approach as the working validation
       const baseUrl =
         environment === 'sandbox'
@@ -243,7 +243,10 @@ async function performComprehensiveTest(
       const formData = new FormData();
       formData.append('userSecretKey', userSecretKey);
       formData.append('catname', testCategoryName);
-      formData.append('catdescription', 'Test category for connection validation');
+      formData.append(
+        'catdescription',
+        'Test category for connection validation'
+      );
 
       const response = await fetch(`${baseUrl}/index.php/api/createCategory`, {
         method: 'POST',

@@ -4,7 +4,11 @@
  * Following CLAUDE.md principles: Single source of truth, systematic implementation
  */
 
-import { AgentApplicationStatus, ApplicationDecision, User } from '@prisma/client';
+import {
+  AgentApplicationStatus,
+  ApplicationDecision,
+  User,
+} from '@prisma/client';
 import {
   AgentApplicationFormData,
   AgentApplicationWithRelations,
@@ -12,9 +16,12 @@ import {
   CreateApplicationRequest,
   CreateApplicationResponse,
   UpdateApplicationStatusRequest,
-  ApplicationListResponse
+  ApplicationListResponse,
 } from '@/types/agent-application';
-import { agentApplicationSchema, applicationFiltersSchema } from '@/lib/validation/agent-application';
+import {
+  agentApplicationSchema,
+  applicationFiltersSchema,
+} from '@/lib/validation/agent-application';
 import { emailService } from '@/lib/email/email-service';
 import { sanitizeString } from '@/lib/security/input-validation';
 import { prisma } from '@/lib/prisma';
@@ -23,16 +30,28 @@ export class AgentApplicationService {
   /**
    * Sanitize string fields in form data
    */
-  private static sanitizeFormData(formData: AgentApplicationFormData): AgentApplicationFormData {
+  private static sanitizeFormData(
+    formData: AgentApplicationFormData
+  ): AgentApplicationFormData {
     return {
       ...formData,
       fullName: sanitizeString(formData.fullName),
       address: sanitizeString(formData.address),
-      businessLocation: formData.businessLocation ? sanitizeString(formData.businessLocation) : undefined,
-      instagramHandle: formData.instagramHandle ? sanitizeString(formData.instagramHandle) : undefined,
-      facebookHandle: formData.facebookHandle ? sanitizeString(formData.facebookHandle) : undefined,
-      tiktokHandle: formData.tiktokHandle ? sanitizeString(formData.tiktokHandle) : undefined,
-      jrmProducts: formData.jrmProducts ? sanitizeString(formData.jrmProducts) : undefined,
+      businessLocation: formData.businessLocation
+        ? sanitizeString(formData.businessLocation)
+        : undefined,
+      instagramHandle: formData.instagramHandle
+        ? sanitizeString(formData.instagramHandle)
+        : undefined,
+      facebookHandle: formData.facebookHandle
+        ? sanitizeString(formData.facebookHandle)
+        : undefined,
+      tiktokHandle: formData.tiktokHandle
+        ? sanitizeString(formData.tiktokHandle)
+        : undefined,
+      jrmProducts: formData.jrmProducts
+        ? sanitizeString(formData.jrmProducts)
+        : undefined,
       reasonToJoin: sanitizeString(formData.reasonToJoin),
       expectations: sanitizeString(formData.expectations),
     };
@@ -41,7 +60,9 @@ export class AgentApplicationService {
   /**
    * Create a new agent application
    */
-  static async createApplication(data: CreateApplicationRequest): Promise<CreateApplicationResponse> {
+  static async createApplication(
+    data: CreateApplicationRequest
+  ): Promise<CreateApplicationResponse> {
     try {
       // Sanitize input data
       const sanitizedFormData = this.sanitizeFormData(data.formData);
@@ -55,13 +76,19 @@ export class AgentApplicationService {
           where: {
             userId: data.userId,
             status: {
-              in: [AgentApplicationStatus.DRAFT, AgentApplicationStatus.SUBMITTED, AgentApplicationStatus.UNDER_REVIEW]
-            }
-          }
+              in: [
+                AgentApplicationStatus.DRAFT,
+                AgentApplicationStatus.SUBMITTED,
+                AgentApplicationStatus.UNDER_REVIEW,
+              ],
+            },
+          },
         });
 
         if (existingApplication) {
-          throw new Error('Anda sudah mempunyai permohonan yang sedang diproses');
+          throw new Error(
+            'Anda sudah mempunyai permohonan yang sedang diproses'
+          );
         }
       }
 
@@ -70,9 +97,13 @@ export class AgentApplicationService {
         where: {
           email: validatedData.email,
           status: {
-            in: [AgentApplicationStatus.SUBMITTED, AgentApplicationStatus.UNDER_REVIEW, AgentApplicationStatus.APPROVED]
-          }
-        }
+            in: [
+              AgentApplicationStatus.SUBMITTED,
+              AgentApplicationStatus.UNDER_REVIEW,
+              AgentApplicationStatus.APPROVED,
+            ],
+          },
+        },
       });
 
       if (existingEmail) {
@@ -118,8 +149,8 @@ export class AgentApplicationService {
           expectations: validatedData.expectations,
 
           // System fields
-          submittedAt: new Date()
-        }
+          submittedAt: new Date(),
+        },
       });
 
       // Send confirmation email
@@ -132,12 +163,14 @@ export class AgentApplicationService {
         id: application.id,
         status: application.status,
         submittedAt: application.submittedAt!,
-        message: 'Permohonan anda telah berjaya dihantar. Kami akan menghubungi anda tidak lama lagi.'
+        message:
+          'Permohonan anda telah berjaya dihantar. Kami akan menghubungi anda tidak lama lagi.',
       };
-
     } catch (error) {
       console.error('Error creating agent application:', error);
-      throw new Error(error instanceof Error ? error.message : 'Ralat sistem berlaku');
+      throw new Error(
+        error instanceof Error ? error.message : 'Ralat sistem berlaku'
+      );
     }
   }
 
@@ -153,7 +186,7 @@ export class AgentApplicationService {
       // Verify ownership
       const existingApplication = await prisma.agentApplication.findUnique({
         where: { id },
-        include: { user: true, reviews: true }
+        include: { user: true, reviews: true },
       });
 
       if (!existingApplication) {
@@ -161,7 +194,9 @@ export class AgentApplicationService {
       }
 
       if (existingApplication.userId !== userId && userId) {
-        throw new Error('Anda tidak mempunyai kebenaran untuk mengubah permohonan ini');
+        throw new Error(
+          'Anda tidak mempunyai kebenaran untuk mengubah permohonan ini'
+        );
       }
 
       if (existingApplication.status !== AgentApplicationStatus.DRAFT) {
@@ -170,15 +205,33 @@ export class AgentApplicationService {
 
       // Sanitize update data
       const sanitizedData = data as Partial<AgentApplicationFormData>;
-      if (data.fullName) sanitizedData.fullName = sanitizeString(data.fullName);
-      if (data.address) sanitizedData.address = sanitizeString(data.address);
-      if (data.businessLocation) sanitizedData.businessLocation = sanitizeString(data.businessLocation);
-      if (data.instagramHandle) sanitizedData.instagramHandle = sanitizeString(data.instagramHandle);
-      if (data.facebookHandle) sanitizedData.facebookHandle = sanitizeString(data.facebookHandle);
-      if (data.tiktokHandle) sanitizedData.tiktokHandle = sanitizeString(data.tiktokHandle);
-      if (data.jrmProducts) sanitizedData.jrmProducts = sanitizeString(data.jrmProducts);
-      if (data.reasonToJoin) sanitizedData.reasonToJoin = sanitizeString(data.reasonToJoin);
-      if (data.expectations) sanitizedData.expectations = sanitizeString(data.expectations);
+      if (data.fullName) {
+        sanitizedData.fullName = sanitizeString(data.fullName);
+      }
+      if (data.address) {
+        sanitizedData.address = sanitizeString(data.address);
+      }
+      if (data.businessLocation) {
+        sanitizedData.businessLocation = sanitizeString(data.businessLocation);
+      }
+      if (data.instagramHandle) {
+        sanitizedData.instagramHandle = sanitizeString(data.instagramHandle);
+      }
+      if (data.facebookHandle) {
+        sanitizedData.facebookHandle = sanitizeString(data.facebookHandle);
+      }
+      if (data.tiktokHandle) {
+        sanitizedData.tiktokHandle = sanitizeString(data.tiktokHandle);
+      }
+      if (data.jrmProducts) {
+        sanitizedData.jrmProducts = sanitizeString(data.jrmProducts);
+      }
+      if (data.reasonToJoin) {
+        sanitizedData.reasonToJoin = sanitizeString(data.reasonToJoin);
+      }
+      if (data.expectations) {
+        sanitizedData.expectations = sanitizeString(data.expectations);
+      }
 
       // Update the application
       const updatedApplication = await prisma.agentApplication.update({
@@ -190,15 +243,22 @@ export class AgentApplicationService {
           phoneNumber: data.phoneNumber || existingApplication.phoneNumber,
           address: sanitizedData.address || existingApplication.address,
           age: data.age || existingApplication.age,
-          hasBusinessExp: data.hasBusinessExp ?? existingApplication.hasBusinessExp,
-          businessLocation: data.businessLocation ?? existingApplication.businessLocation,
-          hasTeamLeadExp: data.hasTeamLeadExp ?? existingApplication.hasTeamLeadExp,
+          hasBusinessExp:
+            data.hasBusinessExp ?? existingApplication.hasBusinessExp,
+          businessLocation:
+            data.businessLocation ?? existingApplication.businessLocation,
+          hasTeamLeadExp:
+            data.hasTeamLeadExp ?? existingApplication.hasTeamLeadExp,
           isRegistered: data.isRegistered ?? existingApplication.isRegistered,
-          instagramHandle: data.instagramHandle ?? existingApplication.instagramHandle,
-          facebookHandle: data.facebookHandle ?? existingApplication.facebookHandle,
+          instagramHandle:
+            data.instagramHandle ?? existingApplication.instagramHandle,
+          facebookHandle:
+            data.facebookHandle ?? existingApplication.facebookHandle,
           tiktokHandle: data.tiktokHandle ?? existingApplication.tiktokHandle,
-          instagramLevel: data.instagramLevel || existingApplication.instagramLevel,
-          facebookLevel: data.facebookLevel || existingApplication.facebookLevel,
+          instagramLevel:
+            data.instagramLevel || existingApplication.instagramLevel,
+          facebookLevel:
+            data.facebookLevel || existingApplication.facebookLevel,
           tiktokLevel: data.tiktokLevel || existingApplication.tiktokLevel,
           hasJrmExp: data.hasJrmExp ?? existingApplication.hasJrmExp,
           jrmProducts: data.jrmProducts ?? existingApplication.jrmProducts,
@@ -207,15 +267,17 @@ export class AgentApplicationService {
           acceptTerms: data.acceptTerms ?? existingApplication.acceptTerms,
 
           // Update status if complete
-          status: data.finalAgreement ? AgentApplicationStatus.SUBMITTED : AgentApplicationStatus.DRAFT,
-          submittedAt: data.finalAgreement ? new Date() : null
+          status: data.finalAgreement
+            ? AgentApplicationStatus.SUBMITTED
+            : AgentApplicationStatus.DRAFT,
+          submittedAt: data.finalAgreement ? new Date() : null,
         },
         include: {
           user: true,
           reviews: {
-            include: { reviewer: true }
-          }
-        }
+            include: { reviewer: true },
+          },
+        },
       });
 
       // Send emails if submitted
@@ -225,17 +287,20 @@ export class AgentApplicationService {
       }
 
       return updatedApplication;
-
     } catch (error) {
       console.error('Error updating agent application:', error);
-      throw new Error(error instanceof Error ? error.message : 'Ralat sistem berlaku');
+      throw new Error(
+        error instanceof Error ? error.message : 'Ralat sistem berlaku'
+      );
     }
   }
 
   /**
    * Get applications with filtering and pagination (Admin)
    */
-  static async getApplications(filters: ApplicationFilters): Promise<ApplicationListResponse> {
+  static async getApplications(
+    filters: ApplicationFilters
+  ): Promise<ApplicationListResponse> {
     try {
       const validatedFilters = applicationFiltersSchema.parse(filters);
 
@@ -248,10 +313,25 @@ export class AgentApplicationService {
 
       if (validatedFilters.search) {
         where.OR = [
-          { fullName: { contains: validatedFilters.search, mode: 'insensitive' } },
+          {
+            fullName: {
+              contains: validatedFilters.search,
+              mode: 'insensitive',
+            },
+          },
           { email: { contains: validatedFilters.search, mode: 'insensitive' } },
-          { icNumber: { contains: validatedFilters.search, mode: 'insensitive' } },
-          { phoneNumber: { contains: validatedFilters.search, mode: 'insensitive' } }
+          {
+            icNumber: {
+              contains: validatedFilters.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            phoneNumber: {
+              contains: validatedFilters.search,
+              mode: 'insensitive',
+            },
+          },
         ];
       }
 
@@ -279,12 +359,12 @@ export class AgentApplicationService {
           user: true,
           reviews: {
             include: { reviewer: true },
-            orderBy: { createdAt: 'desc' }
-          }
+            orderBy: { createdAt: 'desc' },
+          },
         },
         orderBy: { submittedAt: 'desc' },
         skip: (validatedFilters.page - 1) * validatedFilters.limit,
-        take: validatedFilters.limit
+        take: validatedFilters.limit,
       });
 
       const totalPages = Math.ceil(total / validatedFilters.limit);
@@ -295,11 +375,10 @@ export class AgentApplicationService {
           page: validatedFilters.page,
           limit: validatedFilters.limit,
           total,
-          totalPages
+          totalPages,
         },
-        filters: validatedFilters
+        filters: validatedFilters,
       };
-
     } catch (error) {
       console.error('Error getting applications:', error);
       throw new Error('Ralat mengambil senarai permohonan');
@@ -309,7 +388,9 @@ export class AgentApplicationService {
   /**
    * Get application by ID
    */
-  static async getApplicationById(id: string): Promise<AgentApplicationWithRelations | null> {
+  static async getApplicationById(
+    id: string
+  ): Promise<AgentApplicationWithRelations | null> {
     try {
       const application = await prisma.agentApplication.findUnique({
         where: { id },
@@ -317,13 +398,12 @@ export class AgentApplicationService {
           user: true,
           reviews: {
             include: { reviewer: true },
-            orderBy: { createdAt: 'desc' }
-          }
-        }
+            orderBy: { createdAt: 'desc' },
+          },
+        },
       });
 
       return application;
-
     } catch (error) {
       console.error('Error getting application by ID:', error);
       throw new Error('Ralat mengambil maklumat permohonan');
@@ -341,7 +421,7 @@ export class AgentApplicationService {
     try {
       const application = await prisma.agentApplication.findUnique({
         where: { id },
-        include: { user: true, reviews: true }
+        include: { user: true, reviews: true },
       });
 
       if (!application) {
@@ -355,8 +435,8 @@ export class AgentApplicationService {
           status: statusData.status,
           reviewedAt: new Date(),
           reviewedBy: adminId,
-          adminNotes: statusData.adminNotes || null
-        }
+          adminNotes: statusData.adminNotes || null,
+        },
       });
 
       // Create review record
@@ -366,14 +446,13 @@ export class AgentApplicationService {
             applicationId: id,
             reviewerId: adminId,
             decision: statusData.reviewerDecision,
-            notes: statusData.adminNotes || null
-          }
+            notes: statusData.adminNotes || null,
+          },
         });
       }
 
       // Send status update email
       await this.sendStatusUpdateEmail(updatedApplication);
-
     } catch (error) {
       console.error('Error updating application status:', error);
       throw new Error('Ralat mengubah status permohonan');
@@ -389,9 +468,8 @@ export class AgentApplicationService {
         applicationId: application.id,
         applicantName: application.fullName,
         applicantEmail: application.email,
-        submissionDate: application.submittedAt || new Date()
+        submissionDate: application.submittedAt || new Date(),
       });
-
     } catch (error) {
       console.error('Error sending confirmation email:', error);
       // Don't throw error as this shouldn't block application creation
@@ -409,9 +487,8 @@ export class AgentApplicationService {
         applicantEmail: application.email,
         status: application.status,
         adminNotes: application.adminNotes,
-        reviewDate: application.reviewedAt || new Date()
+        reviewDate: application.reviewedAt || new Date(),
       });
-
     } catch (error) {
       console.error('Error sending status update email:', error);
     }
@@ -420,19 +497,21 @@ export class AgentApplicationService {
   /**
    * Notify admins of new application
    */
-  private static async notifyAdminsOfNewApplication(application: any): Promise<void> {
+  private static async notifyAdminsOfNewApplication(
+    application: any
+  ): Promise<void> {
     try {
       // Get admin emails from database
       const adminUsers = await prisma.user.findMany({
         where: {
           role: {
-            in: ['ADMIN', 'SUPERADMIN']
+            in: ['ADMIN', 'SUPERADMIN'],
           },
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
         select: {
-          email: true
-        }
+          email: true,
+        },
       });
 
       const adminEmails = adminUsers.map(admin => admin.email);
@@ -443,10 +522,9 @@ export class AgentApplicationService {
           applicantName: application.fullName,
           applicantEmail: application.email,
           submissionDate: application.submittedAt || new Date(),
-          adminEmails
+          adminEmails,
         });
       }
-
     } catch (error) {
       console.error('Error notifying admins:', error);
     }
@@ -465,32 +543,47 @@ export class AgentApplicationService {
         approved,
         rejected,
         thisMonth,
-        lastMonth
+        lastMonth,
       ] = await Promise.all([
         prisma.agentApplication.count(),
-        prisma.agentApplication.count({ where: { status: AgentApplicationStatus.DRAFT } }),
-        prisma.agentApplication.count({ where: { status: AgentApplicationStatus.SUBMITTED } }),
-        prisma.agentApplication.count({ where: { status: AgentApplicationStatus.UNDER_REVIEW } }),
-        prisma.agentApplication.count({ where: { status: AgentApplicationStatus.APPROVED } }),
-        prisma.agentApplication.count({ where: { status: AgentApplicationStatus.REJECTED } }),
         prisma.agentApplication.count({
-          where: {
-            submittedAt: {
-              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-            }
-          }
+          where: { status: AgentApplicationStatus.DRAFT },
+        }),
+        prisma.agentApplication.count({
+          where: { status: AgentApplicationStatus.SUBMITTED },
+        }),
+        prisma.agentApplication.count({
+          where: { status: AgentApplicationStatus.UNDER_REVIEW },
+        }),
+        prisma.agentApplication.count({
+          where: { status: AgentApplicationStatus.APPROVED },
+        }),
+        prisma.agentApplication.count({
+          where: { status: AgentApplicationStatus.REJECTED },
         }),
         prisma.agentApplication.count({
           where: {
             submittedAt: {
-              gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-              lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-            }
-          }
-        })
+              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            },
+          },
+        }),
+        prisma.agentApplication.count({
+          where: {
+            submittedAt: {
+              gte: new Date(
+                new Date().getFullYear(),
+                new Date().getMonth() - 1,
+                1
+              ),
+              lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            },
+          },
+        }),
       ]);
 
-      const growth = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
+      const growth =
+        lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
 
       return {
         total,
@@ -501,9 +594,8 @@ export class AgentApplicationService {
         rejected,
         thisMonth,
         lastMonth,
-        growth: Math.round(growth * 100) / 100
+        growth: Math.round(growth * 100) / 100,
       };
-
     } catch (error) {
       console.error('Error getting application stats:', error);
       throw new Error('Ralat mengambil statistik permohonan');

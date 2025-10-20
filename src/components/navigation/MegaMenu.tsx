@@ -21,7 +21,7 @@ import {
   Zap,
   Gift,
   TrendingUp,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 
 export interface MegaMenuCategory {
@@ -77,8 +77,15 @@ export interface MegaMenuProps {
   className?: string;
 }
 
-export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps) {
-  const [activeSection, setActiveSection] = useState<string>(sections[0]?.title || '');
+export function MegaMenu({
+  sections,
+  isOpen,
+  onClose,
+  className,
+}: MegaMenuProps) {
+  const [activeSection, setActiveSection] = useState<string>(
+    sections[0]?.title || ''
+  );
 
   const handleCategoryClick = () => {
     onClose();
@@ -92,31 +99,37 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
     }).format(price);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
-  const currentSection = sections.find(section => section.title === activeSection) || sections[0];
+  const currentSection =
+    sections.find(section => section.title === activeSection) || sections[0];
 
   return (
-    <div className={cn(
-      'absolute top-full left-0 right-0 z-50',
-      'bg-background/95 backdrop-blur-sm',
-      'border-b border-border/50 shadow-xl',
-      'animate-in fade-in-0 slide-in-from-top-2 duration-200',
-      className
-    )}>
+    <div
+      className={cn(
+        'absolute top-full left-0 right-0 z-50',
+        'bg-background/95 backdrop-blur-sm',
+        'border-b border-border/50 shadow-xl',
+        'animate-in fade-in-0 slide-in-from-top-2 duration-200',
+        className
+      )}
+    >
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-12 gap-6">
           {/* Section Navigation */}
           <div className="col-span-2">
             <div className="space-y-1">
-              {sections.map((section) => (
+              {sections.map(section => (
                 <Button
                   key={section.title}
                   variant="ghost"
                   className={cn(
                     'w-full justify-start text-left p-3 h-auto',
                     'hover:bg-primary/5 hover:text-primary',
-                    activeSection === section.title && 'bg-primary/10 text-primary'
+                    activeSection === section.title &&
+                      'bg-primary/10 text-primary'
                   )}
                   onMouseEnter={() => setActiveSection(section.title)}
                   onClick={handleCategoryClick}
@@ -131,7 +144,7 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
           {/* Categories Grid */}
           <div className="col-span-6">
             <div className="grid grid-cols-2 gap-4">
-              {currentSection.categories.map((category) => (
+              {currentSection.categories.map(category => (
                 <div key={category.id} className="space-y-2">
                   <Link
                     href={category.href}
@@ -153,7 +166,9 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
                         />
                       </div>
                     )}
-                    <span className="group-hover:underline">{category.name}</span>
+                    <span className="group-hover:underline">
+                      {category.name}
+                    </span>
                     {category.featured && (
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                     )}
@@ -166,7 +181,7 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
 
                   {category.children && (
                     <div className="pl-4 space-y-1">
-                      {category.children.map((subCategory) => (
+                      {category.children.map(subCategory => (
                         <Link
                           key={subCategory.id}
                           href={subCategory.href}
@@ -203,57 +218,61 @@ export function MegaMenu({ sections, isOpen, onClose, className }: MegaMenuProps
           {/* Featured Content */}
           <div className="col-span-4 space-y-4">
             {/* Featured Products */}
-            {currentSection.featuredProducts && currentSection.featuredProducts.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Featured Products
-                </h3>
-                <div className="space-y-2">
-                  {currentSection.featuredProducts.slice(0, 3).map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/products/${product.slug}`}
-                      onClick={handleCategoryClick}
-                    >
-                      <Card className="p-3 hover:shadow-md transition-shadow duration-200 group">
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 rounded-md overflow-hidden">
-                            <Image
-                              src={product.imageUrl}
-                              alt={product.name}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-200"
-                              sizes="48px"
-                            />
-                            {product.badge && (
-                              <Badge className="absolute -top-1 -right-1 text-xs">
-                                {product.badge}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                              {product.name}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-semibold text-sm">
-                                {formatPrice(product.price)}
-                              </span>
-                              {product.originalPrice && product.originalPrice > product.price && (
-                                <span className="text-xs text-muted-foreground line-through">
-                                  {formatPrice(product.originalPrice)}
-                                </span>
-                              )}
+            {currentSection.featuredProducts &&
+              currentSection.featuredProducts.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Featured Products
+                  </h3>
+                  <div className="space-y-2">
+                    {currentSection.featuredProducts
+                      .slice(0, 3)
+                      .map(product => (
+                        <Link
+                          key={product.id}
+                          href={`/products/${product.slug}`}
+                          onClick={handleCategoryClick}
+                        >
+                          <Card className="p-3 hover:shadow-md transition-shadow duration-200 group">
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-12 h-12 rounded-md overflow-hidden">
+                                <Image
+                                  src={product.imageUrl}
+                                  alt={product.name}
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                                  sizes="48px"
+                                />
+                                {product.badge && (
+                                  <Badge className="absolute -top-1 -right-1 text-xs">
+                                    {product.badge}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                                  {product.name}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="font-semibold text-sm">
+                                    {formatPrice(product.price)}
+                                  </span>
+                                  {product.originalPrice &&
+                                    product.originalPrice > product.price && (
+                                      <span className="text-xs text-muted-foreground line-through">
+                                        {formatPrice(product.originalPrice)}
+                                      </span>
+                                    )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
+                          </Card>
+                        </Link>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Promotional Banner */}
             {currentSection.promotionalBanner && (
@@ -348,10 +367,29 @@ export const defaultMegaMenuSections: MegaMenuSection[] = [
         productCount: 156,
         featured: true,
         children: [
-          { id: 'iphone', name: 'iPhone', slug: 'iphone', href: '/categories/electronics/smartphones/iphone', productCount: 45 },
-          { id: 'samsung', name: 'Samsung', slug: 'samsung', href: '/categories/electronics/smartphones/samsung', productCount: 67 },
-          { id: 'xiaomi', name: 'Xiaomi', slug: 'xiaomi', href: '/categories/electronics/smartphones/xiaomi', productCount: 44, badge: { text: 'Popular', variant: 'secondary' } }
-        ]
+          {
+            id: 'iphone',
+            name: 'iPhone',
+            slug: 'iphone',
+            href: '/categories/electronics/smartphones/iphone',
+            productCount: 45,
+          },
+          {
+            id: 'samsung',
+            name: 'Samsung',
+            slug: 'samsung',
+            href: '/categories/electronics/smartphones/samsung',
+            productCount: 67,
+          },
+          {
+            id: 'xiaomi',
+            name: 'Xiaomi',
+            slug: 'xiaomi',
+            href: '/categories/electronics/smartphones/xiaomi',
+            productCount: 44,
+            badge: { text: 'Popular', variant: 'secondary' },
+          },
+        ],
       },
       {
         id: 'laptops',
@@ -360,11 +398,29 @@ export const defaultMegaMenuSections: MegaMenuSection[] = [
         href: '/categories/electronics/laptops',
         productCount: 89,
         children: [
-          { id: 'gaming', name: 'Gaming Laptops', slug: 'gaming', href: '/categories/electronics/laptops/gaming', productCount: 23 },
-          { id: 'business', name: 'Business Laptops', slug: 'business', href: '/categories/electronics/laptops/business', productCount: 34 },
-          { id: 'ultrabook', name: 'Ultrabooks', slug: 'ultrabook', href: '/categories/electronics/laptops/ultrabook', productCount: 32 }
-        ]
-      }
+          {
+            id: 'gaming',
+            name: 'Gaming Laptops',
+            slug: 'gaming',
+            href: '/categories/electronics/laptops/gaming',
+            productCount: 23,
+          },
+          {
+            id: 'business',
+            name: 'Business Laptops',
+            slug: 'business',
+            href: '/categories/electronics/laptops/business',
+            productCount: 34,
+          },
+          {
+            id: 'ultrabook',
+            name: 'Ultrabooks',
+            slug: 'ultrabook',
+            href: '/categories/electronics/laptops/ultrabook',
+            productCount: 32,
+          },
+        ],
+      },
     ],
     featuredProducts: [
       {
@@ -374,16 +430,16 @@ export const defaultMegaMenuSections: MegaMenuSection[] = [
         imageUrl: '/placeholder-product.jpg',
         price: 5999,
         originalPrice: 6499,
-        badge: 'New'
-      }
+        badge: 'New',
+      },
     ],
     promotionalBanner: {
       title: 'Tech Sale',
       description: 'Save up to 50% on selected electronics',
       imageUrl: '/placeholder-banner.jpg',
       ctaText: 'Shop Now',
-      ctaHref: '/deals/electronics'
-    }
+      ctaHref: '/deals/electronics',
+    },
   },
   {
     title: 'Fashion',
@@ -395,10 +451,28 @@ export const defaultMegaMenuSections: MegaMenuSection[] = [
         href: '/categories/fashion/mens',
         productCount: 234,
         children: [
-          { id: 'shirts', name: 'Shirts', slug: 'shirts', href: '/categories/fashion/mens/shirts', productCount: 78 },
-          { id: 'pants', name: 'Pants', slug: 'pants', href: '/categories/fashion/mens/pants', productCount: 89 },
-          { id: 'shoes', name: 'Shoes', slug: 'shoes', href: '/categories/fashion/mens/shoes', productCount: 67 }
-        ]
+          {
+            id: 'shirts',
+            name: 'Shirts',
+            slug: 'shirts',
+            href: '/categories/fashion/mens/shirts',
+            productCount: 78,
+          },
+          {
+            id: 'pants',
+            name: 'Pants',
+            slug: 'pants',
+            href: '/categories/fashion/mens/pants',
+            productCount: 89,
+          },
+          {
+            id: 'shoes',
+            name: 'Shoes',
+            slug: 'shoes',
+            href: '/categories/fashion/mens/shoes',
+            productCount: 67,
+          },
+        ],
       },
       {
         id: 'womens',
@@ -408,13 +482,32 @@ export const defaultMegaMenuSections: MegaMenuSection[] = [
         productCount: 345,
         featured: true,
         children: [
-          { id: 'dresses', name: 'Dresses', slug: 'dresses', href: '/categories/fashion/womens/dresses', productCount: 123 },
-          { id: 'tops', name: 'Tops', slug: 'tops', href: '/categories/fashion/womens/tops', productCount: 156 },
-          { id: 'accessories', name: 'Accessories', slug: 'accessories', href: '/categories/fashion/womens/accessories', productCount: 66, badge: { text: 'Trending', variant: 'destructive' } }
-        ]
-      }
-    ]
-  }
+          {
+            id: 'dresses',
+            name: 'Dresses',
+            slug: 'dresses',
+            href: '/categories/fashion/womens/dresses',
+            productCount: 123,
+          },
+          {
+            id: 'tops',
+            name: 'Tops',
+            slug: 'tops',
+            href: '/categories/fashion/womens/tops',
+            productCount: 156,
+          },
+          {
+            id: 'accessories',
+            name: 'Accessories',
+            slug: 'accessories',
+            href: '/categories/fashion/womens/accessories',
+            productCount: 66,
+            badge: { text: 'Trending', variant: 'destructive' },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export default MegaMenu;

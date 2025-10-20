@@ -26,7 +26,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CustomDateRangePicker } from '@/components/ui/custom-date-range-picker';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
-import { Stepper, useStepperState, type StepperStep } from '@/components/ui/stepper';
+import {
+  Stepper,
+  useStepperState,
+  type StepperStep,
+} from '@/components/ui/stepper';
 import { TabStatusIcon } from '@/components/ui/tab-status-icon';
 import {
   PRODUCT_FORM_STEPS,
@@ -52,6 +56,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { PRODUCT_CONSTANTS } from '@/lib/constants/product-config';
 
 interface Category {
   id: string;
@@ -62,6 +75,11 @@ interface ProductImage {
   url: string;
   altText?: string;
   isPrimary: boolean;
+}
+
+interface CategoryResponse {
+  id: string;
+  name: string;
 }
 
 interface ProductFormData {
@@ -111,7 +129,7 @@ const initialFormData: ProductFormData = {
   regularPrice: '',
   memberPrice: '',
   stockQuantity: 0,
-  lowStockAlert: 10,
+  lowStockAlert: PRODUCT_CONSTANTS.DEFAULT_LOW_STOCK_ALERT,
   weight: 0,
   length: '',
   width: '',
@@ -136,26 +154,35 @@ export function ProductForm({
   onDelete,
 }: ProductFormProps) {
   const router = useRouter();
-  
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   // Initialize form data with initial data or defaults
   const [formData, setFormData] = useState<ProductFormData>(() => ({
     ...initialFormData,
     ...initialData,
   }));
-  
+
   // Initialize stepper with product form steps
   const stepperSteps = PRODUCT_FORM_STEPS.map(step => ({
     id: step.id,
     label: step.label,
     icon: <step.icon className="w-4 h-4" />,
   }));
-  
-  const { steps, currentStep, goToStep, nextStep, prevStep, currentIndex, isFirstStep, isLastStep } = 
-    useStepperState(stepperSteps);
+
+  const {
+    steps,
+    currentStep,
+    goToStep,
+    nextStep,
+    prevStep,
+    currentIndex,
+    isFirstStep,
+    isLastStep,
+  } = useStepperState(stepperSteps);
 
   // Load categories on mount
   useEffect(() => {
@@ -165,17 +192,10 @@ export function ProductForm({
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
-      console.log('🔄 ProductForm received initialData:', initialData);
-      console.log('🏷️ CategoryIds from initialData:', initialData.categoryIds);
-      setFormData(prev => {
-        const newData = {
-          ...prev,
-          ...initialData,
-        };
-        console.log('🆕 New formData after merge:', newData);
-        console.log('🔖 Final categoryIds in formData:', newData.categoryIds);
-        return newData;
-      });
+      setFormData(prev => ({
+        ...prev,
+        ...initialData,
+      }));
     }
   }, [initialData]);
 
@@ -184,11 +204,7 @@ export function ProductForm({
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
-        console.log('📁 Categories loaded:', data);
-        if (data.categories) {
-          console.log('📁 Categories array:', data.categories.map((c: any) => ({ id: c.id, name: c.name })));
-        }
-        setCategories(data);
+        setCategories(data.categories || []);
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -203,13 +219,16 @@ export function ProductForm({
       .replace(/^-+|-+$/g, '');
   };
 
-  const handleInputChange = (field: keyof ProductFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof ProductFormData,
+    value: ProductFormData[keyof ProductFormData]
+  ) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
 
       // Auto-generate slug when name changes
       if (field === 'name' && value) {
-        updated.slug = generateSlug(value);
+        updated.slug = generateSlug(value as string);
       }
 
       // Clear promotional fields when promotional is disabled
@@ -239,29 +258,35 @@ export function ProductForm({
     if (!formData.name.trim()) {
       newErrors.name = 'Product name is required';
     }
-    
+
     if (!formData.slug.trim()) {
       newErrors.slug = 'Product slug is required';
     }
-    
+
     if (!formData.sku.trim()) {
       newErrors.sku = 'SKU is required';
     }
-    
+
     if (formData.categoryIds.length === 0) {
       newErrors.categoryIds = 'At least one category must be selected';
     }
-    
-    if (!formData.regularPrice || parseFloat(formData.regularPrice.toString()) <= 0) {
+
+    if (
+      !formData.regularPrice ||
+      parseFloat(formData.regularPrice.toString()) <= 0
+    ) {
       newErrors.regularPrice = 'Valid regular price is required';
     }
-    
+
     if (formData.stockQuantity < 0) {
       newErrors.stockQuantity = 'Stock quantity cannot be negative';
     }
 
-    if (!formData.weight || parseFloat(formData.weight.toString()) < 0.01) {
-      newErrors.weight = 'Weight is required and must be at least 0.01 kg';
+    if (
+      !formData.weight ||
+      parseFloat(formData.weight.toString()) < PRODUCT_CONSTANTS.MIN_WEIGHT_KG
+    ) {
+      newErrors.weight = `Weight is required and must be at least ${PRODUCT_CONSTANTS.MIN_WEIGHT_KG} kg`;
     }
 
     // Promotional pricing validation
@@ -269,23 +294,26 @@ export function ProductForm({
       if (!formData.promotionalPrice || formData.promotionalPrice <= 0) {
         newErrors.promotionalPrice = 'Valid promotional price is required';
       }
-      
+
       if (!formData.promotionStartDate) {
         newErrors.promotionStartDate = 'Promotion start date is required';
       }
-      
+
       if (!formData.promotionEndDate) {
         newErrors.promotionEndDate = 'Promotion end date is required';
       }
-      
-      if (formData.promotionStartDate && formData.promotionEndDate && 
-          formData.promotionStartDate >= formData.promotionEndDate) {
+
+      if (
+        formData.promotionStartDate &&
+        formData.promotionEndDate &&
+        formData.promotionStartDate >= formData.promotionEndDate
+      ) {
         newErrors.promotionEndDate = 'End date must be after start date';
       }
     }
 
     setErrors(newErrors);
-    
+
     // Navigate to first tab with errors
     if (Object.keys(newErrors).length > 0) {
       const errorTab = getErrorTab(newErrors);
@@ -293,30 +321,31 @@ export function ProductForm({
         goToStep(errorTab);
       }
     }
-    
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       if (onSubmit) {
         await onSubmit(formData);
       } else {
         // Default submission logic
-        const url = mode === 'create' 
-          ? '/api/admin/products' 
-          : `/api/admin/products/${productId}`;
-        
+        const url =
+          mode === 'create'
+            ? '/api/admin/products'
+            : `/api/admin/products/${productId}`;
+
         const method = mode === 'create' ? 'POST' : 'PUT';
-        
+
         const response = await fetch(url, {
           method,
           headers: {
@@ -324,16 +353,22 @@ export function ProductForm({
           },
           body: JSON.stringify(formData),
         });
-        
+
         if (!response.ok) {
-          throw new Error(`Failed to ${mode} product`);
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to ${mode} product`);
         }
-        
-        toast.success(`Product ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+
+        toast.success(
+          `Product ${mode === 'create' ? 'created' : 'updated'} successfully!`
+        );
         router.push('/admin/products');
       }
     } catch (error) {
-      console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} product:`, error);
+      console.error(
+        `Error ${mode === 'create' ? 'creating' : 'updating'} product:`,
+        error
+      );
       toast.error(`Failed to ${mode} product. Please try again.`);
     } finally {
       setLoading(false);
@@ -341,20 +376,24 @@ export function ProductForm({
   };
 
   const handleDelete = async () => {
-    if (mode !== 'edit' || !onDelete) return;
-    
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-      setLoading(true);
-      try {
-        await onDelete();
-        toast.success('Product deleted successfully!');
-        router.push('/admin/products');
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        toast.error('Failed to delete product. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+    if (mode !== 'edit' || !onDelete) {
+      return;
+    }
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    setDeleteDialogOpen(false);
+    try {
+      await onDelete!();
+      toast.success('Product deleted successfully!');
+      router.push('/admin/products');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -364,7 +403,7 @@ export function ProductForm({
       altText: img.altText || formData.name,
       isPrimary: index === 0,
     }));
-    
+
     handleInputChange('images', productImages);
   };
 
@@ -405,10 +444,9 @@ export function ProductForm({
               {mode === 'create' ? 'Create New Product' : 'Edit Product'}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {mode === 'create' 
-                ? 'Add a new product to your store with all the details' 
-                : 'Update product information and settings'
-              }
+              {mode === 'create'
+                ? 'Add a new product to your store with all the details'
+                : 'Update product information and settings'}
             </p>
           </div>
         </div>
@@ -430,7 +468,6 @@ export function ProductForm({
                   />
                 </div>
                 <Tabs value={currentStep} onValueChange={goToStep}>
-
                   {/* Basic Info Tab */}
                   <TabsContent value="basic" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -441,7 +478,9 @@ export function ProductForm({
                         <Input
                           id="name"
                           value={formData.name}
-                          onChange={e => handleInputChange('name', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('name', e.target.value)
+                          }
                           placeholder="Enter product name"
                           className={errors.name ? 'border-red-500' : ''}
                         />
@@ -457,7 +496,9 @@ export function ProductForm({
                         <Input
                           id="slug"
                           value={formData.slug}
-                          onChange={e => handleInputChange('slug', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('slug', e.target.value)
+                          }
                           placeholder="product-url-slug"
                           className={errors.slug ? 'border-red-500' : ''}
                         />
@@ -478,7 +519,9 @@ export function ProductForm({
                         <Input
                           id="sku"
                           value={formData.sku}
-                          onChange={e => handleInputChange('sku', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('sku', e.target.value)
+                          }
                           placeholder="PROD-001"
                           className={errors.sku ? 'border-red-500' : ''}
                         />
@@ -492,7 +535,9 @@ export function ProductForm({
                         <Input
                           id="barcode"
                           value={formData.barcode}
-                          onChange={e => handleInputChange('barcode', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('barcode', e.target.value)
+                          }
                           placeholder="1234567890123"
                         />
                       </div>
@@ -504,16 +549,18 @@ export function ProductForm({
                       </Label>
                       <MultiSelect
                         options={(() => {
-                          const categoryOptions: Option[] = Array.isArray(categories?.categories) 
-                            ? categories.categories.map(category => ({
+                          const categoryOptions: Option[] = Array.isArray(
+                            categories
+                          )
+                            ? categories.map(category => ({
                                 label: category.name,
-                                value: category.id
+                                value: category.id,
                               }))
                             : [];
                           return categoryOptions;
                         })()}
                         selected={formData.categoryIds || []}
-                        onChange={(values) => {
+                        onChange={values => {
                           handleInputChange('categoryIds', values);
                         }}
                         placeholder="Select categories"
@@ -521,21 +568,28 @@ export function ProductForm({
                         searchPlaceholder="Search categories..."
                       />
                       {errors.categoryIds && (
-                        <p className="text-sm text-red-600">{errors.categoryIds}</p>
+                        <p className="text-sm text-red-600">
+                          {errors.categoryIds}
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="shortDescription">Short Description</Label>
+                      <Label htmlFor="shortDescription">
+                        Short Description
+                      </Label>
                       <Input
                         id="shortDescription"
                         value={formData.shortDescription}
-                        onChange={e => handleInputChange('shortDescription', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('shortDescription', e.target.value)
+                        }
                         placeholder="Brief product description"
-                        maxLength={160}
+                        maxLength={PRODUCT_CONSTANTS.MAX_SHORT_DESC_LENGTH}
                       />
                       <p className="text-xs text-muted-foreground">
-                        {formData.shortDescription.length}/160 characters
+                        {formData.shortDescription.length}/
+                        {PRODUCT_CONSTANTS.MAX_SHORT_DESC_LENGTH} characters
                       </p>
                     </div>
 
@@ -544,7 +598,9 @@ export function ProductForm({
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={e => handleInputChange('description', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('description', e.target.value)
+                        }
                         placeholder="Detailed product description"
                         rows={6}
                       />
@@ -557,15 +613,19 @@ export function ProductForm({
                           id="weight"
                           type="number"
                           step="0.01"
-                          min="0.01"
+                          min={PRODUCT_CONSTANTS.MIN_WEIGHT_KG}
                           value={formData.weight}
-                          onChange={e => handleInputChange('weight', e.target.value)}
-                          placeholder="0.01"
+                          onChange={e =>
+                            handleInputChange('weight', e.target.value)
+                          }
+                          placeholder={PRODUCT_CONSTANTS.MIN_WEIGHT_KG.toString()}
                           className={errors.weight ? 'border-red-500' : ''}
                           required
                         />
                         {errors.weight && (
-                          <p className="text-sm text-red-600">{errors.weight}</p>
+                          <p className="text-sm text-red-600">
+                            {errors.weight}
+                          </p>
                         )}
                       </div>
 
@@ -577,7 +637,9 @@ export function ProductForm({
                           step="0.01"
                           min="0"
                           value={formData.length}
-                          onChange={e => handleInputChange('length', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('length', e.target.value)
+                          }
                           placeholder="0.00"
                         />
                       </div>
@@ -590,7 +652,9 @@ export function ProductForm({
                           step="0.01"
                           min="0"
                           value={formData.width}
-                          onChange={e => handleInputChange('width', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('width', e.target.value)
+                          }
                           placeholder="0.00"
                         />
                       </div>
@@ -603,7 +667,9 @@ export function ProductForm({
                           step="0.01"
                           min="0"
                           value={formData.height}
-                          onChange={e => handleInputChange('height', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('height', e.target.value)
+                          }
                           placeholder="0.00"
                         />
                       </div>
@@ -615,7 +681,8 @@ export function ProductForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="regularPrice">
-                          Regular Price (RM) <span className="text-red-500">*</span>
+                          Regular Price (RM){' '}
+                          <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="regularPrice"
@@ -623,12 +690,18 @@ export function ProductForm({
                           step="0.01"
                           min="0"
                           value={formData.regularPrice}
-                          onChange={e => handleInputChange('regularPrice', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('regularPrice', e.target.value)
+                          }
                           placeholder="0.00"
-                          className={errors.regularPrice ? 'border-red-500' : ''}
+                          className={
+                            errors.regularPrice ? 'border-red-500' : ''
+                          }
                         />
                         {errors.regularPrice && (
-                          <p className="text-sm text-red-600">{errors.regularPrice}</p>
+                          <p className="text-sm text-red-600">
+                            {errors.regularPrice}
+                          </p>
                         )}
                       </div>
 
@@ -640,7 +713,9 @@ export function ProductForm({
                           step="0.01"
                           min="0"
                           value={formData.memberPrice}
-                          onChange={e => handleInputChange('memberPrice', e.target.value)}
+                          onChange={e =>
+                            handleInputChange('memberPrice', e.target.value)
+                          }
                           placeholder="0.00"
                         />
                         <p className="text-xs text-muted-foreground">
@@ -653,13 +728,26 @@ export function ProductForm({
                       <Switch
                         id="isPromotional"
                         checked={formData.isPromotional}
-                        onCheckedChange={value => handleInputChange('isPromotional', value)}
+                        onCheckedChange={value =>
+                          handleInputChange('isPromotional', value)
+                        }
                       />
-                      <Label htmlFor="isPromotional">Enable Promotional Pricing</Label>
+                      <Label htmlFor="isPromotional">
+                        Enable Promotional Pricing
+                      </Label>
                       {formData.isPromotional && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 text-xs font-medium">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                           Won't qualify for membership
                         </span>
@@ -668,12 +756,15 @@ export function ProductForm({
 
                     {formData.isPromotional && (
                       <div className="space-y-4 p-4 border rounded-lg bg-orange-50">
-                        <h3 className="font-medium text-orange-800">Promotional Pricing</h3>
-                        
+                        <h3 className="font-medium text-orange-800">
+                          Promotional Pricing
+                        </h3>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="promotionalPrice">
-                              Promotional Price (RM) <span className="text-red-500">*</span>
+                              Promotional Price (RM){' '}
+                              <span className="text-red-500">*</span>
                             </Label>
                             <Input
                               id="promotionalPrice"
@@ -681,31 +772,52 @@ export function ProductForm({
                               step="0.01"
                               min="0"
                               value={formData.promotionalPrice}
-                              onChange={e => handleInputChange('promotionalPrice', parseFloat(e.target.value))}
+                              onChange={e =>
+                                handleInputChange(
+                                  'promotionalPrice',
+                                  parseFloat(e.target.value)
+                                )
+                              }
                               placeholder="0.00"
-                              className={errors.promotionalPrice ? 'border-red-500' : ''}
+                              className={
+                                errors.promotionalPrice ? 'border-red-500' : ''
+                              }
                             />
                             {errors.promotionalPrice && (
-                              <p className="text-sm text-red-600">{errors.promotionalPrice}</p>
+                              <p className="text-sm text-red-600">
+                                {errors.promotionalPrice}
+                              </p>
                             )}
                           </div>
                         </div>
 
                         <div className="space-y-2">
                           <Label>
-                            Promotion Period <span className="text-red-500">*</span>
+                            Promotion Period{' '}
+                            <span className="text-red-500">*</span>
                           </Label>
                           <CustomDateRangePicker
                             startDate={formData.promotionStartDate}
                             endDate={formData.promotionEndDate}
-                            onStartDateChange={date => handleInputChange('promotionStartDate', date)}
-                            onEndDateChange={date => handleInputChange('promotionEndDate', date)}
+                            onStartDateChange={date =>
+                              handleInputChange('promotionStartDate', date)
+                            }
+                            onEndDateChange={date =>
+                              handleInputChange('promotionEndDate', date)
+                            }
                             placeholder="Select promotion period"
-                            className={errors.promotionStartDate || errors.promotionEndDate ? 'border-red-500' : ''}
+                            className={
+                              errors.promotionStartDate ||
+                              errors.promotionEndDate
+                                ? 'border-red-500'
+                                : ''
+                            }
                           />
-                          {(errors.promotionStartDate || errors.promotionEndDate) && (
+                          {(errors.promotionStartDate ||
+                            errors.promotionEndDate) && (
                             <p className="text-sm text-red-600">
-                              {errors.promotionStartDate || errors.promotionEndDate}
+                              {errors.promotionStartDate ||
+                                errors.promotionEndDate}
                             </p>
                           )}
                         </div>
@@ -725,12 +837,21 @@ export function ProductForm({
                           type="number"
                           min="0"
                           value={formData.stockQuantity}
-                          onChange={e => handleInputChange('stockQuantity', parseInt(e.target.value) || 0)}
+                          onChange={e =>
+                            handleInputChange(
+                              'stockQuantity',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
                           placeholder="0"
-                          className={errors.stockQuantity ? 'border-red-500' : ''}
+                          className={
+                            errors.stockQuantity ? 'border-red-500' : ''
+                          }
                         />
                         {errors.stockQuantity && (
-                          <p className="text-sm text-red-600">{errors.stockQuantity}</p>
+                          <p className="text-sm text-red-600">
+                            {errors.stockQuantity}
+                          </p>
                         )}
                       </div>
 
@@ -741,8 +862,13 @@ export function ProductForm({
                           type="number"
                           min="0"
                           value={formData.lowStockAlert}
-                          onChange={e => handleInputChange('lowStockAlert', parseInt(e.target.value) || 0)}
-                          placeholder="10"
+                          onChange={e =>
+                            handleInputChange(
+                              'lowStockAlert',
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          placeholder={PRODUCT_CONSTANTS.DEFAULT_LOW_STOCK_ALERT.toString()}
                         />
                         <p className="text-xs text-muted-foreground">
                           Get notified when stock falls below this number
@@ -754,9 +880,9 @@ export function ProductForm({
                       <Label htmlFor="status">Status</Label>
                       <Select
                         value={formData.status}
-                        onValueChange={(value: 'DRAFT' | 'ACTIVE' | 'INACTIVE') => 
-                          handleInputChange('status', value)
-                        }
+                        onValueChange={(
+                          value: 'DRAFT' | 'ACTIVE' | 'INACTIVE'
+                        ) => handleInputChange('status', value)}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -788,7 +914,9 @@ export function ProductForm({
                       <Switch
                         id="featured"
                         checked={formData.featured}
-                        onCheckedChange={value => handleInputChange('featured', value)}
+                        onCheckedChange={value =>
+                          handleInputChange('featured', value)
+                        }
                       />
                       <Label htmlFor="featured">Featured Product</Label>
                       <p className="text-xs text-muted-foreground ml-2">
@@ -807,14 +935,16 @@ export function ProductForm({
                           altText: img.altText || formData.name,
                         }))}
                         onChange={handleImageChange}
-                        maxFiles={5}
-                        maxSize={5 * 1024 * 1024} // 5MB
+                        maxFiles={PRODUCT_CONSTANTS.MAX_IMAGES}
+                        maxSize={PRODUCT_CONSTANTS.MAX_SIZE_BYTES}
                         accept="image/*"
                         uploadPath="/api/upload/image"
                         className="border-2 border-dashed border-gray-300 rounded-lg p-8"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Upload up to 5 images (max 5MB each). First image will be the primary image.
+                        Upload up to {PRODUCT_CONSTANTS.MAX_IMAGES} images (max{' '}
+                        {PRODUCT_CONSTANTS.MAX_SIZE_MB}MB each). First image
+                        will be the primary image.
                       </p>
                     </div>
                   </TabsContent>
@@ -826,7 +956,12 @@ export function ProductForm({
                         <Switch
                           id="isQualifyingForMembership"
                           checked={formData.isQualifyingForMembership}
-                          onCheckedChange={value => handleInputChange('isQualifyingForMembership', value)}
+                          onCheckedChange={value =>
+                            handleInputChange(
+                              'isQualifyingForMembership',
+                              value
+                            )
+                          }
                         />
                         <Label htmlFor="isQualifyingForMembership">
                           Qualifying for Membership
@@ -841,10 +976,11 @@ export function ProductForm({
                         <CustomDateRangePicker
                           startDate={formData.memberOnlyUntil}
                           endDate={undefined}
-                          onStartDateChange={date => handleInputChange('memberOnlyUntil', date)}
+                          onStartDateChange={date =>
+                            handleInputChange('memberOnlyUntil', date)
+                          }
                           onEndDateChange={() => {}}
                           placeholder="Select member-only period end date"
-                          singleDate
                         />
                         <p className="text-xs text-muted-foreground">
                           Product only available to members until this date
@@ -856,10 +992,11 @@ export function ProductForm({
                         <CustomDateRangePicker
                           startDate={formData.earlyAccessStart}
                           endDate={undefined}
-                          onStartDateChange={date => handleInputChange('earlyAccessStart', date)}
+                          onStartDateChange={date =>
+                            handleInputChange('earlyAccessStart', date)
+                          }
                           onEndDateChange={() => {}}
                           placeholder="Select early access start date"
-                          singleDate
                         />
                         <p className="text-xs text-muted-foreground">
                           Members get early access starting from this date
@@ -877,34 +1014,27 @@ export function ProductForm({
                 <div className="flex justify-between items-center">
                   {/* Previous button - hidden on first step (Basic Info) */}
                   {!isFirstStep && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={prevStep}
-                    >
+                    <Button type="button" variant="outline" onClick={prevStep}>
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Previous
                     </Button>
                   )}
-                  
+
                   {/* Spacer for alignment when Previous button is hidden */}
                   {isFirstStep && <div />}
-                  
+
                   <div className="text-sm text-muted-foreground">
                     Step {currentIndex + 1} of {steps.length}
                   </div>
-                  
+
                   {/* Next button - hidden on last step (Advanced) */}
                   {!isLastStep && (
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                    >
+                    <Button type="button" onClick={nextStep}>
                       Next
                       <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
                     </Button>
                   )}
-                  
+
                   {/* Spacer for alignment when Next button is hidden */}
                   {isLastStep && <div />}
                 </div>
@@ -919,7 +1049,9 @@ export function ProductForm({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">
-                    {mode === 'create' ? 'Product Creation Progress' : 'Product Update Progress'}
+                    {mode === 'create'
+                      ? 'Product Creation Progress'
+                      : 'Product Update Progress'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -940,11 +1072,19 @@ export function ProductForm({
                     {PRODUCT_FORM_STEPS.map(step => {
                       const status = getStepStatus(step.id, formData, errors);
                       return (
-                        <div key={step.id} className="flex items-center justify-between">
+                        <div
+                          key={step.id}
+                          className="flex items-center justify-between"
+                        >
                           <span>{step.label}</span>
-                          <TabStatusIcon 
-                            status={status === 'completed' ? 'complete' : 
-                                   status === 'error' ? 'error' : 'incomplete'} 
+                          <TabStatusIcon
+                            status={
+                              status === 'completed'
+                                ? 'complete'
+                                : status === 'error'
+                                  ? 'error'
+                                  : 'incomplete'
+                            }
                           />
                         </div>
                       );
@@ -963,24 +1103,30 @@ export function ProductForm({
                     size="lg"
                   >
                     {loading ? (
-                      mode === 'create' ? 'Creating...' : 'Updating...'
+                      mode === 'create' ? (
+                        'Creating...'
+                      ) : (
+                        'Updating...'
+                      )
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        {mode === 'create' ? 'Create Product' : 'Update Product'}
+                        {mode === 'create'
+                          ? 'Create Product'
+                          : 'Update Product'}
                       </>
                     )}
                   </Button>
 
                   {mode === 'edit' && formData.slug && (
-                    <Link 
-                      href={`/products/${formData.slug}`} 
-                      target="_blank" 
+                    <Link
+                      href={`/products/${formData.slug}`}
+                      target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button 
+                      <Button
                         type="button"
-                        variant="outline" 
+                        variant="outline"
                         className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
                       >
                         <Eye className="h-4 w-4 mr-2" />
@@ -1024,6 +1170,35 @@ export function ProductForm({
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={loading}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

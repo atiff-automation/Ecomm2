@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getServerSession();
-    if (!session?.user?.role || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user?.role ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Akses tidak dibenarkan' },
         { status: 403 }
@@ -30,13 +33,10 @@ export async function GET(request: NextRequest) {
     const stats = await AgentApplicationService.getApplicationStats();
 
     return NextResponse.json(stats);
-
   } catch (error) {
     console.error('Admin get stats error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

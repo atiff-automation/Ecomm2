@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     // CENTRALIZED: Admin-only access
-    if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }
@@ -29,19 +32,21 @@ export async function POST(request: NextRequest) {
     }
 
     // SINGLE SOURCE OF TRUTH: Check if chat management channel is configured
-    const isConfigured = await simplifiedTelegramService.isChatManagementChannelConfigured();
+    const isConfigured =
+      await simplifiedTelegramService.isChatManagementChannelConfigured();
 
     if (!isConfigured) {
       return NextResponse.json({
         success: false,
-        message: 'Chat management channel not configured'
+        message: 'Chat management channel not configured',
       });
     }
 
     // DRY: Send test notification using centralized service
-    const success = await simplifiedTelegramService.sendChatManagementNotification(
-      '🧪 Test Chat Management Notification',
-      `This is a test notification for chat management channel.
+    const success =
+      await simplifiedTelegramService.sendChatManagementNotification(
+        '🧪 Test Chat Management Notification',
+        `This is a test notification for chat management channel.
 
 If you receive this message, your chat management notifications are working correctly! ✅
 
@@ -49,17 +54,17 @@ This channel will receive:
 • Chat backup completion/failure notifications
 • Data cleanup operation results
 • Chat system maintenance alerts`
-    );
+      );
 
     if (success) {
       return NextResponse.json({
         success: true,
-        message: 'Test notification sent successfully'
+        message: 'Test notification sent successfully',
       });
     } else {
       return NextResponse.json({
         success: false,
-        message: 'Failed to send test notification'
+        message: 'Failed to send test notification',
       });
     }
   } catch (error) {

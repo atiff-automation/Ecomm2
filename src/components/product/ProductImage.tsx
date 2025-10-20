@@ -26,13 +26,13 @@ export interface ProductImageProps {
 const aspectRatioClasses = {
   '1:1': 'aspect-square',
   '4:5': 'aspect-[4/5]',
-  '3:4': 'aspect-[3/4]'
+  '3:4': 'aspect-[3/4]',
 };
 
 const variantClasses = {
   default: 'rounded-lg',
   compact: 'rounded-md',
-  featured: 'rounded-xl'
+  featured: 'rounded-xl',
 };
 
 export function ProductImage({
@@ -42,7 +42,7 @@ export function ProductImage({
   aspectRatio = '1:1',
   showImageCount = false,
   onImageClick,
-  className
+  className,
 }: ProductImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,13 +52,15 @@ export function ProductImage({
 
   if (!primaryImage || imageError) {
     return (
-      <div className={cn(
-        'relative overflow-hidden bg-muted',
-        aspectRatioClasses[aspectRatio],
-        variantClasses[variant],
-        'flex items-center justify-center',
-        className
-      )}>
+      <div
+        className={cn(
+          'relative overflow-hidden bg-muted',
+          aspectRatioClasses[aspectRatio],
+          variantClasses[variant],
+          'flex items-center justify-center',
+          className
+        )}
+      >
         <div className="text-center text-muted-foreground">
           <div className="w-12 h-12 mx-auto mb-2 bg-muted-foreground/20 rounded-lg flex items-center justify-center">
             <svg
@@ -113,39 +115,45 @@ export function ProductImage({
       />
 
       {/* Loading State */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-muted animate-pulse" />
-      )}
+      {isLoading && <div className="absolute inset-0 bg-muted animate-pulse" />}
 
       {/* Hover Overlay */}
-      <div className={cn(
-        'absolute inset-0 bg-black/0 transition-all duration-300',
-        'group-hover:bg-black/10'
-      )} />
+      <div
+        className={cn(
+          'absolute inset-0 bg-black/0 transition-all duration-300',
+          'group-hover:bg-black/10'
+        )}
+      />
 
       {/* Image Count Indicator */}
       {showImageCount && hasMultipleImages && (
-        <div className={cn(
-          'absolute bottom-2 right-2',
-          'bg-black/60 backdrop-blur-sm text-white',
-          'text-xs px-2 py-1 rounded-md',
-          'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
-        )}>
+        <div
+          className={cn(
+            'absolute bottom-2 right-2',
+            'bg-black/60 backdrop-blur-sm text-white',
+            'text-xs px-2 py-1 rounded-md',
+            'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+          )}
+        >
           +{images.length - 1}
         </div>
       )}
 
       {/* Quick View Hint */}
       {onImageClick && (
-        <div className={cn(
-          'absolute inset-0 flex items-center justify-center',
-          'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
-        )}>
-          <div className={cn(
-            'bg-white/90 backdrop-blur-sm text-foreground',
-            'px-3 py-1.5 rounded-md text-sm font-medium',
-            'shadow-lg'
-          )}>
+        <div
+          className={cn(
+            'absolute inset-0 flex items-center justify-center',
+            'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+          )}
+        >
+          <div
+            className={cn(
+              'bg-white/90 backdrop-blur-sm text-foreground',
+              'px-3 py-1.5 rounded-md text-sm font-medium',
+              'shadow-lg'
+            )}
+          >
             Quick View
           </div>
         </div>
@@ -153,13 +161,15 @@ export function ProductImage({
 
       {/* Zoom Icon */}
       {onImageClick && (
-        <div className={cn(
-          'absolute top-2 right-2',
-          'w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full',
-          'flex items-center justify-center',
-          'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
-          'shadow-md'
-        )}>
+        <div
+          className={cn(
+            'absolute top-2 right-2',
+            'w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full',
+            'flex items-center justify-center',
+            'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
+            'shadow-md'
+          )}
+        >
           <svg
             className="w-4 h-4 text-foreground"
             fill="none"
@@ -180,11 +190,17 @@ export function ProductImage({
 }
 
 // Specialized image components
-export const CompactProductImage = ({ className, ...props }: Omit<ProductImageProps, 'variant'>) => (
+export const CompactProductImage = ({
+  className,
+  ...props
+}: Omit<ProductImageProps, 'variant'>) => (
   <ProductImage variant="compact" className={className} {...props} />
 );
 
-export const FeaturedProductImage = ({ className, ...props }: Omit<ProductImageProps, 'variant'>) => (
+export const FeaturedProductImage = ({
+  className,
+  ...props
+}: Omit<ProductImageProps, 'variant'>) => (
   <ProductImage variant="featured" className={className} {...props} />
 );
 

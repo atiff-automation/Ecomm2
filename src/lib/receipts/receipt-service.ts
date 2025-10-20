@@ -238,7 +238,10 @@ export class TaxReceiptService {
   /**
    * Generate HTML tax receipt using template system
    */
-  async generateTaxReceiptHTML(receiptData: TaxReceiptData, templateId?: string): Promise<string> {
+  async generateTaxReceiptHTML(
+    receiptData: TaxReceiptData,
+    templateId?: string
+  ): Promise<string> {
     try {
       // Get the template to use
       let template;
@@ -261,7 +264,7 @@ export class TaxReceiptService {
       return await templateEngine.renderTemplate(template, receiptData, {
         format: 'html',
         includeStyles: true,
-        inlineStyles: true
+        inlineStyles: true,
       });
     } catch (error) {
       console.error('Error generating receipt with template system:', error);
@@ -273,7 +276,9 @@ export class TaxReceiptService {
   /**
    * Legacy HTML tax receipt template (fallback)
    */
-  private async generateLegacyTaxReceiptHTML(receiptData: TaxReceiptData): Promise<string> {
+  private async generateLegacyTaxReceiptHTML(
+    receiptData: TaxReceiptData
+  ): Promise<string> {
     const { order, customer, orderItems, shippingAddress, taxBreakdown } =
       receiptData;
 

@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const { searchParams } = new URL(request.url);
     const includeExpired = searchParams.get('includeExpired') === 'true';

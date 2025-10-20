@@ -267,21 +267,31 @@ export class OrderStatusHandler {
       });
 
       if (!order) {
-        console.error('Order not found for airway bill failure notification:', orderId);
+        console.error(
+          'Order not found for airway bill failure notification:',
+          orderId
+        );
         return;
       }
 
       // Send admin notification via Telegram
-      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error';
+      const errorMessage =
+        typeof error === 'string' ? error : error?.message || 'Unknown error';
 
       await simplifiedTelegramService.sendMessage({
         message: `⚠️ AIRWAY BILL GENERATION FAILED\n\nOrder: #${order.orderNumber}\nError: ${errorMessage}\nStatus: ${order.status}\nPayment: ${order.paymentStatus}\n\nPlease check the order and retry manually if needed.`,
         channel: 'orders',
       });
 
-      console.log('✅ Airway bill failure notification sent for order:', order.orderNumber);
+      console.log(
+        '✅ Airway bill failure notification sent for order:',
+        order.orderNumber
+      );
     } catch (notificationError) {
-      console.error('❌ Failed to send airway bill failure notification:', notificationError);
+      console.error(
+        '❌ Failed to send airway bill failure notification:',
+        notificationError
+      );
     }
 
     // Create audit log for the failure
@@ -292,7 +302,10 @@ export class OrderStatusHandler {
           resource: 'ORDER',
           resourceId: orderId,
           details: {
-            error: typeof error === 'string' ? error : error?.message || 'Unknown error',
+            error:
+              typeof error === 'string'
+                ? error
+                : error?.message || 'Unknown error',
             timestamp: new Date().toISOString(),
           },
           ipAddress: 'system',
@@ -300,7 +313,10 @@ export class OrderStatusHandler {
         },
       });
     } catch (auditError) {
-      console.error('❌ Failed to create audit log for airway bill failure:', auditError);
+      console.error(
+        '❌ Failed to create audit log for airway bill failure:',
+        auditError
+      );
     }
   }
 }

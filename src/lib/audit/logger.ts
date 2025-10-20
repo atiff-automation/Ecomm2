@@ -37,7 +37,7 @@ export async function logAudit(data: AuditLogData): Promise<void> {
         Sentry.captureException(error, {
           tags: {
             severity: 'critical',
-            type: 'audit_log_failure'
+            type: 'audit_log_failure',
           },
           extra: data,
         });
@@ -83,7 +83,9 @@ async function processAuditQueue(): Promise<void> {
 
       // If we've failed too many times, stop and try again later
       if (failCount >= 3) {
-        console.error(`⚠️ Audit queue processing paused after ${failCount} failures`);
+        console.error(
+          `⚠️ Audit queue processing paused after ${failCount} failures`
+        );
         break;
       }
 

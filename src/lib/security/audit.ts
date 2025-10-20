@@ -36,10 +36,10 @@ export class AuditLogger {
             newValues: entry.newValues,
             ipAddress: entry.ipAddress,
             userAgent: entry.userAgent,
-            ...entry.details
+            ...entry.details,
           },
-          createdAt: entry.timestamp || new Date()
-        }
+          createdAt: entry.timestamp || new Date(),
+        },
       });
     } catch (error) {
       // Don't throw - audit logging failure shouldn't break the main operation
@@ -76,7 +76,7 @@ export class AuditLogger {
       ipAddress: ip,
       userAgent,
       timestamp: new Date(),
-      details: reason ? { changeReason: reason } : undefined
+      details: reason ? { changeReason: reason } : undefined,
     });
 
     // Also create business profile history entry
@@ -90,8 +90,8 @@ export class AuditLogger {
             newValues: this.sanitizeProfileData(newProfile),
             changedBy: userId,
             changeReason: reason,
-            createdAt: new Date()
-          }
+            createdAt: new Date(),
+          },
         });
       } catch (error) {
         console.error('Business profile history logging failed:', error);
@@ -127,7 +127,7 @@ export class AuditLogger {
       ipAddress: ip,
       userAgent,
       timestamp: new Date(),
-      details: reason ? { changeReason: reason } : undefined
+      details: reason ? { changeReason: reason } : undefined,
     });
   }
 
@@ -158,7 +158,7 @@ export class AuditLogger {
       newValues,
       ipAddress: ip,
       userAgent,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -190,8 +190,8 @@ export class AuditLogger {
       timestamp: new Date(),
       details: {
         targetUserId,
-        ...details
-      }
+        ...details,
+      },
     });
   }
 
@@ -216,18 +216,28 @@ export class AuditLogger {
       dateFrom,
       dateTo,
       page = 1,
-      limit = 50
+      limit = 50,
     } = filters;
 
     const where: any = {};
 
-    if (userId) where.userId = userId;
-    if (resource) where.resource = resource;
-    if (action) where.action = action;
+    if (userId) {
+      where.userId = userId;
+    }
+    if (resource) {
+      where.resource = resource;
+    }
+    if (action) {
+      where.action = action;
+    }
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt.gte = dateFrom;
-      if (dateTo) where.createdAt.lte = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     const [logs, total] = await Promise.all([
@@ -240,15 +250,15 @@ export class AuditLogger {
               firstName: true,
               lastName: true,
               email: true,
-              role: true
-            }
-          }
+              role: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
       }),
-      prisma.auditLog.count({ where })
+      prisma.auditLog.count({ where }),
     ]);
 
     return {
@@ -256,7 +266,7 @@ export class AuditLogger {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -280,7 +290,9 @@ export class AuditLogger {
    * @returns Sanitized profile data
    */
   private static sanitizeProfileData(profile: any): any {
-    if (!profile) return null;
+    if (!profile) {
+      return null;
+    }
 
     const sanitized = { ...profile };
 
@@ -288,7 +300,8 @@ export class AuditLogger {
     if (sanitized.bankAccountNumber) {
       const accountNumber = sanitized.bankAccountNumber;
       if (typeof accountNumber === 'string' && accountNumber.length > 4) {
-        sanitized.bankAccountNumber = accountNumber.slice(0, 4) + '*'.repeat(accountNumber.length - 4);
+        sanitized.bankAccountNumber =
+          accountNumber.slice(0, 4) + '*'.repeat(accountNumber.length - 4);
       }
     }
 
@@ -311,10 +324,10 @@ export class AuditLogger {
         businessProfile: {
           select: {
             id: true,
-            legalName: true
-          }
-        }
-      }
+            legalName: true,
+          },
+        },
+      },
     });
   }
 }

@@ -20,9 +20,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react';
+import {
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface StatusUpdateDialogProps {
@@ -36,16 +48,23 @@ export function StatusUpdateDialog({
   application,
   open,
   onOpenChange,
-  onStatusUpdate
+  onStatusUpdate,
 }: StatusUpdateDialogProps) {
-  const [status, setStatus] = useState<AgentApplicationStatus>(application.status);
+  const [status, setStatus] = useState<AgentApplicationStatus>(
+    application.status
+  );
   const [decision, setDecision] = useState<ApplicationDecision | ''>('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   const statusOptions = [
     { value: 'SUBMITTED', label: 'Dihantar', icon: Clock, color: 'blue' },
-    { value: 'UNDER_REVIEW', label: 'Dalam Semakan', icon: AlertTriangle, color: 'yellow' },
+    {
+      value: 'UNDER_REVIEW',
+      label: 'Dalam Semakan',
+      icon: AlertTriangle,
+      color: 'yellow',
+    },
     { value: 'APPROVED', label: 'Diterima', icon: CheckCircle, color: 'green' },
     { value: 'REJECTED', label: 'Ditolak', icon: XCircle, color: 'red' },
   ];
@@ -53,7 +72,11 @@ export function StatusUpdateDialog({
   const decisionOptions = [
     { value: 'APPROVED', label: 'Diluluskan', color: 'green' },
     { value: 'REJECTED', label: 'Ditolak', color: 'red' },
-    { value: 'NEEDS_MORE_INFO', label: 'Perlukan Maklumat Tambahan', color: 'yellow' },
+    {
+      value: 'NEEDS_MORE_INFO',
+      label: 'Perlukan Maklumat Tambahan',
+      color: 'yellow',
+    },
   ];
 
   const handleSubmit = async () => {
@@ -64,17 +87,20 @@ export function StatusUpdateDialog({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/agent-applications/${application.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status,
-          reviewerDecision: decision || undefined,
-          adminNotes: notes || undefined,
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/agent-applications/${application.id}/status`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status,
+            reviewerDecision: decision || undefined,
+            adminNotes: notes || undefined,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -89,10 +115,11 @@ export function StatusUpdateDialog({
       setStatus(application.status);
       setDecision('');
       setNotes('');
-
     } catch (error) {
       console.error('Status update error:', error);
-      toast.error(error instanceof Error ? error.message : 'Ralat sistem berlaku');
+      toast.error(
+        error instanceof Error ? error.message : 'Ralat sistem berlaku'
+      );
     } finally {
       setLoading(false);
     }
@@ -106,7 +133,9 @@ export function StatusUpdateDialog({
 
   const getStatusIcon = (statusValue: AgentApplicationStatus) => {
     const option = statusOptions.find(opt => opt.value === statusValue);
-    if (!option) return null;
+    if (!option) {
+      return null;
+    }
     const Icon = option.icon;
     return <Icon className="w-4 h-4" />;
   };
@@ -122,19 +151,25 @@ export function StatusUpdateDialog({
         <DialogHeader>
           <DialogTitle>Kemaskini Status Permohonan</DialogTitle>
           <DialogDescription>
-            Kemaskini status dan tambah nota untuk permohonan {application.fullName}
+            Kemaskini status dan tambah nota untuk permohonan{' '}
+            {application.fullName}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Current Status */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <Label className="text-sm font-medium text-gray-700">Status Semasa</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              Status Semasa
+            </Label>
             <div className="mt-2">
-              <Badge className={`bg-${getStatusColor(application.status)}-100 text-${getStatusColor(application.status)}-700`}>
+              <Badge
+                className={`bg-${getStatusColor(application.status)}-100 text-${getStatusColor(application.status)}-700`}
+              >
                 {getStatusIcon(application.status)}
                 <span className="ml-2">
-                  {statusOptions.find(opt => opt.value === application.status)?.label || application.status}
+                  {statusOptions.find(opt => opt.value === application.status)
+                    ?.label || application.status}
                 </span>
               </Badge>
             </div>
@@ -149,12 +184,17 @@ export function StatusUpdateDialog({
           {/* New Status Selection */}
           <div className="space-y-2">
             <Label htmlFor="status">Status Baru *</Label>
-            <Select value={status} onValueChange={(value) => setStatus(value as AgentApplicationStatus)}>
+            <Select
+              value={status}
+              onValueChange={value =>
+                setStatus(value as AgentApplicationStatus)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih status baru" />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((option) => {
+                {statusOptions.map(option => {
                   const Icon = option.icon;
                   return (
                     <SelectItem key={option.value} value={option.value}>
@@ -178,9 +218,11 @@ export function StatusUpdateDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Tiada keputusan</SelectItem>
-                {decisionOptions.map((option) => (
+                {decisionOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
-                    <span className={`text-${option.color}-700`}>{option.label}</span>
+                    <span className={`text-${option.color}-700`}>
+                      {option.label}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -194,25 +236,33 @@ export function StatusUpdateDialog({
               id="notes"
               placeholder="Tambah nota atau sebab untuk perubahan status..."
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               rows={4}
               className="resize-none"
             />
             <p className="text-xs text-gray-500">
-              Nota ini akan dihantar kepada pemohon melalui email dan disimpan dalam sistem
+              Nota ini akan dihantar kepada pemohon melalui email dan disimpan
+              dalam sistem
             </p>
           </div>
 
           {/* Application Summary */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">Ringkasan Permohonan</h4>
+            <h4 className="font-medium text-blue-900 mb-2">
+              Ringkasan Permohonan
+            </h4>
             <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
               <div>Email: {application.email}</div>
               <div>Telefon: {application.phoneNumber}</div>
               <div>Umur: {application.age}</div>
               <div>IC: {application.icNumber}</div>
-              <div>Pengalaman Perniagaan: {application.hasBusinessExp ? 'Ya' : 'Tidak'}</div>
-              <div>Pengalaman JRM: {application.hasJrmExp ? 'Ya' : 'Tidak'}</div>
+              <div>
+                Pengalaman Perniagaan:{' '}
+                {application.hasBusinessExp ? 'Ya' : 'Tidak'}
+              </div>
+              <div>
+                Pengalaman JRM: {application.hasJrmExp ? 'Ya' : 'Tidak'}
+              </div>
             </div>
           </div>
 
@@ -226,8 +276,7 @@ export function StatusUpdateDialog({
                   <p>
                     {status === 'APPROVED'
                       ? 'Memluluskan permohonan ini akan menghantar email pengesahan kepada pemohon dan membolehkan mereka memulakan proses orientasi.'
-                      : 'Menolak permohonan ini akan menghantar email penolakan kepada pemohon. Pastikan anda memberi sebab yang jelas dalam nota admin.'
-                    }
+                      : 'Menolak permohonan ini akan menghantar email penolakan kepada pemohon. Pastikan anda memberi sebab yang jelas dalam nota admin.'}
                   </p>
                 </div>
               </div>
@@ -239,7 +288,11 @@ export function StatusUpdateDialog({
           <Button variant="outline" onClick={handleReset} disabled={loading}>
             Reset
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
             Batal
           </Button>
           <Button onClick={handleSubmit} disabled={loading || !status}>

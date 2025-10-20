@@ -13,7 +13,7 @@ import {
   imagePatterns,
   responsiveButtons,
   formPatterns,
-  utils
+  utils,
 } from '@/lib/design-tokens';
 
 // Responsive Typography Component
@@ -34,10 +34,7 @@ export const ResponsiveHeading: React.FC<ResponsiveHeadingProps> = ({
   const responsiveClass = responsiveTypography[level];
 
   return (
-    <Component
-      className={cn(responsiveClass, className)}
-      {...props}
-    >
+    <Component className={cn(responsiveClass, className)} {...props}>
       {children}
     </Component>
   );
@@ -53,15 +50,11 @@ interface ResponsiveTextProps {
 export const ResponsiveText: React.FC<ResponsiveTextProps> = ({
   variant = 'body',
   children,
-  className
+  className,
 }) => {
   const responsiveClass = responsiveTypography[variant];
 
-  return (
-    <p className={cn(responsiveClass, className)}>
-      {children}
-    </p>
-  );
+  return <p className={cn(responsiveClass, className)}>{children}</p>;
 };
 
 // Responsive Grid Component
@@ -74,15 +67,11 @@ interface ResponsiveGridProps {
 export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   pattern,
   children,
-  className
+  className,
 }) => {
   const gridClass = gridPatterns[pattern];
 
-  return (
-    <div className={cn(gridClass, className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(gridClass, className)}>{children}</div>;
 };
 
 // Responsive Container Component
@@ -95,12 +84,19 @@ interface ResponsiveContainerProps {
 export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   children,
   className,
-  maxWidth = '2xl'
+  maxWidth = '2xl',
 }) => {
   const maxWidthClass = maxWidth === 'full' ? 'w-full' : `max-w-${maxWidth}`;
 
   return (
-    <div className={cn('mx-auto', responsiveSpacing.container, maxWidthClass, className)}>
+    <div
+      className={cn(
+        'mx-auto',
+        responsiveSpacing.container,
+        maxWidthClass,
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -116,17 +112,16 @@ interface ResponsiveSectionProps {
 export const ResponsiveSection: React.FC<ResponsiveSectionProps> = ({
   children,
   className,
-  spacing = 'normal'
+  spacing = 'normal',
 }) => {
-  const spacingClass = spacing === 'tight' ? 'py-6 sm:py-8 lg:py-12' :
-                      spacing === 'wide' ? 'py-12 sm:py-16 lg:py-24' :
-                      responsiveSpacing.section;
+  const spacingClass =
+    spacing === 'tight'
+      ? 'py-6 sm:py-8 lg:py-12'
+      : spacing === 'wide'
+        ? 'py-12 sm:py-16 lg:py-24'
+        : responsiveSpacing.section;
 
-  return (
-    <section className={cn(spacingClass, className)}>
-      {children}
-    </section>
-  );
+  return <section className={cn(spacingClass, className)}>{children}</section>;
 };
 
 // Responsive Image Component
@@ -141,7 +136,7 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   src,
   alt,
   pattern,
-  className
+  className,
 }) => {
   const imageClass = imagePatterns[pattern];
 
@@ -176,10 +171,7 @@ export const ResponsiveButton: React.FC<ResponsiveButtonProps> = ({
   const mobileClass = fullWidthOnMobile ? 'w-full sm:w-auto' : '';
 
   return (
-    <button
-      className={cn(buttonClass, mobileClass, className)}
-      {...props}
-    >
+    <button className={cn(buttonClass, mobileClass, className)} {...props}>
       {children}
     </button>
   );
@@ -195,17 +187,16 @@ interface ResponsiveStackProps {
 export const ResponsiveStack: React.FC<ResponsiveStackProps> = ({
   spacing = 'normal',
   children,
-  className
+  className,
 }) => {
-  const spacingClass = spacing === 'tight' ? layoutPatterns.stackTight :
-                      spacing === 'wide' ? layoutPatterns.stackWide :
-                      layoutPatterns.stack;
+  const spacingClass =
+    spacing === 'tight'
+      ? layoutPatterns.stackTight
+      : spacing === 'wide'
+        ? layoutPatterns.stackWide
+        : layoutPatterns.stack;
 
-  return (
-    <div className={cn(spacingClass, className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(spacingClass, className)}>{children}</div>;
 };
 
 // Responsive Flex Component
@@ -226,23 +217,39 @@ export const ResponsiveFlex: React.FC<ResponsiveFlexProps> = ({
   wrap = false,
   gap = 'md',
   children,
-  className
+  className,
 }) => {
-  const directionClass = direction === 'row' ? layoutPatterns.flexRow :
-                        direction === 'col' ? layoutPatterns.flexCol :
-                        `flex flex-${direction}`;
+  const directionClass =
+    direction === 'row'
+      ? layoutPatterns.flexRow
+      : direction === 'col'
+        ? layoutPatterns.flexCol
+        : `flex flex-${direction}`;
 
   const alignClass = `items-${align}`;
-  const justifyClass = justify === 'between' ? 'justify-between' :
-                      justify === 'around' ? 'justify-around' :
-                      justify === 'evenly' ? 'justify-evenly' :
-                      `justify-${justify}`;
+  const justifyClass =
+    justify === 'between'
+      ? 'justify-between'
+      : justify === 'around'
+        ? 'justify-around'
+        : justify === 'evenly'
+          ? 'justify-evenly'
+          : `justify-${justify}`;
 
   const wrapClass = wrap ? 'flex-wrap' : '';
   const gapClass = responsiveSpacing.gap[gap];
 
   return (
-    <div className={cn(directionClass, alignClass, justifyClass, wrapClass, gapClass, className)}>
+    <div
+      className={cn(
+        directionClass,
+        alignClass,
+        justifyClass,
+        wrapClass,
+        gapClass,
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -260,16 +267,28 @@ export const ResponsiveCard: React.FC<ResponsiveCardProps> = ({
   children,
   className,
   padding = 'normal',
-  shadow = true
+  shadow = true,
 }) => {
-  const paddingClass = padding === 'tight' ? 'p-3 sm:p-4' :
-                      padding === 'wide' ? responsiveSpacing.component :
-                      responsiveSpacing.card;
+  const paddingClass =
+    padding === 'tight'
+      ? 'p-3 sm:p-4'
+      : padding === 'wide'
+        ? responsiveSpacing.component
+        : responsiveSpacing.card;
 
-  const shadowClass = shadow ? 'shadow-sm hover:shadow-md transition-shadow' : '';
+  const shadowClass = shadow
+    ? 'shadow-sm hover:shadow-md transition-shadow'
+    : '';
 
   return (
-    <div className={cn('bg-white rounded-lg border', paddingClass, shadowClass, className)}>
+    <div
+      className={cn(
+        'bg-white rounded-lg border',
+        paddingClass,
+        shadowClass,
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -285,7 +304,7 @@ interface ResponsiveTableProps {
 export const ResponsiveTableWrapper: React.FC<ResponsiveTableProps> = ({
   children,
   mobileBreakpoint = 'lg',
-  className
+  className,
 }) => {
   const hideClass = `hidden ${mobileBreakpoint}:block`;
 
@@ -293,9 +312,7 @@ export const ResponsiveTableWrapper: React.FC<ResponsiveTableProps> = ({
     <div className={cn('w-full', className)}>
       {/* Desktop Table */}
       <div className={hideClass}>
-        <div className="overflow-x-auto">
-          {children}
-        </div>
+        <div className="overflow-x-auto">{children}</div>
       </div>
 
       {/* Mobile Card View */}
@@ -323,17 +340,20 @@ export const ResponsiveFormField: React.FC<ResponsiveFormFieldProps> = ({
   children,
   required = false,
   error,
-  className
+  className,
 }) => {
   return (
     <div className={cn(formPatterns.field, className)}>
-      <label className={cn(formPatterns.label, required && 'after:content-["*"] after:text-red-500 after:ml-1')}>
+      <label
+        className={cn(
+          formPatterns.label,
+          required && 'after:content-["*"] after:text-red-500 after:ml-1'
+        )}
+      >
         {label}
       </label>
       {children}
-      {error && (
-        <p className="text-red-500 text-xs sm:text-sm mt-1">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-xs sm:text-sm mt-1">{error}</p>}
     </div>
   );
 };
@@ -355,29 +375,29 @@ export const ResponsiveInput: React.FC<ResponsiveInputProps> = ({
 }) => {
   return (
     <input
-      className={cn(formPatterns.input, 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500', className)}
+      className={cn(
+        formPatterns.input,
+        'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+        className
+      )}
       {...props}
     />
   );
 };
 
 // Mobile-only and Desktop-only visibility components
-export const MobileOnly: React.FC<{ children: React.ReactNode; breakpoint?: 'sm' | 'md' | 'lg' }> = ({
-  children,
-  breakpoint = 'lg'
-}) => (
-  <div className={`${breakpoint}:hidden`}>
-    {children}
-  </div>
+export const MobileOnly: React.FC<{
+  children: React.ReactNode;
+  breakpoint?: 'sm' | 'md' | 'lg';
+}> = ({ children, breakpoint = 'lg' }) => (
+  <div className={`${breakpoint}:hidden`}>{children}</div>
 );
 
-export const DesktopOnly: React.FC<{ children: React.ReactNode; breakpoint?: 'sm' | 'md' | 'lg' }> = ({
-  children,
-  breakpoint = 'lg'
-}) => (
-  <div className={`hidden ${breakpoint}:block`}>
-    {children}
-  </div>
+export const DesktopOnly: React.FC<{
+  children: React.ReactNode;
+  breakpoint?: 'sm' | 'md' | 'lg';
+}> = ({ children, breakpoint = 'lg' }) => (
+  <div className={`hidden ${breakpoint}:block`}>{children}</div>
 );
 
 // Export utility hook for responsive utilities

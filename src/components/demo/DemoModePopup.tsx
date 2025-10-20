@@ -25,7 +25,7 @@ export default function DemoModePopup({
   isVisible,
   onClose,
   type,
-  onHomeRedirect
+  onHomeRedirect,
 }: DemoModePopupProps) {
   const router = useRouter();
 
@@ -67,7 +67,9 @@ export default function DemoModePopup({
   };
 
   // Don't render if not visible
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const message = DEMO_CONFIG.messages[type];
   const isCheckoutType = type === 'checkout';
@@ -107,7 +109,10 @@ export default function DemoModePopup({
               </div>
             )}
           </div>
-          <CardTitle id="demo-popup-title" className="text-xl font-bold text-gray-900">
+          <CardTitle
+            id="demo-popup-title"
+            className="text-xl font-bold text-gray-900"
+          >
             {isCheckoutType ? 'Coming Soon!' : 'Feature Coming Soon!'}
           </CardTitle>
         </CardHeader>
@@ -144,8 +149,12 @@ export default function DemoModePopup({
           {/* Demo Notice */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p className="text-xs text-yellow-800">
-              <strong>Demo Mode:</strong> You can browse products, add items to cart, and explore the website.
-              {isCheckoutType ? ' Orders and payments' : ' Account registration'} will be available soon!
+              <strong>Demo Mode:</strong> You can browse products, add items to
+              cart, and explore the website.
+              {isCheckoutType
+                ? ' Orders and payments'
+                : ' Account registration'}{' '}
+              will be available soon!
             </p>
           </div>
         </CardContent>
@@ -174,6 +183,6 @@ export function useDemoModePopup() {
     isVisible,
     popupType,
     showPopup,
-    hidePopup
+    hidePopup,
   };
 }

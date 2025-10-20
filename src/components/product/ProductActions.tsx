@@ -17,7 +17,7 @@ import {
   Plus,
   Minus,
   Check,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 export interface ProductActionsProps {
@@ -47,32 +47,32 @@ const variantClasses = {
     container: 'gap-3',
     primary: 'h-10 px-4 text-sm',
     secondary: 'h-10 w-10',
-    quantity: 'h-8 w-8'
+    quantity: 'h-8 w-8',
   },
   compact: {
     container: 'gap-2',
     primary: 'h-8 px-3 text-xs',
     secondary: 'h-8 w-8',
-    quantity: 'h-6 w-6'
+    quantity: 'h-6 w-6',
   },
   featured: {
     container: 'gap-4',
     primary: 'h-12 px-6 text-base',
     secondary: 'h-12 w-12',
-    quantity: 'h-10 w-10'
+    quantity: 'h-10 w-10',
   },
   minimal: {
     container: 'gap-2',
     primary: 'h-9 px-3 text-sm',
     secondary: 'h-9 w-9',
-    quantity: 'h-7 w-7'
-  }
+    quantity: 'h-7 w-7',
+  },
 };
 
 const layoutClasses = {
   horizontal: 'flex flex-row items-center',
   vertical: 'flex flex-col',
-  grid: 'grid grid-cols-2 lg:grid-cols-1'
+  grid: 'grid grid-cols-2 lg:grid-cols-1',
 };
 
 export function ProductActions({
@@ -94,7 +94,7 @@ export function ProductActions({
   onQuickView,
   onToggleCompare,
   onShare,
-  className
+  className,
 }: ProductActionsProps) {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +105,9 @@ export function ProductActions({
   const maxQty = Math.min(maxQuantity, stock);
 
   const handleAddToCart = async () => {
-    if (isOutOfStock || isLoading) return;
+    if (isOutOfStock || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('addToCart');
@@ -119,7 +121,9 @@ export function ProductActions({
   };
 
   const handleToggleWishlist = async () => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('wishlist');
@@ -137,7 +141,9 @@ export function ProductActions({
   };
 
   const handleToggleCompare = async () => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setLoadingAction('compare');
@@ -179,10 +185,12 @@ export function ProductActions({
         <Minus className="h-3 w-3" />
       </Button>
 
-      <span className={cn(
-        'min-w-8 text-center text-sm font-medium',
-        variant === 'compact' && 'text-xs min-w-6'
-      )}>
+      <span
+        className={cn(
+          'min-w-8 text-center text-sm font-medium',
+          variant === 'compact' && 'text-xs min-w-6'
+        )}
+      >
         {quantity}
       </span>
 
@@ -217,10 +225,7 @@ export function ProductActions({
           {loadingAction === 'wishlist' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Heart className={cn(
-              'h-4 w-4',
-              isInWishlist && 'fill-current'
-            )} />
+            <Heart className={cn('h-4 w-4', isInWishlist && 'fill-current')} />
           )}
         </Button>
       )}
@@ -273,22 +278,18 @@ export function ProductActions({
   );
 
   return (
-    <div className={cn(
-      layoutClasses[layout],
-      classes.container,
-      className
-    )}>
+    <div className={cn(layoutClasses[layout], classes.container, className)}>
       {/* Primary Action - Add to Cart */}
-      <div className={cn(
-        'flex items-center gap-2',
-        layout === 'vertical' && 'w-full'
-      )}>
-        {showQuantity && !isOutOfStock && (
-          <QuantitySelector />
+      <div
+        className={cn(
+          'flex items-center gap-2',
+          layout === 'vertical' && 'w-full'
         )}
+      >
+        {showQuantity && !isOutOfStock && <QuantitySelector />}
 
         <Button
-          variant={isInCart ? "secondary" : "default"}
+          variant={isInCart ? 'secondary' : 'default'}
           size="sm"
           className={cn(
             classes.primary,
@@ -301,20 +302,15 @@ export function ProductActions({
           {loadingAction === 'addToCart' && (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           )}
-          {isInCart && !isLoading && (
-            <Check className="h-4 w-4 mr-2" />
-          )}
-          {!isInCart && !isLoading && (
-            <ShoppingCart className="h-4 w-4 mr-2" />
-          )}
+          {isInCart && !isLoading && <Check className="h-4 w-4 mr-2" />}
+          {!isInCart && !isLoading && <ShoppingCart className="h-4 w-4 mr-2" />}
 
           <span className="truncate">
             {isOutOfStock
               ? 'Out of Stock'
               : isInCart
                 ? 'In Cart'
-                : 'Add to Cart'
-            }
+                : 'Add to Cart'}
           </span>
         </Button>
       </div>
@@ -340,12 +336,14 @@ export function ProductActions({
 
       {/* Stock indicator for low stock */}
       {stock > 0 && stock <= 3 && (
-        <div className={cn(
-          'text-xs text-destructive font-medium',
-          layout === 'horizontal' && 'ml-auto',
-          layout === 'vertical' && 'text-center',
-          layout === 'grid' && 'col-span-2 text-center'
-        )}>
+        <div
+          className={cn(
+            'text-xs text-destructive font-medium',
+            layout === 'horizontal' && 'ml-auto',
+            layout === 'vertical' && 'text-center',
+            layout === 'grid' && 'col-span-2 text-center'
+          )}
+        >
           Only {stock} left!
         </div>
       )}
@@ -354,15 +352,24 @@ export function ProductActions({
 }
 
 // Specialized action components
-export const CompactProductActions = ({ className, ...props }: Omit<ProductActionsProps, 'variant'>) => (
+export const CompactProductActions = ({
+  className,
+  ...props
+}: Omit<ProductActionsProps, 'variant'>) => (
   <ProductActions variant="compact" className={className} {...props} />
 );
 
-export const FeaturedProductActions = ({ className, ...props }: Omit<ProductActionsProps, 'variant'>) => (
+export const FeaturedProductActions = ({
+  className,
+  ...props
+}: Omit<ProductActionsProps, 'variant'>) => (
   <ProductActions variant="featured" className={className} {...props} />
 );
 
-export const MinimalProductActions = ({ className, ...props }: Omit<ProductActionsProps, 'variant'>) => (
+export const MinimalProductActions = ({
+  className,
+  ...props
+}: Omit<ProductActionsProps, 'variant'>) => (
   <ProductActions
     variant="minimal"
     showQuantity={false}
@@ -387,12 +394,14 @@ export function QuickAddButton({
   isInCart = false,
   isOutOfStock = false,
   onAddToCart,
-  className
+  className,
 }: QuickAddButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
-    if (isOutOfStock || isLoading) return;
+    if (isOutOfStock || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -404,7 +413,7 @@ export function QuickAddButton({
 
   return (
     <Button
-      variant={isInCart ? "secondary" : "default"}
+      variant={isInCart ? 'secondary' : 'default'}
       size="sm"
       className={cn(
         'h-8 w-8 p-0 rounded-full',
@@ -414,7 +423,9 @@ export function QuickAddButton({
       )}
       onClick={handleClick}
       disabled={isOutOfStock || isLoading}
-      title={isOutOfStock ? 'Out of stock' : isInCart ? 'In cart' : 'Add to cart'}
+      title={
+        isOutOfStock ? 'Out of stock' : isInCart ? 'In cart' : 'Add to cart'
+      }
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" />

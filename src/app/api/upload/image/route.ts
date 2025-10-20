@@ -48,8 +48,10 @@ export async function POST(request: NextRequest) {
 
     // Parse upload options from form data
     const useLegacyMode = formData.get('legacy') === 'true';
-    const customSizes = formData.get('sizes')?.toString().split(',') || undefined;
-    const customFormats = formData.get('formats')?.toString().split(',') || undefined;
+    const customSizes =
+      formData.get('sizes')?.toString().split(',') || undefined;
+    const customFormats =
+      formData.get('formats')?.toString().split(',') || undefined;
 
     const options: ImageProcessingOptions = {
       sizes: customSizes || ['small', 'medium', 'large', 'hero'],

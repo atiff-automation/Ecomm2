@@ -26,7 +26,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     // Check admin authentication
     const session = await getServerSession();
-    if (!session?.user?.role || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    if (
+      !session?.user?.role ||
+      !['ADMIN', 'SUPERADMIN'].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: 'Akses tidak dibenarkan' },
         { status: 403 }
@@ -53,8 +56,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           error: 'Data tidak sah',
           details: validationResult.error.errors.map(err => ({
             field: err.path.join('.'),
-            message: err.message
-          }))
+            message: err.message,
+          })),
         },
         { status: 400 }
       );
@@ -68,24 +71,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({
-      message: 'Status permohonan telah dikemaskini'
+      message: 'Status permohonan telah dikemaskini',
     });
-
   } catch (error) {
     console.error('Admin update status error:', error);
 
     // Handle specific errors
     if (error instanceof Error && error.message.includes('tidak dijumpai')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
-    const errorMessage = error instanceof Error ? error.message : 'Ralat sistem berlaku';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Ralat sistem berlaku';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -104,7 +104,9 @@ export async function GET(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const product = await prisma.product.findUnique({
       where: { id: params.id },
@@ -159,7 +161,9 @@ export async function PUT(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     const body = await request.json();
     const productData = updateProductSchema.parse(body);
@@ -402,7 +406,9 @@ export async function DELETE(
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
-    if (error) return error;
+    if (error) {
+      return error;
+    }
 
     // Check if product exists
     const product = await prisma.product.findUnique({

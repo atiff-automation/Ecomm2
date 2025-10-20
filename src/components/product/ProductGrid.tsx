@@ -14,7 +14,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Container, Grid } from '@/components/ui/layout';
-import { ProductCard, type ProductCardProps } from '@/components/product/ProductCard';
+import {
+  ProductCard,
+  type ProductCardProps,
+} from '@/components/product/ProductCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import {
   Grid3X3,
@@ -32,7 +35,7 @@ import {
   MoreHorizontal,
   Eye,
   Heart,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 
 export interface ProductGridFilters {
@@ -94,7 +97,8 @@ export interface ProductGridProps {
 
 // Loading Skeleton Components
 function ProductCardSkeleton({ variant = 'default' }: { variant?: string }) {
-  const height = variant === 'compact' ? 'h-64' : variant === 'featured' ? 'h-80' : 'h-72';
+  const height =
+    variant === 'compact' ? 'h-64' : variant === 'featured' ? 'h-80' : 'h-72';
 
   return (
     <Card className={cn('overflow-hidden', height)}>
@@ -115,18 +119,20 @@ function ProductCardSkeleton({ variant = 'default' }: { variant?: string }) {
 
 function ProductGridSkeleton({
   columns = { mobile: 2, tablet: 3, desktop: 4 },
-  count = 8
+  count = 8,
 }: {
   columns?: { mobile: number; tablet: number; desktop: number };
   count?: number;
 }) {
   return (
-    <div className={cn(
-      'grid gap-6',
-      `grid-cols-${columns.mobile}`,
-      `md:grid-cols-${columns.tablet}`,
-      `lg:grid-cols-${columns.desktop}`
-    )}>
+    <div
+      className={cn(
+        'grid gap-6',
+        `grid-cols-${columns.mobile}`,
+        `md:grid-cols-${columns.tablet}`,
+        `lg:grid-cols-${columns.desktop}`
+      )}
+    >
       {Array.from({ length: count }).map((_, index) => (
         <ProductCardSkeleton key={index} />
       ))}
@@ -136,12 +142,12 @@ function ProductGridSkeleton({
 
 // Empty State Component
 function EmptyState({
-  title = "No products found",
+  title = 'No products found',
   description = "Try adjusting your filters or search terms to find what you're looking for.",
   icon: IconComponent = ShoppingBag,
   action,
   filters,
-  onClearFilters
+  onClearFilters,
 }: {
   title?: string;
   description?: string;
@@ -153,10 +159,14 @@ function EmptyState({
   filters?: ProductGridFilters;
   onClearFilters?: () => void;
 }) {
-  const hasActiveFilters = filters && Object.values(filters).some(value =>
-    value !== undefined && value !== null &&
-    (Array.isArray(value) ? value.length > 0 : true)
-  );
+  const hasActiveFilters =
+    filters &&
+    Object.values(filters).some(
+      value =>
+        value !== undefined &&
+        value !== null &&
+        (Array.isArray(value) ? value.length > 0 : true)
+    );
 
   return (
     <Card className="p-12">
@@ -167,7 +177,9 @@ function EmptyState({
 
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">{description}</p>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            {description}
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -178,11 +190,7 @@ function EmptyState({
             </Button>
           )}
 
-          {action && (
-            <Button onClick={action.onClick}>
-              {action.label}
-            </Button>
-          )}
+          {action && <Button onClick={action.onClick}>{action.label}</Button>}
         </div>
       </CardContent>
     </Card>
@@ -192,7 +200,7 @@ function EmptyState({
 // Error State Component
 function ErrorState({
   error,
-  onRetry
+  onRetry,
 }: {
   error: string;
   onRetry?: () => void;
@@ -205,7 +213,9 @@ function ErrorState({
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-red-900">Something went wrong</h3>
+          <h3 className="text-lg font-semibold text-red-900">
+            Something went wrong
+          </h3>
           <p className="text-red-700 max-w-md mx-auto">{error}</p>
         </div>
 
@@ -223,7 +233,7 @@ function ErrorState({
 // View Toggle Component
 function ViewToggle({
   viewMode,
-  onViewChange
+  onViewChange,
 }: {
   viewMode: 'grid' | 'list';
   onViewChange: (mode: 'grid' | 'list') => void;
@@ -257,17 +267,21 @@ function StatsBar({
   total,
   showing,
   loading,
-  filters
+  filters,
 }: {
   total: number;
   showing: number;
   loading: boolean;
   filters?: ProductGridFilters;
 }) {
-  const hasActiveFilters = filters && Object.values(filters).some(value =>
-    value !== undefined && value !== null &&
-    (Array.isArray(value) ? value.length > 0 : true)
-  );
+  const hasActiveFilters =
+    filters &&
+    Object.values(filters).some(
+      value =>
+        value !== undefined &&
+        value !== null &&
+        (Array.isArray(value) ? value.length > 0 : true)
+    );
 
   return (
     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -279,7 +293,8 @@ function StatsBar({
           </div>
         ) : (
           <span>
-            Showing {showing.toLocaleString()} of {total.toLocaleString()} products
+            Showing {showing.toLocaleString()} of {total.toLocaleString()}{' '}
+            products
             {hasActiveFilters && ' (filtered)'}
           </span>
         )}
@@ -330,7 +345,7 @@ export function ProductGrid({
   onAddToCart,
   onToggleWishlist,
   onQuickView,
-  className
+  className,
 }: ProductGridProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialViewMode);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -363,7 +378,9 @@ export function ProductGrid({
 
   // Render section header if provided
   const renderHeader = () => {
-    if (!title && !subtitle && !description) return null;
+    if (!title && !subtitle && !description) {
+      return null;
+    }
 
     return (
       <SectionHeader
@@ -378,7 +395,9 @@ export function ProductGrid({
 
   // Render toolbar
   const renderToolbar = () => {
-    if (!showViewToggle && !showSorting && !onRefresh) return null;
+    if (!showViewToggle && !showSorting && !onRefresh) {
+      return null;
+    }
 
     return (
       <div className="flex items-center justify-between mb-6">
@@ -401,19 +420,15 @@ export function ProductGrid({
               onClick={handleRefresh}
               disabled={isRefreshing}
             >
-              <RefreshCw className={cn(
-                'h-4 w-4',
-                isRefreshing && 'animate-spin'
-              )} />
+              <RefreshCw
+                className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+              />
               <span className="sr-only">Refresh</span>
             </Button>
           )}
 
           {showViewToggle && (
-            <ViewToggle
-              viewMode={viewMode}
-              onViewChange={setViewMode}
-            />
+            <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
           )}
         </div>
       </div>
@@ -435,10 +450,14 @@ export function ProductGrid({
         <EmptyState
           filters={filters}
           onClearFilters={handleClearFilters}
-          action={onRefresh ? {
-            label: 'Refresh',
-            onClick: handleRefresh
-          } : undefined}
+          action={
+            onRefresh
+              ? {
+                  label: 'Refresh',
+                  onClick: handleRefresh,
+                }
+              : undefined
+          }
         />
       );
     }
@@ -446,7 +465,7 @@ export function ProductGrid({
     if (viewMode === 'list') {
       return (
         <div className="space-y-4">
-          {products.map((product) => (
+          {products.map(product => (
             <ProductCard
               key={product.id}
               product={product}
@@ -470,10 +489,15 @@ export function ProductGrid({
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             onQuickView={onQuickView}
-            className={layout === 'masonry' ?
-              index % 3 === 0 ? 'row-span-2' :
-              index % 5 === 0 ? 'row-span-3' : ''
-              : undefined}
+            className={
+              layout === 'masonry'
+                ? index % 3 === 0
+                  ? 'row-span-2'
+                  : index % 5 === 0
+                    ? 'row-span-3'
+                    : ''
+                : undefined
+            }
           />
         ))}
       </div>
@@ -482,10 +506,14 @@ export function ProductGrid({
 
   // Render load more button
   const renderLoadMore = () => {
-    if (!showLoadMore || !onLoadMore || !pagination) return null;
+    if (!showLoadMore || !onLoadMore || !pagination) {
+      return null;
+    }
 
     const hasMore = pagination.page < pagination.totalPages;
-    if (!hasMore) return null;
+    if (!hasMore) {
+      return null;
+    }
 
     return (
       <div className="text-center mt-8">
@@ -523,7 +551,10 @@ export function ProductGrid({
 }
 
 // Specialized product grid variants
-export const FeaturedProductGrid = ({ className, ...props }: Omit<ProductGridProps, 'variant'>) => (
+export const FeaturedProductGrid = ({
+  className,
+  ...props
+}: Omit<ProductGridProps, 'variant'>) => (
   <ProductGrid
     variant="featured"
     title="Featured Products"
@@ -536,7 +567,10 @@ export const FeaturedProductGrid = ({ className, ...props }: Omit<ProductGridPro
   />
 );
 
-export const SearchProductGrid = ({ className, ...props }: Omit<ProductGridProps, 'showFilters' | 'showSorting'>) => (
+export const SearchProductGrid = ({
+  className,
+  ...props
+}: Omit<ProductGridProps, 'showFilters' | 'showSorting'>) => (
   <ProductGrid
     showFilters={true}
     showSorting={true}
@@ -547,7 +581,10 @@ export const SearchProductGrid = ({ className, ...props }: Omit<ProductGridProps
   />
 );
 
-export const CategoryProductGrid = ({ className, ...props }: Omit<ProductGridProps, 'variant' | 'layout'>) => (
+export const CategoryProductGrid = ({
+  className,
+  ...props
+}: Omit<ProductGridProps, 'variant' | 'layout'>) => (
   <ProductGrid
     variant="default"
     layout="grid"
@@ -560,7 +597,10 @@ export const CategoryProductGrid = ({ className, ...props }: Omit<ProductGridPro
   />
 );
 
-export const CompactProductGrid = ({ className, ...props }: Omit<ProductGridProps, 'variant' | 'columns'>) => (
+export const CompactProductGrid = ({
+  className,
+  ...props
+}: Omit<ProductGridProps, 'variant' | 'columns'>) => (
   <ProductGrid
     variant="compact"
     columns={{ mobile: 3, tablet: 4, desktop: 6 }}

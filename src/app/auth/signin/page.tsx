@@ -46,9 +46,11 @@ function SignInForm() {
       } else {
         // Refresh session to get updated user data
         const session = await getSession();
-        
+
         setIsRedirecting(true);
-        console.log('✅ Sign in successful, redirecting...', { role: session?.user?.role });
+        console.log('✅ Sign in successful, redirecting...', {
+          role: session?.user?.role,
+        });
 
         // Role-based redirect logic
         if (session?.user?.role === 'SUPERADMIN') {
@@ -60,7 +62,7 @@ function SignInForm() {
         } else {
           router.push(callbackUrl);
         }
-        
+
         // Don't reset loading on successful signin - let the redirect happen
       }
     } catch (error) {
@@ -131,8 +133,16 @@ function SignInForm() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || isRedirecting}>
-                {isRedirecting ? 'Redirecting...' : isLoading ? 'Signing in...' : 'Sign In'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isRedirecting}
+              >
+                {isRedirecting
+                  ? 'Redirecting...'
+                  : isLoading
+                    ? 'Signing in...'
+                    : 'Sign In'}
               </Button>
             </form>
 

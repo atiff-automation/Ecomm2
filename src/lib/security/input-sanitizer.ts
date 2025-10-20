@@ -10,8 +10,12 @@ import { z } from 'zod';
 // CENTRALIZED CONFIGURATION - Single source of truth
 const SANITIZATION_CONFIG = {
   HTML: {
-    ALLOWED_TAGS: (process.env.ALLOWED_HTML_TAGS || 'b,i,em,strong,p,br,ul,ol,li,a').split(','),
-    ALLOWED_ATTRIBUTES: (process.env.ALLOWED_HTML_ATTRIBUTES || 'href,title,alt').split(','),
+    ALLOWED_TAGS: (
+      process.env.ALLOWED_HTML_TAGS || 'b,i,em,strong,p,br,ul,ol,li,a'
+    ).split(','),
+    ALLOWED_ATTRIBUTES: (
+      process.env.ALLOWED_HTML_ATTRIBUTES || 'href,title,alt'
+    ).split(','),
     MAX_LENGTH: parseInt(process.env.HTML_MAX_LENGTH || '10000'),
   },
   TEXT: {
@@ -20,12 +24,20 @@ const SANITIZATION_CONFIG = {
     STRIP_CONTROL_CHARS: process.env.STRIP_CONTROL_CHARS !== 'false',
   },
   TELEGRAM: {
-    MAX_MESSAGE_LENGTH: parseInt(process.env.TELEGRAM_MAX_MESSAGE_LENGTH || '4096'),
-    ALLOWED_ENTITIES: (process.env.TELEGRAM_ALLOWED_ENTITIES || 'bold,italic,code,pre').split(','),
+    MAX_MESSAGE_LENGTH: parseInt(
+      process.env.TELEGRAM_MAX_MESSAGE_LENGTH || '4096'
+    ),
+    ALLOWED_ENTITIES: (
+      process.env.TELEGRAM_ALLOWED_ENTITIES || 'bold,italic,code,pre'
+    ).split(','),
   },
   NOTIFICATION: {
-    MAX_TITLE_LENGTH: parseInt(process.env.NOTIFICATION_TITLE_MAX_LENGTH || '200'),
-    MAX_BODY_LENGTH: parseInt(process.env.NOTIFICATION_BODY_MAX_LENGTH || '1000'),
+    MAX_TITLE_LENGTH: parseInt(
+      process.env.NOTIFICATION_TITLE_MAX_LENGTH || '200'
+    ),
+    MAX_BODY_LENGTH: parseInt(
+      process.env.NOTIFICATION_BODY_MAX_LENGTH || '1000'
+    ),
   },
 } as const;
 
@@ -214,7 +226,9 @@ export class InputSanitizer {
 
       if (!allowedTypes.includes(sanitized.type)) {
         sanitized.type = 'SYSTEM_UPDATES';
-        violations.push('Invalid notification type, defaulted to SYSTEM_UPDATES');
+        violations.push(
+          'Invalid notification type, defaulted to SYSTEM_UPDATES'
+        );
       }
     }
 
@@ -247,8 +261,13 @@ export class InputSanitizer {
 
     // CENTRALIZED length check for Telegram API limits
     if (sanitized.length > SANITIZATION_CONFIG.TELEGRAM.MAX_MESSAGE_LENGTH) {
-      sanitized = sanitized.substring(0, SANITIZATION_CONFIG.TELEGRAM.MAX_MESSAGE_LENGTH);
-      violations.push(`Message truncated to ${SANITIZATION_CONFIG.TELEGRAM.MAX_MESSAGE_LENGTH} characters`);
+      sanitized = sanitized.substring(
+        0,
+        SANITIZATION_CONFIG.TELEGRAM.MAX_MESSAGE_LENGTH
+      );
+      violations.push(
+        `Message truncated to ${SANITIZATION_CONFIG.TELEGRAM.MAX_MESSAGE_LENGTH} characters`
+      );
     }
 
     // SYSTEMATIC Telegram-specific sanitization
@@ -257,7 +276,10 @@ export class InputSanitizer {
       const allowedEntities = SANITIZATION_CONFIG.TELEGRAM.ALLOWED_ENTITIES;
 
       // Remove unsupported HTML tags while preserving content
-      sanitized = sanitized.replace(/<(?!\/?(?:b|i|strong|em|code|pre)\b)[^>]*>/gi, '');
+      sanitized = sanitized.replace(
+        /<(?!\/?(?:b|i|strong|em|code|pre)\b)[^>]*>/gi,
+        ''
+      );
 
       // Convert HTML to Telegram markdown where appropriate
       sanitized = sanitized
@@ -275,9 +297,7 @@ export class InputSanitizer {
       violations.push('Message formatted for Telegram');
     } else {
       // Strip all HTML/markdown formatting
-      sanitized = sanitized
-        .replace(/<[^>]*>/g, '')
-        .replace(/[*_`]/g, '');
+      sanitized = sanitized.replace(/<[^>]*>/g, '').replace(/[*_`]/g, '');
 
       if (sanitized !== message) {
         violations.push('Formatting removed from message');
@@ -328,7 +348,9 @@ export class InputSanitizer {
       };
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessages = error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`);
+        const errorMessages = error.issues.map(
+          issue => `${issue.path.join('.')}: ${issue.message}`
+        );
         violations.push(...errorMessages);
       }
 
