@@ -24,6 +24,8 @@ model User {
   createdAt                 DateTime                    @default(now())
   updatedAt                 DateTime                    @updatedAt
   lastLoginAt               DateTime?
+  passwordResetToken        String?                     @unique
+  passwordResetTokenExpiry  DateTime?
   addresses                 Address[]
   auditLogs                 AuditLog[]
   cartItems                 CartItem[]
