@@ -101,10 +101,9 @@ export const BREADCRUMB_CONFIGS = {
     main: { label: 'Customers', href: '/admin/customers' },
     directory: { label: 'Customer Directory', href: '/admin/customers' },
     membership: {
-      label: 'Membership Analytics',
-      href: '/admin/customers/membership',
+      label: 'Membership',
+      href: '/admin/membership',
     },
-    referrals: { label: 'Referral System', href: '/admin/customers/referrals' },
   },
   products: {
     main: { label: 'Products', href: '/admin/products' },

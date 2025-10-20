@@ -15,7 +15,6 @@ import {
   ShoppingBag,
   DollarSign,
   Edit,
-  // Trash2, // Not currently used
 } from 'lucide-react';
 import Link from 'next/link';
 import {

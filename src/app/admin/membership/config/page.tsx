@@ -33,8 +33,6 @@ interface MembershipConfig {
   membershipThreshold: number;
   enablePromotionalExclusion: boolean;
   requireQualifyingCategories: boolean;
-  membershipBenefitsText: string;
-  membershipTermsText: string;
 }
 
 export default function MembershipConfigPage() {
@@ -45,8 +43,6 @@ export default function MembershipConfigPage() {
     membershipThreshold: 80,
     enablePromotionalExclusion: true,
     requireQualifyingCategories: true,
-    membershipBenefitsText: '',
-    membershipTermsText: '',
   });
 
   const [originalConfig, setOriginalConfig] = useState<MembershipConfig | null>(
