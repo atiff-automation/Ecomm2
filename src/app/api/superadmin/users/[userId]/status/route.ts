@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { userId: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Verify SuperAdmin access
     const token = await getToken({

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +79,10 @@ export async function GET(request: NextRequest) {
  * PUT /api/admin/settings/business-profile - Update business profile
  */
 export async function PUT(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     console.log('[API Business Profile PUT] Request received');
     console.log(

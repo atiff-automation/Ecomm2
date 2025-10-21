@@ -65,6 +65,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { PRODUCT_CONSTANTS } from '@/lib/constants/product-config';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Category {
   id: string;
@@ -372,7 +373,7 @@ export function ProductForm({
 
         const method = mode === 'create' ? 'POST' : 'PUT';
 
-        const response = await fetch(url, {
+        const response = await fetchWithCSRF(url, {
           method,
           headers: {
             'Content-Type': 'application/json',

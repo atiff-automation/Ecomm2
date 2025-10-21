@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ProductForm } from '@/components/admin/ProductForm';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface ProductFormData {
   name: string;
@@ -178,7 +179,7 @@ export default function EditProductPage() {
       })),
     };
 
-    const response = await fetch(`/api/admin/products/${productId}`, {
+    const response = await fetchWithCSRF(`/api/admin/products/${productId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(processedFormData),
@@ -193,7 +194,7 @@ export default function EditProductPage() {
   };
 
   const handleDelete = async () => {
-    const response = await fetch(`/api/admin/products/${productId}`, {
+    const response = await fetchWithCSRF(`/api/admin/products/${productId}`, {
       method: 'DELETE',
     });
 

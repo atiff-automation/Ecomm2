@@ -1,12 +1,13 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Order Details API - JRM E-commerce Platform
  * API for admin to view and manage individual orders
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
+
+export const dynamic = 'force-dynamic';
+
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
 import { logAudit } from '@/lib/audit/logger';
@@ -163,6 +164,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
@@ -346,6 +351,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check - only admin can delete orders
     const { error, session } = await requireAdminRole();

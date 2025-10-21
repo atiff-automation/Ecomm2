@@ -157,22 +157,10 @@ export class CSRFProtection {
       const session = await getServerSession(authOptions);
       const sessionId = session?.user?.id;
 
-      // Extract CSRF token from header or body - SYSTEMATIC EXTRACTION
-      const headerToken = request.headers.get(CSRF_CONFIG.HEADER_NAME);
-      let bodyToken: string | undefined;
-
-      try {
-        const contentType = request.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-          const body = await request.json();
-          bodyToken =
-            body[CSRF_CONFIG.HEADER_NAME.replace('x-', '').replace('-', '_')];
-        }
-      } catch (error) {
-        // Body parsing failed, continue with header token only
-      }
-
-      const token = headerToken || bodyToken;
+      // Extract CSRF token from header - SYSTEMATIC EXTRACTION
+      // NOTE: Token MUST be sent in header to avoid consuming request body
+      // Body consumption would prevent route handlers from reading request data
+      const token = request.headers.get(CSRF_CONFIG.HEADER_NAME);
 
       // Validate token - CENTRALIZED VALIDATION
       const validation = this.validateToken(token || '', sessionId);

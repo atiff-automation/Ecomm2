@@ -1,12 +1,13 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Discount Codes API - JRM E-commerce Platform
  * API for managing all discount codes and coupons
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
+
+export const dynamic = 'force-dynamic';
+
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
@@ -75,6 +76,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();

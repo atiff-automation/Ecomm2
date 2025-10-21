@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,10 @@ import { prisma } from '@/lib/db/prisma';
 import { handleApiError } from '@/lib/error-handler';
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Verify SuperAdmin access
     const token = await getToken({

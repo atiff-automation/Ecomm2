@@ -1,12 +1,13 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Single Product API - JRM E-commerce Platform
  * Handles fetching, updating, and deleting individual products
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
+
+export const dynamic = 'force-dynamic';
+
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
 import { logAudit } from '@/lib/audit/logger';
@@ -158,6 +159,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
@@ -403,6 +408,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();

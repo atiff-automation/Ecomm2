@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { requireAdminRole } from '@/lib/auth/authorization';
 
 export const dynamic = 'force-dynamic';
@@ -127,6 +128,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { customerId: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();
@@ -232,6 +237,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { customerId: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();

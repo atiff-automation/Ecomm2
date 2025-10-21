@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { requireAdminRole } from '@/lib/auth/authorization';
 
 export const dynamic = 'force-dynamic';
@@ -7,6 +8,10 @@ import { prisma } from '@/lib/db/prisma';
 import { UserRole } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();

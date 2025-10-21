@@ -9,6 +9,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/admin/ProductForm';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface ProductImage {
   url: string;
@@ -90,7 +91,7 @@ export default function CreateProductPage() {
       })),
     };
 
-    const response = await fetch('/api/admin/products', {
+    const response = await fetchWithCSRF('/api/admin/products', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
