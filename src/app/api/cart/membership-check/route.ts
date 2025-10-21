@@ -23,18 +23,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { cartItems }: { cartItems: CartItem[] } = body;
 
+    // Get membership configuration from centralized service FIRST
+    const membershipConfig = await getMembershipConfiguration();
+    const threshold = membershipConfig.membershipThreshold;
+
     if (!cartItems || cartItems.length === 0) {
       return NextResponse.json({
         eligible: false,
         qualifyingTotal: 0,
-        threshold: 80,
+        threshold,
         message: 'Cart is empty',
       });
     }
-
-    // Get membership configuration from centralized service
-    const membershipConfig = await getMembershipConfiguration();
-    const threshold = membershipConfig.membershipThreshold;
 
     // Get products with their categories
     const productIds = cartItems.map(item => item.productId);

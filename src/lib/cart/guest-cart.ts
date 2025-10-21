@@ -8,6 +8,7 @@ import {
   getBestPrice,
   productQualifiesForMembership,
 } from '@/lib/promotions/promotion-utils';
+import { getMembershipConfiguration } from '@/lib/config/membership-config';
 
 export interface GuestCartItem {
   productId: string;
@@ -171,6 +172,10 @@ export function clearGuestCart(): void {
  * Get guest cart with product details
  */
 export async function getGuestCartWithProducts() {
+  // Fetch membership configuration from centralized service
+  const membershipConfig = await getMembershipConfiguration();
+  const membershipThreshold = membershipConfig.membershipThreshold;
+
   const cart = getGuestCart();
 
   if (cart.items.length === 0) {
@@ -183,10 +188,10 @@ export async function getGuestCartWithProducts() {
         applicableSubtotal: 0,
         potentialSavings: 0,
         qualifyingTotal: 0,
-        membershipThreshold: 80,
+        membershipThreshold,
         isEligibleForMembership: false,
         membershipProgress: 0,
-        amountNeededForMembership: 80,
+        amountNeededForMembership: membershipThreshold,
         taxAmount: 0,
         shippingCost: 0,
         total: 0,
@@ -318,16 +323,20 @@ export async function getGuestCartWithProducts() {
     memberSubtotal += memberPrice;
     applicableSubtotal += effectivePrice;
 
-    // Check if product qualifies for membership using centralized logic
-    const qualifiesForMembership = productQualifiesForMembership({
-      isPromotional: item.product.isPromotional,
-      promotionalPrice: item.product.promotionalPrice,
-      promotionStartDate: item.product.promotionStartDate,
-      promotionEndDate: item.product.promotionEndDate,
-      isQualifyingForMembership: item.product.isQualifyingForMembership,
-      memberOnlyUntil: item.product.memberOnlyUntil,
-      earlyAccessStart: item.product.earlyAccessStart,
-    });
+    // Check if product qualifies for membership using centralized logic with config
+    const qualifiesForMembership = productQualifiesForMembership(
+      {
+        isPromotional: item.product.isPromotional,
+        promotionalPrice: item.product.promotionalPrice,
+        promotionStartDate: item.product.promotionStartDate,
+        promotionEndDate: item.product.promotionEndDate,
+        isQualifyingForMembership: item.product.isQualifyingForMembership,
+        memberOnlyUntil: item.product.memberOnlyUntil,
+        earlyAccessStart: item.product.earlyAccessStart,
+      },
+      membershipConfig.enablePromotionalExclusion,
+      membershipConfig.requireQualifyingProducts
+    );
 
     // CRITICAL: If using promotional price, don't count towards membership qualification
     const isUsingPromotionalPrice = priceInfo.priceType === 'promotional';
@@ -340,7 +349,7 @@ export async function getGuestCartWithProducts() {
   });
 
   const potentialSavings = subtotal - memberSubtotal;
-  const membershipThreshold = 80;
+  // Use dynamic threshold from config (already fetched at function start)
   const isEligibleForMembership = qualifyingTotal >= membershipThreshold;
   const membershipProgress = Math.min(
     (qualifyingTotal / membershipThreshold) * 100,

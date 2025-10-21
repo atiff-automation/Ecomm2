@@ -147,7 +147,8 @@ export function calculateMembershipEligibility(
         promotionEndDate: item.product.promotionEndDate,
         isQualifyingForMembership: item.product.isQualifyingForMembership,
       },
-      config.enablePromotionalExclusion
+      config.enablePromotionalExclusion,
+      config.requireQualifyingCategories
     );
 
     if (qualifiesForMembership) {
@@ -297,7 +298,8 @@ export async function checkUserMembershipQualification(
             promotionEndDate: item.product.promotionEndDate,
             isQualifyingForMembership: item.product.isQualifyingForMembership,
           },
-          config.enablePromotionalExclusion
+          config.enablePromotionalExclusion,
+          config.requireQualifyingCategories
         );
 
         if (qualifiesForMembership) {
