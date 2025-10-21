@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import {
   hashPassword,
@@ -33,6 +34,10 @@ interface RegisterRequest {
 }
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const body: RegisterRequest = await request.json();
 

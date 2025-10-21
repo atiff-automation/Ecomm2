@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
@@ -13,6 +14,10 @@ import bcrypt from 'bcryptjs';
  * PUT /api/settings/password - Change user password
  */
 export async function PUT(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const session = await getServerSession(authOptions);
 

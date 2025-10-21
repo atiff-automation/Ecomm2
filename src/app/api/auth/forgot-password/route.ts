@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validation/auth';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { generatePasswordResetToken, PASSWORD_RESET_CONFIG } from '@/lib/auth/password-reset';
 import { emailService } from '@/lib/email/email-service';
 import { generatePasswordResetEmailHTML } from '@/lib/email/templates/password-reset-email';
@@ -27,6 +28,10 @@ const API_CONFIG = {
 } as const;
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const body = await request.json();
 

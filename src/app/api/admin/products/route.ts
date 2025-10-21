@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import { logAudit } from '@/lib/audit/logger';
 import { requireAdminRole } from '@/lib/auth/authorization';
@@ -113,6 +114,10 @@ const createProductSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authorization check
     const { error, session } = await requireAdminRole();

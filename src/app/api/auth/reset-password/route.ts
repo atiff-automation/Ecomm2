@@ -14,10 +14,15 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validation/auth';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { resetPasswordWithToken } from '@/lib/auth/password-reset';
 import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const body = await request.json();
 
