@@ -146,9 +146,13 @@ export class APIClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
+      // CSRF TOKEN INJECTION - Auto-inject CSRF token for mutation requests
+      const csrfHeaders = await this.getCsrfHeaders(config.method || 'GET');
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...config.headers,
+        ...csrfHeaders, // Include CSRF token if needed
+        ...config.headers, // Allow override if needed
       };
 
       const fetchConfig: RequestInit = {
@@ -343,6 +347,46 @@ export class APIClient {
    */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * CENTRALIZED CSRF token injection - DRY PRINCIPLE
+   * Auto-inject CSRF tokens for mutation requests (POST, PUT, PATCH, DELETE)
+   */
+  private async getCsrfHeaders(method: string): Promise<Record<string, string>> {
+    // Only inject CSRF token for mutation requests - SYSTEMATIC SECURITY
+    const mutationMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    if (!mutationMethods.includes(method.toUpperCase())) {
+      return {};
+    }
+
+    try {
+      // Dynamically import to avoid circular dependencies and support both client/server
+      if (typeof window !== 'undefined') {
+        // Client-side: Use the CSRF token manager
+        const { csrfTokenManager } = await import('@/hooks/use-csrf-token');
+
+        // Initialize if not already initialized
+        if (!csrfTokenManager.getToken()) {
+          await csrfTokenManager.initialize();
+        }
+
+        const token = csrfTokenManager.getToken();
+        const headerName = csrfTokenManager.getHeaderName();
+
+        if (token) {
+          return { [headerName]: token };
+        }
+      }
+
+      // If no token available, return empty headers
+      // The server will reject the request with 403, which is expected behavior
+      return {};
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+      // Don't throw - let the request proceed and server will reject if needed
+      return {};
+    }
   }
 
   /**
