@@ -160,6 +160,15 @@ export function ProductForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Membership configuration state
+  const [membershipConfig, setMembershipConfig] = useState<{
+    enablePromotionalExclusion: boolean;
+    requireQualifyingProducts: boolean;
+  }>({
+    enablePromotionalExclusion: true,
+    requireQualifyingProducts: true,
+  });
+
   // Initialize form data with initial data or defaults
   const [formData, setFormData] = useState<ProductFormData>(() => ({
     ...initialFormData,
@@ -184,10 +193,27 @@ export function ProductForm({
     isLastStep,
   } = useStepperState(stepperSteps);
 
-  // Load categories on mount
+  // Load categories and membership config on mount
   useEffect(() => {
     fetchCategories();
+    fetchMembershipConfig();
   }, []);
+
+  const fetchMembershipConfig = async () => {
+    try {
+      const response = await fetch('/api/admin/membership/config/display');
+      if (response.ok) {
+        const data = await response.json();
+        setMembershipConfig({
+          enablePromotionalExclusion: data.enablePromotionalExclusion,
+          requireQualifyingProducts: data.requireQualifyingProducts,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch membership config:', error);
+      // Keep defaults on error
+    }
+  };
 
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
@@ -735,7 +761,7 @@ export function ProductForm({
                       <Label htmlFor="isPromotional">
                         Enable Promotional Pricing
                       </Label>
-                      {formData.isPromotional && (
+                      {formData.isPromotional && membershipConfig.enablePromotionalExclusion && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 text-xs font-medium">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -750,6 +776,23 @@ export function ProductForm({
                             />
                           </svg>
                           Won't qualify for membership
+                        </span>
+                      )}
+                      {formData.isPromotional && !membershipConfig.enablePromotionalExclusion && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-800 text-xs font-medium">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Can qualify for membership
                         </span>
                       )}
                     </div>
@@ -952,24 +995,35 @@ export function ProductForm({
                   {/* Advanced Tab */}
                   <TabsContent value="advanced" className="space-y-6">
                     <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="isQualifyingForMembership"
-                          checked={formData.isQualifyingForMembership}
-                          onCheckedChange={value =>
-                            handleInputChange(
-                              'isQualifyingForMembership',
-                              value
-                            )
-                          }
-                        />
-                        <Label htmlFor="isQualifyingForMembership">
-                          Qualifying for Membership
-                        </Label>
-                        <p className="text-xs text-muted-foreground ml-2">
-                          Purchase counts towards membership qualification
-                        </p>
-                      </div>
+                      {membershipConfig.requireQualifyingProducts && (
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="isQualifyingForMembership"
+                            checked={formData.isQualifyingForMembership}
+                            onCheckedChange={value =>
+                              handleInputChange(
+                                'isQualifyingForMembership',
+                                value
+                              )
+                            }
+                          />
+                          <Label htmlFor="isQualifyingForMembership">
+                            Qualifying for Membership
+                          </Label>
+                          <p className="text-xs text-muted-foreground ml-2">
+                            Purchase counts towards membership qualification
+                          </p>
+                        </div>
+                      )}
+
+                      {!membershipConfig.requireQualifyingProducts && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                          <p className="text-sm text-blue-800">
+                            <strong>Note:</strong> All products automatically qualify for membership.
+                            The "Require Qualifying Products" setting is currently disabled in membership configuration.
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label>Member Only Until</Label>

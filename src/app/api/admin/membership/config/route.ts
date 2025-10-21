@@ -11,6 +11,7 @@ import { prisma } from '@/lib/db/prisma';
 import { logAudit } from '@/lib/audit/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { invalidateMembershipConfigCache } from '@/lib/config/membership-config';
 
 /**
  * GET /api/admin/membership/config - Get membership configuration
@@ -212,6 +213,16 @@ export async function PUT(request: NextRequest) {
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       },
+    });
+
+    // CRITICAL: Invalidate cache after updating config
+    // This ensures all subsequent requests get the new configuration
+    invalidateMembershipConfigCache();
+
+    console.log('✅ Membership config updated and cache invalidated:', {
+      membershipThreshold,
+      enablePromotionalExclusion,
+      requireQualifyingCategories,
     });
 
     return NextResponse.json({

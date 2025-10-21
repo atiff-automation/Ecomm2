@@ -10,6 +10,7 @@ import {
   productQualifiesForMembership,
   getBestPrice,
 } from '@/lib/promotions/promotion-utils';
+import { getMembershipConfiguration } from '@/lib/config/membership-config';
 
 interface CartItem {
   productId: string;
@@ -31,14 +32,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get membership settings (threshold amount) - using system config instead
-    const thresholdConfig = await prisma.systemConfig.findFirst({
-      where: {
-        key: 'membership_threshold',
-      },
-    });
-
-    const threshold = Number(thresholdConfig?.value) || 80;
+    // Get membership configuration from centralized service
+    const membershipConfig = await getMembershipConfiguration();
+    const threshold = membershipConfig.membershipThreshold;
 
     // Get products with their categories
     const productIds = cartItems.map(item => item.productId);
@@ -118,16 +114,20 @@ export async function POST(request: NextRequest) {
       console.log(`   - promotionStartDate: ${product.promotionStartDate}`);
       console.log(`   - promotionEndDate: ${product.promotionEndDate}`);
 
-      // Check if product qualifies for membership calculation using comprehensive promotional logic
-      const qualifiesForMembership = productQualifiesForMembership({
-        isPromotional: product.isPromotional,
-        promotionalPrice: product.promotionalPrice,
-        promotionStartDate: product.promotionStartDate,
-        promotionEndDate: product.promotionEndDate,
-        isQualifyingForMembership: product.isQualifyingForMembership,
-        memberOnlyUntil: product.memberOnlyUntil,
-        earlyAccessStart: product.earlyAccessStart,
-      });
+      // Check if product qualifies for membership calculation using membership config
+      const qualifiesForMembership = productQualifiesForMembership(
+        {
+          isPromotional: product.isPromotional,
+          promotionalPrice: product.promotionalPrice,
+          promotionStartDate: product.promotionStartDate,
+          promotionEndDate: product.promotionEndDate,
+          isQualifyingForMembership: product.isQualifyingForMembership,
+          memberOnlyUntil: product.memberOnlyUntil,
+          earlyAccessStart: product.earlyAccessStart,
+        },
+        membershipConfig.enablePromotionalExclusion,
+        membershipConfig.requireQualifyingProducts
+      );
 
       // CRITICAL: If the user is getting promotional pricing, the product should NOT qualify
       // This ensures consistency between pricing and qualification

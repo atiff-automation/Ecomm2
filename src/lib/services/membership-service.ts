@@ -5,6 +5,8 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { getMembershipConfiguration } from '@/lib/config/membership-config';
+import { productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
 
 export interface OrderForMembership {
   id: string;
@@ -33,7 +35,7 @@ export interface OrderForMembership {
 }
 
 export class MembershipService {
-  private static readonly MEMBERSHIP_THRESHOLD = 80;
+  // REMOVED: Hardcoded threshold - now uses dynamic config
 
   /**
    * Main entry point: Process an order for potential membership activation
@@ -74,20 +76,31 @@ export class MembershipService {
         };
       }
 
-      // Calculate qualifying total using business rules
-      const qualifyingTotal = this.calculateQualifyingTotal(order.orderItems);
+      // Get membership configuration
+      const membershipConfig = await getMembershipConfiguration();
+
+      // Calculate qualifying total using dynamic business rules
+      const qualifyingTotal = await this.calculateQualifyingTotal(
+        order.orderItems,
+        membershipConfig.enablePromotionalExclusion,
+        membershipConfig.requireQualifyingProducts
+      );
 
       console.log('🔍 Membership qualification check:', {
         orderId: order.id,
         orderNumber: order.orderNumber,
         userId: order.userId,
         qualifyingTotal,
-        threshold: this.MEMBERSHIP_THRESHOLD,
-        qualifies: qualifyingTotal >= this.MEMBERSHIP_THRESHOLD,
+        threshold: membershipConfig.membershipThreshold,
+        qualifies: qualifyingTotal >= membershipConfig.membershipThreshold,
+        config: {
+          enablePromotionalExclusion: membershipConfig.enablePromotionalExclusion,
+          requireQualifyingProducts: membershipConfig.requireQualifyingProducts,
+        },
       });
 
       // Check if order qualifies for membership
-      if (qualifyingTotal >= this.MEMBERSHIP_THRESHOLD) {
+      if (qualifyingTotal >= membershipConfig.membershipThreshold) {
         await this.activateMembership(order.userId, qualifyingTotal);
 
         // Clean up pending membership if exists
@@ -115,8 +128,8 @@ export class MembershipService {
         console.log('❌ Membership NOT activated:', {
           userId: order.userId,
           qualifyingTotal,
-          threshold: this.MEMBERSHIP_THRESHOLD,
-          shortfall: this.MEMBERSHIP_THRESHOLD - qualifyingTotal,
+          threshold: membershipConfig.membershipThreshold,
+          shortfall: membershipConfig.membershipThreshold - qualifyingTotal,
           reason: 'Order does not meet membership requirements',
         });
 
@@ -137,20 +150,33 @@ export class MembershipService {
   }
 
   /**
-   * Calculate qualifying total based on business rules
-   * Only non-promotional, membership-qualifying products count
+   * Calculate qualifying total based on dynamic membership configuration
+   * Uses centralized config instead of hardcoded rules
    */
-  private static calculateQualifyingTotal(
-    orderItems: OrderForMembership['orderItems']
-  ): number {
+  private static async calculateQualifyingTotal(
+    orderItems: OrderForMembership['orderItems'],
+    enablePromotionalExclusion: boolean,
+    requireQualifyingProducts: boolean
+  ): Promise<number> {
     let qualifyingTotal = 0;
 
     for (const item of orderItems) {
-      // Business Rule: Only non-promotional products that are marked as qualifying count
-      if (
-        !item.product.isPromotional &&
-        item.product.isQualifyingForMembership
-      ) {
+      // Use centralized qualification logic with dynamic config
+      const qualifies = productQualifiesForMembership(
+        {
+          isPromotional: item.product.isPromotional,
+          promotionalPrice: null, // Not needed for qualification
+          promotionStartDate: null,
+          promotionEndDate: null,
+          isQualifyingForMembership: item.product.isQualifyingForMembership,
+          memberOnlyUntil: null,
+          earlyAccessStart: null,
+        },
+        enablePromotionalExclusion,
+        requireQualifyingProducts
+      );
+
+      if (qualifies) {
         qualifyingTotal += Number(item.regularPrice) * item.quantity;
       }
     }
@@ -228,23 +254,28 @@ export class MembershipService {
     reason: string;
   }> {
     const order = await this.getOrderForMembership(orderId);
+    const membershipConfig = await getMembershipConfiguration();
 
     if (!order) {
       return {
         qualifies: false,
         qualifyingTotal: 0,
-        threshold: this.MEMBERSHIP_THRESHOLD,
+        threshold: membershipConfig.membershipThreshold,
         reason: 'Order not found',
       };
     }
 
-    const qualifyingTotal = this.calculateQualifyingTotal(order.orderItems);
-    const qualifies = qualifyingTotal >= this.MEMBERSHIP_THRESHOLD;
+    const qualifyingTotal = await this.calculateQualifyingTotal(
+      order.orderItems,
+      membershipConfig.enablePromotionalExclusion,
+      membershipConfig.requireQualifyingProducts
+    );
+    const qualifies = qualifyingTotal >= membershipConfig.membershipThreshold;
 
     return {
       qualifies,
       qualifyingTotal,
-      threshold: this.MEMBERSHIP_THRESHOLD,
+      threshold: membershipConfig.membershipThreshold,
       reason: qualifies
         ? 'Order qualifies for membership'
         : 'Order does not meet membership requirements',

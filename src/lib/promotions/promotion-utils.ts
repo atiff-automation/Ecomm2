@@ -338,12 +338,30 @@ export function getPromotionDisplayText(
 
 /**
  * Utility to check if a product qualifies for membership (with promotional override)
+ *
+ * @param product - Product promotion data
+ * @param enablePromotionalExclusion - If true, promotional products don't qualify (from membership config)
+ * @param requireQualifyingProducts - If true, only products with isQualifyingForMembership=true qualify (from membership config)
+ *
+ * Following @CLAUDE.md: No hardcoded defaults, config must be passed explicitly
  */
 export function productQualifiesForMembership(
   product: PromotionData,
-  enablePromotionalExclusion: boolean = true
+  enablePromotionalExclusion: boolean,
+  requireQualifyingProducts: boolean
 ): boolean {
-  // If promotional exclusion is disabled, promotional products can qualify
+  // First check: Does the product need to be explicitly marked as qualifying?
+  if (requireQualifyingProducts && !product.isQualifyingForMembership) {
+    return false;
+  }
+
+  // If requireQualifyingProducts is OFF, all products qualify by default
+  // unless promotional exclusion is enabled
+  if (!requireQualifyingProducts && !enablePromotionalExclusion) {
+    return true;
+  }
+
+  // Second check: If promotional exclusion is disabled, promotional products can qualify
   if (!enablePromotionalExclusion) {
     return product.isQualifyingForMembership;
   }
@@ -355,6 +373,9 @@ export function productQualifiesForMembership(
     memberPrice: 0, // Not needed for qualification check
   });
 
+  // Product qualifies if:
+  // - Promotion is not active (or no promotion exists)
+  // - AND product is marked as qualifying (if requireQualifyingProducts is true)
   return promotionStatus.qualifiesForMembership;
 }
 
