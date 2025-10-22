@@ -393,7 +393,21 @@ export const protectionConfigs = {
       requestsPerMinute: getRateLimit(120), // Railway: 240 req/min
       uniqueTokenPerInterval: 1000,
     },
-    corsProtection: { enabled: true, allowedOrigins: [] },
+    corsProtection: {
+      enabled: true,
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXTAUTH_URL || '',
+        getAppUrl(true), // Use centralized helper
+        // Railway public domain
+        process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : '',
+        // Wildcard for Railway preview deployments (non-production only)
+        process.env.RAILWAY_ENVIRONMENT !== 'production' ? '*' : '',
+      ].filter(Boolean),
+    },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
   } as Partial<ApiProtectionConfig>,
@@ -452,14 +466,28 @@ export const protectionConfigs = {
     productionOnly: { enabled: true, blockInDevelopment: false },
   } as Partial<ApiProtectionConfig>,
 
-  // Critical operations (no changes needed)
+  // Critical operations
   critical: {
     rateLimiting: {
       enabled: true,
       requestsPerMinute: getRateLimit(5), // Railway: 10 req/min
       uniqueTokenPerInterval: 50,
     },
-    corsProtection: { enabled: true, allowedOrigins: [] },
+    corsProtection: {
+      enabled: true,
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXTAUTH_URL || '',
+        getAppUrl(true), // Use centralized helper
+        // Railway public domain
+        process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : '',
+        // Wildcard for Railway preview deployments (non-production only)
+        process.env.RAILWAY_ENVIRONMENT !== 'production' ? '*' : '',
+      ].filter(Boolean),
+    },
     userAgentValidation: { enabled: true, blockSuspicious: true },
     requireAuth: true,
     adminOnly: true,
