@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,7 +166,7 @@ export default function AdminPreferencesPage() {
   const onSubmit = async (data: AdminPreferencesFormData) => {
     try {
       setSaving(true);
-      const response = await fetch('/api/admin/settings/preferences', {
+      const response = await fetchWithCSRF('/api/admin/settings/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

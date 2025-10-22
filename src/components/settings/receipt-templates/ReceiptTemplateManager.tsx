@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +54,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
   const loadTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/receipt-templates');
+      const response = await fetchWithCSRF('/api/admin/receipt-templates');
       if (!response.ok) {
         throw new Error('Failed to load templates');
       }
@@ -158,7 +159,7 @@ export const ReceiptTemplateManager: React.FC<ReceiptTemplateManagerProps> = ({
 
   const handleInitializeDefaults = async () => {
     try {
-      const response = await fetch('/api/admin/receipt-templates/initialize', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/initialize', {
         method: 'POST',
       });
 

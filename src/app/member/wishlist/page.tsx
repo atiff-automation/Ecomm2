@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { usePricing } from '@/hooks/use-pricing';
@@ -125,7 +126,7 @@ export default function MemberWishlistPage() {
 
   const removeFromWishlist = async (productId: string) => {
     try {
-      const response = await fetch('/api/wishlist', {
+      const response = await fetchWithCSRF('/api/wishlist', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +146,7 @@ export default function MemberWishlistPage() {
 
   const addToCart = async (productId: string) => {
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetchWithCSRF('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

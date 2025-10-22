@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -124,7 +125,7 @@ export default function MemberProfilePage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/member/profile', {
+      const response = await fetchWithCSRF('/api/member/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

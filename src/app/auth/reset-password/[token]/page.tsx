@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/card';
 import Link from 'next/link';
 import { resetPasswordSchema, type ResetPasswordInput, PASSWORD_RULES } from '@/lib/validation/auth';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -45,7 +46,7 @@ function ResetPasswordForm() {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await fetch('/api/auth/reset-password/verify', {
+        const response = await fetchWithCSRF('/api/auth/reset-password/verify', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -89,7 +90,7 @@ function ResetPasswordForm() {
       });
 
       // Call API to reset password
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetchWithCSRF('/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

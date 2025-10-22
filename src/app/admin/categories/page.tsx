@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Category {
   id: string;
@@ -172,7 +173,7 @@ export default function AdminCategoriesPage() {
         : '/api/categories';
       const method = editingCategory ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await fetchWithCSRF(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -231,7 +232,7 @@ export default function AdminCategoriesPage() {
     }
 
     try {
-      const response = await fetch(`/api/categories/${categoryToDelete}`, {
+      const response = await fetchWithCSRF(`/api/categories/${categoryToDelete}`, {
         method: 'DELETE',
       });
 

@@ -17,6 +17,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Bell,
@@ -129,7 +130,7 @@ export default function NotificationsPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await fetch('/api/member/notifications', {
+      const response = await fetchWithCSRF('/api/member/notifications', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -219,7 +220,7 @@ export default function NotificationsPage() {
   const saveTelegramConfiguration = async () => {
     try {
       setTelegramLoading(true);
-      const response = await fetch('/api/user/telegram', {
+      const response = await fetchWithCSRF('/api/user/telegram', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +253,7 @@ export default function NotificationsPage() {
   const testTelegramConnection = async () => {
     setTelegramTesting(true);
     try {
-      const response = await fetch('/api/user/telegram/test', {
+      const response = await fetchWithCSRF('/api/user/telegram/test', {
         method: 'POST',
       });
 

@@ -31,6 +31,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface AdminTelegramConfig {
   id?: string;
@@ -95,7 +96,7 @@ export function SimpleTelegramConfig({
    */
   const loadConfiguration = async () => {
     try {
-      const response = await fetch('/api/admin/telegram/simple-config');
+      const response = await fetchWithCSRF('/api/admin/telegram/simple-config');
       if (response.ok) {
         const data = await response.json();
         if (data.configured && data.config) {
@@ -148,7 +149,7 @@ export function SimpleTelegramConfig({
     setTestResults({});
 
     try {
-      const response = await fetch('/api/admin/telegram/simple-config', {
+      const response = await fetchWithCSRF('/api/admin/telegram/simple-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,7 +193,7 @@ export function SimpleTelegramConfig({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/admin/telegram/simple-config', {
+      const response = await fetchWithCSRF('/api/admin/telegram/simple-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -222,7 +223,7 @@ export function SimpleTelegramConfig({
 
         // Force service reload to refresh cached config
         try {
-          await fetch('/api/admin/telegram/simple-config', { method: 'PATCH' });
+          await fetchWithCSRF('/api/admin/telegram/simple-config', { method: 'PATCH' });
         } catch (error) {
           console.warn('Service reload failed:', error);
         }
@@ -295,7 +296,7 @@ export function SimpleTelegramConfig({
 
           // Force service reload to clear cached config
           try {
-            await fetch('/api/admin/telegram/simple-config', {
+            await fetchWithCSRF('/api/admin/telegram/simple-config', {
               method: 'PATCH',
             });
           } catch (error) {
@@ -349,7 +350,7 @@ export function SimpleTelegramConfig({
       };
 
       const endpoint = endpointMap[type];
-      const response = await fetch(`/api/admin/telegram/${endpoint}`, {
+      const response = await fetchWithCSRF(`/api/admin/telegram/${endpoint}`, {
         method: 'POST',
       });
 

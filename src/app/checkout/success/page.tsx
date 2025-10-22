@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
@@ -52,7 +53,7 @@ export default function CheckoutSuccessPage() {
               console.log(`🔄 Updating order status for: ${actualOrderNumber}`);
 
               // Find order by order number and update status
-              const updateResponse = await fetch(
+              const updateResponse = await fetchWithCSRF(
                 '/api/admin/orders/update-by-number',
                 {
                   method: 'POST',

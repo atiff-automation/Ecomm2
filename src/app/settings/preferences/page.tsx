@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -145,7 +146,7 @@ export default function PreferencesPage() {
   const onSubmit = async (data: PreferencesFormData) => {
     try {
       setSaving(true);
-      const response = await fetch('/api/settings/preferences', {
+      const response = await fetchWithCSRF('/api/settings/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -13,7 +13,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 
 interface SettingsInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -29,8 +29,12 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
   helperText,
   required,
   className = '',
+  type,
   ...props
 }) => {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const isPasswordField = type === 'password';
+
   return (
     <div className="space-y-2">
       <Label htmlFor={props.id} className="text-sm font-medium">
@@ -38,18 +42,38 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
 
-      <Input
-        {...props}
-        className={`${className} ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
-        aria-invalid={!!error}
-        aria-describedby={
-          error
-            ? `${props.id}-error`
-            : helperText
-              ? `${props.id}-help`
-              : undefined
-        }
-      />
+      <div className="relative">
+        <Input
+          {...props}
+          type={isPasswordField && showPassword ? 'text' : type}
+          className={`${className} ${error ? 'border-red-500 focus:ring-red-500' : ''} ${
+            isPasswordField ? 'pr-10' : ''
+          }`}
+          aria-invalid={!!error}
+          aria-describedby={
+            error
+              ? `${props.id}-error`
+              : helperText
+                ? `${props.id}-help`
+                : undefined
+          }
+        />
+
+        {isPasswordField && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded p-1"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        )}
+      </div>
 
       {error && (
         <div

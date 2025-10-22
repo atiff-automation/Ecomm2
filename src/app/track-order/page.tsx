@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Package, Search, Loader2, AlertCircle } from 'lucide-react';
 import { TrackingDisplay } from '@/components/tracking/TrackingDisplay';
 import { OrderStatus } from '@prisma/client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 /**
  * Track Order Page
@@ -56,7 +57,7 @@ export default function TrackOrderPage() {
     setRateLimitInfo({});
 
     try {
-      const response = await fetch('/api/track', {
+      const response = await fetchWithCSRF('/api/track', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

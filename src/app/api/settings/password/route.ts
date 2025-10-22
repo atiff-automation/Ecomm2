@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { passwordChangeSchema } from '@/lib/validation/settings';
 import { AuditLogger } from '@/lib/security';
 import bcrypt from 'bcryptjs';
+import { ZodError } from 'zod';
 
 /**
  * PUT /api/settings/password - Change user password
@@ -21,13 +22,13 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
+    // ✅ All authenticated users can change their own password
+    // (CUSTOMER, ADMIN, STAFF, SUPERADMIN)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Only customers can change their own password
-    if (session.user.role !== 'CUSTOMER') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Unauthorized - User ID required' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
@@ -107,9 +108,17 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Change password error:', error);
 
-    if (error instanceof Error && error.name === 'ZodError') {
+    // Handle Zod validation errors with detailed messages
+    if (error instanceof ZodError) {
+      const firstError = error.issues[0];
+      const fieldName = firstError.path.join('.') || 'input';
+      const message = firstError.message || 'Invalid input data';
+
       return NextResponse.json(
-        { error: 'Invalid input data', details: error },
+        {
+          error: `${fieldName}: ${message}`,
+          details: error.issues,
+        },
         { status: 400 }
       );
     }

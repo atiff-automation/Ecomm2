@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,7 @@ export default function ProductImportPage() {
 
   const downloadCategoryList = async () => {
     try {
-      const response = await fetch('/api/categories?includeProductCount=true');
+      const response = await fetchWithCSRF('/api/categories?includeProductCount=true');
       if (response.ok) {
         const data = await response.json();
         const categories = data.categories;
@@ -235,7 +236,7 @@ export default function ProductImportPage() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/admin/products/import', {
+      const response = await fetchWithCSRF('/api/admin/products/import', {
         method: 'POST',
         body: formData,
       });

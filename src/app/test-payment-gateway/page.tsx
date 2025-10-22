@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';

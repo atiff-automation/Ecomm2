@@ -23,6 +23,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { usePricing } from '@/hooks/use-pricing';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface WishlistItem {
   id: string;
@@ -104,7 +105,7 @@ export default function WishlistPage() {
 
     try {
       setAddingToCart(productId);
-      const response = await fetch('/api/cart', {
+      const response = await fetchWithCSRF('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

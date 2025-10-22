@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -156,7 +157,7 @@ export default function MemberReferralsPage() {
 
     setSendingReferral(true);
     try {
-      const response = await fetch('/api/member/referrals', {
+      const response = await fetchWithCSRF('/api/member/referrals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

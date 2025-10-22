@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +69,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
       setLoading(true);
 
       // First try to load from business profile
-      const businessResponse = await fetch('/api/admin/business-profile');
+      const businessResponse = await fetchWithCSRF('/api/admin/business-profile');
       let businessProfile = null;
 
       if (businessResponse.ok) {
@@ -151,7 +152,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
       formData.append('file', file);
       formData.append('usage', 'company-logo');
 
-      const response = await fetch('/api/admin/media/upload', {
+      const response = await fetchWithCSRF('/api/admin/media/upload', {
         method: 'POST',
         body: formData,
       });
@@ -181,7 +182,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
       setSaving(true);
 
       // Save to business profile
-      const businessResponse = await fetch('/api/admin/business-profile', {
+      const businessResponse = await fetchWithCSRF('/api/admin/business-profile', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +202,7 @@ export const CompanyInfoEditor: React.FC<CompanyInfoEditorProps> = ({
       });
 
       // Save system config for receipt-specific settings
-      const configResponse = await fetch('/api/admin/system-config', {
+      const configResponse = await fetchWithCSRF('/api/admin/system-config', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -232,7 +233,7 @@ export function AgentApplicationForm({
       }
 
       // Submit to API
-      const response = await fetch('/api/agent-application', {
+      const response = await fetchWithCSRF('/api/agent-application', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

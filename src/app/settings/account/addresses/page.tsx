@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   SettingsLayout,
   SettingsCard,
@@ -109,7 +110,7 @@ export default function AddressManagementPage() {
 
       const method = editingAddress ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await fetchWithCSRF(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -170,7 +171,7 @@ export default function AddressManagementPage() {
     }
 
     try {
-      const response = await fetch(`/api/settings/addresses/${addressId}`, {
+      const response = await fetchWithCSRF(`/api/settings/addresses/${addressId}`, {
         method: 'DELETE',
       });
 
@@ -194,7 +195,7 @@ export default function AddressManagementPage() {
     type: 'billing' | 'shipping'
   ) => {
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/settings/addresses/${addressId}/default`,
         {
           method: 'POST',

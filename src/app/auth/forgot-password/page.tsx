@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/card';
 import Link from 'next/link';
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validation/auth';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 function ForgotPasswordForm() {
   const router = useRouter();
@@ -44,7 +45,7 @@ function ForgotPasswordForm() {
       const validatedData: ForgotPasswordInput = forgotPasswordSchema.parse({ email });
 
       // Call API to request password reset
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetchWithCSRF('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

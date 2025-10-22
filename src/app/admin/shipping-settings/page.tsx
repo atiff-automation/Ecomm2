@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   useShippingInit,
   useShippingBalance,
@@ -312,7 +313,7 @@ export default function ShippingSettingsPage() {
         delete cleanedData.priorityCouriers;
       }
 
-      const response = await fetch('/api/admin/shipping/settings', {
+      const response = await fetchWithCSRF('/api/admin/shipping/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cleanedData),
@@ -368,7 +369,7 @@ export default function ShippingSettingsPage() {
   const testConnection = async () => {
     setIsTesting(true);
     try {
-      const response = await fetch('/api/admin/shipping/test-connection', {
+      const response = await fetchWithCSRF('/api/admin/shipping/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -402,7 +403,7 @@ export default function ShippingSettingsPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch('/api/admin/shipping/settings', {
+      const response = await fetchWithCSRF('/api/admin/shipping/settings', {
         method: 'DELETE',
       });
 

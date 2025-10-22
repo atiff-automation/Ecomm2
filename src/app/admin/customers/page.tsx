@@ -35,6 +35,7 @@ import {
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Customer {
   id: string;
@@ -134,7 +135,7 @@ export default function AdminCustomers() {
 
     setDeletingId(customer.id);
     try {
-      const response = await fetch(`/api/admin/customers/${customer.id}`, {
+      const response = await fetchWithCSRF(`/api/admin/customers/${customer.id}`, {
         method: 'DELETE',
       });
 

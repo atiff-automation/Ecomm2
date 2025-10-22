@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,7 +86,7 @@ export default function ThemeConsistentTemplateSelector({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/receipt-templates');
+      const response = await fetchWithCSRF('/api/admin/receipt-templates');
 
       if (!response.ok) {
         if (response.status === 404 || response.status === 500) {
@@ -118,7 +119,7 @@ export default function ThemeConsistentTemplateSelector({
   const initializeTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/receipt-templates/initialize', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/initialize', {
         method: 'POST',
       });
 
@@ -206,7 +207,7 @@ export default function ThemeConsistentTemplateSelector({
 
   const loadBusinessProfile = async () => {
     try {
-      const response = await fetch('/api/admin/settings/business-profile');
+      const response = await fetchWithCSRF('/api/admin/settings/business-profile');
       if (response.ok) {
         const data = await response.json();
         if (data.profile) {
@@ -250,7 +251,7 @@ export default function ThemeConsistentTemplateSelector({
       formData.append('width', logoWidth.toString());
       formData.append('height', logoHeight.toString());
 
-      const response = await fetch('/api/admin/receipt-templates/logo', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/logo', {
         method: 'POST',
         body: formData,
       });
@@ -286,7 +287,7 @@ export default function ThemeConsistentTemplateSelector({
     setMessage(null);
 
     try {
-      const response = await fetch('/api/admin/receipt-templates/logo', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/logo', {
         method: 'DELETE',
       });
 

@@ -1,53 +1,49 @@
 /**
- * CSRF Token Endpoint - JRM E-commerce Platform
- * Provides CSRF tokens to frontend clients for state-changing requests
+ * CSRF Token API Endpoint - JRM E-commerce Platform
+ * SINGLE SOURCE OF TRUTH for CSRF token generation and distribution
  *
- * CENTRALIZED TOKEN DISTRIBUTION - Single source of truth for CSRF tokens
+ * This endpoint provides fresh CSRF tokens to frontend clients
+ * Tokens are session-bound for authenticated users
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { CSRFProtection } from '@/lib/security/csrf-protection';
+import { CSRFProtection, CSRF_CONFIG } from '@/lib/security/csrf-protection';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/csrf-token - Fetch CSRF token for current session
+ * GET /api/csrf-token
+ * Generate and return a fresh CSRF token
  *
- * SYSTEMATIC TOKEN GENERATION:
- * - Generates session-bound CSRF token
- * - No authentication required (tokens can be generated for anonymous users)
- * - Token automatically expires after configured lifetime (default: 1 hour)
- *
- * Usage:
- * ```typescript
- * const response = await fetch('/api/csrf-token');
- * const { csrfToken } = await response.json();
- *
- * // Use in subsequent requests
- * await fetch('/api/admin/products', {
- *   method: 'POST',
- *   headers: { 'x-csrf-token': csrfToken },
- *   body: JSON.stringify(data)
- * });
- * ```
+ * Response format matches CSRFTokenResponse interface from use-csrf-token.ts
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get current session (if authenticated)
+    // Get session to bind token to user - CENTRALIZED SESSION HANDLING
     const session = await getServerSession(authOptions);
     const sessionId = session?.user?.id;
 
-    // Generate CSRF token - CENTRALIZED TOKEN GENERATION
-    const csrfToken = await CSRFProtection.getTokenForSession(sessionId);
+    // Generate token using centralized CSRF protection - SINGLE SOURCE OF TRUTH
+    const csrfToken = CSRFProtection.generateToken(sessionId);
 
-    // Return token with metadata - SYSTEMATIC RESPONSE FORMAT
-    return NextResponse.json({
+    // Build response with token metadata - SYSTEMATIC RESPONSE
+    const response = {
       success: true,
-      csrfToken,
-      expiresIn: parseInt(process.env.CSRF_TOKEN_LIFETIME || '3600000'), // milliseconds
-      headerName: process.env.CSRF_HEADER_NAME || 'x-csrf-token',
+      csrfToken: csrfToken,
+      expiresIn: CSRF_CONFIG.TOKEN_LIFETIME, // milliseconds
+      headerName: CSRF_CONFIG.HEADER_NAME,
+    };
+
+    // Return with no-cache headers - SYSTEMATIC SECURITY
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
   } catch (error) {
     console.error('CSRF token generation error:', error);
@@ -56,9 +52,17 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: 'Failed to generate CSRF token',
-        message: 'An error occurred while generating the security token. Please refresh and try again.',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Internal server error',
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
     );
   }
 }

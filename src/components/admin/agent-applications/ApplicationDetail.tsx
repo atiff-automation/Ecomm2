@@ -39,6 +39,7 @@ import { format } from 'date-fns';
 import { ms } from 'date-fns/locale';
 import { SOCIAL_MEDIA_LEVELS } from '@/lib/config/agent-application-form';
 import Link from 'next/link';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface ApplicationDetailProps {
   application: AgentApplicationWithRelations;

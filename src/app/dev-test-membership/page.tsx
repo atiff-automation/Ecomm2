@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export default function MembershipTestingPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/payment/test-simulator', {
+      const response = await fetchWithCSRF('/api/payment/test-simulator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +113,7 @@ export default function MembershipTestingPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/payment/test-simulator', {
+      const response = await fetchWithCSRF('/api/payment/test-simulator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -143,7 +144,7 @@ export default function MembershipTestingPage() {
   const checkPendingMemberships = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/membership/pending');
+      const response = await fetchWithCSRF('/api/admin/membership/pending');
       const result = await response.json();
 
       addResult({

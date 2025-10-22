@@ -35,6 +35,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { AdminPageLayout, BreadcrumbItem } from '@/components/admin/layout';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface CreateDiscountCodeForm {
   code: string;
@@ -178,7 +179,7 @@ export default function CreateDiscountCodePage() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/admin/discount-codes', {
+      const response = await fetchWithCSRF('/api/admin/discount-codes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

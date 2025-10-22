@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   SettingsLayout,
   SettingsCard,
@@ -82,7 +83,7 @@ export default function AccountSettingsPage() {
 
     setIsLoadingProfile(true);
     try {
-      const response = await fetch('/api/settings/account', {
+      const response = await fetchWithCSRF('/api/settings/account', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -120,12 +121,13 @@ export default function AccountSettingsPage() {
 
     setIsLoadingPassword(true);
     try {
-      const response = await fetch('/api/settings/password', {
+      const response = await fetchWithCSRF('/api/settings/password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
+          confirmPassword: data.confirmPassword,
         }),
       });
 

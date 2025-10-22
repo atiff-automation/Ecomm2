@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface WishlistButtonProps {
   productId: string;
@@ -73,7 +74,7 @@ export function WishlistButton({
 
       if (inWishlist) {
         // Remove from wishlist
-        const response = await fetch('/api/wishlist', {
+        const response = await fetchWithCSRF('/api/wishlist', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ export function WishlistButton({
         }
       } else {
         // Add to wishlist
-        const response = await fetch('/api/wishlist', {
+        const response = await fetchWithCSRF('/api/wishlist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

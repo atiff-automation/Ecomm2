@@ -27,6 +27,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
 import { ResponsiveFulfillmentDialog } from '@/components/admin/orders/ResponsiveFulfillmentDialog';
 import {
@@ -86,7 +87,7 @@ export default function OrderDetailsPage() {
 
     setIsUpdatingStatus(true);
     try {
-      const response = await fetch(`/api/orders/${order.id}/status`, {
+      const response = await fetchWithCSRF(`/api/orders/${order.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,7 +151,7 @@ export default function OrderDetailsPage() {
     setIsFulfilling(true);
 
     try {
-      const response = await fetch(`/api/admin/orders/${order.id}/fulfill`, {
+      const response = await fetchWithCSRF(`/api/admin/orders/${order.id}/fulfill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -209,7 +210,7 @@ export default function OrderDetailsPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/orders/${order.id}`, {
+      const response = await fetchWithCSRF(`/api/admin/orders/${order.id}`, {
         method: 'DELETE',
       });
 

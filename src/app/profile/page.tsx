@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { validateMalaysianPhoneNumber } from '@/lib/utils';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface UserProfile {
   id: string;
@@ -93,7 +94,7 @@ export default function ProfilePage() {
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/user/profile', {
+      const response = await fetchWithCSRF('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
@@ -128,7 +129,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       }
 
       // Send to custom error endpoint
-      fetch('/api/errors', {
+      fetchWithCSRF('/api/errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

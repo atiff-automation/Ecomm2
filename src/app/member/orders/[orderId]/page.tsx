@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { OrderStatus } from '@prisma/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -140,7 +141,7 @@ export default function OrderDetailPage() {
 
     setRefreshingTracking(true);
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/customer/orders/${orderId}/tracking/refresh`,
         {
           method: 'POST',

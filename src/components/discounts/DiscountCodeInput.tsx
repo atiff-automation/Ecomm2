@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -58,7 +59,7 @@ export default function DiscountCodeInput({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/discounts/validate', {
+      const response = await fetchWithCSRF('/api/discounts/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

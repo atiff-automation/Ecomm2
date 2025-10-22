@@ -47,6 +47,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { AdminPageLayout, TabConfig } from '@/components/admin/layout';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface DiscountCode {
   id: string;
@@ -114,7 +115,7 @@ export default function DiscountCodesPage() {
   const handleStatusToggle = async (id: string, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      const response = await fetch(`/api/admin/discount-codes/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/discount-codes/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -134,7 +135,7 @@ export default function DiscountCodesPage() {
     }
 
     try {
-      const response = await fetch(`/api/admin/discount-codes/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/discount-codes/${id}`, {
         method: 'DELETE',
       });
 

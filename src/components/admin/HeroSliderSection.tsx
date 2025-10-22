@@ -31,6 +31,7 @@ import {
   ArrowRight,
   MoreHorizontal,
 } from 'lucide-react';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 // ==================== INTERFACES ====================
 

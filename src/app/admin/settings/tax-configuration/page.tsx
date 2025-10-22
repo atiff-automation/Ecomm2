@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   SettingsCard,
   SettingsSection,
@@ -118,7 +119,7 @@ export default function TaxConfigurationPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/admin/settings/tax-configuration', {
+      const response = await fetchWithCSRF('/api/admin/settings/tax-configuration', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

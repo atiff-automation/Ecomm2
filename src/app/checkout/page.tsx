@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Select,
   SelectContent,
@@ -641,7 +642,7 @@ export default function CheckoutPage() {
           membershipActivated: membershipActivated || membershipPending, // Include pending memberships
         };
 
-        const response = await fetch('/api/orders', {
+        const response = await fetchWithCSRF('/api/orders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -698,7 +699,7 @@ export default function CheckoutPage() {
       console.log('🔄 Creating order with payment method:', paymentMethod);
 
       // First create the order
-      const orderResponse = await fetch('/api/orders', {
+      const orderResponse = await fetchWithCSRF('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

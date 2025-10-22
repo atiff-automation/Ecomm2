@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { UserRole } from '@prisma/client';
@@ -51,7 +52,7 @@ export default function SuperAdminPage() {
 
   const fetchAdminUsers = async () => {
     try {
-      const response = await fetch('/api/superadmin/users');
+      const response = await fetchWithCSRF('/api/superadmin/users');
       if (response.ok) {
         const data = await response.json();
         setAdminUsers(data);
@@ -67,7 +68,7 @@ export default function SuperAdminPage() {
 
   const fetchSystemStatus = async () => {
     try {
-      const response = await fetch('/api/superadmin/system-status');
+      const response = await fetchWithCSRF('/api/superadmin/system-status');
       if (response.ok) {
         const data = await response.json();
         setSystemStatus(data);
@@ -84,7 +85,7 @@ export default function SuperAdminPage() {
     }
 
     try {
-      const response = await fetch('/api/superadmin/reset-password', {
+      const response = await fetchWithCSRF('/api/superadmin/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: passwordResetEmail }),
@@ -111,7 +112,7 @@ export default function SuperAdminPage() {
     const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
 
     try {
-      const response = await fetch(`/api/superadmin/users/${userId}/status`, {
+      const response = await fetchWithCSRF(`/api/superadmin/users/${userId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -133,7 +134,7 @@ export default function SuperAdminPage() {
 
   const handleMaintenanceToggle = async () => {
     try {
-      const response = await fetch('/api/superadmin/maintenance', {
+      const response = await fetchWithCSRF('/api/superadmin/maintenance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !systemStatus.maintenanceMode }),

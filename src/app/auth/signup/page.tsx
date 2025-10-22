@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import Link from 'next/link';
 import { validatePassword, validateMalaysianPhoneNumber } from '@/lib/utils';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface FormData {
   email: string;
@@ -91,7 +92,7 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetchWithCSRF('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

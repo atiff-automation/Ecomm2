@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -113,7 +114,7 @@ export default function MembershipCheckoutBanner({
 
     try {
       setLoading(true);
-      const response = await fetch('/api/cart/membership-check', {
+      const response = await fetchWithCSRF('/api/cart/membership-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cartItems }),

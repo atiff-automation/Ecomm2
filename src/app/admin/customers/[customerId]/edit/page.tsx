@@ -22,6 +22,7 @@ import {
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface CustomerFormData {
   firstName: string;
@@ -139,7 +140,7 @@ export default function AdminCustomerEdit({
 
     setSaving(true);
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/admin/customers/${params.customerId}`,
         {
           method: 'PUT',
@@ -188,7 +189,7 @@ export default function AdminCustomerEdit({
 
     setDeleting(true);
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/admin/customers/${params.customerId}`,
         {
           method: 'DELETE',

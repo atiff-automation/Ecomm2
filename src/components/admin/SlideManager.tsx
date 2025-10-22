@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Dialog,
   DialogContent,

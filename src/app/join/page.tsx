@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -68,7 +69,7 @@ export default function JoinPage() {
 
   const validateReferralCode = async (code: string) => {
     try {
-      const response = await fetch(`/api/referrals/validate?code=${code}`);
+      const response = await fetchWithCSRF(`/api/referrals/validate?code=${code}`);
       if (response.ok) {
         const data = await response.json();
         setReferralInfo(data);
@@ -136,7 +137,7 @@ export default function JoinPage() {
     setRegistering(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetchWithCSRF('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

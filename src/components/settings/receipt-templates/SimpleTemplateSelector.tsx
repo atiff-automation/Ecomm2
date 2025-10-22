@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +54,7 @@ export default function SimpleTemplateSelector({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/receipt-templates');
+      const response = await fetchWithCSRF('/api/admin/receipt-templates');
 
       if (!response.ok) {
         // If no templates exist, try to initialize them
@@ -83,7 +84,7 @@ export default function SimpleTemplateSelector({
   const initializeTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/receipt-templates/initialize', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/initialize', {
         method: 'POST',
       });
 

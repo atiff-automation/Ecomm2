@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -191,7 +192,7 @@ export default function SiteCustomizationSettings() {
       setIsSaving(true);
       setValidationErrors([]);
 
-      const response = await fetch('/api/admin/site-customization', {
+      const response = await fetchWithCSRF('/api/admin/site-customization', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -246,7 +247,7 @@ export default function SiteCustomizationSettings() {
 
     try {
       setIsSaving(true);
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         '/api/admin/site-customization?action=reset',
         {
           method: 'POST',
@@ -305,7 +306,7 @@ export default function SiteCustomizationSettings() {
           console.log('🗑️ Deleting file from volume:', filename);
 
           // Delete from volume
-          await fetch(`/api/admin/site-customization?filename=${filename}`, {
+          await fetchWithCSRF(`/api/admin/site-customization?filename=${filename}`, {
             method: 'DELETE',
           });
 
@@ -361,7 +362,7 @@ export default function SiteCustomizationSettings() {
       if (oldFilename) {
         console.log('🗑️ Deleting old file before upload:', oldFilename);
         try {
-          await fetch(`/api/admin/site-customization?filename=${oldFilename}`, {
+          await fetchWithCSRF(`/api/admin/site-customization?filename=${oldFilename}`, {
             method: 'DELETE',
           });
           console.log('✅ Old file deleted from volume');
@@ -385,7 +386,7 @@ export default function SiteCustomizationSettings() {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         '/api/admin/site-customization?action=upload',
         {
           method: 'POST',

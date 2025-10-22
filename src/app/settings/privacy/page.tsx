@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   SettingsLayout,
   SettingsCard,
@@ -92,7 +93,7 @@ export default function PrivacySettingsPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/settings/notifications', {
+      const response = await fetchWithCSRF('/api/settings/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -117,7 +118,7 @@ export default function PrivacySettingsPage() {
 
   const handleExportData = async () => {
     try {
-      const response = await fetch('/api/settings/export', {
+      const response = await fetchWithCSRF('/api/settings/export', {
         method: 'POST',
       });
 
@@ -144,7 +145,7 @@ export default function PrivacySettingsPage() {
     }
 
     try {
-      const response = await fetch('/api/settings/delete-account', {
+      const response = await fetchWithCSRF('/api/settings/delete-account', {
         method: 'POST',
       });
 

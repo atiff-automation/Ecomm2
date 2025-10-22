@@ -171,6 +171,8 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-  debug: process.env.NODE_ENV === 'development',
+  // Security: Debug mode disabled to prevent credential logging
+  // Enable only when explicitly debugging authentication issues: debug: true
+  debug: false,
   secret: process.env.NEXTAUTH_SECRET!,
 };

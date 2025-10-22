@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -101,7 +102,7 @@ export default function MembershipConfigPage() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/admin/membership/config', {
+      const response = await fetchWithCSRF('/api/admin/membership/config', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

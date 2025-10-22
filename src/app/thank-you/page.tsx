@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -122,7 +123,7 @@ function ThankYouContent() {
 
     try {
       // Clear cart via API
-      const response = await fetch('/api/cart', { method: 'DELETE' });
+      const response = await fetchWithCSRF('/api/cart', { method: 'DELETE' });
       if (response.ok) {
         console.log('✅ Cart cleared via API');
       }
@@ -248,7 +249,7 @@ function ThankYouContent() {
 
       // Search for order by order number using secured public API
       console.log('🔍 Fetching order details for:', orderRef);
-      const response = await fetch(`/api/orders/lookup/${orderRef}`);
+      const response = await fetchWithCSRF(`/api/orders/lookup/${orderRef}`);
 
       if (!response.ok) {
         const errorData = await response

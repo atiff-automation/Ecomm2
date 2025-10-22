@@ -19,6 +19,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 export interface UploadedImage {
   url: string;
@@ -163,7 +164,7 @@ export default function ImageUpload({
       formData.append('legacy', 'true');
       formData.append('preserveOriginal', 'true');
 
-      const response = await fetch(uploadPath || '/api/upload/image', {
+      const response = await fetchWithCSRF(uploadPath || '/api/upload/image', {
         method: 'POST',
         body: formData,
       });
@@ -261,7 +262,7 @@ export default function ImageUpload({
     // Only try to delete from server if image has filename (was uploaded)
     if (image.filename) {
       try {
-        await fetch(`/api/upload/image?filename=${image.filename}`, {
+        await fetchWithCSRF(`/api/upload/image?filename=${image.filename}`, {
           method: 'DELETE',
         });
       } catch (error) {

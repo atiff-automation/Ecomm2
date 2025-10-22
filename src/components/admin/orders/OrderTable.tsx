@@ -23,6 +23,7 @@ import { OrderStatus } from '@prisma/client';
 import type { OrderTableData, OrderTableProps, ActionResult } from './types';
 import { getNextBusinessDay } from '@/lib/shipping/utils/date-utils';
 import { format } from 'date-fns';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 export function OrderTable({
   orders,
@@ -50,7 +51,7 @@ export function OrderTable({
     status: OrderStatus
   ): Promise<ActionResult> => {
     try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+      const response = await fetchWithCSRF(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, triggeredBy: 'admin' }),

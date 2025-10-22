@@ -23,6 +23,7 @@ import {
   Download,
   Loader2,
 } from 'lucide-react';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface TrackingStats {
   totalShipments: number;
@@ -77,7 +78,7 @@ export default function TrackingAnalyticsDashboard({
   const handleBatchRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('/api/admin/orders/batch-tracking-refresh', {
+      const response = await fetchWithCSRF('/api/admin/orders/batch-tracking-refresh', {
         method: 'POST',
       });
 

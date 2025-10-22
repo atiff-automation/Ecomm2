@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
@@ -102,7 +103,7 @@ export default function MembershipRegistrationModal({
       setLoading(true);
       setErrors({});
 
-      const response = await fetch('/api/auth/register', {
+      const response = await fetchWithCSRF('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -248,7 +249,7 @@ export default function MembershipRegistrationModal({
           onClose();
         } else {
           // For non-checkout flows, activate membership immediately
-          const membershipResponse = await fetch('/api/membership/register', {
+          const membershipResponse = await fetchWithCSRF('/api/membership/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

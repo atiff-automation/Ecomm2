@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export default function DevAdminSetupPage() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/dev/create-user', {
+      const response = await fetchWithCSRF('/api/dev/create-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,7 +173,7 @@ export default function DevAdminSetupPage() {
 
     for (const account of accounts) {
       try {
-        const response = await fetch('/api/dev/create-user', {
+        const response = await fetchWithCSRF('/api/dev/create-user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -152,7 +153,7 @@ export default function AgentApplicationDetailPage() {
 
     try {
       setUpdating(true);
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `/api/admin/agent-applications/${applicationId}/status`,
         {
           method: 'PUT',

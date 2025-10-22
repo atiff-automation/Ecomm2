@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,7 +145,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
     try {
       setInstalling(template.type);
 
-      const response = await fetch('/api/admin/receipt-templates', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

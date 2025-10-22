@@ -38,6 +38,7 @@ import {
   Info,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { getNextBusinessDay } from '@/lib/shipping/utils/date-utils';
 import type {
   CourierOption,
@@ -168,7 +169,7 @@ export default function FulfillmentWidget({
     }, 200);
 
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/fulfill`, {
+      const response = await fetchWithCSRF(`/api/admin/orders/${orderId}/fulfill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

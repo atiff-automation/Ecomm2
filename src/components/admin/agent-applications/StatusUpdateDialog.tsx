@@ -36,6 +36,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface StatusUpdateDialogProps {
   application: AgentApplicationWithRelations;

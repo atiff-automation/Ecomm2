@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -89,7 +90,7 @@ export function RecentlyViewed({
 
     try {
       // setLoading(true);
-      const response = await fetch(`/api/recently-viewed?limit=${limit}`);
+      const response = await fetchWithCSRF(`/api/recently-viewed?limit=${limit}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -117,7 +118,7 @@ export function RecentlyViewed({
       variant: 'destructive',
       onConfirm: async () => {
         try {
-          const response = await fetch('/api/recently-viewed', {
+          const response = await fetchWithCSRF('/api/recently-viewed', {
             method: 'DELETE',
           });
 

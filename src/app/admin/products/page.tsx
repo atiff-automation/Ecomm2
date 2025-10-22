@@ -61,6 +61,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Product {
   id: string;
@@ -267,7 +268,7 @@ export default function AdminProductsPage() {
     }
 
     try {
-      const response = await fetch(`/api/admin/products/${productToDelete}`, {
+      const response = await fetchWithCSRF(`/api/admin/products/${productToDelete}`, {
         method: 'DELETE',
       });
 

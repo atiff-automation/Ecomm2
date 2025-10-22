@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -53,7 +54,7 @@ export default function ComparisonPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/products/compare', {
+      const response = await fetchWithCSRF('/api/products/compare', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,7 @@ export default function ModernTemplateSelector({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/receipt-templates');
+      const response = await fetchWithCSRF('/api/admin/receipt-templates');
 
       if (!response.ok) {
         if (response.status === 404 || response.status === 500) {
@@ -90,7 +91,7 @@ export default function ModernTemplateSelector({
   const initializeTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/receipt-templates/initialize', {
+      const response = await fetchWithCSRF('/api/admin/receipt-templates/initialize', {
         method: 'POST',
       });
 

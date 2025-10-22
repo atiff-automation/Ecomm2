@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ export function SocialProofIndicator({
       setLoading(true);
 
       // Fetch stock levels and purchase counts
-      const stockResponse = await fetch('/api/social-proof/stock-levels', {
+      const stockResponse = await fetchWithCSRF('/api/social-proof/stock-levels', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

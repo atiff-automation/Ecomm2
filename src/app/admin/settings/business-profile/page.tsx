@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   SettingsCard,
   SettingsSection,
@@ -210,7 +211,7 @@ export default function BusinessProfilePage() {
       console.log('[Business Profile] Starting save request...');
       console.log('[Business Profile] Data:', data);
 
-      const response = await fetch('/api/admin/settings/business-profile', {
+      const response = await fetchWithCSRF('/api/admin/settings/business-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

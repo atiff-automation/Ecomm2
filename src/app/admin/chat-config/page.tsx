@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -79,7 +80,7 @@ export default function ChatConfigPage() {
     setSaveStatus('idle');
 
     try {
-      const response = await fetch('/api/admin/chat-config', {
+      const response = await fetchWithCSRF('/api/admin/chat-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +123,7 @@ export default function ChatConfigPage() {
     setSaveStatus('idle');
 
     try {
-      const response = await fetch('/api/admin/chat-config', {
+      const response = await fetchWithCSRF('/api/admin/chat-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -184,7 +185,7 @@ export default function ChatConfigPage() {
       formData.append('file', file);
       formData.append('usage', 'chat_avatar');
 
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         '/api/admin/site-customization/media/upload',
         {
           method: 'POST',

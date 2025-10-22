@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,7 @@ export default function MembershipTestingPage() {
 
   const fetchPendingOrders = async () => {
     try {
-      const response = await fetch('/api/admin/pending-memberships');
+      const response = await fetchWithCSRF('/api/admin/pending-memberships');
       if (response.ok) {
         const data = await response.json();
         setPendingOrders(data.pendingMemberships || []);
@@ -98,7 +99,7 @@ export default function MembershipTestingPage() {
     try {
       addTestResult(`Simulating ${status} payment for order ${orderId}...`);
 
-      const response = await fetch('/api/payment/test-simulator', {
+      const response = await fetchWithCSRF('/api/payment/test-simulator', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +146,7 @@ export default function MembershipTestingPage() {
       addTestResult(`Creating test order for RM${amount} with ${userEmail}...`);
 
       // This would need to be implemented - create a test order API
-      const response = await fetch('/api/test/create-order', {
+      const response = await fetchWithCSRF('/api/test/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

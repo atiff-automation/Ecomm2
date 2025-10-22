@@ -25,6 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, MapPin, Phone, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Address {
   id: string;
@@ -155,7 +156,7 @@ export default function AddressBookPage() {
 
       const method = editingAddress ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await fetchWithCSRF(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ export default function AddressBookPage() {
     }
 
     try {
-      const response = await fetch(`/api/member/addresses/${addressId}`, {
+      const response = await fetchWithCSRF(`/api/member/addresses/${addressId}`, {
         method: 'DELETE',
       });
 

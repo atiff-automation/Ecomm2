@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -123,7 +124,7 @@ export default function ToyyibPayConfigPage() {
 
     try {
       setSaving(true);
-      const response = await fetch('/api/admin/payment/toyyibpay/credentials', {
+      const response = await fetchWithCSRF('/api/admin/payment/toyyibpay/credentials', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +158,7 @@ export default function ToyyibPayConfigPage() {
   ) => {
     try {
       setSaving(true);
-      const response = await fetch('/api/admin/payment/toyyibpay/credentials', {
+      const response = await fetchWithCSRF('/api/admin/payment/toyyibpay/credentials', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -195,7 +196,7 @@ export default function ToyyibPayConfigPage() {
 
     try {
       setSaving(true);
-      const response = await fetch('/api/admin/payment/toyyibpay/credentials', {
+      const response = await fetchWithCSRF('/api/admin/payment/toyyibpay/credentials', {
         method: 'DELETE',
       });
 

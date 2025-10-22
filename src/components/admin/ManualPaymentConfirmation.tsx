@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { CheckCircle, CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface ManualPaymentConfirmationProps {
   orderId: string;
@@ -44,7 +45,7 @@ export default function ManualPaymentConfirmation({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+      const response = await fetchWithCSRF(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

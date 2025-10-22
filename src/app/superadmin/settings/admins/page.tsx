@@ -1,4 +1,5 @@
 'use client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -51,7 +52,7 @@ export default function SuperadminAdminManagementPage() {
 
   const loadAdmins = async () => {
     try {
-      const response = await fetch('/api/superadmin/settings/admins');
+      const response = await fetchWithCSRF('/api/superadmin/settings/admins');
       if (response.ok) {
         const data = await response.json();
         setAdmins(data.data || []);

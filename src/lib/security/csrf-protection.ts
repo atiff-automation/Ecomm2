@@ -64,6 +64,12 @@ export class CSRFProtection {
       sessionId,
     });
 
+    console.log('🔑 CSRF Token Generated:', {
+      tokenPrefix: token.substring(0, 20) + '...',
+      sessionId: sessionId || 'anonymous',
+      storeSize: this.tokens.size,
+    });
+
     // CLEANUP: Remove expired tokens - SYSTEMATIC MAINTENANCE
     this.cleanupExpiredTokens();
 
@@ -78,13 +84,23 @@ export class CSRFProtection {
     sessionId?: string
   ): CSRFValidationResult {
     try {
+      console.log('🔍 CSRF Validation Debug:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        sessionId,
+        storedTokensCount: this.tokens.size,
+        storedTokens: Array.from(this.tokens.keys()).map(t => t.substring(0, 20) + '...'),
+      });
+
       if (!token) {
+        console.log('❌ CSRF: Token missing');
         return { valid: false, reason: 'Token missing' };
       }
 
       // Parse token components - SYSTEMATIC PARSING
       const parts = token.split('.');
       if (parts.length !== 4) {
+        console.log('❌ CSRF: Invalid token format', { parts: parts.length });
         return { valid: false, reason: 'Invalid token format' };
       }
 
@@ -93,6 +109,10 @@ export class CSRFProtection {
 
       // Validate timestamp - NO HARDCODE, uses centralized config
       if (Date.now() - timestamp > CSRF_CONFIG.TOKEN_LIFETIME) {
+        console.log('❌ CSRF: Token expired', {
+          age: Date.now() - timestamp,
+          maxAge: CSRF_CONFIG.TOKEN_LIFETIME
+        });
         this.tokens.delete(token);
         return { valid: false, reason: 'Token expired' };
       }
@@ -109,6 +129,7 @@ export class CSRFProtection {
           Buffer.from(expectedSignature)
         )
       ) {
+        console.log('❌ CSRF: Invalid signature');
         return { valid: false, reason: 'Invalid token signature' };
       }
 
@@ -118,15 +139,24 @@ export class CSRFProtection {
         tokenSessionId !== sessionId &&
         tokenSessionId !== 'anonymous'
       ) {
+        console.log('❌ CSRF: Session mismatch', {
+          expected: sessionId,
+          actual: tokenSessionId
+        });
         return { valid: false, reason: 'Token session mismatch' };
       }
 
       // Check if token exists in store - CENTRALIZED TOKEN MANAGEMENT
       const tokenData = this.tokens.get(token);
       if (!tokenData) {
+        console.log('❌ CSRF: Token not found in store', {
+          tokenPrefix: token.substring(0, 20) + '...',
+          storeSize: this.tokens.size,
+        });
         return { valid: false, reason: 'Token not found' };
       }
 
+      console.log('✅ CSRF: Token valid');
       return { valid: true };
     } catch (error) {
       console.error('CSRF token validation error:', error);
