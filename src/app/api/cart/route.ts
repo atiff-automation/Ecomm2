@@ -84,13 +84,25 @@ async function handleGET() {
       const guestCartData = await getGuestCartWithProducts();
 
       // Transform guest cart to match CartResponse structure
+      // CRITICAL: Ensure data structure consistency between guest and authenticated carts
       return NextResponse.json({
         id: 'guest_cart',
         items: guestCartData.items.map(item => ({
           id: item.id,
           productId: item.product.id,
           quantity: item.quantity,
-          product: item.product,
+          product: {
+            ...item.product,
+            // Transform guest cart's singular 'category' to match authenticated 'categories' array structure
+            categories: item.product.category ? [{
+              category: {
+                id: item.product.category.id,
+                name: item.product.category.name,
+                slug: item.product.category.slug,
+              }
+            }] : [],
+            category: undefined, // Remove singular category to prevent confusion
+          },
         })),
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
@@ -320,7 +332,18 @@ async function handlePOST(request: NextRequest) {
             id: item.id,
             productId: item.product.id,
             quantity: item.quantity,
-            product: item.product,
+            product: {
+              ...item.product,
+              // Transform guest cart's singular 'category' to match authenticated 'categories' array structure
+              categories: item.product.category ? [{
+                category: {
+                  id: item.product.category.id,
+                  name: item.product.category.name,
+                  slug: item.product.category.slug,
+                }
+              }] : [],
+              category: undefined, // Remove singular category to prevent confusion
+            },
           })),
           totalItems: guestCartData.summary.itemCount,
           subtotal: guestCartData.summary.subtotal,
@@ -615,7 +638,18 @@ async function handlePUT(request: NextRequest) {
           id: item.id,
           productId: item.product.id,
           quantity: item.quantity,
-          product: item.product,
+          product: {
+            ...item.product,
+            // Transform guest cart's singular 'category' to match authenticated 'categories' array structure
+            categories: item.product.category ? [{
+              category: {
+                id: item.product.category.id,
+                name: item.product.category.name,
+                slug: item.product.category.slug,
+              }
+            }] : [],
+            category: undefined, // Remove singular category to prevent confusion
+          },
         })),
         totalItems: guestCartData.summary.itemCount,
         subtotal: guestCartData.summary.subtotal,
