@@ -485,8 +485,14 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Update product stock
+      // Update product stock - reserve inventory immediately upon order creation
+      console.log('📦 Reserving stock for order items...');
       for (const cartItem of cartItems) {
+        const productBeforeUpdate = await tx.product.findUnique({
+          where: { id: cartItem.productId },
+          select: { stockQuantity: true, name: true }
+        });
+
         await tx.product.update({
           where: { id: cartItem.productId },
           data: {
@@ -495,7 +501,14 @@ export async function POST(request: NextRequest) {
             },
           },
         });
+
+        if (productBeforeUpdate) {
+          const newStock = productBeforeUpdate.stockQuantity - cartItem.quantity;
+          console.log(`📦 Stock reserved for ${productBeforeUpdate.name}: -${cartItem.quantity} (${productBeforeUpdate.stockQuantity} → ${newStock})`);
+        }
       }
+      console.log('✅ Stock reservation completed - will be confirmed on payment success');
+      console.log('⚠️ Stock will be restored automatically if payment fails');
 
       // Clear cart (user cart or guest cart)
       if (!isGuest) {

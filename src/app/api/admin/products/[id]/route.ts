@@ -432,9 +432,40 @@ export async function DELETE(
       );
     }
 
+    // BUSINESS RULE: Check if product has existing orders
+    // Products with order history cannot be deleted to preserve:
+    // - Customer purchase history
+    // - Financial/tax records compliance
+    // - Audit trail integrity
+    const orderItemCount = await prisma.orderItem.count({
+      where: { productId: params.id },
+    });
+
+    if (orderItemCount > 0) {
+      return NextResponse.json(
+        {
+          message: `Cannot delete product "${product.name}" because it has ${orderItemCount} order ${orderItemCount === 1 ? 'item' : 'items'} in the system. Products with existing orders cannot be deleted to preserve order history and financial records. Please set the product status to INACTIVE instead.`,
+          code: 'PRODUCT_HAS_ORDERS',
+          details: {
+            productName: product.name,
+            sku: product.sku,
+            orderItemCount,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     // Delete product with transaction
+    // NOTE: Only products without order history can reach this point
     await prisma.$transaction(async tx => {
-      // Delete related records first
+      // Delete related records first (following database cascade order)
+      // Being explicit about deletions for audit trail and clarity
+
+      await tx.review.deleteMany({
+        where: { productId: params.id },
+      });
+
       await tx.productImage.deleteMany({
         where: { productId: params.id },
       });
@@ -447,7 +478,11 @@ export async function DELETE(
         where: { productId: params.id },
       });
 
-      // Delete the product
+      await tx.productCategory.deleteMany({
+        where: { productId: params.id },
+      });
+
+      // Delete the product (safe now - no order dependencies)
       await tx.product.delete({
         where: { id: params.id },
       });
@@ -472,8 +507,41 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('Error deleting product:', error);
+
+    // Enhanced error handling with specific messages
+    let errorMessage = 'Failed to delete product';
+    let errorCode = 'DELETE_FAILED';
+
+    // Prisma-specific error handling
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; meta?: any };
+
+      switch (prismaError.code) {
+        case 'P2003':
+          // Foreign key constraint violation
+          const constraintName =
+            prismaError.meta?.constraint || 'unknown constraint';
+          errorMessage = `Cannot delete product due to existing references in the database (${constraintName}). This product may have associated records that must be removed first.`;
+          errorCode = 'FOREIGN_KEY_CONSTRAINT';
+          break;
+
+        case 'P2025':
+          // Record not found
+          errorMessage = 'Product not found or already deleted';
+          errorCode = 'NOT_FOUND';
+          break;
+
+        default:
+          errorMessage = `Database error: ${prismaError.code}`;
+          errorCode = 'DATABASE_ERROR';
+      }
+    }
+
     return NextResponse.json(
-      { message: 'Failed to delete product' },
+      {
+        message: errorMessage,
+        code: errorCode,
+      },
       { status: 500 }
     );
   }

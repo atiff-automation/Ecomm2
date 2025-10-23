@@ -28,19 +28,53 @@ export async function POST(request: NextRequest) {
       transactionId,
     });
 
-    // Find the order
+    // Find the order with order items
     const order = await prisma.order.findFirst({
       where: { orderNumber: orderReference },
+      include: {
+        orderItems: {
+          select: {
+            productId: true,
+            quantity: true,
+            productName: true,
+          },
+        },
+      },
     });
 
     if (order) {
+      // Restore stock for all items in the cancelled order
+      console.log('⚠️ Payment failed - restoring stock for order:', order.orderNumber);
+
+      for (const item of order.orderItems) {
+        const currentProduct = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { stockQuantity: true, name: true }
+        });
+
+        if (currentProduct) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: {
+                increment: item.quantity, // Restore the stock
+              },
+            },
+          });
+
+          console.log(`📦 Stock restored for ${currentProduct.name}: +${item.quantity} (${currentProduct.stockQuantity} → ${currentProduct.stockQuantity + item.quantity})`);
+        }
+      }
+
+      console.log('✅ Stock restoration completed for failed payment');
+
       // Update order status to failed
       await prisma.order.update({
         where: { id: order.id },
         data: {
           paymentStatus: 'FAILED',
           status: 'CANCELLED',
-          paymentReference: transactionId,
+          paymentId: transactionId,
         },
       });
     }
@@ -57,7 +91,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Payment failure webhook error:', error);
     return NextResponse.json(
-      { message: 'Webhook processing failed', error: error.message },
+      {
+        message: 'Webhook processing failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

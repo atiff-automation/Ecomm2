@@ -192,19 +192,9 @@ export async function POST(request: NextRequest) {
       newPaymentStatus = 'PAID';
       newOrderStatus = 'PAID'; // Fixed: Use PAID instead of non-existent CONFIRMED
 
-      // Reserve inventory
-      for (const item of order.orderItems) {
-        if (item.product) {
-          const newStock = Math.max(
-            0,
-            item.product.stockQuantity - item.quantity
-          );
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: { stockQuantity: newStock },
-          });
-        }
-      }
+      // ✅ STOCK ALREADY DEDUCTED: Stock was decremented during order creation
+      // No need to deduct again here - this was causing double deduction bug
+      console.log('✅ Payment confirmed - stock was already reserved during order creation');
 
       // Activate pending membership if exists
       if (order.pendingMembership && order.user && !order.user.isMember) {
@@ -255,13 +245,39 @@ export async function POST(request: NextRequest) {
         }
       }
     } else if (callback.status === '3') {
-      // Failed
+      // Failed - restore stock that was deducted during order creation
       newPaymentStatus = 'FAILED';
       newOrderStatus = 'CANCELLED';
+
+      console.log('⚠️ Payment failed - restoring stock for order:', order.orderNumber);
+
+      // Restore stock for all items in the cancelled order
+      for (const item of order.orderItems) {
+        const currentProduct = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { stockQuantity: true, name: true }
+        });
+
+        if (currentProduct) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: {
+                increment: item.quantity, // Restore the stock
+              },
+            },
+          });
+
+          console.log(`📦 Stock restored for ${currentProduct.name}: +${item.quantity} (${currentProduct.stockQuantity} → ${currentProduct.stockQuantity + item.quantity})`);
+        }
+      }
+
+      console.log('✅ Stock restoration completed for cancelled order');
     } else if (callback.status === '2') {
-      // Pending - keep current status
+      // Pending - keep current status, stock remains reserved
       newPaymentStatus = 'PENDING';
       newOrderStatus = 'PENDING';
+      console.log('⏳ Payment still pending - stock remains reserved');
     }
 
     // Update order status directly without triggering notifications

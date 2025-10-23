@@ -1,0 +1,878 @@
+
+▗ ▗   ▖ ▖  Claude Code v2.0.22
+           Sonnet 4.5 · Claude Pro
+  ▘▘ ▝▝    /Users/atiffriduan/Desktop/EcomJRM
+
+> /clear 
+  ⎿  (no content)
+
+> please inspect and present the issue. i does not received any telegram notification for new 
+order and low stock notification. when i test in the notification page, it do sents the testing to
+ my telegram, but when there is new order or low stock no notification received. please inspect, 
+no code yet 
+
+⏺ I'll inspect the notification system to identify why Telegram notifications aren't being sent
+  for new orders and low stock despite the test working. Let me investigate systematically.
+
+⏺ Let me investigate the notification system files:
+
+⏺ Read(src/app/api/admin/settings/notifications/route.ts)
+  ⎿  Error reading file
+
+⏺ Search(pattern: "sendTelegramNotification")
+  ⎿  Found 0 files 
+
+⏺ Search(pattern: "new.*order|order.*created")
+  ⎿  Found 162 files (ctrl+o to expand)
+
+⏺ Search(pattern: "low.*stock|stock.*low")
+  ⎿  Found 56 files (ctrl+o to expand)
+
+⏺ Read(src/lib/telegram/simplified-telegram-service.ts)
+  ⎿  Read 839 lines
+
+⏺ Search(pattern: "**/notification*.ts")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ Read(src/app/api/webhooks/payment-success/route.ts)
+  ⎿  Read 247 lines
+
+⏺ Read(src/app/api/webhooks/toyyibpay/route.ts)
+  ⎿  Read 474 lines
+
+⏺ Now let me check where the notifications should actually be triggered:
+
+⏺ Read(src/lib/notifications/order-status-handler.ts)
+  ⎿  Read 367 lines
+
+⏺ Read(src/app/api/admin/products/[id]/route.ts)
+  ⎿  Read 549 lines
+
+⏺ Search(pattern: "sendNewOrderNotification|sendLowStockAlert", output_mode: "content")
+  ⎿  Found 11 lines (ctrl+o to expand)
+
+⏺ Now let me check where low stock alerts should be triggered from product updates:
+
+⏺ Search(pattern: "(sendLowStockAlert|lowStockAlert|low.*stock)", type: "ts")
+  ⎿  Found 36 files (ctrl+o to expand)
+
+⏺ Read(src/lib/services/enhanced-product-service.ts)
+  ⎿  Read 578 lines
+
+⏺ Search(pattern: "handleOrderStatusChange", output_mode: "content")
+  ⎿  Found 6 lines (ctrl+o to expand)
+
+⏺ Now let me check the webhook flow more carefully:
+
+⏺ Bash(grep -rn "sendLowStockAlert" --include="*.ts" --include="*.tsx" src/) timeout: 10m 0s
+  ⎿ src//app/api/admin/telegram/simple-test-inventory/route.ts:50:    const success = await simpl
+    ifiedTelegramService.sendLowStockAlert(
+    src//lib/telegram/simplified-telegram-service.ts:538:  async sendLowStockAlert(
+    … +5 lines (ctrl+o to expand)
+
+
+⏺ Perfect! Now I have identified the issues. Let me complete the analysis:
+
+⏺ Root Cause Analysis: Telegram Notifications Not Sending
+
+  I've completed my investigation and identified two critical issues preventing Telegram
+  notifications from being sent for new orders and low stock alerts.
+
+  ---
+  Issue #1: New Order Notifications - Missing Webhook Call 🔴
+
+  The Problem
+
+  The toyyibPay webhook (src/app/api/webhooks/toyyibpay/route.ts) does NOT call the
+  OrderStatusHandler.handleOrderStatusChange() method that triggers Telegram notifications.
+
+  Evidence
+
+  Line 283-296 in toyyibpay/route.ts:
+  // Update order status directly without triggering notifications
+  // Notifications are handled by the centralized payment-success webhook to avoid duplicates
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: newOrderStatus,
+      paymentStatus: newPaymentStatus,
+      paymentId: callback.refno,
+      updatedAt: new Date(),
+    },
+  });
+
+  The comment says notifications are handled by the "centralized payment-success webhook" but the
+  toyyibPay webhook never calls that webhook. It directly updates the database and skips
+  notification logic entirely.
+
+  Compare with payment-success webhook
+
+  Lines 199-214 in payment-success/route.ts:
+  await OrderStatusHandler.handleOrderStatusChange({
+    orderId: order.id,
+    previousStatus,
+    newStatus: 'PAID',
+    previousPaymentStatus,
+    newPaymentStatus: 'PAID',
+    triggeredBy: 'webhook_payment_gateway',
+    metadata: {
+      transactionId,
+      webhookTimestamp: timestamp,
+    },
+  });
+
+  What Actually Sends Notifications
+
+  Lines 116-141 in order-status-handler.ts:
+  private static async handlePaymentSuccess(order: any, data: OrderStatusChangeData) {
+    console.log('💰 Payment success detected for order:', order.orderNumber);
+
+    // Send Telegram notification for successful payment
+    await simplifiedTelegramService.sendNewOrderNotification({
+      orderNumber: order.orderNumber,
+      customerName,
+      total: Number(order.total),
+      items: order.orderItems.map(...),
+      paymentMethod: ...,
+      createdAt: new Date(),
+    });
+  }
+
+  Root Cause
+
+  toyyibPay webhook (route.ts:283-296) → Updates DB directly → NO notification call → NO Telegram
+  message sent
+
+  ---
+  Issue #2: Low Stock Alerts - Never Implemented 🔴
+
+  The Problem
+
+  The sendLowStockAlert() function exists in the Telegram service but is NEVER CALLED anywhere in
+  the codebase except in test routes.
+
+  Evidence
+
+  Search results show only 2 real usages:
+  1. Definition: src/lib/telegram/simplified-telegram-service.ts:538 - the function itself
+  2. Test Only: src/app/api/admin/telegram/simple-test-inventory/route.ts:50 - test endpoint
+
+  Where It SHOULD Be Called
+
+  When products are updated with low stock, the code at
+  src/app/api/admin/products/[id]/route.ts:244-368 updates stock quantities BUT never checks if
+  stock fell below lowStockAlert threshold and never calls sendLowStockAlert().
+
+  What's Missing
+
+  After updating product stock (line 269-273):
+  ...(productData.stockQuantity !== undefined && {
+    stockQuantity: productData.stockQuantity,
+  }),
+
+  There should be logic like:
+  // Check if stock dropped below alert threshold
+  if (productData.stockQuantity <= existingProduct.lowStockAlert) {
+    await simplifiedTelegramService.sendLowStockAlert(
+      updatedProduct.name,
+      productData.stockQuantity,
+      updatedProduct.sku
+    );
+  }
+
+  But this does not exist anywhere in the product update route.
+
+  ---
+  Summary
+
+  | Issue                   | Location                                        | Status
+       | Impact                                    |
+  |-------------------------|-------------------------------------------------|-------------------
+  -----|-------------------------------------------|
+  | New Order Notifications | src/app/api/webhooks/toyyibpay/route.ts:283-296 | 🔴 Missing 
+  Integration | No Telegram notifications for paid orders |
+  | Low Stock Alerts        | src/app/api/admin/products/[id]/route.ts        | 🔴 Not Implemented
+       | Low stock detection logic never runs      |
+
+  Why Test Works
+
+  The test endpoints (simple-test-order/route.ts, simple-test-inventory/route.ts) directly call
+  the Telegram service methods, bypassing the broken production flow. That's why testing works but
+   real orders/stock updates don't trigger notifications.
+
+⏺ ---
+  Next Steps
+
+  Would you like me to:
+
+  1. Fix the new order notification issue by adding OrderStatusHandler.handleOrderStatusChange()
+  to the toyyibPay webhook?
+  2. Implement low stock alerts by adding stock monitoring logic to the product update route?
+  3. Both fixes together?
+
+  Let me know and I'll implement the solution!
+
+> actually previously it works accordingly, are you sure we are missing or not implemented yet? 
+
+⏺ You're right to question this! Let me check the git history to see what changed:
+
+⏺ Bash(git log --oneline --all -20) timeout: 10m 0s
+  ⎿  36d195f fix: Add proper CORS origins for authenticated and critical API endpoints
+     fafaf54 feat(db): Add password reset token fields to users table
+     98c0b16 fix: Add CSRF protection to product listing page delete function
+     … +17 lines (ctrl+o to expand)
+
+⏺ Bash(git log --all --grep="notification\|telegram" --oneline -10) timeout: 10m 0s
+  ⎿  5cf38b3 feat(security): Implement CSRF protection for critical API routes
+     19d4c3c feat: Add customer delete functionality and toast notifications
+     7952b5f refactor: product admin cleanup - CLAUDE.md compliance
+     … +7 lines (ctrl+o to expand)
+
+⏺ Bash(git log --all --oneline -- src/app/api/webhooks/toyyibpay/route.ts | head -10) timeout: 10m 0s
+  ⎿  47123db fix: resolve TypeScript schema drift errors and apply code formatting 
+     9c14c0d fix: Critical EasyParcel fulfillment data capture bug
+     8a75245 fix: Resolve ToyyibPay webhook timeout and payment status update issue
+     … +6 lines (ctrl+o to expand)
+
+⏺ I see a relevant commit! Let me check what happened in that notification fix:
+
+⏺ Bash(git show 95b2cfb --stat) timeout: 10m 0s
+  ⎿  commit 95b2cfb89a9fd5cda907845c776e15dbe7574801      
+     Author: atiff-automation <atiff.automation@gmail.com>
+     Date:   Sat Oct 18 13:08:33 2025 +0800
+     … +37 lines (ctrl+o to expand)
+
+⏺ Bash(git show 95b2cfb -- src/app/api/webhooks/toyyibpay/route.ts | head -100) timeout: 10m 0s
+  ⎿  (No content)
+
+⏺ Interesting! The toyyibpay webhook wasn't changed in that commit. Let me check when it was last
+  modified:
+
+⏺ Bash(git log --all --oneline --follow -- src/app/api/webhooks/toyyibpay/route.ts |    timeout: 10m 
+      head -5)                                                                          0s
+  ⎿  47123db fix: resolve TypeScript schema drift errors and apply code formatting 
+     9c14c0d fix: Critical EasyParcel fulfillment data capture bug
+     8a75245 fix: Resolve ToyyibPay webhook timeout and payment status update issue
+     … +2 lines (ctrl+o to expand)
+
+⏺ Bash(git show 8a75245:src/app/api/webhooks/toyyibpay/route.ts | grep -A 30 "Update     timeout: 10m 
+      order status")                                                                     0s
+  ⎿     // Update order status directly without triggering notifications                         
+        // Notifications are handled by the centralized payment-success webhook to avoid duplicat
+    es
+    … +30 lines (ctrl+o to expand)
+
+
+⏺ You're absolutely right! The comment in the code says it was intentionally designed this way.
+  Let me check if there's actually a separate webhook or mechanism that should be triggering
+  notifications:
+
+⏺ Bash(git show 8a75245 --stat) timeout: 10m 0s
+  ⎿  commit 8a75245280cab5aa7a4f2bfbed2c5d369c9778c4      
+     Author: atiff-automation <atiff.automation@gmail.com>
+     Date:   Fri Oct 10 23:01:29 2025 +0800
+     … +425 lines (ctrl+o to expand)
+
+⏺ Bash(git diff 8a75245^..8a75245 -- src/app/api/webhooks/toyyibpay/route.ts | grep -B5   timeout: 10m 
+      -A5 "notification")                                                                 0s
+  ⎿  No matches found
+
+⏺ Let me look at an earlier version to see when notifications WERE working:
+
+⏺ Bash(git log --all --grep="telegram\|notification" --oneline --                         timeout: 10m 
+      src/app/api/webhooks/toyyibpay/route.ts | head -20)                                 0s
+  ⎿  9c14c0d fix: Critical EasyParcel fulfillment data capture bug      
+     8af2731 🔧 Fix Zod validation error in payment status update system
+
+⏺ Bash(git log --all --oneline --before="2025-10-10" --                                   timeout: 10m 
+      src/app/api/webhooks/toyyibpay/route.ts | head -5)                                  0s
+  ⎿  c9a7b19 Fix Next.js static generation errors for Railway deployment     
+     08a6a1f done postcode auto-fill
+     6f0401c 🔧 Fix CSS loading issues and complete systematic ESLint cleanup
+     … +2 lines (ctrl+o to expand)
+
+⏺ Let me check an older version of the webhook file:
+
+⏺ Bash(git show 1b5f8bc:src/app/api/webhooks/toyyibpay/route.ts | grep -B10 -A10  timeout: 10m 0s
+      "telegram\|notification\|sendNewOrder" | head -40)
+  ⎿   * toyyibPay Payment Webhook Handler                        
+      * Processes payment status updates from toyyibPay
+      * Following the same pattern as the Billplz webhook handler
+     … +37 lines (ctrl+o to expand)
+
+⏺ Perfect! You're absolutely correct - it WAS working before! The old version used:
+
+  await updateOrderStatus(order.id, newOrderStatus, newPaymentStatus, 'toyyibpay-webhook', {...});
+
+  But the current version removed that call and replaced it with direct database update. Let me
+  see when/why this was changed:
+
+⏺ Bash(git diff 1b5f8bc..8a75245 -- src/app/api/webhooks/toyyibpay/route.ts | grep -B5  timeout: 10m 
+      -A5 "updateOrderStatus\|Update order status")                                     0s
+  ⎿  @@ -242,25 +261,47 @@ export async function POST(request: NextRequest) {
+            newOrderStatus = 'PENDING';
+          }
+     … +34 lines (ctrl+o to expand)
+
+⏺ Updated Root Cause Analysis
+
+  You're 100% correct! The notifications DID work before, but they were accidentally broken in
+  commit 8a75245 (Oct 10, 2025).
+
+  What Happened:
+
+  BEFORE (Working):
+  // Old version at commit 1b5f8bc
+  await updateOrderStatus(
+    order.id,
+    newOrderStatus,
+    newPaymentStatus,
+    'toyyibpay-webhook',
+    {...}
+  );
+  // ✅ This called OrderStatusHandler.handleOrderStatusChange()
+  // ✅ Which triggered Telegram notifications
+
+  AFTER (Broken):
+  // Current version after commit 8a75245
+  // Update order status directly without triggering notifications
+  // Notifications are handled by the centralized payment-success webhook to avoid duplicates
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: newOrderStatus,
+      paymentStatus: newPaymentStatus,
+      paymentId: callback.refno,
+      updatedAt: new Date(),
+    },
+  });
+  // ❌ updateOrderStatus() removed → No notification handler called
+  // ❌ Comment says "centralized payment-success webhook" handles it
+  // ❌ BUT payment-success webhook is NEVER called!
+
+  The Bug:
+
+  The comment says "Notifications are handled by the centralized payment-success webhook to avoid 
+  duplicates" but:
+  1. The toyyibPay webhook doesn't call the payment-success webhook
+  2. toyyibPay handles its own payment processing
+  3. The notification call was removed but never replaced
+
+  Result:
+
+  Notifications stopped working after Oct 10, 2025 when commit 8a75245 removed the
+  updateOrderStatus() call.
+
+  ---
+  For Low Stock Alerts:
+
+  My original finding still stands - low stock alerts were never implemented in the product update
+   flow. The function exists but is never called when stock changes.
+
+  ---
+  Would you like me to restore the working notification flow?
+
+> do not restore, plan to correct it. for order stock, we need it handle by centralized 
+payment-success webhook to avoid duplicate, for low stock do what is the best. present to me first
+ 
+
+⏺ Perfect! Let me create a comprehensive plan to fix both issues properly.
+
+⏺ Read(src/app/api/webhooks/payment-success/route.ts)
+  ⎿  Read 50 lines
+
+⏺ Search(pattern: "lowStockAlert|low_stock", path: "prisma/schema.prisma", output_mode: "content")
+  ⎿  Found 1 line (ctrl+o to expand)
+
+⏺ 📋 Telegram Notification Fix Plan
+
+  Problem Summary
+
+  | Issue                   | Status                       | Root Cause
+                        |
+  |-------------------------|------------------------------|--------------------------------------
+  ----------------------|
+  | New Order Notifications | 🔴 Broken since Oct 10, 2025 | updateOrderStatus() removed from
+  toyyibPay webhook         |
+  | Low Stock Alerts        | 🔴 Never implemented         | No logic to detect/notify when stock
+  drops below threshold |
+
+  ---
+  Solution 1: New Order Notifications (Centralized Approach)
+
+  Current Architecture Problem
+
+  ┌─────────────────┐
+  │  ToyyibPay      │
+  │  Webhook        │──┐
+  └─────────────────┘  │
+                       │  ❌ Both webhooks handle payment
+  ┌─────────────────┐  │     separately → No coordination
+  │  Payment-Success│  │
+  │  Webhook        │──┘
+  └─────────────────┘
+
+  Proposed Solution: Make toyyibPay call OrderStatusHandler
+
+  Why this approach:
+  - ToyyibPay webhook is the REAL payment processor (used in production)
+  - Payment-success webhook appears to be for testing/simulation only
+  - Centralized approach = notifications should happen where REAL payment processing happens
+
+  Implementation Strategy
+
+  File: src/app/api/webhooks/toyyibpay/route.ts
+
+  Changes Required:
+
+  Step 1: Import OrderStatusHandler
+
+  // ADD this import at top
+  import { OrderStatusHandler } from '@/lib/notifications/order-status-handler';
+
+  Step 2: Replace Direct DB Update with Handler Call
+
+  Current (Broken):
+  // Lines 283-296 - REMOVE THIS
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: newOrderStatus,
+      paymentStatus: newPaymentStatus,
+      paymentId: callback.refno,
+      updatedAt: new Date(),
+    },
+  });
+
+  New (Working):
+  // Get current status BEFORE update for change tracking
+  const previousStatus = order.status;
+  const previousPaymentStatus = order.paymentStatus;
+
+  // Update database
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: newOrderStatus,
+      paymentStatus: newPaymentStatus,
+      paymentId: callback.refno,
+      updatedAt: new Date(),
+    },
+  });
+
+  // ✅ TRIGGER NOTIFICATIONS via centralized handler
+  if (newPaymentStatus === 'PAID' && previousPaymentStatus !== 'PAID') {
+    try {
+      await OrderStatusHandler.handleOrderStatusChange({
+        orderId: order.id,
+        previousStatus,
+        newStatus: newOrderStatus,
+        previousPaymentStatus,
+        newPaymentStatus,
+        triggeredBy: 'toyyibpay-webhook',
+        metadata: {
+          billCode: callback.billcode,
+          refNo: callback.refno,
+          paymentAmount: callback.amount,
+          transactionTime: callback.transaction_time,
+        },
+      });
+
+      console.log('✅ Order status change handled for order:', order.orderNumber);
+    } catch (notificationError) {
+      // Don't fail webhook if notification fails
+      console.error('❌ Failed to handle order status change:', notificationError);
+    }
+  }
+
+  Benefits:
+
+  ✅ Follows existing pattern (payment-success webhook already uses this)✅ Centralized
+  notification logic via OrderStatusHandler✅ No duplicate notifications (only fires when payment
+  status changes to PAID)✅ Non-blocking (webhook succeeds even if notification fails)✅ Proper
+  audit trail via OrderStatusHandler
+
+  ---
+  Solution 2: Low Stock Alerts
+
+  Proposed Solution: Product Update Hook + Background Check
+
+  Two approaches to consider:
+
+  Option A: Real-Time Detection (Recommended)
+
+  Trigger low stock alert immediately when stock drops below threshold during product updates.
+
+  File: src/app/api/admin/products/[id]/route.ts
+
+  Location: After product update transaction (line 368)
+
+  Implementation:
+  // After the transaction completes (line 368)
+  const result = await prisma.$transaction(async tx => {
+    // ... existing product update code ...
+    return updatedProduct;
+  });
+
+  // ✅ CHECK FOR LOW STOCK after successful update
+  if (
+    productData.stockQuantity !== undefined &&
+    result.lowStockAlert > 0 && // Only if alert threshold is set
+    productData.stockQuantity <= result.lowStockAlert
+  ) {
+    try {
+      await simplifiedTelegramService.sendLowStockAlert(
+        result.name,
+        productData.stockQuantity,
+        result.sku
+      );
+
+      console.log(`⚠️ Low stock alert sent for ${result.name}: ${productData.stockQuantity} <= 
+  ${result.lowStockAlert}`);
+    } catch (notificationError) {
+      console.error('❌ Failed to send low stock alert:', notificationError);
+      // Don't fail the product update if notification fails
+    }
+  }
+
+  Triggers:
+  - ✅ Admin manually updates stock via product edit
+  - ✅ Product import updates stock quantities
+  - ❌ Order purchase deducts stock (handled in Option B below)
+
+  Option B: Order-Triggered Stock Alerts
+
+  Detect low stock after order stock deduction (when customers buy products).
+
+  File: src/app/api/webhooks/toyyibpay/route.ts
+
+  Location: After stock restoration logic (line 275)
+
+  Implementation:
+  if (callback.status === '1') {
+    // Success - payment confirmed
+    newPaymentStatus = 'PAID';
+    newOrderStatus = 'PAID';
+
+    // ✅ CHECK FOR LOW STOCK after order confirmed
+    // Stock was already deducted during order creation
+    for (const item of order.orderItems) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+        select: {
+          stockQuantity: true,
+          lowStockAlert: true,
+          name: true,
+          sku: true
+        }
+      });
+
+      if (product && product.lowStockAlert > 0) {
+        // Check if stock dropped below threshold
+        if (product.stockQuantity <= product.lowStockAlert) {
+          try {
+            await simplifiedTelegramService.sendLowStockAlert(
+              product.name,
+              product.stockQuantity,
+              product.sku
+            );
+
+            console.log(`⚠️ Low stock alert: ${product.name} (${product.stockQuantity} units 
+  remaining)`);
+          } catch (error) {
+            console.error('❌ Failed to send low stock alert:', error);
+          }
+        }
+      }
+    }
+  }
+
+  Triggers:
+  - ✅ Customer completes purchase
+  - ✅ Detects low stock across all items in order
+  - ✅ Sends alert for each product below threshold
+
+  ---
+  Recommended Implementation Plan
+
+  Implement BOTH Options:
+
+  1. Option A - Catches manual stock updates by admin
+  2. Option B - Catches stock depletion from customer orders
+
+  This ensures complete coverage for all stock change scenarios.
+
+  ---
+  Risk Assessment
+
+  | Change                                      | Risk Level | Mitigation
+             |
+  |---------------------------------------------|------------|------------------------------------
+  -----------|
+  | Add OrderStatusHandler to toyyibPay webhook | 🟡 Medium  | Wrapped in try-catch, won't fail
+  webhook      |
+  | Low stock alerts in product update          | 🟢 Low     | Non-blocking, runs after successful
+   update    |
+  | Low stock alerts in order webhook           | 🟡 Medium  | May increase webhook processing
+  time slightly |
+
+  ---
+  Testing Plan
+
+  After Implementation:
+
+  Test 1: New Order Notifications
+  1. Create test order via checkout
+  2. Process payment via toyyibPay
+  3. Verify Telegram notification received with order details
+
+  Test 2: Low Stock - Manual Update
+  1. Edit product, set stock to 5, lowStockAlert to 10
+  2. Save product
+  3. Verify Telegram alert received
+
+  Test 3: Low Stock - Order Purchase
+  1. Create product with stock=12, lowStockAlert=10
+  2. Customer orders 3 units (stock becomes 9)
+  3. Complete payment
+  4. Verify Telegram alert received
+
+  Test 4: No Duplicate Notifications
+  1. Process multiple toyyibPay callbacks for same order
+  2. Verify only ONE notification sent (status change detection works)
+
+  ---
+  File Summary
+
+  Files to modify:
+  1. src/app/api/webhooks/toyyibpay/route.ts - Add OrderStatusHandler + low stock check (Option B)
+  2. src/app/api/admin/products/[id]/route.ts - Add low stock check after update (Option A)
+
+  Files to import:
+  - @/lib/notifications/order-status-handler (toyyibPay webhook)
+  - @/lib/telegram/simplified-telegram-service (both files)
+
+  ---
+
+⏺ ---
+  Questions for You:
+
+  1. New Order Notifications: Do you approve the approach of adding OrderStatusHandler to the
+  toyyibPay webhook?
+  2. Low Stock Alerts: Which option do you prefer?
+    - Option A only (admin manual updates)
+    - Option B only (customer order depletion)
+    - Both A + B (comprehensive coverage) ✅ Recommended
+  3. Alert Frequency: Should we add deduplication logic to prevent spam if stock stays low?
+    - Example: Only alert once when stock first drops below threshold, not on every update while
+  still low
+  4. Additional Scenarios: Any other stock change scenarios I should consider?
+    - Product imports
+    - Bulk stock updates
+    - Stock restocking (should we notify when stock is replenished above threshold?)
+
+  Let me know your preferences and I'll implement accordingly!
+
+> question on New Order Notifications: what if we have another payment gateway too like billplz, 
+do we need to create the webhook success for billplz success payment? the purpose of centralised 
+is to make it also general for any payment gateway success situation. do you go me? am i answering
+ our concern? 
+
+⏺ Absolutely brilliant catch! 🎯 You're 100% right - I misunderstood the architecture!
+
+  Let me re-analyze:
+
+⏺ Search(pattern: "billplz", path: "src/app/api")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ Bash(find src/app/api/webhooks -type f -name "*.ts" | head -10) timeout: 10m 0s
+  ⎿  src/app/api/webhooks/easyparcel-tracking/route.ts
+     src/app/api/webhooks/payment-success/route.ts
+     src/app/api/webhooks/payment-failed/route.ts
+     src/app/api/webhooks/toyyibpay/route.ts
+
+⏺ Perfect! Now I understand the architecture. Let me check how the payment-success webhook is
+  supposed to be called:
+
+⏺ Bash(grep -rn "payment-success\|payment-failed" --include="*.ts" --include="*.tsx"      timeout: 10m 
+      src/app/api/payment src/app/api/webhooks/toyyibpay | head -20)                      0s
+  ⎿ src/app/api/webhooks/toyyibpay/route.ts:284:    // Notifications are handled by the centraliz
+    ed payment-success webhook to avoid duplicates
+
+
+⏺ Read(src/app/api/webhooks/payment-failed/route.ts)
+  ⎿  Read 50 lines
+
+⏺ Now I understand! You're asking: Should toyyibPay webhook CALL the centralized payment-success 
+  webhook internally? Let me investigate the correct pattern:
+
+⏺ 🎯 YES! You're Exactly Right!
+
+  Current Architecture (What SHOULD Happen)
+
+  ┌─────────────────────────────────────────────────┐
+  │         PAYMENT GATEWAY WEBHOOKS                │
+  │  (Gateway-specific payment processing)          │
+  └─────────────────────────────────────────────────┘
+                       │
+          ┌────────────┼────────────┐
+          │            │            │
+     ┌────▼───┐   ┌───▼────┐   ┌──▼──────┐
+     │ToyyibPay│  │Billplz │  │Stripe   │
+     │Webhook  │  │Webhook │  │Webhook  │
+     └────┬───┘   └───┬────┘   └──┬──────┘
+          │           │            │
+          │  Update DB Only        │
+          │  (status, paymentId)   │
+          │           │            │
+          └───────────┼────────────┘
+                      │
+                ┌─────▼──────┐
+                │  INTERNAL  │
+                │   CALL     │ ← They should call this!
+                └─────┬──────┘
+                      │
+          ┌───────────▼────────────────┐
+          │ /api/webhooks/             │
+          │  payment-success           │
+          │                            │
+          │ ✅ Centralized Handler     │
+          │ • Notifications            │
+          │ • Membership activation    │
+          │ • Business logic           │
+          └────────────────────────────┘
+
+  The Problem
+
+  Current toyyibPay webhook does:
+  - ❌ Updates database directly
+  - ❌ Handles membership logic itself
+  - ❌ Does NOT call payment-success webhook
+  - ❌ Comment says it should call centralized webhook, but doesn't!
+
+  It SHOULD do:
+  - ✅ Update database with payment details
+  - ✅ CALL /api/webhooks/payment-success internally
+  - ✅ Let centralized webhook handle notifications + business logic
+
+  ---
+  ✅ CORRECTED Solution: Internal Webhook Call Pattern
+
+⏺ Implementation in toyyibPay Webhook
+
+  File: src/app/api/webhooks/toyyibpay/route.ts
+
+  After database update (replace lines 283-296):
+
+  // Update order status in database
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: newOrderStatus,
+      paymentStatus: newPaymentStatus,
+      paymentId: callback.refno,
+      updatedAt: new Date(),
+    },
+  });
+
+  console.log(`✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`);
+
+  // ✅ CALL CENTRALIZED WEBHOOK for payment success
+  // This triggers notifications, membership activation, and all business logic
+  if (callback.status === '1') { // Payment successful
+    try {
+      // Make internal HTTP call to centralized payment-success webhook
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/webhooks/payment-success`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add internal auth header to verify this is internal call
+          'X-Internal-Webhook': process.env.WEBHOOK_INTERNAL_SECRET || 'internal',
+        },
+        body: JSON.stringify({
+          orderReference: order.orderNumber,
+          amount: parseFloat(callback.amount) / 100, // Convert cents to dollars
+          currency: 'MYR',
+          status: 'PAID',
+          transactionId: callback.refno,
+          timestamp: callback.transaction_time || new Date().toISOString(),
+          source: 'toyyibpay', // Identify the payment gateway
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('❌ Failed to trigger centralized webhook:', error);
+      } else {
+        console.log('✅ Centralized payment-success webhook called successfully');
+      }
+    } catch (webhookError) {
+      console.error('❌ Error calling centralized webhook:', webhookError);
+      // Don't fail the toyyibPay webhook if internal call fails
+    }
+  }
+
+  Benefits of This Approach:
+
+  ✅ Gateway-Agnostic: Add Billplz, Stripe, etc. - all call same centralized webhook✅ Single 
+  Source of Truth: All payment success logic in ONE place✅ No Code Duplication: Don't repeat
+  notification logic in every gateway webhook✅ Easy Testing: Can test payment-success webhook
+  independently✅ Maintainability: Change notification logic once, affects all gateways
+
+  ---
+  Alternative Approach: Shared Service Layer
+
+  If you don't want HTTP calls between webhooks:
+
+  Create a shared service that both webhooks call:
+
+  // src/lib/services/payment-success-handler.service.ts
+
+  export class PaymentSuccessHandler {
+    static async handlePaymentSuccess(orderReference: string, metadata: {
+      amount: number;
+      transactionId: string;
+      paymentGateway: string;
+      timestamp: string;
+    }) {
+      // Find order
+      const order = await prisma.order.findFirst({
+        where: { orderNumber: orderReference },
+        include: { /* ... */ }
+      });
+
+      if (!order) return { success: false, error: 'Order not found' };
+
+      // Trigger all business logic
+      await OrderStatusHandler.handleOrderStatusChange({
+        orderId: order.id,
+        previousStatus: order.status,
+        newStatus: 'PAID',
+        /* ... */
+      });
+
+      await MembershipService.processOrderForMembership(order.id);
+
+      // etc...
+
+      return { success: true };
+    }
+  }
+
+  Then both toyyibPay webhook and payment-success webhook call this service.
+
+  ---
+  Which Approach Do You Prefer?
+
+  Option 1: ToyyibPay webhook → Internal HTTP call → payment-success webhookOption 2: ToyyibPay
+  webhook → Shared Service → Business logic
+
+  Both achieve centralization. Option 1 reuses existing payment-success webhook. Option 2 avoids
+  HTTP overhead.
+
+⏺ ---
+  Let me know which approach you prefer, and we'll implement it along with the low stock alerts!
+
+
+
