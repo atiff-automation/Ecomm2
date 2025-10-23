@@ -561,8 +561,8 @@ export default function BusinessProfilePage() {
                   handleFieldChange('registrationNumber', e.target.value)
                 }
                 error={errors.registrationNumber?.message}
-                placeholder="e.g., 123456-X"
-                helperText="Format: 123456-X (6-8 digits followed by letter)"
+                placeholder="Enter registration number"
+                helperText="Your business registration number"
               />
 
               <SettingsInput

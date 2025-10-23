@@ -42,8 +42,8 @@ const MALAYSIAN_PHONE_REGEX = /^(\+?6?01)[02-46-9]\d{7,8}$/;
 const MALAYSIAN_LANDLINE_REGEX = /^(\+?6?0)[1-9]\d{8,9}$/;
 const MALAYSIAN_POSTCODE_REGEX = /^\d{5}$/;
 
-// SSM registration number regex (e.g., 123456-X)
-const SSM_REGEX = /^\d{6,8}-[A-Z]$/;
+// SSM registration number - accepts any string (format check removed)
+// const SSM_REGEX = /^\d{6,8}-[A-Z]$/; // Old format validation
 
 // GST number regex (e.g., C12345678901)
 const GST_REGEX = /^[A-Z]\d{11}$/;
@@ -296,7 +296,7 @@ export const businessProfileSchema = z.object({
   registrationNumber: z
     .string()
     .min(1, 'SSM registration number is required')
-    .regex(SSM_REGEX, 'Invalid SSM format (e.g., 123456-X)'),
+    .max(50, 'Registration number must be less than 50 characters'),
 
   taxRegistrationNumber: z
     .string()
