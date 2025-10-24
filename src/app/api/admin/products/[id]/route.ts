@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkCSRF } from '@/lib/middleware/with-csrf';
+import { dimensionsSchema } from '@/lib/validation/product-dimensions';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ const updateProductSchema = z.object({
         ),
     ])
     .optional(),
-  dimensions: z.string().optional(),
+  dimensions: dimensionsSchema, // Use centralized schema (Single Source of Truth)
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).optional(),
   featured: z.boolean().optional(),
   isPromotional: z.boolean().optional(),

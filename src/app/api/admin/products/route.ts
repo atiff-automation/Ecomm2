@@ -8,6 +8,7 @@ import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import { logAudit } from '@/lib/audit/logger';
 import { requireAdminRole } from '@/lib/auth/authorization';
+import { dimensionsSchema } from '@/lib/validation/product-dimensions';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -81,7 +82,7 @@ const createProductSchema = z.object({
         'Weight must be at least 0.01 kg'
       ),
   ]),
-  dimensions: z.string().optional(),
+  dimensions: dimensionsSchema, // Use centralized schema (Single Source of Truth)
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).default('DRAFT'),
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),

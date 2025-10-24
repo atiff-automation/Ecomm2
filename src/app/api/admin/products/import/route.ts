@@ -13,8 +13,9 @@ import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
+import { createDimensionsFromColumns } from '@/lib/validation/product-dimensions';
 
-// Product validation schema
+// Product validation schema - Updated to use separate dimension columns
 const productSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   name: z.string().min(1, 'Product name is required'),
@@ -36,7 +37,10 @@ const productSchema = z.object({
   weight: z
     .number()
     .positive('Weight must be a positive number for shipping calculations'),
-  dimensions: z.string().optional(),
+  // NEW: Separate dimension columns instead of single string
+  dimensionLength: z.number().positive().nullable().optional(),
+  dimensionWidth: z.number().positive().nullable().optional(),
+  dimensionHeight: z.number().positive().nullable().optional(),
   featured: z.boolean().default(false),
   isPromotional: z.boolean().default(false),
   isQualifyingForMembership: z.boolean().default(true),
@@ -100,7 +104,9 @@ function getUserFriendlyErrorMessage(
     description: 'Description',
     shortDescription: 'Short Description',
     weight: 'Product Weight',
-    dimensions: 'Product Dimensions',
+    dimensionLength: 'Dimension Length (cm)',
+    dimensionWidth: 'Dimension Width (cm)',
+    dimensionHeight: 'Dimension Height (cm)',
     featured: 'Featured Status',
     isPromotional: 'Promotional Status',
     isQualifyingForMembership: 'Membership Qualification',
@@ -302,6 +308,9 @@ function convertToProduct(
       'lowStockAlert',
       'weight',
       'promotionalPrice',
+      'dimensionLength',
+      'dimensionWidth',
+      'dimensionHeight',
     ];
     const requiredNumericFields = ['regularPrice', 'stockQuantity', 'weight'];
 
@@ -739,12 +748,16 @@ export async function POST(request: NextRequest) {
 
         if (isUpdate) {
           // Update existing product
-          const { categoryName, ...updateData } = productData;
+          // Extract dimension columns and convert to object using centralized helper
+          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, ...updateData } = productData;
+          const dimensions = createDimensionsFromColumns(dimensionLength, dimensionWidth, dimensionHeight);
+
           await prisma.product.update({
             where: { sku: productData.sku },
             data: {
               ...updateData,
               memberPrice: updateData.memberPrice || updateData.regularPrice,
+              dimensions: dimensions, // Use converted dimension object
               slug,
               promotionStartDate: productData.promotionStartDate
                 ? new Date(productData.promotionStartDate)
@@ -776,11 +789,15 @@ export async function POST(request: NextRequest) {
           });
         } else {
           // Create new product
-          const { categoryName, ...createData } = productData;
+          // Extract dimension columns and convert to object using centralized helper
+          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, ...createData } = productData;
+          const dimensions = createDimensionsFromColumns(dimensionLength, dimensionWidth, dimensionHeight);
+
           await prisma.product.create({
             data: {
               ...createData,
               memberPrice: createData.memberPrice || createData.regularPrice,
+              dimensions: dimensions, // Use converted dimension object
               slug,
               promotionStartDate: productData.promotionStartDate
                 ? new Date(productData.promotionStartDate)

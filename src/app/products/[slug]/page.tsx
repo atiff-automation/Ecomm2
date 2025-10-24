@@ -29,6 +29,7 @@ import { useSession } from 'next-auth/react';
 import { usePricing } from '@/hooks/use-pricing';
 import { productService } from '@/lib/services/product-service';
 import { useCart } from '@/hooks/use-cart';
+import { ProductDimensions } from '@/lib/validation/product-dimensions';
 
 interface ProductImage {
   id: string;
@@ -72,7 +73,7 @@ interface Product {
   stockQuantity: number;
   lowStockAlert: number;
   weight?: number;
-  dimensions?: string;
+  dimensions?: ProductDimensions | null; // Updated to use centralized type
   featured: boolean;
   isPromotional: boolean;
   isQualifyingForMembership: boolean;
@@ -97,27 +98,25 @@ interface Product {
   relatedProducts: RelatedProduct[];
 }
 
-// Utility function to format dimensions
-function formatDimensions(dimensionsString: string): string {
-  try {
-    const dimensions = JSON.parse(dimensionsString);
-    const parts = [];
-
-    if (dimensions.length && dimensions.length > 0) {
-      parts.push(`L: ${dimensions.length}cm`);
-    }
-    if (dimensions.width && dimensions.width > 0) {
-      parts.push(`W: ${dimensions.width}cm`);
-    }
-    if (dimensions.height && dimensions.height > 0) {
-      parts.push(`H: ${dimensions.height}cm`);
-    }
-
-    return parts.length > 0 ? parts.join(' × ') : 'Not specified';
-  } catch (error) {
-    // If parsing fails, return the original string or 'Not specified'
-    return dimensionsString || 'Not specified';
+// Utility function to format dimensions (updated to handle object format)
+function formatDimensions(dimensions: ProductDimensions | null | undefined): string {
+  if (!dimensions) {
+    return 'Not specified';
   }
+
+  const parts = [];
+
+  if (dimensions.length && dimensions.length > 0) {
+    parts.push(`L: ${dimensions.length}cm`);
+  }
+  if (dimensions.width && dimensions.width > 0) {
+    parts.push(`W: ${dimensions.width}cm`);
+  }
+  if (dimensions.height && dimensions.height > 0) {
+    parts.push(`H: ${dimensions.height}cm`);
+  }
+
+  return parts.length > 0 ? parts.join(' × ') : 'Not specified';
 }
 
 export default function ProductDetailPage() {

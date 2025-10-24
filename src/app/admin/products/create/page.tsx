@@ -69,8 +69,8 @@ export default function CreateProductPage() {
           ? parseFloat(formData.memberPrice.toString())
           : null,
       weight: parseFloat(formData.weight.toString()),
-      // Convert dimensions object to JSON string as expected by API
-      dimensions: JSON.stringify({
+      // Send dimensions as JSON object (not stringified)
+      dimensions: {
         length:
           formData.length && formData.length !== ''
             ? parseFloat(formData.length.toString())
@@ -83,7 +83,7 @@ export default function CreateProductPage() {
           formData.height && formData.height !== ''
             ? parseFloat(formData.height.toString())
             : null,
-      }),
+      },
       images: formData.images.map((img: ProductImage, index: number) => ({
         url: img.url,
         altText: img.altText || formData.name,

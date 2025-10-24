@@ -143,7 +143,9 @@ export default function ProductImportPage() {
       'stockQuantity',
       'lowStockAlert',
       'weight',
-      'dimensions',
+      'dimensionLength',
+      'dimensionWidth',
+      'dimensionHeight',
       'featured',
       'isPromotional',
       'isQualifyingForMembership',
@@ -167,7 +169,9 @@ export default function ProductImportPage() {
       '100',
       '10',
       '0.5',
-      '10x10x5',
+      '10',
+      '15',
+      '8',
       'TRUE',
       'FALSE',
       'TRUE',
@@ -192,7 +196,9 @@ export default function ProductImportPage() {
       'Available stock quantity',
       'Low stock alert level',
       'Product weight in kg',
-      'Dimensions in cm (LxWxH)',
+      'Length in cm (number)',
+      'Width in cm (number)',
+      'Height in cm (number)',
       'TRUE/FALSE - featured product',
       'TRUE/FALSE - on promotion',
       'TRUE/FALSE - membership eligible',
@@ -421,8 +427,8 @@ export default function ProductImportPage() {
                           Member discount price
                         </li>
                         <li>
-                          • <span className="font-medium">dimensions</span> -
-                          Product size in cm (e.g., 10x10x5)
+                          • <span className="font-medium">dimensionLength, dimensionWidth, dimensionHeight</span> -
+                          Product dimensions in cm (separate columns)
                         </li>
                         <li>
                           • <span className="font-medium">featured</span> -
@@ -629,10 +635,10 @@ export default function ProductImportPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-blue-600">Optional Fields</span>
-                  <Badge variant="outline">15</Badge>
+                  <Badge variant="outline">17</Badge>
                 </div>
                 <div className="text-xs text-blue-600 -mt-1">
-                  description, memberPrice, dimensions, etc.
+                  description, memberPrice, dimensions (L/W/H), etc.
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Max File Size</span>
