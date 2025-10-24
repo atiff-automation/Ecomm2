@@ -192,37 +192,35 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ✅ CORRECT: Delegate notification to OrderStatusHandler to avoid duplicates
-    // This ensures notifications are sent through the centralized handler
+    // ✅ CENTRALIZED: Use PaymentSuccessHandler for all payment success notifications
+    // This ensures DRY and Single Source of Truth (CLAUDE.md compliance)
     try {
-      // Import here to avoid circular dependencies
-      const { OrderStatusHandler } = await import(
-        '@/lib/notifications/order-status-handler'
+      const { PaymentSuccessHandler } = await import(
+        '@/lib/services/payment-success-handler'
       );
 
-      await OrderStatusHandler.handleOrderStatusChange({
-        orderId: order.id,
-        previousStatus,
-        newStatus: 'PAID', // Fixed: Use PAID instead of non-existent CONFIRMED
-        previousPaymentStatus,
-        newPaymentStatus: 'PAID',
-        triggeredBy: 'webhook_payment_gateway',
+      await PaymentSuccessHandler.handle({
+        orderReference: order.orderNumber,
+        amount: Number(amount),
+        transactionId,
+        paymentGateway: 'manual', // Generic payment gateway
+        timestamp: timestamp || new Date().toISOString(),
         metadata: {
-          transactionId,
-          webhookTimestamp: timestamp,
+          webhookSource: 'payment_success_webhook',
+          currency,
         },
       });
 
       console.log(
-        '✅ Order status change handled for order:',
+        '✅ Payment success handled for order:',
         order.orderNumber
       );
-    } catch (statusHandlerError) {
+    } catch (handlerError) {
       console.error(
-        'Failed to handle order status change:',
-        statusHandlerError
+        'Failed to handle payment success:',
+        handlerError
       );
-      // Don't fail the webhook if status handler fails
+      // Don't fail the webhook if handler fails
     }
 
     console.log('✅ Payment webhook processed successfully');

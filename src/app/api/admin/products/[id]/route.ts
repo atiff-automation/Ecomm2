@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { prisma } from '@/lib/db/prisma';
-import { logAudit } from '@/lib/audit/logger';
+import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
 import { UserRole } from '@prisma/client';
 // import { ProductStatus } from '@prisma/client'; // Not currently used
 import { z } from 'zod';
@@ -367,6 +367,30 @@ export async function PUT(
 
       return updatedProduct;
     });
+
+    // LOW STOCK ALERT: Only send if stock CROSSED threshold (above → below)
+    // KISS: Simple threshold crossing detection without database timestamps
+    if (
+      productData.stockQuantity !== undefined &&
+      result.lowStockAlert > 0 &&
+      existingProduct.stockQuantity > result.lowStockAlert && // Was ABOVE threshold
+      productData.stockQuantity <= result.lowStockAlert // Now BELOW threshold
+    ) {
+      try {
+        await simplifiedTelegramService.sendLowStockAlert(
+          result.name,
+          productData.stockQuantity,
+          result.sku
+        );
+
+        console.log(
+          `⚠️ Low stock alert: ${result.name} crossed threshold (${existingProduct.stockQuantity} → ${productData.stockQuantity}, threshold: ${result.lowStockAlert})`
+        );
+      } catch (lowStockError) {
+        console.error('❌ Failed to send low stock alert:', lowStockError);
+        // Don't fail the product update if notification fails
+      }
+    }
 
     // Log the action
     await prisma.auditLog.create({

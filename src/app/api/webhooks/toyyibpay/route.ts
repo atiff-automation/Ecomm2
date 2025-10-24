@@ -12,7 +12,8 @@ import { prisma } from '@/lib/db/prisma';
 import { emailService } from '@/lib/email/email-service';
 import { activateUserMembership } from '@/lib/membership';
 import { processReferralOrderCompletion } from '@/lib/referrals/referral-utils';
-import { updateOrderStatus } from '@/lib/notifications/order-status-handler';
+import { PaymentSuccessHandler } from '@/lib/services/payment-success-handler';
+import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
 import { toyyibPayConfig } from '@/lib/config/toyyibpay-config';
 import { verifyWebhookSignature, getClientIP } from '@/lib/utils/security';
 import { logWebhookRequest } from '@/lib/utils/webhook-logger';
@@ -280,8 +281,7 @@ export async function POST(request: NextRequest) {
       console.log('⏳ Payment still pending - stock remains reserved');
     }
 
-    // Update order status directly without triggering notifications
-    // Notifications are handled by the centralized payment-success webhook to avoid duplicates
+    // Update order status in database
     await prisma.order.update({
       where: { id: order.id },
       data: {
@@ -295,6 +295,71 @@ export async function POST(request: NextRequest) {
     console.log(
       `✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`
     );
+
+    // CENTRALIZED: Call PaymentSuccessHandler for payment success notifications
+    // This triggers Telegram notifications, email confirmations, and business logic
+    if (callback.status === '1') {
+      // Payment successful
+      try {
+        await PaymentSuccessHandler.handle({
+          orderReference: order.orderNumber,
+          amount: parseFloat(callback.amount) / 100, // Convert cents to MYR
+          transactionId: callback.refno,
+          paymentGateway: 'toyyibpay',
+          timestamp: callback.transaction_time,
+          metadata: {
+            billCode: callback.billcode,
+            orderId: callback.order_id,
+            reason: callback.reason,
+          },
+        });
+
+        console.log('✅ Payment success handler completed for order:', order.orderNumber);
+      } catch (handlerError) {
+        // Don't fail webhook if notification fails
+        console.error('❌ Payment success handler error:', handlerError);
+      }
+
+      // LOW STOCK ALERT: Only send if stock CROSSED threshold (above → below)
+      // KISS: Calculate previous stock and check threshold crossing
+      try {
+        for (const item of order.orderItems) {
+          const product = await prisma.product.findUnique({
+            where: { id: item.productId },
+            select: {
+              stockQuantity: true,
+              lowStockAlert: true,
+              name: true,
+              sku: true,
+            },
+          });
+
+          if (product && product.lowStockAlert > 0) {
+            // Calculate stock before this order (current + quantity ordered)
+            const previousStock = product.stockQuantity + item.quantity;
+
+            // Only alert if stock CROSSED threshold (was above, now below)
+            if (
+              previousStock > product.lowStockAlert && // Was ABOVE threshold
+              product.stockQuantity <= product.lowStockAlert // Now BELOW threshold
+            ) {
+              await simplifiedTelegramService.sendLowStockAlert(
+                product.name,
+                product.stockQuantity,
+                product.sku
+              );
+
+              console.log(
+                `⚠️ Low stock alert: ${product.name} crossed threshold (${previousStock} → ${product.stockQuantity}, threshold: ${product.lowStockAlert})`
+              );
+            }
+          }
+        }
+      } catch (lowStockError) {
+        // Don't fail webhook if low stock alert fails
+        console.error('❌ Low stock alert error:', lowStockError);
+      }
+    }
 
     // Create audit log for the order status change
     if (order.user) {
