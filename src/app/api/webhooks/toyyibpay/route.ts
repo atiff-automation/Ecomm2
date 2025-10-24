@@ -281,25 +281,16 @@ export async function POST(request: NextRequest) {
       console.log('⏳ Payment still pending - stock remains reserved');
     }
 
-    // Update order status in database
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: newOrderStatus,
-        paymentStatus: newPaymentStatus,
-        paymentId: callback.refno,
-        updatedAt: new Date(),
-      },
-    });
+    // CENTRALIZED: Handle order status updates based on payment status
+    // SUCCESS: PaymentSuccessHandler updates order and sends notifications
+    // FAILED/PENDING: Direct update since no complex business logic needed
 
-    console.log(
-      `✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`
-    );
-
-    // CENTRALIZED: Call PaymentSuccessHandler for payment success notifications
-    // This triggers Telegram notifications, email confirmations, and business logic
     if (callback.status === '1') {
-      // Payment successful
+      // Payment successful - use centralized handler
+      // SINGLE SOURCE OF TRUTH: PaymentSuccessHandler will:
+      // 1. Update order status and paymentId in database
+      // 2. Send Telegram and email notifications
+      // 3. Create audit logs
       try {
         await PaymentSuccessHandler.handle({
           orderReference: order.orderNumber,
@@ -319,8 +310,27 @@ export async function POST(request: NextRequest) {
         // Don't fail webhook if notification fails
         console.error('❌ Payment success handler error:', handlerError);
       }
+    } else {
+      // Payment failed or pending - simple database update
+      // No complex business logic needed for these states
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: newOrderStatus,
+          paymentStatus: newPaymentStatus,
+          paymentId: callback.refno,
+          updatedAt: new Date(),
+        },
+      });
 
-      // LOW STOCK ALERT: Only send if stock CROSSED threshold (above → below)
+      console.log(
+        `✅ Order ${order.orderNumber} updated: ${newOrderStatus}/${newPaymentStatus}`
+      );
+    }
+
+    // LOW STOCK ALERT: Only send if stock CROSSED threshold (above → below)
+    // Only applicable for successful payments
+    if (callback.status === '1') {
       // KISS: Calculate previous stock and check threshold crossing
       try {
         for (const item of order.orderItems) {

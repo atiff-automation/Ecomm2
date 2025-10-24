@@ -103,6 +103,19 @@ export class PaymentSuccessHandler {
       const previousStatus = order.status;
       const previousPaymentStatus = order.paymentStatus;
 
+      // SINGLE SOURCE OF TRUTH: Update order status in database
+      // This is the ONLY place where payment success updates the order
+      console.log('💾 Updating order status to PAID:', order.orderNumber);
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'PAID' as OrderStatus,
+          paymentStatus: 'PAID' as PaymentStatus,
+          paymentId: params.transactionId,
+          updatedAt: new Date(),
+        },
+      });
+
       // Trigger OrderStatusHandler to handle notifications and business logic
       // This will:
       // - Send Telegram notification for new order
