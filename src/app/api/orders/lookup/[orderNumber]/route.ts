@@ -212,22 +212,41 @@ export async function GET(
       );
     }
 
-    // Additional security check: ensure order is not in a sensitive state
+    // IMPROVED: Allow recent failed orders for legitimate payment failure redirects
+    // SECURITY: Only allow failed orders created within last 24 hours
+    // FOLLOWS @CLAUDE.md: NO HARDCODE - use existing MAX_ORDER_AGE_MS constant
     if (order.status === 'CANCELLED' || order.paymentStatus === 'FAILED') {
-      console.warn(
-        `🚫 Access denied to sensitive order: ${actualOrderNumber} from IP: ${clientIP}`
-      );
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Order not found or no longer available',
-          error: 'ORDER_NOT_AVAILABLE',
-        },
-        {
-          status: 404,
-          headers: SECURITY_HEADERS,
-        }
-      );
+      // Calculate order age
+      const orderAge = Date.now() - order.createdAt.getTime();
+
+      // SINGLE SOURCE OF TRUTH: MAX_ORDER_AGE_MS already defined at line 40
+      // Current value: 24 * 60 * 60 * 1000 (24 hours)
+      const isRecent = orderAge < MAX_ORDER_AGE_MS;
+
+      if (isRecent) {
+        // ALLOW: Recent failed order - legitimate payment failure redirect from ToyyibPay
+        // User should see what they tried to buy and have retry option
+        console.log(
+          `✅ Allowing access to recent failed order: ${actualOrderNumber} (age: ${Math.floor(orderAge / 1000 / 60)} minutes)`
+        );
+        // Continue to order data response below (don't return here)
+      } else {
+        // BLOCK: Old failed order - security measure to prevent enumeration
+        console.warn(
+          `🚫 Access denied to old failed order: ${actualOrderNumber} (age: ${Math.floor(orderAge / 1000 / 60 / 60)} hours)`
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Order not found or no longer available',
+            error: 'ORDER_NOT_AVAILABLE',
+          },
+          {
+            status: 404,
+            headers: SECURITY_HEADERS,
+          }
+        );
+      }
     }
 
     console.log(
