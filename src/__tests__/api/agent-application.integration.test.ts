@@ -15,11 +15,6 @@ jest.mock('@/lib/services/agent-application.service');
 jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
-jest.mock('@/lib/utils/rate-limit', () => ({
-  rateLimit: () => ({
-    check: jest.fn().mockResolvedValue({ success: true }),
-  }),
-}));
 
 const mockAgentApplicationService = AgentApplicationService as jest.Mocked<
   typeof AgentApplicationService

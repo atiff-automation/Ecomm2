@@ -11,13 +11,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { AgentApplicationService } from '@/lib/services/agent-application.service';
 import { agentApplicationSchema } from '@/lib/validation/agent-application';
-import { rateLimit } from '@/lib/utils/rate-limit';
-
-// Rate limiting: 5 submissions per hour per IP
-const limiter = rateLimit({
-  interval: 60 * 60 * 1000, // 1 hour
-  uniqueTokenPerInterval: 500, // Max 500 unique IPs per interval
-});
 
 /**
  * POST /api/agent-application
@@ -25,10 +18,6 @@ const limiter = rateLimit({
  */
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
-    const ip = request.ip ?? 'anonymous';
-    await limiter.check(5, ip); // 5 requests per hour
-
     // Get user session (optional)
     const session = await getServerSession();
     const userId = session?.user?.id;
