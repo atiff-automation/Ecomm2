@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import MembershipWelcomeModal from '@/components/membership/MembershipWelcomeModal';
+import PaymentFailedView from '@/components/payment/PaymentFailedView';
 
 interface OrderItem {
   id: string;

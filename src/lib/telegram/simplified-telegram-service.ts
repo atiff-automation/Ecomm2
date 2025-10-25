@@ -565,6 +565,52 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   }
 
   /**
+   * CENTRALIZED: Send payment failed alert to admin
+   * FOLLOWS @CLAUDE.md: DRY - same pattern as sendLowStockAlert
+   */
+  async sendPaymentFailedAlert(
+    orderNumber: string,
+    customerName: string,
+    customerEmail: string,
+    amount: number,
+    reason?: string
+  ): Promise<boolean> {
+    // Check if orders channel is configured
+    if (!(await this.isOrdersChannelConfigured())) {
+      console.log('Orders channel not configured, skipping payment failed alert');
+      return false;
+    }
+
+    // SINGLE SOURCE OF TRUTH: Currency formatting
+    const formattedAmount = new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+    }).format(amount);
+
+    // NO HARDCODE: Message template with proper HTML formatting
+    const message = `
+❌ <b>PAYMENT FAILED ALERT!</b>
+
+🔴 <b>Order:</b> <code>${orderNumber}</code>
+👤 <b>Customer:</b> ${customerName}
+📧 <b>Email:</b> ${customerEmail}
+💰 <b>Amount:</b> ${formattedAmount}
+${reason ? `\n❗ <b>Reason:</b> ${reason}` : ''}
+
+Stock has been automatically restored to inventory.
+Customer may retry payment within 24 hours.
+
+⏰ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
+`.trim();
+
+    return await this.sendMessage({
+      chat_id: this.config!.ordersChatId!,
+      text: message,
+      parse_mode: 'HTML',
+    });
+  }
+
+  /**
    * DRY: Same general notification logic
    */
   async sendGeneralNotification(
@@ -747,6 +793,13 @@ export const simplifiedTelegramService = {
   ) {
     const instance = await this.getInstance();
     return instance.sendLowStockAlert(...args);
+  },
+
+  async sendPaymentFailedAlert(
+    ...args: Parameters<SimplifiedTelegramService['sendPaymentFailedAlert']>
+  ) {
+    const instance = await this.getInstance();
+    return instance.sendPaymentFailedAlert(...args);
   },
 
   async sendGeneralNotification(

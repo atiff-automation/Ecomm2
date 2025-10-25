@@ -274,6 +274,27 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('✅ Stock restoration completed for cancelled order');
+
+      // CENTRALIZED: Send admin notification for failed payment
+      // FOLLOWS @CLAUDE.md: DRY - reuse simplifiedTelegramService
+      try {
+        await simplifiedTelegramService.sendPaymentFailedAlert(
+          order.orderNumber,
+          order.user
+            ? `${order.user.firstName} ${order.user.lastName}`
+            : order.shippingAddress
+              ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
+              : 'Guest',
+          order.user?.email || order.billingAddress?.email || 'No email',
+          Number(order.total),
+          callback.reason || 'Payment declined'
+        );
+
+        console.log('✅ Telegram payment failed alert sent to admin');
+      } catch (telegramError) {
+        // Don't fail webhook if Telegram notification fails
+        console.error('❌ Telegram payment failed alert error:', telegramError);
+      }
     } else if (callback.status === '2') {
       // Pending - keep current status, stock remains reserved
       newPaymentStatus = 'PENDING';
