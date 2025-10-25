@@ -117,6 +117,13 @@ function ThankYouContent() {
   const toyyibPayStatusId = searchParams.get('status_id'); // 1=success, 2=pending, 3=fail
   const toyyibPayBillCode = searchParams.get('billcode');
 
+  // ADD THIS: Detect payment status for conditional UI
+  // SINGLE SOURCE OF TRUTH: ToyyibPay status codes
+  // 1 = success, 2 = pending, 3 = failed
+  const isPaymentSuccess = toyyibPayStatusId === '1';
+  const isPaymentPending = toyyibPayStatusId === '2';
+  const isPaymentFailed = toyyibPayStatusId === '3';
+
   // Clear cart immediately when thank-you page loads (after successful payment)
   const clearCartAfterPayment = async () => {
     console.log('🧹 Thank-you page: Clearing cart after successful payment');
@@ -449,6 +456,13 @@ function ThankYouContent() {
     );
   }
 
+  // CONDITIONAL RENDERING: Payment Failed vs Success
+  // FOLLOWS @CLAUDE.md: DRY - separate components for clear separation of concerns
+  if (isPaymentFailed && orderData) {
+    return <PaymentFailedView orderData={orderData} />;
+  }
+
+  // Original success UI (existing code)
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
