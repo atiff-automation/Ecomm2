@@ -122,8 +122,8 @@ export class OrderStatusHandler {
     // Send Telegram notification for successful payment
     try {
       const customerName = order.user
-        ? `${order.user.firstName} ${order.user.lastName}`
-        : 'Valued Customer';
+        ? `${order.user.firstName} ${order.user.lastName} (${order.user.email})`
+        : `${order.shippingAddress.firstName} ${order.shippingAddress.lastName} (${order.guestEmail})`;
 
       await simplifiedTelegramService.sendNewOrderNotification({
         orderNumber: order.orderNumber,
