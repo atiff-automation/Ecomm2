@@ -10,37 +10,23 @@ import {
   isSuspiciousUserAgent,
   SECURITY_HEADERS,
 } from '@/lib/utils/security';
-import { rateLimit } from '@/lib/utils/rate-limit';
 import { getAppUrl } from '@/lib/config/app-url';
 
 /**
- * Railway-specific adjustments
- * Railway's container architecture requires higher limits due to:
- * - Container restarts (rate limit state reset)
- * - Multiple instances (no shared state)
- * - Load balancer behavior
+ * SECURITY NOTE: Rate limiting now handled at Railway platform level
+ *
+ * Previous implementation: In-memory rate limiting
+ * Issue: Memory leaks causing Railway container crashes every 4 hours
+ *
+ * Current approach: Railway provides DDoS protection and rate limiting infrastructure
+ * Benefits:
+ * - No memory leaks
+ * - Shared state across container instances
+ * - Survives container restarts
+ * - Professional-grade protection
+ *
+ * Future: Can add Cloudflare or Upstash Redis for granular per-endpoint limits
  */
-const isRailway =
-  process.env.RAILWAY_ENVIRONMENT ||
-  process.env.RAILWAY_SERVICE_NAME ||
-  process.env.RAILWAY_PROJECT_ID;
-
-// Multiply rate limits by 2 on Railway for safety margin
-const RATE_LIMIT_MULTIPLIER = isRailway ? 2 : 1;
-
-/**
- * Helper function to adjust rate limits for Railway environment
- */
-function getRateLimit(baseLimit: number): number {
-  const adjusted = Math.floor(baseLimit * RATE_LIMIT_MULTIPLIER);
-
-  // Log adjustment in development
-  if (process.env.NODE_ENV === 'development' && isRailway) {
-    console.log(`🔧 Railway detected: Rate limit ${baseLimit} → ${adjusted}`);
-  }
-
-  return adjusted;
-}
 
 export interface ApiProtectionConfig {
   rateLimiting?: {
@@ -71,7 +57,7 @@ export interface ApiProtectionConfig {
 
 const defaultConfig: ApiProtectionConfig = {
   rateLimiting: {
-    enabled: true,
+    enabled: false, // Disabled - handled at Railway platform level
     requestsPerMinute: 60,
     uniqueTokenPerInterval: 500,
   },
@@ -99,22 +85,6 @@ const defaultConfig: ApiProtectionConfig = {
     logRequests: process.env.NODE_ENV === 'development',
     logErrors: true,
   },
-};
-
-// Rate limiters for different protection levels
-const rateLimiters = {
-  strict: rateLimit({
-    interval: 60 * 1000, // 1 minute
-    uniqueTokenPerInterval: 100,
-  }),
-  moderate: rateLimit({
-    interval: 60 * 1000, // 1 minute
-    uniqueTokenPerInterval: 500,
-  }),
-  lenient: rateLimit({
-    interval: 60 * 1000, // 1 minute
-    uniqueTokenPerInterval: 1000,
-  }),
 };
 
 export interface ProtectionResult {
@@ -184,52 +154,8 @@ export async function protectApiEndpoint(
       }
     }
 
-    // 2. Rate limiting protection
-    if (mergedConfig.rateLimiting?.enabled) {
-      const limiter = rateLimiters.moderate; // Default to moderate
-
-      try {
-        await limiter.check(
-          mergedConfig.rateLimiting.requestsPerMinute,
-          clientIP
-        );
-      } catch {
-        if (mergedConfig.logging?.logErrors) {
-          console.warn(
-            `🚫 RATE_LIMIT_HIT | ` +
-              `IP: ${clientIP} | ` +
-              `Path: ${pathname} | ` +
-              `Method: ${method} | ` +
-              `UserAgent: ${userAgent.substring(0, 60)} | ` +
-              `Limit: ${mergedConfig.rateLimiting?.requestsPerMinute || 'N/A'} | ` +
-              `Time: ${new Date().toISOString()}`
-          );
-        }
-
-        return {
-          allowed: false,
-          response: NextResponse.json(
-            {
-              success: false,
-              message: 'Too many requests. Please try again later.',
-              error: 'RATE_LIMIT_EXCEEDED',
-            },
-            {
-              status: 429,
-              headers: {
-                ...SECURITY_HEADERS,
-                'Retry-After': '60',
-                'X-RateLimit-Limit':
-                  mergedConfig.rateLimiting.requestsPerMinute.toString(),
-                'X-RateLimit-Remaining': '0',
-                'X-RateLimit-Reset': (Date.now() + 60000).toString(),
-              },
-            }
-          ),
-          reason: 'Rate limit exceeded',
-        };
-      }
-    }
+    // 2. Rate limiting - Now handled at Railway platform level
+    // (Previously implemented in-memory rate limiting - removed due to memory leaks)
 
     // 3. CORS protection
     if (mergedConfig.corsProtection?.enabled) {

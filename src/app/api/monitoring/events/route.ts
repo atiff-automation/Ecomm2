@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { rateLimit } from '@/lib/rate-limit';
+
+// SECURITY NOTE: Rate limiting now handled at Railway platform level
 
 interface UserEvent {
   eventId: string;
@@ -36,21 +37,6 @@ interface UserEvent {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
-    const identifier = request.ip || 'anonymous';
-    const { success } = await rateLimit.limit(identifier, {
-      limit: 500,
-      window: '1h',
-      key: 'event-monitoring',
-    });
-
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded' },
-        { status: 429 }
-      );
-    }
-
     const event: UserEvent = await request.json();
 
     // Validate required fields

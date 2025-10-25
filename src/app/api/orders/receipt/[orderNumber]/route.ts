@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { rateLimit } from '@/lib/utils/rate-limit';
 import { sanitizeInput } from '@/lib/utils/validation';
 import { getClientIP } from '@/lib/utils/security';
 import { invoiceService } from '@/lib/invoices/invoice-service';
@@ -18,11 +17,9 @@ interface Params {
   orderNumber: string;
 }
 
-// Rate limiting configuration
-const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 100, // More restrictive for receipt downloads
-});
+// SECURITY NOTE: Rate limiting now handled at Railway platform level
+// Previously: In-memory rate limiting (5 req/min) - removed due to memory leaks
+// Now: Railway provides DDoS protection and rate limiting infrastructure
 
 // Order number validation regex
 const ORDER_NUMBER_REGEX = /^ORD-\d{8}-[A-Z0-9]{4,8}$/;
@@ -51,29 +48,6 @@ export async function GET(
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
   try {
-    // Rate limiting
-    try {
-      await limiter.check(5, clientIP); // 5 requests per minute per IP
-    } catch {
-      console.warn(
-        `🚫 Receipt download rate limit exceeded for IP: ${clientIP}`
-      );
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Too many requests. Please try again later.',
-          error: 'RATE_LIMIT_EXCEEDED',
-        },
-        {
-          status: 429,
-          headers: {
-            ...SECURITY_HEADERS,
-            'Retry-After': '60',
-          },
-        }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'pdf';
     const download = searchParams.get('download') === 'true';

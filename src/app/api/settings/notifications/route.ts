@@ -8,41 +8,24 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { notificationPreferencesSchema } from '@/lib/validation/settings';
 import { AuditLogger } from '@/lib/security';
-import { RateLimiter } from '@/lib/security/rate-limiter';
 import { CSRFProtection } from '@/lib/security/csrf-protection';
 import { InputSanitizer } from '@/lib/security/input-sanitizer';
 import {
   NotificationLogger,
   NotificationEvents,
 } from '@/lib/monitoring/notification-logger';
+import { getClientIP } from '@/lib/utils/security';
+
+// SECURITY NOTE: Rate limiting now handled at Railway platform level
 
 /**
  * GET /api/settings/notifications - Get notification preferences
  */
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
+  const clientIP = getClientIP(request);
 
   try {
-    // CENTRALIZED rate limiting - Single source of truth
-    const rateLimitResult = await RateLimiter.checkRateLimit(
-      request,
-      'PREFERENCES_UPDATE'
-    );
-    if (!rateLimitResult.allowed) {
-      await NotificationEvents.logRateLimit('IN_APP', 'anonymous', {
-        ip: rateLimitResult.clientIP,
-        endpoint: '/api/settings/notifications',
-      });
-
-      return NextResponse.json(
-        { error: 'Rate limit exceeded' },
-        {
-          status: 429,
-          headers: rateLimitResult.headers,
-        }
-      );
-    }
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -53,7 +36,7 @@ export async function GET(request: NextRequest) {
         'Unauthorized access attempt to notification preferences',
         {
           context: {
-            ip: rateLimitResult.clientIP,
+            ip: clientIP,
             endpoint: '/api/settings/notifications',
           },
         }
@@ -71,7 +54,7 @@ export async function GET(request: NextRequest) {
         {
           userId: session.user.id,
           context: {
-            ip: rateLimitResult.clientIP,
+            ip: clientIP,
             endpoint: '/api/settings/notifications',
           },
           metadata: { role: session.user.role },

@@ -11,13 +11,10 @@ import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import { toyyibPayService } from '@/lib/payments/toyyibpay-service';
 import { getClientIP } from '@/lib/utils/security';
-import { rateLimit } from '@/lib/utils/rate-limit';
 
-// SECURITY: Rate limiting configuration
-const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 500,
-});
+// SECURITY NOTE: Rate limiting now handled at Railway platform level
+// Previously: In-memory rate limiting (5 req/min) - removed due to memory leaks
+// Now: Railway provides DDoS protection and rate limiting infrastructure
 
 // SINGLE SOURCE OF TRUTH: Retry window constant
 const MAX_RETRY_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -43,20 +40,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
   const startTime = Date.now();
 
   try {
-    // SECURITY: Rate limiting (5 retries per minute per IP)
-    try {
-      await limiter.check(5, clientIP);
-    } catch {
-      console.warn(`🚫 Rate limit exceeded for retry payment from IP: ${clientIP}`);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Too many retry attempts. Please wait a moment.',
-        },
-        { status: 429 }
-      );
-    }
-
     // Parse request body
     const body: RetryPaymentRequest = await request.json();
     const { failedOrderNumber } = body;

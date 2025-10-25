@@ -198,14 +198,47 @@ async function startApplication() {
       runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
     }, 5000); // Wait 5 seconds for server to fully start
 
+    // Memory monitoring (every 10 minutes)
+    const memoryCheckInterval = setInterval(() => {
+      const mem = process.memoryUsage();
+      const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
+      const heapTotalMB = Math.round(mem.heapTotal / 1024 / 1024);
+      const rssMB = Math.round(mem.rss / 1024 / 1024);
+      const heapPercent = Math.round((mem.heapUsed / mem.heapTotal) * 100);
+
+      console.log(
+        `💾 Memory: Heap ${heapUsedMB}MB/${heapTotalMB}MB (${heapPercent}%), RSS ${rssMB}MB`
+      );
+
+      // Warn if memory usage is high
+      if (heapPercent > 80) {
+        console.warn(
+          `⚠️  HIGH MEMORY USAGE: ${heapPercent}% - Consider investigating memory leaks`
+        );
+      }
+    }, 10 * 60 * 1000); // Every 10 minutes
+
     // Handle graceful shutdown
     process.on('SIGTERM', () => {
       console.log('📴 Received SIGTERM, shutting down gracefully');
+      console.log('⏳ Cleaning up resources...');
+
+      // Stop memory monitoring
+      clearInterval(memoryCheckInterval);
+
+      // Give server 5 seconds to close connections
+      setTimeout(() => {
+        console.log('⏰ Timeout reached, forcing shutdown');
+        process.exit(0);
+      }, 5000);
+
+      // Attempt graceful shutdown
       server.kill('SIGTERM');
     });
 
     process.on('SIGINT', () => {
       console.log('📴 Received SIGINT, shutting down gracefully');
+      clearInterval(memoryCheckInterval);
       server.kill('SIGINT');
     });
 
