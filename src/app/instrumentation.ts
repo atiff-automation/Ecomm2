@@ -1,14 +1,22 @@
 /**
  * Instrumentation - Malaysian E-commerce Platform
- * Server-side initialization for caching and monitoring systems
+ * Server-side initialization for caching, monitoring, and crash detection systems
  */
 
 import { initializeCache } from '@/lib/cache/cache-init';
 import { initializeMonitoring } from '@/lib/monitoring/monitoring-init';
+import { crashLogger } from '@/lib/monitoring/crash-logger';
+
+// Store interval references for cleanup
+let healthCheckInterval: NodeJS.Timeout | null = null;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     console.log('🚀 Starting server-side initialization...');
+
+    // Initialize crash logger FIRST to catch any initialization errors
+    crashLogger.initialize();
+    console.log('✅ Crash logger initialized');
 
     try {
       // Initialize cache system
@@ -91,7 +99,7 @@ export async function register() {
 
       // Schedule periodic health checks in production
       if (process.env.NODE_ENV === 'production') {
-        setInterval(
+        healthCheckInterval = setInterval(
           async () => {
             try {
               const { getMonitoringHealth } = await import(
@@ -101,20 +109,31 @@ export async function register() {
 
               if (health.status === 'unhealthy') {
                 console.error('🚨 System health check failed:', health);
+                crashLogger.logCustomEvent('Health check failed', { health });
               } else if (health.status === 'degraded') {
                 console.warn('⚠️ System health degraded:', health);
+                crashLogger.logCustomEvent('Health check degraded', { health });
               }
             } catch (error) {
               console.error('❌ Health check error:', error);
+              crashLogger.logCustomEvent('Health check error', {
+                error: error instanceof Error ? error.message : String(error)
+              });
             }
           },
           5 * 60 * 1000
         ); // Every 5 minutes
       }
 
+      // Setup cleanup on shutdown
+      setupCleanupHandlers();
+
       console.log('🎉 Server-side initialization completed successfully');
     } catch (error) {
       console.error('❌ Server-side initialization failed:', error);
+      crashLogger.logCustomEvent('Instrumentation initialization failed', {
+        error: error instanceof Error ? error.message : String(error)
+      });
 
       // Don't crash the application, just log the error
       if (error instanceof Error) {
@@ -125,4 +144,24 @@ export async function register() {
       }
     }
   }
+}
+
+/**
+ * Setup cleanup handlers for graceful shutdown
+ */
+function setupCleanupHandlers() {
+  const cleanup = () => {
+    console.log('🧹 Cleaning up instrumentation resources...');
+
+    // Clear health check interval
+    if (healthCheckInterval) {
+      clearInterval(healthCheckInterval);
+      healthCheckInterval = null;
+      console.log('✅ Health check interval cleared');
+    }
+  };
+
+  // These handlers are registered by crash-logger.ts already
+  // We just add our specific cleanup logic
+  process.once('beforeExit', cleanup);
 }

@@ -42,3 +42,16 @@ export function stopCronJobs(): void {
 
   console.log('✅ All cron jobs stopped');
 }
+
+// Register cleanup on process termination
+if (typeof process !== 'undefined') {
+  process.on('SIGTERM', () => {
+    console.log('🛑 SIGTERM received - stopping all cron jobs...');
+    stopCronJobs();
+  });
+
+  process.on('SIGINT', () => {
+    console.log('🛑 SIGINT received - stopping all cron jobs...');
+    stopCronJobs();
+  });
+}
