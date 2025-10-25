@@ -183,8 +183,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         // Generate new order number
         orderNumber: `ORD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
 
-        // Link to user if exists
-        userId: failedOrder.userId,
+        // Link to user if exists (Prisma relation syntax)
+        user: failedOrder.userId
+          ? { connect: { id: failedOrder.userId } }
+          : undefined,
 
         // Copy order details from failed order
         subtotal: failedOrder.subtotal,
