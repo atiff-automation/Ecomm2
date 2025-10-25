@@ -7,6 +7,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import { toyyibPayService } from '@/lib/payments/toyyibpay-service';
 import { getClientIP } from '@/lib/utils/security';
@@ -34,6 +35,10 @@ interface RetryPaymentResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<RetryPaymentResponse>> {
+  // CSRF Protection - SECURITY: Prevent cross-site request forgery
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   const clientIP = getClientIP(request);
   const startTime = Date.now();
 
@@ -95,6 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         },
         shippingAddress: true,
         billingAddress: true,
+        pendingMembership: true,
       },
     });
 
@@ -194,6 +200,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
 
         // Copy membership flags
         wasEligibleForMembership: failedOrder.wasEligibleForMembership,
+
+        // CRITICAL: Recreate pending membership if customer was eligible
+        // FOLLOWS @CLAUDE.md: FAIRNESS - customer deserves membership if they qualified
+        pendingMembership: failedOrder.wasEligibleForMembership &&
+                          failedOrder.userId &&
+                          !failedOrder.user?.isMember
+          ? {
+              create: {
+                userId: failedOrder.userId,
+                qualifyingAmount: failedOrder.total,
+                createdViaOrder: true,
+              },
+            }
+          : undefined,
 
         // Copy addresses
         shippingAddress: failedOrder.shippingAddress
