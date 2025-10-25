@@ -278,7 +278,7 @@ export const protectionConfigs = {
   public: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(300), // Railway: 600 req/min
+      requestsPerMinute: 300, // Railway: 600 req/min
       uniqueTokenPerInterval: 2000,
     },
     corsProtection: { enabled: true, allowedOrigins: ['*'] },
@@ -290,7 +290,7 @@ export const protectionConfigs = {
   standard: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(150), // Railway: 300 req/min
+      requestsPerMinute: 150, // Railway: 300 req/min
       uniqueTokenPerInterval: 1500,
     },
     corsProtection: {
@@ -316,7 +316,7 @@ export const protectionConfigs = {
   authenticated: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(120), // Railway: 240 req/min
+      requestsPerMinute: 120, // Railway: 240 req/min
       uniqueTokenPerInterval: 1000,
     },
     corsProtection: {
@@ -342,7 +342,7 @@ export const protectionConfigs = {
   admin: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(100), // Railway: 200 req/min
+      requestsPerMinute: 100, // Railway: 200 req/min
       uniqueTokenPerInterval: 500,
     },
     corsProtection: {
@@ -369,7 +369,7 @@ export const protectionConfigs = {
   sensitive: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(30), // Railway: 60 req/min
+      requestsPerMinute: 30, // Railway: 60 req/min
       uniqueTokenPerInterval: 200,
     },
     corsProtection: {
@@ -396,7 +396,7 @@ export const protectionConfigs = {
   critical: {
     rateLimiting: {
       enabled: true,
-      requestsPerMinute: getRateLimit(5), // Railway: 10 req/min
+      requestsPerMinute: 5, // Railway: 10 req/min
       uniqueTokenPerInterval: 50,
     },
     corsProtection: {
