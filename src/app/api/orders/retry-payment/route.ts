@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { prisma } from '@/lib/db/prisma';
 import { toyyibPayService } from '@/lib/payments/toyyibpay-service';
-import { getClientIP } from '@/lib/utils/security';
+import { getClientIP, generateOrderNumber } from '@/lib/utils/security';
 
 // SECURITY NOTE: Rate limiting now handled at Railway platform level
 // Previously: In-memory rate limiting (5 req/min) - removed due to memory leaks
@@ -31,7 +31,9 @@ interface RetryPaymentResponse {
   unavailableItems?: string[];
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<RetryPaymentResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<RetryPaymentResponse>> {
   // CSRF Protection - SECURITY: Prevent cross-site request forgery
   const csrfCheck = await checkCSRF(request);
   if (csrfCheck) return csrfCheck;
@@ -55,7 +57,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
       );
     }
 
-    console.log(`🔄 Retry payment request for order: ${failedOrderNumber} from IP: ${clientIP}`);
+    console.log(
+      `🔄 Retry payment request for order: ${failedOrderNumber} from IP: ${clientIP}`
+    );
 
     // SINGLE SOURCE OF TRUTH: Fetch failed order with all relationships
     const failedOrder = await prisma.order.findUnique({
@@ -100,7 +104,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
     }
 
     // Validation: Order is actually failed/cancelled
-    if (failedOrder.status !== 'CANCELLED' || failedOrder.paymentStatus !== 'FAILED') {
+    if (
+      failedOrder.status !== 'CANCELLED' ||
+      failedOrder.paymentStatus !== 'FAILED'
+    ) {
       console.warn(
         `❌ Order is not failed: ${failedOrderNumber} (status: ${failedOrder.status}, payment: ${failedOrder.paymentStatus})`
       );
@@ -122,7 +129,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
       return NextResponse.json(
         {
           success: false,
-          error: 'This order is no longer available for retry. Please place a new order.',
+          error:
+            'This order is no longer available for retry. Please place a new order.',
         },
         { status: 400 }
       );
@@ -163,13 +171,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
     // FOLLOWS @CLAUDE.md: Clean separation - old order stays CANCELLED, new order is PENDING
     const newOrder = await prisma.order.create({
       data: {
-        // Generate new order number
-        orderNumber: `ORD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        // SINGLE SOURCE OF TRUTH: Use centralized order number generator
+        orderNumber: generateOrderNumber(),
 
         // Link to user if exists (Prisma relation syntax)
         user: failedOrder.userId
           ? { connect: { id: failedOrder.userId } }
           : undefined,
+
+        // CRITICAL: Copy guest customer data to prevent "Unknown Customer"
+        guestEmail: failedOrder.guestEmail,
+        guestMembershipIntent: failedOrder.guestMembershipIntent,
 
         // Copy order details from failed order
         subtotal: failedOrder.subtotal,
@@ -188,17 +200,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
 
         // CRITICAL: Recreate pending membership if customer was eligible
         // FOLLOWS @CLAUDE.md: FAIRNESS - customer deserves membership if they qualified
-        pendingMembership: failedOrder.wasEligibleForMembership &&
-                          failedOrder.userId &&
-                          !failedOrder.user?.isMember
-          ? {
-              create: {
-                userId: failedOrder.userId,
-                qualifyingAmount: failedOrder.total,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-              },
-            }
-          : undefined,
+        pendingMembership:
+          failedOrder.wasEligibleForMembership &&
+          failedOrder.userId &&
+          !failedOrder.user?.isMember
+            ? {
+                create: {
+                  userId: failedOrder.userId,
+                  qualifyingAmount: failedOrder.total,
+                  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+                },
+              }
+            : undefined,
 
         // Copy addresses
         shippingAddress: failedOrder.shippingAddress
@@ -237,6 +250,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
             }
           : undefined,
 
+        // CRITICAL: Copy courier/shipping configuration to enable fulfillment
+        selectedCourierServiceId: failedOrder.selectedCourierServiceId,
+        courierName: failedOrder.courierName,
+        courierServiceType: failedOrder.courierServiceType,
+        courierServiceDetail: failedOrder.courierServiceDetail,
+        selectedDropoffPointId: failedOrder.selectedDropoffPointId,
+        estimatedDelivery: failedOrder.estimatedDelivery,
+        shippingPreferences: failedOrder.shippingPreferences,
+        shippingWeight: failedOrder.shippingWeight,
+        scheduledPickupDate: failedOrder.scheduledPickupDate,
+
         // Copy order items (this will trigger stock deduction)
         orderItems: {
           create: failedOrder.orderItems.map(item => ({
@@ -265,7 +289,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
       });
     }
 
-    console.log(`✅ New order created: ${newOrder.orderNumber} (retry of ${failedOrderNumber})`);
+    console.log(
+      `✅ New order created: ${newOrder.orderNumber} (retry of ${failedOrderNumber})`
+    );
 
     // SINGLE SOURCE OF TRUTH: Create payment bill using toyyibPay service
     const paymentResult = await toyyibPayService.createBill({
@@ -277,7 +303,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         : failedOrder.shippingAddress?.firstName
           ? `${failedOrder.shippingAddress.firstName} ${failedOrder.shippingAddress.lastName}`
           : 'Guest',
-      billEmail: failedOrder.user?.email || failedOrder.guestEmail || 'guest@example.com',
+      billEmail:
+        failedOrder.user?.email ||
+        failedOrder.guestEmail ||
+        'guest@example.com',
       billPhone: failedOrder.shippingAddress?.phone || '',
       externalReferenceNo: newOrder.orderNumber,
       paymentChannel: '2', // Both FPX and Credit Card
@@ -304,12 +333,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         });
       }
 
-      console.error(`❌ Payment bill creation failed for ${newOrder.orderNumber}:`, paymentResult.error);
+      console.error(
+        `❌ Payment bill creation failed for ${newOrder.orderNumber}:`,
+        paymentResult.error
+      );
 
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to create payment link. Please try again or contact support.',
+          error:
+            'Failed to create payment link. Please try again or contact support.',
         },
         { status: 500 }
       );
@@ -355,12 +388,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
     });
   } catch (error) {
     const responseTime = Date.now() - startTime;
-    console.error(`❌ Retry payment error (${responseTime}ms) from IP: ${clientIP}:`, error);
+    console.error(
+      `❌ Retry payment error (${responseTime}ms) from IP: ${clientIP}:`,
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        error: 'An error occurred while processing your request. Please try again.',
+        error:
+          'An error occurred while processing your request. Please try again.',
       },
       { status: 500 }
     );
