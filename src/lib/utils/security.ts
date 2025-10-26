@@ -288,10 +288,11 @@ export function isSuspiciousUserAgent(userAgent: string): boolean {
 
 /**
  * Generate order number with security considerations
+ * Format: ORD-YYYYMMDD-XXXX (17 chars total)
  */
 export function generateOrderNumber(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const random = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const random = crypto.randomBytes(2).toString('hex').toUpperCase();
   return `ORD-${date}-${random}`;
 }
 
