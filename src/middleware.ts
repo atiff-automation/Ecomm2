@@ -133,10 +133,11 @@ export async function middleware(request: NextRequest) {
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     'unknown';
 
-  // CRITICAL: Block all test and debug endpoints in production
+  // CRITICAL: Block all test and debug endpoints in production (unless explicitly allowed)
   if (
     (pathname.startsWith('/api/test') || pathname.startsWith('/api/debug')) &&
-    process.env.NODE_ENV === 'production'
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_DEBUG_ENDPOINTS !== 'true'
   ) {
     console.warn(
       `🚫 Blocked test endpoint access in production: ${pathname} from IP: ${ip}`
