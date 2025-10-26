@@ -215,48 +215,11 @@ export interface FulfillmentErrorResponse {
 }
 
 /**
- * Suggested action for error recovery
- */
-export interface FulfillmentAction {
-  type: 'TOPUP' | 'RETRY' | 'CHANGE_COURIER' | 'CONTACT_SUPPORT';
-  label: string; // Button/link text
-  url?: string; // External URL (for TOPUP, CONTACT_SUPPORT)
-}
-
-/**
  * Combined fulfillment response type
  */
 export type FulfillmentResponse =
   | FulfillmentSuccessResponse
   | FulfillmentErrorResponse;
-
-// ============================================================================
-// FULFILLMENT WIDGET STATE
-// ============================================================================
-
-/**
- * State management for fulfillment UI widget
- */
-export interface FulfillmentWidgetState {
-  status: FulfillmentState;
-  selectedCourier?: CourierOption;
-  pickupDate: Date;
-  trackingNumber?: string;
-  awbNumber?: string;
-  labelUrl?: string;
-  scheduledPickupDate?: string; // ISO date string (YYYY-MM-DD)
-  error?: FulfillmentError;
-}
-
-/**
- * Detailed error information for fulfillment widget
- */
-export interface FulfillmentError {
-  code: ShippingErrorCode;
-  message: string;
-  suggestedActions: FulfillmentAction[];
-  retryable: boolean;
-}
 
 // ============================================================================
 // TRACKING

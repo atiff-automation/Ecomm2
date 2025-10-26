@@ -4,7 +4,7 @@
  * GET /api/admin/orders/[orderId]/shipping-options
  *
  * Fetches available courier options for an order from EasyParcel API.
- * Used by FulfillmentWidget to populate courier override dropdown.
+ * Used by ResponsiveFulfillmentDialog to populate courier override dropdown.
  *
  * @route GET /api/admin/orders/[orderId]/shipping-options
  */
@@ -204,7 +204,7 @@ export async function GET(
       );
     }
 
-    // Step 9: Format response for FulfillmentWidget
+    // Step 9: Format response for ResponsiveFulfillmentDialog
     const courierOptions = rates.map(rate => ({
       serviceId: rate.service_id,
       courierName: rate.courier_name,

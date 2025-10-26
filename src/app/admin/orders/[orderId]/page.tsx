@@ -38,6 +38,7 @@ import {
 import { ORDER_STATUSES } from '@/lib/constants/order';
 import { OrderStatus } from '@prisma/client';
 import type { OrderDetailsData } from '@/components/admin/orders/types';
+import { useOrderFulfillment } from '@/hooks/use-order-fulfillment';
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -47,10 +48,20 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<OrderDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [isFulfilling, setIsFulfilling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
+
+  // Use shared fulfillment hook (refetch order data on success for detail page)
+  const {
+    fulfillmentDialogOpen,
+    setFulfillmentDialogOpen,
+    isFulfilling,
+    handleFulfill: fulfillOrder,
+    handleConfirmFulfillment,
+  } = useOrderFulfillment({
+    onSuccess: () => fetchOrder(),
+    reloadOnSuccess: false,
+  });
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -112,72 +123,16 @@ export default function OrderDetailsPage() {
     }
   };
 
+  /**
+   * Wrapper for handleFulfill to adapt order data structure
+   */
   const handleFulfill = () => {
     if (!order) {
       return;
     }
 
-    // Prevent fulfillment if order is already fulfilled
-    if (order.shipment) {
-      toast.error('This order has already been fulfilled');
-      return;
-    }
-
-    // Prevent fulfillment if payment not completed
-    if (order.paymentStatus !== 'PAID') {
-      toast.error('Order must be paid before fulfillment');
-      return;
-    }
-
-    if (!order.selectedCourierServiceId) {
-      toast.error(
-        'No courier service selected. Please select a courier from the order settings.'
-      );
-      return;
-    }
-
-    setFulfillmentDialogOpen(true);
-  };
-
-  const handleConfirmFulfillment = async (
-    pickupDate: string,
-    shipmentId?: string, // Keep for backward compatibility, but will be undefined
-    options?: { overriddenByAdmin: boolean; selectedServiceId: string }
-  ) => {
-    if (!order) {
-      throw new Error('No order available for fulfillment');
-    }
-
-    setIsFulfilling(true);
-
-    try {
-      const response = await fetchWithCSRF(`/api/admin/orders/${order.id}/fulfill`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceId:
-            options?.selectedServiceId || order.selectedCourierServiceId,
-          pickupDate: pickupDate,
-          // No shipmentId - single-step flow
-          overriddenByAdmin: options?.overriddenByAdmin || false,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Order fulfilled successfully');
-
-        setFulfillmentDialogOpen(false);
-        fetchOrder();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fulfill order');
-      }
-    } catch (error) {
-      console.error('[OrderDetailsPage] Fulfillment error:', error);
-      throw error;
-    } finally {
-      setIsFulfilling(false);
-    }
+    // Use shared hook's fulfillment logic
+    fulfillOrder(order);
   };
 
   const handlePrintInvoice = () => {

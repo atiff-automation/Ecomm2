@@ -333,19 +333,25 @@ export interface FulfillmentOverrideOptions {
 }
 
 /**
+ * Standardized order data for fulfillment dialog
+ * Ensures consistency between OrderTable and Individual Order Page
+ */
+export interface FulfillmentDialogOrder {
+  id: string;
+  orderNumber: string;
+  courierName?: string | null;
+  courierServiceDetail?: string | null;
+  selectedCourierServiceId: string;
+  shippingCost: string | number;
+}
+
+/**
  * FulfillmentConfirmDialog component props
  */
 export interface FulfillmentConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  order: {
-    id: string;
-    orderNumber: string;
-    courierName?: string;
-    courierServiceDetail?: string;
-    selectedCourierServiceId: string;
-    shippingCost: string | number;
-  };
+  order: FulfillmentDialogOrder;
   onConfirm: (
     pickupDate: string,
     shipmentId?: string,

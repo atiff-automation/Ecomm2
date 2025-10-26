@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -21,9 +21,8 @@ import {
 } from '@/lib/utils/order';
 import { OrderStatus } from '@prisma/client';
 import type { OrderTableData, OrderTableProps, ActionResult } from './types';
-import { getNextBusinessDay } from '@/lib/shipping/utils/date-utils';
-import { format } from 'date-fns';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
+import { useOrderFulfillment } from '@/hooks/use-order-fulfillment';
 
 export function OrderTable({
   orders,
@@ -35,11 +34,17 @@ export function OrderTable({
   sortDirection = 'desc',
   isLoading = false,
 }: OrderTableProps) {
-  // Fulfillment dialog state
-  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] =
-    useState<OrderTableData | null>(null);
-  const [isFulfilling, setIsFulfilling] = useState(false);
+  // Use shared fulfillment hook (reload page on success for table view)
+  const {
+    fulfillmentDialogOpen,
+    setFulfillmentDialogOpen,
+    selectedOrderForFulfillment,
+    isFulfilling,
+    handleFulfill: fulfillOrder,
+    handleConfirmFulfillment,
+  } = useOrderFulfillment({
+    reloadOnSuccess: true,
+  });
 
   const allSelected =
     orders.length > 0 && selectedOrderIds.length === orders.length;
@@ -77,8 +82,11 @@ export function OrderTable({
     }
   };
 
+  /**
+   * Adapter function for OrderInlineActions compatibility
+   * Wraps the shared hook's handleFulfill to return ActionResult
+   */
   const handleFulfill = async (orderId: string): Promise<ActionResult> => {
-    // Get the order to retrieve the selected courier service ID
     const orderToFulfill = orders.find(o => o.id === orderId);
 
     if (!orderToFulfill) {
@@ -88,76 +96,8 @@ export function OrderTable({
       };
     }
 
-    // Check if courier service was selected during checkout
-    if (!orderToFulfill.selectedCourierServiceId) {
-      return {
-        success: false,
-        error:
-          'No courier service selected. Please select a courier from the order detail page.',
-      };
-    }
-
-    // Open confirmation dialog instead of immediate fulfillment
-    setSelectedOrderForFulfillment(orderToFulfill);
-    setFulfillmentDialogOpen(true);
-
-    // Return success to prevent error toast
-    // Actual fulfillment happens in handleConfirmFulfillment
-    return {
-      success: true,
-      message: 'Opening fulfillment dialog...',
-    };
-  };
-
-  const handleConfirmFulfillment = async (
-    pickupDate: string,
-    shipmentId?: string,
-    options?: { overriddenByAdmin: boolean; selectedServiceId: string }
-  ) => {
-    if (!selectedOrderForFulfillment) {
-      throw new Error('No order selected for fulfillment');
-    }
-
-    setIsFulfilling(true);
-
-    try {
-      const response = await fetch(
-        `/api/admin/orders/${selectedOrderForFulfillment.id}/fulfill`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            serviceId:
-              options?.selectedServiceId ||
-              selectedOrderForFulfillment.selectedCourierServiceId,
-            pickupDate: pickupDate,
-            shipmentId: shipmentId,
-            overriddenByAdmin: options?.overriddenByAdmin || false,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Close dialog
-        setFulfillmentDialogOpen(false);
-        setSelectedOrderForFulfillment(null);
-
-        // Refresh page to show updated order status
-        // Alternative: use router.refresh() or refetch data
-        window.location.reload();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fulfill order');
-      }
-    } catch (error) {
-      console.error('[OrderTable] Fulfillment error:', error);
-      // Re-throw to be caught by dialog component
-      throw error;
-    } finally {
-      setIsFulfilling(false);
-    }
+    // Use shared hook's fulfillment logic
+    return fulfillOrder(orderToFulfill);
   };
 
   if (isLoading) {
@@ -372,8 +312,9 @@ export function OrderTable({
             id: selectedOrderForFulfillment.id,
             orderNumber: selectedOrderForFulfillment.orderNumber,
             courierName: selectedOrderForFulfillment.courierName,
+            courierServiceDetail: selectedOrderForFulfillment.courierServiceDetail,
             selectedCourierServiceId:
-              selectedOrderForFulfillment.selectedCourierServiceId,
+              selectedOrderForFulfillment.selectedCourierServiceId || '',
             shippingCost: selectedOrderForFulfillment.shippingCost,
           }}
           onConfirm={handleConfirmFulfillment}
