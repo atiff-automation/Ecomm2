@@ -159,7 +159,9 @@ export async function GET(request: NextRequest) {
 
       // Courier service fields (for fulfillment)
       selectedCourierServiceId: order.selectedCourierServiceId,
+      courierName: order.courierName,
       courierServiceDetail: order.courierServiceDetail,
+      shippingCost: order.shippingCost,
 
       // Order items (matching frontend interface OrderTableData)
       orderItems: order.orderItems.map(item => ({

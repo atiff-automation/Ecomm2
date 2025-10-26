@@ -127,6 +127,8 @@ export async function POST(request: NextRequest) {
           },
         },
         user: true,
+        shippingAddress: true,
+        billingAddress: true,
         pendingMembership: true,
       },
     });
@@ -276,16 +278,16 @@ export async function POST(request: NextRequest) {
       console.log('✅ Stock restoration completed for cancelled order');
 
       // CENTRALIZED: Send admin notification for failed payment
-      // FOLLOWS @CLAUDE.md: DRY - reuse simplifiedTelegramService
+      // FOLLOWS @CLAUDE.md: DRY - same customer format as sendNewOrderNotification
       try {
+        // DRY: Same customer name pattern as order success notification
+        const customerName = order.user
+          ? `${order.user.firstName} ${order.user.lastName} (${order.user.email})`
+          : `${order.shippingAddress.firstName} ${order.shippingAddress.lastName} (${order.guestEmail})`;
+
         await simplifiedTelegramService.sendPaymentFailedAlert(
           order.orderNumber,
-          order.user
-            ? `${order.user.firstName} ${order.user.lastName}`
-            : order.shippingAddress
-              ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
-              : 'Guest',
-          order.user?.email || order.billingAddress?.email || 'No email',
+          customerName,
           Number(order.total),
           callback.reason || 'Payment declined'
         );

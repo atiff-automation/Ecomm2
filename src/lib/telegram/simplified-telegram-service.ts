@@ -566,12 +566,12 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
 
   /**
    * CENTRALIZED: Send payment failed alert to admin
-   * FOLLOWS @CLAUDE.md: DRY - same pattern as sendLowStockAlert
+   * FOLLOWS @CLAUDE.md: DRY - same pattern as sendNewOrderNotification
+   * NOTE: customerName should include email in format "Name (email)" for both users and guests
    */
   async sendPaymentFailedAlert(
     orderNumber: string,
     customerName: string,
-    customerEmail: string,
     amount: number,
     reason?: string
   ): Promise<boolean> {
@@ -588,12 +588,12 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
     }).format(amount);
 
     // NO HARDCODE: Message template with proper HTML formatting
+    // DRY: Same customer format as sendNewOrderNotification (name includes email)
     const message = `
 ❌ <b>PAYMENT FAILED ALERT!</b>
 
 🔴 <b>Order:</b> <code>${orderNumber}</code>
 👤 <b>Customer:</b> ${customerName}
-📧 <b>Email:</b> ${customerEmail}
 💰 <b>Amount:</b> ${formattedAmount}
 ${reason ? `\n❗ <b>Reason:</b> ${reason}` : ''}
 
