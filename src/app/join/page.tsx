@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -329,9 +330,8 @@ export default function JoinPage() {
                 <label htmlFor="password" className="text-sm font-medium">
                   Password *
                 </label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   value={formData.password}
                   onChange={e => handleInputChange('password', e.target.value)}
                   placeholder="Create a strong password"
@@ -349,9 +349,8 @@ export default function JoinPage() {
                 >
                   Confirm Password *
                 </label>
-                <Input
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
                   value={formData.confirmPassword}
                   onChange={e =>
                     handleInputChange('confirmPassword', e.target.value)

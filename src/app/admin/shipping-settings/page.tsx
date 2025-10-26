@@ -26,6 +26,7 @@ import {
 } from '@/lib/hooks/use-shipping-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -596,9 +597,8 @@ export default function ShippingSettingsPage() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="apiKey">API Key *</Label>
-              <Input
+              <PasswordInput
                 id="apiKey"
-                type="password"
                 {...register('apiKey')}
                 placeholder="Enter your EasyParcel API key"
               />

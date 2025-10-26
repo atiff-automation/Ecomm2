@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Crown, Star, Gift, Sparkles } from 'lucide-react';
@@ -499,9 +500,8 @@ export default function MembershipRegistrationModal({
 
               <div>
                 <Label htmlFor="password">Password *</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   value={formData.password}
                   onChange={e => handleInputChange('password', e.target.value)}
                   className={errors.password ? 'border-red-500' : ''}
@@ -513,9 +513,8 @@ export default function MembershipRegistrationModal({
 
               <div>
                 <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <Input
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
                   value={formData.confirmPassword}
                   onChange={e =>
                     handleInputChange('confirmPassword', e.target.value)
@@ -615,9 +614,8 @@ export default function MembershipRegistrationModal({
 
               <div>
                 <Label htmlFor="loginPassword">Password</Label>
-                <Input
+                <PasswordInput
                   id="loginPassword"
-                  type="password"
                   value={loginData.password}
                   onChange={e =>
                     handleLoginInputChange('password', e.target.value)

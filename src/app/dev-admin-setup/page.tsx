@@ -10,6 +10,7 @@ import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Card,
@@ -323,10 +324,9 @@ export default function DevAdminSetupPage() {
 
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Password"

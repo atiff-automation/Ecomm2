@@ -15,6 +15,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Card,
@@ -230,10 +231,9 @@ function ResetPasswordForm() {
 
                 <div>
                   <Label htmlFor="password">New Password</Label>
-                  <Input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     required
                     value={formData.password}
                     onChange={handleInputChange}
@@ -245,10 +245,9 @@ function ResetPasswordForm() {
 
                 <div>
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
+                  <PasswordInput
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
                     required
                     value={formData.confirmPassword}
                     onChange={handleInputChange}

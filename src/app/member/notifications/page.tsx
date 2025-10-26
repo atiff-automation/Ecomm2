@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Badge } from '@/components/ui/badge';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -647,9 +648,8 @@ export default function NotificationsPage() {
             <h4 className="font-medium">Bot Configuration</h4>
             <div className="grid w-full items-center gap-2">
               <Label htmlFor="botToken">Bot Token</Label>
-              <Input
+              <PasswordInput
                 id="botToken"
-                type="password"
                 placeholder="Enter your Telegram bot token"
                 value={telegramConfig.botToken || ''}
                 onChange={e =>
