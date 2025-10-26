@@ -195,7 +195,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
               create: {
                 userId: failedOrder.userId,
                 qualifyingAmount: failedOrder.total,
-                createdViaOrder: true,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
               },
             }
           : undefined,
@@ -204,6 +204,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         shippingAddress: failedOrder.shippingAddress
           ? {
               create: {
+                type: 'SHIPPING',
                 firstName: failedOrder.shippingAddress.firstName,
                 lastName: failedOrder.shippingAddress.lastName,
                 company: failedOrder.shippingAddress.company,
@@ -221,6 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         billingAddress: failedOrder.billingAddress
           ? {
               create: {
+                type: 'BILLING',
                 firstName: failedOrder.billingAddress.firstName,
                 lastName: failedOrder.billingAddress.lastName,
                 company: failedOrder.billingAddress.company,
@@ -231,7 +233,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
                 postalCode: failedOrder.billingAddress.postalCode,
                 country: failedOrder.billingAddress.country,
                 phone: failedOrder.billingAddress.phone,
-                email: failedOrder.billingAddress.email,
               },
             }
           : undefined,
@@ -241,10 +242,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
           create: failedOrder.orderItems.map(item => ({
             productId: item.productId,
             productName: item.productName,
+            productSku: item.productSku,
             quantity: item.quantity,
             regularPrice: item.regularPrice,
             memberPrice: item.memberPrice,
             appliedPrice: item.appliedPrice,
+            totalPrice: item.totalPrice,
           })),
         },
       },
@@ -274,7 +277,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RetryPaym
         : failedOrder.shippingAddress?.firstName
           ? `${failedOrder.shippingAddress.firstName} ${failedOrder.shippingAddress.lastName}`
           : 'Guest',
-      billEmail: failedOrder.user?.email || failedOrder.billingAddress?.email || 'guest@example.com',
+      billEmail: failedOrder.user?.email || failedOrder.guestEmail || 'guest@example.com',
       billPhone: failedOrder.shippingAddress?.phone || '',
       externalReferenceNo: newOrder.orderNumber,
       paymentChannel: '2', // Both FPX and Credit Card
