@@ -249,8 +249,12 @@ export default function MembershipRegistrationModal({
           window.history.replaceState(null, '', '/checkout');
           onClose();
         } else {
-          // For non-checkout flows, activate membership immediately
-          const membershipResponse = await fetchWithCSRF('/api/membership/register', {
+          // 🔒 SECURITY FIX: Do NOT activate membership immediately
+          // All flows (checkout and non-checkout) must go through payment first
+          // Membership activation ONLY happens after payment success
+
+          // Confirm registration intent (for audit trail)
+          await fetchWithCSRF('/api/membership/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -259,17 +263,17 @@ export default function MembershipRegistrationModal({
             }),
           });
 
-          const membershipResult = await membershipResponse.json();
+          // Return pending status - membership requires payment completion
+          onSuccess({
+            membershipStatus: 'pending_payment',
+            membership: {
+              isActive: false,
+              pendingPayment: true,
+              qualifyingAmount: eligibility.qualifyingTotal,
+            },
+          });
 
-          if (membershipResponse.ok) {
-            onSuccess(membershipResult);
-            onClose();
-          } else {
-            setErrors({
-              submit:
-                membershipResult.message || 'Failed to activate membership',
-            });
-          }
+          onClose();
         }
       } else {
         setErrors({ submit: 'Invalid email or password' });

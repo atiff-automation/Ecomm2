@@ -74,43 +74,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Activate membership
-    const membershipActivated = await activateUserMembership(
-      session.user.id,
-      qualifyingAmount,
-      orderId
-    );
+    // 🔒 SECURITY FIX: Do NOT activate membership here
+    // Membership activation ONLY happens after payment success
+    // via OrderStatusHandler.handlePaymentSuccess()
+    //
+    // This endpoint now only validates eligibility and confirms
+    // that the user is ready to proceed with checkout.
+    //
+    // The actual flow is:
+    // 1. User provides NRIC (via MembershipCheckoutBanner)
+    // 2. Order created with pendingMembership (includes NRIC)
+    // 3. Payment processed
+    // 4. Payment success webhook → OrderStatusHandler → activateUserMembership()
 
-    if (!membershipActivated) {
-      return NextResponse.json(
-        { message: 'Failed to activate membership' },
-        { status: 500 }
-      );
-    }
-
-    // Get updated user data
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        isMember: true,
-        memberSince: true,
-        membershipTotal: true,
-      },
-    });
-
-    // Create audit log for membership activation
+    // Create audit log for membership registration intent (not activation)
     await prisma.auditLog.create({
       data: {
         userId: session.user.id,
-        action: 'CREATE',
+        action: 'UPDATE',
         resource: 'Membership',
         resourceId: session.user.id,
         details: {
-          membershipActivated: true,
+          membershipRegistrationIntent: true,
           qualifyingAmount,
           orderId,
-          activatedAt: new Date().toISOString(),
+          registeredAt: new Date().toISOString(),
           acceptedTerms: acceptTerms,
+          note: 'User registered intent - activation pending payment',
         },
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
@@ -118,12 +108,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'Membership activated successfully',
+      message: 'Registration confirmed - proceed with checkout and payment to activate membership',
       membership: {
-        isActive: true,
-        memberSince: updatedUser?.memberSince,
-        membershipTotal: updatedUser?.membershipTotal,
+        isActive: false, // Not active yet - requires payment
+        isPending: true,
         qualifyingAmount,
+        note: 'Complete your purchase to activate membership',
       },
     });
   } catch (error) {

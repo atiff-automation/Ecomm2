@@ -71,11 +71,13 @@ export async function POST(request: NextRequest) {
       // Activate pending membership if exists
       if (order.pendingMembership && order.user && !order.user.isMember) {
         const pending = order.pendingMembership;
+        const nric = pending.registrationData?.nric; // Extract NRIC from pendingMembership
 
         const activated = await activateUserMembership(
           order.user.id,
           Number(pending.qualifyingAmount),
-          order.id
+          order.id,
+          nric // ← Pass NRIC parameter (same as OrderStatusHandler)
         );
 
         if (activated) {
