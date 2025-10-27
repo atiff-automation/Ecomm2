@@ -44,6 +44,11 @@ export interface OrderEmailData {
   };
   trackingNumber?: string;
   estimatedDelivery?: string;
+  membershipInfo?: {
+    isNewMember: boolean;
+    memberId: string; // Malaysia NRIC
+    memberSince: Date | null;
+  };
 }
 
 export interface MemberWelcomeData {
@@ -353,7 +358,35 @@ export class EmailService {
                 : ''
             }
           </div>
-          
+
+          ${
+            orderData.membershipInfo?.isNewMember
+              ? `
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      border-radius: 8px;
+                      padding: 24px;
+                      margin: 24px 0;
+                      color: white;
+                      text-align: center;">
+            <h2 style="margin: 0 0 16px 0;">🎉 Welcome to Membership!</h2>
+            <div style="background: rgba(255,255,255,0.2);
+                        border-radius: 8px;
+                        padding: 16px;
+                        margin: 16px 0;">
+              <p style="margin: 0 0 8px 0; font-size: 14px;">Your Member ID</p>
+              <p style="margin: 0;
+                         font-size: 28px;
+                         font-weight: bold;
+                         font-family: 'Courier New', monospace;">
+                ${orderData.membershipInfo.memberId}
+              </p>
+            </div>
+            <p style="margin: 16px 0 0 0;">✨ Enjoy member pricing on all future purchases!</p>
+          </div>
+        `
+              : ''
+          }
+
           <h3>Order Items</h3>
           <table class="items-table">
             <thead>

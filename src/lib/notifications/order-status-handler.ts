@@ -8,6 +8,8 @@ import { prisma } from '@/lib/db/prisma';
 import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
 import { emailService } from '@/lib/email/email-service';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { activateUserMembership } from '@/lib/membership';
+import { maskNRIC } from '@/lib/validation/nric';
 
 interface OrderStatusChangeData {
   orderId: string;
@@ -36,6 +38,7 @@ export class OrderStatusHandler {
       where: { id: data.orderId },
       include: {
         user: true,
+        pendingMembership: true,
         orderItems: {
           include: {
             product: {
@@ -119,7 +122,37 @@ export class OrderStatusHandler {
   ) {
     console.log('💰 Payment success detected for order:', order.orderNumber);
 
-    // Send Telegram notification for successful payment
+    // ✅ STEP 1: Activate membership (if applicable)
+    if (order.pendingMembership && order.user && !order.user.isMember) {
+      try {
+        const pending = order.pendingMembership;
+        const nric = pending.registrationData?.nric;
+
+        console.log('🎯 Activating membership for user:', order.user.id);
+        console.log('📋 Qualifying amount:', Number(pending.qualifyingAmount));
+        console.log('🆔 NRIC:', nric ? maskNRIC(nric) : 'N/A');
+
+        const activated = await activateUserMembership(
+          order.user.id,
+          Number(pending.qualifyingAmount),
+          order.id,
+          nric
+        );
+
+        if (activated) {
+          await prisma.pendingMembership.delete({
+            where: { id: pending.id },
+          });
+          console.log('✅ Membership activated and pending record deleted');
+        } else {
+          console.error('❌ Failed to activate membership');
+        }
+      } catch (error) {
+        console.error('❌ Error during membership activation:', error);
+      }
+    }
+
+    // ✅ STEP 2: Send Telegram notification for successful payment
     try {
       const customerName = order.user
         ? `${order.user.firstName} ${order.user.lastName} (${order.user.email})`
@@ -147,9 +180,15 @@ export class OrderStatusHandler {
       console.error('❌ Failed to send Telegram notification:', error);
     }
 
-    // Send email confirmation
+    // ✅ STEP 3: Send email confirmation (with membership info if applicable)
     try {
       if (order.user) {
+        // Fetch fresh user data to get updated membership info
+        const freshUser = await prisma.user.findUnique({
+          where: { id: order.user.id },
+          select: { isMember: true, memberSince: true, nric: true },
+        });
+
         await emailService.sendOrderConfirmation({
           orderNumber: order.orderNumber,
           customerName: `${order.user.firstName} ${order.user.lastName}`,
@@ -164,7 +203,15 @@ export class OrderStatusHandler {
           shippingCost: Number(order.shippingCost),
           total: Number(order.total),
           paymentMethod: order.paymentMethod || 'Unknown',
+          // Include membership info if newly activated
+          membershipInfo: freshUser?.isMember && freshUser?.nric ? {
+            isNewMember: true,
+            memberId: freshUser.nric,
+            memberSince: freshUser.memberSince,
+          } : undefined,
         });
+
+        console.log('✅ Order confirmation email sent to:', order.user.email);
       }
     } catch (error) {
       console.error('❌ Failed to send email confirmation:', error);

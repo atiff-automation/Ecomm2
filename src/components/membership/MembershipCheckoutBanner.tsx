@@ -6,6 +6,19 @@ import { useSession } from 'next-auth/react';
 import { Crown, Sparkles, ArrowRight, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { validateNRIC, maskNRIC, NRIC_VALIDATION_RULES } from '@/lib/validation/nric';
 import MembershipRegistrationModal from './MembershipRegistrationModal';
 
 interface CartItem {
@@ -47,6 +60,12 @@ export default function MembershipCheckoutBanner({
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [hasJustRegistered, setHasJustRegistered] = useState(false);
+
+  // NRIC form state (Ultra-KISS - only 4 state variables including submission tracking)
+  const [nric, setNric] = useState('');
+  const [nricError, setNricError] = useState('');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [nricSubmitted, setNricSubmitted] = useState(false);
 
   // Check eligibility when cart items change (including quantity changes)
   useEffect(() => {
@@ -175,6 +194,55 @@ export default function MembershipCheckoutBanner({
     onMembershipActivated?.(membershipData);
   };
 
+  // NRIC form handlers (Ultra-KISS)
+  const handleNricChange = (value: string) => {
+    // Sanitize: Remove all non-digits
+    const cleaned = value.replace(/\D/g, '');
+    setNric(cleaned);
+    setNricError('');
+
+    // Validate when complete
+    if (cleaned.length === 12) {
+      const validation = validateNRIC(cleaned);
+      if (!validation.valid) {
+        setNricError(validation.error || '');
+      }
+    }
+  };
+
+  const handleSubmitNric = async () => {
+    setShowConfirmDialog(false);
+
+    try {
+      // ✅ CSRF PROTECTION - Use fetchWithCSRF for all mutation requests
+      const response = await fetchWithCSRF('/api/membership/nric', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nric }),
+      });
+
+      if (response.ok) {
+        // Mark NRIC as submitted
+        setNricSubmitted(true);
+        // Store NRIC for checkout (will be passed to /api/orders)
+        onMembershipActivated?.({
+          membershipStatus: 'pending_payment',
+          nric: nric,
+        });
+      } else {
+        const data = await response.json();
+        if (data.code === 'DUPLICATE_NRIC') {
+          setNricError(NRIC_VALIDATION_RULES.ERROR_MESSAGES.DUPLICATE);
+        } else {
+          setNricError('Failed to validate NRIC. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting NRIC:', error);
+      setNricError('An error occurred. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div
@@ -262,51 +330,162 @@ export default function MembershipCheckoutBanner({
   if (eligibility.eligible) {
     // Check if user is logged in
     if (session?.user) {
-      // Logged-in user qualifies - show automatic activation message
-      return (
-        <div
-          className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
-        >
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <Crown className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold text-green-800">
-                  🎉 Membership Will Be Activated!
-                </h3>
-                <Sparkles className="h-4 w-4 text-green-600" />
+      // Logged-in user qualifies - show NRIC form or success message
+      if (!nricSubmitted) {
+        // Show NRIC form (Ultra-KISS: single input + confirmation)
+        return (
+          <>
+            <div
+              className={`bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 ${className}`}
+            >
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Crown className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="font-semibold text-blue-900">
+                      🎉 You Qualify for Membership!
+                    </h3>
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                  </div>
+
+                  {/* NRIC Form - Ultra-KISS: Single Input */}
+                  <div className="space-y-4 bg-white p-4 rounded-lg border border-blue-200">
+                    <div>
+                      <h4 className="font-semibold text-sm text-blue-900 mb-3">
+                        Enter Your Malaysia NRIC Number
+                      </h4>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Your NRIC will serve as your permanent Member ID and cannot be changed later.
+                      </p>
+                    </div>
+
+                    {/* Single NRIC Input */}
+                    <div>
+                      <Label htmlFor="nric" className="text-sm font-medium">
+                        NRIC Number <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="nric"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={12}
+                        value={nric}
+                        onChange={(e) => handleNricChange(e.target.value)}
+                        placeholder="e.g. 900101015678"
+                        className={`mt-1 font-mono text-lg ${nricError ? 'border-red-300' : ''}`}
+                      />
+                      {nricError && (
+                        <p className="text-sm text-red-600 mt-1">{nricError}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        12 digits, no dashes or symbols
+                      </p>
+                    </div>
+
+                    {/* Preview */}
+                    {nric.length === 12 && !nricError && (
+                      <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                        <p className="text-xs text-blue-700 mb-1">Your Member ID will be:</p>
+                        <p className="text-2xl font-mono font-bold text-blue-900">{nric}</p>
+                        <p className="text-xs text-red-600 mt-2">⚠️ Cannot be changed after submission</p>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <Button
+                      onClick={() => setShowConfirmDialog(true)}
+                      disabled={nric.length !== 12 || !!nricError}
+                      className="w-full"
+                    >
+                      Continue to Checkout
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <p className="text-green-700 text-sm mb-3">
-                Great news! With {formatCurrency(eligibility.qualifyingTotal)}{' '}
-                in eligible purchases, your membership will be automatically
-                activated when your payment is completed successfully.
-              </p>
-              <div className="bg-green-100 rounded-lg p-3 mb-3">
+            </div>
+
+            {/* Confirmation Dialog - Ultra-KISS: Replaces double-entry */}
+            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>⚠️ Confirm Your NRIC Number</AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-3">
+                    <p>Please verify that your NRIC is correct:</p>
+                    <div className="bg-blue-50 p-4 rounded border-2 border-blue-300">
+                      <p className="text-sm text-blue-700 mb-1">Member ID:</p>
+                      <p className="text-3xl font-mono font-bold text-blue-900">{nric}</p>
+                    </div>
+                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                      <p className="text-sm text-yellow-800 font-semibold mb-2">
+                        ⚠️ Important:
+                      </p>
+                      <ul className="text-sm text-yellow-800 space-y-1">
+                        <li>• This NRIC cannot be changed after submission</li>
+                        <li>• It will be your permanent Member ID</li>
+                        <li>• Corrections require contacting support</li>
+                      </ul>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Let Me Check Again</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSubmitNric}>
+                    Yes, This is Correct
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        );
+      } else {
+        // NRIC submitted - show activation message
+        return (
+          <div
+            className={`bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 ${className}`}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-green-100 rounded-full">
+                <Crown className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <Gift className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">
-                    What happens next:
+                  <h3 className="font-semibold text-green-800">
+                    🎉 Membership Will Be Activated!
+                  </h3>
+                  <Sparkles className="h-4 w-4 text-green-600" />
+                </div>
+                <p className="text-green-700 text-sm mb-3">
+                  Great news! With {formatCurrency(eligibility.qualifyingTotal)}{' '}
+                  in eligible purchases, your membership will be automatically
+                  activated when your payment is completed successfully.
+                </p>
+                <div className="bg-green-100 rounded-lg p-3 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">
+                      What happens next:
+                    </span>
+                  </div>
+                  <ul className="text-sm text-green-700 space-y-1 ml-6 list-disc">
+                    <li>Complete your purchase to activate membership</li>
+                    <li>Log in for future orders to enjoy member pricing</li>
+                    <li>Access exclusive deals and early product releases</li>
+                  </ul>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>
+                    Membership activation is subject to successful payment
+                    completion
                   </span>
                 </div>
-                <ul className="text-sm text-green-700 space-y-1 ml-6 list-disc">
-                  <li>Complete your purchase to activate membership</li>
-                  <li>Log in for future orders to enjoy member pricing</li>
-                  <li>Access exclusive deals and early product releases</li>
-                </ul>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-green-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>
-                  Membership activation is subject to successful payment
-                  completion
-                </span>
               </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      }
     } else {
       // Guest user qualifies - show join modal option
       return (

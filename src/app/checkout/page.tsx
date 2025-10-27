@@ -158,6 +158,7 @@ export default function CheckoutPage() {
   const [membershipActivated, setMembershipActivated] = useState(false);
   const [membershipPending, setMembershipPending] = useState(false);
   const [pendingMembershipMessage, setPendingMembershipMessage] = useState('');
+  const [nric, setNric] = useState<string>(''); // Malaysia NRIC for membership activation
   const [paymentProcessed, setPaymentProcessed] = useState(() => {
     // Check if we have payment result parameters on initial load
     if (typeof window !== 'undefined') {
@@ -356,6 +357,13 @@ export default function CheckoutPage() {
         membershipData.message ||
           'Your membership will be activated after successful payment.'
       );
+
+      // Store NRIC for order submission
+      if (membershipData.nric) {
+        setNric(membershipData.nric);
+        console.log('✅ NRIC received from MembershipCheckoutBanner');
+      }
+
       // Don't refresh checkout data since member pricing shouldn't apply yet
     } else {
       // Membership is immediately active
@@ -640,6 +648,7 @@ export default function CheckoutPage() {
           calculatedWeight: calculatedWeight,
           paymentMethod,
           membershipActivated: membershipActivated || membershipPending, // Include pending memberships
+          nric: nric || undefined, // Malaysia NRIC for membership activation
         };
 
         const response = await fetchWithCSRF('/api/orders', {
@@ -694,6 +703,7 @@ export default function CheckoutPage() {
         calculatedWeight: calculatedWeight,
         paymentMethod,
         membershipActivated: membershipActivated || membershipPending, // Include pending memberships
+        nric: nric || undefined, // Malaysia NRIC for membership activation
       };
 
       console.log('🔄 Creating order with payment method:', paymentMethod);

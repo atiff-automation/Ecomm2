@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { productQualifiesForMembership } from '@/lib/promotions/promotion-utils';
+import { maskNRIC } from '@/lib/validation/nric';
 
 export interface MembershipConfig {
   membershipThreshold: number;
@@ -190,12 +191,13 @@ export function calculateMembershipEligibility(
 export async function activateUserMembership(
   userId: string,
   qualifyingAmount: number,
-  orderId?: string
+  orderId?: string,
+  nric?: string
 ): Promise<boolean> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { isMember: true, membershipTotal: true },
+      select: { isMember: true, membershipTotal: true, nric: true },
     });
 
     if (!user) {
@@ -222,6 +224,7 @@ export async function activateUserMembership(
         isMember: true,
         memberSince: new Date(),
         membershipTotal: qualifyingAmount,
+        nric: nric,
       },
     });
 
@@ -236,12 +239,15 @@ export async function activateUserMembership(
           membershipActivated: true,
           qualifyingAmount,
           orderId,
+          nric: nric ? maskNRIC(nric) : undefined,
           activatedAt: new Date().toISOString(),
         },
         ipAddress: 'system',
         userAgent: 'membership-service',
       },
     });
+
+    console.log('✅ Membership activated for user:', userId, 'with NRIC:', nric ? maskNRIC(nric) : 'N/A');
 
     return true;
   } catch (error) {

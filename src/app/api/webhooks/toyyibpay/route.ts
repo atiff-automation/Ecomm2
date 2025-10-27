@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { emailService } from '@/lib/email/email-service';
-import { activateUserMembership } from '@/lib/membership';
 import { processReferralOrderCompletion } from '@/lib/referrals/referral-utils';
 import { PaymentSuccessHandler } from '@/lib/services/payment-success-handler';
 import { simplifiedTelegramService } from '@/lib/telegram/simplified-telegram-service';
@@ -199,41 +198,9 @@ export async function POST(request: NextRequest) {
       // No need to deduct again here - this was causing double deduction bug
       console.log('✅ Payment confirmed - stock was already reserved during order creation');
 
-      // Activate pending membership if exists
-      if (order.pendingMembership && order.user && !order.user.isMember) {
-        const pending = order.pendingMembership;
-
-        // Activate the membership
-        const activated = await activateUserMembership(
-          order.user.id,
-          Number(pending.qualifyingAmount),
-          order.id
-        );
-
-        if (activated) {
-          // Remove the pending membership record
-          await prisma.pendingMembership.delete({
-            where: { id: pending.id },
-          });
-
-          console.log(
-            'Membership activated for user:',
-            order.user.id,
-            'Order:',
-            order.id
-          );
-        }
-      } else if (order.user?.isMember) {
-        // Update existing member's total
-        const newTotal =
-          Number(order.user.membershipTotal) + Number(order.total);
-        await prisma.user.update({
-          where: { id: order.user.id },
-          data: {
-            membershipTotal: newTotal,
-          },
-        });
-      }
+      // ✅ MEMBERSHIP ACTIVATION: Handled by PaymentSuccessHandler → OrderStatusHandler
+      // SINGLE SOURCE OF TRUTH: Membership activation moved to order-status-handler.ts
+      // This follows @CLAUDE.md: DRY principle - no duplicate activation logic
 
       // Process referral completion if user exists and made their first qualifying order
       if (order.user) {

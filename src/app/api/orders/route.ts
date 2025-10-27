@@ -44,6 +44,7 @@ const createOrderSchema = z.object({
   paymentMethod: z.enum(['toyyibpay', 'TOYYIBPAY']),
   orderNotes: z.string().optional(),
   membershipActivated: z.boolean().optional(),
+  nric: z.string().optional(), // Malaysia NRIC for membership activation
   isGuest: z.boolean().optional(), // To indicate guest checkout
   guestEmail: z.string().email().optional(), // Guest email for order tracking
   // New simplified shipping implementation
@@ -538,6 +539,7 @@ export async function POST(request: NextRequest) {
                 registerAsMember: orderData.membershipActivated,
                 qualifyingAmount: qualifyingTotal,
                 timestamp: new Date().toISOString(),
+                nric: orderData.nric, // Store NRIC for membership activation
               },
               expiresAt,
             },

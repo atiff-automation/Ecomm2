@@ -32,6 +32,7 @@ import {
   User,
   Loader2,
   AlertCircle,
+  Info,
 } from 'lucide-react';
 import Image from 'next/image';
 import MembershipWelcomeModal from '@/components/membership/MembershipWelcomeModal';
@@ -80,8 +81,10 @@ interface OrderData {
   } | null;
   customer: {
     firstName: string;
+    lastName: string;
     isMember: boolean;
     memberSince?: string;
+    nric?: string; // Malaysia NRIC - serves as Member ID
   };
 }
 
@@ -513,6 +516,51 @@ function ThankYouContent() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Membership Card - Show when membership was just activated */}
+        {orderData?.customer?.isMember &&
+          orderData?.customer?.nric &&
+          orderData?.customer?.memberSince &&
+          (() => {
+            // Check if membership was activated within 60 seconds of order creation
+            const memberSinceTime = new Date(
+              orderData.customer.memberSince
+            ).getTime();
+            const orderCreatedTime = new Date(orderData.createdAt).getTime();
+            const isNewlyActivated =
+              memberSinceTime >= orderCreatedTime - 60000 &&
+              memberSinceTime <= orderCreatedTime + 60000;
+            return isNewlyActivated;
+          })() && (
+            <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-800">
+                  <Crown className="w-6 h-6" />
+                  🎉 Welcome to Membership!
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
+                  <p className="text-sm text-purple-600 mb-1">
+                    Your Member ID
+                  </p>
+                  <p className="text-3xl font-bold font-mono text-purple-900">
+                    {orderData.customer.nric}
+                  </p>
+                </div>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>What's next?</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                      <li>Enjoy member prices on all future purchases</li>
+                      <li>Access exclusive member-only deals</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Summary */}

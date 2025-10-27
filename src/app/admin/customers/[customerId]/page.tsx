@@ -32,6 +32,7 @@ interface Customer {
   lastName: string;
   email: string;
   phone: string | null;
+  nric: string | null; // Malaysia NRIC - serves as Member ID
   isMember: boolean;
   memberSince: string | null;
   totalOrders: number;
@@ -256,7 +257,7 @@ export default function AdminCustomerView({
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -276,6 +277,21 @@ export default function AdminCustomerView({
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(customer.totalSpent)}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Member ID</CardTitle>
+            <Crown className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600 font-mono">
+              {customer.nric || 'N/A'}
+            </div>
+            {customer.nric && (
+              <p className="text-xs text-muted-foreground mt-1">NRIC Number</p>
+            )}
           </CardContent>
         </Card>
 
