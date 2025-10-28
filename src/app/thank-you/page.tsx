@@ -114,8 +114,6 @@ function ThankYouContent() {
   // 1. Direct orderRef parameter (from test gateway or direct navigation)
   // 2. ToyyibPay order_id parameter (from payment gateway redirect)
   const orderRef = searchParams.get('orderRef') || searchParams.get('order_id');
-  const amount = searchParams.get('amount');
-  const membershipEligible = searchParams.get('membership') === 'true';
 
   // ToyyibPay return parameters
   const toyyibPayStatusId = searchParams.get('status_id'); // 1=success, 2=pending, 3=fail
@@ -215,12 +213,30 @@ function ThankYouContent() {
     }
   }, [pollCount]);
 
-  // Handle membership activation if eligible
+  // Handle membership activation - check order data instead of URL parameter
+  // FOLLOWS @CLAUDE.md: Single Source of Truth - order data is the authoritative source
   useEffect(() => {
-    if (membershipEligible && session?.user && !session.user.isMember) {
+    // Only proceed if we have order data and a logged-in user
+    if (!orderData || !session?.user) {
+      return;
+    }
+
+    // Check if membership was just activated (order shows member but session doesn't)
+    const orderShowsMembership =
+      orderData.customer?.isMember && orderData.customer?.memberSince;
+    const sessionNotUpdated = !session.user.isMember;
+
+    // Check if membership was activated recently (within 5 minutes of order creation)
+    const isRecentActivation = orderData.customer?.memberSince
+      ? new Date(orderData.customer.memberSince).getTime() >=
+        new Date(orderData.createdAt).getTime() - 5 * 60 * 1000
+      : false;
+
+    if (orderShowsMembership && sessionNotUpdated && isRecentActivation) {
+      console.log('🎉 Membership activation detected, updating session...');
       handleMembershipActivation();
     }
-  }, [membershipEligible, session]);
+  }, [orderData, session]);
 
   // Handle logout - redirect to main page when user logs out
   useEffect(() => {
@@ -541,9 +557,7 @@ function ThankYouContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
-                  <p className="text-sm text-purple-600 mb-1">
-                    Your Member ID
-                  </p>
+                  <p className="text-sm text-purple-600 mb-1">Your Member ID</p>
                   <p className="text-3xl font-bold font-mono text-purple-900">
                     {orderData.customer.nric}
                   </p>

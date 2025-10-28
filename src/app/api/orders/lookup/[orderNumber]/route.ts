@@ -136,6 +136,7 @@ export async function GET(
             // Exclude sensitive user data
             isMember: true,
             memberSince: true,
+            nric: true, // Malaysia NRIC - serves as Member ID
           },
         },
         shippingAddress: {
@@ -276,8 +277,13 @@ export async function GET(
             order.user?.firstName ||
             (order.shippingAddress as any)?.firstName ||
             'Guest',
+          lastName:
+            order.user?.lastName ||
+            (order.shippingAddress as any)?.lastName ||
+            '',
           isMember: order.user?.isMember || false,
           memberSince: order.user?.memberSince?.toISOString() || null,
+          nric: order.user?.nric || null, // Malaysia NRIC - serves as Member ID
         },
       },
       timestamp: new Date().toISOString(),
