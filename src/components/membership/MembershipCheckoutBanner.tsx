@@ -6,20 +6,8 @@ import { useSession } from 'next-auth/react';
 import { Crown, Sparkles, ArrowRight, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { validateNRIC, maskNRIC, NRIC_VALIDATION_RULES } from '@/lib/validation/nric';
 import MembershipRegistrationModal from './MembershipRegistrationModal';
+import MembershipNricModal from './MembershipNricModal';
 
 interface CartItem {
   productId: string;
@@ -42,9 +30,14 @@ interface MembershipEligibility {
   isExistingMember: boolean;
 }
 
+interface MembershipActivationData {
+  membershipStatus: 'pending_payment' | 'opted_out' | 'active';
+  nric?: string;
+}
+
 interface MembershipCheckoutBannerProps {
   cartItems: CartItem[];
-  onMembershipActivated?: (membershipData: any) => void;
+  onMembershipActivated?: (membershipData: MembershipActivationData) => void;
   className?: string;
 }
 
@@ -58,12 +51,8 @@ export default function MembershipCheckoutBanner({
     null
   );
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-
-  // NRIC form state (Ultra-KISS - only 4 state variables including submission tracking)
-  const [nric, setNric] = useState('');
-  const [nricError, setNricError] = useState('');
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [showNricModal, setShowNricModal] = useState(false);
   const [nricSubmitted, setNricSubmitted] = useState(false);
 
   // Check eligibility when cart items change (including quantity changes)
@@ -72,6 +61,26 @@ export default function MembershipCheckoutBanner({
       checkEligibility();
     }
   }, [cartItems]); // Depend on entire cartItems array to catch quantity changes
+
+  // Auto-open NRIC modal for returning users who qualify
+  useEffect(() => {
+    // Only auto-open if:
+    // 1. User is logged in
+    // 2. Eligibility is loaded and user qualifies
+    // 3. User is not already a member
+    // 4. NRIC hasn't been submitted yet
+    // 5. Modal is not already open
+    if (
+      session?.user &&
+      eligibility?.eligible &&
+      !eligibility.isExistingMember &&
+      !nricSubmitted &&
+      !showNricModal
+    ) {
+      // Auto-open modal for returning users
+      setShowNricModal(true);
+    }
+  }, [session?.user, eligibility, nricSubmitted, showNricModal]);
 
   const checkEligibility = async () => {
     // Skip if no cart items or already loading
@@ -105,10 +114,13 @@ export default function MembershipCheckoutBanner({
     }).format(amount);
   };
 
-  const handleMembershipSuccess = async (membershipData: any) => {
+  const handleMembershipSuccess = async (membershipData: MembershipActivationData) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('🎯 handleMembershipSuccess called', membershipData);
     }
+
+    // Close registration modal
+    setShowRegistrationModal(false);
 
     // Refresh session to get updated user data
     try {
@@ -123,58 +135,31 @@ export default function MembershipCheckoutBanner({
     }
 
     // Refresh eligibility status
-    checkEligibility();
+    await checkEligibility();
+
+    // Auto-open NRIC modal after account creation
+    setShowNricModal(true);
+  };
+
+  // Modal handlers
+  const handleNricSuccess = (nric: string) => {
+    // NRIC submitted successfully
+    setNricSubmitted(true);
+    setShowNricModal(false);
     // Notify parent component
-    onMembershipActivated?.(membershipData);
+    onMembershipActivated?.({
+      membershipStatus: 'pending_payment',
+      nric: nric,
+    });
   };
 
-  // NRIC form handlers (Ultra-KISS)
-  const handleNricChange = (value: string) => {
-    // Sanitize: Remove all non-digits
-    const cleaned = value.replace(/\D/g, '');
-    setNric(cleaned);
-    setNricError('');
-
-    // Validate when complete
-    if (cleaned.length === 12) {
-      const validation = validateNRIC(cleaned);
-      if (!validation.valid) {
-        setNricError(validation.error || '');
-      }
-    }
-  };
-
-  const handleSubmitNric = async () => {
-    setShowConfirmDialog(false);
-
-    try {
-      // ✅ CSRF PROTECTION - Use fetchWithCSRF for all mutation requests
-      const response = await fetchWithCSRF('/api/membership/nric', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nric }),
-      });
-
-      if (response.ok) {
-        // Mark NRIC as submitted
-        setNricSubmitted(true);
-        // Store NRIC for checkout (will be passed to /api/orders)
-        onMembershipActivated?.({
-          membershipStatus: 'pending_payment',
-          nric: nric,
-        });
-      } else {
-        const data = await response.json();
-        if (data.code === 'DUPLICATE_NRIC') {
-          setNricError(NRIC_VALIDATION_RULES.ERROR_MESSAGES.DUPLICATE);
-        } else {
-          setNricError('Failed to validate NRIC. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Error submitting NRIC:', error);
-      setNricError('An error occurred. Please try again.');
-    }
+  const handleNricOptOut = () => {
+    // User opted out of membership
+    setShowNricModal(false);
+    // Optionally notify parent that user opted out
+    onMembershipActivated?.({
+      membershipStatus: 'opted_out',
+    });
   };
 
   if (loading) {
@@ -200,9 +185,8 @@ export default function MembershipCheckoutBanner({
   if (eligibility.eligible) {
     // Check if user is logged in
     if (session?.user) {
-      // Logged-in user qualifies - show NRIC form or success message
+      // Logged-in user qualifies - show button to open NRIC modal
       if (!nricSubmitted) {
-        // Show NRIC form (Ultra-KISS: single input + confirmation)
         return (
           <>
             <div
@@ -220,93 +204,29 @@ export default function MembershipCheckoutBanner({
                     <Sparkles className="h-4 w-4 text-blue-600" />
                   </div>
 
-                  {/* NRIC Form - Ultra-KISS: Single Input */}
-                  <div className="space-y-4 bg-white p-4 rounded-lg border border-blue-200">
-                    <div>
-                      <h4 className="font-semibold text-sm text-blue-900 mb-3">
-                        Enter Your Malaysia NRIC Number
-                      </h4>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Your NRIC will serve as your permanent Member ID and cannot be changed later.
-                      </p>
-                    </div>
+                  <p className="text-blue-700 text-sm mb-3">
+                    With {formatCurrency(eligibility.qualifyingTotal)} in eligible purchases,
+                    you can unlock exclusive member pricing on all future orders!
+                  </p>
 
-                    {/* Single NRIC Input */}
-                    <div>
-                      <Label htmlFor="nric" className="text-sm font-medium">
-                        NRIC Number <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="nric"
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={12}
-                        value={nric}
-                        onChange={(e) => handleNricChange(e.target.value)}
-                        placeholder="e.g. 900101015678"
-                        className={`mt-1 font-mono text-lg ${nricError ? 'border-red-300' : ''}`}
-                      />
-                      {nricError && (
-                        <p className="text-sm text-red-600 mt-1">{nricError}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        12 digits, no dashes or symbols
-                      </p>
-                    </div>
-
-                    {/* Preview */}
-                    {nric.length === 12 && !nricError && (
-                      <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                        <p className="text-xs text-blue-700 mb-1">Your Member ID will be:</p>
-                        <p className="text-2xl font-mono font-bold text-blue-900">{nric}</p>
-                        <p className="text-xs text-red-600 mt-2">⚠️ Cannot be changed after submission</p>
-                      </div>
-                    )}
-
-                    {/* Submit Button */}
-                    <Button
-                      onClick={() => setShowConfirmDialog(true)}
-                      disabled={nric.length !== 12 || !!nricError}
-                      className="w-full"
-                    >
-                      Continue to Checkout
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => setShowNricModal(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    Enter NRIC to Activate Membership
+                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Confirmation Dialog - Ultra-KISS: Replaces double-entry */}
-            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>⚠️ Confirm Your NRIC Number</AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-3">
-                    <p>Please verify that your NRIC is correct:</p>
-                    <div className="bg-blue-50 p-4 rounded border-2 border-blue-300">
-                      <p className="text-sm text-blue-700 mb-1">Member ID:</p>
-                      <p className="text-3xl font-mono font-bold text-blue-900">{nric}</p>
-                    </div>
-                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-                      <p className="text-sm text-yellow-800 font-semibold mb-2">
-                        ⚠️ Important:
-                      </p>
-                      <ul className="text-sm text-yellow-800 space-y-1">
-                        <li>• This NRIC cannot be changed after submission</li>
-                        <li>• It will be your permanent Member ID</li>
-                        <li>• Corrections require contacting support</li>
-                      </ul>
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Let Me Check Again</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmitNric}>
-                    Yes, This is Correct
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {/* NRIC Modal */}
+            <MembershipNricModal
+              isOpen={showNricModal}
+              onClose={() => setShowNricModal(false)}
+              onSuccess={handleNricSuccess}
+              onOptOut={handleNricOptOut}
+            />
           </>
         );
       } else {
@@ -381,7 +301,7 @@ export default function MembershipCheckoutBanner({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => setShowRegistrationModal(true)}
                     size="sm"
                     className="bg-yellow-600 hover:bg-yellow-700 text-white"
                   >
@@ -405,8 +325,8 @@ export default function MembershipCheckoutBanner({
           </div>
 
           <MembershipRegistrationModal
-            isOpen={showModal}
-            onClose={() => setShowModal(false)}
+            isOpen={showRegistrationModal}
+            onClose={() => setShowRegistrationModal(false)}
             onSuccess={handleMembershipSuccess}
             eligibility={eligibility}
             cartItems={cartItems}

@@ -73,6 +73,11 @@ interface CheckoutItem {
   };
 }
 
+interface MembershipActivationData {
+  membershipStatus: 'pending_payment' | 'opted_out' | 'active';
+  nric?: string;
+}
+
 interface CheckoutSummary {
   itemCount: number;
   subtotal: number;
@@ -349,22 +354,25 @@ export default function CheckoutPage() {
   }, [session?.user?.id, paymentProcessed, router, totalItems, cartLoading]); // Removed useSameAddress and cart from dependencies
 
   // Handle membership activation callback
-  const handleMembershipActivated = (membershipData: any) => {
-    if (membershipData.membershipStatus === 'pending_payment') {
-      // Membership is pending payment - don't apply member pricing yet
+  const handleMembershipActivated = (membershipData: MembershipActivationData) => {
+    if (membershipData.membershipStatus === 'pending_payment' && membershipData.nric) {
+      // Membership is pending payment AND NRIC has been submitted
       setMembershipPending(true);
       setPendingMembershipMessage(
-        membershipData.message ||
-          'Your membership will be activated after successful payment.'
+        'Your membership will be activated after successful payment.'
       );
 
       // Store NRIC for order submission
-      if (membershipData.nric) {
-        setNric(membershipData.nric);
-        console.log('✅ NRIC received from MembershipCheckoutBanner');
-      }
+      setNric(membershipData.nric);
+      console.log('✅ NRIC received from MembershipCheckoutBanner');
 
       // Don't refresh checkout data since member pricing shouldn't apply yet
+    } else if (membershipData.membershipStatus === 'opted_out') {
+      // User opted out of membership
+      setMembershipPending(false);
+      setPendingMembershipMessage('');
+      setNric('');
+      console.log('ℹ️ User opted out of membership');
     } else {
       // Membership is immediately active
       setMembershipActivated(true);
