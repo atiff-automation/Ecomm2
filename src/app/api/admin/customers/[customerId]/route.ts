@@ -91,6 +91,7 @@ export async function GET(
       lastName: customer.lastName,
       email: customer.email,
       phone: customer.phone,
+      nric: customer.nric, // Malaysia NRIC - serves as Member ID
       isMember: customer.isMember,
       memberSince: customer.memberSince,
       status: customer.status,
