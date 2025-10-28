@@ -204,11 +204,12 @@ export class PricingService {
       });
     }
 
-    // Qualifying badge (only if no promotions active)
+    // Qualifying badge (only if no promotions active and user is not a member)
     if (
       product.isQualifyingForMembership &&
       !promotionStatus.isActive &&
-      !promotionStatus.isScheduled
+      !promotionStatus.isScheduled &&
+      !userContext.isMember
     ) {
       badges.push({
         type: 'qualifying',

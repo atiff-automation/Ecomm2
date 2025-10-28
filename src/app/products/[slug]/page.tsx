@@ -16,7 +16,6 @@ import {
   Heart,
   ShoppingCart,
   Truck,
-  Shield,
   Award,
   ChevronLeft,
   ChevronRight,
@@ -587,13 +586,9 @@ export default function ProductDetailPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm">
               <Truck className="w-4 h-4 text-green-600" />
-              <span>Free shipping for orders over RM 150</span>
+              <span>Free shipping for orders over RM 150 (except for Sabah, Sarawak & Labuan)</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Shield className="w-4 h-4 text-blue-600" />
-              <span>1 year warranty included</span>
-            </div>
-            {product.isQualifyingForMembership && (
+            {product.isQualifyingForMembership && !isMember && (
               <div className="flex items-center gap-2 text-sm">
                 <Award className="w-4 h-4 text-purple-600" />
                 <span>Qualifies for membership benefits</span>
