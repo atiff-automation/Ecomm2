@@ -2,3 +2,13 @@
 NIXPACKS_NODE_VERSION = "20"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+
+[phases.setup]
+# Override to prevent Nixpacks from installing browser packages
+aptPkgs = []
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
