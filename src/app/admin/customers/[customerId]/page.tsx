@@ -197,13 +197,14 @@ export default function AdminCustomerView({
       actions={pageActions}
       breadcrumbs={breadcrumbs}
       parentSection={{ label: 'Customers', href: '/admin/customers' }}
+      showBackButton={true}
       className="max-w-4xl mx-auto"
     >
       {/* Member Badge */}
       {customer.isMember && (
         <div className="mb-6 flex items-center gap-2 text-yellow-600">
           <Crown className="h-5 w-5" />
-          <span className="font-medium">VIP Member</span>
+          <span className="font-medium">Member</span>
           {customer.memberSince && (
             <span className="text-sm text-gray-600">
               since {new Date(customer.memberSince).toLocaleDateString('en-MY')}

@@ -210,9 +210,9 @@ export class MemberPromotionService {
 
       case 'HIGH_SPENDER':
         config = {
-          name: `VIP Appreciation - ${user.firstName}`,
+          name: `Member Appreciation - ${user.firstName}`,
           description:
-            'Thank you for being a valued customer! Enjoy exclusive VIP pricing.',
+            'Thank you for being a valued customer! Enjoy exclusive member pricing.',
           discountType: DiscountType.PERCENTAGE,
           discountValue: 30,
           minimumOrderValue: 200,
@@ -287,7 +287,7 @@ export class MemberPromotionService {
       };
     } else if (totalSpent < 1000) {
       nextBenefitUnlock = {
-        name: 'VIP Status',
+        name: 'Member Status',
         requirement: 'RM1,000 total spent',
         progress: totalSpent,
         target: 1000,
@@ -422,21 +422,21 @@ export class MemberPromotionService {
       });
 
       if (totalSpent._sum.total && Number(totalSpent._sum.total) >= 1000) {
-        // Check if they already have a VIP offer
-        const existingVIP = await prisma.discountCode.findFirst({
+        // Check if they already have a member offer
+        const existingMemberOffer = await prisma.discountCode.findFirst({
           where: {
-            name: { contains: 'VIP Appreciation' },
+            name: { contains: 'Member Appreciation' },
             createdById: userId,
             status: DiscountStatus.ACTIVE,
           },
         });
 
-        if (!existingVIP) {
-          const vipCode = await this.createLoyaltyMilestonePromotion(
+        if (!existingMemberOffer) {
+          const memberCode = await this.createLoyaltyMilestonePromotion(
             userId,
             'HIGH_SPENDER'
           );
-          createdCodes.push(vipCode);
+          createdCodes.push(memberCode);
         }
       }
 
