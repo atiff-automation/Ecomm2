@@ -18,15 +18,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   CheckCircle2,
   Download,
-  ArrowRight,
   Crown,
-  Gift,
   Package,
   CreditCard,
   MapPin,
   Clock,
   FileText,
-  Sparkles,
   ShoppingBag,
   Home,
   User,
@@ -35,7 +32,6 @@ import {
   Info,
 } from 'lucide-react';
 import Image from 'next/image';
-import MembershipWelcomeModal from '@/components/membership/MembershipWelcomeModal';
 import PaymentFailedView from '@/components/payment/PaymentFailedView';
 
 interface OrderItem {
@@ -104,7 +100,6 @@ function ThankYouContent() {
   const [error, setError] = useState<string>('');
   const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   const [membershipActivated, setMembershipActivated] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [initialSessionState, setInitialSessionState] = useState<
     'loading' | 'authenticated' | 'guest'
   >('loading');
@@ -255,7 +250,6 @@ function ThankYouContent() {
       setOrderData(null);
       setError('');
       setMembershipActivated(false);
-      setShowWelcomeModal(false);
 
       // Redirect to home page
       router.push('/');
@@ -343,11 +337,6 @@ function ThankYouContent() {
       // Update session to get latest user data
       await updateSession();
       setMembershipActivated(true);
-
-      // Show welcome modal after a short delay
-      setTimeout(() => {
-        setShowWelcomeModal(true);
-      }, 1500);
     } catch (error) {
       console.error('Error updating membership status:', error);
     }
@@ -872,19 +861,6 @@ function ThankYouContent() {
             </Card>
           </div>
         </div>
-
-        {/* Membership Welcome Modal */}
-        <MembershipWelcomeModal
-          isOpen={showWelcomeModal}
-          onClose={() => setShowWelcomeModal(false)}
-          memberInfo={{
-            name: orderData?.customer
-              ? `${orderData.customer.firstName} ${orderData.customer.lastName}`
-              : undefined,
-            memberSince: orderData?.customer?.memberSince,
-            orderValue: orderData?.total,
-          }}
-        />
       </div>
     </div>
   );

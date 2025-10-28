@@ -214,21 +214,31 @@ export default function AdminCustomerView({
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Total Orders
+            </CardTitle>
+            <div className="p-2 bg-gray-50 rounded-lg">
+              <ShoppingBag className="h-4 w-4 text-gray-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{customer.totalOrders}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {customer.totalOrders}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Total Spent
+            </CardTitle>
+            <div className="p-2 bg-green-50 rounded-lg">
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -237,28 +247,36 @@ export default function AdminCustomerView({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Member ID</CardTitle>
-            <Crown className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Member ID
+            </CardTitle>
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <Crown className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600 font-mono">
+            <div className="text-lg font-semibold text-purple-600 font-mono tracking-tight break-all">
               {customer.nric || 'N/A'}
             </div>
             {customer.nric && (
-              <p className="text-xs text-muted-foreground mt-1">NRIC Number</p>
+              <p className="text-xs text-gray-500 mt-1">NRIC Number</p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Member Since</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Member Since
+            </CardTitle>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Calendar className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-xl font-bold text-blue-600">
               {customer.memberSince
                 ? new Date(customer.memberSince).toLocaleDateString('en-MY')
                 : 'Not a member'}
