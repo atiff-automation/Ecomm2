@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Crown, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Crown } from 'lucide-react';
 import Link from 'next/link';
 import {
   AdminPageLayout,
@@ -60,7 +60,6 @@ export default function AdminCustomerEdit({
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
@@ -178,40 +177,6 @@ export default function AdminCustomerEdit({
     }
   };
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${customer?.firstName} ${customer?.lastName}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    setDeleting(true);
-    try {
-      const response = await fetchWithCSRF(
-        `/api/admin/customers/${params.customerId}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      if (response.ok) {
-        toast.success('Customer deleted successfully');
-        router.push('/admin/customers');
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to delete customer:', errorData);
-        toast.error(errorData.message || 'Failed to delete customer');
-      }
-    } catch (error) {
-      console.error('Failed to delete customer:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -263,15 +228,6 @@ export default function AdminCustomerEdit({
   const pageActions = (
     <div className="flex items-center gap-2">
       {customer.isMember && <Crown className="h-5 w-5 text-yellow-500" />}
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleDelete}
-        disabled={deleting}
-      >
-        <Trash2 className="h-4 w-4 mr-2" />
-        {deleting ? 'Deleting...' : 'Delete Customer'}
-      </Button>
     </div>
   );
 

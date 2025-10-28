@@ -4,9 +4,7 @@ import { requireAdminRole } from '@/lib/auth/authorization';
 
 export const dynamic = 'force-dynamic';
 
-import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/db/prisma';
-import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
 const updateCustomerSchema = z.object({
@@ -233,69 +231,3 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/customers/[customerId] - Delete customer (soft delete)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { customerId: string } }
-) {
-  // CSRF Protection
-  const csrfCheck = await checkCSRF(request);
-  if (csrfCheck) return csrfCheck;
-
-  try {
-    // Authorization check
-    const { error, session } = await requireAdminRole();
-    if (error) {
-      return error;
-    }
-
-    // Check if customer exists
-    const existingCustomer = await prisma.user.findUnique({
-      where: { id: params.customerId },
-      include: {
-        _count: {
-          select: {
-            orders: true,
-          },
-        },
-      },
-    });
-
-    if (!existingCustomer) {
-      return NextResponse.json(
-        { message: 'Customer not found' },
-        { status: 404 }
-      );
-    }
-
-    // Prevent deletion if customer has orders
-    if (existingCustomer._count.orders > 0) {
-      return NextResponse.json(
-        {
-          message:
-            'Cannot delete customer with existing orders. Consider suspending the account instead.',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Soft delete by setting status to INACTIVE
-    await prisma.user.update({
-      where: { id: params.customerId },
-      data: {
-        status: 'INACTIVE',
-        email: `deleted_${Date.now()}_${existingCustomer.email}`, // Prevent email conflicts
-      },
-    });
-
-    return NextResponse.json({
-      message: 'Customer account deactivated successfully',
-    });
-  } catch (error) {
-    console.error('Error deleting customer:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
