@@ -36,20 +36,14 @@ model User {
   heroSectionsCreated       HeroSection[]               @relation("HeroCreator")
   importExportJobs          ImportExportJob[]
   mediaUploads              MediaUpload[]               @relation("MediaUploader")
-  referralsReceived         MemberReferral[]            @relation("ReferralsReceived")
-  referralsMade             MemberReferral[]            @relation("ReferralsMade")
   notificationPreferences   NotificationPreference[]
   orders                    Order[]
   pendingMembership         PendingMembership?
   recentlyViewed            RecentlyViewed[]
-  rewardsProcessed          ReferralReward[]            @relation("RewardsProcessed")
-  referralRewards           ReferralReward[]
-  referralSettings          ReferralSetting[]
   reviews                   Review[]
   siteCustomizationsCreated SiteCustomization[]         @relation("SiteCustomizationCreator")
   themesCreated             SiteTheme[]                 @relation("ThemeCreator")
   telegramConfig            TelegramConfig?
-  wishlistItems             WishlistItem[]
   agentApplications         AgentApplication[]
   applicationReviews        AgentApplicationReview[]
 
@@ -176,7 +170,6 @@ model Product {
   variants                  ProductVariant[]
   recentlyViewed            RecentlyViewed[]
   reviews                   Review[]
-  wishlistItems             WishlistItem[]
 
   @@index([slug])
   @@index([sku])
@@ -413,18 +406,6 @@ model Review {
   @@map("reviews")
 }
 
-model WishlistItem {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@index([userId])
-  @@map("wishlist_items")
-}
 
 model RecentlyViewed {
   id        String   @id @default(cuid())
@@ -625,81 +606,6 @@ model NotificationPreference {
   @@map("notification_preferences")
 }
 
-model MemberReferral {
-  id                   String              @id @default(cuid())
-  referrerId           String
-  referredId           String?
-  referralCode         String              @unique
-  referredEmail        String?
-  status               ReferralStatus      @default(PENDING)
-  referrerRewardType   ReferralRewardType?
-  referrerRewardAmount Decimal?            @db.Decimal(10, 2)
-  referrerRewardStatus RewardStatus        @default(PENDING)
-  refereeRewardType    ReferralRewardType?
-  referreeRewardAmount Decimal?            @db.Decimal(10, 2)
-  refereeRewardStatus  RewardStatus        @default(PENDING)
-  firstOrderDate       DateTime?
-  firstOrderAmount     Decimal?            @db.Decimal(10, 2)
-  totalOrderAmount     Decimal?            @default(0) @db.Decimal(15, 2)
-  totalOrders          Int                 @default(0)
-  referralDate         DateTime            @default(now())
-  registeredDate       DateTime?
-  rewardedDate         DateTime?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  referred             User?               @relation("ReferralsReceived", fields: [referredId], references: [id])
-  referrer             User                @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
-  rewards              ReferralReward[]
-
-  @@index([referrerId])
-  @@index([referredId])
-  @@index([referralCode])
-  @@index([status])
-  @@index([referralDate])
-  @@map("member_referrals")
-}
-
-model ReferralReward {
-  id              String             @id @default(cuid())
-  userId          String
-  referralId      String
-  rewardType      ReferralRewardType
-  rewardAmount    Decimal            @db.Decimal(10, 2)
-  status          RewardStatus       @default(PENDING)
-  description     String?
-  processedBy     String?
-  processedAt     DateTime?
-  expiresAt       DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  processedByUser User?              @relation("RewardsProcessed", fields: [processedBy], references: [id])
-  referral        MemberReferral     @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([referralId])
-  @@index([status])
-  @@index([expiresAt])
-  @@map("referral_rewards")
-}
-
-model ReferralSetting {
-  id                    String             @id @default(cuid())
-  referrerRewardType    ReferralRewardType @default(DISCOUNT_CODE)
-  referrerRewardAmount  Decimal            @default(10) @db.Decimal(10, 2)
-  refereeRewardType     ReferralRewardType @default(DISCOUNT_CODE)
-  refereeRewardAmount   Decimal            @default(10) @db.Decimal(10, 2)
-  minimumOrderAmount    Decimal            @default(50) @db.Decimal(10, 2)
-  rewardExpiryDays      Int                @default(30)
-  maxReferralsPerMember Int?
-  isActive              Boolean            @default(true)
-  updatedBy             String
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  updatedByUser         User               @relation(fields: [updatedBy], references: [id])
-
-  @@map("referral_settings")
-}
 
 model SiteTheme {
   id              String   @id @default(cuid())
