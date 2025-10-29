@@ -15,11 +15,7 @@ import {
   User,
   ShoppingBag,
   MapPin,
-  Bell,
-  Heart,
   Clock,
-  Gift,
-  Settings,
   Menu,
   X,
   LogOut,
@@ -33,9 +29,9 @@ interface MemberLayoutProps {
 
 const navigationItems = [
   {
-    label: 'Dashboard',
-    href: '/member/dashboard',
-    icon: Home,
+    label: 'Profile',
+    href: '/member/profile',
+    icon: User,
   },
   {
     label: 'My Orders',
@@ -48,29 +44,9 @@ const navigationItems = [
     icon: MapPin,
   },
   {
-    label: 'Wishlist',
-    href: '/member/wishlist',
-    icon: Heart,
-  },
-  {
     label: 'Recently Viewed',
     href: '/member/recently-viewed',
     icon: Clock,
-  },
-  {
-    label: 'Member Benefits',
-    href: '/member/benefits',
-    icon: Gift,
-  },
-  {
-    label: 'Notifications',
-    href: '/member/notifications',
-    icon: Bell,
-  },
-  {
-    label: 'Profile',
-    href: '/member/profile',
-    icon: User,
   },
 ];
 
@@ -99,9 +75,6 @@ export default function MemberLayout({ children }: MemberLayoutProps) {
   };
 
   const isActiveRoute = (href: string) => {
-    if (href === '/member/dashboard') {
-      return pathname === '/member/dashboard' || pathname === '/member';
-    }
     return pathname.startsWith(href);
   };
 
@@ -114,7 +87,7 @@ export default function MemberLayout({ children }: MemberLayoutProps) {
         } lg:translate-x-0`}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <Link href="/member/dashboard" className="flex items-center">
+          <Link href="/member/orders" className="flex items-center">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">JRM</span>
