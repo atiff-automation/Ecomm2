@@ -12,8 +12,8 @@ export default function MemberIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to member dashboard
-    router.push('/member/dashboard');
+    // Redirect to member orders (most useful landing page)
+    router.push('/member/orders');
   }, [router]);
 
   return (
