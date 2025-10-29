@@ -19,14 +19,9 @@ import {
   Mail,
   Phone,
   Crown,
-  UserCheck,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Settings,
-  Target,
-  TrendingUp,
-  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -34,8 +29,6 @@ import {
   BreadcrumbItem,
   BREADCRUMB_CONFIGS,
 } from '@/components/admin/layout';
-import { toast } from 'sonner';
-import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface Customer {
   id: string;
@@ -66,7 +59,6 @@ interface MembershipStats {
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CustomerFilters>({});
   const [membershipStats, setMembershipStats] = useState<MembershipStats>({
     memberConversionRate: 0,
@@ -123,38 +115,6 @@ export default function AdminCustomers() {
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
-
-  const handleDelete = async (customer: Customer) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${customer.firstName} ${customer.lastName}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    setDeletingId(customer.id);
-    try {
-      const response = await fetchWithCSRF(`/api/admin/customers/${customer.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Customer deleted successfully');
-        // Refresh the customer list
-        fetchCustomers();
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to delete customer:', errorData);
-        toast.error(errorData.message || 'Failed to delete customer');
-      }
-    } catch (error) {
-      console.error('Failed to delete customer:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-MY', {
@@ -443,14 +403,6 @@ export default function AdminCustomers() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Link>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(customer)}
-                              disabled={deletingId === customer.id}
-                            >
-                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
