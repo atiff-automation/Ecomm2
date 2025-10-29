@@ -934,26 +934,6 @@ model TaxConfiguration {
   @@map("tax_configuration")
 }
 
-model ReceiptTemplate {
-  id              String              @id @default(cuid())
-  name            String
-  description     String?
-  templateType    ReceiptTemplateType
-  templateContent Json
-  isDefault       Boolean             @default(false)
-  isActive        Boolean             @default(true)
-  previewImage    String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  createdBy       String
-  updatedBy       String?
-
-  @@index([templateType])
-  @@index([isDefault, isActive])
-  @@map("receipt_templates")
-}
-
-
 model NotificationLog {
   id               String   @id @default(cuid())
   timestamp        DateTime @default(now())
@@ -1179,13 +1159,6 @@ enum WebhookStatus {
   RETRY
   PROCESSED
   FAILED
-}
-
-enum ReceiptTemplateType {
-  THERMAL_RECEIPT
-  BUSINESS_INVOICE
-  MINIMAL_RECEIPT
-  DETAILED_INVOICE
 }
 
 // Agent Application System Models

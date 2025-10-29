@@ -5,8 +5,6 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { malaysianTaxService } from '@/lib/tax/malaysian-tax';
-import { receiptTemplateService } from './template-service';
-import { TemplateEngine } from './template-engine';
 import { businessProfileService } from './business-profile-service';
 import { imageUrlToBase64 } from '@/lib/utils/image-utils';
 
@@ -236,47 +234,9 @@ export class TaxReceiptService {
   }
 
   /**
-   * Generate HTML tax receipt using template system
+   * Generate HTML tax receipt
    */
   async generateTaxReceiptHTML(
-    receiptData: TaxReceiptData,
-    templateId?: string
-  ): Promise<string> {
-    try {
-      // Get the template to use
-      let template;
-      if (templateId) {
-        template = await receiptTemplateService.getTemplateById(templateId);
-        if (!template) {
-          throw new Error('Template not found');
-        }
-      } else {
-        template = await receiptTemplateService.getActiveTemplate();
-      }
-
-      // Fall back to hardcoded template if no template system is configured
-      if (!template) {
-        return await this.generateLegacyTaxReceiptHTML(receiptData);
-      }
-
-      // Use new template engine
-      const templateEngine = new TemplateEngine();
-      return await templateEngine.renderTemplate(template, receiptData, {
-        format: 'html',
-        includeStyles: true,
-        inlineStyles: true,
-      });
-    } catch (error) {
-      console.error('Error generating receipt with template system:', error);
-      // Fall back to legacy template
-      return await this.generateLegacyTaxReceiptHTML(receiptData);
-    }
-  }
-
-  /**
-   * Legacy HTML tax receipt template (fallback)
-   */
-  private async generateLegacyTaxReceiptHTML(
     receiptData: TaxReceiptData
   ): Promise<string> {
     const { order, customer, orderItems, shippingAddress, taxBreakdown } =
