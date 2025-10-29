@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { FEATURED_FIRST_ORDER_BY } from '@/lib/utils/product-sorting';
 
 export interface ComparisonProduct {
   id: string;
@@ -269,9 +270,7 @@ export class ComparisonService {
           },
         },
         take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: FEATURED_FIRST_ORDER_BY,
       });
 
       return similarProducts.map(product => ({

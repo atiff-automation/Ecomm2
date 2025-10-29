@@ -15,6 +15,11 @@ import {
   shouldCleanupPromotion,
   getPromotionCleanupData,
 } from '@/lib/promotions/promotion-utils';
+import {
+  buildProductOrderBy,
+  shouldPrioritizeFeatured,
+  type ProductSortField,
+} from '@/lib/utils/product-sorting';
 
 const createProductSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -175,25 +180,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build orderBy
-    const orderBy: any = {};
-    switch (sortBy) {
-      case 'name':
-        orderBy.name = sortOrder;
-        break;
-      case 'price':
-        orderBy.regularPrice = sortOrder;
-        break;
-      case 'created':
-        orderBy.createdAt = sortOrder;
-        break;
-      case 'rating':
-        // For rating sort, we'll need to calculate average rating
-        orderBy.createdAt = sortOrder; // Fallback for now
-        break;
-      default:
-        orderBy.createdAt = 'desc';
-    }
+    // Build orderBy using centralized utility
+    // This ensures consistent featured-first sorting across the application
+    const includeFeaturedFirst = shouldPrioritizeFeatured(
+      !!search,
+      !!category,
+      !!features
+    );
+
+    const orderBy = buildProductOrderBy(
+      sortBy as ProductSortField,
+      sortOrder,
+      includeFeaturedFirst
+    );
 
     // Execute queries
     const [products, totalCount] = await Promise.all([

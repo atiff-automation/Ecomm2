@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { z } from 'zod';
+import { compareFeaturedStatus } from '@/lib/utils/product-sorting';
 
 const addRecentlyViewedSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Fetch more items than needed to ensure we have enough after filtering
     const recentlyViewedItems = await prisma.recentlyViewed.findMany({
       where: { userId: session.user.id },
       include: {
@@ -61,13 +63,24 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { viewedAt: 'desc' },
-      take: limit,
+      take: limit * 2, // Fetch double to account for inactive products
     });
 
-    // Filter out inactive products and calculate ratings
-    const formattedItems = recentlyViewedItems
+    // Sort by featured status first, then by view time
+    const sortedItems = recentlyViewedItems
       .filter(item => item.product.status === 'ACTIVE')
-      .map(item => {
+      .sort((a, b) => {
+        // Featured products first (using centralized utility)
+        const featuredSort = compareFeaturedStatus(a.product, b.product);
+        if (featuredSort !== 0) return featuredSort;
+
+        // Then by view time (most recent first)
+        return b.viewedAt.getTime() - a.viewedAt.getTime();
+      })
+      .slice(0, limit); // Take only the requested limit
+
+    // Calculate ratings for the sorted items
+    const formattedItems = sortedItems.map(item => {
         const reviews = item.product.reviews;
         const averageRating =
           reviews.length > 0

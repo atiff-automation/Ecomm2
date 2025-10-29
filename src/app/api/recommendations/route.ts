@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { FEATURED_FIRST_ORDER_BY } from '@/lib/utils/product-sorting';
 
 /**
  * GET /api/recommendations - Get personalized product recommendations
@@ -135,7 +136,7 @@ async function getPersonalizedRecommendations(
             select: { rating: true },
           },
         },
-        orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+        orderBy: FEATURED_FIRST_ORDER_BY,
         take: limit,
       });
     }
@@ -286,7 +287,7 @@ async function getSimilarProducts(
           select: { rating: true },
         },
       },
-      orderBy: [{ createdAt: 'desc' }, { featured: 'desc' }],
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
   } catch (error) {
