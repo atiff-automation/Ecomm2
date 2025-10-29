@@ -308,9 +308,25 @@ export class APIClient {
       // In server-side context, construct absolute URL
       const protocol =
         process.env.NODE_ENV === 'production' ? 'https:' : 'http:';
-      const host = process.env.VERCEL_URL
-        ? `${protocol}//${process.env.VERCEL_URL}`
-        : `${protocol}//localhost:${process.env.PORT || 3000}`;
+
+      let host: string;
+
+      // Check for Railway deployment first
+      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        host = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+      }
+      // Check for Vercel deployment
+      else if (process.env.VERCEL_URL) {
+        host = `${protocol}//${process.env.VERCEL_URL}`;
+      }
+      // Check for custom API URL
+      else if (process.env.NEXT_PUBLIC_API_URL) {
+        host = process.env.NEXT_PUBLIC_API_URL;
+      }
+      // Fallback to localhost for development
+      else {
+        host = `${protocol}//localhost:${process.env.PORT || 3000}`;
+      }
 
       return `${host}${url}`;
     }
