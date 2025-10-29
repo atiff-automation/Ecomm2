@@ -13,6 +13,11 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { productService } from '@/lib/services/product-service';
 import { categoryService } from '@/lib/services/category-service';
+import {
+  buildProductOrderBy,
+  shouldPrioritizeFeatured,
+  type ProductSortField,
+} from '@/lib/utils/product-sorting';
 import { ProductsClient } from './products-client';
 import { ProductsHeader } from './components/ProductsHeader';
 import { ProductsLoading } from './components/ProductsLoading';
@@ -87,21 +92,19 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
       const skip = (params.page - 1) * params.limit;
       const totalPages = Math.ceil(totalCount / params.limit);
 
-      // Build orderBy
-      const orderBy: any = {};
-      switch (params.sortBy) {
-        case 'name':
-          orderBy.name = params.sortOrder;
-          break;
-        case 'price':
-          orderBy.regularPrice = params.sortOrder;
-          break;
-        case 'rating':
-          orderBy.averageRating = params.sortOrder;
-          break;
-        default:
-          orderBy.createdAt = params.sortOrder;
-      }
+      // Build orderBy using centralized sorting utility
+      // This ensures featured products appear first when appropriate
+      const includeFeaturedFirst = shouldPrioritizeFeatured(
+        !!params.search,
+        !!params.category,
+        false // No feature filters in server component URL params
+      );
+
+      const orderBy = buildProductOrderBy(
+        params.sortBy as ProductSortField,
+        params.sortOrder,
+        includeFeaturedFirst
+      );
 
       // Fetch products with relations
       const products = await prisma.product.findMany({

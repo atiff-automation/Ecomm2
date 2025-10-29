@@ -196,7 +196,7 @@ async function getGenericRecommendations(
           select: { rating: true },
         },
       },
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      orderBy: FEATURED_FIRST_ORDER_BY,
       take: limit,
     });
   } catch (error) {
@@ -287,7 +287,7 @@ async function getSimilarProducts(
           select: { rating: true },
         },
       },
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      orderBy: FEATURED_FIRST_ORDER_BY,
       take: limit,
     });
   } catch (error) {
@@ -348,7 +348,7 @@ async function getCategoryRecommendations(
           select: { rating: true },
         },
       },
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      orderBy: FEATURED_FIRST_ORDER_BY,
       take: limit,
     });
   } catch (error) {
@@ -400,7 +400,7 @@ async function getTrendingProducts(limit: number, excludeUserId?: string) {
           select: { rating: true },
         },
       },
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      orderBy: FEATURED_FIRST_ORDER_BY,
       take: limit,
     });
   } catch (error) {
