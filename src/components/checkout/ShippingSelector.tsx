@@ -12,6 +12,7 @@
 
 'use client';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
+import { normalizePhoneNumber } from '@/lib/shipping/utils/phoneNumber-utils';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,11 +79,23 @@ export default function ShippingSelector({
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
+      // Normalize phone number to +60 format before sending to API
+      let normalizedAddress = deliveryAddress;
+      try {
+        normalizedAddress = {
+          ...deliveryAddress,
+          phone: normalizePhoneNumber(deliveryAddress.phone),
+        };
+      } catch (phoneError) {
+        // If normalization fails, still attempt with original
+        console.warn('[ShippingSelector] Phone normalization failed:', phoneError);
+      }
+
       const response = await fetchWithCSRF('/api/shipping/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          deliveryAddress,
+          deliveryAddress: normalizedAddress,
           items,
           orderValue,
         }),

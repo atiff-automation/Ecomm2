@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db/prisma';
 import { sanitizeInput } from '@/lib/utils/validation';
 import { getClientIP } from '@/lib/utils/security';
 import { invoiceService } from '@/lib/invoices/invoice-service';
+import { generateReceiptPDF } from '@/lib/utils/pdf-generator';
 
 interface Params {
   orderNumber: string;
@@ -132,36 +133,9 @@ export async function GET(
     }
 
     if (format === 'pdf') {
-      // Generate PDF using Puppeteer (same as invoice route)
-      const htmlReceipt = await invoiceService.generateReceiptHTML(receiptData);
-
-      let browser;
+      // Generate PDF using PDFKit (no browser required)
       try {
-        // Dynamic import to avoid SSR issues
-        const puppeteer = (await import('puppeteer')).default;
-
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-
-        const page = await browser.newPage();
-        await page.setContent(htmlReceipt, {
-          waitUntil: 'networkidle0', // Wait for all network requests to finish
-        });
-
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: {
-            top: '1cm',
-            right: '1cm',
-            bottom: '1cm',
-            left: '1cm',
-          },
-        });
-
-        await browser.close();
+        const pdfBuffer = await generateReceiptPDF(receiptData);
 
         const responseTime = Date.now() - startTime;
         console.log(
@@ -178,9 +152,6 @@ export async function GET(
           },
         });
       } catch (error) {
-        if (browser) {
-          await browser.close();
-        }
         console.error('PDF generation error:', error);
         throw error;
       }

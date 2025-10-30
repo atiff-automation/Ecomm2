@@ -999,7 +999,7 @@ export default function CheckoutPage() {
                   <Input
                     id="shippingPhone"
                     type="tel"
-                    placeholder="+60123456789"
+                    placeholder="0123456789 or 60123456789 or +60123456789"
                     value={shippingAddress.phone}
                     onChange={e =>
                       handleAddressChange('shipping', 'phone', e.target.value)
@@ -1011,6 +1011,9 @@ export default function CheckoutPage() {
                         : ''
                     }`}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter your 10-11 digit Malaysian number (with or without +60)
+                  </p>
                   {renderFieldError('shippingAddress.phone')}
                 </div>
               </div>
@@ -1244,7 +1247,7 @@ export default function CheckoutPage() {
                     <Input
                       id="billingPhone"
                       type="tel"
-                      placeholder="+60123456789"
+                      placeholder="0123456789 or 60123456789 or +60123456789"
                       value={billingAddress.phone}
                       onChange={e =>
                         handleAddressChange('billing', 'phone', e.target.value)
@@ -1252,6 +1255,9 @@ export default function CheckoutPage() {
                       required
                       className="h-12 sm:h-10"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter your 10-11 digit Malaysian number (with or without +60)
+                    </p>
                   </div>
                 </div>
 

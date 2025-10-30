@@ -19,6 +19,7 @@ import {
   EasyParcelError,
 } from '@/lib/shipping/easyparcel-service';
 import { calculateTotalWeight } from '@/lib/shipping/utils/weight-utils';
+import { normalizePhoneNumber } from '@/lib/shipping/utils/phoneNumber-utils';
 import {
   COURIER_SELECTION_STRATEGIES,
   SHIPPING_ERROR_CODES,
@@ -55,7 +56,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { deliveryAddress, items, orderValue } = validation.data;
+    let { deliveryAddress, items, orderValue } = validation.data;
+
+    // Normalize phone number to +60 format (defense-in-depth)
+    // Even though frontend normalizes, we normalize again on server for consistency
+    try {
+      deliveryAddress = {
+        ...deliveryAddress,
+        phone: normalizePhoneNumber(deliveryAddress.phone),
+      };
+    } catch (phoneError) {
+      console.error('[ShippingCalculate] Server-side phone normalization failed:', phoneError);
+      // Continue anyway - Zod validation already checked the format
+    }
 
     // Check if shipping is configured
     const settings = await getShippingSettingsOrThrow();
@@ -331,7 +344,7 @@ const ShippingCalculateSchema = z.object({
       .string()
       .regex(
         VALIDATION_PATTERNS.PHONE_MY,
-        'Phone must be in Malaysian format (+60XXXXXXXXX)'
+        'Phone must be a valid Malaysian number (0123456789, 60123456789, or +60123456789)'
       ),
     addressLine1: z.string().min(1, 'Address line 1 is required').max(200),
     addressLine2: z.string().max(200).optional(),

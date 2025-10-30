@@ -209,9 +209,22 @@ export const TRACKING_CONFIG = {
  * Validation Patterns
  *
  * Regular expressions for input validation (used in Zod schemas).
+ *
+ * PHONE_MY: Accepts all valid Malaysian mobile number formats:
+ * - 0123456789 (local 10-digit)
+ * - 01234567899 (local 11-digit)
+ * - +60123456789 (international with +, 8 digits after +60)
+ * - +601234567899 (international with +, 9 digits after +60)
+ * - 60123456789 (international without +, 8 digits after 60)
+ * - 601234567899 (international without +, 9 digits after 60)
+ *
+ * Pattern logic:
+ * - 0[01]\d{8,9}: Local format (0-prefix, 2nd digit 0-1, 8-9 more digits = 10-11 total)
+ * - \+60[01]\d{7,8}: International with + (8-9 digits after +60)
+ * - 60[01]\d{7,8}: International without + (8-9 digits after 60)
  */
 export const VALIDATION_PATTERNS = {
-  PHONE_MY: /^\+60[0-9]{8,10}$/, // Malaysian phone format
+  PHONE_MY: /^(0[01]\d{8,9}|\+60[01]\d{7,8}|60[01]\d{7,8})$/, // All Malaysian mobile formats
   POSTAL_CODE_MY: /^\d{5}$/, // 5-digit Malaysian postal code
   API_KEY: /^[A-Za-z0-9_\-+=/.]+$/, // Allows common API key characters (letters, numbers, dash, underscore, etc)
 } as const;

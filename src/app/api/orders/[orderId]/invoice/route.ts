@@ -11,7 +11,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { invoiceService } from '@/lib/invoices/invoice-service';
 import { UserRole } from '@prisma/client';
-import puppeteer from 'puppeteer';
+import { generateReceiptPDF } from '@/lib/utils/pdf-generator';
 
 interface RouteParams {
   params: {
@@ -76,33 +76,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     if (format === 'pdf') {
-      // Generate PDF using Puppeteer
-      const htmlReceipt = await invoiceService.generateReceiptHTML(invoiceData);
-
-      let browser;
+      // Generate PDF using PDFKit (no browser required)
       try {
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-
-        const page = await browser.newPage();
-        await page.setContent(htmlReceipt, {
-          waitUntil: 'networkidle0', // Wait for all network requests to finish
-        });
-
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: {
-            top: '1cm',
-            right: '1cm',
-            bottom: '1cm',
-            left: '1cm',
-          },
-        });
-
-        await browser.close();
+        const pdfBuffer = await generateReceiptPDF(invoiceData);
 
         return new Response(pdfBuffer, {
           headers: {
@@ -111,9 +87,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           },
         });
       } catch (error) {
-        if (browser) {
-          await browser.close();
-        }
         console.error('PDF generation error:', error);
         throw error;
       }
