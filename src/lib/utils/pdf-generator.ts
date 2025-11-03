@@ -8,11 +8,6 @@ import PDFDocument from 'pdfkit';
 import { ReceiptData } from '@/lib/invoices/invoice-service';
 import { TaxReceiptData } from '@/lib/receipts/receipt-service';
 
-interface PDFGenerationOptions {
-  filename?: string;
-  includeQR?: boolean;
-}
-
 /**
  * Format currency to Malaysian Ringgit
  */
@@ -417,8 +412,7 @@ export function generateTaxReceiptPDF(
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const { order, customer, orderItems, shippingAddress, taxBreakdown } =
-        receiptData;
+      const { order, customer, orderItems, taxBreakdown } = receiptData;
 
       const receiptNumber = `RCP-${order.orderNumber.replace('ORD-', '')}`;
 
@@ -468,7 +462,9 @@ export function generateTaxReceiptPDF(
         `${customer.firstName || ''} ${customer.lastName || ''}${customer.isMember ? ' [MEMBER]' : ''}`
       );
       doc.text(`Email: ${customer.email}`);
-      if (customer.phone) doc.text(`Phone: ${customer.phone}`);
+      if (customer.phone) {
+        doc.text(`Phone: ${customer.phone}`);
+      }
       doc.text(`Order: ${order.orderNumber}`);
 
       doc.moveDown();
