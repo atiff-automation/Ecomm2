@@ -40,3 +40,5 @@ next-env.d.ts
 
 # webhook logs (contain sensitive payment data)
 /logs/webhooks
+railway-backup-*.sql
+railway-business-profile-backup-*.csv

@@ -779,7 +779,6 @@ model BusinessProfile {
   secondaryPhone        String?
   primaryEmail          String
   supportEmail          String?
-  website               String?
   businessLicense       String?
   industryCode          String?
   establishedDate       DateTime?
@@ -788,9 +787,6 @@ model BusinessProfile {
   updatedAt             DateTime                 @updatedAt
   createdBy             String
   updatedBy             String?
-  logoHeight            Int?                     @default(40)
-  logoUrl               String?
-  logoWidth             Int?                     @default(120)
   history               BusinessProfileHistory[]
 
   @@index([isActive])

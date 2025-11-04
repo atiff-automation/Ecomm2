@@ -79,8 +79,6 @@ export default function BusinessProfilePage() {
       secondaryPhone: '',
       primaryEmail: '',
       supportEmail: '',
-      website: '',
-      logoUrl: '',
       registeredAddress: {
         addressLine1: '',
         addressLine2: '',
@@ -161,8 +159,6 @@ export default function BusinessProfilePage() {
             secondaryPhone: profileData.secondaryPhone || '',
             primaryEmail: profileData.primaryEmail || '',
             supportEmail: profileData.supportEmail || '',
-            website: profileData.website || '',
-            logoUrl: profileData.logoUrl || '',
             registeredAddress: {
               addressLine1: profileData.registeredAddress?.addressLine1 || '',
               addressLine2: profileData.registeredAddress?.addressLine2 || '',
@@ -663,26 +659,6 @@ export default function BusinessProfilePage() {
                 helperText="Optional customer support email"
               />
             </div>
-
-            <SettingsInput
-              label="Website"
-              type="url"
-              value={watchedValues.website || ''}
-              onChange={e => handleFieldChange('website', e.target.value)}
-              error={errors.website?.message}
-              placeholder="https://www.company.com"
-              helperText="Optional company website"
-            />
-
-            <SettingsInput
-              label="Logo URL"
-              type="url"
-              value={watchedValues.logoUrl || ''}
-              onChange={e => handleFieldChange('logoUrl', e.target.value)}
-              error={errors.logoUrl?.message}
-              placeholder="https://www.company.com/logo.png"
-              helperText="Optional company logo URL for receipts and invoices"
-            />
           </SettingsSection>
         </SettingsCard>
 

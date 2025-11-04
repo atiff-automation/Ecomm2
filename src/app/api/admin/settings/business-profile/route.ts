@@ -136,7 +136,6 @@ export async function PUT(request: NextRequest) {
       secondaryPhone: validatedData.secondaryPhone || null,
       primaryEmail: validatedData.primaryEmail,
       supportEmail: validatedData.supportEmail || null,
-      website: validatedData.website || null,
       registeredAddress: {
         addressLine1: validatedData.registeredAddress.addressLine1,
         addressLine2: validatedData.registeredAddress.addressLine2 || null,

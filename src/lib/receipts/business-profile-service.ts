@@ -81,13 +81,6 @@ export class BusinessProfileService {
         registrationNumber: profile.registrationNumber || 'Not Registered',
         taxRegistrationNumber: profile.taxRegistrationNumber || undefined,
         businessType: profile.businessType || 'SDN_BHD',
-        logo: profile.logoUrl
-          ? {
-              url: profile.logoUrl,
-              width: profile.logoWidth || 120,
-              height: profile.logoHeight || 40,
-            }
-          : undefined,
         address: {
           line1: profile.registeredAddress?.addressLine1 || 'Address Line 1',
           line2: profile.registeredAddress?.addressLine2,
@@ -184,21 +177,19 @@ export class BusinessProfileService {
   async getLegacyCompanyInfo() {
     const profile = await this.getBusinessProfile();
 
-    // Also fetch logo from site customization if not in business profile
-    let logoData = profile.logo;
+    // Fetch logo from site customization only
+    let logoData = undefined;
 
-    if (!logoData) {
-      try {
-        const siteCustomization = await prisma.siteCustomization.findFirst({
-          orderBy: { updatedAt: 'desc' },
-        });
+    try {
+      const siteCustomization = await prisma.siteCustomization.findFirst({
+        orderBy: { updatedAt: 'desc' },
+      });
 
-        if (siteCustomization?.config?.branding?.logo) {
-          logoData = siteCustomization.config.branding.logo as any;
-        }
-      } catch (error) {
-        console.log('Could not fetch site customization logo:', error);
+      if (siteCustomization?.config?.branding?.logo) {
+        logoData = siteCustomization.config.branding.logo as any;
       }
+    } catch (error) {
+      console.log('Could not fetch site customization logo:', error);
     }
 
     return {
@@ -208,7 +199,7 @@ export class BusinessProfileService {
       email: profile.contact.primaryEmail,
       registrationNo: profile.registrationNumber,
       sstNo: profile.taxRegistrationNumber || 'Not Registered',
-      logo: logoData, // Include logo data from either source
+      logo: logoData, // Logo from site customization only
     };
   }
 }

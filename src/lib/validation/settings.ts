@@ -343,10 +343,6 @@ export const businessProfileSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  website: z.string().url('Invalid website URL').optional().or(z.literal('')),
-
-  logoUrl: z.string().url('Invalid logo URL').optional().or(z.literal('')),
-
   // Address Information - Now properly nested
   registeredAddress: businessAddressSchema,
   operationalAddress: optionalBusinessAddressSchema,
