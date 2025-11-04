@@ -7,6 +7,7 @@
 import PDFDocument from 'pdfkit';
 import { ReceiptData } from '@/lib/invoices/invoice-service';
 import { TaxReceiptData } from '@/lib/receipts/receipt-service';
+import { businessProfileService } from '@/lib/receipts/business-profile-service';
 
 /**
  * Format currency to Malaysian Ringgit
@@ -28,14 +29,19 @@ function formatDate(date: Date): string {
 
 /**
  * Generate receipt PDF using PDFKit
- * Generates professional receipt/invoice PDF without browser rendering
+ * Simple, clean design inspired by modern SaaS receipts
  */
-export function generateReceiptPDF(receiptData: ReceiptData): Promise<Buffer> {
+export async function generateReceiptPDF(
+  receiptData: ReceiptData
+): Promise<Buffer> {
+  // Fetch company info from centralized service
+  const companyInfo = await businessProfileService.getLegacyCompanyInfo();
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 50,
       });
 
       const chunks: Buffer[] = [];
@@ -53,335 +59,358 @@ export function generateReceiptPDF(receiptData: ReceiptData): Promise<Buffer> {
         taxBreakdown,
       } = receiptData;
 
-      // ========== HEADER SECTION ==========
+      // ========== SIMPLE HEADER ==========
       doc
-        .fontSize(18)
+        .fillColor('#000000')
+        .fontSize(24)
         .font('Helvetica-Bold')
-        .text('RECEIPT', { align: 'center' });
+        .text('Receipt', 50, 50);
+
+      // Add business logo in top right if available
+      if (companyInfo.logo && companyInfo.logo.url) {
+        try {
+          // Convert relative path to absolute path if needed
+          const logoPath = companyInfo.logo.url.startsWith('http')
+            ? companyInfo.logo.url
+            : `${process.cwd()}/public${companyInfo.logo.url}`;
+
+          doc.image(logoPath, 450, 45, {
+            fit: [100, 50],
+            align: 'right',
+          });
+        } catch (error) {
+          console.error('Error adding logo to PDF:', error);
+          // Continue without logo if there's an error
+        }
+      }
+
+      doc.moveDown(0.5);
 
       doc
-        .fontSize(14)
-        .font('Helvetica-Bold')
-        .text(order.orderNumber, { align: 'center' })
         .fontSize(10)
         .font('Helvetica')
-        .text(`Date: ${formatDate(order.createdAt)}`, { align: 'center' })
-        .text(`Status: ${order.paymentStatus}`, { align: 'center' });
+        .text(`Invoice number: ${order.orderNumber}`, { continued: false })
+        .text(`Date paid: ${formatDate(order.createdAt)}`)
+        .moveDown(1.5);
 
-      doc
-        .moveTo(40, doc.y + 5)
-        .lineTo(555, doc.y + 5)
-        .stroke();
-      doc.moveDown();
+      // ========== TWO-COLUMN LAYOUT: COMPANY INFO & BILL TO ==========
+      const leftColX = 50;
+      const rightColX = 320;
+      const startY = doc.y;
 
-      // ========== COMPANY INFO ==========
+      // Left column - Company Info
       doc
         .fontSize(10)
         .font('Helvetica-Bold')
-        .text('JRM E-commerce Sdn Bhd', 40, doc.y);
+        .fillColor('#000000')
+        .text(companyInfo.name, leftColX, startY, { width: 250 });
+
       doc
         .fontSize(9)
         .font('Helvetica')
-        .text('Reg: ' + (process.env.COMPANY_REGISTRATION || '202301234567'))
-        .text('SST: ' + (process.env.COMPANY_SST_NO || 'A12-3456-78901234'))
-        .text(process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia')
-        .text('Phone: ' + (process.env.COMPANY_PHONE || '+60 3-1234 5678'))
-        .text(
-          'Email: ' + (process.env.COMPANY_EMAIL || 'info@jrmecommerce.com')
-        );
+        .fillColor('#666666')
+        .text(companyInfo.address, leftColX, doc.y + 5, { width: 250 })
+        .text(companyInfo.phone, leftColX, doc.y + 2, { width: 250 })
+        .text(companyInfo.email, leftColX, doc.y + 2, { width: 250 });
 
-      doc.moveDown();
-
-      // ========== BILLING & SHIPPING SECTION ==========
-      const y = doc.y;
-
-      // Billing Address
-      doc.fontSize(10).font('Helvetica-Bold').text('BILL TO:', 40, y);
+      // Right column - Bill To
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Bill to', rightColX, startY);
 
       if (billingAddress) {
         doc
           .fontSize(9)
           .font('Helvetica')
+          .fillColor('#666666')
           .text(
             `${billingAddress.firstName} ${billingAddress.lastName}`,
-            40,
-            doc.y
+            rightColX,
+            startY + 15,
+            { width: 225 }
           )
-          .text(billingAddress.addressLine1)
-          .text(
-            billingAddress.addressLine2 || '',
-            billingAddress.addressLine2 ? {} : { height: 0 }
-          )
-          .text(
-            `${billingAddress.city}, ${billingAddress.state} ${billingAddress.postalCode}`
-          )
-          .text(billingAddress.country);
+          .text(billingAddress.addressLine1, rightColX, doc.y + 2, { width: 225 });
+
+        if (billingAddress.addressLine2) {
+          doc.text(billingAddress.addressLine2, rightColX, doc.y + 2, { width: 225 });
+        }
+
+        doc.text(
+          `${billingAddress.city}, ${billingAddress.state} ${billingAddress.postalCode}`,
+          rightColX,
+          doc.y + 2,
+          { width: 225 }
+        );
       } else {
         doc
           .fontSize(9)
           .font('Helvetica')
-          .text(`${customer.firstName || ''} ${customer.lastName || ''}`, 40)
-          .text(`Email: ${customer.email}`)
-          .text(customer.phone ? `Phone: ${customer.phone}` : '');
+          .fillColor('#666666')
+          .text(
+            `${customer.firstName || ''} ${customer.lastName || ''}`,
+            rightColX,
+            startY + 15,
+            { width: 225 }
+          )
+          .text(customer.email, rightColX, doc.y + 2, { width: 225 });
       }
 
-      // Shipping Address (on right side)
-      if (shippingAddress) {
-        const shippingY = y;
-        doc
-          .fontSize(10)
-          .font('Helvetica-Bold')
-          .text('SHIP TO:', 320, shippingY);
+      // Move down after two-column section
+      doc.y = Math.max(doc.y, startY + 100);
+      doc.moveDown(2);
+
+      // ========== PAYMENT AMOUNT HIGHLIGHT ==========
+      doc
+        .fillColor('#000000')
+        .fontSize(18)
+        .font('Helvetica-Bold')
+        .text(
+          `${formatCurrency(order.total)} paid on ${formatDate(order.createdAt)}`,
+          50,
+          doc.y
+        );
+
+      doc.moveDown(2);
+
+      // ========== SIMPLE TABLE ==========
+      const tableTop = doc.y;
+      const descCol = 50;
+      const qtyCol = 370;
+      const priceCol = 430;
+      const amountCol = 495;
+
+      // Table header with bottom border
+      doc
+        .fontSize(9)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Description', descCol, tableTop)
+        .text('Qty', qtyCol, tableTop, { align: 'right', width: 50 })
+        .text('Unit price', priceCol, tableTop, { align: 'right', width: 60 })
+        .text('Amount', amountCol, tableTop, { align: 'right', width: 60 });
+
+      // Horizontal line below header
+      doc
+        .moveTo(50, doc.y + 5)
+        .lineTo(555, doc.y + 5)
+        .strokeColor('#e0e0e0')
+        .lineWidth(1)
+        .stroke();
+
+      doc.moveDown(1);
+
+      // Table rows
+      orderItems.forEach(item => {
+        const itemY = doc.y;
 
         doc
           .fontSize(9)
           .font('Helvetica')
-          .text(
-            `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            320,
-            doc.y
-          )
-          .text(shippingAddress.addressLine1)
-          .text(
-            shippingAddress.addressLine2 || '',
-            shippingAddress.addressLine2 ? {} : { height: 0 }
-          )
-          .text(
-            `${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postalCode}`
-          )
-          .text(shippingAddress.country);
-      }
+          .fillColor('#000000')
+          .text(item.productName, descCol, itemY, { width: 300 });
 
-      doc.moveDown();
-
-      // ========== ITEMS TABLE ==========
-      const tableTop = doc.y + 10;
-      const col1 = 40;
-      const col2 = 380;
-      const col3 = 450;
-      const col4 = 540;
-      const rowHeight = 20;
-
-      // Table header
-      doc.rect(col1 - 5, tableTop, 510, rowHeight).fillAndStroke('#f0f0f0');
-      doc.fillColor('#000000');
-
-      doc
-        .fontSize(9)
-        .font('Helvetica-Bold')
-        .text('Item Description', col1, tableTop + 5)
-        .text('Qty', col2, tableTop + 5, { width: 60, align: 'right' })
-        .text('Price', col3, tableTop + 5, { width: 60, align: 'right' })
-        .text('Total', col4, tableTop + 5, { width: 60, align: 'right' });
-
-      let tableY = tableTop + rowHeight;
-
-      // Table rows
-      doc.fontSize(9).font('Helvetica');
-
-      orderItems.forEach(item => {
-        // Draw row separator
-        doc
-          .moveTo(col1 - 5, tableY)
-          .lineTo(col4 + 60, tableY)
-          .stroke();
-
-        const itemText = `${item.productName}${item.productSku ? ` (SKU: ${item.productSku})` : ''}`;
-
-        // Check if we need a new page
-        if (tableY + rowHeight > 750) {
-          doc.addPage();
-          tableY = 40;
+        if (item.productSku) {
+          doc
+            .fontSize(8)
+            .fillColor('#666666')
+            .text(item.productSku, descCol, doc.y + 3);
         }
 
         doc
-          .text(itemText, col1, tableY + 5, { width: 340, fontSize: 9 })
-          .text(item.quantity.toString(), col2, tableY + 5, {
-            width: 60,
+          .fontSize(9)
+          .fillColor('#000000')
+          .text(item.quantity.toString(), qtyCol, itemY, {
             align: 'right',
+            width: 50,
           })
-          .text(formatCurrency(item.appliedPrice), col3, tableY + 5, {
-            width: 60,
+          .text(formatCurrency(item.appliedPrice), priceCol, itemY, {
             align: 'right',
+            width: 60,
           })
-          .text(formatCurrency(item.totalPrice), col4, tableY + 5, {
-            width: 60,
+          .text(formatCurrency(item.totalPrice), amountCol, itemY, {
             align: 'right',
+            width: 60,
           });
 
-        tableY += rowHeight;
+        doc.moveDown(1.2);
       });
 
-      // Final table border
-      doc
-        .moveTo(col1 - 5, tableY)
-        .lineTo(col4 + 60, tableY)
-        .stroke();
-
-      tableY += 10;
+      doc.moveDown(1);
 
       // ========== TOTALS SECTION ==========
-      const totalRowY = tableY;
-      const totalLabelX = col3 - 5;
+      const totalsX = 380;
+      const totalsValueX = 495;
 
-      doc.fontSize(9).font('Helvetica');
-
-      doc.text('Subtotal:', totalLabelX, totalRowY, {
-        width: 60,
-        align: 'right',
-      });
-      doc.text(formatCurrency(order.subtotal), col4, totalRowY, {
-        width: 60,
-        align: 'right',
-      });
-
-      let currentY = totalRowY + rowHeight;
-
-      if (order.discountAmount > 0) {
-        doc
-          .fillColor('#10b981')
-          .text('Discount:', totalLabelX, currentY, {
-            width: 60,
-            align: 'right',
-          })
-          .fillColor('#000000')
-          .text(`-${formatCurrency(order.discountAmount)}`, col4, currentY, {
-            width: 60,
-            align: 'right',
-          });
-        currentY += rowHeight;
-      }
-
-      doc.text('Shipping:', totalLabelX, currentY, {
-        width: 60,
-        align: 'right',
-      });
-      doc.text(formatCurrency(order.shippingCost), col4, currentY, {
-        width: 60,
-        align: 'right',
-      });
-
-      currentY += rowHeight;
-
-      doc.text('Tax (SST 6%):', totalLabelX, currentY, {
-        width: 60,
-        align: 'right',
-      });
-      doc.text(formatCurrency(order.taxAmount), col4, currentY, {
-        width: 60,
-        align: 'right',
-      });
-
-      currentY += rowHeight + 5;
-
-      // Total border
-      doc
-        .moveTo(totalLabelX, currentY)
-        .lineTo(col4 + 60, currentY)
-        .stroke();
-
-      currentY += 8;
-
-      // Grand total
-      doc
-        .fontSize(12)
-        .font('Helvetica-Bold')
-        .text('TOTAL:', totalLabelX, currentY, { width: 60, align: 'right' })
-        .text(formatCurrency(order.total), col4, currentY, {
-          width: 60,
-          align: 'right',
-        });
-
-      doc.moveDown(3);
-
-      // ========== TAX BREAKDOWN SECTION ==========
-      if (taxBreakdown) {
-        doc.rect(40, doc.y, 515, 2).fillAndStroke('#e5e7eb');
-
-        doc.moveDown();
-
-        doc.fontSize(10).font('Helvetica-Bold').text('Tax Breakdown', 40);
-
-        doc.fontSize(9).font('Helvetica');
-
-        const taxLabelX = 40;
-        const taxValueX = col4;
-
-        doc.text('Taxable Amount:', taxLabelX, doc.y, {
-          width: taxValueX - taxLabelX - 10,
-          align: 'left',
-        });
-        doc.text(
-          formatCurrency(taxBreakdown.taxableAmount),
-          taxValueX,
-          doc.y - (doc.heightOfString('Taxable Amount:') || 0),
-          { width: 60, align: 'right' }
-        );
-
-        doc.moveDown();
-
-        doc.text('SST (6%):', taxLabelX, doc.y, {
-          width: taxValueX - taxLabelX - 10,
-          align: 'left',
-        });
-        doc.text(
-          formatCurrency(taxBreakdown.sstAmount),
-          taxValueX,
-          doc.y - (doc.heightOfString('SST (6%):') || 0),
-          { width: 60, align: 'right' }
-        );
-
-        doc.moveDown();
-
-        doc.text('Total Tax:', taxLabelX, doc.y, {
-          width: taxValueX - taxLabelX - 10,
-          align: 'left',
-        });
-        doc.text(
-          formatCurrency(taxBreakdown.totalTax),
-          taxValueX,
-          doc.y - (doc.heightOfString('Total Tax:') || 0),
-          { width: 60, align: 'right' }
-        );
-
-        doc.moveDown();
-      }
-
-      // ========== FOOTER SECTION ==========
-      doc.moveDown(2);
-      doc.rect(40, doc.y, 515, 2).fillAndStroke('#e5e7eb');
-
-      doc.moveDown();
-
-      doc.fontSize(9).font('Helvetica-Bold').text('Payment Information', 40);
-
+      // Subtotal
+      let totalLineY = doc.y;
       doc
         .fontSize(9)
         .font('Helvetica')
-        .text(`Payment Method: ${order.paymentMethod}`)
-        .text(`Status: ${order.paymentStatus}`)
-        .text(`Order Date: ${formatDate(order.createdAt)}`);
+        .fillColor('#666666')
+        .text('Subtotal', totalsX, totalLineY);
+      doc
+        .fillColor('#000000')
+        .text(formatCurrency(order.subtotal), totalsValueX, totalLineY, {
+          align: 'right',
+          width: 60,
+        });
 
-      if (order.customerNotes) {
-        doc.moveDown();
-        doc.fontSize(9).font('Helvetica-Bold').text('Notes:');
-        doc.fontSize(9).font('Helvetica').text(order.customerNotes);
+      doc.moveDown(0.5);
+
+      // Discount (if applicable)
+      if (order.discountAmount > 0) {
+        totalLineY = doc.y;
+        doc
+          .fillColor('#666666')
+          .text('Discount', totalsX, totalLineY);
+        doc
+          .fillColor('#000000')
+          .text(`-${formatCurrency(order.discountAmount)}`, totalsValueX, totalLineY, {
+            align: 'right',
+            width: 60,
+          });
+        doc.moveDown(0.5);
       }
+
+      // Shipping
+      totalLineY = doc.y;
+      doc.fillColor('#666666').text('Shipping', totalsX, totalLineY);
+      doc
+        .fillColor('#000000')
+        .text(formatCurrency(order.shippingCost), totalsValueX, totalLineY, {
+          align: 'right',
+          width: 60,
+        });
+
+      doc.moveDown(0.5);
+
+      // Tax
+      totalLineY = doc.y;
+      doc.fillColor('#666666').text('Tax (SST 6%)', totalsX, totalLineY);
+      doc
+        .fillColor('#000000')
+        .text(formatCurrency(order.taxAmount), totalsValueX, totalLineY, {
+          align: 'right',
+          width: 60,
+        });
+
+      doc.moveDown(1);
+
+      // Horizontal line before total
+      doc
+        .moveTo(totalsX, doc.y)
+        .lineTo(555, doc.y)
+        .strokeColor('#000000')
+        .lineWidth(1)
+        .stroke();
+
+      doc.moveDown(0.5);
+
+      // Grand Total
+      totalLineY = doc.y;
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Total', totalsX, totalLineY);
+      doc
+        .fontSize(11)
+        .text(formatCurrency(order.total), totalsValueX, totalLineY, {
+          align: 'right',
+          width: 60,
+        });
+
+      doc.moveDown(0.5);
+
+      // Amount Paid
+      totalLineY = doc.y;
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Amount paid', totalsX, totalLineY);
+      doc
+        .fontSize(11)
+        .text(formatCurrency(order.total), totalsValueX, totalLineY, {
+          align: 'right',
+          width: 60,
+        });
 
       doc.moveDown(2);
 
+      // ========== PAYMENT HISTORY TABLE ==========
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Payment history', 50, doc.y);
+
+      doc.moveDown(1);
+
+      const paymentTableY = doc.y;
+
+      // Payment table header
+      doc
+        .fontSize(9)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Payment method', 50, paymentTableY)
+        .text('Date', 220, paymentTableY)
+        .text('Amount paid', 370, paymentTableY)
+        .text('Receipt number', 470, paymentTableY);
+
+      // Horizontal line below header
+      doc
+        .moveTo(50, doc.y + 5)
+        .lineTo(555, doc.y + 5)
+        .strokeColor('#e0e0e0')
+        .lineWidth(1)
+        .stroke();
+
+      doc.moveDown(1);
+
+      // Payment row
+      const paymentMethod =
+        order.paymentMethod === 'ONLINE_BANKING'
+          ? 'Online Banking'
+          : order.paymentMethod;
+
+      const paymentRowY = doc.y;
+      doc
+        .fontSize(9)
+        .font('Helvetica')
+        .fillColor('#000000')
+        .text(paymentMethod, 50, paymentRowY)
+        .text(formatDate(order.createdAt), 220, paymentRowY)
+        .text(formatCurrency(order.total), 370, paymentRowY)
+        .text(order.orderNumber, 470, paymentRowY);
+
+      doc.moveDown(3);
+
+      // ========== FOOTER ==========
       doc
         .fontSize(8)
         .font('Helvetica')
         .fillColor('#666666')
         .text(
-          'This receipt is computer generated and does not require a physical signature.',
-          { align: 'center' }
-        )
-        .text(
-          'Thank you for your business! Please retain this receipt for your records.',
-          { align: 'center' }
+          `Your order with ${companyInfo.name} is complete.`,
+          50,
+          doc.y,
+          { align: 'left', width: 505 }
         );
+
+      if (shippingAddress) {
+        doc
+          .moveDown(0.5)
+          .text(
+            `Shipping to: ${shippingAddress.addressLine1}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postalCode}`,
+            50,
+            doc.y,
+            { align: 'left', width: 505 }
+          );
+      }
 
       // Finalize PDF
       doc.end();
@@ -395,9 +424,12 @@ export function generateReceiptPDF(receiptData: ReceiptData): Promise<Buffer> {
  * Generate tax receipt PDF using PDFKit
  * Generates Malaysian tax-compliant tax receipts
  */
-export function generateTaxReceiptPDF(
+export async function generateTaxReceiptPDF(
   receiptData: TaxReceiptData
 ): Promise<Buffer> {
+  // Fetch company info from centralized service
+  const companyInfo = await businessProfileService.getLegacyCompanyInfo();
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -439,18 +471,16 @@ export function generateTaxReceiptPDF(
       doc.moveDown();
 
       // ========== COMPANY INFO ==========
-      doc.fontSize(10).font('Helvetica-Bold').text('JRM E-commerce Sdn Bhd');
+      doc.fontSize(10).font('Helvetica-Bold').text(companyInfo.name);
 
       doc
         .fontSize(9)
         .font('Helvetica')
-        .text('Reg: ' + (process.env.COMPANY_REGISTRATION || '202301234567'))
-        .text('SST: ' + (process.env.COMPANY_SST_NO || 'A12-3456-78901234'))
-        .text(process.env.COMPANY_ADDRESS || 'Kuala Lumpur, Malaysia')
-        .text('Phone: ' + (process.env.COMPANY_PHONE || '+60 3-1234 5678'))
-        .text(
-          'Email: ' + (process.env.COMPANY_EMAIL || 'info@jrmecommerce.com')
-        );
+        .text('Reg: ' + companyInfo.registrationNo)
+        .text('SST: ' + companyInfo.sstNo)
+        .text(companyInfo.address)
+        .text('Phone: ' + companyInfo.phone)
+        .text('Email: ' + companyInfo.email);
 
       doc.moveDown();
 

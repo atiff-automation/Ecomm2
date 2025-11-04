@@ -469,7 +469,7 @@ export default function OrderDetailsPage() {
                 </Button>
               )}
 
-              {/* Print Invoice */}
+              {/* Print Receipt */}
               <Button
                 variant="outline"
                 size="sm"
@@ -477,7 +477,7 @@ export default function OrderDetailsPage() {
                 className="w-full justify-start"
               >
                 <Printer className="h-4 w-4 mr-2" />
-                Print Invoice
+                Print Receipt
               </Button>
 
               {/* Print Packing Slip - Only show if available */}

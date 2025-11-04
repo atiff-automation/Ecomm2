@@ -1,11 +1,10 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Public Receipt Download API - Malaysian E-commerce Platform
  * Allows receipt download by order number for thank-you pages
  * Public endpoint with enhanced security measures (similar to order lookup)
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';

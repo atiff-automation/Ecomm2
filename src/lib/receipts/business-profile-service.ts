@@ -184,6 +184,23 @@ export class BusinessProfileService {
   async getLegacyCompanyInfo() {
     const profile = await this.getBusinessProfile();
 
+    // Also fetch logo from site customization if not in business profile
+    let logoData = profile.logo;
+
+    if (!logoData) {
+      try {
+        const siteCustomization = await prisma.siteCustomization.findFirst({
+          orderBy: { updatedAt: 'desc' },
+        });
+
+        if (siteCustomization?.config?.branding?.logo) {
+          logoData = siteCustomization.config.branding.logo as any;
+        }
+      } catch (error) {
+        console.log('Could not fetch site customization logo:', error);
+      }
+    }
+
     return {
       name: profile.name,
       address: profile.address.full,
@@ -191,7 +208,7 @@ export class BusinessProfileService {
       email: profile.contact.primaryEmail,
       registrationNo: profile.registrationNumber,
       sstNo: profile.taxRegistrationNumber || 'Not Registered',
-      logo: profile.logo, // Include logo data
+      logo: logoData, // Include logo data from either source
     };
   }
 }

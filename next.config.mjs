@@ -20,8 +20,8 @@ const nextConfig = {
     instrumentationHook: true,
     // Enable server components for better performance
     serverComponentsExternalPackages: [
-      'ioredis', 
       '@prisma/client',
+      'pdfkit', // Prevent bundling PDFKit to allow access to font data files
       '@opentelemetry/api',
       '@opentelemetry/sdk-node',
       '@opentelemetry/auto-instrumentations-node'
