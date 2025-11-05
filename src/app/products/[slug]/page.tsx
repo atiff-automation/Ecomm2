@@ -29,6 +29,7 @@ import { usePricing } from '@/hooks/use-pricing';
 import { productService } from '@/lib/services/product-service';
 import { useCart } from '@/hooks/use-cart';
 import { ProductDimensions } from '@/lib/validation/product-dimensions';
+import { useFreeShippingDisplay } from '@/hooks/use-free-shipping-display';
 
 interface ProductImage {
   id: string;
@@ -128,6 +129,9 @@ export default function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+
+  // Fetch dynamic free shipping display text
+  const { freeShippingText } = useFreeShippingDisplay();
 
   // Always call pricing hook to maintain hook order (Rules of Hooks)
   // Use a default empty product object when no product data is available
@@ -584,10 +588,12 @@ export default function ProductDetailPage() {
 
           {/* Features */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Truck className="w-4 h-4 text-green-600" />
-              <span>Free shipping for orders over RM 150 (except for Sabah, Sarawak & Labuan)</span>
-            </div>
+            {freeShippingText && (
+              <div className="flex items-center gap-2 text-sm">
+                <Truck className="w-4 h-4 text-green-600" />
+                <span>{freeShippingText}</span>
+              </div>
+            )}
             {product.isQualifyingForMembership && !isMember && (
               <div className="flex items-center gap-2 text-sm">
                 <Award className="w-4 h-4 text-purple-600" />

@@ -12,7 +12,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -143,12 +143,43 @@ export default function ShippingSettingsPage() {
       courierSelectionMode: COURIER_SELECTION_STRATEGIES.CHEAPEST,
       freeShippingEnabled: true,
       freeShippingThreshold: 150,
+      freeShippingEligibleStates: [], // NEW: Empty by default (no states selected)
       autoUpdateOrderStatus: true,
       whatsappNotificationsEnabled: false,
     },
   });
 
   const watchedValues = watch();
+
+  // Watch free shipping state for conditional UI rendering
+  const freeShippingEnabled = watch('freeShippingEnabled');
+  const freeShippingEligibleStates = watch('freeShippingEligibleStates') || [];
+
+  // Helper: Select all states for free shipping
+  const handleSelectAllStates = useCallback(() => {
+    const allStateCodes = Object.keys(MALAYSIAN_STATES);
+    setValue('freeShippingEligibleStates', allStateCodes, { shouldDirty: true });
+  }, [setValue]);
+
+  // Helper: Clear all state selections (disables free shipping)
+  const handleClearAllStates = useCallback(() => {
+    setValue('freeShippingEligibleStates', [], { shouldDirty: true });
+  }, [setValue]);
+
+  // Helper: Toggle individual state selection
+  const handleToggleState = useCallback(
+    (stateCode: string) => {
+      const currentStates = freeShippingEligibleStates;
+      const isCurrentlySelected = currentStates.includes(stateCode);
+
+      const newStates = isCurrentlySelected
+        ? currentStates.filter((s: string) => s !== stateCode) // Remove
+        : [...currentStates, stateCode]; // Add
+
+      setValue('freeShippingEligibleStates', newStates, { shouldDirty: true });
+    },
+    [freeShippingEligibleStates, setValue]
+  );
 
   // Phase 3 & 4: React Query effect - Sync init data to component state
   useEffect(() => {
@@ -421,6 +452,7 @@ export default function ShippingSettingsPage() {
           selectedCouriers: undefined,
           freeShippingEnabled: false,
           freeShippingThreshold: undefined,
+          freeShippingEligibleStates: [], // NEW: Reset to empty array
           autoUpdateOrderStatus: false,
           whatsappNotificationsEnabled: false,
         });
@@ -1407,6 +1439,102 @@ export default function ShippingSettingsPage() {
                 <p className="text-sm text-gray-600 mt-1">
                   Orders above this amount get free shipping
                 </p>
+              </div>
+            )}
+
+            {/* State-Based Eligibility Configuration */}
+            {watchedValues.freeShippingEnabled && (
+              <div className="space-y-4 border-t pt-6 mt-6">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <Label className="text-base font-semibold">
+                      Eligible States for Free Shipping
+                    </Label>
+                    <p className="text-sm text-gray-600">
+                      Select which states qualify for free shipping. At least one state must be selected.
+                      If no states are selected, free shipping will be effectively disabled.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSelectAllStates}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearAllStates}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
+
+                {/* State Selection Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  {Object.entries(MALAYSIAN_STATES)
+                    .sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB)) // Sort alphabetically
+                    .map(([code, name]) => {
+                      const isChecked = freeShippingEligibleStates.includes(code);
+                      return (
+                        <div
+                          key={code}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`state-${code}`}
+                            checked={isChecked}
+                            onCheckedChange={() => handleToggleState(code)}
+                          />
+                          <Label
+                            htmlFor={`state-${code}`}
+                            className="text-sm font-normal cursor-pointer hover:text-blue-600 transition-colors"
+                          >
+                            {name}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Validation Error Display */}
+                {errors.freeShippingEligibleStates && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {errors.freeShippingEligibleStates.message}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Summary Information */}
+                <div className="flex items-center gap-3 pt-2">
+                  <Badge variant="secondary" className="text-sm">
+                    {freeShippingEligibleStates.length} of {Object.keys(MALAYSIAN_STATES).length} states selected
+                  </Badge>
+                  {freeShippingEligibleStates.length === 0 && (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        Warning: Free shipping will be disabled (no states selected)
+                      </span>
+                    </div>
+                  )}
+                  {freeShippingEligibleStates.length > 0 && (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm">
+                        Free shipping available for selected states
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

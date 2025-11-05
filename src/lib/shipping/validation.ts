@@ -11,7 +11,11 @@ import { z } from 'zod';
 import {
   COURIER_SELECTION_STRATEGIES,
   PRIORITY_COURIER_CONFIG,
+  MALAYSIAN_STATES,
 } from './constants';
+
+// Valid Malaysian state codes for validation
+const VALID_STATE_CODES = Object.keys(MALAYSIAN_STATES) as [string, ...string[]];
 
 /**
  * Shipping Settings Validation Schema
@@ -67,6 +71,25 @@ export const ShippingSettingsValidationSchema = z
       .min(1, 'Threshold must be at least RM 1')
       .max(10000, 'Threshold cannot exceed RM 10,000')
       .optional(),
+
+    // State-based eligibility validation
+    freeShippingEligibleStates: z
+      .array(z.enum(VALID_STATE_CODES))
+      .optional()
+      .refine(
+        (states) => {
+          // Empty array not allowed - must select at least one state or leave undefined
+          if (states !== undefined && states.length === 0) {
+            return false;
+          }
+          return true;
+        },
+        {
+          message:
+            'At least one state must be selected for free shipping eligibility. ' +
+            'To disable free shipping, uncheck "Enable free shipping" instead.',
+        }
+      ),
 
     // Automation
     autoUpdateOrderStatus: z.boolean(),

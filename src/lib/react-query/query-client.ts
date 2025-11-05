@@ -59,4 +59,7 @@ export const queryKeys = {
     category: (categoryId: string) =>
       ['products', 'category', categoryId] as const,
   },
+
+  // Shipping queries
+  shippingSettings: ['shipping', 'settings'] as const,
 } as const;

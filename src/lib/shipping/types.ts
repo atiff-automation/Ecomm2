@@ -43,6 +43,7 @@ export interface ShippingSettings {
   // Free Shipping Configuration
   freeShippingEnabled: boolean;
   freeShippingThreshold?: number; // Minimum order amount in RM
+  freeShippingEligibleStates?: MalaysianStateCode[]; // Whitelist of states eligible for free shipping
 
   // Automation Settings
   autoUpdateOrderStatus: boolean; // Auto-update order status based on tracking
@@ -465,6 +466,7 @@ export interface ShippingSettingsRequest {
   };
   freeShippingEnabled: boolean;
   freeShippingThreshold?: number;
+  freeShippingEligibleStates?: MalaysianStateCode[];
   autoUpdateOrderStatus: boolean;
   whatsappNotificationsEnabled: boolean;
 }

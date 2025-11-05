@@ -29,6 +29,7 @@ import type {
   ShippingOption,
   ShippingCalculationResult,
   DeliveryAddress,
+  MalaysianStateCode,
 } from '@/lib/shipping/types';
 
 const prisma = new PrismaClient();
@@ -148,12 +149,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for free shipping eligibility
+    // Check if free shipping eligibility (with state-based restrictions)
     // orderValue should be cart total (after discounts, before tax/shipping)
-    const freeShippingApplied =
-      settings.freeShippingEnabled &&
-      settings.freeShippingThreshold &&
-      orderValue >= settings.freeShippingThreshold;
+    const freeShippingApplied = checkFreeShippingEligibility(
+      settings,
+      deliveryAddress.state,
+      orderValue
+    );
 
     // Convert EasyParcel rates to ShippingOptions
     // ✅ FIX: Use service_name (brand) instead of courier_name (legal entity)
@@ -396,3 +398,108 @@ const ShippingCalculateSchema = z.object({
 
   orderValue: z.number().positive('Order value must be positive'),
 });
+
+/**
+ * Check if order qualifies for free shipping
+ *
+ * Implements multi-tier eligibility check:
+ * 1. Feature must be enabled globally (toggle overrides all)
+ * 2. Threshold must be configured
+ * 3. Delivery state must be eligible (if state restrictions configured)
+ * 4. Order value must meet threshold
+ *
+ * @param settings - Shipping settings from database (SystemConfig)
+ * @param deliveryState - Customer's delivery state code (e.g., 'kul', 'srw')
+ * @param orderValue - Cart total after discounts, before tax/shipping
+ * @returns true if free shipping should be applied, false otherwise
+ *
+ * @example
+ * // State restrictions enabled - KUL eligible, SRW not
+ * checkFreeShippingEligibility(
+ *   { freeShippingEnabled: true, freeShippingThreshold: 150, freeShippingEligibleStates: ['kul'] },
+ *   'kul',
+ *   200
+ * ); // true
+ *
+ * checkFreeShippingEligibility(
+ *   { freeShippingEnabled: true, freeShippingThreshold: 150, freeShippingEligibleStates: ['kul'] },
+ *   'srw',
+ *   200
+ * ); // false (state not eligible)
+ */
+function checkFreeShippingEligibility(
+  settings: {
+    freeShippingEnabled: boolean;
+    freeShippingThreshold?: number;
+    freeShippingEligibleStates?: string[];
+  },
+  deliveryState: string,
+  orderValue: number
+): boolean {
+  // TIER 1: Feature toggle check (overrides everything)
+  if (!settings.freeShippingEnabled) {
+    console.log('[FreeShipping] Feature disabled globally');
+    return false;
+  }
+
+  // TIER 2: Threshold configuration check
+  if (!settings.freeShippingThreshold) {
+    console.log('[FreeShipping] No threshold configured');
+    return false;
+  }
+
+  // TIER 3: State-based eligibility check (NEW LOGIC)
+  if (settings.freeShippingEligibleStates !== undefined) {
+    // State restrictions are configured
+    if (settings.freeShippingEligibleStates.length === 0) {
+      // Empty array = free shipping disabled (safety check)
+      console.log('[FreeShipping] Empty state list - feature effectively disabled');
+      return false;
+    }
+
+    // Check if delivery state is in eligible list
+    const isStateEligible = settings.freeShippingEligibleStates.includes(
+      deliveryState
+    );
+
+    if (!isStateEligible) {
+      // SILENT FAILURE: State not eligible, no error message to customer
+      console.log('[FreeShipping] State not eligible for free shipping:', {
+        deliveryState,
+        eligibleStates: settings.freeShippingEligibleStates,
+        stateCount: settings.freeShippingEligibleStates.length,
+      });
+      return false;
+    }
+
+    console.log('[FreeShipping] State eligibility verified:', {
+      deliveryState,
+      eligibleStates: settings.freeShippingEligibleStates,
+    });
+  } else {
+    // No state restrictions configured = all states eligible (backwards compatible)
+    console.log(
+      '[FreeShipping] No state restrictions configured - all states eligible'
+    );
+  }
+
+  // TIER 4: Order value threshold check
+  if (orderValue < settings.freeShippingThreshold) {
+    console.log('[FreeShipping] Order value below threshold:', {
+      orderValue: `RM ${orderValue.toFixed(2)}`,
+      threshold: `RM ${settings.freeShippingThreshold.toFixed(2)}`,
+      shortfall: `RM ${(settings.freeShippingThreshold - orderValue).toFixed(2)}`,
+    });
+    return false;
+  }
+
+  // ALL CHECKS PASSED
+  console.log('[FreeShipping] ✅ ELIGIBLE - All conditions met:', {
+    orderValue: `RM ${orderValue.toFixed(2)}`,
+    threshold: `RM ${settings.freeShippingThreshold.toFixed(2)}`,
+    deliveryState,
+    hasStateRestrictions: settings.freeShippingEligibleStates !== undefined,
+  });
+
+  return true;
+}
