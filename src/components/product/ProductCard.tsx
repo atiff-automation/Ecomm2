@@ -124,7 +124,7 @@ export function ProductCard({
         <CardContent className="p-2 sm:p-3 flex-1 flex flex-col">
           <div className="flex flex-col h-full">
             {/* Top Section - Name, Rating */}
-            <div className="flex-1 space-y-1.5 mb-3">
+            <div className="flex-1 space-y-1.5 mb-1">
               {/* Product Name - Shopee style mobile sizing */}
               <h3
                 className={`font-medium line-clamp-2 hover:text-primary transition-colors text-[14px] sm:text-[14px] leading-tight min-h-[2.5rem]`}
