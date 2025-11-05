@@ -15,7 +15,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Star } from 'lucide-react';
-import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { usePricing } from '@/hooks/use-pricing';
 import { ProductPricingData } from '@/lib/types/pricing';
 
@@ -56,6 +55,14 @@ export function ProductCard({
   // Get all pricing data from centralized service
   const pricing = usePricing(product);
 
+  // Separate badges by position for Shopee-style layout
+  const imageBadges = pricing.badges.filter(
+    badge => badge.position === 'onImage'
+  );
+  const belowPriceBadges = pricing.badges.filter(
+    badge => badge.position === 'belowPrice'
+  );
+
   const primaryImage =
     product.images?.find(img => img.isPrimary) || product.images?.[0];
 
@@ -86,7 +93,7 @@ export function ProductCard({
       <Card
         className={`group hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col ${className}`}
       >
-        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-t-lg">
           {primaryImage ? (
             <Image
               src={primaryImage.url}
@@ -100,55 +107,31 @@ export function ProductCard({
             </div>
           )}
 
-          {/* Badges from centralized pricing service */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {pricing.badges.map((badge, index) => (
+          {/* Promotional badges on image top-left - filled style, smaller font */}
+          <div className="absolute top-1.5 left-1.5 flex flex-col gap-1">
+            {imageBadges.map((badge, index) => (
               <Badge
                 key={`${badge.type}-${index}`}
                 variant={badge.variant}
-                className={badge.className}
+                className={`${badge.className} text-[10px] px-2 py-0.5 font-semibold`}
               >
                 {badge.text}
               </Badge>
             ))}
           </div>
-
-          <div
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={e => e.preventDefault()}
-          >
-            <WishlistButton
-              productId={product.id}
-              size="sm"
-              variant="secondary"
-              className="w-8 h-8 sm:w-9 sm:h-9 p-0 bg-white/90 hover:bg-white"
-            />
-          </div>
         </div>
 
-        <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
+        <CardContent className="p-2 sm:p-3 flex-1 flex flex-col">
           <div className="flex flex-col h-full">
-            {/* Top Section - Category, Name, Description, Rating */}
-            <div className="flex-1 space-y-2 mb-4">
-              {/* Category */}
-              <span className="text-xs text-muted-foreground block">
-                {product.categories?.[0]?.category?.name || 'Uncategorized'}
-              </span>
-
-              {/* Product Name */}
+            {/* Top Section - Name, Rating */}
+            <div className="flex-1 space-y-1.5 mb-3">
+              {/* Product Name - Shopee style mobile sizing */}
               <h3
-                className={`font-semibold line-clamp-1 hover:text-primary transition-colors text-sm sm:text-base min-h-[1.5rem]`}
+                className={`font-medium line-clamp-2 hover:text-primary transition-colors text-[14px] sm:text-[14px] leading-tight min-h-[2.5rem]`}
                 title={product.name}
               >
                 {product.name}
               </h3>
-
-              {/* Description */}
-              {showDescription && product.shortDescription && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.shortDescription}
-                </p>
-              )}
 
               {/* Rating */}
               {showRating && product.averageRating > 0 && (
@@ -172,15 +155,17 @@ export function ProductCard({
               )}
             </div>
 
-            {/* Bottom Section - Price and Button */}
-            <div className="space-y-3">
-              {/* Centralized Pricing Display */}
+            {/* Bottom Section - Price and Button - Reduced gap on mobile */}
+            <div className="space-y-2 sm:space-y-2.5">
+              {/* Centralized Pricing Display - Shopee style with smaller RM on mobile */}
               <div className="space-y-1" aria-label={pricing.priceDescription}>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`font-bold text-base sm:text-lg ${pricing.displayClasses.priceColor}`}
-                  >
-                    {pricing.formattedPrice}
+                  {/* All prices RED globally - responsive font size only */}
+                  <span className="text-red-600">
+                    <span className="text-[14px] md:text-[16px] font-normal">RM</span>
+                    <span className="text-lg md:text-xl font-normal md:font-bold">
+                      {pricing.formattedPrice.replace('RM', '').trim()}
+                    </span>
                   </span>
                   {pricing.priceType === 'early-access' && (
                     <Badge
@@ -191,33 +176,72 @@ export function ProductCard({
                     </Badge>
                   )}
                   {pricing.priceType === 'member' && (
-                    <Badge variant="secondary" className="text-xs">
-                      Member
-                    </Badge>
+                    <>
+                      <span className="text-xs font-normal text-black md:hidden">Member Price</span>
+                      <Badge
+                        variant="outline"
+                        className="hidden md:inline-flex text-xs border-black text-black"
+                      >
+                        Member
+                      </Badge>
+                    </>
                   )}
                 </div>
 
-                {/* Show original price and savings */}
+                {/* Show original price and savings - Smaller on mobile */}
                 {pricing.showSavings && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground line-through">
+                    <span className="text-[11px] sm:text-xs text-muted-foreground line-through">
                       {pricing.formattedOriginalPrice}
                     </span>
-                    <span
-                      className={`text-xs font-medium ${pricing.displayClasses.savingsColor}`}
-                    >
+                    <span className="text-[11px] sm:text-xs font-medium text-red-600">
                       Save {pricing.formattedSavings}
                     </span>
                   </div>
                 )}
 
-                {/* Show member price preview for non-members */}
+                {/* Show member price preview for non-members - Black globally */}
                 {pricing.showMemberPreview && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-black font-medium">
                     {pricing.memberPreviewText}
                   </div>
                 )}
               </div>
+
+              {/* Feature/Membership badges below price - Shopee style, smaller on mobile */}
+              {belowPriceBadges.length > 0 && (
+                <div className="flex flex-nowrap md:flex-wrap items-center gap-1.5 overflow-x-auto">
+                  {belowPriceBadges.map((badge, index) => {
+                    // Shopee-style outline badge colors
+                    const colorClasses =
+                      badge.outlineColor === 'red'
+                        ? 'border-red-500 text-red-500'
+                        : badge.outlineColor === 'green'
+                          ? 'border-green-600 text-green-600'
+                          : 'border-gray-400 text-gray-600';
+
+                    // Shorten text on mobile only
+                    const displayText =
+                      badge.type === 'qualifying' ? (
+                        <>
+                          <span className="md:hidden">Membership</span>
+                          <span className="hidden md:inline">{badge.text}</span>
+                        </>
+                      ) : (
+                        badge.text
+                      );
+
+                    return (
+                      <span
+                        key={`${badge.type}-${index}`}
+                        className={`inline-flex items-center px-1.5 py-0.5 text-[9px] md:text-[10px] font-normal border rounded ${colorClasses} bg-transparent whitespace-nowrap`}
+                      >
+                        {displayText}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Add to Cart Button */}
               <Button

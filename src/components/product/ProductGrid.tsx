@@ -127,7 +127,7 @@ function ProductGridSkeleton({
   return (
     <div
       className={cn(
-        'grid gap-6',
+        'grid gap-2 sm:gap-3 md:gap-4',
         `grid-cols-${columns.mobile}`,
         `md:grid-cols-${columns.tablet}`,
         `lg:grid-cols-${columns.desktop}`
@@ -369,7 +369,7 @@ export function ProductGrid({
       return 'space-y-4';
     }
 
-    const base = 'grid gap-6';
+    const base = 'grid gap-2 sm:gap-3 md:gap-4';
     if (layout === 'masonry') {
       return `${base} grid-cols-${columns.mobile} md:grid-cols-${columns.tablet} lg:grid-cols-${columns.desktop} auto-rows-[minmax(250px,auto)]`;
     }

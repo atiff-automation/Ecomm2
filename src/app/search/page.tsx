@@ -650,7 +650,7 @@ export default function SearchPage() {
                       ))}
                     </SearchResultsGrid>
                   ) : (
-                    <div className="grid gap-6 grid-cols-1">
+                    <div className="grid gap-4 grid-cols-1">
                       {products.map(product => (
                         <ProductCard
                           key={product.id}

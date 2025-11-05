@@ -18,6 +18,9 @@ export interface PricingBadge {
   text: string;
   variant: 'default' | 'destructive' | 'outline' | 'secondary';
   className?: string;
+  position: 'onImage' | 'belowPrice'; // Badge display position
+  styleType: 'filled' | 'outline'; // Filled (background) vs Outline (border only) - Shopee style
+  outlineColor?: string; // For outline badges: border and text color (e.g., 'red', 'green')
 }
 
 export interface PricingDisplayClasses {

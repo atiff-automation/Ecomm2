@@ -150,7 +150,7 @@ export const ProductGrid = ({
       lg: 4,
       xl: 5,
     }}
-    gap="md"
+    gap="xs"
     className={className}
     {...props}
   >

@@ -144,23 +144,29 @@ export class PricingService {
   ): PricingBadge[] {
     const badges: PricingBadge[] = [];
 
-    // Featured badge
+    // Featured badge - below price, red outline (Shopee style)
     if (product.featured) {
       badges.push({
         type: 'featured',
         text: 'Featured',
-        variant: 'default',
-        className: 'bg-blue-600 text-white',
+        variant: 'outline',
+        className: '',
+        position: 'belowPrice',
+        styleType: 'outline',
+        outlineColor: 'red',
       });
     }
 
-    // Early access badges
+    // Early access badges - below price, green outline (Shopee style)
     if (earlyAccessStatus.isMemberOnly && !userContext.isMember) {
       badges.push({
         type: 'members-only',
         text: 'Members Only',
         variant: 'outline',
-        className: 'bg-purple-100 text-purple-800 border-purple-500',
+        className: '',
+        position: 'belowPrice',
+        styleType: 'outline',
+        outlineColor: 'green',
       });
     }
 
@@ -168,12 +174,15 @@ export class PricingService {
       badges.push({
         type: 'early-access',
         text: 'Early Access',
-        variant: 'secondary',
-        className: 'bg-purple-500 text-white',
+        variant: 'outline',
+        className: '',
+        position: 'belowPrice',
+        styleType: 'outline',
+        outlineColor: 'green',
       });
     }
 
-    // Promotion badges
+    // Promotion badges - on image, filled style (includes countdown text)
     if (promotionStatus.isActive) {
       const promotionText = getPromotionDisplayText(promotionStatus);
       badges.push({
@@ -181,6 +190,8 @@ export class PricingService {
         text: promotionText || 'Special Price',
         variant: 'destructive',
         className: 'bg-red-500 text-white',
+        position: 'onImage',
+        styleType: 'filled',
       });
     }
 
@@ -191,20 +202,24 @@ export class PricingService {
         text: promotionText || 'Coming Soon',
         variant: 'outline',
         className: 'bg-blue-500 text-white border-blue-500',
+        position: 'onImage',
+        styleType: 'filled',
       });
     }
 
-    // Stock status
+    // Stock status - on image, filled style
     if (product.stockQuantity === 0) {
       badges.push({
         type: 'out-of-stock',
         text: 'Out of Stock',
         variant: 'outline',
         className: 'bg-white text-gray-600',
+        position: 'onImage',
+        styleType: 'filled',
       });
     }
 
-    // Qualifying badge (only if no promotions active and user is not a member)
+    // Qualifying badge - below price, green outline (Shopee style)
     if (
       product.isQualifyingForMembership &&
       !promotionStatus.isActive &&
@@ -215,7 +230,10 @@ export class PricingService {
         type: 'qualifying',
         text: 'Membership Qualifying',
         variant: 'outline',
-        className: 'bg-blue-50 text-blue-700 border-blue-200',
+        className: '',
+        position: 'belowPrice',
+        styleType: 'outline',
+        outlineColor: 'green',
       });
     }
 
@@ -343,7 +361,10 @@ export class PricingService {
           type: 'members-only',
           text: 'Members Only',
           variant: 'outline',
-          className: 'bg-purple-100 text-purple-800 border-purple-500',
+          className: '',
+          position: 'belowPrice',
+          styleType: 'outline',
+          outlineColor: 'green',
         },
       ],
       displayClasses: {
