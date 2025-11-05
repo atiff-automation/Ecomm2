@@ -179,7 +179,7 @@ export default function HomePage() {
 
         {/* On Promotion Section */}
         <section className="py-16 bg-gradient-to-br from-red-50 to-orange-50">
-          <div className="container mx-auto px-8 lg:px-16">
+          <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-12">
               <div>
                 <div className="flex items-center gap-3 mb-4">
@@ -253,7 +253,7 @@ export default function HomePage() {
 
         {/* Featured Products Section */}
         <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-8 lg:px-16">
+          <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-12">
               <div>
                 <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
@@ -314,7 +314,7 @@ export default function HomePage() {
         {/* Membership CTA Section */}
         {!isMember && (
           <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <div className="container mx-auto px-8 lg:px-16 text-center">
+            <div className="container mx-auto px-4 text-center">
               <div className="max-w-3xl mx-auto">
                 <h2 className="text-3xl font-bold mb-4">
                   Unlock Member Benefits Today!
@@ -364,14 +364,14 @@ export default function HomePage() {
 
         {/* Recently Viewed Products */}
         <section className="py-16">
-          <div className="container mx-auto px-8 lg:px-16">
+          <div className="container mx-auto px-4">
             <RecentlyViewed limit={6} />
           </div>
         </section>
 
         {/* Product Recommendations */}
         <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-8 lg:px-16">
+          <div className="container mx-auto px-4">
             <ProductRecommendations
               type="general"
               limit={Math.floor(config.ui.pagination.defaultPageSize / 2.5)}

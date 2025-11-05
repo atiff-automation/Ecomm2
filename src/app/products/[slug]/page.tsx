@@ -30,6 +30,7 @@ import { productService } from '@/lib/services/product-service';
 import { useCart } from '@/hooks/use-cart';
 import { ProductDimensions } from '@/lib/validation/product-dimensions';
 import { useFreeShippingDisplay } from '@/hooks/use-free-shipping-display';
+import { ProductCard } from '@/components/product/ProductCard';
 
 interface ProductImage {
   id: string;
@@ -52,14 +53,8 @@ interface Review {
   };
 }
 
-interface RelatedProduct {
-  id: string;
-  name: string;
-  slug: string;
-  regularPrice: number;
-  memberPrice: number;
-  images: ProductImage[];
-}
+// Removed narrow RelatedProduct interface - API returns full product data
+// We'll use the Product type and transform as needed
 
 interface Product {
   id: string;
@@ -95,7 +90,7 @@ interface Product {
   reviews: Review[];
   averageRating: number;
   reviewCount: number;
-  relatedProducts: RelatedProduct[];
+  relatedProducts: Omit<Product, 'relatedProducts' | 'reviews'>[];
 }
 
 // Utility function to format dimensions (updated to handle object format)
@@ -770,63 +765,42 @@ export default function ProductDetailPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Related Products */}
+      {/* Related Products - Using Standard ProductCard */}
       {product.relatedProducts.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {product.relatedProducts.map(relatedProduct => {
-              const primaryImage =
-                relatedProduct.images.find(img => img.isPrimary) ||
-                relatedProduct.images[0];
+              // Transform related product to match ProductCard expectations
+              // API returns full product data, just ensure required fields exist
+              const productCardData = {
+                ...relatedProduct,
+                // Ensure all required fields are present with defaults if missing
+                averageRating: relatedProduct.averageRating || 0,
+                reviewCount: relatedProduct.reviewCount || 0,
+                stockQuantity: relatedProduct.stockQuantity || 0,
+                featured: relatedProduct.featured || false,
+                isPromotional: relatedProduct.isPromotional || false,
+                isQualifyingForMembership:
+                  relatedProduct.isQualifyingForMembership || false,
+                promotionalPrice: relatedProduct.promotionalPrice || null,
+                promotionStartDate: relatedProduct.promotionStartDate || null,
+                promotionEndDate: relatedProduct.promotionEndDate || null,
+                memberOnlyUntil: relatedProduct.memberOnlyUntil || null,
+                earlyAccessStart: relatedProduct.earlyAccessStart || null,
+                categories: relatedProduct.categories || [],
+                images: relatedProduct.images || [],
+              };
 
               return (
-                <Link
+                <ProductCard
                   key={relatedProduct.id}
-                  href={`/products/${relatedProduct.slug}`}
-                >
-                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                      {primaryImage ? (
-                        <Image
-                          src={primaryImage.url}
-                          alt={relatedProduct.name}
-                          fill
-                          quality={100}
-                          unoptimized={true}
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400">No Image</span>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
-                        {relatedProduct.name}
-                      </h3>
-                      <div className="mt-2">
-                        <span className="font-bold">
-                          {new Intl.NumberFormat('en-MY', {
-                            style: 'currency',
-                            currency: 'MYR',
-                          }).format(relatedProduct.regularPrice)}
-                        </span>
-                        {relatedProduct.memberPrice <
-                          relatedProduct.regularPrice && (
-                          <div className="text-xs text-muted-foreground">
-                            Member:{' '}
-                            {new Intl.NumberFormat('en-MY', {
-                              style: 'currency',
-                              currency: 'MYR',
-                            }).format(relatedProduct.memberPrice)}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                  product={productCardData}
+                  onAddToCart={handleAddToCart}
+                  size="md"
+                  showDescription={false}
+                  showRating={true}
+                />
               );
             })}
           </div>
