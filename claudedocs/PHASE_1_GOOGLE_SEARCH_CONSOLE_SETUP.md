@@ -13,7 +13,7 @@ After completing Phase 1 of the SEO optimization, you need to submit your sitema
 ## Step 1: Verify Your Website in Google Search Console
 
 ### 1.1 Go to Google Search Console
-Visit: https://search.google.com/search-console/
+Visit: 
 
 ### 1.2 Add Property
 1. Click "Add Property"
