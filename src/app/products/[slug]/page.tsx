@@ -31,6 +31,9 @@ import { useCart } from '@/hooks/use-cart';
 import { ProductDimensions } from '@/lib/validation/product-dimensions';
 import { useFreeShippingDisplay } from '@/hooks/use-free-shipping-display';
 import { ProductCard } from '@/components/product/ProductCard';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 interface ProductImage {
   id: string;
@@ -623,8 +626,52 @@ export default function ProductDetailPage() {
           <Card>
             <CardContent className="p-6">
               {product.description ? (
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap">{product.description}</p>
+                <div className="prose prose-lg max-w-none">
+                  <ReactMarkdown
+                    rehypePlugins={[rehypeRaw]}
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      // Custom styling for headings
+                      h2: ({ node, ...props }) => (
+                        <h2
+                          className="text-2xl font-bold mt-8 mb-4 text-gray-900 first:mt-0"
+                          {...props}
+                        />
+                      ),
+                      h3: ({ node, ...props }) => (
+                        <h3
+                          className="text-xl font-semibold mt-6 mb-3 text-gray-800"
+                          {...props}
+                        />
+                      ),
+                      // Custom styling for lists
+                      ul: ({ node, ...props }) => (
+                        <ul className="list-none space-y-2 my-4" {...props} />
+                      ),
+                      li: ({ node, ...props }) => (
+                        <li
+                          className="flex items-start gap-2 text-gray-700"
+                          {...props}
+                        />
+                      ),
+                      // Custom styling for paragraphs
+                      p: ({ node, ...props }) => (
+                        <p
+                          className="text-gray-700 leading-relaxed mb-4"
+                          {...props}
+                        />
+                      ),
+                      // Bold text styling
+                      strong: ({ node, ...props }) => (
+                        <strong
+                          className="font-semibold text-gray-900"
+                          {...props}
+                        />
+                      ),
+                    }}
+                  >
+                    {product.description}
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <p className="text-muted-foreground">
