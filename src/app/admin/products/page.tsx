@@ -369,7 +369,7 @@ export default function AdminProductsPage() {
     try {
       const params = new URLSearchParams({
         ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory !== 'all' && { category: selectedCategory }),
+        ...(selectedCategory !== 'all' && { categoryId: selectedCategory }),
         ...(selectedStatus !== 'all' && { status: selectedStatus }),
       });
 

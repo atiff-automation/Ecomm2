@@ -80,72 +80,80 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Generate CSV content
+    // Generate CSV content - MUST match import template format exactly
     const headers = [
-      'SKU',
-      'Name',
-      'Description',
-      'Short Description',
-      'Category',
-      'Category ID',
-      'Regular Price',
-      'Member Price',
-      'Stock Quantity',
-      'Low Stock Alert',
-      'Weight',
-      'Dimensions',
-      'Featured',
-      'Is Promotional',
-      'Is Qualifying For Membership',
-      'Promotional Price',
-      'Promotion Start Date',
-      'Promotion End Date',
-      'Member Only Until',
-      'Early Access Start',
-      'Status',
-      'Meta Title',
-      'Meta Description',
-      'Primary Image URL',
-      'Created At',
-      'Updated At',
+      'sku',
+      'name',
+      'description',
+      'shortDescription',
+      'categoryName',
+      'regularPrice',
+      'memberPrice',
+      'stockQuantity',
+      'lowStockAlert',
+      'weight',
+      'dimensionLength',
+      'dimensionWidth',
+      'dimensionHeight',
+      'featured',
+      'isPromotional',
+      'isQualifyingForMembership',
+      'promotionalPrice',
+      'promotionStartDate',
+      'promotionEndDate',
+      'memberOnlyUntil',
+      'earlyAccessStart',
+      'metaTitle',
+      'metaDescription',
     ];
 
     const csvRows = [
       headers.join(','),
       ...products.map(product => {
+        // Extract dimensions from JSON object
+        let dimensionLength = '';
+        let dimensionWidth = '';
+        let dimensionHeight = '';
+
+        if (product.dimensions && typeof product.dimensions === 'object') {
+          const dims = product.dimensions as any;
+          dimensionLength = dims.length || '';
+          dimensionWidth = dims.width || '';
+          dimensionHeight = dims.height || '';
+        }
+
         const row = [
           `"${product.sku || ''}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.description || '').replace(/"/g, '""')}"`,
           `"${(product.shortDescription || '').replace(/"/g, '""')}"`,
           `"${product.categories?.[0]?.category?.name || ''}"`,
-          `"${product.categories?.[0]?.category?.id || ''}"`,
           product.regularPrice || 0,
           product.memberPrice || 0,
           product.stockQuantity || 0,
           product.lowStockAlert || 0,
           product.weight || '',
-          `"${(product.dimensions || '').replace(/"/g, '""')}"`,
-          product.featured ? 'true' : 'false',
-          product.isPromotional ? 'true' : 'false',
-          product.isQualifyingForMembership ? 'true' : 'false',
+          dimensionLength,
+          dimensionWidth,
+          dimensionHeight,
+          product.featured ? 'TRUE' : 'FALSE',
+          product.isPromotional ? 'TRUE' : 'FALSE',
+          product.isQualifyingForMembership ? 'TRUE' : 'FALSE',
           product.promotionalPrice || '',
           product.promotionStartDate
-            ? product.promotionStartDate.toISOString()
+            ? product.promotionStartDate.toISOString().split('T')[0]
             : '',
           product.promotionEndDate
-            ? product.promotionEndDate.toISOString()
+            ? product.promotionEndDate.toISOString().split('T')[0]
             : '',
-          product.memberOnlyUntil ? product.memberOnlyUntil.toISOString() : '',
+          product.memberOnlyUntil
+            ? product.memberOnlyUntil.toISOString().split('T')[0]
+            : '',
           product.earlyAccessStart
-            ? product.earlyAccessStart.toISOString()
+            ? product.earlyAccessStart.toISOString().split('T')[0]
             : '',
-          `"${product.status || ''}"`,
           `"${(product.metaTitle || '').replace(/"/g, '""')}"`,
           `"${(product.metaDescription || '').replace(/"/g, '""')}"`,
-          `"${product.images[0]?.url || ''}"`,
-          product.createdAt.toISOString(),
-          product.updatedAt.toISOString(),
         ];
         return row.join(',');
       }),
