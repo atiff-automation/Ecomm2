@@ -52,10 +52,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Fetch all published products
+    // Fetch all active products (publicly visible)
     const products = await prisma.product.findMany({
       where: {
-        status: 'PUBLISHED',
+        status: 'ACTIVE',
       },
       select: {
         slug: true,
@@ -74,13 +74,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    // Fetch all categories with products
+    // Fetch all categories with active products
     const categories = await prisma.category.findMany({
       where: {
         products: {
           some: {
             product: {
-              status: 'PUBLISHED',
+              status: 'ACTIVE',
             },
           },
         },
