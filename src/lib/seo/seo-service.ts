@@ -35,34 +35,37 @@ export interface CategorySEO extends SEOData {
 }
 
 export class SEOService {
-  private static readonly SITE_NAME = 'JRM E-commerce';
+  private static readonly SITE_NAME = 'JRM HOLISTIK - Jamu Ratu Malaya';
   private static readonly SITE_URL =
     process.env.NEXTAUTH_URL || 'https://jrm-ecommerce.com';
   private static readonly DEFAULT_IMAGE = '/images/og-default.jpg';
-  private static readonly COMPANY_NAME = 'JRM E-commerce Sdn Bhd';
+  private static readonly COMPANY_NAME = 'JRM HOLISTIK (Jamu Ratu Malaya)';
+  private static readonly COMPANY_NAME_MALAY = 'Jamu Ratu Malaya - JRM HOLISTIK';
+  private static readonly FOUNDER = 'Bonda Rozita Ibrahim';
 
   /**
    * Generate SEO metadata for homepage
    */
   static getHomepageSEO(): SEOData {
     return {
-      title:
-        'JRM E-commerce - Malaysian Online Shopping with Membership Benefits',
+      title: 'JRM HOLISTIK | Jamu Ratu Malaya - Jamu Kesihatan Wanita Terbaik Malaysia',
       description:
-        'Shop online in Malaysia with exclusive member pricing. Join our membership program and enjoy special discounts on electronics, fashion, home goods and more. Free shipping available.',
+        'Jamu Ratu Malaya (JRM HOLISTIK) - Produk jamu tradisional terbaik untuk kesihatan dan kecantikan wanita. Lulus KKM, 100% halal, dipercayai ribuan wanita Malaysia. Dipersembahkan oleh Bonda Rozita Ibrahim.',
       keywords: [
-        'Malaysia online shopping',
-        'e-commerce Malaysia',
-        'member pricing',
-        'online store Malaysia',
-        'Malaysian e-commerce',
-        'online shopping deals',
-        'membership benefits',
-        'free shipping Malaysia',
+        'JRM HOLISTIK',
+        'Jamu Ratu Malaya',
+        'jamu untuk wanita',
+        'jamu tradisional Malaysia',
+        'jamu kesihatan wanita',
+        'jamu lulus KKM',
+        'jamu halal',
+        'beli jamu online Malaysia',
+        'Mega Ratu',
+        'jamu terbaik Malaysia',
       ],
       ogType: 'website',
       ogImage: `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
-      ogImageAlt: 'JRM E-commerce - Malaysian Online Shopping',
+      ogImageAlt: 'JRM HOLISTIK - Jamu Ratu Malaya | Jamu Kesihatan Wanita',
       twitterCard: 'summary_large_image',
       structuredData: this.generateOrganizationSchema(),
     };
@@ -183,7 +186,7 @@ export class SEOService {
       url: this.SITE_URL,
       logo: `${this.SITE_URL}/images/logo.png`,
       description:
-        'Malaysian e-commerce platform with membership benefits and exclusive pricing',
+        'JRM HOLISTIK (Jamu Ratu Malaya) - Produk jamu tradisional terbaik untuk kesihatan dan kecantikan wanita Malaysia. Dipersembahkan oleh Bonda Rozita Ibrahim.',
       address: {
         '@type': 'PostalAddress',
         addressCountry: 'MY',
@@ -195,7 +198,7 @@ export class SEOService {
         telephone: '+60-3-1234-5678',
         contactType: 'customer support',
         areaServed: 'MY',
-        availableLanguage: ['English', 'Bahasa Malaysia'],
+        availableLanguage: ['Bahasa Malaysia', 'English'],
       },
       sameAs: [
         'https://facebook.com/jrmecommerce',
@@ -262,15 +265,16 @@ export class SEOService {
     const schema: any = {
       '@context': 'https://schema.org',
       '@type': 'Product',
-      name: product.name,
+      name: `${product.name} - JRM HOLISTIK`,
       description: product.description,
       sku: product.sku,
-      brand: product.brand
-        ? {
-            '@type': 'Brand',
-            name: product.brand,
-          }
-        : undefined,
+      brand: {
+        '@type': 'Brand',
+        name: product.brand || 'JRM HOLISTIK - Jamu Ratu Malaya',
+        logo: `${this.SITE_URL}/images/logo.png`,
+        url: this.SITE_URL,
+      },
+      inLanguage: 'ms',
       image: product.images?.map(img => `${this.SITE_URL}${img}`) || [
         `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
       ],

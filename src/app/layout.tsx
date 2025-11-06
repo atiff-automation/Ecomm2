@@ -32,41 +32,55 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | JRM E-commerce',
-    default: 'JRM E-commerce - Malaysian Online Store with Membership',
+    template: '%s | JRM HOLISTIK - Jamu Ratu Malaya',
+    default: 'JRM HOLISTIK | Jamu Ratu Malaya - Jamu Kesihatan Wanita Terbaik Malaysia',
   },
   description:
-    'Complete Malaysian e-commerce platform with intelligent membership system, dual pricing, and local payment integration.',
+    'Jamu Ratu Malaya (JRM HOLISTIK) - Produk jamu tradisional terbaik untuk kesihatan dan kecantikan wanita Malaysia. Lulus KKM, 100% halal, dipercayai oleh ribuan wanita. Dipersembahkan oleh Bonda Rozita Ibrahim.',
   keywords: [
-    'malaysia',
-    'ecommerce',
-    'online store',
-    'membership',
-    'shopping',
-    'retail',
+    // Bahasa Malaysia keywords (PRIMARY)
+    'JRM HOLISTIK',
+    'Jamu Ratu Malaya',
+    'jamu untuk wanita',
+    'jamu tradisional Malaysia',
+    'jamu kesihatan wanita',
+    'jamu lulus KKM',
+    'jamu halal',
+    'beli jamu online Malaysia',
+    'jamu untuk kecantikan',
+    'jamu terbaik Malaysia',
+    'Mega Ratu',
+    'jamu Bonda Rozita',
+    // English keywords (SECONDARY)
+    'traditional Malaysian jamu',
+    'women health supplements Malaysia',
   ],
-  authors: [{ name: 'JRM E-commerce Team' }],
-  creator: 'JRM E-commerce',
-  publisher: 'JRM E-commerce',
+  authors: [{ name: 'JRM HOLISTIK - Bonda Rozita Ibrahim' }],
+  creator: 'JRM HOLISTIK',
+  publisher: 'Jamu Ratu Malaya',
   // Use centralized helper with localhost fallback for metadata
   metadataBase: new URL(getAppUrl(true)),
   alternates: {
     canonical: '/',
+    languages: {
+      'ms-MY': '/',
+      'en-MY': '/',
+    },
   },
   openGraph: {
     type: 'website',
-    locale: 'en_MY',
+    locale: 'ms_MY',
     url: '/',
-    title: 'JRM E-commerce - Malaysian Online Store',
+    title: 'JRM HOLISTIK - Jamu Ratu Malaya | Jamu Kesihatan Wanita Terbaik',
     description:
-      'Complete Malaysian e-commerce platform with intelligent membership system',
-    siteName: 'JRM E-commerce',
+      'Produk jamu tradisional terbaik untuk kesihatan dan kecantikan wanita Malaysia. Lulus KKM, 100% halal, dipercayai ribuan wanita.',
+    siteName: 'JRM HOLISTIK - Jamu Ratu Malaya',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'JRM E-commerce - Malaysian Online Store',
+    title: 'JRM HOLISTIK - Jamu Ratu Malaya | Jamu Kesihatan Wanita',
     description:
-      'Complete Malaysian e-commerce platform with intelligent membership system',
+      'Produk jamu tradisional terbaik untuk kesihatan dan kecantikan wanita Malaysia dari JRM HOLISTIK',
   },
   robots: {
     index: true,
@@ -96,7 +110,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ms" suppressHydrationWarning>
       <head>
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

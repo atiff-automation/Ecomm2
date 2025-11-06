@@ -177,6 +177,104 @@ export default function HomePage() {
           isMember={isMember}
         />
 
+        {/* Brand Introduction Section - BAHASA MALAYSIA */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-8 lg:px-16">
+            <div className="max-w-4xl mx-auto">
+              {/* Main Heading */}
+              <div className="text-center mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+                  Selamat Datang ke JRM HOLISTIK - Jamu Ratu Malaya
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Dipersembahkan oleh Bonda Rozita Ibrahim
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
+                <p className="text-lg leading-relaxed">
+                  <strong>JRM HOLISTIK</strong>, yang juga dikenali sebagai{' '}
+                  <strong>Jamu Ratu Malaya</strong>, adalah jenama terpercaya
+                  Malaysia yang menggabungkan kebijaksanaan herba tradisional
+                  dengan sains moden. Dipersembahkan oleh{' '}
+                  <strong>Bonda Rozita Ibrahim</strong> (pengasas Sendayu
+                  Tinggi), kami komited untuk menyediakan produk jamu dan
+                  kesihatan semula jadi yang berkualiti tinggi untuk wanita dan
+                  keluarga Malaysia.
+                </p>
+
+                <p className="text-lg leading-relaxed">
+                  Setiap produk <strong>Jamu Ratu Malaya</strong> dihasilkan
+                  daripada ramuan tradisional tulen yang telah dipercayai selama
+                  beberapa generasi. Kami menggabungkan kearifan jamu
+                  tradisional Melayu dengan teknologi pembuatan moden untuk
+                  memastikan setiap produk memenuhi piawaian kualiti tertinggi.
+                </p>
+
+                <p className="text-lg leading-relaxed">
+                  Sama ada anda mencari produk untuk kesihatan dalaman wanita,
+                  penjagaan selepas bersalin, kecantikan kulit, atau
+                  kesejahteraan umum, <strong>JRM HOLISTIK</strong> menawarkan
+                  penyelesaian semula jadi yang telah dipercayai oleh ribuan
+                  wanita di seluruh Malaysia.
+                </p>
+              </div>
+
+              {/* Trust Signals */}
+              <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                    <Shield className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">100%</div>
+                  <div className="text-sm text-gray-600">Tulen & Berkualiti</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Award className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    Lulus KKM
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Kementerian Kesihatan
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Star className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">HALAL</div>
+                  <div className="text-sm text-gray-600">Pengesahan HALAL</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Users className="w-8 h-8 text-yellow-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">Ribuan</div>
+                  <div className="text-sm text-gray-600">Pelanggan Setia</div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="mt-8 text-center">
+                <Link href="/about-us">
+                  <Button
+                    size="lg"
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Ketahui Lebih Lanjut Tentang Kami
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* On Promotion Section */}
         <section className="py-16 bg-gradient-to-br from-red-50 to-orange-50">
           <div className="container mx-auto px-4">
