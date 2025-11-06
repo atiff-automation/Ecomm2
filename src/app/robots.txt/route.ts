@@ -33,7 +33,7 @@ Allow: /legal/
 Allow: /products/
 
 # Sitemap location
-Sitemap: ${baseUrl}/api/sitemap
+Sitemap: ${baseUrl}/sitemap.xml
 
 # Crawl delay (in seconds)
 Crawl-delay: 1
