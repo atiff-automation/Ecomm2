@@ -1,6 +1,7 @@
 /**
  * Robots.txt Configuration - JRM HOLISTIK
  * Controls search engine crawling behavior
+ * Updated: 2025-11-06 - Fixed sitemap URL reference
  */
 
 import { MetadataRoute } from 'next';
