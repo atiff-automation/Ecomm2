@@ -1,858 +1,121 @@
 /**
- * Product Detail Page - Malaysian E-commerce Platform
- * Comprehensive product view with reviews, pricing, and membership benefits
+ * Product Detail Page - Server Component
+ * Generates SEO metadata and fetches product data
  */
 
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Star,
-  Heart,
-  ShoppingCart,
-  Truck,
-  Award,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Minus,
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { usePricing } from '@/hooks/use-pricing';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { productService } from '@/lib/services/product-service';
-import { useCart } from '@/hooks/use-cart';
-import { ProductDimensions } from '@/lib/validation/product-dimensions';
-import { useFreeShippingDisplay } from '@/hooks/use-free-shipping-display';
-import { ProductCard } from '@/components/product/ProductCard';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
+import { SEOService } from '@/lib/seo/seo-service';
+import { ProductClient } from './ProductClient';
 
-interface ProductImage {
-  id: string;
-  url: string;
-  altText?: string;
-  sortOrder: number;
-  isPrimary: boolean;
-}
-
-interface Review {
-  id: string;
-  rating: number;
-  title?: string;
-  comment?: string;
-  isVerifiedPurchase: boolean;
-  createdAt: string;
-  user: {
-    id: string;
-    name: string;
+interface PageProps {
+  params: {
+    slug: string;
   };
 }
 
-// Removed narrow RelatedProduct interface - API returns full product data
-// We'll use the Product type and transform as needed
+/**
+ * Generate dynamic metadata for product pages
+ * Priority: metaTitle > SEO Service generated title
+ */
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  try {
+    const product = await productService.getProduct(params.slug);
 
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  shortDescription?: string;
-  sku: string;
-  regularPrice: number;
-  memberPrice: number;
-  stockQuantity: number;
-  lowStockAlert: number;
-  weight?: number;
-  dimensions?: ProductDimensions | null; // Updated to use centralized type
-  featured: boolean;
-  isPromotional: boolean;
-  isQualifyingForMembership: boolean;
-  promotionalPrice?: number | null;
-  promotionStartDate?: string | null;
-  promotionEndDate?: string | null;
-  memberOnlyUntil?: string | null;
-  earlyAccessStart?: string | null;
-  metaTitle?: string;
-  metaDescription?: string;
-  categories: Array<{
-    category: {
-      id: string;
-      name: string;
-      slug: string;
+    // Priority 1: Use custom metaTitle and metaDescription if provided
+    if (product.metaTitle || product.metaDescription) {
+      const title = product.metaTitle || product.name;
+      const description =
+        product.metaDescription ||
+        product.description?.substring(0, 160) ||
+        `${product.name} - Produk dari JRM HOLISTIK`;
+
+      return {
+        title,
+        description,
+        openGraph: {
+          title,
+          description,
+          type: 'website',
+          images: product.images.length > 0 ? [product.images[0].url] : [],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title,
+          description,
+          images: product.images.length > 0 ? [product.images[0].url] : [],
+        },
+      };
+    }
+
+    // Priority 2: Generate from SEO Service (Bahasa Malaysia)
+    const categoryName =
+      product.categories.length > 0
+        ? product.categories[0].category.name
+        : undefined;
+
+    const seoData = SEOService.getProductSEO({
+      name: product.name,
+      description: product.description,
+      regularPrice: product.regularPrice,
+      memberPrice: product.memberPrice,
+      images: product.images.map(img => img.url),
+      category: categoryName,
+      brand: 'JRM HOLISTIK',
+      sku: product.sku,
+      stock: product.stockQuantity,
+      rating: product.averageRating,
+      reviewCount: product.reviewCount,
+      slug: product.slug,
+    });
+
+    return {
+      title: seoData.title,
+      description: seoData.description,
+      keywords: seoData.keywords,
+      openGraph: {
+        title: seoData.title,
+        description: seoData.description,
+        type: 'website',
+        images: product.images.length > 0 ? [product.images[0].url] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: seoData.title,
+        description: seoData.description,
+        images: product.images.length > 0 ? [product.images[0].url] : [],
+      },
     };
-  }>;
-  images: ProductImage[];
-  reviews: Review[];
-  averageRating: number;
-  reviewCount: number;
-  relatedProducts: Omit<Product, 'relatedProducts' | 'reviews'>[];
-}
-
-// Utility function to format dimensions (updated to handle object format)
-function formatDimensions(dimensions: ProductDimensions | null | undefined): string {
-  if (!dimensions) {
-    return 'Not specified';
-  }
-
-  const parts = [];
-
-  if (dimensions.length && dimensions.length > 0) {
-    parts.push(`L: ${dimensions.length}cm`);
-  }
-  if (dimensions.width && dimensions.width > 0) {
-    parts.push(`W: ${dimensions.width}cm`);
-  }
-  if (dimensions.height && dimensions.height > 0) {
-    parts.push(`H: ${dimensions.height}cm`);
-  }
-
-  return parts.length > 0 ? parts.join(' × ') : 'Not specified';
-}
-
-export default function ProductDetailPage() {
-  const params = useParams();
-  const { data: session } = useSession();
-  const { addToCart } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [addingToCart, setAddingToCart] = useState(false);
-
-  // Fetch dynamic free shipping display text
-  const { freeShippingText } = useFreeShippingDisplay();
-
-  // Always call pricing hook to maintain hook order (Rules of Hooks)
-  // Use a default empty product object when no product data is available
-  const pricing = usePricing(
-    product || {
-      id: '',
-      name: '',
-      regularPrice: 0,
-      memberPrice: 0,
-      stockQuantity: 0,
-      featured: false,
-      isPromotional: false,
-      isQualifyingForMembership: false,
-      promotionalPrice: null,
-      promotionStartDate: null,
-      promotionEndDate: null,
-      memberOnlyUntil: null,
-      earlyAccessStart: null,
-    }
-  );
-
-  const slug = params.slug as string;
-  const isLoggedIn = !!session?.user;
-  const isMember = session?.user?.isMember;
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Use service layer with built-in error handling and caching
-        const product = await productService.getProduct(slug);
-        setProduct(product);
-
-        // Track product view for analytics
-        productService.trackProductView(product.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load product');
-      } finally {
-        setLoading(false);
-      }
+  } catch (error) {
+    // Fallback metadata if product not found
+    return {
+      title: 'Product Not Found',
+      description: 'The product you are looking for does not exist.',
     };
+  }
+}
 
-    if (slug) {
-      fetchProduct();
-    }
-  }, [slug]);
+/**
+ * Product Detail Page - Server Component
+ */
+export default async function ProductPage({ params }: PageProps) {
+  let product;
 
-  const handleAddToCart = async () => {
-    if (!product) {
-      return;
-    }
-
-    setAddingToCart(true);
-    try {
-      await addToCart(product.id, quantity);
-      // The success toast is handled by the useCart hook
-    } catch (error) {
-      // The error toast is handled by the useCart hook
-      console.error('Error adding to cart:', error);
-    } finally {
-      setAddingToCart(false);
-    }
-  };
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (!product) {
-      return;
-    }
-
-    const validQuantity = Math.max(
-      1,
-      Math.min(newQuantity, product.stockQuantity)
-    );
-    setQuantity(validQuantity);
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="aspect-square bg-gray-200 rounded-lg" />
-            <div className="space-y-4">
-              <div className="h-8 bg-gray-200 rounded w-3/4" />
-              <div className="h-4 bg-gray-200 rounded w-1/2" />
-              <div className="h-12 bg-gray-200 rounded w-1/3" />
-              <div className="h-10 bg-gray-200 rounded w-full" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  try {
+    product = await productService.getProduct(params.slug);
+  } catch (error) {
+    // Product not found, show 404
+    notFound();
   }
 
-  if (error || !product) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-          <p className="text-muted-foreground mb-6">
-            {error || 'The product you are looking for does not exist.'}
-          </p>
-          <Link href="/products">
-            <Button>Browse Products</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Track product view (async, non-blocking)
+  productService.trackProductView(product.id).catch(err => {
+    console.error('Failed to track product view:', err);
+  });
 
-  const isOutOfStock = product ? product.stockQuantity === 0 : false;
-
-  // Check if product is restricted (only when product and pricing exist)
-  const isRestricted =
-    product &&
-    pricing &&
-    pricing.effectivePrice === 0 &&
-    pricing.priceDescription.includes('restricted');
-
-  // Render restricted access page if needed
-  if (isRestricted) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-            <div className="text-2xl">🔒</div>
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Members Only</h1>
-          <p className="text-muted-foreground mb-6">
-            This product is currently available for members only
-            {product.memberOnlyUntil && (
-              <span>
-                {' '}
-                until{' '}
-                {new Date(product.memberOnlyUntil).toLocaleDateString('en-MY')}
-              </span>
-            )}
-          </p>
-          <div className="space-y-3">
-            <Link href="/membership">
-              <Button className="w-full">Join Membership</Button>
-            </Link>
-            <Link href="/products">
-              <Button variant="outline" className="w-full">
-                Browse Other Products
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  const isLowStock =
-    product.stockQuantity <= product.lowStockAlert && product.stockQuantity > 0;
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <Link href="/products" className="hover:text-primary">
-            Products
-          </Link>
-          {product.categories.length > 0 && (
-            <>
-              <span>/</span>
-              <Link
-                href={`/products?category=${product.categories[0].category.id}`}
-                className="hover:text-primary"
-              >
-                {product.categories[0].category.name}
-              </Link>
-            </>
-          )}
-          <span>/</span>
-          <span className="text-foreground">{product.name}</span>
-        </div>
-      </nav>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Product Images */}
-        <div className="space-y-4">
-          {/* Main Image */}
-          <div className="aspect-square relative overflow-hidden rounded-lg border">
-            {product.images.length > 0 ? (
-              <Image
-                src={
-                  product.images[selectedImageIndex]?.url ||
-                  product.images[0].url
-                }
-                alt={
-                  product.images[selectedImageIndex]?.altText || product.name
-                }
-                fill
-                quality={100}
-                unoptimized={true}
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-400">No Image</span>
-              </div>
-            )}
-
-            {/* Image Navigation */}
-            {product.images.length > 1 && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
-                  onClick={() =>
-                    setSelectedImageIndex(prev =>
-                      prev === 0 ? product.images.length - 1 : prev - 1
-                    )
-                  }
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                  onClick={() =>
-                    setSelectedImageIndex(prev =>
-                      prev === product.images.length - 1 ? 0 : prev + 1
-                    )
-                  }
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Thumbnail Images */}
-          {product.images.length > 1 && (
-            <div className="flex space-x-2 overflow-x-auto">
-              {product.images.map((image, index) => (
-                <button
-                  key={image.id}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 relative rounded border-2 overflow-hidden ${
-                    selectedImageIndex === index
-                      ? 'border-primary'
-                      : 'border-gray-200'
-                  }`}
-                >
-                  <Image
-                    src={image.url}
-                    alt={image.altText || product.name}
-                    fill
-                    quality={100}
-                    unoptimized={true}
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Product Info */}
-        <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              {/* Centralized badges from pricing service */}
-              {pricing &&
-                product &&
-                product.id &&
-                pricing.badges.map((badge, index) => (
-                  <Badge
-                    key={`${badge.type}-${index}`}
-                    variant={badge.variant}
-                    className={badge.className}
-                  >
-                    {badge.type === 'featured' && (
-                      <Award className="w-3 h-3 mr-1" />
-                    )}
-                    {badge.text}
-                  </Badge>
-                ))}
-              {/* Stock status badges */}
-              {isLowStock && (
-                <Badge
-                  variant="outline"
-                  className="text-orange-600 border-orange-600"
-                >
-                  Low Stock
-                </Badge>
-              )}
-              {isOutOfStock && (
-                <Badge
-                  variant="outline"
-                  className="text-red-600 border-red-600"
-                >
-                  Out of Stock
-                </Badge>
-              )}
-            </div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <p className="text-muted-foreground">SKU: {product.sku}</p>
-          </div>
-
-          {/* Rating */}
-          {product.averageRating > 0 && (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <Star
-                    key={star}
-                    className={`w-5 h-5 ${
-                      star <= product.averageRating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-                <span className="font-medium ml-1">
-                  {product.averageRating}
-                </span>
-              </div>
-              <span className="text-muted-foreground">
-                ({product.reviewCount}{' '}
-                {product.reviewCount === 1 ? 'review' : 'reviews'})
-              </span>
-            </div>
-          )}
-
-          {/* Centralized Price Display */}
-          {pricing && product && product.id ? (
-            <div className="space-y-2" aria-label={pricing.priceDescription}>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <span
-                    className={`text-3xl font-bold ${pricing.displayClasses.priceColor}`}
-                  >
-                    {pricing.formattedPrice}
-                  </span>
-                  {/* Price type badges already handled by centralized badges above */}
-                </div>
-
-                {/* Original price and savings */}
-                {pricing.showSavings && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl text-muted-foreground line-through">
-                      {pricing.formattedOriginalPrice}
-                    </span>
-                    <span
-                      className={`font-medium ${pricing.displayClasses.savingsColor}`}
-                    >
-                      You save {pricing.formattedSavings}
-                    </span>
-                  </div>
-                )}
-
-                {/* Member price preview for non-members */}
-                {pricing.showMemberPreview && (
-                  <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800">
-                      <strong>{pricing.memberPreviewText}</strong>
-                      <br />
-                      Save{' '}
-                      {pricing.formattedPotentialMemberSavings ||
-                        pricing.formattedSavings}{' '}
-                      with membership
-                    </p>
-                  </div>
-                )}
-
-                {/* Early access information */}
-                {pricing.priceType === 'early-access' && (
-                  <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-sm text-purple-800">
-                      <strong>🎆 Early Access Promotion</strong>
-                      <br />
-                      {isMember
-                        ? 'You have early access to this promotion!'
-                        : 'Members get early access to special promotions'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            // Fallback pricing display while loading
-            <div className="space-y-2">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl font-bold">
-                  {new Intl.NumberFormat('en-MY', {
-                    style: 'currency',
-                    currency: 'MYR',
-                  }).format(product.regularPrice)}
-                </span>
-              </div>
-              {product.memberPrice < product.regularPrice && (
-                <div className="text-sm text-muted-foreground">
-                  Member Price:{' '}
-                  {new Intl.NumberFormat('en-MY', {
-                    style: 'currency',
-                    currency: 'MYR',
-                  }).format(product.memberPrice)}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quantity & Add to Cart */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label className="font-medium">Quantity:</label>
-              <div className="flex items-center border rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <span className="px-4 py-2 font-medium">{quantity}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={quantity >= product.stockQuantity}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {product.stockQuantity} available
-              </span>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                className="flex-1"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || addingToCart}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              </Button>
-              <Button variant="outline" size="icon">
-                <Heart className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="space-y-3">
-            {freeShippingText && (
-              <div className="flex items-center gap-2 text-sm">
-                <Truck className="w-4 h-4 text-green-600" />
-                <span>{freeShippingText}</span>
-              </div>
-            )}
-            {product.isQualifyingForMembership && !isMember && (
-              <div className="flex items-center gap-2 text-sm">
-                <Award className="w-4 h-4 text-purple-600" />
-                <span>Qualifies for membership benefits</span>
-              </div>
-            )}
-          </div>
-
-          {/* Short Description */}
-          {product.shortDescription && (
-            <div>
-              <h3 className="font-semibold mb-2">Overview</h3>
-              <p className="text-muted-foreground">
-                {product.shortDescription}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Product Details Tabs */}
-      <Tabs defaultValue="description" className="mb-12">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="description">Description</TabsTrigger>
-          <TabsTrigger value="specifications">Specifications</TabsTrigger>
-          <TabsTrigger value="reviews">
-            Reviews ({product.reviewCount})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="description" className="mt-6">
-          <Card>
-            <CardContent className="p-6">
-              {product.description ? (
-                <div className="prose prose-lg max-w-none">
-                  <ReactMarkdown
-                    rehypePlugins={[rehypeRaw]}
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      // Custom styling for headings
-                      h2: ({ node, ...props }) => (
-                        <h2
-                          className="text-2xl font-bold mt-8 mb-4 text-gray-900 first:mt-0"
-                          {...props}
-                        />
-                      ),
-                      h3: ({ node, ...props }) => (
-                        <h3
-                          className="text-xl font-semibold mt-6 mb-3 text-gray-800"
-                          {...props}
-                        />
-                      ),
-                      // Custom styling for lists
-                      ul: ({ node, ...props }) => (
-                        <ul className="list-none space-y-2 my-4" {...props} />
-                      ),
-                      li: ({ node, ...props }) => (
-                        <li
-                          className="flex items-start gap-2 text-gray-700"
-                          {...props}
-                        />
-                      ),
-                      // Custom styling for paragraphs
-                      p: ({ node, ...props }) => (
-                        <p
-                          className="text-gray-700 leading-relaxed mb-4"
-                          {...props}
-                        />
-                      ),
-                      // Bold text styling
-                      strong: ({ node, ...props }) => (
-                        <strong
-                          className="font-semibold text-gray-900"
-                          {...props}
-                        />
-                      ),
-                    }}
-                  >
-                    {product.description}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  No description available.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="specifications" className="mt-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Product Details</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>SKU:</span>
-                      <span>{product.sku}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Categories:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {product.categories.map(cat => (
-                          <Badge
-                            key={cat.category.id}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {cat.category.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    {product.weight && (
-                      <div className="flex justify-between">
-                        <span>Weight:</span>
-                        <span>{product.weight} kg</span>
-                      </div>
-                    )}
-                    {product.dimensions && (
-                      <div className="flex justify-between">
-                        <span>Dimensions:</span>
-                        <span>{formatDimensions(product.dimensions)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Availability</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Stock:</span>
-                      <span
-                        className={
-                          isOutOfStock
-                            ? 'text-red-600'
-                            : isLowStock
-                              ? 'text-orange-600'
-                              : 'text-green-600'
-                        }
-                      >
-                        {isOutOfStock
-                          ? 'Out of Stock'
-                          : `${product.stockQuantity} available`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Status:</span>
-                      <span className="text-green-600">In Production</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reviews" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Customer Reviews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {product.reviews.length > 0 ? (
-                <div className="space-y-6">
-                  {product.reviews.map(review => (
-                    <div
-                      key={review.id}
-                      className="border-b pb-6 last:border-b-0"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <Star
-                                key={star}
-                                className={`w-4 h-4 ${
-                                  star <= review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="font-medium">
-                            {review.user.name}
-                          </span>
-                          {review.isVerifiedPurchase && (
-                            <Badge variant="secondary" className="text-xs">
-                              Verified Purchase
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {review.title && (
-                        <h4 className="font-semibold mb-2">{review.title}</h4>
-                      )}
-                      {review.comment && (
-                        <p className="text-muted-foreground">
-                          {review.comment}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  No reviews yet. Be the first to review this product!
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Related Products - Using Standard ProductCard */}
-      {product.relatedProducts.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {product.relatedProducts.map(relatedProduct => {
-              // Transform related product to match ProductCard expectations
-              // API returns full product data, just ensure required fields exist
-              const productCardData = {
-                ...relatedProduct,
-                // Ensure all required fields are present with defaults if missing
-                averageRating: relatedProduct.averageRating || 0,
-                reviewCount: relatedProduct.reviewCount || 0,
-                stockQuantity: relatedProduct.stockQuantity || 0,
-                featured: relatedProduct.featured || false,
-                isPromotional: relatedProduct.isPromotional || false,
-                isQualifyingForMembership:
-                  relatedProduct.isQualifyingForMembership || false,
-                promotionalPrice: relatedProduct.promotionalPrice || null,
-                promotionStartDate: relatedProduct.promotionStartDate || null,
-                promotionEndDate: relatedProduct.promotionEndDate || null,
-                memberOnlyUntil: relatedProduct.memberOnlyUntil || null,
-                earlyAccessStart: relatedProduct.earlyAccessStart || null,
-                categories: relatedProduct.categories || [],
-                images: relatedProduct.images || [],
-              };
-
-              return (
-                <ProductCard
-                  key={relatedProduct.id}
-                  product={productCardData}
-                  onAddToCart={handleAddToCart}
-                  size="md"
-                  showDescription={false}
-                  showRating={true}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  // Render client component with product data
+  return <ProductClient product={product} />;
 }

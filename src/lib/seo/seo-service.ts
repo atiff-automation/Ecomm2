@@ -90,13 +90,13 @@ export class SEOService {
   }): ProductSEO {
     const availability = product.stock > 0 ? 'in_stock' : 'out_of_stock';
     const image = product.images?.[0] || this.DEFAULT_IMAGE;
-    const priceRange = `RM${product.memberPrice} - RM${product.regularPrice}`;
+    const categoryDisplay = product.category || 'Jamu Kesihatan Wanita';
 
     return {
-      title: `${product.name} - ${priceRange} | JRM E-commerce Malaysia`,
+      title: `${product.name} - JRM HOLISTIK | ${categoryDisplay}`,
       description: product.description
-        ? `${product.description.substring(0, 160)}...`
-        : `Buy ${product.name} online in Malaysia. Member price from RM${product.memberPrice}. ${availability === 'in_stock' ? 'In stock' : 'Currently unavailable'}.`,
+        ? `${product.description.substring(0, 157)}...`
+        : `${product.name} - Produk jamu dari JRM HOLISTIK (Jamu Ratu Malaya). Harga ahli dari RM${product.memberPrice}. ${availability === 'in_stock' ? 'Stok tersedia' : 'Stok habis'}.`,
       keywords: [
         product.name.toLowerCase(),
         '', // Category keywords should be provided as primary category name
@@ -172,6 +172,35 @@ export class SEOService {
       ogType: 'website',
       noindex: true, // Don't index search result pages
       structuredData: this.generateSearchResultsSchema(query, resultCount),
+    };
+  }
+
+  /**
+   * Generate SEO metadata for About Us page
+   */
+  static getAboutUsSEO(): SEOData {
+    return {
+      title: 'Tentang Kami - JRM HOLISTIK Ajah (Dealer Rasmi UG 237) | Jamu Ratu Malaya',
+      description:
+        'JRM HOLISTIK Ajah adalah dealer rasmi produk Jamu Ratu Malaya (UG 237). Kami menawarkan produk jamu tradisional berkualiti dari Bonda Rozita Ibrahim - 100% tulen, lulus KKM, dan halal.',
+      keywords: [
+        'tentang JRM HOLISTIK',
+        'JRM HOLISTIK Ajah',
+        'dealer JRM HOLISTIK',
+        'Jamu Ratu Malaya dealer',
+        'Bonda Rozita Ibrahim',
+        'dealer rasmi UG 237',
+        'tentang jamu ratu malaya',
+        'sejarah JRM HOLISTIK',
+        'produk jamu Malaysia',
+        'jamu tradisional tulen',
+      ],
+      canonical: `${this.SITE_URL}/about-us`,
+      ogType: 'website',
+      ogImage: `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
+      ogImageAlt: 'JRM HOLISTIK Ajah - Dealer Rasmi Jamu Ratu Malaya',
+      twitterCard: 'summary_large_image',
+      structuredData: this.generateAboutUsSchema(),
     };
   }
 
@@ -350,6 +379,49 @@ export class SEOService {
           text: faq.answer,
         },
       })),
+    };
+  }
+
+  /**
+   * Generate About Us page structured data
+   */
+  private static generateAboutUsSchema() {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      '@id': `${this.SITE_URL}/about-us`,
+      mainEntity: {
+        '@type': 'Organization',
+        name: 'JRM HOLISTIK Ajah - Dealer Rasmi UG 237',
+        alternateName: this.COMPANY_NAME,
+        url: this.SITE_URL,
+        logo: `${this.SITE_URL}/images/logo.png`,
+        description:
+          'Dealer rasmi produk Jamu Ratu Malaya (JRM HOLISTIK). Menawarkan produk jamu tradisional berkualiti tinggi dari Bonda Rozita Ibrahim - 100% tulen, lulus KKM, dan halal.',
+        founder: {
+          '@type': 'Person',
+          name: this.FOUNDER,
+          jobTitle: 'Pengasas JRM HOLISTIK & Sendayu Tinggi',
+        },
+        address: {
+          '@type': 'PostalAddress',
+          addressCountry: 'MY',
+          addressLocality: 'Kuala Lumpur',
+          addressRegion: 'Selangor',
+        },
+        areaServed: {
+          '@type': 'Country',
+          name: 'Malaysia',
+        },
+        knowsAbout: [
+          'Jamu Tradisional',
+          'Kesihatan Wanita',
+          'Herba Malaysia',
+          'Penjagaan Selepas Bersalin',
+          'Kecantikan Semula Jadi',
+        ],
+        award: ['Lulus KKM', 'Halal', 'Dipercayai Ribuan Pelanggan'],
+      },
     };
   }
 

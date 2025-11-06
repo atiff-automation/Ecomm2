@@ -1,11 +1,10 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Agent Application Status Update API Route
  * Handle status updates for agent applications
  * Following CLAUDE.md principles: Systematic implementation, audit logging
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';

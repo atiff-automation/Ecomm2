@@ -1,11 +1,10 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Agent Application Statistics API Route
  * Provide dashboard statistics for admin
  * Following CLAUDE.md principles: Centralized data aggregation
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';

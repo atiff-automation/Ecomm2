@@ -127,6 +127,7 @@ export function Footer({ className }: FooterProps) {
     {
       title: 'Company',
       links: [
+        { label: 'About Us', href: '/about-us' },
         { label: 'Agent Program', href: '/apply-agent' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Terms of Service', href: '/legal/terms' },

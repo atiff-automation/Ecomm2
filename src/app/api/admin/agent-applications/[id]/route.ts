@@ -1,11 +1,10 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Admin Individual Agent Application API Routes
  * Handle individual application operations for admins
  * Following CLAUDE.md principles: Systematic implementation, proper security
  */
+
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminRole } from '@/lib/auth/authorization';

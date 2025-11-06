@@ -177,97 +177,81 @@ export default function HomePage() {
           isMember={isMember}
         />
 
-        {/* Brand Introduction Section - BAHASA MALAYSIA */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-8 lg:px-16">
-            <div className="max-w-4xl mx-auto">
-              {/* Main Heading */}
+        {/* Compact Brand Trust Section */}
+        <section className="py-12 bg-gradient-to-br from-green-50 via-white to-emerald-50">
+          <div className="container mx-auto px-4 lg:px-16">
+            <div className="max-w-5xl mx-auto">
+              {/* Compact Header */}
               <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-                  Selamat Datang ke JRM HOLISTIK - Jamu Ratu Malaya
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                  Dealer Rasmi JRM HOLISTIK
                 </h2>
-                <p className="text-xl text-gray-600">
-                  Dipersembahkan oleh Bonda Rozita Ibrahim
+                <p className="text-lg text-gray-600">
+                  Produk dari Bonda Rozita
                 </p>
               </div>
 
-              {/* Content */}
-              <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-                <p className="text-lg leading-relaxed">
-                  <strong>JRM HOLISTIK</strong>, yang juga dikenali sebagai{' '}
-                  <strong>Jamu Ratu Malaya</strong>, adalah jenama terpercaya
-                  Malaysia yang menggabungkan kebijaksanaan herba tradisional
-                  dengan sains moden. Dipersembahkan oleh{' '}
-                  <strong>Bonda Rozita Ibrahim</strong> (pengasas Sendayu
-                  Tinggi), kami komited untuk menyediakan produk jamu dan
-                  kesihatan semula jadi yang berkualiti tinggi untuk wanita dan
-                  keluarga Malaysia.
-                </p>
-
-                <p className="text-lg leading-relaxed">
-                  Setiap produk <strong>Jamu Ratu Malaya</strong> dihasilkan
-                  daripada ramuan tradisional tulen yang telah dipercayai selama
-                  beberapa generasi. Kami menggabungkan kearifan jamu
-                  tradisional Melayu dengan teknologi pembuatan moden untuk
-                  memastikan setiap produk memenuhi piawaian kualiti tertinggi.
-                </p>
-
-                <p className="text-lg leading-relaxed">
-                  Sama ada anda mencari produk untuk kesihatan dalaman wanita,
-                  penjagaan selepas bersalin, kecantikan kulit, atau
-                  kesejahteraan umum, <strong>JRM HOLISTIK</strong> menawarkan
-                  penyelesaian semula jadi yang telah dipercayai oleh ribuan
-                  wanita di seluruh Malaysia.
-                </p>
-              </div>
-
-              {/* Trust Signals */}
-              <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-                    <Shield className="w-8 h-8 text-green-600" />
+              {/* Trust Badges - Modern Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-green-100">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-green-600" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">100%</div>
-                  <div className="text-sm text-gray-600">Tulen & Berkualiti</div>
+                  <div className="text-lg font-bold text-gray-900 text-center">
+                    100%
+                  </div>
+                  <div className="text-xs text-gray-600 text-center">
+                    Tulen & Berkualiti
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Award className="w-8 h-8 text-blue-600" />
+                <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-blue-100">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Award className="w-6 h-6 text-blue-600" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-lg font-bold text-gray-900 text-center">
                     Lulus KKM
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs text-gray-600 text-center">
                     Kementerian Kesihatan
                   </div>
                 </div>
 
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Star className="w-8 h-8 text-purple-600" />
+                <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-purple-100">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Star className="w-6 h-6 text-purple-600" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">HALAL</div>
-                  <div className="text-sm text-gray-600">Pengesahan HALAL</div>
+                  <div className="text-lg font-bold text-gray-900 text-center">
+                    HALAL
+                  </div>
+                  <div className="text-xs text-gray-600 text-center">
+                    Pengesahan HALAL
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <Users className="w-8 h-8 text-yellow-600" />
+                <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-yellow-100">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-yellow-600" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">Ribuan</div>
-                  <div className="text-sm text-gray-600">Pelanggan Setia</div>
+                  <div className="text-lg font-bold text-gray-900 text-center">
+                    Ribuan
+                  </div>
+                  <div className="text-xs text-gray-600 text-center">
+                    Pelanggan Setia
+                  </div>
                 </div>
               </div>
 
               {/* CTA */}
-              <div className="mt-8 text-center">
+              <div className="text-center">
                 <Link href="/about-us">
                   <Button
                     size="lg"
-                    className="bg-primary hover:bg-primary/90"
+                    variant="outline"
+                    className="border-green-600 text-green-700 hover:bg-green-50 hover:border-green-700 group"
                   >
-                    Ketahui Lebih Lanjut Tentang Kami
+                    Ketahui Lebih Lanjut
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
               </div>
