@@ -47,12 +47,6 @@ async function fetchMembershipStatus(
 
   const data: MembershipStatusResponse = await response.json();
 
-  console.log('🔍 Membership status fetched:', {
-    isLoggedIn: data.isLoggedIn,
-    isMember: data.isMember,
-    hasPendingMembership: data.hasPendingMembership,
-  });
-
   return {
     isLoggedIn: data.isLoggedIn,
     isMember: data.isMember,

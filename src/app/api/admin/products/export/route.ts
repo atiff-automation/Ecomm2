@@ -1,19 +1,21 @@
 /**
-
-export const dynamic = 'force-dynamic';
-
  * Product Export API Route - Malaysian E-commerce Platform
  * Exports products in CSV format for fulfillment and analysis
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
+import { prisma } from '@/lib/db/prisma';
+import { productExportParamsSchema } from '@/lib/validation/product-export';
+import { ZodError } from 'zod';
+
 // Utility function for filename formatting
 const formatDateForFilename = (date: Date = new Date()): string => {
   return date.toISOString().split('T')[0].replace(/-/g, '');
 };
-import { prisma } from '@/lib/db/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,32 +28,77 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    // Extract and validate query parameters
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const categoryId = searchParams.get('categoryId');
-    const status = searchParams.get('status');
+    const rawParams = {
+      productIds: searchParams.get('productIds') ?? undefined,
+      search: searchParams.get('search') ?? undefined,
+      categoryId: searchParams.get('categoryId') ?? undefined,
+      status: searchParams.get('status') ?? undefined,
+    };
 
-    // Build where clause
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
+    // Validate using Zod schema
+    let validatedParams;
+    try {
+      validatedParams = productExportParamsSchema.parse(rawParams);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          {
+            message: 'Invalid export parameters',
+            errors: error.errors.map(e => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
-    if (categoryId) {
-      where.categories = {
+    // Build where clause with proper type safety
+    interface WhereClause {
+      id?: { in: string[] };
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' };
+        sku?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+      }>;
+      categories?: {
         some: {
-          categoryId: categoryId,
-        },
+          categoryId: string;
+        };
       };
+      status?: string;
     }
 
-    if (status) {
-      where.status = status;
+    const where: WhereClause = {};
+
+    // Priority 1: Export specific product IDs if provided
+    if (validatedParams.productIds && validatedParams.productIds.length > 0) {
+      where.id = { in: validatedParams.productIds };
+    } else {
+      // Priority 2: Use filter-based export
+      if (validatedParams.search) {
+        where.OR = [
+          { name: { contains: validatedParams.search, mode: 'insensitive' } },
+          { sku: { contains: validatedParams.search, mode: 'insensitive' } },
+          { description: { contains: validatedParams.search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (validatedParams.categoryId) {
+        where.categories = {
+          some: {
+            categoryId: validatedParams.categoryId,
+          },
+        };
+      }
+
+      if (validatedParams.status) {
+        where.status = validatedParams.status;
+      }
     }
 
     // Fetch products with related data

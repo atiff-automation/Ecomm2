@@ -55,29 +55,21 @@ export class CartService {
     // The service layer events should handle updates instead
     if (typeof window !== 'undefined') {
       window.addEventListener('cartUpdated', () => {
-        console.log('🌍 Global cartUpdated event received (legacy)');
         // Do nothing - service layer events handle updates now
       });
 
       // Listen for force refresh events (e.g., after payment success)
       window.addEventListener('forceCartRefresh', () => {
-        console.log('🔄 Force cart refresh event received');
-        this.refreshCart()
-          .then(() => {
-            console.log('✅ Cart force refresh completed');
-          })
-          .catch(error => {
-            console.error('❌ Cart force refresh failed:', error);
-          });
+        this.refreshCart().catch(error => {
+          console.error('❌ Cart force refresh failed:', error);
+        });
       });
 
       // Listen for cart cleared events (after successful payment)
       window.addEventListener('cart_cleared', async () => {
-        console.log('🧹 Cart cleared event received - setting empty cart');
         this.cart = this.createEmptyCart();
         this.lastFetch = Date.now();
         this.emitEvent('CART_CLEARED', { cart: this.cart });
-        console.log('✅ Cart cleared and updated in service');
       });
     }
   }
@@ -93,18 +85,15 @@ export class CartService {
    * Get current cart data with caching
    */
   async getCart(forceRefresh: boolean = false): Promise<CartResponse> {
-    console.log('🔄 getCart called with forceRefresh:', forceRefresh);
     const now = Date.now();
 
     // Use cached cart if available and fresh
     if (!forceRefresh && this.cart && now - this.lastFetch < this.CACHE_TTL) {
-      console.log('💾 Using cached cart:', { cartItems: this.cart.totalItems });
       return this.cart;
     }
 
     // Prevent concurrent fetches
     if (this.isLoading) {
-      console.log('⏳ Cart already loading, waiting...');
       // Wait for current fetch to complete
       while (this.isLoading) {
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -114,15 +103,9 @@ export class CartService {
 
     try {
       this.isLoading = true;
-      console.log('🌐 Fetching cart from API...');
       const response = await apiClient.get<CartResponse>('/api/cart');
 
       if (response.success && response.data) {
-        console.log('📥 Cart fetched successfully:', {
-          cartItems: response.data.totalItems,
-          cartId: response.data.id,
-          backendResponse: response.data,
-        });
         this.cart = response.data;
         this.lastFetch = now;
         this.emitEvent('CART_REFRESHED', { cart: this.cart });
@@ -134,7 +117,6 @@ export class CartService {
       console.error('❌ CartService.getCart error:', error);
       // Return empty cart on error to prevent UI breaks
       const emptyCart = this.createEmptyCart();
-      console.log('🚫 Setting empty cart due to error');
       this.cart = emptyCart;
       return emptyCart;
     } finally {
@@ -149,36 +131,17 @@ export class CartService {
     productId: string,
     quantity: number = 1
   ): Promise<CartResponse> {
-    console.log('🛒 CartService.addToCart called with:', {
-      productId,
-      quantity,
-    });
-
     try {
       const requestData: AddToCartRequest = { productId, quantity };
-      console.log('🌐 Making API call to /api/cart with:', requestData);
 
       const response = await apiClient.post<CartResponse>(
         '/api/cart',
         requestData
       );
 
-      console.log('📡 API response received:', {
-        success: response.success,
-        hasData: !!response.data,
-        cartItems: response.data?.totalItems,
-        fullResponse: response,
-      });
-
       if (response.success && response.data) {
         this.cart = response.data;
         this.lastFetch = Date.now();
-
-        console.log('✅ Cart updated, emitting ITEM_ADDED event');
-        console.log('🔍 Cart data before events:', {
-          cartId: this.cart.id,
-          totalItems: this.cart.totalItems,
-        });
 
         // Emit events immediately after updating cart
         this.emitEvent('ITEM_ADDED', {
@@ -190,10 +153,6 @@ export class CartService {
 
         // Force immediate update for UI components
         setTimeout(() => {
-          console.log('⏰ setTimeout callback - cart status:', {
-            hasCart: !!this.cart,
-            cartItems: this.cart?.totalItems || 'NO CART',
-          });
           this.emitEvent('CART_REFRESHED', { cart: this.cart });
         }, 0);
 
@@ -225,11 +184,6 @@ export class CartService {
         productId: cartItem.productId,
         quantity,
       };
-
-      console.log(
-        '🔧 CartService.updateCartItem - using PUT /api/cart with:',
-        requestData
-      );
 
       const response = await apiClient.put<CartResponse>(
         '/api/cart',
@@ -269,11 +223,6 @@ export class CartService {
         productId: cartItem.productId,
         quantity: 0,
       };
-
-      console.log(
-        '🗑️ CartService.removeFromCart - using PUT /api/cart with:',
-        requestData
-      );
 
       const response = await apiClient.put<CartResponse>(
         '/api/cart',
@@ -490,16 +439,6 @@ export class CartService {
       event,
       timestamp: new Date(),
     };
-
-    // Debug logging in development - force log to see what's happening
-    console.log('🛒 CartService emitting event:', event, {
-      cartItems: eventPayload.cart?.totalItems,
-      listeners: {
-        specific: this.eventListeners.get(event)?.size || 0,
-        wildcard: this.eventListeners.get('*')?.size || 0,
-      },
-      timestamp: new Date().toISOString(),
-    });
 
     // Emit to specific event listeners
     const listeners = this.eventListeners.get(event);

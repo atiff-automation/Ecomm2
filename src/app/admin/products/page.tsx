@@ -367,11 +367,26 @@ export default function AdminProductsPage() {
 
   const exportProducts = async () => {
     try {
-      const params = new URLSearchParams({
-        ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory !== 'all' && { categoryId: selectedCategory }),
-        ...(selectedStatus !== 'all' && { status: selectedStatus }),
-      });
+      const params = new URLSearchParams();
+
+      // Priority 1: Export selected products if any are selected
+      if (bulkSelection.selectedCount > 0) {
+        const selectedIds = Array.from(bulkSelection.selectedItems);
+        params.set('productIds', selectedIds.join(','));
+        toast.info(`Exporting ${bulkSelection.selectedCount} selected product${bulkSelection.selectedCount > 1 ? 's' : ''}...`);
+      } else {
+        // Priority 2: Export filtered products
+        if (searchTerm) {
+          params.set('search', searchTerm);
+        }
+        if (selectedCategory !== 'all') {
+          params.set('categoryId', selectedCategory);
+        }
+        if (selectedStatus !== 'all') {
+          params.set('status', selectedStatus);
+        }
+        toast.info('Exporting filtered products...');
+      }
 
       const response = await fetch(`/api/admin/products/export?${params}`);
       if (response.ok) {
@@ -384,6 +399,10 @@ export default function AdminProductsPage() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        toast.success('Export completed successfully');
+      } else {
+        const error = await response.json();
+        toast.error(error.message || 'Failed to export products');
       }
     } catch (error) {
       console.error('Export error:', error);

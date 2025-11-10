@@ -86,10 +86,6 @@ export function useCart(): UseCartReturn {
       currentAuthState &&
       !transferAttempted.current
     ) {
-      console.log(
-        '🔐 User authentication detected, checking for guest cart...'
-      );
-
       // Check if there's actually a guest cart in localStorage to transfer
       const hasGuestCart =
         typeof window !== 'undefined' &&
@@ -98,16 +94,12 @@ export function useCart(): UseCartReturn {
           localStorage.getItem('shopping_cart'));
 
       if (hasGuestCart) {
-        console.log(
-          '📦 Guest cart found, transferring to authenticated user...'
-        );
         transferAttempted.current = true;
 
         // Transfer guest cart to authenticated user cart
         const transferGuestCart = async () => {
           try {
             await cartService.transferGuestCart();
-            console.log('✅ Guest cart transferred successfully');
             // Refresh cart to get latest data after transfer
             await refreshCart();
           } catch (error) {
@@ -119,16 +111,13 @@ export function useCart(): UseCartReturn {
 
         transferGuestCart();
       } else {
-        console.log('🚫 No guest cart found, skipping transfer');
         transferAttempted.current = true; // Mark as attempted to prevent future checks
         // Don't refresh - user is already authenticated and cart is valid
-        console.log('📊 Keeping existing authenticated cart data');
       }
     }
 
     // Check if user logged out (previous: true, current: false)
     if (previousAuthState.current && !currentAuthState) {
-      console.log('🚪 User logged out, clearing cart cache...');
       transferAttempted.current = false;
       // Clear cart cache when user logs out
       setCart(null);
@@ -173,12 +162,9 @@ export function useCart(): UseCartReturn {
   // Actions
   const addToCart = useCallback(
     async (productId: string, quantity: number = 1) => {
-      console.log('🔗 useCart.addToCart called with:', { productId, quantity });
       try {
         setError(null);
-        console.log('📞 Calling cartService.addToCart...');
         await cartService.addToCart(productId, quantity);
-        console.log('🎉 cartService.addToCart completed successfully');
         toast.success(
           `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`,
           {
@@ -195,7 +181,6 @@ export function useCart(): UseCartReturn {
           }
         );
       } catch (err) {
-        console.error('💥 useCart.addToCart error:', err);
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to add to cart';
         setError(errorMessage);
@@ -377,17 +362,10 @@ export function useCartCount(): {
     const unsubscribe = cartService.addEventListener(
       '*',
       (payload: CartEventPayload) => {
-        console.log('🔔 useCartCount received event:', payload.event, {
-          cartItems: payload.cart?.totalItems,
-          timestamp: payload.timestamp,
-        });
-
         if (payload.cart) {
-          console.log('📊 Updating cart count to:', payload.cart.totalItems);
           setCount(payload.cart.totalItems);
           setError(null);
         } else {
-          console.log('🔄 No cart data, refreshing...');
           // If no cart data in event, refresh from service
           refreshCount();
         }

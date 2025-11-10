@@ -24,14 +24,6 @@ export function usePricing(product: ProductPricingData): ProductPricing {
   const freshMembership = useFreshMembership();
 
   const userContext: UserPricingContext = useMemo(() => {
-    console.log('🔍 usePricing userContext:', {
-      freshMembershipLoading: freshMembership.loading,
-      freshMembershipLoggedIn: freshMembership.isLoggedIn,
-      freshMembershipIsMember: freshMembership.isMember,
-      sessionIsMember: session?.user?.isMember,
-      userId: session?.user?.id,
-    });
-
     return {
       isLoggedIn: freshMembership.isLoggedIn,
       isMember: freshMembership.isMember, // Use fresh membership status

@@ -23,7 +23,6 @@ export function SimpleN8nChatLoader() {
     fetch('/api/chat-config/public')
       .then(res => res.json())
       .then(data => {
-        console.log('📡 Chat config loaded:', data);
         if (data.isEnabled && data.webhookUrl) {
           setConfig(data);
         }
@@ -36,16 +35,9 @@ export function SimpleN8nChatLoader() {
       return;
     }
 
-    console.log('🚀 Initializing n8n chat with webhook:', config.webhookUrl);
-
     // Import and initialize using the installed package
     import('@n8n/chat')
       .then(({ createChat }) => {
-        console.log('📦 @n8n/chat loaded, creating chat with config:', {
-          webhookUrl: config.webhookUrl,
-          mode: 'window',
-        });
-
         createChat({
           webhookUrl: config.webhookUrl,
           mode: 'window',
@@ -66,8 +58,6 @@ export function SimpleN8nChatLoader() {
           defaultLanguage: 'en',
           target: '#n8n-chat',
         });
-
-        console.log('✅ n8n chat initialized');
 
         // Inject dynamic CSS for colors and styling
         const styleElement = document.createElement('style');

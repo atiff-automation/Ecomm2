@@ -88,6 +88,15 @@ export interface ProductListParams {
   features?: ('featured' | 'promotional' | 'member-qualifying')[];
 }
 
+export interface ProductExportParams {
+  // Export specific product IDs (takes precedence over filters)
+  productIds?: string[];
+  // Filter-based export parameters (only used if productIds is empty)
+  search?: string;
+  categoryId?: string;
+  status?: string;
+}
+
 export interface ProductResponse {
   id: string;
   name: string;
