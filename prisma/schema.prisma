@@ -152,6 +152,7 @@ model Product {
   weight                    Decimal           @db.Decimal(8, 2)
   metaTitle                 String?
   metaDescription           String?
+  metaKeywords              Json?
   featured                  Boolean           @default(false)
   isPromotional             Boolean           @default(false)
   isQualifyingForMembership Boolean           @default(true)

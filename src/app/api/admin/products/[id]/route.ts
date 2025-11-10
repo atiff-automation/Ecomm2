@@ -96,6 +96,9 @@ const updateProductSchema = z.object({
       })
     )
     .optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  metaKeywords: z.array(z.string()).optional(),
 });
 
 // GET - Fetch single product
@@ -312,6 +315,16 @@ export async function PUT(
             earlyAccessStart: productData.earlyAccessStart
               ? new Date(productData.earlyAccessStart)
               : null,
+          }),
+          // SEO & Meta fields
+          ...(productData.metaTitle !== undefined && {
+            metaTitle: productData.metaTitle || null,
+          }),
+          ...(productData.metaDescription !== undefined && {
+            metaDescription: productData.metaDescription || null,
+          }),
+          ...(productData.metaKeywords !== undefined && {
+            metaKeywords: productData.metaKeywords || null,
           }),
         },
         include: {

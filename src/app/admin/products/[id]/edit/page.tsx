@@ -41,6 +41,9 @@ interface ProductFormData {
     altText?: string;
     isPrimary: boolean;
   }>;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
 }
 
 interface ProductCategory {
@@ -121,6 +124,9 @@ export default function EditProductPage() {
               width: 0, // Unknown dimensions for existing images
               height: 0,
             })) || [],
+          metaTitle: product.metaTitle || '',
+          metaDescription: product.metaDescription || '',
+          metaKeywords: product.metaKeywords || [],
         };
 
         setInitialData(productData);

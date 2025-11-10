@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
       'earlyAccessStart',
       'metaTitle',
       'metaDescription',
+      'metaKeywords',
     ];
 
     const csvRows = [
@@ -154,6 +155,7 @@ export async function GET(request: NextRequest) {
             : '',
           `"${(product.metaTitle || '').replace(/"/g, '""')}"`,
           `"${(product.metaDescription || '').replace(/"/g, '""')}"`,
+          `"${(Array.isArray(product.metaKeywords) ? product.metaKeywords.join(', ') : '').replace(/"/g, '""')}"`,
         ];
         return row.join(',');
       }),

@@ -156,6 +156,7 @@ export default function ProductImportPage() {
       'earlyAccessStart',
       'metaTitle',
       'metaDescription',
+      'metaKeywords',
     ];
 
     const sampleRow = [
@@ -182,6 +183,7 @@ export default function ProductImportPage() {
       '',
       'Sample Product | Your Store',
       'Buy Sample Product online at great prices',
+      'keyword1, keyword2, keyword3, jamu Malaysia',
     ];
 
     // Create explanatory rows
@@ -209,6 +211,7 @@ export default function ProductImportPage() {
       'Early access start date',
       'SEO page title',
       'SEO description',
+      'SEO keywords (comma-separated)',
     ];
 
     const csvContent = [headers, explanationRow, sampleRow]

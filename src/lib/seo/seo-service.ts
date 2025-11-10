@@ -87,6 +87,7 @@ export class SEOService {
     rating?: number;
     reviewCount?: number;
     slug: string;
+    metaKeywords?: string[] | null;
   }): ProductSEO {
     const availability = product.stock > 0 ? 'in_stock' : 'out_of_stock';
     const image = product.images?.[0] || this.DEFAULT_IMAGE;
@@ -97,15 +98,15 @@ export class SEOService {
       description: product.description
         ? `${product.description.substring(0, 157)}...`
         : `${product.name} - Produk jamu dari JRM HOLISTIK (Jamu Ratu Malaya). Harga ahli dari RM${product.memberPrice}. ${availability === 'in_stock' ? 'Stok tersedia' : 'Stok habis'}.`,
-      keywords: [
-        product.name.toLowerCase(),
-        '', // Category keywords should be provided as primary category name
-        product.brand?.toLowerCase() || '',
-        'Malaysia',
-        'online shopping',
-        'member price',
-        'buy online Malaysia',
-      ].filter(Boolean),
+      keywords: product.metaKeywords && product.metaKeywords.length > 0
+        ? product.metaKeywords
+        : [
+            product.name.toLowerCase(),
+            product.category?.toLowerCase() || '',
+            product.brand?.toLowerCase() || '',
+            'jamu Malaysia',
+            'beli jamu online',
+          ].filter(Boolean),
       canonical: `${this.SITE_URL}/products/${product.slug}`,
       ogType: 'product',
       ogImage: `${this.SITE_URL}${image}`,

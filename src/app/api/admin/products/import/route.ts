@@ -51,6 +51,7 @@ const productSchema = z.object({
   earlyAccessStart: z.string().datetime().optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
+  metaKeywords: z.string().optional(),
 });
 
 interface ImportError {
@@ -749,8 +750,12 @@ export async function POST(request: NextRequest) {
         if (isUpdate) {
           // Update existing product
           // Extract dimension columns and convert to object using centralized helper
-          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, ...updateData } = productData;
+          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, metaKeywords, ...updateData } = productData;
           const dimensions = createDimensionsFromColumns(dimensionLength, dimensionWidth, dimensionHeight);
+          // Parse metaKeywords from comma-separated string to array
+          const parsedMetaKeywords = metaKeywords
+            ? metaKeywords.split(',').map(k => k.trim()).filter(Boolean)
+            : null;
 
           await prisma.product.update({
             where: { sku: productData.sku },
@@ -758,6 +763,7 @@ export async function POST(request: NextRequest) {
               ...updateData,
               memberPrice: updateData.memberPrice || updateData.regularPrice,
               dimensions: dimensions, // Use converted dimension object
+              metaKeywords: parsedMetaKeywords,
               slug,
               promotionStartDate: productData.promotionStartDate
                 ? new Date(productData.promotionStartDate)
@@ -790,14 +796,19 @@ export async function POST(request: NextRequest) {
         } else {
           // Create new product
           // Extract dimension columns and convert to object using centralized helper
-          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, ...createData } = productData;
+          const { categoryName, dimensionLength, dimensionWidth, dimensionHeight, metaKeywords, ...createData } = productData;
           const dimensions = createDimensionsFromColumns(dimensionLength, dimensionWidth, dimensionHeight);
+          // Parse metaKeywords from comma-separated string to array
+          const parsedMetaKeywords = metaKeywords
+            ? metaKeywords.split(',').map(k => k.trim()).filter(Boolean)
+            : null;
 
           await prisma.product.create({
             data: {
               ...createData,
               memberPrice: createData.memberPrice || createData.regularPrice,
               dimensions: dimensions, // Use converted dimension object
+              metaKeywords: parsedMetaKeywords,
               slug,
               promotionStartDate: productData.promotionStartDate
                 ? new Date(productData.promotionStartDate)

@@ -109,6 +109,9 @@ interface ProductFormData {
   memberOnlyUntil?: Date;
   earlyAccessStart?: Date;
   images: ProductImage[];
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
 }
 
 export interface ProductFormProps {
@@ -145,6 +148,9 @@ const initialFormData: ProductFormData = {
   memberOnlyUntil: undefined,
   earlyAccessStart: undefined,
   images: [],
+  metaTitle: '',
+  metaDescription: '',
+  metaKeywords: [],
 };
 
 export function ProductForm({
@@ -1056,6 +1062,116 @@ export function ProductForm({
                         <p className="text-xs text-muted-foreground">
                           Members get early access starting from this date
                         </p>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* SEO & Meta Tab */}
+                  <TabsContent value="seo" className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="metaTitle">
+                          Meta Title{' '}
+                          <span className="text-xs text-muted-foreground font-normal">
+                            (Recommended: 60-70 characters)
+                          </span>
+                        </Label>
+                        <Input
+                          id="metaTitle"
+                          value={formData.metaTitle || ''}
+                          onChange={e =>
+                            handleInputChange('metaTitle', e.target.value)
+                          }
+                          placeholder="Product Name - JRM HOLISTIK | Category"
+                          maxLength={70}
+                        />
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-muted-foreground">
+                            SEO title that appears in search engine results
+                          </p>
+                          <span
+                            className={`text-xs ${
+                              (formData.metaTitle?.length || 0) > 70
+                                ? 'text-red-600'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {formData.metaTitle?.length || 0}/70
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="metaDescription">
+                          Meta Description{' '}
+                          <span className="text-xs text-muted-foreground font-normal">
+                            (Recommended: 150-160 characters)
+                          </span>
+                        </Label>
+                        <Textarea
+                          id="metaDescription"
+                          value={formData.metaDescription || ''}
+                          onChange={e =>
+                            handleInputChange('metaDescription', e.target.value)
+                          }
+                          placeholder="Product description for search engines. Include benefits and call-to-action."
+                          rows={3}
+                          maxLength={160}
+                        />
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-muted-foreground">
+                            Brief description shown in search results
+                          </p>
+                          <span
+                            className={`text-xs ${
+                              (formData.metaDescription?.length || 0) > 160
+                                ? 'text-red-600'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {formData.metaDescription?.length || 0}/160
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="metaKeywords">
+                          Meta Keywords (Bahasa Malaysia){' '}
+                          <span className="text-xs text-muted-foreground font-normal">
+                            (8-12 keywords recommended)
+                          </span>
+                        </Label>
+                        <Textarea
+                          id="metaKeywords"
+                          value={(formData.metaKeywords || []).join(', ')}
+                          onChange={e => {
+                            const keywords = e.target.value
+                              .split(',')
+                              .map(k => k.trim())
+                              .filter(Boolean);
+                            handleInputChange('metaKeywords', keywords);
+                          }}
+                          placeholder="jamu untuk wanita, jamu kesihatan wanita, jamu lulus KKM, jamu halal Malaysia"
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter keywords separated by commas. Use Bahasa Malaysia keywords for better SEO.
+                          <br />
+                          Current keywords: {(formData.metaKeywords || []).length}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <h4 className="text-sm font-medium text-blue-900 mb-2">
+                          SEO Best Practices
+                        </h4>
+                        <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+                          <li>Use Bahasa Malaysia keywords for Malaysian market</li>
+                          <li>Include product name and primary benefit in title</li>
+                          <li>Keep meta description compelling with call-to-action</li>
+                          <li>Target 8-12 relevant keywords per product</li>
+                          <li>Include trust signals: "Lulus KKM", "Halal"</li>
+                        </ul>
                       </div>
                     </div>
                   </TabsContent>

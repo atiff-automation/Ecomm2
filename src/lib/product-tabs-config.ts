@@ -10,6 +10,7 @@ import {
   Settings,
   Image as ImageIcon,
   Zap,
+  Search,
 } from 'lucide-react';
 
 export interface ProductFormStep {
@@ -75,6 +76,13 @@ export const PRODUCT_FORM_STEPS: ProductFormStep[] = [
       'isQualifyingForMembership',
     ],
   },
+  {
+    id: 'seo',
+    label: 'SEO & Meta',
+    icon: Search,
+    requiredFields: [],
+    optionalFields: ['metaTitle', 'metaDescription', 'metaKeywords'],
+  },
 ];
 
 /**
@@ -105,6 +113,7 @@ export const TAB_ERROR_FIELDS = {
     'earlyAccessStart',
     'isQualifyingForMembership',
   ],
+  seo: ['metaTitle', 'metaDescription', 'metaKeywords'],
 };
 
 /**

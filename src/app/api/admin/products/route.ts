@@ -112,6 +112,9 @@ const createProductSchema = z.object({
       })
     )
     .optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  metaKeywords: z.array(z.string()).optional(),
 });
 
 export async function POST(request: NextRequest) {
