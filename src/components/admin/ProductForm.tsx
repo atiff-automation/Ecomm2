@@ -166,6 +166,7 @@ export function ProductForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [keywordsInput, setKeywordsInput] = useState('');
 
   // Membership configuration state
   const [membershipConfig, setMembershipConfig] = useState<{
@@ -181,6 +182,11 @@ export function ProductForm({
     ...initialFormData,
     ...initialData,
   }));
+
+  // Initialize keywords input from formData
+  useEffect(() => {
+    setKeywordsInput((formData.metaKeywords || []).join(', '));
+  }, [formData.metaKeywords]);
 
   // Initialize stepper with product form steps
   const stepperSteps = PRODUCT_FORM_STEPS.map(step => ({
@@ -1143,8 +1149,9 @@ export function ProductForm({
                         </Label>
                         <Textarea
                           id="metaKeywords"
-                          value={(formData.metaKeywords || []).join(', ')}
-                          onChange={e => {
+                          value={keywordsInput}
+                          onChange={e => setKeywordsInput(e.target.value)}
+                          onBlur={e => {
                             const keywords = e.target.value
                               .split(',')
                               .map(k => k.trim())
@@ -1157,7 +1164,11 @@ export function ProductForm({
                         <p className="text-xs text-muted-foreground">
                           Enter keywords separated by commas. Use Bahasa Malaysia keywords for better SEO.
                           <br />
-                          Current keywords: {(formData.metaKeywords || []).length}
+                          Current keywords:{' '}
+                          {keywordsInput
+                            .split(',')
+                            .map(k => k.trim())
+                            .filter(Boolean).length}
                         </p>
                       </div>
 

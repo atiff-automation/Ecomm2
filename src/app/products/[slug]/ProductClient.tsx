@@ -295,7 +295,7 @@ export function ProductClient({ product }: ProductClientProps) {
                 >
                   <Image
                     src={image.url}
-                    alt={image.altText || product.metaTitle || product.name}
+                    alt={product.metaTitle || image.altText || product.name}
                     fill
                     quality={100}
                     unoptimized={true}

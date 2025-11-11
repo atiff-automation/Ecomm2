@@ -99,7 +99,7 @@ export function ProductImage({
       {/* Main Image */}
       <Image
         src={primaryImage.url}
-        alt={primaryImage.altText || metaTitle || productName}
+        alt={metaTitle || primaryImage.altText || productName}
         fill
         className={cn(
           'object-cover transition-all duration-300',

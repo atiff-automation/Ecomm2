@@ -188,8 +188,8 @@ export function CartSidebar({
                           <Image
                             src={item.product.primaryImage.url}
                             alt={
-                              item.product.primaryImage.altText ||
                               item.product.metaTitle ||
+                              item.product.primaryImage.altText ||
                               item.product.name
                             }
                             fill

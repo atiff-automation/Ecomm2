@@ -98,7 +98,7 @@ export function ProductCard({
           {primaryImage ? (
             <Image
               src={primaryImage.url}
-              alt={primaryImage.altText || product.metaTitle || product.name}
+              alt={product.metaTitle || primaryImage.altText || product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
             />
