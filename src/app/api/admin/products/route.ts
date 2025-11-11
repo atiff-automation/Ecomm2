@@ -212,6 +212,9 @@ export async function POST(request: NextRequest) {
           earlyAccessStart: productData.earlyAccessStart
             ? new Date(productData.earlyAccessStart)
             : null,
+          metaTitle: productData.metaTitle || null,
+          metaDescription: productData.metaDescription || null,
+          metaKeywords: productData.metaKeywords || null,
         },
       });
 
