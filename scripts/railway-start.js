@@ -132,12 +132,12 @@ async function startApplication() {
     console.log(`   UPSTASH_REDIS: ${process.env.UPSTASH_REDIS_REST_URL ? '✓ Configured' : '➖ Using in-memory rate limiting'}`);
     console.log();
 
-    // Step 3: Check for and resolve failed migrations, then run database migration
+    // Step 3: Check for failed migrations, then run database migration
     console.log('📦 Step 3: Database migration');
 
-    // First, check migration status and resolve any failed migrations
+    // First, check migration status - FAIL FAST if there are issues
     try {
-      console.log('🔍 Checking for failed migrations...');
+      console.log('🔍 Checking migration status...');
       const { execSync } = require('child_process');
 
       const statusOutput = execSync('npx prisma migrate status', {
@@ -146,33 +146,38 @@ async function startApplication() {
         cwd: process.cwd()
       });
 
-      // Check if there are failed migrations
+      // Check if there are failed migrations - STOP deployment if found
       if (statusOutput.includes('failed') || statusOutput.includes('Failed')) {
-        console.log('⚠️  Found failed migration, attempting to resolve...');
-
-        // Extract the failed migration name from the status output
-        const failedMigrationMatch = statusOutput.match(/`([^`]+)`\s+migration.*failed/i);
-
-        if (failedMigrationMatch && failedMigrationMatch[1]) {
-          const migrationName = failedMigrationMatch[1];
-          console.log(`🔧 Marking migration "${migrationName}" as resolved...`);
-
-          execSync(`npx prisma migrate resolve --applied ${migrationName}`, {
-            stdio: 'inherit',
-            env: process.env,
-            cwd: process.cwd()
-          });
-
-          console.log(`✅ Migration "${migrationName}" marked as resolved`);
-        } else {
-          console.log('⚠️  Could not extract failed migration name, continuing anyway...');
-        }
+        console.error('❌ DEPLOYMENT STOPPED: Failed migration detected!');
+        console.error('');
+        console.error('A previous migration failed and must be resolved manually to prevent data corruption.');
+        console.error('');
+        console.error('📋 Migration Status:');
+        console.error(statusOutput);
+        console.error('');
+        console.error('🔧 To resolve this issue:');
+        console.error('');
+        console.error('1. Investigate why the migration failed:');
+        console.error('   railway run npx prisma migrate status');
+        console.error('');
+        console.error('2. Connect to the database and check the actual schema:');
+        console.error('   railway run npx prisma db pull');
+        console.error('');
+        console.error('3. If the migration was already applied, mark it as resolved:');
+        console.error('   railway run node scripts/fix-failed-migration.js');
+        console.error('');
+        console.error('4. Or manually resolve a specific migration:');
+        console.error('   railway run npx prisma migrate resolve --applied <migration_name>');
+        console.error('');
+        console.error('⚠️  Do NOT auto-resolve without investigating - this could cause data corruption!');
+        console.error('');
+        process.exit(1); // FAIL FAST - require manual intervention
       } else {
         console.log('✅ No failed migrations detected');
       }
     } catch (error) {
-      // If migration status check fails, log but continue with deployment
-      console.log('ℹ️  Migration status check failed, continuing with deployment...');
+      // If migration status check fails, it's likely the first deployment
+      console.log('ℹ️  Migration status check failed (might be first deployment), continuing...');
     }
 
     // Now run the actual migration
