@@ -132,8 +132,50 @@ async function startApplication() {
     console.log(`   UPSTASH_REDIS: ${process.env.UPSTASH_REDIS_REST_URL ? '✓ Configured' : '➖ Using in-memory rate limiting'}`);
     console.log();
 
-    // Step 3: Run database migration
+    // Step 3: Check for and resolve failed migrations, then run database migration
     console.log('📦 Step 3: Database migration');
+
+    // First, check migration status and resolve any failed migrations
+    try {
+      console.log('🔍 Checking for failed migrations...');
+      const { execSync } = require('child_process');
+
+      const statusOutput = execSync('npx prisma migrate status', {
+        encoding: 'utf-8',
+        env: process.env,
+        cwd: process.cwd()
+      });
+
+      // Check if there are failed migrations
+      if (statusOutput.includes('failed') || statusOutput.includes('Failed')) {
+        console.log('⚠️  Found failed migration, attempting to resolve...');
+
+        // Extract the failed migration name from the status output
+        const failedMigrationMatch = statusOutput.match(/`([^`]+)`\s+migration.*failed/i);
+
+        if (failedMigrationMatch && failedMigrationMatch[1]) {
+          const migrationName = failedMigrationMatch[1];
+          console.log(`🔧 Marking migration "${migrationName}" as resolved...`);
+
+          execSync(`npx prisma migrate resolve --applied ${migrationName}`, {
+            stdio: 'inherit',
+            env: process.env,
+            cwd: process.cwd()
+          });
+
+          console.log(`✅ Migration "${migrationName}" marked as resolved`);
+        } else {
+          console.log('⚠️  Could not extract failed migration name, continuing anyway...');
+        }
+      } else {
+        console.log('✅ No failed migrations detected');
+      }
+    } catch (error) {
+      // If migration status check fails, log but continue with deployment
+      console.log('ℹ️  Migration status check failed, continuing with deployment...');
+    }
+
+    // Now run the actual migration
     await runCommand('npx', ['prisma', 'migrate', 'deploy'], 'Database migration');
     console.log();
 
