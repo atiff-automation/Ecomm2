@@ -189,6 +189,7 @@ export function CartSidebar({
                             src={item.product.primaryImage.url}
                             alt={
                               item.product.primaryImage.altText ||
+                              item.product.metaTitle ||
                               item.product.name
                             }
                             fill

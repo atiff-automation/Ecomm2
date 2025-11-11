@@ -16,6 +16,7 @@ export interface ProductImageProps {
     isPrimary: boolean;
   }>;
   productName: string;
+  metaTitle?: string;
   variant?: 'default' | 'compact' | 'featured';
   aspectRatio?: '1:1' | '4:5' | '3:4';
   showImageCount?: boolean;
@@ -38,6 +39,7 @@ const variantClasses = {
 export function ProductImage({
   images,
   productName,
+  metaTitle,
   variant = 'default',
   aspectRatio = '1:1',
   showImageCount = false,
@@ -97,7 +99,7 @@ export function ProductImage({
       {/* Main Image */}
       <Image
         src={primaryImage.url}
-        alt={primaryImage.altText || productName}
+        alt={primaryImage.altText || metaTitle || productName}
         fill
         className={cn(
           'object-cover transition-all duration-300',

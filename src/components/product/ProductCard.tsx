@@ -23,6 +23,7 @@ interface ProductCardProps {
     name: string;
     slug: string;
     shortDescription?: string;
+    metaTitle?: string;
     averageRating: number;
     reviewCount: number;
     categories: Array<{
@@ -97,7 +98,7 @@ export function ProductCard({
           {primaryImage ? (
             <Image
               src={primaryImage.url}
-              alt={primaryImage.altText || product.name}
+              alt={primaryImage.altText || product.metaTitle || product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
             />

@@ -233,7 +233,9 @@ export function ProductClient({ product }: ProductClientProps) {
                   product.images[0].url
                 }
                 alt={
-                  product.images[selectedImageIndex]?.altText || product.name
+                  product.images[selectedImageIndex]?.altText ||
+                  product.metaTitle ||
+                  product.name
                 }
                 fill
                 quality={100}
@@ -293,7 +295,7 @@ export function ProductClient({ product }: ProductClientProps) {
                 >
                   <Image
                     src={image.url}
-                    alt={image.altText || product.name}
+                    alt={image.altText || product.metaTitle || product.name}
                     fill
                     quality={100}
                     unoptimized={true}

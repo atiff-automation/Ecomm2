@@ -115,6 +115,9 @@ export interface ProductResponse {
   promotionEndDate?: string;
   memberOnlyUntil?: string;
   earlyAccessStart?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: any;
   averageRating: number;
   reviewCount: number;
   categories: CategoryResponse[];

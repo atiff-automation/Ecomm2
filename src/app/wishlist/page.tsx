@@ -33,6 +33,7 @@ interface WishlistItem {
     name: string;
     slug: string;
     shortDescription?: string;
+    metaTitle?: string;
     regularPrice: number;
     memberPrice: number;
     stockQuantity: number;
@@ -195,7 +196,11 @@ export default function WishlistPage() {
           {item.product.primaryImage ? (
             <Image
               src={item.product.primaryImage.url}
-              alt={item.product.primaryImage.altText || item.product.name}
+              alt={
+                item.product.primaryImage.altText ||
+                item.product.metaTitle ||
+                item.product.name
+              }
               fill
               quality={100}
               unoptimized={true}
