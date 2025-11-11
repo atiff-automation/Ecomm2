@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { checkCSRF } from '@/lib/middleware/with-csrf';
 import { dimensionsSchema } from '@/lib/validation/product-dimensions';
 
@@ -419,6 +420,26 @@ export async function PUT(
         },
       },
     });
+
+    // CACHE INVALIDATION: Revalidate Next.js Data Cache (DRY - Single Source of Truth)
+    // This ensures individual product page and listing page immediately show updated data
+    try {
+      // Get the product slug for revalidation
+      const productSlug = productData.slug || existingProduct.slug;
+
+      // Revalidate individual product page
+      revalidatePath(`/products/${productSlug}`);
+
+      // Revalidate products listing page
+      revalidatePath('/products');
+
+      // Revalidate admin product pages
+      revalidatePath('/admin/products');
+      revalidatePath(`/admin/products/${params.id}/edit`);
+    } catch (revalidationError) {
+      // Don't fail the update if revalidation fails
+      console.error('Failed to revalidate paths:', revalidationError);
+    }
 
     return NextResponse.json({
       message: 'Product updated successfully',

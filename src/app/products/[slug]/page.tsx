@@ -1,11 +1,16 @@
 /**
  * Product Detail Page - Server Component
  * Generates SEO metadata and fetches product data
+ *
+ * ARCHITECTURE: Uses direct Prisma queries (Server Component best practice)
+ * - No HTTP calls to own API routes
+ * - No custom caching layers (uses Next.js Data Cache)
+ * - Consistent with products listing page pattern
  */
 
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { productService } from '@/lib/services/product-service';
+import { prisma } from '@/lib/db/prisma';
 import { SEOService } from '@/lib/seo/seo-service';
 import { ProductClient } from './ProductClient';
 
@@ -23,7 +28,52 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   try {
-    const product = await productService.getProduct(params.slug);
+    // Direct database query - no HTTP, no custom cache (Single Source of Truth)
+    const product = await prisma.product.findUnique({
+      where: { slug: params.slug },
+      include: {
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        images: {
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
+    if (!product) {
+      return {
+        title: 'Product Not Found',
+        description: 'The product you are looking for does not exist.',
+      };
+    }
+
+    // Calculate average rating
+    const approvedReviews = await prisma.review.findMany({
+      where: {
+        productId: product.id,
+        isApproved: true,
+      },
+      select: {
+        rating: true,
+      },
+    });
+
+    const totalRating = approvedReviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
+    const averageRating =
+      approvedReviews.length > 0 ? totalRating / approvedReviews.length : 0;
+    const reviewCount = approvedReviews.length;
 
     // Priority 1: Use custom metaTitle and metaDescription if provided
     if (product.metaTitle || product.metaDescription) {
@@ -36,7 +86,7 @@ export async function generateMetadata({
       return {
         title,
         description,
-        keywords: product.metaKeywords,
+        keywords: product.metaKeywords as string[] | undefined,
         openGraph: {
           title,
           description,
@@ -60,16 +110,16 @@ export async function generateMetadata({
 
     const seoData = SEOService.getProductSEO({
       name: product.name,
-      description: product.description,
-      regularPrice: product.regularPrice,
-      memberPrice: product.memberPrice,
+      description: product.description || undefined,
+      regularPrice: Number(product.regularPrice),
+      memberPrice: Number(product.memberPrice),
       images: product.images.map(img => img.url),
       category: categoryName,
       brand: 'JRM HOLISTIK',
       sku: product.sku,
       stock: product.stockQuantity,
-      rating: product.averageRating,
-      reviewCount: product.reviewCount,
+      rating: averageRating,
+      reviewCount: reviewCount,
       slug: product.slug,
     });
 
@@ -101,22 +151,156 @@ export async function generateMetadata({
 
 /**
  * Product Detail Page - Server Component
+ * Direct database query - no HTTP calls, no custom cache
  */
 export default async function ProductPage({ params }: PageProps) {
-  let product;
+  // Direct database query (Single Source of Truth - same pattern as listing page)
+  const product = await prisma.product.findUnique({
+    where: { slug: params.slug },
+    include: {
+      categories: {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
+      images: {
+        orderBy: { sortOrder: 'asc' },
+      },
+      variants: {
+        orderBy: { createdAt: 'asc' },
+      },
+      reviews: {
+        where: { isApproved: true },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      },
+      _count: {
+        select: {
+          reviews: {
+            where: { isApproved: true },
+          },
+        },
+      },
+    },
+  });
 
-  try {
-    product = await productService.getProduct(params.slug);
-  } catch (error) {
+  if (!product) {
     // Product not found, show 404
     notFound();
   }
 
-  // Track product view (async, non-blocking)
-  productService.trackProductView(product.id).catch(err => {
+  // Calculate average rating
+  const approvedReviews = await prisma.review.findMany({
+    where: {
+      productId: product.id,
+      isApproved: true,
+    },
+    select: {
+      rating: true,
+    },
+  });
+
+  const totalRating = approvedReviews.reduce(
+    (sum, review) => sum + review.rating,
+    0
+  );
+  const averageRating =
+    approvedReviews.length > 0 ? totalRating / approvedReviews.length : 0;
+
+  // Get related products from same categories
+  const productCategoryIds = product.categories.map(cat => cat.category.id);
+  const relatedProducts = await prisma.product.findMany({
+    where: {
+      categories: {
+        some: {
+          categoryId: {
+            in: productCategoryIds,
+          },
+        },
+      },
+      status: 'ACTIVE',
+      id: { not: product.id },
+    },
+    include: {
+      categories: {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
+      images: {
+        where: { isPrimary: true },
+        take: 1,
+      },
+    },
+    take: 4,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Transform data to match ProductClient interface
+  const productWithRating = {
+    ...product,
+    regularPrice: Number(product.regularPrice),
+    memberPrice: Number(product.memberPrice),
+    promotionalPrice: product.promotionalPrice
+      ? Number(product.promotionalPrice)
+      : null,
+    weight: product.weight ? Number(product.weight) : null,
+    averageRating: Math.round(averageRating * 10) / 10,
+    reviewCount: product._count.reviews,
+    categories: product.categories.map(pc => ({
+      category: pc.category,
+    })),
+    reviews: product.reviews.map(review => ({
+      ...review,
+      user: {
+        id: review.user.id,
+        name: `${review.user.firstName} ${review.user.lastName}`,
+      },
+    })),
+    relatedProducts: relatedProducts.map(rp => ({
+      ...rp,
+      regularPrice: Number(rp.regularPrice),
+      memberPrice: Number(rp.memberPrice),
+      promotionalPrice: rp.promotionalPrice ? Number(rp.promotionalPrice) : null,
+      weight: rp.weight ? Number(rp.weight) : null,
+      averageRating: 0,
+      reviewCount: 0,
+      categories: rp.categories.map(pc => ({
+        category: pc.category,
+      })),
+    })),
+  };
+
+  // Track product view (async, non-blocking) - uses API route
+  fetch(`/api/recently-viewed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId: product.id }),
+  }).catch(err => {
     console.error('Failed to track product view:', err);
   });
 
   // Render client component with product data
-  return <ProductClient product={product} />;
+  return <ProductClient product={productWithRating} />;
 }
