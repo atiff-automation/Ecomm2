@@ -46,6 +46,8 @@ model User {
   telegramConfig            TelegramConfig?
   agentApplications         AgentApplication[]
   applicationReviews        AgentApplicationReview[]
+  faqsCreated               FAQ[]                       @relation("FAQCreatedBy")
+  faqsUpdated               FAQ[]                       @relation("FAQUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -1062,6 +1064,52 @@ enum WebhookStatus {
   RETRY
   PROCESSED
   FAILED
+}
+
+enum FAQCategory {
+  ABOUT_US
+  PRODUCTS
+  SHIPPING
+  PAYMENT
+  MEMBERSHIP
+  SAFETY
+}
+
+enum FAQStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// FAQ Model
+model FAQ {
+  id          String      @id @default(cuid())
+
+  // Content
+  question    String      @db.VarChar(500)
+  answer      String      @db.Text
+
+  // Organization
+  category    FAQCategory
+  sortOrder   Int         @default(0)
+
+  // Status
+  status      FAQStatus   @default(ACTIVE)
+
+  // Metadata
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Audit
+  createdByUser User?     @relation("FAQCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?     @relation("FAQUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([category])
+  @@index([status])
+  @@index([sortOrder])
+  @@index([createdAt])
+  @@map("faqs")
 }
 
 // Agent Application System Models
