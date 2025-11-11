@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { FAQ_CONSTANTS } from '@/lib/constants/faq-constants';
@@ -38,7 +38,6 @@ import type { FAQFormData } from '@/types/faq.types';
 
 export default function AdminFAQEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -80,11 +79,7 @@ export default function AdminFAQEditPage({ params }: { params: { id: string } })
         });
       } catch (error) {
         console.error('Error fetching FAQ:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load FAQ',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load FAQ');
         router.push('/admin/content/faqs');
       } finally {
         setLoading(false);
@@ -113,20 +108,13 @@ export default function AdminFAQEditPage({ params }: { params: { id: string } })
         throw new Error(error.error || 'Failed to update FAQ');
       }
 
-      toast({
-        title: 'Success',
-        description: 'FAQ updated successfully',
-      });
+      toast.success('FAQ updated successfully');
 
       router.push('/admin/content/faqs');
       router.refresh();
     } catch (error) {
       console.error('Error updating FAQ:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update FAQ',
-        variant: 'destructive',
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to update FAQ');
     } finally {
       setIsSubmitting(false);
     }

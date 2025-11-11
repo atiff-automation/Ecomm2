@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { FAQ_CONSTANTS } from '@/lib/constants/faq-constants';
@@ -38,7 +38,6 @@ import type { FAQFormData } from '@/types/faq.types';
 
 export default function AdminFAQCreatePage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form setup
@@ -69,20 +68,13 @@ export default function AdminFAQCreatePage() {
         throw new Error(error.error || 'Failed to create FAQ');
       }
 
-      toast({
-        title: 'Success',
-        description: 'FAQ created successfully',
-      });
+      toast.success('FAQ created successfully');
 
       router.push('/admin/content/faqs');
       router.refresh();
     } catch (error) {
       console.error('Error creating FAQ:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create FAQ',
-        variant: 'destructive',
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to create FAQ');
     } finally {
       setIsSubmitting(false);
     }

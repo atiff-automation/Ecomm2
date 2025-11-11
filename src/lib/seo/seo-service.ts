@@ -206,6 +206,35 @@ export class SEOService {
   }
 
   /**
+   * Generate SEO metadata for FAQ page (Soalan Lazim)
+   */
+  static getFAQPageSEO(faqs: Array<{ question: string; answer: string }> = []): SEOData {
+    return {
+      title: 'Soalan Lazim (FAQ) - JRM HOLISTIK | Jamu Ratu Malaya',
+      description:
+        'Jawapan kepada soalan yang sering ditanya tentang JRM HOLISTIK dan produk jamu kami. Ketahui lebih lanjut tentang produk, penghantaran, pembayaran, keahlian, dan keselamatan produk jamu kami.',
+      keywords: [
+        'FAQ JRM HOLISTIK',
+        'soalan lazim jamu',
+        'soalan tentang JRM',
+        'cara order jamu',
+        'penghantaran jamu Malaysia',
+        'pembayaran jamu online',
+        'keahlian JRM HOLISTIK',
+        'produk jamu selamat',
+        'jamu lulus KKM',
+        'jamu halal Malaysia',
+      ],
+      canonical: `${this.SITE_URL}/soalan-lazim`,
+      ogType: 'website',
+      ogImage: `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
+      ogImageAlt: 'Soalan Lazim JRM HOLISTIK - Jamu Ratu Malaya',
+      twitterCard: 'summary_large_image',
+      structuredData: faqs.length > 0 ? this.generateFAQSchema(faqs) : undefined,
+    };
+  }
+
+  /**
    * Generate Organization structured data
    */
   private static generateOrganizationSchema() {

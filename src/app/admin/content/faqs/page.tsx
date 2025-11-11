@@ -36,11 +36,10 @@ import {
 } from 'lucide-react';
 import { FAQ_CONSTANTS, getFAQCategoryLabel } from '@/lib/constants/faq-constants';
 import { FAQWithRelations } from '@/types/faq.types';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export default function AdminFAQListPage() {
   const router = useRouter();
-  const { toast } = useToast();
 
   // State
   const [faqs, setFaqs] = useState<FAQWithRelations[]>([]);
@@ -73,11 +72,7 @@ export default function AdminFAQListPage() {
       setFaqs(data.faqs);
     } catch (error) {
       console.error('Error fetching FAQs:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch FAQs',
-        variant: 'destructive',
-      });
+      toast.error('Failed to fetch FAQs');
     } finally {
       setLoading(false);
     }
@@ -95,19 +90,12 @@ export default function AdminFAQListPage() {
 
       if (!response.ok) throw new Error('Failed to delete FAQ');
 
-      toast({
-        title: 'Success',
-        description: 'FAQ deleted successfully',
-      });
+      toast.success('FAQ deleted successfully');
 
       fetchFAQs();
     } catch (error) {
       console.error('Error deleting FAQ:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete FAQ',
-        variant: 'destructive',
-      });
+      toast.error('Failed to delete FAQ');
     }
   };
 
