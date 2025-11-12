@@ -50,6 +50,11 @@ model User {
   faqsUpdated               FAQ[]                       @relation("FAQUpdatedBy")
   faqCategoriesCreated      FAQCategory[]               @relation("FAQCategoryCreatedBy")
   faqCategoriesUpdated      FAQCategory[]               @relation("FAQCategoryUpdatedBy")
+  articles                  Article[]                   @relation("ArticleAuthor")
+  articlesCreated           Article[]                   @relation("ArticleCreatedBy")
+  articlesUpdated           Article[]                   @relation("ArticleUpdatedBy")
+  articleCategoriesCreated  ArticleCategory[]           @relation("ArticleCategoryCreatedBy")
+  articleCategoriesUpdated  ArticleCategory[]           @relation("ArticleCategoryUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -1315,4 +1320,132 @@ enum BusinessType {
   MUDAH
   TIDAK_BERKAITAN
   LAIN_LAIN
+}
+
+// Article CMS Models
+
+// Article Status Enum
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// Article Category Model - Dynamic categories managed by admin
+model ArticleCategory {
+  id          String   @id @default(cuid())
+
+  // Category Name
+  name        String   @unique
+  slug        String   @unique
+  description String?
+
+  // Display
+  icon        String?  // Icon name (e.g., "BookOpen", "Lightbulb")
+  color       String?  // Hex color for category badge
+  sortOrder   Int      @default(0)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  articles    Article[]
+  createdByUser User?  @relation("ArticleCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?  @relation("ArticleCategoryUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("article_categories")
+}
+
+// Article Tag Model - Free-form tags for taxonomy
+model ArticleTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  articles  ArticleToTag[]
+
+  @@index([slug])
+  @@map("article_tags")
+}
+
+// Article to Tag Junction Table (Many-to-Many)
+model ArticleToTag {
+  id        String   @id @default(cuid())
+  articleId String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  article   Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       ArticleTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, tagId])
+  @@index([articleId])
+  @@index([tagId])
+  @@map("article_to_tags")
+}
+
+// Article Model
+model Article {
+  id               String         @id @default(cuid())
+
+  // Basic Content
+  title            String         @db.VarChar(200)
+  slug             String         @unique @db.VarChar(200)
+  excerpt          String?        @db.VarChar(500)
+  content          String         @db.Text // Rich text HTML from TipTap
+  featuredImage    String         // Required featured image URL
+  featuredImageAlt String         @db.VarChar(200)
+
+  // Organization
+  categoryId       String
+  category         ArticleCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags             ArticleToTag[]
+  sortOrder        Int            @default(0)
+
+  // SEO Fields
+  metaTitle        String?        @db.VarChar(200)
+  metaDescription  String?        @db.VarChar(300)
+  metaKeywords     String[]       // Array of keywords
+
+  // Author
+  authorId         String
+  author           User           @relation("ArticleAuthor", fields: [authorId], references: [id])
+
+  // Publishing
+  status           ArticleStatus  @default(DRAFT)
+  publishedAt      DateTime?
+
+  // Analytics
+  viewCount        Int            @default(0)
+  readingTimeMin   Int            @default(0) // Auto-calculated
+
+  // Metadata
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  // Audit Relations
+  createdByUser    User?          @relation("ArticleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser    User?          @relation("ArticleUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([sortOrder])
+  @@index([viewCount])
+  @@index([createdAt])
+  @@map("articles")
 }
