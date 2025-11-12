@@ -162,6 +162,16 @@ export const articleCategoryBaseSchema = z.object({
 export const articleCategoryCreateSchema = articleCategoryBaseSchema;
 export const articleCategoryUpdateSchema = articleCategoryBaseSchema.partial();
 
+// Category reorder schema
+export const articleCategoryReorderSchema = z.object({
+  updates: z.array(
+    z.object({
+      id: z.string().cuid('Invalid category ID'),
+      sortOrder: z.number().int().min(0),
+    })
+  ),
+});
+
 // Type exports
 export type ArticleCreateSchema = z.infer<typeof articleCreateSchema>;
 export type ArticleUpdateSchema = z.infer<typeof articleUpdateSchema>;
@@ -169,3 +179,4 @@ export type ArticleReorderSchema = z.infer<typeof articleReorderSchema>;
 export type ArticleFilterSchema = z.infer<typeof articleFilterSchema>;
 export type ArticleCategoryCreateSchema = z.infer<typeof articleCategoryCreateSchema>;
 export type ArticleCategoryUpdateSchema = z.infer<typeof articleCategoryUpdateSchema>;
+export type ArticleCategoryReorderSchema = z.infer<typeof articleCategoryReorderSchema>;
