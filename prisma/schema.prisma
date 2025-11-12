@@ -46,6 +46,10 @@ model User {
   telegramConfig            TelegramConfig?
   agentApplications         AgentApplication[]
   applicationReviews        AgentApplicationReview[]
+  faqsCreated               FAQ[]                       @relation("FAQCreatedBy")
+  faqsUpdated               FAQ[]                       @relation("FAQUpdatedBy")
+  faqCategoriesCreated      FAQCategory[]               @relation("FAQCategoryCreatedBy")
+  faqCategoriesUpdated      FAQCategory[]               @relation("FAQCategoryUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -1062,6 +1066,78 @@ enum WebhookStatus {
   RETRY
   PROCESSED
   FAILED
+}
+
+enum FAQStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// FAQ Category Model - Dynamic categories managed by admin
+model FAQCategory {
+  id          String   @id @default(cuid())
+
+  // Category Name (Language-Neutral)
+  name        String   @unique
+
+  // Additional Info
+  description String?  // Description for admin reference
+  icon        String?  // Icon name (e.g., "Info", "Package")
+
+  // Display Order
+  sortOrder   Int      @default(0)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  faqs        FAQ[]
+  createdByUser User?  @relation("FAQCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?  @relation("FAQCategoryUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([name])
+  @@index([sortOrder])
+  @@index([isActive])
+  @@map("faq_categories")
+}
+
+// FAQ Model
+model FAQ {
+  id          String      @id @default(cuid())
+
+  // Content
+  question    String      @db.VarChar(500)
+  answer      String      @db.Text
+
+  // Organization - Now uses dynamic category
+  categoryId  String
+  category    FAQCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sortOrder   Int         @default(0)
+
+  // Status
+  status      FAQStatus   @default(ACTIVE)
+
+  // Metadata
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Audit
+  createdByUser User?     @relation("FAQCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?     @relation("FAQUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([sortOrder])
+  @@index([createdAt])
+  @@map("faqs")
 }
 
 // Agent Application System Models

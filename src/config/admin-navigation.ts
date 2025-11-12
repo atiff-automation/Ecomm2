@@ -10,6 +10,7 @@ import {
   MessageCircle,
   CreditCard,
   BarChart3,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
@@ -115,6 +116,15 @@ export const adminNavigation: NavigationItem[] = [
     icon: MessageCircle,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'n8n Chat Widget Configuration',
+  },
+
+  // ❓ FAQ Section
+  {
+    label: 'FAQs',
+    href: '/admin/content/faqs',
+    icon: HelpCircle,
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
+    description: 'Manage Frequently Asked Questions',
   },
 
   // ⚙️ Settings Section
