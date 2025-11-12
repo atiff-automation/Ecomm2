@@ -36,6 +36,12 @@ export async function GET(
     const faq = await prisma.fAQ.findUnique({
       where: { id: faqId },
       include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         createdByUser: {
           select: { id: true, firstName: true, lastName: true },
         },

@@ -4,57 +4,63 @@
  */
 
 export const FAQ_CONSTANTS = {
-  // Categories with Bahasa Malaysia labels
+  // Categories with English labels for admin
   CATEGORIES: {
     ABOUT_US: {
       value: 'ABOUT_US',
-      label: 'Tentang Kami',
-      description: 'Soalan tentang syarikat dan jenama',
+      label: 'About Us',
+      labelMalay: 'Tentang Kami',
+      description: 'Questions about company and brand',
       icon: 'Info',
     },
     PRODUCTS: {
       value: 'PRODUCTS',
-      label: 'Produk',
-      description: 'Soalan tentang produk jamu',
+      label: 'Products',
+      labelMalay: 'Produk',
+      description: 'Questions about products',
       icon: 'Package',
     },
     SHIPPING: {
       value: 'SHIPPING',
-      label: 'Penghantaran',
-      description: 'Soalan tentang penghantaran dan pos',
+      label: 'Shipping',
+      labelMalay: 'Penghantaran',
+      description: 'Questions about shipping and delivery',
       icon: 'Truck',
     },
     PAYMENT: {
       value: 'PAYMENT',
-      label: 'Pembayaran',
-      description: 'Soalan tentang kaedah pembayaran',
+      label: 'Payment',
+      labelMalay: 'Pembayaran',
+      description: 'Questions about payment methods',
       icon: 'CreditCard',
     },
     MEMBERSHIP: {
       value: 'MEMBERSHIP',
-      label: 'Keahlian',
-      description: 'Soalan tentang program keahlian',
+      label: 'Membership',
+      labelMalay: 'Keahlian',
+      description: 'Questions about membership program',
       icon: 'Users',
     },
     SAFETY: {
       value: 'SAFETY',
-      label: 'Keselamatan',
-      description: 'Soalan tentang keselamatan produk',
+      label: 'Safety',
+      labelMalay: 'Keselamatan',
+      description: 'Questions about product safety',
       icon: 'Shield',
     },
   },
 
-  // Status options
+  // Status options with English labels for admin
   STATUS: {
     ACTIVE: {
       value: 'ACTIVE',
-      label: 'Aktif',
+      label: 'Active',
       color: 'green',
       icon: 'CheckCircle',
     },
     INACTIVE: {
       value: 'INACTIVE',
-      label: 'Tidak Aktif',
+      label: 'Inactive',
       color: 'gray',
       icon: 'XCircle',
     },
@@ -85,10 +91,16 @@ export const FAQ_CONSTANTS = {
 export type FAQCategoryValue = keyof typeof FAQ_CONSTANTS.CATEGORIES;
 export type FAQStatusValue = keyof typeof FAQ_CONSTANTS.STATUS;
 
-// Helper function to get category label
+// Helper function to get category label (English - for admin)
 export function getFAQCategoryLabel(category: string): string {
   const categoryKey = category as FAQCategoryValue;
   return FAQ_CONSTANTS.CATEGORIES[categoryKey]?.label || category;
+}
+
+// Helper function to get Malay category label (for public display)
+export function getFAQCategoryLabelMalay(category: string): string {
+  const categoryKey = category as FAQCategoryValue;
+  return FAQ_CONSTANTS.CATEGORIES[categoryKey]?.labelMalay || category;
 }
 
 // Helper function to get all categories as array

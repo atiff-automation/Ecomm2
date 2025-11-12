@@ -1,6 +1,6 @@
 /**
  * FAQ Page Layout with SEO Metadata
- * /soalan-lazim
+ * /faq
  */
 
 import { Metadata } from 'next';
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SoalanLazimLayout({
+export default function FAQLayout({
   children,
 }: {
   children: React.ReactNode;

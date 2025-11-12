@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,10 +35,33 @@ import Link from 'next/link';
 import { FAQ_CONSTANTS } from '@/lib/constants/faq-constants';
 import { faqCreateSchema } from '@/lib/validations/faq-validation';
 import type { FAQFormData } from '@/types/faq.types';
+import type { FAQCategoryPublic } from '@/types/faq-category.types';
 
 export default function AdminFAQCreatePage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<FAQCategoryPublic[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/admin/faq-categories?isActive=true');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+
+        const data = await response.json();
+        setCategories(data.categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        toast.error('Failed to load categories');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Form setup
   const form = useForm<FAQFormData>({
@@ -46,7 +69,7 @@ export default function AdminFAQCreatePage() {
     defaultValues: {
       question: '',
       answer: '',
-      category: 'ABOUT_US',
+      categoryId: '',
       sortOrder: 0,
       status: 'ACTIVE',
     },
@@ -81,29 +104,29 @@ export default function AdminFAQCreatePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
+    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <Link href="/admin/content/faqs">
-          <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-3 md:mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to FAQs
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">Create New FAQ</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold">Create New FAQ</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Add a new frequently asked question
         </p>
       </div>
 
       {/* Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>FAQ Details</CardTitle>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">FAQ Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
               {/* Question */}
               <FormField
                 control={form.control}
@@ -111,7 +134,7 @@ export default function AdminFAQCreatePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Question (Bahasa Malaysia) <span className="text-red-500">*</span>
+                      Question <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -119,7 +142,7 @@ export default function AdminFAQCreatePage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs md:text-sm">
                       The question that customers ask (10-500 characters)
                     </FormDescription>
                     <FormMessage />
@@ -134,7 +157,7 @@ export default function AdminFAQCreatePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Answer (Bahasa Malaysia) <span className="text-red-500">*</span>
+                      Answer <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Textarea
@@ -143,7 +166,7 @@ export default function AdminFAQCreatePage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs md:text-sm">
                       The detailed answer (20-5000 characters)
                     </FormDescription>
                     <FormMessage />
@@ -154,7 +177,7 @@ export default function AdminFAQCreatePage() {
               {/* Category */}
               <FormField
                 control={form.control}
-                name="category"
+                name="categoryId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
@@ -163,45 +186,23 @@ export default function AdminFAQCreatePage() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      disabled={loadingCategories}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select category"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(FAQ_CONSTANTS.CATEGORIES).map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label} - {cat.description}
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}{cat.description ? ` - ${cat.description}` : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
+                    <FormDescription className="text-xs md:text-sm">
                       Group this FAQ under a category
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Sort Order */}
-              <FormField
-                control={form.control}
-                name="sortOrder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Order</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Lower numbers appear first (0 = top)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -232,7 +233,7 @@ export default function AdminFAQCreatePage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
+                    <FormDescription className="text-xs md:text-sm">
                       Active FAQs are visible on the website
                     </FormDescription>
                     <FormMessage />
@@ -243,13 +244,13 @@ export default function AdminFAQCreatePage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <Link href="/admin/content/faqs">
-              <Button type="button" variant="outline">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 md:gap-4">
+            <Link href="/admin/content/faqs" className="w-full sm:w-auto">
+              <Button type="button" variant="outline" className="w-full sm:w-auto">
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? 'Creating...' : 'Create FAQ'}
             </Button>

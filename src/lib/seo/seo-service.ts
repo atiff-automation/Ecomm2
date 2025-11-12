@@ -206,7 +206,7 @@ export class SEOService {
   }
 
   /**
-   * Generate SEO metadata for FAQ page (Soalan Lazim)
+   * Generate SEO metadata for FAQ page
    */
   static getFAQPageSEO(faqs: Array<{ question: string; answer: string }> = []): SEOData {
     return {
@@ -225,7 +225,7 @@ export class SEOService {
         'jamu lulus KKM',
         'jamu halal Malaysia',
       ],
-      canonical: `${this.SITE_URL}/soalan-lazim`,
+      canonical: `${this.SITE_URL}/faq`,
       ogType: 'website',
       ogImage: `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
       ogImageAlt: 'Soalan Lazim JRM HOLISTIK - Jamu Ratu Malaya',

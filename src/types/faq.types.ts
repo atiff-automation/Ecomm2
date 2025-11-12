@@ -3,13 +3,20 @@
  * Centralized TypeScript types for FAQ feature
  */
 
-import { FAQ as PrismaFAQ, FAQCategory, FAQStatus } from '@prisma/client';
+import { FAQ as PrismaFAQ, FAQCategory as PrismaFAQCategory, FAQStatus } from '@prisma/client';
 
 // Base FAQ type from Prisma
 export type FAQ = PrismaFAQ;
 
+// FAQ Category type
+export type FAQCategory = PrismaFAQCategory;
+
 // FAQ with relations
 export interface FAQWithRelations extends FAQ {
+  category?: {
+    id: string;
+    name: string;
+  };
   createdByUser?: {
     id: string;
     firstName: string;
@@ -27,7 +34,11 @@ export interface FAQPublic {
   id: string;
   question: string;
   answer: string;
-  category: FAQCategory;
+  categoryId: string;
+  category?: {
+    id: string;
+    name: string;
+  };
   sortOrder: number;
 }
 
@@ -35,7 +46,7 @@ export interface FAQPublic {
 export interface FAQCreateInput {
   question: string;
   answer: string;
-  category: FAQCategory;
+  categoryId: string;
   sortOrder?: number;
   status?: FAQStatus;
 }
@@ -44,14 +55,14 @@ export interface FAQCreateInput {
 export interface FAQUpdateInput {
   question?: string;
   answer?: string;
-  category?: FAQCategory;
+  categoryId?: string;
   sortOrder?: number;
   status?: FAQStatus;
 }
 
 // FAQ filter options
 export interface FAQFilter {
-  category?: FAQCategory | 'ALL';
+  categoryId?: string | 'ALL';
   status?: FAQStatus | 'ALL';
   search?: string;
 }
@@ -82,7 +93,7 @@ export interface FAQPublicListResponse {
 export interface FAQFormData {
   question: string;
   answer: string;
-  category: FAQCategory;
+  categoryId: string;
   sortOrder: number;
   status: FAQStatus;
 }

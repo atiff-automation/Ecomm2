@@ -6,16 +6,6 @@
 import { z } from 'zod';
 import { FAQ_CONSTANTS } from '@/lib/constants/faq-constants';
 
-// Category enum
-const faqCategoryEnum = z.enum([
-  'ABOUT_US',
-  'PRODUCTS',
-  'SHIPPING',
-  'PAYMENT',
-  'MEMBERSHIP',
-  'SAFETY',
-]);
-
 // Status enum
 const faqStatusEnum = z.enum(['ACTIVE', 'INACTIVE']);
 
@@ -25,11 +15,11 @@ export const faqBaseSchema = z.object({
     .string()
     .min(
       FAQ_CONSTANTS.VALIDATION.QUESTION_MIN_LENGTH,
-      `Soalan mesti sekurang-kurangnya ${FAQ_CONSTANTS.VALIDATION.QUESTION_MIN_LENGTH} aksara`
+      `Question must be at least ${FAQ_CONSTANTS.VALIDATION.QUESTION_MIN_LENGTH} characters`
     )
     .max(
       FAQ_CONSTANTS.VALIDATION.QUESTION_MAX_LENGTH,
-      `Soalan tidak boleh melebihi ${FAQ_CONSTANTS.VALIDATION.QUESTION_MAX_LENGTH} aksara`
+      `Question must not exceed ${FAQ_CONSTANTS.VALIDATION.QUESTION_MAX_LENGTH} characters`
     )
     .trim(),
 
@@ -37,21 +27,22 @@ export const faqBaseSchema = z.object({
     .string()
     .min(
       FAQ_CONSTANTS.VALIDATION.ANSWER_MIN_LENGTH,
-      `Jawapan mesti sekurang-kurangnya ${FAQ_CONSTANTS.VALIDATION.ANSWER_MIN_LENGTH} aksara`
+      `Answer must be at least ${FAQ_CONSTANTS.VALIDATION.ANSWER_MIN_LENGTH} characters`
     )
     .max(
       FAQ_CONSTANTS.VALIDATION.ANSWER_MAX_LENGTH,
-      `Jawapan tidak boleh melebihi ${FAQ_CONSTANTS.VALIDATION.ANSWER_MAX_LENGTH} aksara`
+      `Answer must not exceed ${FAQ_CONSTANTS.VALIDATION.ANSWER_MAX_LENGTH} characters`
     )
     .trim(),
 
-  category: faqCategoryEnum,
+  categoryId: z.string().min(1, 'Category is required'),
 
   sortOrder: z
     .number()
-    .int('Sort order mesti nombor bulat')
-    .min(0, 'Sort order mesti 0 atau lebih')
-    .default(0),
+    .int('Sort order must be an integer')
+    .min(0, 'Sort order must be 0 or greater')
+    .default(0)
+    .optional(),
 
   status: faqStatusEnum.default('ACTIVE'),
 });
@@ -74,7 +65,7 @@ export const faqReorderSchema = z.object({
 
 // Filter schema
 export const faqFilterSchema = z.object({
-  category: z.union([faqCategoryEnum, z.literal('ALL')]).optional(),
+  categoryId: z.string().cuid().or(z.literal('ALL')).optional(),
   status: z.union([faqStatusEnum, z.literal('ALL')]).optional(),
   search: z.string().optional(),
 });

@@ -1,6 +1,6 @@
 /**
  * Public FAQ Page
- * /soalan-lazim
+ * /faq
  */
 
 'use client';
@@ -10,15 +10,33 @@ import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FAQ_CONSTANTS, getFAQCategoryLabel } from '@/lib/constants/faq-constants';
 import type { FAQPublic } from '@/types/faq.types';
+import type { FAQCategoryPublic } from '@/types/faq-category.types';
 
-export default function SoalanLazimPage() {
+export default function FAQPage() {
   const [faqs, setFaqs] = useState<FAQPublic[]>([]);
+  const [categories, setCategories] = useState<FAQCategoryPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/public/faq-categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Fetch FAQs
   useEffect(() => {
@@ -42,7 +60,7 @@ export default function SoalanLazimPage() {
   // Filter FAQs
   const filteredFAQs = faqs.filter((faq) => {
     const matchesCategory =
-      selectedCategory === 'ALL' || faq.category === selectedCategory;
+      selectedCategory === 'ALL' || faq.categoryId === selectedCategory;
     const matchesSearch =
       !search ||
       faq.question.toLowerCase().includes(search.toLowerCase()) ||
@@ -53,8 +71,9 @@ export default function SoalanLazimPage() {
 
   // Group by category
   const faqsByCategory = filteredFAQs.reduce((acc, faq) => {
-    if (!acc[faq.category]) acc[faq.category] = [];
-    acc[faq.category].push(faq);
+    const categoryId = faq.categoryId;
+    if (!acc[categoryId]) acc[categoryId] = [];
+    acc[categoryId].push(faq);
     return acc;
   }, {} as Record<string, FAQPublic[]>);
 
@@ -65,26 +84,26 @@ export default function SoalanLazimPage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-50 to-emerald-50 py-16">
-        <div className="container mx-auto px-4 lg:px-16">
+      <section className="bg-gradient-to-br from-green-50 to-emerald-50 py-12 md:py-16">
+        <div className="container mx-auto px-4 md:px-6 lg:px-16">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               Soalan Lazim (FAQ)
             </h1>
-            <p className="text-lg text-gray-600 mb-8">
+            <p className="text-base md:text-lg text-gray-600 mb-6 md:mb-8 px-2">
               Jawapan kepada soalan yang sering ditanya tentang JRM HOLISTIK dan
               produk jamu kami
             </p>
 
             {/* Search */}
             <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
               <Input
                 type="text"
                 placeholder="Cari soalan..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-12 h-14 text-lg"
+                className="pl-10 md:pl-12 h-12 md:h-14 text-base md:text-lg"
               />
             </div>
           </div>
@@ -92,22 +111,26 @@ export default function SoalanLazimPage() {
       </section>
 
       {/* Category Filters */}
-      <section className="py-8 border-b">
-        <div className="container mx-auto px-4 lg:px-16">
-          <div className="flex flex-wrap gap-3 justify-center">
+      <section className="py-6 md:py-8 border-b">
+        <div className="container mx-auto px-4 md:px-6 lg:px-16">
+          <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
             <Button
               variant={selectedCategory === 'ALL' ? 'default' : 'outline'}
               onClick={() => setSelectedCategory('ALL')}
+              size="sm"
+              className="md:h-10 md:px-4"
             >
               Semua
             </Button>
-            {Object.values(FAQ_CONSTANTS.CATEGORIES).map((cat) => (
+            {categories.map((cat) => (
               <Button
-                key={cat.value}
-                variant={selectedCategory === cat.value ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(cat.value)}
+                key={cat.id}
+                variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(cat.id)}
+                size="sm"
+                className="md:h-10 md:px-4"
               >
-                {cat.label}
+                {cat.name}
               </Button>
             ))}
           </div>
@@ -115,8 +138,8 @@ export default function SoalanLazimPage() {
       </section>
 
       {/* FAQ Accordion */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 lg:px-16 max-w-4xl">
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4 md:px-6 lg:px-16 max-w-4xl">
           {loading ? (
             <div className="text-center py-12">Loading...</div>
           ) : filteredFAQs.length === 0 ? (
@@ -124,13 +147,15 @@ export default function SoalanLazimPage() {
               Tiada soalan dijumpai. Cuba cari dengan kata kunci lain.
             </div>
           ) : (
-            Object.entries(faqsByCategory).map(([category, categoryFAQs]) => (
-              <div key={category} className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  {getFAQCategoryLabel(category)}
-                </h2>
+            Object.entries(faqsByCategory).map(([categoryId, categoryFAQs]) => {
+              const category = categories.find((c) => c.id === categoryId);
+              return (
+                <div key={categoryId} className="mb-8 md:mb-12">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 md:mb-6">
+                    {category?.name || 'Unknown Category'}
+                  </h2>
 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {categoryFAQs.map((faq) => {
                     const isExpanded = expandedId === faq.id;
 
@@ -141,24 +166,23 @@ export default function SoalanLazimPage() {
                       >
                         <button
                           onClick={() => toggleExpand(faq.id)}
-                          className="w-full text-left px-6 py-4 flex items-start justify-between gap-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                          className="w-full text-left px-4 py-3 md:px-6 md:py-4 flex items-start justify-between gap-3 md:gap-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                         >
-                          <span className="font-semibold text-gray-900 flex-1">
+                          <span className="font-semibold text-gray-900 flex-1 text-sm md:text-base">
                             {faq.question}
                           </span>
                           {isExpanded ? (
-                            <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0 mt-0.5" />
                           ) : (
-                            <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0 mt-0.5" />
                           )}
                         </button>
 
                         {isExpanded && (
-                          <div className="px-6 pb-4 text-gray-700 leading-relaxed">
-                            <div
-                              dangerouslySetInnerHTML={{ __html: faq.answer }}
-                              className="prose prose-sm max-w-none"
-                            />
+                          <div className="px-4 md:px-6 pb-4 md:pb-6 pt-2 border-t border-gray-100">
+                            <div className="text-sm md:text-base text-gray-700 whitespace-pre-wrap break-words leading-relaxed">
+                              {faq.answer}
+                            </div>
                           </div>
                         )}
                       </Card>
@@ -166,21 +190,24 @@ export default function SoalanLazimPage() {
                   })}
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>
 
       {/* Contact CTA */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 lg:px-16 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+      <section className="py-12 md:py-16 bg-gray-50">
+        <div className="container mx-auto px-4 md:px-6 lg:px-16 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
             Tidak jumpa jawapan?
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm md:text-base text-gray-600 mb-6">
             Hubungi kami untuk bantuan lanjut
           </p>
-          <Button size="lg">Hubungi Support</Button>
+          <Button size="default" className="md:h-11 md:px-8">
+            Hubungi Support
+          </Button>
         </div>
       </section>
     </div>

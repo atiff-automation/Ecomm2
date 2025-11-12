@@ -1,8 +1,8 @@
 /**
- * FAQs Reorder API
- * PUT /api/admin/faqs/reorder
+ * FAQ Categories Reorder API
+ * PUT /api/admin/faq-categories/reorder
  *
- * Updates sortOrder for multiple FAQ items in a single transaction
+ * Updates sortOrder for multiple FAQ categories in a single transaction
  * Following CLAUDE.md:
  * - Zod validation for all inputs
  * - Prisma transactions (atomic operations)
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
     // All updates succeed together or all fail together
     const result = await prisma.$transaction(
       validated.items.map((item) =>
-        prisma.fAQ.update({
+        prisma.fAQCategory.update({
           where: { id: item.id },
           data: { sortOrder: item.sortOrder },
         })
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Reorder FAQs error:', error);
+    console.error('Reorder FAQ categories error:', error);
 
     // Handle Zod validation errors
     if (error instanceof ZodError) {
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
     if (error instanceof Error && error.message.includes('Record to update not found')) {
       return NextResponse.json(
         {
-          error: 'One or more FAQs not found',
+          error: 'One or more categories not found',
         },
         { status: 404 }
       );

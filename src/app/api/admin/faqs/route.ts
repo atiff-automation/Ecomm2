@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // 2. Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const filters = faqFilterSchema.parse({
-      category: searchParams.get('category') || undefined,
+      categoryId: searchParams.get('categoryId') || undefined,
       status: searchParams.get('status') || undefined,
       search: searchParams.get('search') || undefined,
     });
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     // 3. Build Prisma where clause
     const where: Prisma.FAQWhereInput = {};
 
-    if (filters.category && filters.category !== 'ALL') {
-      where.category = filters.category;
+    if (filters.categoryId && filters.categoryId !== 'ALL') {
+      where.categoryId = filters.categoryId;
     }
 
     if (filters.status && filters.status !== 'ALL') {
@@ -56,6 +56,12 @@ export async function GET(request: NextRequest) {
     const faqs = await prisma.fAQ.findMany({
       where,
       include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         createdByUser: {
           select: {
             id: true,
