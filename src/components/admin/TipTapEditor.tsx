@@ -37,6 +37,9 @@ import {
   AlignRight,
   Smile,
   Loader2,
+  MousePointerClick,
+  Sparkles,
+  CircleDot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -103,7 +106,7 @@ export default function TipTapEditor({
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3',
+          'tiptap-editor focus:outline-none min-h-[400px] px-4 py-3',
       },
     },
   });
@@ -117,6 +120,24 @@ export default function TipTapEditor({
     if (url) {
       editor.chain().focus().setLink({ href: url }).run();
     }
+  };
+
+  // Add CTA Button helpers
+  const addCTAButton = (style: 'primary' | 'secondary' | 'outline') => {
+    const buttonText = window.prompt('Enter button text (e.g., "Buy Now", "Learn More"):');
+    if (!buttonText) return;
+
+    const url = window.prompt('Enter button URL (e.g., /products/slug, https://wa.me/..., https://shopee.com/...):');
+    if (!url) return;
+
+    // Determine CSS class based on style
+    const className = `article-cta-${style}`;
+
+    // Insert CTA button as a paragraph with centered link
+    const buttonHTML = `<p style="text-align: center;"><a href="${url}" class="${className}">${buttonText}</a></p>`;
+
+    editor.chain().focus().insertContent(buttonHTML).run();
+    toast.success(`${style.charAt(0).toUpperCase() + style.slice(1)} CTA button added`);
   };
 
   const addImageFromURL = () => {
@@ -345,6 +366,33 @@ export default function TipTapEditor({
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
 
+        {/* CTA Buttons */}
+        <ToolbarButton
+          onClick={() => addCTAButton('primary')}
+          active={false}
+          title="Add Primary CTA Button (Buy Now, Shop Now)"
+        >
+          <MousePointerClick className="h-4 w-4 text-primary" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => addCTAButton('secondary')}
+          active={false}
+          title="Add Secondary CTA Button (Learn More, Contact)"
+        >
+          <Sparkles className="h-4 w-4 text-secondary-foreground" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => addCTAButton('outline')}
+          active={false}
+          title="Add Outline CTA Button (View Details)"
+        >
+          <CircleDot className="h-4 w-4 text-muted-foreground" />
+        </ToolbarButton>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
         <ToolbarButton
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploadingImage}
@@ -409,10 +457,13 @@ export default function TipTapEditor({
           <Redo className="h-4 w-4" />
         </ToolbarButton>
 
-        {/* Image Guide */}
-        <div className="ml-auto flex items-center text-xs text-gray-500">
-          <span>
-            💡 Tip: Optimal image width: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}px
+        {/* CTA & Image Guide */}
+        <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs text-gray-500">
+          <span className="hidden lg:inline">
+            🎯 CTA: <MousePointerClick className="h-3 w-3 inline text-primary" /> Primary | <Sparkles className="h-3 w-3 inline" /> Secondary | <CircleDot className="h-3 w-3 inline" /> Outline
+          </span>
+          <span className="hidden md:inline">
+            💡 Image: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}px optimal
           </span>
         </div>
       </div>

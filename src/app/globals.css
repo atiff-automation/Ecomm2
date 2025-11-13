@@ -81,3 +81,138 @@
     @apply min-w-[48px] min-h-[48px] sm:min-w-[44px] sm:min-h-[44px];
   }
 }
+
+/* ============================================
+   TipTap Editor Styles - Make formatting visible
+   ============================================ */
+.tiptap-editor {
+  @apply text-base leading-relaxed text-gray-900;
+}
+
+/* Headings - Clear visual hierarchy */
+.tiptap-editor h1 {
+  @apply text-3xl font-bold text-gray-900 mt-6 mb-4 leading-tight;
+}
+
+.tiptap-editor h2 {
+  @apply text-2xl font-bold text-gray-900 mt-5 mb-3 leading-snug;
+}
+
+.tiptap-editor h3 {
+  @apply text-xl font-semibold text-gray-900 mt-4 mb-2 leading-snug;
+}
+
+/* Paragraphs */
+.tiptap-editor p {
+  @apply mb-4 last:mb-0;
+}
+
+/* Lists - Show bullets and numbers */
+.tiptap-editor ul {
+  @apply list-disc list-outside ml-6 mb-4 space-y-1;
+}
+
+.tiptap-editor ol {
+  @apply list-decimal list-outside ml-6 mb-4 space-y-1;
+}
+
+.tiptap-editor li {
+  @apply text-gray-900 pl-1;
+}
+
+/* Nested lists */
+.tiptap-editor li > ul,
+.tiptap-editor li > ol {
+  @apply mt-1 mb-0;
+}
+
+/* Blockquote */
+.tiptap-editor blockquote {
+  @apply border-l-4 border-gray-300 pl-4 py-2 my-4 italic text-gray-700 bg-gray-50;
+}
+
+/* Links */
+.tiptap-editor a {
+  @apply text-blue-600 underline hover:text-blue-800;
+}
+
+/* Images */
+.tiptap-editor img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+/* Text formatting */
+.tiptap-editor strong {
+  @apply font-bold;
+}
+
+.tiptap-editor em {
+  @apply italic;
+}
+
+.tiptap-editor u {
+  @apply underline;
+}
+
+.tiptap-editor s {
+  @apply line-through;
+}
+
+/* Text alignment */
+.tiptap-editor [style*="text-align: left"] {
+  @apply text-left;
+}
+
+.tiptap-editor [style*="text-align: center"] {
+  @apply text-center;
+}
+
+.tiptap-editor [style*="text-align: right"] {
+  @apply text-right;
+}
+
+/* Placeholder */
+.tiptap-editor p.is-editor-empty:first-child::before {
+  @apply text-gray-400;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Focus state */
+.tiptap-editor:focus {
+  @apply outline-none;
+}
+
+/* ============================================
+   CTA Button Styles - For Article Content
+   ============================================ */
+
+/* Primary CTA Button - Main action (Buy Now, Shop Now) */
+.article-cta-primary {
+  @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90 transition-colors no-underline text-center;
+  min-width: 140px;
+}
+
+/* Secondary CTA Button - Secondary action (Learn More, Contact Us) */
+.article-cta-secondary {
+  @apply inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground font-semibold rounded-md hover:bg-secondary/80 transition-colors no-underline text-center;
+  min-width: 140px;
+}
+
+/* Outline CTA Button - Tertiary action (View Details, Read More) */
+.article-cta-outline {
+  @apply inline-flex items-center justify-center px-6 py-3 border-2 border-primary text-primary font-semibold rounded-md hover:bg-primary hover:text-primary-foreground transition-colors no-underline text-center;
+  min-width: 140px;
+}
+
+/* CTA Button wrapper for center alignment */
+.article-cta-wrapper {
+  @apply my-6 text-center;
+}
+
+/* CTA Button group - for multiple CTAs side by side */
+.article-cta-group {
+  @apply flex flex-wrap gap-3 justify-center my-6;
+}
