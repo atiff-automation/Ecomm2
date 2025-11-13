@@ -453,11 +453,8 @@ export default function TipTapEditor({
           <Redo className="h-4 w-4" />
         </ToolbarButton>
 
-        {/* CTA & Image Guide */}
-        <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs text-gray-500">
-          <span className="hidden lg:inline">
-            🎯 CTA Button with 10 color presets + custom colors
-          </span>
+        {/* Image Guide */}
+        <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
           <span className="hidden md:inline">
             💡 Image: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}px optimal
           </span>
