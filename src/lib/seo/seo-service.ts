@@ -395,6 +395,77 @@ export class SEOService {
   }
 
   /**
+   * Generate SEO metadata for article listing page
+   */
+  static getArticleListingSEO(page: number = 1): SEOData {
+    const pageTitle = page > 1 ? ` - Page ${page}` : '';
+
+    return {
+      title: `Articles & Tips${pageTitle} | JRM HOLISTIK - Jamu Ratu Malaya`,
+      description:
+        'Read the latest articles, health tips, and wellness guides about traditional jamu from JRM HOLISTIK. Expert advice on women\'s health and natural remedies.',
+      keywords: [
+        'JRM HOLISTIK articles',
+        'jamu health tips',
+        'traditional medicine Malaysia',
+        'women health tips',
+        'jamu benefits',
+        'wellness blog Malaysia',
+        'herbal remedies',
+        'Jamu Ratu Malaya blog',
+      ],
+      canonical: `${this.SITE_URL}/article${page > 1 ? `?page=${page}` : ''}`,
+      ogType: 'website',
+      ogImage: `${this.SITE_URL}${this.DEFAULT_IMAGE}`,
+      twitterCard: 'summary_large_image',
+      structuredData: this.generateBlogSchema(),
+    };
+  }
+
+  /**
+   * Generate SEO metadata for single article page
+   */
+  static getArticleSEO(article: {
+    title: string;
+    excerpt: string | null;
+    content: string;
+    featuredImage: string;
+    featuredImageAlt: string;
+    category: { name: string };
+    author: { firstName: string; lastName: string };
+    publishedAt: Date;
+    slug: string;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    metaKeywords?: string[] | null;
+  }): SEOData {
+    const metaTitle = article.metaTitle || article.title;
+    const metaDesc =
+      article.metaDescription ||
+      article.excerpt ||
+      article.content.replace(/<[^>]*>/g, '').substring(0, 157) + '...';
+    const authorName = `${article.author.firstName} ${article.author.lastName}`;
+
+    return {
+      title: `${metaTitle} | JRM HOLISTIK Blog`,
+      description: metaDesc,
+      keywords: article.metaKeywords || [
+        article.title.toLowerCase(),
+        article.category.name.toLowerCase(),
+        'JRM HOLISTIK',
+        'jamu Malaysia',
+        'health tips',
+      ],
+      canonical: `${this.SITE_URL}/article/${article.slug}`,
+      ogType: 'article',
+      ogImage: `${this.SITE_URL}${article.featuredImage}`,
+      ogImageAlt: article.featuredImageAlt,
+      twitterCard: 'summary_large_image',
+      structuredData: this.generateArticleSchema(article, authorName),
+    };
+  }
+
+  /**
    * Generate FAQ structured data
    */
   static generateFAQSchema(faqs: Array<{ question: string; answer: string }>) {
@@ -409,6 +480,70 @@ export class SEOService {
           text: faq.answer,
         },
       })),
+    };
+  }
+
+  /**
+   * Generate Article structured data
+   */
+  private static generateArticleSchema(
+    article: {
+      title: string;
+      excerpt: string | null;
+      content: string;
+      featuredImage: string;
+      publishedAt: Date;
+    },
+    authorName: string
+  ) {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: article.title,
+      description: article.excerpt || undefined,
+      image: `${this.SITE_URL}${article.featuredImage}`,
+      datePublished: article.publishedAt.toISOString(),
+      dateModified: article.publishedAt.toISOString(),
+      author: {
+        '@type': 'Person',
+        name: authorName,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: this.COMPANY_NAME,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${this.SITE_URL}/images/logo.png`,
+        },
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `${this.SITE_URL}/article`,
+      },
+      inLanguage: 'ms',
+    };
+  }
+
+  /**
+   * Generate Blog structured data for listing page
+   */
+  private static generateBlogSchema() {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      '@id': `${this.SITE_URL}/article`,
+      name: 'JRM HOLISTIK Blog - Articles & Health Tips',
+      description:
+        'Expert articles and health tips about traditional jamu and women\'s wellness',
+      publisher: {
+        '@type': 'Organization',
+        name: this.COMPANY_NAME,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${this.SITE_URL}/images/logo.png`,
+        },
+      },
+      inLanguage: 'ms',
     };
   }
 

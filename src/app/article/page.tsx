@@ -16,6 +16,8 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import type { ArticleWithRelations, ArticleCategory } from '@/types/article.types';
 import { ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
+import SEOHead from '@/components/seo/SEOHead';
+import { SEOService } from '@/lib/seo/seo-service';
 
 interface TopTag {
   name: string;
@@ -99,8 +101,12 @@ export default function ArticlePage() {
     setPage(1);
   };
 
+  // Generate SEO metadata
+  const seoData = SEOService.getArticleListingSEO(page);
+
   return (
     <div>
+      <SEOHead seo={seoData} />
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-12 md:py-16">
         <div className="container mx-auto px-4 md:px-6 lg:px-16">

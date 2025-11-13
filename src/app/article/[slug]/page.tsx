@@ -26,6 +26,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import type { ArticleWithRelations } from '@/types/article.types';
+import SEOHead from '@/components/seo/SEOHead';
+import { SEOService } from '@/lib/seo/seo-service';
 
 interface SingleArticlePageProps {
   params: { slug: string };
@@ -119,8 +121,12 @@ export default function SingleArticlePage({ params }: SingleArticlePageProps) {
     return null;
   }
 
+  // Generate SEO metadata
+  const seoData = SEOService.getArticleSEO(article);
+
   return (
     <div>
+      <SEOHead seo={seoData} />
       {/* Breadcrumbs */}
       <section className="border-b bg-gray-50">
         <div className="container mx-auto px-4 md:px-6 lg:px-16 py-3 md:py-4">
