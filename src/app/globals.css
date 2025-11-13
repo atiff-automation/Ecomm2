@@ -217,3 +217,25 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+/* ============================================
+   Article Content Styles - Preserve button styles
+   ============================================ */
+
+/* Ensure product embed buttons keep their inline styles and ignore prose link styling */
+.article-content .product-embed-button {
+  color: white !important;
+  text-decoration: none !important;
+  background-color: rgb(220, 38, 38) !important;
+}
+
+.article-content .product-embed-button:hover {
+  color: white !important;
+  text-decoration: none !important;
+  background-color: rgb(185, 28, 28) !important;
+}
+
+/* Ensure CTA buttons keep their inline styles and ignore prose link styling */
+.article-content .article-cta-button {
+  text-decoration: none !important;
+}
