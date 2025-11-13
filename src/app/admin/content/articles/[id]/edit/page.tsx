@@ -35,7 +35,8 @@ import Link from 'next/link';
 import { articleUpdateSchema } from '@/lib/validations/article-validation';
 import type { ArticleFormData, ArticleCategory } from '@/types/article.types';
 import TipTapEditor from '@/components/admin/TipTapEditor';
-import { calculateReadingTime } from '@/lib/constants/article-constants';
+import { calculateReadingTime, ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
+import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
 
 export default function AdminArticleEditPage({
   params,
@@ -47,6 +48,7 @@ export default function AdminArticleEditPage({
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<ArticleCategory[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
 
   // Form setup
   const form = useForm<ArticleFormData>({
@@ -114,6 +116,9 @@ export default function AdminArticleEditPage({
           metaDescription: article.metaDescription || '',
           metaKeywords: article.metaKeywords || [],
         });
+
+        // Set featured image state for ImageUpload component
+        setFeaturedImageUrl(article.featuredImage || '');
       } catch (error) {
         console.error('Error fetching article:', error);
         toast.error('Failed to load article');
@@ -139,6 +144,13 @@ export default function AdminArticleEditPage({
   const handleRemoveTag = (tagToRemove: string) => {
     const tags = form.getValues('tags');
     form.setValue('tags', tags.filter(tag => tag !== tagToRemove));
+  };
+
+  // Handle featured image change
+  const handleFeaturedImageChange = (images: UploadedImage[]) => {
+    const url = images[0]?.url || '';
+    setFeaturedImageUrl(url);
+    form.setValue('featuredImage', url);
   };
 
   // Submit handler
@@ -372,22 +384,26 @@ export default function AdminArticleEditPage({
               <CardTitle>Featured Image</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="featuredImage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Image URL <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Image URL" {...field} />
-                    </FormControl>
-                    <FormDescription>Full URL or path to featured image</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Featured Image <span className="text-red-500">*</span>
+                </label>
+                <ImageUpload
+                  value={featuredImageUrl ? [{ url: featuredImageUrl }] : []}
+                  onChange={handleFeaturedImageChange}
+                  maxFiles={ARTICLE_CONSTANTS.IMAGE_UPLOAD.MAX_FILES}
+                  maxSize={ARTICLE_CONSTANTS.IMAGE_UPLOAD.MAX_FILE_SIZE}
+                  accept={ARTICLE_CONSTANTS.IMAGE_UPLOAD.ACCEPTED_MIME_TYPES}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Upload article featured image (optimal size: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}×{ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_HEIGHT}px for best display)
+                </p>
+                {form.formState.errors.featuredImage && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.featuredImage.message}
+                  </p>
                 )}
-              />
+              </div>
 
               <FormField
                 control={form.control}
