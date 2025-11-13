@@ -222,18 +222,9 @@
 
 /* Override any conflicting link styles in editor - MUST have higher specificity */
 .tiptap-editor a.article-cta-button {
-  /* Reset all default link styles */
+  /* Reset all default link styles - inline styles will override these */
+  color: unset !important;
   text-decoration: none !important;
-
-  /* Let inline styles control all visual properties */
-  /* Inline styles will provide: background-color, color, border */
-}
-
-/* Remove Tailwind's default link classes from CTA buttons */
-.tiptap-editor a.article-cta-button.text-blue-600 {
-  color: inherit !important;
-}
-
-.tiptap-editor a.article-cta-button.underline {
-  text-decoration: none !important;
+  background-color: unset !important;
+  border: unset !important;
 }
