@@ -71,12 +71,12 @@ export default function TipTapEditor({
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkData, setLinkData] = useState({ url: '', text: '', isEditing: false });
-  const [, forceUpdate] = useState({});
+  const [updateCounter, setUpdateCounter] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Force component re-render when selection changes
+  // Force component re-render when selection changes to update toolbar button states
   const handleSelectionUpdate = useCallback(() => {
-    forceUpdate({});
+    setUpdateCounter(prev => prev + 1);
   }, []);
 
   const editor = useEditor({

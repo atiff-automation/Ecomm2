@@ -133,7 +133,12 @@
 
 /* Links - exclude CTA buttons and product embed buttons */
 .tiptap-editor a:not(.article-cta-button):not(.product-embed-button) {
-  @apply text-blue-600 underline hover:text-blue-800;
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.tiptap-editor a:not(.article-cta-button):not(.product-embed-button):hover {
+  color: #1e40af;
 }
 
 /* Images */
@@ -222,29 +227,21 @@
    Article Content Styles - Preserve button styles
    ============================================ */
 
-/* Override prose link styles for product embed buttons - higher specificity without !important */
-.prose .article-content .product-embed-button,
-.prose .article-content a.product-embed-button,
-.article-content .prose .product-embed-button,
-.article-content .prose a.product-embed-button {
-  color: white;
-  text-decoration: none;
-  background-color: rgb(220, 38, 38);
+/* Override Tailwind prose link styles for product embed buttons */
+/* Using !important is necessary here to override prose utility specificity */
+.article-content .product-embed-button {
+  color: white !important;
+  text-decoration: none !important;
+  background-color: rgb(220, 38, 38) !important;
 }
 
-.prose .article-content .product-embed-button:hover,
-.prose .article-content a.product-embed-button:hover,
-.article-content .prose .product-embed-button:hover,
-.article-content .prose a.product-embed-button:hover {
-  color: white;
-  text-decoration: none;
-  background-color: rgb(185, 28, 28);
+.article-content .product-embed-button:hover {
+  color: white !important;
+  text-decoration: none !important;
+  background-color: rgb(185, 28, 28) !important;
 }
 
 /* Override prose link styles for CTA buttons */
-.prose .article-content .article-cta-button,
-.prose .article-content a.article-cta-button,
-.article-content .prose .article-cta-button,
-.article-content .prose a.article-cta-button {
-  text-decoration: none;
+.article-content .article-cta-button {
+  text-decoration: none !important;
 }
