@@ -131,8 +131,8 @@
   @apply border-l-4 border-gray-300 pl-4 py-2 my-4 italic text-gray-700 bg-gray-50;
 }
 
-/* Links */
-.tiptap-editor a {
+/* Links - exclude CTA buttons */
+.tiptap-editor a:not(.article-cta-button) {
   @apply text-blue-600 underline hover:text-blue-800;
 }
 
@@ -210,21 +210,10 @@
 .tiptap-editor .article-cta-button {
   @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-md transition-all no-underline text-center;
   min-width: 140px;
-  /* Ensure inline styles are respected */
-  text-decoration: none !important;
 }
 
 .tiptap-editor .article-cta-button:hover {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Override any conflicting link styles in editor - MUST have higher specificity */
-.tiptap-editor a.article-cta-button {
-  /* Reset all default link styles - inline styles will override these */
-  color: unset !important;
-  text-decoration: none !important;
-  background-color: unset !important;
-  border: unset !important;
 }

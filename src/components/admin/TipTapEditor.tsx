@@ -80,14 +80,21 @@ export default function TipTapEditor({
       }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-600 underline',
-        },
       }).extend({
-        // Allow inline styles for CTA buttons
+        // Preserve class and style attributes from HTML (for CTA buttons)
         addAttributes() {
           return {
             ...this.parent?.(),
+            class: {
+              default: null,
+              parseHTML: element => element.getAttribute('class'),
+              renderHTML: attributes => {
+                if (!attributes.class) {
+                  return {};
+                }
+                return { class: attributes.class };
+              },
+            },
             style: {
               default: null,
               parseHTML: element => element.getAttribute('style'),
