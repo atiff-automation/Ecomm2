@@ -83,6 +83,23 @@ export default function TipTapEditor({
         HTMLAttributes: {
           class: 'text-blue-600 underline',
         },
+      }).extend({
+        // Allow inline styles for CTA buttons
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            style: {
+              default: null,
+              parseHTML: element => element.getAttribute('style'),
+              renderHTML: attributes => {
+                if (!attributes.style) {
+                  return {};
+                }
+                return { style: attributes.style };
+              },
+            },
+          };
+        },
       }),
       Image.configure({
         HTMLAttributes: {

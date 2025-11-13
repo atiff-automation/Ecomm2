@@ -205,3 +205,35 @@
 .article-cta-button:active {
   transform: translateY(0);
 }
+
+/* Ensure CTA buttons render correctly in TipTap editor */
+.tiptap-editor .article-cta-button {
+  @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-md transition-all no-underline text-center;
+  min-width: 140px;
+  /* Ensure inline styles are respected */
+  text-decoration: none !important;
+}
+
+.tiptap-editor .article-cta-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Override any conflicting link styles in editor - MUST have higher specificity */
+.tiptap-editor a.article-cta-button {
+  /* Reset all default link styles */
+  text-decoration: none !important;
+
+  /* Let inline styles control all visual properties */
+  /* Inline styles will provide: background-color, color, border */
+}
+
+/* Remove Tailwind's default link classes from CTA buttons */
+.tiptap-editor a.article-cta-button.text-blue-600 {
+  color: inherit !important;
+}
+
+.tiptap-editor a.article-cta-button.underline {
+  text-decoration: none !important;
+}
