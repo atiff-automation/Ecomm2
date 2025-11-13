@@ -131,8 +131,8 @@
   @apply border-l-4 border-gray-300 pl-4 py-2 my-4 italic text-gray-700 bg-gray-50;
 }
 
-/* Links - exclude CTA buttons */
-.tiptap-editor a:not(.article-cta-button) {
+/* Links - exclude CTA buttons and product embed buttons */
+.tiptap-editor a:not(.article-cta-button):not(.product-embed-button) {
   @apply text-blue-600 underline hover:text-blue-800;
 }
 

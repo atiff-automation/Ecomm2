@@ -199,7 +199,7 @@ export class ContentTransformerService {
           href="/products/${product.slug}"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md text-sm font-medium transition-colors"
+          class="product-embed-button inline-flex items-center px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md text-sm font-medium transition-colors"
         >
           View Product
         </a>
