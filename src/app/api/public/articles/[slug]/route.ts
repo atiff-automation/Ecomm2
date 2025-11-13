@@ -94,37 +94,28 @@ export async function GET(
       });
 
     // 4. Transform article content (YouTube embeds + Product cards)
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚀 [API] Starting content transformation for article:', article.slug);
-    console.log('📊 [API] Original content length:', article.content.length);
-
     try {
-      // Extract product slugs from content
-      console.log('📍 [API] Step 1: Extracting product slugs...');
-      const productSlugs = ProductEmbedService.extractProductSlugs(article.content);
-      console.log('✅ [API] Extracted slugs:', productSlugs);
+      // Extract current host from request (e.g., "localhost:3000" or "jrmholistikajah.com")
+      const host = request.headers.get('host') || 'localhost:3000';
+
+      // Extract product slugs from content (filtered by current host)
+      const productSlugs = ProductEmbedService.extractProductSlugs(
+        article.content,
+        host
+      );
 
       // Fetch product data with caching
-      console.log('📍 [API] Step 2: Fetching product data...');
       const productsData = await ProductEmbedService.fetchProductsBySlug(productSlugs);
-      console.log('✅ [API] Fetched products:', Array.from(productsData.keys()));
 
       // Transform content with all embeds
-      console.log('📍 [API] Step 3: Transforming content...');
-      const transformedContent = await ContentTransformerService.transformContent(
+      article.content = await ContentTransformerService.transformContent(
         article.content,
         productsData
       );
-      console.log('✅ [API] Transformed content length:', transformedContent.length);
-      console.log('📊 [API] Content changed:', article.content !== transformedContent);
-
-      article.content = transformedContent;
     } catch (transformError) {
-      console.error('❌ [API] Content transformation error:', transformError);
+      console.error('Content transformation error:', transformError);
       // Continue with original content (graceful degradation)
     }
-
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // 5. Fetch related articles (same category, exclude current)
     const relatedArticles = await prisma.article.findMany({

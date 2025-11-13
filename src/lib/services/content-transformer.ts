@@ -120,20 +120,10 @@ export class ContentTransformerService {
     // Matches: <a href="https://domain.com/products/slug" ...>...</a>
     const productLinkPattern = /<a[^>]*href=["'](?:https?:\/\/[^\/]+)?\/products?\/([a-z0-9-]+)["'][^>]*>.*?<\/a>/gi;
 
-    console.log('🔍 [Product Transform] Starting transformation...');
-    console.log('📊 [Product Transform] Products data size:', productsData.size);
-    console.log('📊 [Product Transform] Available product slugs:', Array.from(productsData.keys()));
-    console.log('📊 [Product Transform] HTML length:', html.length);
-
     // Transform product links to embeds
-    let matchCount = 0;
     transformed = transformed.replace(productLinkPattern, (match, slug) => {
-      matchCount++;
-      console.log(`🎯 [Product Transform] Match #${matchCount}:`, { slug, matchPreview: match.substring(0, 100) + '...' });
-
       // Skip if already processed
       if (processedSlugs.has(slug)) {
-        console.log(`⏭️ [Product Transform] Skipping duplicate slug: ${slug}`);
         return match;
       }
       processedSlugs.add(slug);
@@ -141,18 +131,13 @@ export class ContentTransformerService {
       // Get product data
       const product = productsData.get(slug);
       if (!product) {
-        console.log(`❌ [Product Transform] Product not found for slug: ${slug}`);
-        // Product not found or deleted - keep original link
+        // Product not found or deleted - keep original link (graceful degradation)
         return match;
       }
 
-      console.log(`✅ [Product Transform] Generating embed for:`, product.name);
       // Generate embed markup
       return this.generateProductEmbedMarkup(product);
     });
-
-    console.log(`📝 [Product Transform] Total matches found: ${matchCount}`);
-    console.log(`📝 [Product Transform] Unique slugs processed: ${processedSlugs.size}`);
 
     return transformed;
   }

@@ -163,35 +163,44 @@ export class ProductEmbedService {
   }
 
   /**
-   * Extract product slugs from HTML content
+   * Extract product slugs from HTML content (domain-aware)
+   * Only extracts slugs from URLs matching the current host
    * Detects both /product/[slug] and /products/[slug] patterns
    * @param html Raw HTML content
-   * @returns Array of unique product slugs
+   * @param currentHost Current request host (e.g., "localhost:3000" or "jrmholistikajah.com")
+   * @returns Array of unique product slugs from matching domain
    */
-  static extractProductSlugs(html: string): string[] {
-    const { LINK_PATTERN } = ARTICLE_CONSTANTS.EMBEDS.PRODUCT;
+  static extractProductSlugs(html: string, currentHost: string): string[] {
     const slugs = new Set<string>();
 
-    console.log('🔍 [Extract Slugs] Starting extraction...');
-    console.log('📊 [Extract Slugs] HTML length:', html.length);
-    console.log('📊 [Extract Slugs] Pattern:', LINK_PATTERN.source);
-
     try {
-      // Match all product links
-      const matches = html.matchAll(new RegExp(LINK_PATTERN.source, 'g'));
+      // Pattern to match full product URLs with domain
+      // Captures: (1) full URL, (2) domain/host, (3) slug
+      const fullUrlPattern = /<a[^>]*href=["'](https?:\/\/([^\/]+)\/products?\/([a-z0-9-]+))["'][^>]*>/gi;
 
-      let matchCount = 0;
-      for (const match of matches) {
-        matchCount++;
-        console.log(`🎯 [Extract Slugs] Match #${matchCount}:`, match[0], '→ slug:', match[1]);
-        if (match[1]) {
-          slugs.add(match[1]);
+      // Pattern to match relative product URLs (assumed to be same domain)
+      const relativeUrlPattern = /<a[^>]*href=["'](\/products?\/([a-z0-9-]+))["'][^>]*>/gi;
+
+      // Extract from absolute URLs (with domain check)
+      let match;
+      while ((match = fullUrlPattern.exec(html)) !== null) {
+        const fullUrl = match[1];
+        const domain = match[2];
+        const slug = match[3];
+
+        // Only include if domain matches current host
+        if (domain === currentHost) {
+          slugs.add(slug);
         }
       }
 
-      console.log(`📝 [Extract Slugs] Total matches: ${matchCount}, Unique slugs: ${slugs.size}`);
+      // Extract from relative URLs (always include - they're for current site)
+      while ((match = relativeUrlPattern.exec(html)) !== null) {
+        const slug = match[2];
+        slugs.add(slug);
+      }
     } catch (error) {
-      console.error('❌ [Extract Slugs] Error:', error);
+      console.error('Error extracting product slugs:', error);
     }
 
     return Array.from(slugs);
