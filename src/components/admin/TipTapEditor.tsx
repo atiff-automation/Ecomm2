@@ -45,6 +45,7 @@ import { toast } from 'sonner';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
 import CTAButtonDialog from '@/components/admin/CTAButtonDialog';
+import LinkDialog from '@/components/admin/LinkDialog';
 
 // Dynamically import EmojiPicker to avoid SSR issues
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
@@ -68,6 +69,8 @@ export default function TipTapEditor({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showCTADialog, setShowCTADialog] = useState(false);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [linkData, setLinkData] = useState({ url: '', text: '', isEditing: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -140,10 +143,46 @@ export default function TipTapEditor({
   }
 
   const addLink = () => {
-    const url = window.prompt('Enter URL:');
-    if (url) {
+    // Check if text is selected
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, '');
+
+    if (selectedText) {
+      // Text is selected - check if it's already a link
+      const isLink = editor.isActive('link');
+      if (isLink) {
+        // Editing existing link
+        const href = editor.getAttributes('link').href || '';
+        setLinkData({ url: href, text: selectedText, isEditing: true });
+      } else {
+        // Converting text to link
+        setLinkData({ url: '', text: selectedText, isEditing: false });
+      }
+    } else {
+      // No text selected - will create new link with text
+      setLinkData({ url: '', text: '', isEditing: false });
+    }
+
+    setShowLinkDialog(true);
+  };
+
+  const handleLinkSave = (url: string, text?: string) => {
+    if (linkData.isEditing) {
+      // Update existing link URL
+      editor.chain().focus().setLink({ href: url }).run();
+    } else if (text) {
+      // Insert new link with text
+      editor
+        .chain()
+        .focus()
+        .insertContent(`<a href="${url}">${text}</a>`)
+        .run();
+    } else {
+      // Convert selected text to link
       editor.chain().focus().setLink({ href: url }).run();
     }
+
+    toast.success(linkData.isEditing ? 'Link updated' : 'Link added');
   };
 
   // Handle CTA button insertion from dialog
@@ -471,6 +510,16 @@ export default function TipTapEditor({
         open={showCTADialog}
         onClose={() => setShowCTADialog(false)}
         onInsert={handleCTAInsert}
+      />
+
+      {/* Link Dialog */}
+      <LinkDialog
+        open={showLinkDialog}
+        onClose={() => setShowLinkDialog(false)}
+        onSave={handleLinkSave}
+        initialUrl={linkData.url}
+        initialText={linkData.text}
+        isEditing={linkData.isEditing}
       />
     </div>
   );
