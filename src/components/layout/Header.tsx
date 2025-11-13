@@ -36,6 +36,7 @@ import {
   Search,
   UserPlus,
   HelpCircle,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -99,6 +100,7 @@ export function Header() {
 
   const navigationItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
+    { href: '/article', label: 'Articles', icon: FileText },
     { href: '/faq', label: 'FAQ', icon: HelpCircle },
     { href: '/track-order', label: 'Track Order' },
     { href: '/apply-agent', label: 'Apply as Agent', icon: UserPlus },
