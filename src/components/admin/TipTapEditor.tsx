@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -71,7 +71,13 @@ export default function TipTapEditor({
   const [showCTADialog, setShowCTADialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkData, setLinkData] = useState({ url: '', text: '', isEditing: false });
+  const [, forceUpdate] = useState({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Force component re-render when selection changes
+  const handleSelectionUpdate = useCallback(() => {
+    forceUpdate({});
+  }, []);
 
   const editor = useEditor({
     immediatelyRender: false, // Fix for Next.js SSR hydration
@@ -130,6 +136,7 @@ export default function TipTapEditor({
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
+    onSelectionUpdate: handleSelectionUpdate,
     editorProps: {
       attributes: {
         class:
