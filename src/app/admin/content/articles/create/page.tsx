@@ -35,13 +35,15 @@ import Link from 'next/link';
 import { articleCreateSchema } from '@/lib/validations/article-validation';
 import type { ArticleFormData, ArticleCategory } from '@/types/article.types';
 import TipTapEditor from '@/components/admin/TipTapEditor';
-import { calculateReadingTime } from '@/lib/constants/article-constants';
+import { calculateReadingTime, ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
+import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
 
 export default function AdminArticleCreatePage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<ArticleCategory[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
 
   // Form setup
   const form = useForm<ArticleFormData>({
@@ -110,6 +112,13 @@ export default function AdminArticleCreatePage() {
     form.setValue('tags', tags.filter(tag => tag !== tagToRemove));
   };
 
+  // Handle featured image change
+  const handleFeaturedImageChange = (images: UploadedImage[]) => {
+    const url = images[0]?.url || '';
+    setFeaturedImageUrl(url);
+    form.setValue('featuredImage', url);
+  };
+
   // Auto-generate excerpt from content if empty
   const handleContentChange = (html: string) => {
     form.setValue('content', html);
@@ -123,6 +132,7 @@ export default function AdminArticleCreatePage() {
 
   // Submit handler
   const onSubmit = async (data: ArticleFormData) => {
+    console.log('📝 Form submission started', data);
     try {
       setIsSubmitting(true);
 
@@ -178,7 +188,13 @@ export default function AdminArticleCreatePage() {
 
       {/* Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(
+            onSubmit,
+            (errors) => console.log('❌ Validation errors:', errors)
+          )}
+          className="space-y-6"
+        >
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -267,7 +283,16 @@ export default function AdminArticleCreatePage() {
                       <FormLabel>
                         Status <span className="text-red-500">*</span>
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Auto-set publishedAt when status changes to PUBLISHED
+                          if (value === 'PUBLISHED' && !form.getValues('publishedAt')) {
+                            form.setValue('publishedAt', new Date());
+                          }
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -313,7 +338,7 @@ export default function AdminArticleCreatePage() {
                       )}
                       <div className="flex gap-2">
                         <Input
-                          placeholder="Add tag"
+                          placeholder={ARTICLE_CONSTANTS.TAG_EXAMPLES}
                           value={tagInput}
                           onChange={(e) => setTagInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -349,25 +374,26 @@ export default function AdminArticleCreatePage() {
               <CardTitle>Featured Image</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="featuredImage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Image URL <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="/images/articles/jamu-benefits.jpg"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>Full URL or path to featured image</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Featured Image <span className="text-red-500">*</span>
+                </label>
+                <ImageUpload
+                  value={featuredImageUrl ? [{ url: featuredImageUrl }] : []}
+                  onChange={handleFeaturedImageChange}
+                  maxFiles={ARTICLE_CONSTANTS.IMAGE_UPLOAD.MAX_FILES}
+                  maxSize={ARTICLE_CONSTANTS.IMAGE_UPLOAD.MAX_FILE_SIZE}
+                  accept={ARTICLE_CONSTANTS.IMAGE_UPLOAD.ACCEPTED_MIME_TYPES}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Upload article featured image (optimal size: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}×{ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_HEIGHT}px for best display)
+                </p>
+                {form.formState.errors.featuredImage && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.featuredImage.message}
+                  </p>
                 )}
-              />
+              </div>
 
               <FormField
                 control={form.control}
@@ -420,26 +446,22 @@ export default function AdminArticleCreatePage() {
               />
 
               {/* Content Editor */}
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Content <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <TipTapEditor
-                        content={field.value}
-                        onChange={handleContentChange}
-                        placeholder="Write your article content here... (minimum 100 characters)"
-                      />
-                    </FormControl>
-                    <FormDescription>Minimum 100 characters</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Content <span className="text-red-500">*</span>
+                </label>
+                <TipTapEditor
+                  content={form.watch('content')}
+                  onChange={handleContentChange}
+                  placeholder="Write your article content here... (minimum 100 characters)"
+                />
+                <p className="text-sm text-muted-foreground">Minimum 100 characters</p>
+                {form.formState.errors.content && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.content.message}
+                  </p>
                 )}
-              />
+              </div>
             </CardContent>
           </Card>
 

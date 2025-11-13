@@ -9,6 +9,8 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from '@/lib/db/prisma';
 import { ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
+import { ContentTransformerService } from '@/lib/services/content-transformer';
+import { ProductEmbedService } from '@/lib/services/product-embed-service';
 
 /**
  * GET /api/public/articles/[slug]
@@ -91,7 +93,40 @@ export async function GET(
         console.error('Error incrementing view count:', error);
       });
 
-    // 4. Fetch related articles (same category, exclude current)
+    // 4. Transform article content (YouTube embeds + Product cards)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🚀 [API] Starting content transformation for article:', article.slug);
+    console.log('📊 [API] Original content length:', article.content.length);
+
+    try {
+      // Extract product slugs from content
+      console.log('📍 [API] Step 1: Extracting product slugs...');
+      const productSlugs = ProductEmbedService.extractProductSlugs(article.content);
+      console.log('✅ [API] Extracted slugs:', productSlugs);
+
+      // Fetch product data with caching
+      console.log('📍 [API] Step 2: Fetching product data...');
+      const productsData = await ProductEmbedService.fetchProductsBySlug(productSlugs);
+      console.log('✅ [API] Fetched products:', Array.from(productsData.keys()));
+
+      // Transform content with all embeds
+      console.log('📍 [API] Step 3: Transforming content...');
+      const transformedContent = await ContentTransformerService.transformContent(
+        article.content,
+        productsData
+      );
+      console.log('✅ [API] Transformed content length:', transformedContent.length);
+      console.log('📊 [API] Content changed:', article.content !== transformedContent);
+
+      article.content = transformedContent;
+    } catch (transformError) {
+      console.error('❌ [API] Content transformation error:', transformError);
+      // Continue with original content (graceful degradation)
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // 5. Fetch related articles (same category, exclude current)
     const relatedArticles = await prisma.article.findMany({
       where: {
         categoryId: article.category.id,
@@ -118,7 +153,7 @@ export async function GET(
       take: ARTICLE_CONSTANTS.UI.RELATED_ARTICLES_COUNT,
     });
 
-    // 5. Return article with related articles
+    // 6. Return article with related articles (content already transformed)
     return NextResponse.json({
       article,
       relatedArticles,

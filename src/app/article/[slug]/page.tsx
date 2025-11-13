@@ -28,6 +28,7 @@ import { format } from 'date-fns';
 import type { ArticleWithRelations } from '@/types/article.types';
 import SEOHead from '@/components/seo/SEOHead';
 import { SEOService } from '@/lib/seo/seo-service';
+import { ArticleContent } from '@/components/article/embeds/ArticleContent';
 
 interface SingleArticlePageProps {
   params: { slug: string };
@@ -209,10 +210,10 @@ export default function SingleArticlePage({ params }: SingleArticlePageProps) {
             />
           </div>
 
-          {/* Article Content */}
-          <div
-            className="prose prose-sm sm:prose md:prose-lg max-w-none mb-8 md:mb-12"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+          {/* Article Content with Embeds */}
+          <ArticleContent
+            content={article.content}
+            className="mb-8 md:mb-12"
           />
 
           {/* Tags */}

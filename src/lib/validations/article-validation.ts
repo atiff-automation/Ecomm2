@@ -56,7 +56,16 @@ export const articleBaseSchema = z.object({
     )
     .trim(),
 
-  featuredImage: z.string().url('Featured image must be a valid URL'),
+  featuredImage: z
+    .string()
+    .min(1, 'Featured image is required')
+    .refine(
+      (val) => {
+        // Accept full URLs (http/https) or paths starting with /
+        return val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/');
+      },
+      { message: 'Featured image must be a valid URL or path' }
+    ),
 
   featuredImageAlt: z
     .string()

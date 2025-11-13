@@ -214,3 +214,41 @@ export interface ArticleCategoryUpdateInput {
   sortOrder?: number;
   isActive?: boolean;
 }
+
+// ============================================================================
+// Embed Types - Product Cards in Articles
+// ============================================================================
+
+/**
+ * Product Embed Data
+ * Minimal product information for embedding in articles
+ * Optimized for performance with only essential fields
+ */
+export interface ProductEmbedData {
+  id: string;
+  slug: string;
+  name: string;
+  regularPrice: number;
+  memberPrice: number;
+  featuredImage: string;
+  stockQuantity: number;
+  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+}
+
+/**
+ * Cached Product
+ * Product data with cache metadata
+ */
+export interface CachedProduct extends ProductEmbedData {
+  cachedAt: number; // Unix timestamp
+  ttl: number; // Time to live in milliseconds
+}
+
+/**
+ * Product Embed Cache Entry
+ * Internal cache structure for ProductEmbedService
+ */
+export interface ProductEmbedCacheEntry {
+  data: ProductEmbedData;
+  expiresAt: number; // Unix timestamp
+}
