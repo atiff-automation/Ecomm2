@@ -433,7 +433,7 @@ export class SEOService {
     featuredImageAlt: string;
     category: { name: string };
     author: { firstName: string; lastName: string };
-    publishedAt: Date;
+    publishedAt: Date | string;
     slug: string;
     metaTitle?: string | null;
     metaDescription?: string | null;
@@ -492,18 +492,23 @@ export class SEOService {
       excerpt: string | null;
       content: string;
       featuredImage: string;
-      publishedAt: Date;
+      publishedAt: Date | string;
     },
     authorName: string
   ) {
+    // Handle both Date objects and ISO strings (API serialization)
+    const publishedDate = typeof article.publishedAt === 'string'
+      ? article.publishedAt
+      : article.publishedAt.toISOString();
+
     return {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: article.title,
       description: article.excerpt || undefined,
       image: `${this.SITE_URL}${article.featuredImage}`,
-      datePublished: article.publishedAt.toISOString(),
-      dateModified: article.publishedAt.toISOString(),
+      datePublished: publishedDate,
+      dateModified: publishedDate,
       author: {
         '@type': 'Person',
         name: authorName,
