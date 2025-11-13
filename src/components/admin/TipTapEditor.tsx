@@ -289,7 +289,7 @@ export default function TipTapEditor({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={cn('h-8 w-8 p-0', active && 'bg-blue-100')}
+      className={cn('h-8 w-8 p-0', active && 'bg-black text-white hover:bg-black')}
     >
       {children}
     </Button>
