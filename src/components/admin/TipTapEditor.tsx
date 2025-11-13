@@ -38,14 +38,13 @@ import {
   Smile,
   Loader2,
   MousePointerClick,
-  Sparkles,
-  CircleDot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { ARTICLE_CONSTANTS } from '@/lib/constants/article-constants';
+import CTAButtonDialog from '@/components/admin/CTAButtonDialog';
 
 // Dynamically import EmojiPicker to avoid SSR issues
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
@@ -68,6 +67,7 @@ export default function TipTapEditor({
 }: TipTapEditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showCTADialog, setShowCTADialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -122,22 +122,10 @@ export default function TipTapEditor({
     }
   };
 
-  // Add CTA Button helpers
-  const addCTAButton = (style: 'primary' | 'secondary' | 'outline') => {
-    const buttonText = window.prompt('Enter button text (e.g., "Buy Now", "Learn More"):');
-    if (!buttonText) return;
-
-    const url = window.prompt('Enter button URL (e.g., /products/slug, https://wa.me/..., https://shopee.com/...):');
-    if (!url) return;
-
-    // Determine CSS class based on style
-    const className = `article-cta-${style}`;
-
-    // Insert CTA button as a paragraph with centered link
-    const buttonHTML = `<p style="text-align: center;"><a href="${url}" class="${className}">${buttonText}</a></p>`;
-
-    editor.chain().focus().insertContent(buttonHTML).run();
-    toast.success(`${style.charAt(0).toUpperCase() + style.slice(1)} CTA button added`);
+  // Handle CTA button insertion from dialog
+  const handleCTAInsert = (html: string) => {
+    editor.chain().focus().insertContent(html).run();
+    toast.success('CTA button added successfully');
   };
 
   const addImageFromURL = () => {
@@ -366,29 +354,13 @@ export default function TipTapEditor({
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
 
-        {/* CTA Buttons */}
+        {/* CTA Button */}
         <ToolbarButton
-          onClick={() => addCTAButton('primary')}
+          onClick={() => setShowCTADialog(true)}
           active={false}
-          title="Add Primary CTA Button (Buy Now, Shop Now)"
+          title="Add CTA Button (with color customization)"
         >
           <MousePointerClick className="h-4 w-4 text-primary" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          onClick={() => addCTAButton('secondary')}
-          active={false}
-          title="Add Secondary CTA Button (Learn More, Contact)"
-        >
-          <Sparkles className="h-4 w-4 text-secondary-foreground" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          onClick={() => addCTAButton('outline')}
-          active={false}
-          title="Add Outline CTA Button (View Details)"
-        >
-          <CircleDot className="h-4 w-4 text-muted-foreground" />
         </ToolbarButton>
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -460,7 +432,7 @@ export default function TipTapEditor({
         {/* CTA & Image Guide */}
         <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs text-gray-500">
           <span className="hidden lg:inline">
-            🎯 CTA: <MousePointerClick className="h-3 w-3 inline text-primary" /> Primary | <Sparkles className="h-3 w-3 inline" /> Secondary | <CircleDot className="h-3 w-3 inline" /> Outline
+            🎯 CTA Button with 10 color presets + custom colors
           </span>
           <span className="hidden md:inline">
             💡 Image: {ARTICLE_CONSTANTS.IMAGE_UPLOAD.OPTIMAL_WIDTH}px optimal
@@ -472,6 +444,13 @@ export default function TipTapEditor({
       <div className="bg-white min-h-[400px]">
         <EditorContent editor={editor} />
       </div>
+
+      {/* CTA Button Dialog */}
+      <CTAButtonDialog
+        open={showCTADialog}
+        onClose={() => setShowCTADialog(false)}
+        onInsert={handleCTAInsert}
+      />
     </div>
   );
 }

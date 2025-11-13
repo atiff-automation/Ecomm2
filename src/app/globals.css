@@ -187,32 +187,21 @@
 
 /* ============================================
    CTA Button Styles - For Article Content
+   Dynamic colors via inline styles
    ============================================ */
 
-/* Primary CTA Button - Main action (Buy Now, Shop Now) */
-.article-cta-primary {
-  @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90 transition-colors no-underline text-center;
+/* Base CTA Button - Colors applied via inline styles */
+.article-cta-button {
+  @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-md transition-all no-underline text-center;
   min-width: 140px;
 }
 
-/* Secondary CTA Button - Secondary action (Learn More, Contact Us) */
-.article-cta-secondary {
-  @apply inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground font-semibold rounded-md hover:bg-secondary/80 transition-colors no-underline text-center;
-  min-width: 140px;
+.article-cta-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Outline CTA Button - Tertiary action (View Details, Read More) */
-.article-cta-outline {
-  @apply inline-flex items-center justify-center px-6 py-3 border-2 border-primary text-primary font-semibold rounded-md hover:bg-primary hover:text-primary-foreground transition-colors no-underline text-center;
-  min-width: 140px;
-}
-
-/* CTA Button wrapper for center alignment */
-.article-cta-wrapper {
-  @apply my-6 text-center;
-}
-
-/* CTA Button group - for multiple CTAs side by side */
-.article-cta-group {
-  @apply flex flex-wrap gap-3 justify-center my-6;
+.article-cta-button:active {
+  transform: translateY(0);
 }
