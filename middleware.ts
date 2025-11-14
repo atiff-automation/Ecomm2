@@ -8,8 +8,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
-  // Only protect critical admin routes
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
+
+  // Redirect www to non-www (canonical URL)
+  if (hostname.startsWith('www.')) {
+    const url = request.nextUrl.clone();
+    url.host = hostname.replace('www.', '');
+    return NextResponse.redirect(url, 301);
+  }
 
   const protectedPaths = [
     '/admin',
@@ -47,8 +54,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match only critical admin routes (narrow scope)
-    '/admin/:path*',
-    '/api/admin/:path*',
+    // Apply to all routes for www redirect
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

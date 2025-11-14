@@ -29,6 +29,7 @@ import type { ArticleWithRelations } from '@/types/article.types';
 import SEOHead from '@/components/seo/SEOHead';
 import { SEOService } from '@/lib/seo/seo-service';
 import { ArticleContent } from '@/components/article/embeds/ArticleContent';
+import { ArticleSchema } from '@/components/seo/ArticleSchema';
 
 interface SingleArticlePageProps {
   params: { slug: string };
@@ -128,6 +129,14 @@ export default function SingleArticlePage({ params }: SingleArticlePageProps) {
   return (
     <div>
       <SEOHead seo={seoData} />
+      <ArticleSchema
+        title={article.title}
+        description={article.excerpt}
+        image={article.featuredImage || undefined}
+        datePublished={new Date(article.createdAt).toISOString()}
+        dateModified={new Date(article.updatedAt).toISOString()}
+        category={article.category.name}
+      />
       {/* Breadcrumbs */}
       <section className="border-b bg-gray-50">
         <div className="container mx-auto px-4 md:px-6 lg:px-16 py-3 md:py-4">

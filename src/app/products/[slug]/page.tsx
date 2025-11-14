@@ -13,6 +13,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db/prisma';
 import { SEOService } from '@/lib/seo/seo-service';
 import { ProductClient } from './ProductClient';
+import { ProductSchema } from '@/components/seo/ProductSchema';
 
 interface PageProps {
   params: {
@@ -301,6 +302,36 @@ export default async function ProductPage({ params }: PageProps) {
     console.error('Failed to track product view:', err);
   });
 
-  // Render client component with product data
-  return <ProductClient product={productWithRating} />;
+  // Determine the current price (promotional > member)
+  const currentPrice = product.promotionalPrice
+    ? Number(product.promotionalPrice)
+    : Number(product.memberPrice);
+
+  // Determine availability status
+  const availability =
+    product.status === 'ACTIVE' && product.stockQuantity > 0
+      ? 'InStock'
+      : product.status === 'ACTIVE' && product.stockQuantity === 0
+        ? 'OutOfStock'
+        : 'OutOfStock';
+
+  // Render client component with product data and structured data
+  return (
+    <>
+      <ProductSchema
+        name={product.name}
+        description={product.description}
+        image={product.images.length > 0 ? product.images[0].url : ''}
+        price={currentPrice}
+        sku={product.sku || undefined}
+        category={
+          product.categories.length > 0
+            ? product.categories[0].category.name
+            : undefined
+        }
+        availability={availability as 'InStock' | 'OutOfStock'}
+      />
+      <ProductClient product={productWithRating} />
+    </>
+  );
 }

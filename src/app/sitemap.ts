@@ -36,22 +36,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/contact`,
+      url: `${baseUrl}/article`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/faq`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/auth/signin`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/auth/signup`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.5,
     },
   ];
 
@@ -106,8 +100,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
+    // Fetch all published articles
+    const articles = await prisma.article.findMany({
+      where: {
+        status: 'PUBLISHED',
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    // Article pages - high priority for SEO and content marketing
+    const articlePages: MetadataRoute.Sitemap = articles.map(article => ({
+      url: `${baseUrl}/article/${article.slug}`,
+      lastModified: article.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    }));
+
     // Combine all pages
-    return [...staticPages, ...productPages, ...categoryPages];
+    return [...staticPages, ...productPages, ...categoryPages, ...articlePages];
   } catch (error) {
     console.error('Error generating sitemap:', error);
     // Return at least static pages if database fails

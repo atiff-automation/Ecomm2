@@ -10,6 +10,7 @@ import { DynamicFavicon } from '@/components/favicon/DynamicFavicon';
 import { SimpleN8nChatLoader } from '@/components/chat/SimpleN8nChatLoader';
 import { getAppUrl } from '@/lib/config/app-url';
 import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider';
+import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import './globals.css';
 
 const geistSans = localFont({
@@ -135,6 +136,9 @@ export default function RootLayout({
           httpEquiv="Referrer-Policy"
           content="strict-origin-when-cross-origin"
         />
+
+        {/* Structured Data for SEO */}
+        <OrganizationSchema />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
