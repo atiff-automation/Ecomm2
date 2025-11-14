@@ -127,7 +127,7 @@ export default function AdminFAQListPage() {
     try {
       const payload = prepareReorderPayload(reorderedFAQs);
 
-      const response = await fetch(DRAG_DROP_CONSTANTS.API_ROUTES.REORDER_FAQS, {
+      const response = await fetchWithCSRF(DRAG_DROP_CONSTANTS.API_ROUTES.REORDER_FAQS, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: payload }),

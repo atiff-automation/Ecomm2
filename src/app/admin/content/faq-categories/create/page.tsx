@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -70,7 +71,7 @@ export default function AdminFAQCategoryCreatePage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch('/api/admin/faq-categories', {
+      const response = await fetchWithCSRF('/api/admin/faq-categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

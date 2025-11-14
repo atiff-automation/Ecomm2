@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -80,7 +81,7 @@ export default function AdminFAQCreatePage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(FAQ_CONSTANTS.API_ROUTES.ADMIN_BASE, {
+      const response = await fetchWithCSRF(FAQ_CONSTANTS.API_ROUTES.ADMIN_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
