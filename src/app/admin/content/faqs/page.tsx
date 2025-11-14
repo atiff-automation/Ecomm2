@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Select,
   SelectContent,
@@ -105,7 +106,7 @@ export default function AdminFAQListPage() {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
 
     try {
-      const response = await fetch(
+      const response = await fetchWithCSRF(
         `${FAQ_CONSTANTS.API_ROUTES.ADMIN_BASE}/${id}`,
         { method: 'DELETE' }
       );

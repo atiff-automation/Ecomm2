@@ -86,10 +86,7 @@
    TipTap Editor Styles - Make formatting visible
    ============================================ */
 .tiptap-editor {
-  @apply text-base leading-relaxed text-gray-900;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  @apply text-base leading-relaxed text-gray-900 break-words hyphens-auto;
 }
 
 /* Headings - Clear visual hierarchy */
@@ -256,17 +253,6 @@
   text-decoration: none !important;
 }
 
-/* Mobile responsiveness - Handle long words and prevent horizontal scroll */
-.article-content {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  hyphens: auto;
-}
-
-.article-content p,
-.article-content div,
-.article-content span {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
+/* Mobile responsiveness - Handle long words and prevent horizontal scroll
+   Uses modern overflow-wrap instead of deprecated word-break: break-word
+   Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-wrap */

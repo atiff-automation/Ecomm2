@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Card,
   CardContent,
@@ -79,7 +80,7 @@ export default function AdminFAQCategoryListPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      const response = await fetch(`/api/admin/faq-categories/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/faq-categories/${id}`, {
         method: 'DELETE',
       });
 
