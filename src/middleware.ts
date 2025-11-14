@@ -31,6 +31,7 @@ function setSecurityHeaders(response: NextResponse): void {
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: blob:",
       "connect-src 'self' https:",
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
       "frame-ancestors 'none'",
     ].join('; ')
   );

@@ -87,6 +87,9 @@
    ============================================ */
 .tiptap-editor {
   @apply text-base leading-relaxed text-gray-900;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Headings - Clear visual hierarchy */
@@ -251,4 +254,19 @@
 /* Override prose link styles for CTA buttons */
 .article-content .article-cta-button {
   text-decoration: none !important;
+}
+
+/* Mobile responsiveness - Handle long words and prevent horizontal scroll */
+.article-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.article-content p,
+.article-content div,
+.article-content span {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
