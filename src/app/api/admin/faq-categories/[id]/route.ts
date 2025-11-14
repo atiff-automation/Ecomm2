@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdminRole } from '@/lib/auth/authorization';
 import { faqCategoryUpdateSchema } from '@/lib/validations/faq-category-validation';
 import { ZodError } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/faq-categories/[id]
@@ -59,6 +60,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { error, session } = await requireAdminRole();
     if (error) {
@@ -135,6 +140,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { error } = await requireAdminRole();
     if (error) {

@@ -15,8 +15,13 @@ import { prisma } from '@/lib/prisma';
 import { reorderRequestSchema } from '@/lib/validations/reorder-validation';
 import { DRAG_DROP_CONSTANTS } from '@/lib/constants/drag-drop-constants';
 import { ZodError } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 export async function PUT(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Parse request body
     const body = await request.json();

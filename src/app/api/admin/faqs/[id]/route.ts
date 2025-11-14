@@ -14,6 +14,7 @@ import { requireAdminRole } from '@/lib/auth/authorization';
 import { faqUpdateSchema, faqIdSchema } from '@/lib/validations/faq-validation';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/faqs/[id]
@@ -81,6 +82,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authorization
     const { error, session } = await requireAdminRole();
@@ -154,6 +159,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authorization
     const { error, session } = await requireAdminRole();

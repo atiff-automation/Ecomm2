@@ -12,6 +12,7 @@ import {
   faqCategoryQuerySchema,
 } from '@/lib/validations/faq-category-validation';
 import { ZodError } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/faq-categories
@@ -86,6 +87,10 @@ export async function GET(request: NextRequest) {
  * Create new FAQ category
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { error, session } = await requireAdminRole();
     if (error) {
