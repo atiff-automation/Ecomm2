@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Select,
   SelectContent,
@@ -112,7 +113,7 @@ export default function AdminArticleListPage() {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
 
     try {
-      const response = await fetch(`/api/admin/articles/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/articles/${id}`, {
         method: 'DELETE',
       });
 

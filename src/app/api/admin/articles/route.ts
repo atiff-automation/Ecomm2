@@ -12,6 +12,7 @@ import { articleCreateSchema, articleFilterSchema } from '@/lib/validations/arti
 import { calculateReadingTime } from '@/lib/constants/article-constants';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/articles
@@ -148,6 +149,10 @@ export async function GET(request: NextRequest) {
  * Create new article
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authentication check
     const session = await getServerSession(authOptions);

@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Form,
   FormControl,
@@ -241,7 +242,7 @@ export function ArticleForm({
           : `/api/admin/articles/${articleId}`;
         const method = mode === 'create' ? 'POST' : 'PUT';
 
-        const response = await fetch(url, {
+        const response = await fetchWithCSRF(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

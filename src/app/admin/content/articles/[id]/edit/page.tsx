@@ -9,6 +9,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ArticleForm } from '@/components/admin/ArticleForm';
 import { toast } from 'sonner';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 export default function AdminArticleEditPage({
   params,
@@ -18,7 +19,7 @@ export default function AdminArticleEditPage({
   const router = useRouter();
 
   const handleDelete = async () => {
-    const response = await fetch(`/api/admin/articles/${params.id}`, {
+    const response = await fetchWithCSRF(`/api/admin/articles/${params.id}`, {
       method: 'DELETE',
     });
 

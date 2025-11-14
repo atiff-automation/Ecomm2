@@ -13,6 +13,7 @@ import { articleUpdateSchema, articleIdSchema } from '@/lib/validations/article-
 import { calculateReadingTime } from '@/lib/constants/article-constants';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/articles/[id]
@@ -91,6 +92,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authentication
     const session = await getServerSession(authOptions);
@@ -247,6 +252,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authentication
     const session = await getServerSession(authOptions);

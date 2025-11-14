@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Form,
   FormControl,
@@ -124,7 +125,7 @@ export default function AdminArticleCategoryEditPage({
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`/api/admin/article-categories/${params.id}`, {
+      const response = await fetchWithCSRF(`/api/admin/article-categories/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

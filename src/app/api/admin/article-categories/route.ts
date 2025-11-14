@@ -12,6 +12,7 @@ import {
 } from '@/lib/validations/article-validation';
 import { ZodError } from 'zod';
 import { z } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 // Query schema for filtering
 const articleCategoryQuerySchema = z.object({
@@ -94,6 +95,10 @@ export async function GET(request: NextRequest) {
  * Create new article category
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { error, session } = await requireAdminRole();
     if (error) {

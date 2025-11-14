@@ -159,13 +159,13 @@ export class ContentTransformerService {
     const stockColorClass = isInStock ? 'text-green-600' : 'text-red-600';
 
     // Generate compact product card
-    return `<div class="product-embed-wrapper my-6 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white" data-product-slug="${product.slug}">
+    return `<div class="not-prose product-embed-wrapper my-6 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white" data-product-slug="${product.slug}">
   <div class="flex gap-4">
-    <div class="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32">
+    <div class="flex-shrink-0 w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
       <img
         src="${product.featuredImage}"
         alt="${product.name}"
-        class="w-full h-full object-cover rounded-md"
+        class="product-embed-image w-full h-full object-cover rounded-md"
         loading="lazy"
       />
     </div>

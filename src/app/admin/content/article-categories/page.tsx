@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import {
   Card,
   CardContent,
@@ -78,7 +79,7 @@ export default function AdminArticleCategoryListPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      const response = await fetch(`/api/admin/article-categories/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/article-categories/${id}`, {
         method: 'DELETE',
       });
 
@@ -100,7 +101,7 @@ export default function AdminArticleCategoryListPage() {
     try {
       const payload = prepareReorderPayload(reorderedCategories);
 
-      const response = await fetch('/api/admin/article-categories/reorder', {
+      const response = await fetchWithCSRF('/api/admin/article-categories/reorder', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ updates: payload }),

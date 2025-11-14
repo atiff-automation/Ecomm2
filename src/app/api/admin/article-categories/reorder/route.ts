@@ -9,11 +9,16 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/db/prisma';
 import { articleCategoryReorderSchema } from '@/lib/validations/article-validation';
 import { z } from 'zod';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * PATCH /api/admin/article-categories/reorder
  */
 export async function PATCH(request: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(request);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // 1. Authentication
     const session = await getServerSession(authOptions);
