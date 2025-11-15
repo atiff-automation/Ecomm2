@@ -18,6 +18,10 @@ import {
   shouldPrioritizeFeatured,
   type ProductSortField,
 } from '@/lib/utils/product-sorting';
+import {
+  PRODUCT_FILTER_PARAMS,
+  isFilterTrue,
+} from '@/lib/constants/product-filter-constants';
 import { ProductsClient } from './products-client';
 import { ProductsHeader } from './components/ProductsHeader';
 import { ProductsLoading } from './components/ProductsLoading';
@@ -27,6 +31,8 @@ interface SearchParams {
   category?: string;
   sortBy?: string;
   page?: string;
+  promotional?: string;
+  featured?: string;
 }
 
 interface ProductsServerProps {
@@ -43,6 +49,8 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
     const search = searchParams.search?.trim();
     const category = searchParams.category;
     const sortBy = searchParams.sortBy || 'created-desc';
+    const promotional = isFilterTrue(searchParams.promotional);
+    const featured = isFilterTrue(searchParams.featured);
 
     // Server-side data fetching (runs on server, zero client bundle impact)
     const [sortField, sortOrder] = sortBy.split('-');
@@ -53,6 +61,8 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
       category: category !== 'all' ? category : undefined,
       sortBy: sortField as 'created' | 'name' | 'price' | 'rating',
       sortOrder: sortOrder as 'asc' | 'desc',
+      promotional,
+      featured,
     };
 
     // CRITICAL FIX: Use direct database calls in server component instead of HTTP API calls
@@ -83,6 +93,16 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
             categoryId: params.category,
           },
         };
+      }
+
+      // Filter by promotional status
+      if (params.promotional) {
+        where.isPromotional = true;
+      }
+
+      // Filter by featured status
+      if (params.featured) {
+        where.featured = true;
       }
 
       // Get total count for pagination
@@ -208,6 +228,8 @@ export async function ProductsServer({ searchParams }: ProductsServerProps) {
             categories.find(cat => cat.id === category)?.name ||
             'All Categories'
           }
+          isPromotional={promotional}
+          isFeatured={featured}
         />
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -255,10 +277,22 @@ export async function generateMetadata({
 }) {
   const search = searchParams.search?.trim();
   const category = searchParams.category;
+  const promotional = isFilterTrue(searchParams.promotional);
+  const featured = isFilterTrue(searchParams.featured);
 
   let title = 'Products - JRM E-commerce';
   let description =
     'Browse our collection of quality products with member benefits and competitive prices.';
+
+  // Build filter prefix for title
+  let filterPrefix = '';
+  if (promotional && featured) {
+    filterPrefix = 'Promotional & Featured ';
+  } else if (promotional) {
+    filterPrefix = 'Promotional ';
+  } else if (featured) {
+    filterPrefix = 'Featured ';
+  }
 
   if (search && category && category !== 'all') {
     // Get category name for title
@@ -266,25 +300,29 @@ export async function generateMetadata({
       const categories = await categoryService.getCategories();
       const categoryName =
         categories.find(cat => cat.id === category)?.name || 'Products';
-      title = `"${search}" in ${categoryName} - JRM E-commerce`;
-      description = `Search results for "${search}" in ${categoryName} category. Find quality products with member discounts.`;
+      title = `"${search}" in ${filterPrefix}${categoryName} - JRM E-commerce`;
+      description = `Search results for "${search}" in ${filterPrefix.toLowerCase()}${categoryName} category. Find quality products with member discounts.`;
     } catch {
-      title = `"${search}" - JRM E-commerce`;
-      description = `Search results for "${search}". Find quality products with member discounts.`;
+      title = `"${search}" - ${filterPrefix}JRM E-commerce`;
+      description = `Search results for "${search}". Find ${filterPrefix.toLowerCase()}quality products with member discounts.`;
     }
   } else if (search) {
-    title = `"${search}" - JRM E-commerce`;
-    description = `Search results for "${search}". Find quality products with member discounts.`;
+    title = `"${search}" - ${filterPrefix}JRM E-commerce`;
+    description = `Search results for "${search}". Find ${filterPrefix.toLowerCase()}quality products with member discounts.`;
   } else if (category && category !== 'all') {
     try {
       const categories = await categoryService.getCategories();
       const categoryName =
         categories.find(cat => cat.id === category)?.name || 'Products';
-      title = `${categoryName} - JRM E-commerce`;
-      description = `Browse our ${categoryName.toLowerCase()} collection. Quality products with member benefits.`;
+      title = `${filterPrefix}${categoryName} - JRM E-commerce`;
+      description = `Browse our ${filterPrefix.toLowerCase()}${categoryName.toLowerCase()} collection. Quality products with member benefits.`;
     } catch {
       // Fallback if category service fails
     }
+  } else if (promotional || featured) {
+    // Filter-only pages
+    title = `${filterPrefix}Products - JRM E-commerce`;
+    description = `Browse our ${filterPrefix.toLowerCase()}products. Find quality items with member benefits and competitive prices.`;
   }
 
   return {

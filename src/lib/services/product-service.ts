@@ -94,6 +94,9 @@ export class ProductService {
       if (params.featured !== undefined) {
         queryParams.append('featured', params.featured.toString());
       }
+      if (params.promotional !== undefined) {
+        queryParams.append('promotional', params.promotional.toString());
+      }
       if (params.inStock !== undefined) {
         queryParams.append('inStock', params.inStock.toString());
       }

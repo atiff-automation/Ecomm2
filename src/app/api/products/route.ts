@@ -67,6 +67,7 @@ const searchProductsSchema = z.object({
   maxPrice: z.string().transform(Number).optional(),
   inStock: z.string().transform(Boolean).optional(),
   featured: z.string().transform(Boolean).optional(),
+  promotional: z.string().transform(Boolean).optional(),
   features: z
     .string()
     .optional()
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest) {
       maxPrice,
       inStock,
       featured,
+      promotional,
       features,
       sortBy,
       sortOrder,
@@ -149,6 +151,10 @@ export async function GET(request: NextRequest) {
 
     if (featured !== undefined) {
       where.featured = featured;
+    }
+
+    if (promotional !== undefined) {
+      where.isPromotional = promotional;
     }
 
     // Handle features filtering

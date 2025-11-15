@@ -11,6 +11,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DynamicMemberLogo } from '@/components/member/DynamicMemberLogo';
+import { MEMBER_PAGE_TEXT } from '@/lib/constants/member-text';
 import {
   User,
   ShoppingBag,
@@ -20,7 +22,6 @@ import {
   X,
   LogOut,
   Home,
-  Award,
 } from 'lucide-react';
 
 interface MemberLayoutProps {
@@ -86,20 +87,11 @@ export default function MemberLayout({ children }: MemberLayoutProps) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <Link href="/member/orders" className="flex items-center">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">JRM</span>
-              </div>
-              <span className="ml-3 text-lg font-semibold text-gray-900">
-                Member
-              </span>
-            </div>
-          </Link>
+        <div className="flex items-center justify-center h-20 px-6 border-b border-gray-200 relative">
+          <DynamicMemberLogo />
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            className="lg:hidden absolute right-6 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
           >
             <X className="h-6 w-6" />
           </button>
@@ -107,21 +99,16 @@ export default function MemberLayout({ children }: MemberLayoutProps) {
 
         {/* Member Status */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-              <Award className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-gray-900">{session.user.name}</p>
-              <div className="flex items-center space-x-2">
-                {session.user.isMember ? (
-                  <Badge className="bg-green-100 text-green-800 border-green-200">
-                    ✨ Active Member
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">Guest</Badge>
-                )}
-              </div>
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <p className="font-medium text-gray-900 text-center">{session.user.name}</p>
+            <div className="flex items-center justify-center">
+              {session.user.isMember ? (
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  ✨ Active Member
+                </Badge>
+              ) : (
+                <Badge variant="outline">{MEMBER_PAGE_TEXT.STATUS.REGULAR}</Badge>
+              )}
             </div>
           </div>
         </div>

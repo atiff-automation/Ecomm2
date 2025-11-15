@@ -9,6 +9,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,8 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, X } from 'lucide-react';
+import { Search, X, Percent, Star } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { FILTER_LABELS } from '@/lib/constants/product-filter-constants';
 
 interface Category {
   id: string;
@@ -31,9 +34,13 @@ interface ProductsFiltersProps {
   currentSearch: string;
   currentCategory: string;
   currentSort: string;
+  currentPromotional: boolean;
+  currentFeatured: boolean;
   onSearchChange: (search: string) => void;
   onCategoryChange: (category: string) => void;
   onSortChange: (sortBy: string) => void;
+  onPromotionalChange: (promotional: boolean) => void;
+  onFeaturedChange: (featured: boolean) => void;
   onClearFilters: () => void;
   disabled?: boolean;
 }
@@ -43,9 +50,13 @@ export function ProductsFilters({
   currentSearch,
   currentCategory,
   currentSort,
+  currentPromotional,
+  currentFeatured,
   onSearchChange,
   onCategoryChange,
   onSortChange,
+  onPromotionalChange,
+  onFeaturedChange,
   onClearFilters,
   disabled = false,
 }: ProductsFiltersProps) {
@@ -72,9 +83,11 @@ export function ProductsFilters({
     return (
       currentSearch !== '' ||
       currentCategory !== 'all' ||
-      currentSort !== 'created-desc'
+      currentSort !== 'created-desc' ||
+      currentPromotional ||
+      currentFeatured
     );
-  }, [currentSearch, currentCategory, currentSort]);
+  }, [currentSearch, currentCategory, currentSort, currentPromotional, currentFeatured]);
 
   return (
     <Card>
@@ -166,6 +179,49 @@ export function ProductsFilters({
           </Select>
         </div>
 
+        {/* Product Type Filters */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium">Product Type</label>
+
+          {/* Promotional Filter */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="promotional-filter"
+              checked={currentPromotional}
+              onCheckedChange={(checked) => {
+                onPromotionalChange(checked === true);
+              }}
+              disabled={disabled}
+            />
+            <Label
+              htmlFor="promotional-filter"
+              className="text-sm font-normal cursor-pointer flex items-center gap-2"
+            >
+              <Percent className="w-4 h-4 text-red-600" />
+              <span>{FILTER_LABELS.PROMOTIONAL}</span>
+            </Label>
+          </div>
+
+          {/* Featured Filter */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="featured-filter"
+              checked={currentFeatured}
+              onCheckedChange={(checked) => {
+                onFeaturedChange(checked === true);
+              }}
+              disabled={disabled}
+            />
+            <Label
+              htmlFor="featured-filter"
+              className="text-sm font-normal cursor-pointer flex items-center gap-2"
+            >
+              <Star className="w-4 h-4 text-blue-600" />
+              <span>{FILTER_LABELS.FEATURED}</span>
+            </Label>
+          </div>
+        </div>
+
         {/* Sort By */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Sort By</label>
@@ -206,6 +262,18 @@ export function ProductsFilters({
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                   {categories.find(cat => cat.id === currentCategory)?.name ||
                     'Category'}
+                </span>
+              )}
+              {currentPromotional && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                  <Percent className="w-3 h-3 mr-1" />
+                  {FILTER_LABELS.PROMOTIONAL}
+                </span>
+              )}
+              {currentFeatured && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                  <Star className="w-3 h-3 mr-1" />
+                  {FILTER_LABELS.FEATURED}
                 </span>
               )}
               {currentSort !== 'created-desc' && (

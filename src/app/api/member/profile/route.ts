@@ -37,6 +37,7 @@ export async function GET() {
         email: true,
         phone: true,
         dateOfBirth: true,
+        nric: true,
         memberSince: true,
         membershipTotal: true,
       },
@@ -52,6 +53,7 @@ export async function GET() {
       email: user.email,
       phone: user.phone,
       dateOfBirth: user.dateOfBirth?.toISOString().split('T')[0] || null,
+      nric: user.nric,
       memberSince: user.memberSince?.toISOString() || null,
       membershipTotal: Number(user.membershipTotal || 0),
     };
@@ -176,6 +178,7 @@ export async function PUT(request: NextRequest) {
         email: true,
         phone: true,
         dateOfBirth: true,
+        nric: true,
         memberSince: true,
         membershipTotal: true,
       },
@@ -220,6 +223,7 @@ export async function PUT(request: NextRequest) {
       email: updatedUser.email,
       phone: updatedUser.phone,
       dateOfBirth: updatedUser.dateOfBirth?.toISOString().split('T')[0] || null,
+      nric: updatedUser.nric,
       memberSince: updatedUser.memberSince?.toISOString() || null,
       membershipTotal: Number(updatedUser.membershipTotal || 0),
     };

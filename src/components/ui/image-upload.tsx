@@ -17,9 +17,29 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  GripVertical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
+import { toast } from 'sonner';
+import { DRAG_DROP_CONSTANTS } from '@/lib/constants/drag-drop-constants';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export interface UploadedImage {
   url: string;
@@ -48,6 +68,126 @@ interface ImageUploadProps {
   className?: string;
   disabled?: boolean;
 }
+
+// ==================== SORTABLE IMAGE COMPONENT ====================
+
+interface SortableImageProps {
+  id: string;
+  image: UploadedImage;
+  index: number;
+  onRemove: () => void;
+  disabled: boolean;
+  formatFileSize: (bytes: number) => string;
+}
+
+function SortableImage({
+  id,
+  image,
+  index,
+  onRemove,
+  disabled,
+  formatFileSize,
+}: SortableImageProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        opacity: isDragging ? DRAG_DROP_CONSTANTS.STYLES.DRAGGING_OPACITY : 1,
+      }}
+      className={cn(
+        'relative group border rounded-lg overflow-hidden',
+        isDragging && 'z-50'
+      )}
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center">
+        <Image
+          src={image.url}
+          alt={`Upload ${index + 1}`}
+          width={200}
+          height={200}
+          className="w-full h-full object-cover"
+          quality={100}
+          unoptimized={true}
+        />
+      </div>
+
+      {/* Image Info - Only show if we have meaningful data */}
+      {(image.size || 0) > 0 || (image.width && image.height) ? (
+        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
+          {image.width && image.height && (
+            <p className="truncate">
+              {image.width} × {image.height}
+            </p>
+          )}
+          {image.size && image.size > 0 && <p>{formatFileSize(image.size)}</p>}
+        </div>
+      ) : null}
+
+      {/* Drag Handle */}
+      <button
+        className={cn(
+          'absolute top-2 left-2 h-8 w-8 bg-white/90 hover:bg-white rounded',
+          DRAG_DROP_CONSTANTS.STYLES.DRAG_HANDLE_CURSOR,
+          'flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
+          'shadow-md z-10',
+          disabled && 'cursor-not-allowed opacity-30'
+        )}
+        {...attributes}
+        {...listeners}
+        aria-label={DRAG_DROP_CONSTANTS.ACCESSIBILITY.DRAG_HANDLE_LABEL}
+        disabled={disabled}
+        type="button"
+      >
+        <GripVertical className="h-4 w-4 text-gray-600" />
+      </button>
+
+      {/* Remove Button */}
+      <Button
+        variant="destructive"
+        size="sm"
+        className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        onClick={e => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        disabled={disabled}
+      >
+        <X className="h-3 w-3" />
+      </Button>
+
+      {/* Primary Image Badge */}
+      {index === 0 && (
+        <div className="absolute bottom-2 left-2 z-10">
+          <Badge variant="default" className="text-xs">
+            {DRAG_DROP_CONSTANTS.LABELS.PRIMARY_IMAGE}
+          </Badge>
+        </div>
+      )}
+
+      {/* Success Indicator */}
+      <div className="absolute top-12 left-2 h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
+        <CheckCircle className="h-3 w-3 text-white" />
+      </div>
+    </div>
+  );
+}
+
+// ==================== MAIN COMPONENT ====================
 
 export default function ImageUpload({
   // Legacy props
@@ -278,6 +418,39 @@ export default function ImageUpload({
 
   const clearErrors = () => setErrors([]);
 
+  // Drag-and-drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end event
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (over && active.id !== over.id) {
+        const oldIndex = images.findIndex((_, idx) => idx.toString() === active.id);
+        const newIndex = images.findIndex((_, idx) => idx.toString() === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          try {
+            const reorderedImages = arrayMove(images, oldIndex, newIndex);
+            setImages(reorderedImages);
+            currentOnChange?.(reorderedImages);
+            toast.success(DRAG_DROP_CONSTANTS.MESSAGES.SUCCESS);
+          } catch (error) {
+            console.error('Error reordering images:', error);
+            toast.error(DRAG_DROP_CONSTANTS.MESSAGES.ERROR);
+          }
+        }
+      }
+    },
+    [images, currentOnChange]
+  );
+
   return (
     <div className={cn('space-y-4', className)}>
       {/* Upload Area */}
@@ -287,8 +460,11 @@ export default function ImageUpload({
           dragActive
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-300 hover:border-gray-400',
-          disabled && 'opacity-50 cursor-not-allowed'
+          disabled && 'cursor-not-allowed'
         )}
+        style={{
+          opacity: disabled ? DRAG_DROP_CONSTANTS.STYLES.DRAGGING_OPACITY : 1,
+        }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -359,57 +535,30 @@ export default function ImageUpload({
 
       {/* Image Grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((image, index) => (
-            <div
-              key={index}
-              className="relative group border rounded-lg overflow-hidden"
-            >
-              <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                <Image
-                  src={image.url}
-                  alt={`Upload ${index + 1}`}
-                  width={200}
-                  height={200}
-                  className="w-full h-full object-cover"
-                  quality={100}
-                  unoptimized={true}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={images.map((_, idx) => idx.toString())}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {images.map((image, index) => (
+                <SortableImage
+                  key={index}
+                  id={index.toString()}
+                  image={image}
+                  index={index}
+                  onRemove={() => removeImage(index)}
+                  disabled={disabled}
+                  formatFileSize={formatFileSize}
                 />
-              </div>
-
-              {/* Image Info - Only show if we have meaningful data */}
-              {(image.size > 0 || (image.width && image.height)) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2 text-xs">
-                  {image.width && image.height && (
-                    <p className="truncate">
-                      {image.width} × {image.height}
-                    </p>
-                  )}
-                  {image.size > 0 && <p>{formatFileSize(image.size)}</p>}
-                </div>
-              )}
-
-              {/* Remove Button */}
-              <Button
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={e => {
-                  e.stopPropagation();
-                  removeImage(index);
-                }}
-                disabled={disabled}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-
-              {/* Success Indicator */}
-              <div className="absolute top-2 left-2 h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-3 w-3 text-white" />
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Upload Stats */}

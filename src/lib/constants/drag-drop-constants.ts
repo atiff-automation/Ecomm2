@@ -60,5 +60,13 @@ export const DRAG_DROP_CONSTANTS = {
     DROP_ZONE_HIGHLIGHT: 'bg-blue-50',
     DRAG_HANDLE_SIZE: 'w-4 h-4',
     DRAG_HANDLE_COLOR: 'text-gray-400',
+    DRAG_HANDLE_CURSOR: 'cursor-grab active:cursor-grabbing',
+  },
+
+  /**
+   * Labels and text
+   */
+  LABELS: {
+    PRIMARY_IMAGE: 'Primary',
   },
 } as const;

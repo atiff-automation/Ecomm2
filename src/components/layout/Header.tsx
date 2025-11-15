@@ -37,6 +37,8 @@ import {
   UserPlus,
   HelpCircle,
   FileText,
+  MapPin,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -205,16 +207,14 @@ export function Header() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="relative h-8 w-8 rounded-full"
+                      className="relative h-8 w-8 rounded-full bg-black hover:bg-gray-800 p-0"
                       aria-label={`User menu for ${user?.name || 'user'}`}
                       aria-expanded={false}
                       aria-haspopup="menu"
                     >
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-primary-foreground">
-                          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      </div>
+                      <span className="text-sm font-medium text-primary-foreground">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </span>
                       {isMember && (
                         <Badge
                           variant="secondary"
@@ -248,27 +248,27 @@ export function Header() {
                     {user?.role !== 'ADMIN' && user?.role !== 'STAFF' && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/member/dashboard">
+                          <Link href="/member/profile">
                             <User className="mr-2 h-4 w-4" />
-                            <span>Dashboard</span>
+                            <span>Profile</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/member/orders">
                             <Package className="mr-2 h-4 w-4" />
-                            <span>Orders</span>
+                            <span>My Orders</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/member/wishlist">
-                            <Heart className="mr-2 h-4 w-4" />
-                            <span>Wishlist</span>
+                          <Link href="/member/addresses">
+                            <MapPin className="mr-2 h-4 w-4" />
+                            <span>Addresses</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/member/profile">
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                          <Link href="/member/recently-viewed">
+                            <Clock className="mr-2 h-4 w-4" />
+                            <span>Recently Viewed</span>
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -363,12 +363,12 @@ export function Header() {
                         </div>
                         <div className="grid gap-1 mt-2">
                           <Link
-                            href="/member/dashboard"
+                            href="/member/profile"
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                           >
                             <User className="mr-2 h-4 w-4" />
-                            Dashboard
+                            Profile
                           </Link>
                           <Link
                             href="/member/orders"
@@ -376,23 +376,23 @@ export function Header() {
                             className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                           >
                             <Package className="mr-2 h-4 w-4" />
-                            Orders
+                            My Orders
                           </Link>
                           <Link
-                            href="/member/wishlist"
+                            href="/member/addresses"
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                           >
-                            <Heart className="mr-2 h-4 w-4" />
-                            Wishlist
+                            <MapPin className="mr-2 h-4 w-4" />
+                            Addresses
                           </Link>
                           <Link
-                            href="/member/profile"
+                            href="/member/recently-viewed"
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
                           >
-                            <Settings className="mr-2 h-4 w-4" />
-                            Profile
+                            <Clock className="mr-2 h-4 w-4" />
+                            Recently Viewed
                           </Link>
                           {(user?.role === 'ADMIN' ||
                             user?.role === 'STAFF') && (

@@ -80,6 +80,7 @@ export interface ProductListParams {
   search?: string;
   category?: string;
   featured?: boolean;
+  promotional?: boolean;
   sortBy?: 'created' | 'name' | 'price' | 'rating';
   sortOrder?: 'asc' | 'desc';
   priceMin?: number;

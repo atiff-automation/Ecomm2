@@ -35,6 +35,11 @@ import { ProductsError } from './components/ProductsError';
 import { ProductsLoading } from './components/ProductsLoading';
 import { useCart } from '@/hooks/use-cart';
 import { productService } from '@/lib/services/product-service';
+import {
+  PRODUCT_FILTER_PARAMS,
+  FILTER_VALUES,
+  isFilterTrue,
+} from '@/lib/constants/product-filter-constants';
 import { toast } from 'sonner';
 import { Filter } from 'lucide-react';
 
@@ -95,6 +100,8 @@ interface ProductsClientProps {
     category?: string;
     sortBy?: string;
     page?: string;
+    promotional?: string;
+    featured?: string;
   };
 }
 
@@ -121,10 +128,17 @@ export function ProductsClient({
   // Current filter values from URL
   const currentParams = useMemo(
     () => ({
-      search: searchParams.get('search') || '',
-      category: searchParams.get('category') || 'all',
-      sortBy: searchParams.get('sortBy') || 'created-desc',
-      page: parseInt(searchParams.get('page') || '1', 10),
+      search: searchParams.get(PRODUCT_FILTER_PARAMS.SEARCH) || '',
+      category: searchParams.get(PRODUCT_FILTER_PARAMS.CATEGORY) || 'all',
+      sortBy: searchParams.get(PRODUCT_FILTER_PARAMS.SORT_BY) || 'created-desc',
+      page: parseInt(
+        searchParams.get(PRODUCT_FILTER_PARAMS.PAGE) || '1',
+        10
+      ),
+      promotional: isFilterTrue(
+        searchParams.get(PRODUCT_FILTER_PARAMS.PROMOTIONAL)
+      ),
+      featured: isFilterTrue(searchParams.get(PRODUCT_FILTER_PARAMS.FEATURED)),
     }),
     [searchParams]
   );
@@ -135,7 +149,16 @@ export function ProductsClient({
       const newParams = new URLSearchParams(searchParams.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
-        if (value && value !== '' && value !== 'all' && value !== 1) {
+        // Handle boolean values (promotional, featured)
+        if (typeof value === 'boolean') {
+          if (value) {
+            newParams.set(key, FILTER_VALUES.TRUE);
+          } else {
+            newParams.delete(key);
+          }
+        }
+        // Handle other values
+        else if (value && value !== '' && value !== 'all' && value !== 1) {
           newParams.set(key, value.toString());
         } else {
           newParams.delete(key);
@@ -147,9 +170,11 @@ export function ProductsClient({
         !updates.page &&
         (updates.search !== undefined ||
           updates.category !== undefined ||
-          updates.sortBy !== undefined)
+          updates.sortBy !== undefined ||
+          updates.promotional !== undefined ||
+          updates.featured !== undefined)
       ) {
-        newParams.delete('page');
+        newParams.delete(PRODUCT_FILTER_PARAMS.PAGE);
       }
 
       const newURL = `${window.location.pathname}?${newParams.toString()}`;
@@ -175,6 +200,8 @@ export function ProductsClient({
         category: params.category !== 'all' ? params.category : undefined,
         sortBy: sortField as 'created' | 'name' | 'price' | 'rating',
         sortOrder: sortOrder as 'asc' | 'desc',
+        promotional: params.promotional,
+        featured: params.featured,
       };
 
       const result = await productService.getProducts(apiParams);
@@ -200,6 +227,8 @@ export function ProductsClient({
       category: initialParams.category || 'all',
       sortBy: initialParams.sortBy || 'created-desc',
       page: parseInt(initialParams.page || '1', 10),
+      promotional: isFilterTrue(initialParams.promotional),
+      featured: isFilterTrue(initialParams.featured),
     };
 
     // Only fetch if parameters actually changed from initial state
@@ -207,7 +236,9 @@ export function ProductsClient({
       currentParams.search !== normalizedInitialParams.search ||
       currentParams.category !== normalizedInitialParams.category ||
       currentParams.sortBy !== normalizedInitialParams.sortBy ||
-      currentParams.page !== normalizedInitialParams.page;
+      currentParams.page !== normalizedInitialParams.page ||
+      currentParams.promotional !== normalizedInitialParams.promotional ||
+      currentParams.featured !== normalizedInitialParams.featured;
 
     if (paramsChanged) {
       fetchProducts(currentParams);
@@ -243,12 +274,28 @@ export function ProductsClient({
     [updateURL]
   );
 
+  const handlePromotionalChange = useCallback(
+    (promotional: boolean) => {
+      updateURL({ promotional });
+    },
+    [updateURL]
+  );
+
+  const handleFeaturedChange = useCallback(
+    (featured: boolean) => {
+      updateURL({ featured });
+    },
+    [updateURL]
+  );
+
   const handleClearFilters = useCallback(() => {
     updateURL({
       search: '',
       category: 'all',
       sortBy: 'created-desc',
       page: 1,
+      promotional: false,
+      featured: false,
     });
   }, [updateURL]);
 
@@ -276,9 +323,13 @@ export function ProductsClient({
           currentSearch={currentParams.search}
           currentCategory={currentParams.category}
           currentSort={currentParams.sortBy}
+          currentPromotional={currentParams.promotional}
+          currentFeatured={currentParams.featured}
           onSearchChange={handleSearchChange}
           onCategoryChange={handleCategoryChange}
           onSortChange={handleSortChange}
+          onPromotionalChange={handlePromotionalChange}
+          onFeaturedChange={handleFeaturedChange}
           onClearFilters={handleClearFilters}
           disabled={isLoading}
         />
@@ -308,9 +359,13 @@ export function ProductsClient({
                   currentSearch={currentParams.search}
                   currentCategory={currentParams.category}
                   currentSort={currentParams.sortBy}
+                  currentPromotional={currentParams.promotional}
+                  currentFeatured={currentParams.featured}
                   onSearchChange={handleSearchChange}
                   onCategoryChange={handleCategoryChange}
                   onSortChange={handleSortChange}
+                  onPromotionalChange={handlePromotionalChange}
+                  onFeaturedChange={handleFeaturedChange}
                   onClearFilters={handleClearFilters}
                   disabled={isLoading}
                 />
