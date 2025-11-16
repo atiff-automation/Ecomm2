@@ -291,7 +291,7 @@ export default function HomePage() {
               <ProductGrid>
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
-                    <div className="aspect-square bg-gray-200" />
+                    <div className="aspect-[4/5] bg-gray-200" />
                     <CardContent className="p-4 space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-3/4" />
                       <div className="h-4 bg-gray-200 rounded w-1/2" />
@@ -355,7 +355,7 @@ export default function HomePage() {
               <ProductGrid>
                 {[...Array(4)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
-                    <div className="aspect-square bg-gray-200" />
+                    <div className="aspect-[4/5] bg-gray-200" />
                     <CardContent className="p-4 space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-3/4" />
                       <div className="h-4 bg-gray-200 rounded w-1/2" />

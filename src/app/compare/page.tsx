@@ -172,7 +172,7 @@ export default function ComparisonPage() {
                   <X className="h-4 w-4" />
                 </Button>
                 <CardContent className="p-4">
-                  <div className="aspect-square relative mb-3 bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="aspect-[4/5] relative mb-3 bg-gray-100 rounded-lg overflow-hidden">
                     {product.images[0] ? (
                       <Image
                         src={product.images[0]}

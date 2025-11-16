@@ -192,7 +192,7 @@ export default function WishlistPage() {
 
     return (
       <Card className="group hover:shadow-lg transition-shadow">
-        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-t-lg">
           {item.product.primaryImage ? (
             <Image
               src={item.product.primaryImage.url}

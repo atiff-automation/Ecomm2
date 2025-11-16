@@ -176,7 +176,7 @@ export default function RecentlyViewedPage() {
               <CardContent className="p-0">
                 {/* Product Image */}
                 <Link href={`/products/${item.product.slug}`}>
-                  <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                  <div className="relative aspect-[4/5] bg-gray-100 overflow-hidden">
                     {item.product.primaryImage ? (
                       <Image
                         src={item.product.primaryImage.url}

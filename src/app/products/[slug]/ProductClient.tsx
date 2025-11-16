@@ -225,7 +225,7 @@ export function ProductClient({ product }: ProductClientProps) {
         {/* Product Images */}
         <div className="space-y-4">
           {/* Main Image */}
-          <div className="aspect-square relative overflow-hidden rounded-lg border">
+          <div className="aspect-[4/5] relative overflow-hidden rounded-lg border">
             {product.images.length > 0 ? (
               <Image
                 src={

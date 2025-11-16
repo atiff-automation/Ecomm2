@@ -160,7 +160,7 @@ export const LazyImageGallery = dynamic(
     loading: () => (
       <div className="grid grid-cols-2 gap-2 animate-pulse">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="aspect-square bg-gray-200 rounded-lg"></div>
+          <div key={i} className="aspect-[4/5] bg-gray-200 rounded-lg"></div>
         ))}
       </div>
     ),
