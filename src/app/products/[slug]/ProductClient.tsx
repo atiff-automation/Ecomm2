@@ -33,6 +33,11 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
+// Constants for expand/collapse thresholds
+const DESCRIPTION_LENGTH_THRESHOLD = 500;
+const REVIEWS_INITIAL_DISPLAY_COUNT = 3;
+const SPECIFICATIONS_MAX_HEIGHT = 300;
+
 interface ProductImage {
   id: string;
   url: string;
@@ -122,6 +127,9 @@ export function ProductClient({ product }: ProductClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [specificationsExpanded, setSpecificationsExpanded] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   // Fetch dynamic free shipping display text
   const { freeShippingText } = useFreeShippingDisplay();
@@ -512,57 +520,72 @@ export function ProductClient({ product }: ProductClientProps) {
 
         <TabsContent value="description" className="mt-6">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               {product.description ? (
-                <div className="prose prose-lg max-w-none">
-                  <ReactMarkdown
-                    rehypePlugins={[rehypeRaw]}
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      // Custom styling for headings
-                      h2: ({ node, ...props }) => (
-                        <h2
-                          className="text-2xl font-bold mt-8 mb-4 text-gray-900 first:mt-0"
-                          {...props}
-                        />
-                      ),
-                      h3: ({ node, ...props }) => (
-                        <h3
-                          className="text-xl font-semibold mt-6 mb-3 text-gray-800"
-                          {...props}
-                        />
-                      ),
-                      // Custom styling for lists
-                      ul: ({ node, ...props }) => (
-                        <ul className="list-none space-y-2 my-4" {...props} />
-                      ),
-                      li: ({ node, ...props }) => (
-                        <li
-                          className="flex items-start gap-2 text-gray-700"
-                          {...props}
-                        />
-                      ),
-                      // Custom styling for paragraphs
-                      p: ({ node, ...props }) => (
-                        <p
-                          className="text-gray-700 leading-relaxed mb-4"
-                          {...props}
-                        />
-                      ),
-                      // Bold text styling
-                      strong: ({ node, ...props }) => (
-                        <strong
-                          className="font-semibold text-gray-900"
-                          {...props}
-                        />
-                      ),
-                    }}
+                <>
+                  <div
+                    className={`prose prose-sm sm:prose-lg max-w-none ${
+                      !descriptionExpanded ? 'line-clamp-6 sm:line-clamp-[10]' : ''
+                    }`}
                   >
-                    {product.description}
-                  </ReactMarkdown>
-                </div>
+                    <ReactMarkdown
+                      rehypePlugins={[rehypeRaw]}
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // Custom styling for headings
+                        h2: ({ node, ...props }) => (
+                          <h2
+                            className="text-xl sm:text-2xl font-bold mt-6 sm:mt-8 mb-3 sm:mb-4 text-gray-900 first:mt-0"
+                            {...props}
+                          />
+                        ),
+                        h3: ({ node, ...props }) => (
+                          <h3
+                            className="text-lg sm:text-xl font-semibold mt-4 sm:mt-6 mb-2 sm:mb-3 text-gray-800"
+                            {...props}
+                          />
+                        ),
+                        // Custom styling for lists
+                        ul: ({ node, ...props }) => (
+                          <ul className="list-none space-y-2 my-3 sm:my-4" {...props} />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li
+                            className="flex items-start gap-2 text-gray-700 text-sm sm:text-base"
+                            {...props}
+                          />
+                        ),
+                        // Custom styling for paragraphs
+                        p: ({ node, ...props }) => (
+                          <p
+                            className="text-gray-700 leading-relaxed mb-3 sm:mb-4 text-sm sm:text-base"
+                            {...props}
+                          />
+                        ),
+                        // Bold text styling
+                        strong: ({ node, ...props }) => (
+                          <strong
+                            className="font-semibold text-gray-900"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {product.description}
+                    </ReactMarkdown>
+                  </div>
+                  {product.description.length > DESCRIPTION_LENGTH_THRESHOLD && (
+                    <Button
+                      variant="link"
+                      onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                      className="mt-2 p-0 h-auto text-primary hover:underline text-sm sm:text-base"
+                    >
+                      {descriptionExpanded ? 'See less' : 'See more'}
+                    </Button>
+                  )}
+                </>
               ) : (
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   No description available.
                 </p>
               )}
@@ -572,18 +595,30 @@ export function ProductClient({ product }: ProductClientProps) {
 
         <TabsContent value="specifications" className="mt-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-4 sm:p-6">
+              <div
+                className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${
+                  !specificationsExpanded
+                    ? `max-h-[${SPECIFICATIONS_MAX_HEIGHT}px] overflow-hidden relative`
+                    : ''
+                }`}
+              >
                 <div>
-                  <h4 className="font-semibold mb-2">Product Details</h4>
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                    Product Details
+                  </h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>SKU:</span>
-                      <span>{product.sku}</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">SKU:</span>
+                      <span className="font-medium text-right break-all">
+                        {product.sku}
+                      </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Categories:</span>
-                      <div className="flex flex-wrap gap-1">
+                    <div className="flex justify-between gap-2 items-start">
+                      <span className="text-muted-foreground shrink-0">
+                        Categories:
+                      </span>
+                      <div className="flex flex-wrap gap-1 justify-end">
                         {product.categories.map(cat => (
                           <Badge
                             key={cat.category.id}
@@ -596,102 +631,153 @@ export function ProductClient({ product }: ProductClientProps) {
                       </div>
                     </div>
                     {product.weight && (
-                      <div className="flex justify-between">
-                        <span>Weight:</span>
-                        <span>{product.weight} kg</span>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Weight:</span>
+                        <span className="font-medium">{product.weight} kg</span>
                       </div>
                     )}
                     {product.dimensions && (
-                      <div className="flex justify-between">
-                        <span>Dimensions:</span>
-                        <span>{formatDimensions(product.dimensions)}</span>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Dimensions:</span>
+                        <span className="font-medium text-right">
+                          {formatDimensions(product.dimensions)}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2">Availability</h4>
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                    Availability
+                  </h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Stock:</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Stock:</span>
                       <span
-                        className={
+                        className={`font-medium ${
                           isOutOfStock
                             ? 'text-red-600'
                             : isLowStock
                               ? 'text-orange-600'
                               : 'text-green-600'
-                        }
+                        }`}
                       >
                         {isOutOfStock
                           ? 'Out of Stock'
                           : `${product.stockQuantity} available`}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Status:</span>
-                      <span className="text-green-600">In Production</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="text-green-600 font-medium">
+                        In Production
+                      </span>
                     </div>
                   </div>
                 </div>
+                {!specificationsExpanded && (
+                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none md:col-span-2" />
+                )}
               </div>
+              {(product.weight ||
+                product.dimensions ||
+                product.categories.length > 3) && (
+                <Button
+                  variant="link"
+                  onClick={() =>
+                    setSpecificationsExpanded(!specificationsExpanded)
+                  }
+                  className="mt-2 p-0 h-auto text-primary hover:underline text-sm sm:text-base"
+                >
+                  {specificationsExpanded ? 'See less' : 'See more'}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Customer Reviews</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">
+                Customer Reviews
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               {product.reviews.length > 0 ? (
-                <div className="space-y-6">
-                  {product.reviews.map(review => (
-                    <div
-                      key={review.id}
-                      className="border-b pb-6 last:border-b-0"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <Star
-                                key={star}
-                                className={`w-4 h-4 ${
-                                  star <= review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+                <>
+                  <div className="space-y-4 sm:space-y-6">
+                    {product.reviews
+                      .slice(
+                        0,
+                        reviewsExpanded
+                          ? undefined
+                          : REVIEWS_INITIAL_DISPLAY_COUNT
+                      )
+                      .map(review => (
+                        <div
+                          key={review.id}
+                          className="border-b pb-4 sm:pb-6 last:border-b-0"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star
+                                    key={star}
+                                    className={`w-4 h-4 ${
+                                      star <= review.rating
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm sm:text-base">
+                                  {review.user.name}
+                                </span>
+                                {review.isVerifiedPurchase && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    Verified Purchase
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-xs sm:text-sm text-muted-foreground">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
                           </div>
-                          <span className="font-medium">
-                            {review.user.name}
-                          </span>
-                          {review.isVerifiedPurchase && (
-                            <Badge variant="secondary" className="text-xs">
-                              Verified Purchase
-                            </Badge>
+                          {review.title && (
+                            <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                              {review.title}
+                            </h4>
+                          )}
+                          {review.comment && (
+                            <p className="text-muted-foreground text-sm sm:text-base">
+                              {review.comment}
+                            </p>
                           )}
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {review.title && (
-                        <h4 className="font-semibold mb-2">{review.title}</h4>
-                      )}
-                      {review.comment && (
-                        <p className="text-muted-foreground">
-                          {review.comment}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      ))}
+                  </div>
+                  {product.reviews.length > REVIEWS_INITIAL_DISPLAY_COUNT && (
+                    <Button
+                      variant="link"
+                      onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                      className="mt-4 p-0 h-auto text-primary hover:underline text-sm sm:text-base"
+                    >
+                      {reviewsExpanded
+                        ? 'See less'
+                        : `See more (${product.reviews.length - REVIEWS_INITIAL_DISPLAY_COUNT} more reviews)`}
+                    </Button>
+                  )}
+                </>
               ) : (
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   No reviews yet. Be the first to review this product!
                 </p>
               )}
