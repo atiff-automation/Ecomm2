@@ -34,13 +34,8 @@ import {
   Heart,
   Award,
   Search,
-  UserPlus,
-  HelpCircle,
-  FileText,
   MapPin,
   Clock,
-  LayoutTemplate,
-  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -106,18 +101,17 @@ export function Header() {
   // Main navigation items - primary browsing actions
   const mainNavItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/landing', label: 'Landing Pages', icon: LayoutTemplate },
-    { href: '/article', label: 'Articles', icon: FileText },
+    { href: '/landing', label: 'Landing Pages' },
+    { href: '/article', label: 'Articles' },
   ];
 
   // Utility navigation items - support and tools
   const utilityNavItems: NavigationItem[] = [
-    { href: '/track-order', label: 'Track Order', icon: Truck },
-    { href: '/faq', label: 'FAQ', icon: HelpCircle },
+    { href: '/track-order', label: 'Track Order' },
+    { href: '/faq', label: 'FAQ' },
     {
       href: '/apply-agent',
       label: 'Apply as Agent',
-      icon: UserPlus,
       isButton: true,
     },
   ];
