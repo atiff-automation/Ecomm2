@@ -144,21 +144,25 @@ export class ContentTransformerService {
 
   /**
    * Generate product embed HTML markup
+   * Server-side pricing display - always shows regular price first (like non-members see)
    * @param product Product data
    * @returns HTML string with product embed card
    */
   private static generateProductEmbedMarkup(product: ProductEmbedData): string {
-    // Determine which price to display
-    const displayPrice = product.memberPrice || product.regularPrice;
-    const showSavings = product.memberPrice && product.memberPrice < product.regularPrice;
-    const savings = showSavings ? product.regularPrice - product.memberPrice : 0;
+    // Server-side embeds always show REGULAR PRICE (no user context available)
+    // This matches what non-members see on product pages
+    const displayPrice = product.regularPrice;
+
+    // Show member price as a PREVIEW only if it's lower than regular price
+    const hasMemberSavings = product.memberPrice && product.memberPrice < product.regularPrice;
+    const memberSavings = hasMemberSavings ? product.regularPrice - product.memberPrice : 0;
 
     // Stock status
     const isInStock = product.status === 'ACTIVE' && product.stockQuantity > 0;
     const stockText = isInStock ? 'In Stock' : 'Out of Stock';
     const stockColorClass = isInStock ? 'text-green-600' : 'text-red-600';
 
-    // Generate compact product card
+    // Generate compact product card with correct pricing display
     return `<div class="not-prose product-embed-wrapper my-6 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white" data-product-slug="${product.slug}">
   <div class="flex gap-4">
     <div class="flex-shrink-0 w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
@@ -178,17 +182,9 @@ export class ContentTransformerService {
           <span class="text-red-600 font-bold text-lg sm:text-xl">
             RM ${displayPrice.toFixed(2)}
           </span>
-          ${showSavings ? `<span class="text-sm text-gray-500 line-through">
-            RM ${product.regularPrice.toFixed(2)}
-          </span>
-          <span class="text-sm font-medium text-red-600">
-            Save RM ${savings.toFixed(2)}
-          </span>` : ''}
         </div>
-        ${product.memberPrice ? `<div class="flex items-center gap-1 mt-1">
-          <span class="inline-flex items-center px-2 py-0.5 text-xs border border-black text-black rounded">
-            Member Price
-          </span>
+        ${hasMemberSavings ? `<div class="text-xs text-black font-medium mt-1">
+          Member price: RM ${product.memberPrice.toFixed(2)}
         </div>` : ''}
       </div>
       <div class="flex items-center gap-3 flex-wrap">
