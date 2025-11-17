@@ -98,17 +98,17 @@ export function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
-  // Main navigation items - primary browsing actions
+  // Main navigation items - primary shopping action
   const mainNavItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/landing', label: 'Landing Pages' },
-    { href: '/article', label: 'Articles' },
   ];
 
-  // Utility navigation items - support and tools
+  // Content and utility navigation items - informational pages and tools
   const utilityNavItems: NavigationItem[] = [
-    { href: '/track-order', label: 'Track Order' },
+    { href: '/landing', label: 'Landing Pages' },
+    { href: '/article', label: 'Articles' },
     { href: '/faq', label: 'FAQ' },
+    { href: '/track-order', label: 'Track Order' },
     {
       href: '/apply-agent',
       label: 'Apply as Agent',
@@ -191,11 +191,6 @@ export function Header() {
               </nav>
             </div>
 
-            {/* Search Bar - Desktop */}
-            <div className="hidden lg:flex flex-1 max-w-md mx-8">
-              <SearchBar placeholder="Search products..." className="w-full" />
-            </div>
-
             {/* Right Section */}
             <div className="flex items-center gap-2">
               {/* Desktop Utility Navigation */}
@@ -229,8 +224,8 @@ export function Header() {
                 )}
               </nav>
 
-              {/* Search Button - Mobile */}
-              <Link href="/search" className="lg:hidden">
+              {/* Search Button */}
+              <Link href="/search">
                 <Button variant="ghost" size="sm" aria-label="Search products">
                   <Search className="w-5 h-5" aria-hidden="true" />
                   <span className="sr-only">Search</span>
