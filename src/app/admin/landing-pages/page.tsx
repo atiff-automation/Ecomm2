@@ -34,10 +34,9 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { LandingPageWithRelations, LandingPageCategory } from '@/types/landing-page.types';
+import type { LandingPageWithRelations } from '@/types/landing-page.types';
 import { format } from 'date-fns';
 import { LANDING_PAGE_CONSTANTS } from '@/lib/constants/landing-page-constants';
 
@@ -48,40 +47,20 @@ export default function AdminLandingPageListPage() {
   const [landingPages, setLandingPages] = useState<LandingPageWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [categories, setCategories] = useState<LandingPageCategory[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch categories for filter
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/admin/article-categories');
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data.categories);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
   // Fetch landingPages
   useEffect(() => {
     fetchLandingPages();
-  }, [categoryFilter, statusFilter, page]);
+  }, [statusFilter, page]);
 
   const fetchLandingPages = async () => {
     try {
       setLoading(true);
 
       const params = new URLSearchParams();
-      if (categoryFilter !== 'ALL') params.append('category', categoryFilter);
       if (statusFilter !== 'ALL') params.append('status', statusFilter);
       if (search) params.append('search', search);
       params.append('page', page.toString());
@@ -146,29 +125,20 @@ export default function AdminLandingPageListPage() {
               Manage landingPages for your website
             </p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/admin/content/article-categories" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto">
-                <FolderOpen className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Manage Categories</span>
-                <span className="md:hidden">Categories</span>
-              </Button>
-            </Link>
-            <Link href="/admin/landing-pages/create" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Create New Landing Page</span>
-                <span className="md:hidden">Create Page</span>
-              </Button>
-            </Link>
-          </div>
+          <Link href="/admin/landing-pages/create" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Create New Landing Page</span>
+              <span className="md:hidden">Create Page</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* Filters */}
       <Card className="mb-4 md:mb-6">
         <CardContent className="pt-4 md:pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {/* Search */}
             <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -180,21 +150,6 @@ export default function AdminLandingPageListPage() {
                 className="pl-9"
               />
             </div>
-
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.slug}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -244,7 +199,6 @@ export default function AdminLandingPageListPage() {
                   <thead className="bg-muted/50 border-b">
                     <tr>
                       <th className="text-left p-3 text-xs md:text-sm font-medium">Title</th>
-                      <th className="text-left p-3 text-xs md:text-sm font-medium hidden md:table-cell">Category</th>
                       <th className="text-center p-3 text-xs md:text-sm font-medium">Status</th>
                       <th className="text-left p-3 text-xs md:text-sm font-medium hidden lg:table-cell">Author</th>
                       <th className="text-left p-3 text-xs md:text-sm font-medium hidden lg:table-cell">Published</th>
@@ -256,25 +210,9 @@ export default function AdminLandingPageListPage() {
                     {filteredLandingPages.map((landingPage) => (
                       <tr key={landingPage.id} className="border-b hover:bg-muted/30">
                         <td className="p-3">
-                          <div>
-                            <p className="font-medium text-sm truncate max-w-xs">
-                              {landingPage.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate max-w-xs md:hidden">
-                              {landingPage.category.name}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-3 hidden md:table-cell">
-                          <Badge
-                            variant="outline"
-                            style={{
-                              borderColor: landingPage.category.color || '#3B82F6',
-                              color: landingPage.category.color || '#3B82F6',
-                            }}
-                          >
-                            {landingPage.category.name}
-                          </Badge>
+                          <p className="font-medium text-sm truncate max-w-xs">
+                            {landingPage.title}
+                          </p>
                         </td>
                         <td className="p-3 text-center">
                           {landingPage.status === 'PUBLISHED' ? (

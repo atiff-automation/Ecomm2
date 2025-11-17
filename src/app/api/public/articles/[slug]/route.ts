@@ -41,6 +41,8 @@ export async function GET(
         featuredImage: true,
         featuredImageAlt: true,
         publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
         readingTimeMin: true,
         viewCount: true,
         metaTitle: true,

@@ -8,6 +8,6 @@
 import React from 'react';
 import { LandingPageForm } from '@/components/admin/LandingPageForm';
 
-export default function AdminArticleCreatePage() {
+export default function AdminLandingPageCreatePage() {
   return <LandingPageForm mode="create" />;
 }

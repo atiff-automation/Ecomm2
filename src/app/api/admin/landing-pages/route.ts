@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
     // 2. Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const filters = landingPageFilterSchema.parse({
-      category: searchParams.get('category') || undefined,
       tag: searchParams.get('tag') || undefined,
       status: searchParams.get('status') || undefined,
       author: searchParams.get('author') || undefined,
@@ -40,10 +39,6 @@ export async function GET(request: NextRequest) {
 
     // 3. Build Prisma where clause
     const where: Prisma.LandingPageWhereInput = {};
-
-    if (filters.category) {
-      where.category = { slug: filters.category };
-    }
 
     if (filters.tag) {
       where.tags = {
@@ -78,7 +73,6 @@ export async function GET(request: NextRequest) {
       prisma.landingPage.findMany({
         where,
         include: {
-          category: true,
           tags: {
             include: {
               tag: true,
@@ -195,7 +189,6 @@ export async function POST(request: NextRequest) {
         content: validatedData.content,
         featuredImage: validatedData.featuredImage,
         featuredImageAlt: validatedData.featuredImageAlt,
-        categoryId: validatedData.categoryId,
         status: validatedData.status,
         publishedAt: validatedData.status === 'PUBLISHED'
           ? validatedData.publishedAt || new Date()
@@ -212,7 +205,6 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        category: true,
         tags: {
           include: {
             tag: true,

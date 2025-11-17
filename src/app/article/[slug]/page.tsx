@@ -126,6 +126,13 @@ export default function SingleArticlePage({ params }: SingleArticlePageProps) {
   // Generate SEO metadata
   const seoData = SEOService.getArticleSEO(article);
 
+  // Safe date formatting for schema
+  const getValidDate = (date: string | Date | null | undefined): string => {
+    if (!date) return new Date().toISOString();
+    const parsedDate = new Date(date);
+    return isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
+  };
+
   return (
     <div>
       <SEOHead seo={seoData} />
@@ -133,8 +140,8 @@ export default function SingleArticlePage({ params }: SingleArticlePageProps) {
         title={article.title}
         description={article.excerpt}
         image={article.featuredImage || undefined}
-        datePublished={new Date(article.createdAt).toISOString()}
-        dateModified={new Date(article.updatedAt).toISOString()}
+        datePublished={getValidDate(article.publishedAt || article.createdAt)}
+        dateModified={getValidDate(article.updatedAt)}
         category={article.category.name}
       />
       {/* Breadcrumbs */}

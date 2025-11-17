@@ -76,8 +76,6 @@ export const landingPageBaseSchema = z.object({
     )
     .trim(),
 
-  categoryId: z.string().cuid('Invalid category ID'),
-
   tags: z
     .array(z.string().trim().min(1))
     .max(LANDING_PAGE_CONSTANTS.VALIDATION.MAX_TAGS, `Maximum ${LANDING_PAGE_CONSTANTS.VALIDATION.MAX_TAGS} tags allowed`)
@@ -142,7 +140,6 @@ export const landingPageReorderSchema = z.object({
 
 // Filter schema
 export const landingPageFilterSchema = z.object({
-  category: z.string().optional(),
   tag: z.string().optional(),
   status: z.union([landingPageStatusEnum, z.literal('ALL')]).optional(),
   author: z.string().optional(),
@@ -157,35 +154,8 @@ export const landingPageIdSchema = z.string().cuid('Invalid landing page ID');
 // Slug parameter schema
 export const landingPageSlugSchema = z.string().min(1, 'Slug is required');
 
-// Category validation schemas
-export const landingPageCategoryBaseSchema = z.object({
-  name: z.string().min(2, 'Category name must be at least 2 characters').max(100).trim(),
-  slug: slugSchema,
-  description: z.string().max(500).trim().optional(),
-  icon: z.string().optional(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Color must be a valid hex code').optional(),
-  sortOrder: z.number().int().min(0).default(0),
-  isActive: z.boolean().default(true),
-});
-
-export const landingPageCategoryCreateSchema = landingPageCategoryBaseSchema;
-export const landingPageCategoryUpdateSchema = landingPageCategoryBaseSchema.partial();
-
-// Category reorder schema
-export const landingPageCategoryReorderSchema = z.object({
-  updates: z.array(
-    z.object({
-      id: z.string().cuid('Invalid category ID'),
-      sortOrder: z.number().int().min(0),
-    })
-  ),
-});
-
 // Type exports
 export type LandingPageCreateSchema = z.infer<typeof landingPageCreateSchema>;
 export type LandingPageUpdateSchema = z.infer<typeof landingPageUpdateSchema>;
 export type LandingPageReorderSchema = z.infer<typeof landingPageReorderSchema>;
 export type LandingPageFilterSchema = z.infer<typeof landingPageFilterSchema>;
-export type LandingPageCategoryCreateSchema = z.infer<typeof landingPageCategoryCreateSchema>;
-export type LandingPageCategoryUpdateSchema = z.infer<typeof landingPageCategoryUpdateSchema>;
-export type LandingPageCategoryReorderSchema = z.infer<typeof landingPageCategoryReorderSchema>;

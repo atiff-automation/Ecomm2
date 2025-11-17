@@ -58,8 +58,6 @@ model User {
   landingPages                 LandingPage[]            @relation("LandingPageAuthor")
   landingPagesCreated          LandingPage[]            @relation("LandingPageCreatedBy")
   landingPagesUpdated          LandingPage[]            @relation("LandingPageUpdatedBy")
-  landingPageCategoriesCreated LandingPageCategory[]    @relation("LandingPageCategoryCreatedBy")
-  landingPageCategoriesUpdated LandingPageCategory[]    @relation("LandingPageCategoryUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -1466,39 +1464,6 @@ enum LandingPageStatus {
 }
 
 // Landing Page Category Model - Dynamic categories managed by admin
-model LandingPageCategory {
-  id          String   @id @default(cuid())
-
-  // Category Name
-  name        String   @unique
-  slug        String   @unique
-  description String?
-
-  // Display
-  icon        String?  // Icon name (e.g., "Rocket", "Target")
-  color       String?  // Hex color for category badge
-  sortOrder   Int      @default(0)
-
-  // Status
-  isActive    Boolean  @default(true)
-
-  // Metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
-
-  // Relations
-  landingPages    LandingPage[]
-  createdByUser   User?  @relation("LandingPageCategoryCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser   User?  @relation("LandingPageCategoryUpdatedBy", fields: [updatedBy], references: [id])
-
-  @@index([slug])
-  @@index([isActive])
-  @@index([sortOrder])
-  @@map("landing_page_categories")
-}
-
 // Landing Page Tag Model - Free-form tags for taxonomy
 model LandingPageTag {
   id        String   @id @default(cuid())
@@ -1542,8 +1507,6 @@ model LandingPage {
   featuredImageAlt String              @db.VarChar(200)
 
   // Organization
-  categoryId       String
-  category         LandingPageCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   tags             LandingPageToTag[]
   sortOrder        Int                 @default(0)
 
@@ -1577,7 +1540,6 @@ model LandingPage {
   @@index([slug])
   @@index([status])
   @@index([publishedAt])
-  @@index([categoryId])
   @@index([authorId])
   @@index([sortOrder])
   @@index([viewCount])

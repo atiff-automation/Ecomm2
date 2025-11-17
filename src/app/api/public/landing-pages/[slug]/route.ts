@@ -28,9 +28,6 @@ export async function GET(
       where: {
         slug,
         status: 'PUBLISHED',
-        category: {
-          isActive: true,
-        },
       },
       select: {
         id: true,
@@ -46,15 +43,8 @@ export async function GET(
         metaTitle: true,
         metaDescription: true,
         metaKeywords: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            color: true,
-            icon: true,
-          },
-        },
+        createdAt: true,
+        updatedAt: true,
         tags: {
           select: {
             tag: {
@@ -117,15 +107,21 @@ export async function GET(
       // Continue with original content (graceful degradation)
     }
 
-    // 5. Fetch related landing pages (same category, exclude current)
+    // 5. Fetch related landing pages (based on tags, exclude current)
+    // Get tag IDs from current landing page
+    const tagIds = landingPage.tags.map((t) => t.tag.id);
+
     const relatedLandingPages = await prisma.landingPage.findMany({
       where: {
-        categoryId: landingPage.category.id,
         status: 'PUBLISHED',
         id: { not: landingPage.id },
-        category: {
-          isActive: true,
-        },
+        ...(tagIds.length > 0 && {
+          tags: {
+            some: {
+              tagId: { in: tagIds },
+            },
+          },
+        }),
       },
       select: {
         id: true,
@@ -136,6 +132,9 @@ export async function GET(
         featuredImageAlt: true,
         publishedAt: true,
         readingTimeMin: true,
+        viewCount: true,
+        createdAt: true,
+        updatedAt: true,
       },
       orderBy: [
         { viewCount: 'desc' },

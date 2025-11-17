@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Save, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { landingPageCreateSchema, landingPageUpdateSchema } from '@/lib/validations/landing-page-validation';
-import type { LandingPageFormData, LandingPageCategory } from '@/types/landing-page.types';
+import type { LandingPageFormData } from '@/types/landing-page.types';
 import TipTapEditor from '@/components/admin/TipTapEditor';
 import { calculateReadingTime, LANDING_PAGE_CONSTANTS, generateExcerpt } from '@/lib/constants/landing-page-constants';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
@@ -50,7 +50,7 @@ import {
 
 export interface LandingPageFormProps {
   mode: 'create' | 'edit';
-  articleId?: string;
+  landingPageId?: string;
   initialData?: Partial<LandingPageFormData>;
   onSubmit?: (data: LandingPageFormData) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -63,7 +63,6 @@ const initialFormData: LandingPageFormData = {
   content: '<p>Start writing your landingPage...</p>',
   featuredImage: '',
   featuredImageAlt: '',
-  categoryId: '',
   tags: [],
   status: 'DRAFT',
   metaTitle: '',
@@ -73,7 +72,7 @@ const initialFormData: LandingPageFormData = {
 
 export function LandingPageForm({
   mode,
-  articleId,
+  landingPageId,
   initialData,
   onSubmit,
   onDelete,
@@ -81,7 +80,6 @@ export function LandingPageForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
-  const [categories, setCategories] = useState<LandingPageCategory[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -98,47 +96,26 @@ export function LandingPageForm({
     },
   });
 
-  // Fetch categories on mount
+  // Fetch existing landing page data for edit mode
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  // Fetch existing article data for edit mode
-  useEffect(() => {
-    if (mode === 'edit' && articleId) {
-      fetchArticle();
+    if (mode === 'edit' && landingPageId) {
+      fetchLandingPage();
     }
-  }, [mode, articleId]);
+  }, [mode, landingPageId]);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/admin/landing-page-categories');
-      if (response.ok) {
-        const data = await response.json();
-        const activeCategories = data.categories.filter((c: LandingPageCategory) =>
-          mode === 'create' ? c.isActive : true
-        );
-        setCategories(activeCategories);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      toast.error('Failed to load categories');
-    }
-  };
-
-  const fetchArticle = async () => {
-    if (!articleId) return;
+  const fetchLandingPage = async () => {
+    if (!landingPageId) return;
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/landing-pages/${articleId}`);
+      const response = await fetch(`/api/admin/landing-pages/${landingPageId}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch article');
+        throw new Error('Failed to fetch landing page');
       }
 
       const data = await response.json();
-      const landingPage = data.article;
+      const landingPage = data.landingPage;
 
       // Populate form
       form.reset({
@@ -148,7 +125,6 @@ export function LandingPageForm({
         content: landingPage.content,
         featuredImage: landingPage.featuredImage,
         featuredImageAlt: landingPage.featuredImageAlt,
-        categoryId: landingPage.categoryId,
         tags: landingPage.tags.map((t: any) => t.tag.name),
         status: landingPage.status,
         publishedAt: landingPage.publishedAt ? new Date(landingPage.publishedAt) : undefined,
@@ -160,8 +136,8 @@ export function LandingPageForm({
       // Set featured image state for ImageUpload component
       setFeaturedImageUrl(landingPage.featuredImage || '');
     } catch (error) {
-      console.error('Error fetching article:', error);
-      toast.error('Failed to load article');
+      console.error('Error fetching landing page:', error);
+      toast.error('Failed to load landing page');
       router.push('/admin/landing-pages');
     } finally {
       setLoading(false);
@@ -239,7 +215,7 @@ export function LandingPageForm({
         // Default submission logic
         const url = mode === 'create'
           ? '/api/admin/landing-pages'
-          : `/api/admin/landing-pages/${articleId}`;
+          : `/api/admin/landing-pages/${landingPageId}`;
         const method = mode === 'create' ? 'POST' : 'PUT';
 
         const response = await fetchWithCSRF(url, {
@@ -250,17 +226,17 @@ export function LandingPageForm({
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || `Failed to ${mode} article`);
+          throw new Error(error.error || `Failed to ${mode} landing page`);
         }
 
-        toast.success(`Article ${mode === 'create' ? 'created' : 'updated'} successfully`);
+        toast.success(`Landing page ${mode === 'create' ? 'created' : 'updated'} successfully`);
         router.push('/admin/landing-pages');
         router.refresh();
       }
     } catch (error) {
-      console.error(`Error ${mode}ing article:`, error);
+      console.error(`Error ${mode}ing landing page:`, error);
       toast.error(
-        error instanceof Error ? error.message : `Failed to ${mode} article`
+        error instanceof Error ? error.message : `Failed to ${mode} landing page`
       );
     } finally {
       setIsSubmitting(false);
@@ -279,11 +255,11 @@ export function LandingPageForm({
     setDeleteDialogOpen(false);
     try {
       await onDelete!();
-      toast.success('Article deleted successfully!');
+      toast.success('Landing page deleted successfully!');
       router.push('/admin/landing-pages');
     } catch (error) {
-      console.error('Error deleting article:', error);
-      toast.error('Failed to delete landingPage. Please try again.');
+      console.error('Error deleting landing page:', error);
+      toast.error('Failed to delete landing page. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -381,42 +357,8 @@ export function LandingPageForm({
                 )}
               />
 
-              {/* Category & Status Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Category */}
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Category <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Status */}
-                <FormField
+              {/* Status */}
+              <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
@@ -449,7 +391,6 @@ export function LandingPageForm({
                     </FormItem>
                   )}
                 />
-              </div>
 
               {/* Tags */}
               <FormField
@@ -574,7 +515,7 @@ export function LandingPageForm({
                     <FormLabel>Excerpt</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Brief summary of the article (auto-generated from content if empty)"
+                        placeholder="Brief summary of the landing page (auto-generated from content if empty)"
                         rows={3}
                         {...field}
                       />
@@ -754,5 +695,3 @@ export function LandingPageForm({
     </div>
   );
 }
-
-export default LandingPageForm;

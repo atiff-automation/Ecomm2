@@ -5,19 +5,17 @@
 
 import {
   LandingPage as PrismaLandingPage,
-  LandingPageCategory as PrismaLandingPageCategory,
   LandingPageTag as PrismaLandingPageTag,
   LandingPageStatus,
 } from '@prisma/client';
 
 // Base types from Prisma
 export type LandingPage = PrismaLandingPage;
-export type LandingPageCategory = PrismaLandingPageCategory;
 export type LandingPageTag = PrismaLandingPageTag;
+export { LandingPageStatus };
 
 // Landing Page with full relations
 export interface LandingPageWithRelations extends LandingPage {
-  category: LandingPageCategory;
   tags: Array<{
     tag: LandingPageTag;
   }>;
@@ -47,11 +45,6 @@ export interface LandingPagePublic {
   content: string;
   featuredImage: string;
   featuredImageAlt: string;
-  category: {
-    name: string;
-    slug: string;
-    color: string | null;
-  };
   tags: Array<{
     name: string;
     slug: string;
@@ -73,11 +66,6 @@ export interface LandingPageListItem {
   excerpt: string | null;
   featuredImage: string;
   featuredImageAlt: string;
-  category: {
-    name: string;
-    slug: string;
-    color: string | null;
-  };
   author: {
     firstName: string;
     lastName: string;
@@ -95,7 +83,6 @@ export interface LandingPageCreateInput {
   content: string;
   featuredImage: string;
   featuredImageAlt: string;
-  categoryId: string;
   tags: string[]; // Array of tag names
   status: LandingPageStatus;
   publishedAt?: Date;
@@ -112,7 +99,6 @@ export interface LandingPageUpdateInput {
   content?: string;
   featuredImage?: string;
   featuredImageAlt?: string;
-  categoryId?: string;
   tags?: string[];
   status?: LandingPageStatus;
   publishedAt?: Date;
@@ -123,7 +109,6 @@ export interface LandingPageUpdateInput {
 
 // Landing Page filter options
 export interface LandingPageFilter {
-  category?: string;
   tag?: string;
   status?: LandingPageStatus | 'ALL';
   author?: string;
@@ -159,11 +144,6 @@ export interface LandingPagePublicListResponse {
   page: number;
   pageSize: number;
   totalPages: number;
-  categories: Array<{
-    name: string;
-    slug: string;
-    count: number;
-  }>;
   tags: Array<{
     name: string;
     slug: string;
@@ -179,40 +159,12 @@ export interface LandingPageFormData {
   content: string;
   featuredImage: string;
   featuredImageAlt: string;
-  categoryId: string;
   tags: string[];
   status: LandingPageStatus;
   publishedAt?: Date;
   metaTitle: string;
   metaDescription: string;
   metaKeywords: string[];
-}
-
-// Category types
-export interface LandingPageCategoryWithCount extends LandingPageCategory {
-  _count: {
-    landingPages: number;
-  };
-}
-
-export interface LandingPageCategoryCreateInput {
-  name: string;
-  slug: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-  sortOrder?: number;
-  isActive?: boolean;
-}
-
-export interface LandingPageCategoryUpdateInput {
-  name?: string;
-  slug?: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-  sortOrder?: number;
-  isActive?: boolean;
 }
 
 // ============================================================================

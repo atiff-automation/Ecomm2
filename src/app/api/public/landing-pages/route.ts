@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const categorySlug = searchParams.get('category');
     const tagSlug = searchParams.get('tag');
     const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -27,18 +26,7 @@ export async function GET(request: NextRequest) {
     // 2. Build where clause
     const where: Prisma.LandingPageWhereInput = {
       status: 'PUBLISHED',
-      category: {
-        isActive: true, // Only show landing pages from active categories
-      },
     };
-
-    // Filter by category
-    if (categorySlug) {
-      where.category = {
-        slug: categorySlug,
-        isActive: true,
-      };
-    }
 
     // Filter by tag
     if (tagSlug) {
@@ -77,14 +65,8 @@ export async function GET(request: NextRequest) {
           publishedAt: true,
           readingTimeMin: true,
           viewCount: true,
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              color: true,
-            },
-          },
+          createdAt: true,
+          updatedAt: true,
           tags: {
             select: {
               tag: {

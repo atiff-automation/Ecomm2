@@ -25,13 +25,7 @@ export function LandingPageCard({ landingPage }: LandingPageCardProps) {
         />
       </div>
       <div className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span
-            className="text-xs px-2 py-1 rounded"
-            style={{ backgroundColor: landingPage.category.color || '#gray' }}
-          >
-            {landingPage.category.name}
-          </span>
+        <div className="mb-2">
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(landingPage.publishedAt), { addSuffix: true })}
           </span>

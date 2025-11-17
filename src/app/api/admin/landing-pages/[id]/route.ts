@@ -36,7 +36,6 @@ export async function GET(
     const landingPage = await prisma.landingPage.findUnique({
       where: { id: landingPageId },
       include: {
-        category: true,
         tags: {
           include: {
             tag: true,
@@ -188,7 +187,6 @@ export async function PUT(
         ...tagOperations,
       },
       include: {
-        category: true,
         tags: {
           include: {
             tag: true,
