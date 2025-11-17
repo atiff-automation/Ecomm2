@@ -98,17 +98,17 @@ export function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
-  // Main navigation items - primary shopping action
+  // Main navigation items - spread across header for balance
   const mainNavItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-  ];
-
-  // Content and utility navigation items - informational pages and tools
-  const utilityNavItems: NavigationItem[] = [
     { href: '/landing', label: 'Landing Pages' },
     { href: '/article', label: 'Articles' },
     { href: '/faq', label: 'FAQ' },
     { href: '/track-order', label: 'Track Order' },
+  ];
+
+  // Action items - compact utilities on the right
+  const utilityNavItems: NavigationItem[] = [
     {
       href: '/apply-agent',
       label: 'Apply as Agent',
