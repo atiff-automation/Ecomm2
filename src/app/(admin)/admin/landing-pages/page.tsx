@@ -37,18 +37,18 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Landing PageWithRelations, Landing PageCategory } from '@/types/landing page.types';
+import type { LandingPageWithRelations, LandingPageCategory } from '@/types/landing-page.types';
 import { format } from 'date-fns';
-import { LANDING_PAGE_CONSTANTS } from '@/lib/constants/landing page-constants';
+import { LANDING_PAGE_CONSTANTS } from '@/lib/constants/landing-page-constants';
 
-export default function AdminLanding PageListPage() {
+export default function AdminLandingPageListPage() {
   const router = useRouter();
 
   // State
-  const [landing pages, setLanding Pages] = useState<Landing PageWithRelations[]>([]);
+  const [landingPages, setLandingPages] = useState<LandingPageWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [categories, setCategories] = useState<Landing PageCategory[]>([]);
+  const [categories, setCategories] = useState<LandingPageCategory[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [page, setPage] = useState(1);
@@ -58,7 +58,7 @@ export default function AdminLanding PageListPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/admin/landing page-categories');
+        const response = await fetch('/api/admin/article-categories');
         if (response.ok) {
           const data = await response.json();
           setCategories(data.categories);
@@ -71,12 +71,12 @@ export default function AdminLanding PageListPage() {
     fetchCategories();
   }, []);
 
-  // Fetch landing pages
+  // Fetch landingPages
   useEffect(() => {
-    fetchLanding Pages();
+    fetchLandingPages();
   }, [categoryFilter, statusFilter, page]);
 
-  const fetchLanding Pages = async () => {
+  const fetchLandingPages = async () => {
     try {
       setLoading(true);
 
@@ -89,14 +89,14 @@ export default function AdminLanding PageListPage() {
 
       const response = await fetch(`/api/admin/landing-pages?${params}`);
 
-      if (!response.ok) throw new Error('Failed to fetch landing pages');
+      if (!response.ok) throw new Error('Failed to fetch landingPages');
 
       const data = await response.json();
-      setLanding Pages(data.landing pages);
+      setLandingPages(data.landingPages);
       setTotalPages(data.totalPages);
     } catch (error) {
-      console.error('Error fetching landing pages:', error);
-      toast.error('Failed to fetch landing pages');
+      console.error('Error fetching landingPages:', error);
+      toast.error('Failed to fetch landingPages');
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export default function AdminLanding PageListPage() {
   // Handle search
   const handleSearch = () => {
     setPage(1); // Reset to first page
-    fetchLanding Pages();
+    fetchLandingPages();
   };
 
   // Handle delete
@@ -120,18 +120,18 @@ export default function AdminLanding PageListPage() {
       if (!response.ok) throw new Error('Failed to delete landing page');
 
       toast.success('Landing Page deleted successfully');
-      fetchLanding Pages();
+      fetchLandingPages();
     } catch (error) {
       console.error('Error deleting landing page:', error);
       toast.error('Failed to delete landing page');
     }
   };
 
-  // Filter landing pages by search (client-side for better UX)
-  const filteredLanding Pages = landing pages.filter(landing page =>
+  // Filter landingPages by search (client-side for better UX)
+  const filteredLandingPages = landingPages.filter(landingPage =>
     search
-      ? landing page.title.toLowerCase().includes(search.toLowerCase()) ||
-        (landing page.excerpt && landing page.excerpt.toLowerCase().includes(search.toLowerCase()))
+      ? landingPage.title.toLowerCase().includes(search.toLowerCase()) ||
+        (landingPage.excerpt && landingPage.excerpt.toLowerCase().includes(search.toLowerCase()))
       : true
   );
 
@@ -143,11 +143,11 @@ export default function AdminLanding PageListPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Landing Page Management</h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              Manage landing pages for your website
+              Manage landingPages for your website
             </p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/content/landing page-categories" className="w-full sm:w-auto">
+            <Link href="/admin/content/article-categories" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full sm:w-auto">
                 <FolderOpen className="w-4 h-4 mr-2" />
                 <span className="hidden md:inline">Manage Categories</span>
@@ -158,7 +158,7 @@ export default function AdminLanding PageListPage() {
               <Button className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 <span className="hidden md:inline">Create New Landing Page</span>
-                <span className="md:hidden">Create Landing Page</span>
+                <span className="md:hidden">Create Page</span>
               </Button>
             </Link>
           </div>
@@ -173,7 +173,7 @@ export default function AdminLanding PageListPage() {
             <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search landing pages..."
+                placeholder="Search landingPages..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -214,10 +214,10 @@ export default function AdminLanding PageListPage() {
       {/* Landing Page List */}
       {loading ? (
         <div className="text-center py-12">Loading...</div>
-      ) : filteredLanding Pages.length === 0 ? (
+      ) : filteredLandingPages.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No landing pages found</p>
+            <p className="text-muted-foreground">No landingPages found</p>
             <Link href="/admin/landing-pages/create" className="mt-4 inline-block">
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -231,10 +231,10 @@ export default function AdminLanding PageListPage() {
           <Card>
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl">
-                Landing Pages ({filteredLanding Pages.length})
+                Landing Pages ({filteredLandingPages.length})
               </CardTitle>
               <CardDescription className="text-xs md:text-sm">
-                Manage and organize your published landing pages
+                Manage and organize your published landingPages
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -253,15 +253,15 @@ export default function AdminLanding PageListPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredLanding Pages.map((landing page) => (
-                      <tr key={landing page.id} className="border-b hover:bg-muted/30">
+                    {filteredLandingPages.map((landingPage) => (
+                      <tr key={landingPage.id} className="border-b hover:bg-muted/30">
                         <td className="p-3">
                           <div>
                             <p className="font-medium text-sm truncate max-w-xs">
-                              {landing page.title}
+                              {landingPage.title}
                             </p>
                             <p className="text-xs text-muted-foreground truncate max-w-xs md:hidden">
-                              {landing page.category.name}
+                              {landingPage.category.name}
                             </p>
                           </div>
                         </td>
@@ -269,15 +269,15 @@ export default function AdminLanding PageListPage() {
                           <Badge
                             variant="outline"
                             style={{
-                              borderColor: landing page.category.color || '#3B82F6',
-                              color: landing page.category.color || '#3B82F6',
+                              borderColor: landingPage.category.color || '#3B82F6',
+                              color: landingPage.category.color || '#3B82F6',
                             }}
                           >
-                            {landing page.category.name}
+                            {landingPage.category.name}
                           </Badge>
                         </td>
                         <td className="p-3 text-center">
-                          {landing page.status === 'PUBLISHED' ? (
+                          {landingPage.status === 'PUBLISHED' ? (
                             <Badge variant="default" className="bg-green-600">
                               <CheckCircle className="w-3 h-3 mr-1" />
                               Published
@@ -290,22 +290,22 @@ export default function AdminLanding PageListPage() {
                           )}
                         </td>
                         <td className="p-3 hidden lg:table-cell text-sm">
-                          {landing page.author.firstName} {landing page.author.lastName}
+                          {landingPage.author.firstName} {landingPage.author.lastName}
                         </td>
                         <td className="p-3 hidden lg:table-cell text-sm text-muted-foreground">
-                          {landing page.publishedAt
-                            ? format(new Date(landing page.publishedAt), 'MMM d, yyyy')
+                          {landingPage.publishedAt
+                            ? format(new Date(landingPage.publishedAt), 'MMM d, yyyy')
                             : '-'}
                         </td>
                         <td className="p-3 text-center hidden sm:table-cell">
                           <div className="flex items-center justify-center gap-1">
                             <Eye className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-sm">{landing page.viewCount}</span>
+                            <span className="text-sm">{landingPage.viewCount}</span>
                           </div>
                         </td>
                         <td className="p-3">
                           <div className="flex items-center justify-center gap-1">
-                            <Link href={`/admin/landing-pages/${landing page.id}/edit`}>
+                            <Link href={`/admin/landing-pages/${landingPage.id}/edit`}>
                               <Button variant="outline" size="sm">
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -313,7 +313,7 @@ export default function AdminLanding PageListPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDelete(landing page.id, landing page.title)}
+                              onClick={() => handleDelete(landingPage.id, landingPage.title)}
                             >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>

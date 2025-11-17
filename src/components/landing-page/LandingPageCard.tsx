@@ -3,7 +3,7 @@
  * Displays landing page preview in list views
  */
 
-import Link from 'next/image';
+import Link from 'next/link';
 import { LandingPageListItem } from '@/types/landing-page.types';
 import { formatDistanceToNow } from 'date-fns';
 
