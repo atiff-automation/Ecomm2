@@ -42,6 +42,11 @@ export const ARTICLE_CONSTANTS = {
     PUBLIC_ARTICLES: '/api/public/articles',
   },
 
+  // Public routes
+  PUBLIC_ROUTES: {
+    ARTICLE: '/article',
+  },
+
   // UI Configuration
   UI: {
     ARTICLES_PER_PAGE: 13,

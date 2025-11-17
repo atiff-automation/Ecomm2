@@ -35,6 +35,7 @@ import {
   CheckCircle,
   XCircle,
   FolderOpen,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ArticleWithRelations, ArticleCategory } from '@/types/article.types';
@@ -124,6 +125,20 @@ export default function AdminArticleListPage() {
     } catch (error) {
       console.error('Error deleting article:', error);
       toast.error('Failed to delete article');
+    }
+  };
+
+  // Handle copy URL
+  const handleCopyUrl = async (slug: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const articleUrl = `${baseUrl}${ARTICLE_CONSTANTS.PUBLIC_ROUTES.ARTICLE}/${slug}`;
+
+      await navigator.clipboard.writeText(articleUrl);
+      toast.success('Article URL copied to clipboard');
+    } catch (error) {
+      console.error('Error copying URL:', error);
+      toast.error('Failed to copy URL to clipboard');
     }
   };
 
@@ -310,6 +325,14 @@ export default function AdminArticleListPage() {
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCopyUrl(article.slug)}
+                              title="Copy article URL"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"

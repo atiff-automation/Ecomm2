@@ -34,6 +34,7 @@ import {
   Eye,
   CheckCircle,
   XCircle,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { LandingPageWithRelations } from '@/types/landing-page.types';
@@ -103,6 +104,20 @@ export default function AdminLandingPageListPage() {
     } catch (error) {
       console.error('Error deleting landing page:', error);
       toast.error('Failed to delete landing page');
+    }
+  };
+
+  // Handle copy URL
+  const handleCopyUrl = async (slug: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const landingPageUrl = `${baseUrl}${LANDING_PAGE_CONSTANTS.PUBLIC_ROUTES.LANDING_PAGE}/${slug}`;
+
+      await navigator.clipboard.writeText(landingPageUrl);
+      toast.success('Landing page URL copied to clipboard');
+    } catch (error) {
+      console.error('Error copying URL:', error);
+      toast.error('Failed to copy URL to clipboard');
     }
   };
 
@@ -248,6 +263,14 @@ export default function AdminLandingPageListPage() {
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCopyUrl(landingPage.slug)}
+                              title="Copy landing page URL"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"

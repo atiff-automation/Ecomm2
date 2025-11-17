@@ -42,6 +42,11 @@ export const LANDING_PAGE_CONSTANTS = {
     PUBLIC_LANDING_PAGES: '/api/public/landing-pages',
   },
 
+  // Public routes
+  PUBLIC_ROUTES: {
+    LANDING_PAGE: '/landing',
+  },
+
   // UI Configuration
   UI: {
     LANDING_PAGES_PER_PAGE: 13,

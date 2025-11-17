@@ -414,6 +414,15 @@ async function getTrendingProducts(limit: number, excludeUserId?: string) {
  */
 async function getUserInteractions(userId: string) {
   try {
+    // Verify Prisma client is available
+    if (!prisma || !prisma.recentlyViewed) {
+      console.error('Prisma client or recentlyViewed model not available');
+      return {
+        categories: [],
+        viewedProducts: [],
+      };
+    }
+
     // Get user's recently viewed products and their categories
     const recentlyViewed = await prisma.recentlyViewed.findMany({
       where: { userId },

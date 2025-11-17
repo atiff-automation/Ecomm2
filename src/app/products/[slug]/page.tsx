@@ -293,14 +293,8 @@ export default async function ProductPage({ params }: PageProps) {
     })),
   };
 
-  // Track product view (async, non-blocking) - uses API route
-  fetch(`/api/recently-viewed`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId: product.id }),
-  }).catch(err => {
-    console.error('Failed to track product view:', err);
-  });
+  // Note: Product view tracking is handled by ProductClient component on the client side
+  // This ensures proper URL resolution and session handling
 
   // Determine the current price (promotional > member)
   const currentPrice = product.promotionalPrice

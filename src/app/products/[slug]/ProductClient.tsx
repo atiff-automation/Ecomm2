@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -139,6 +139,26 @@ export function ProductClient({ product }: ProductClientProps) {
 
   const isLoggedIn = !!session?.user;
   const isMember = session?.user?.isMember;
+
+  // Track product view on mount
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        await fetch('/api/recently-viewed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id }),
+        });
+      } catch (error) {
+        // Silently fail - view tracking is not critical
+        console.error('Failed to track product view:', error);
+      }
+    };
+
+    if (product.id) {
+      trackView();
+    }
+  }, [product.id]);
 
   const handleAddToCart = async () => {
     setAddingToCart(true);
