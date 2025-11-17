@@ -40,6 +40,7 @@ import {
   MapPin,
   Clock,
   LayoutTemplate,
+  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -64,6 +65,7 @@ interface NavigationItem {
   href: string;
   label: string;
   icon?: LucideIcon;
+  isButton?: boolean;
 }
 
 export function Header() {
@@ -101,14 +103,27 @@ export function Header() {
     await signOut({ callbackUrl: '/' });
   };
 
-  const navigationItems: NavigationItem[] = [
+  // Main navigation items - primary browsing actions
+  const mainNavItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/article', label: 'Articles', icon: FileText },
     { href: '/landing', label: 'Landing Pages', icon: LayoutTemplate },
-    { href: '/faq', label: 'FAQ', icon: HelpCircle },
-    { href: '/track-order', label: 'Track Order' },
-    { href: '/apply-agent', label: 'Apply as Agent', icon: UserPlus },
+    { href: '/article', label: 'Articles', icon: FileText },
   ];
+
+  // Utility navigation items - support and tools
+  const utilityNavItems: NavigationItem[] = [
+    { href: '/track-order', label: 'Track Order', icon: Truck },
+    { href: '/faq', label: 'FAQ', icon: HelpCircle },
+    {
+      href: '/apply-agent',
+      label: 'Apply as Agent',
+      icon: UserPlus,
+      isButton: true,
+    },
+  ];
+
+  // All navigation items for mobile menu
+  const allNavItems: NavigationItem[] = [...mainNavItems, ...utilityNavItems];
 
   return (
     <div>
@@ -163,13 +178,13 @@ export function Header() {
                 )}
               </Link>
 
-              {/* Desktop Navigation */}
+              {/* Desktop Main Navigation */}
               <nav
                 className="hidden md:flex items-center space-x-6 ml-6"
                 role="navigation"
                 aria-label="Main navigation"
               >
-                {navigationItems.map(item => (
+                {mainNavItems.map(item => (
                   <Link
                     key={item.href}
                     href={item.href}
@@ -189,6 +204,37 @@ export function Header() {
 
             {/* Right Section */}
             <div className="flex items-center gap-2">
+              {/* Desktop Utility Navigation */}
+              <nav
+                className="hidden lg:flex items-center gap-3 mr-2"
+                role="navigation"
+                aria-label="Utility navigation"
+              >
+                {utilityNavItems.map(item =>
+                  item.isButton ? (
+                    <Link key={item.href} href={item.href}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1.5"
+                      >
+                        {item.icon && <item.icon className="w-4 h-4" />}
+                        {item.label}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="text-sm font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm px-2 py-1 flex items-center gap-1"
+                    >
+                      {item.icon && <item.icon className="w-4 h-4" />}
+                      {item.label}
+                    </Link>
+                  )
+                )}
+              </nav>
+
               {/* Search Button - Mobile */}
               <Link href="/search" className="lg:hidden">
                 <Button variant="ghost" size="sm" aria-label="Search products">
@@ -337,17 +383,33 @@ export function Header() {
 
                     {/* Navigation Links */}
                     <div className="grid gap-2">
-                      {navigationItems.map(item => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
-                        >
-                          {item.icon && <item.icon className="w-4 h-4" />}
-                          {item.label}
-                        </Link>
-                      ))}
+                      {allNavItems.map(item =>
+                        item.isButton ? (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start gap-2"
+                            >
+                              {item.icon && <item.icon className="w-4 h-4" />}
+                              {item.label}
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted rounded-md"
+                          >
+                            {item.icon && <item.icon className="w-4 h-4" />}
+                            {item.label}
+                          </Link>
+                        )
+                      )}
                     </div>
 
                     {/* User Section */}
