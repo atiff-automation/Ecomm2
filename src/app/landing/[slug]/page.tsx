@@ -24,6 +24,7 @@ import type { LandingPageWithRelations } from '@/types/landing-page.types';
 import SEOHead from '@/components/seo/SEOHead';
 import { ArticleContent } from '@/components/article/embeds/ArticleContent';
 import { ArticleSchema } from '@/components/seo/ArticleSchema';
+import { useLandingPageTracking } from '@/hooks/useLandingPageTracking';
 
 interface SingleLandingPageProps {
   params: { slug: string };
@@ -35,6 +36,9 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
   const [relatedLandingPages, setRelatedLandingPages] = useState<LandingPageWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  // Initialize conversion tracking hook
+  const { trackClick } = useLandingPageTracking(params.slug);
 
   useEffect(() => {
     fetchLandingPage();
@@ -287,7 +291,16 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
             Discover our range of products and find what's perfect for you
           </p>
           <Link href="/products">
-            <Button size="default" className="md:h-11 md:px-8">
+            <Button
+              size="default"
+              className="md:h-11 md:px-8"
+              onClick={() =>
+                trackClick({
+                  clickType: 'CTA',
+                  targetUrl: '/products',
+                })
+              }
+            >
               Browse Products
             </Button>
           </Link>

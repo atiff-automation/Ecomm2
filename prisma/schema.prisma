@@ -303,6 +303,7 @@ model Order {
   user                     User?              @relation(fields: [userId], references: [id])
   pendingMembership        PendingMembership?
   shipment                 Shipment?
+  landingPageConversion    LandingPageConversion?
 
   @@index([userId])
   @@index([status])
@@ -1463,6 +1464,13 @@ enum LandingPageStatus {
   PUBLISHED
 }
 
+// Click Type Enum for Landing Page Tracking
+enum ClickType {
+  PRODUCT        // Product card click
+  CTA            // Call-to-action button
+  EXTERNAL_LINK  // External link click
+}
+
 // Landing Page Category Model - Dynamic categories managed by admin
 // Landing Page Tag Model - Free-form tags for taxonomy
 model LandingPageTag {
@@ -1527,6 +1535,11 @@ model LandingPage {
   viewCount        Int                 @default(0)
   readingTimeMin   Int                 @default(0) // Auto-calculated
 
+  // Conversion Tracking (Phase 2)
+  clickCount       Int                 @default(0)  // Total clicks on CTAs/products
+  conversionCount  Int                 @default(0)  // Total purchases attributed
+  conversionValue  Decimal             @default(0)  @db.Decimal(10, 2) // Total revenue
+
   // Metadata
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
@@ -1537,6 +1550,10 @@ model LandingPage {
   createdByUser    User?               @relation("LandingPageCreatedBy", fields: [createdBy], references: [id])
   updatedByUser    User?               @relation("LandingPageUpdatedBy", fields: [updatedBy], references: [id])
 
+  // Phase 2 Relations
+  clicks           LandingPageClick[]
+  conversions      LandingPageConversion[]
+
   @@index([slug])
   @@index([status])
   @@index([publishedAt])
@@ -1545,4 +1562,49 @@ model LandingPage {
   @@index([viewCount])
   @@index([createdAt])
   @@map("landing_pages")
+}
+
+// Landing Page Click Event (Phase 2)
+model LandingPageClick {
+  id            String       @id @default(cuid())
+  landingPageId String
+  clickType     ClickType    // PRODUCT, CTA, EXTERNAL_LINK
+  targetUrl     String?      // What was clicked
+  targetId      String?      // Product ID if applicable
+  sessionId     String?      // Session tracking
+  userId        String?      // If logged in
+  utmSource     String?      // UTM tracking
+  utmMedium     String?
+  utmCampaign   String?
+  createdAt     DateTime     @default(now())
+
+  landingPage   LandingPage  @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+
+  @@index([landingPageId])
+  @@index([clickType])
+  @@index([targetId])
+  @@index([createdAt])
+  @@map("landing_page_clicks")
+}
+
+// Landing Page Conversion Event (Phase 2)
+model LandingPageConversion {
+  id            String       @id @default(cuid())
+  landingPageId String
+  orderId       String       @unique
+  orderValue    Decimal      @db.Decimal(10, 2)
+  sessionId     String?
+  userId        String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  createdAt     DateTime     @default(now())
+
+  landingPage   LandingPage  @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([landingPageId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("landing_page_conversions")
 }
