@@ -55,6 +55,11 @@ model User {
   articlesUpdated           Article[]                   @relation("ArticleUpdatedBy")
   articleCategoriesCreated  ArticleCategory[]           @relation("ArticleCategoryCreatedBy")
   articleCategoriesUpdated  ArticleCategory[]           @relation("ArticleCategoryUpdatedBy")
+  landingPages                 LandingPage[]            @relation("LandingPageAuthor")
+  landingPagesCreated          LandingPage[]            @relation("LandingPageCreatedBy")
+  landingPagesUpdated          LandingPage[]            @relation("LandingPageUpdatedBy")
+  landingPageCategoriesCreated LandingPageCategory[]    @relation("LandingPageCategoryCreatedBy")
+  landingPageCategoriesUpdated LandingPageCategory[]    @relation("LandingPageCategoryUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -1448,4 +1453,134 @@ model Article {
   @@index([viewCount])
   @@index([createdAt])
   @@map("articles")
+}
+
+// ============================================================================
+// Landing Page CMS Models
+// ============================================================================
+
+// Landing Page Status Enum
+enum LandingPageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// Landing Page Category Model - Dynamic categories managed by admin
+model LandingPageCategory {
+  id          String   @id @default(cuid())
+
+  // Category Name
+  name        String   @unique
+  slug        String   @unique
+  description String?
+
+  // Display
+  icon        String?  // Icon name (e.g., "Rocket", "Target")
+  color       String?  // Hex color for category badge
+  sortOrder   Int      @default(0)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  landingPages    LandingPage[]
+  createdByUser   User?  @relation("LandingPageCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?  @relation("LandingPageCategoryUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("landing_page_categories")
+}
+
+// Landing Page Tag Model - Free-form tags for taxonomy
+model LandingPageTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  landingPages  LandingPageToTag[]
+
+  @@index([slug])
+  @@map("landing_page_tags")
+}
+
+// Landing Page to Tag Junction Table (Many-to-Many)
+model LandingPageToTag {
+  id            String   @id @default(cuid())
+  landingPageId String
+  tagId         String
+  createdAt     DateTime @default(now())
+
+  landingPage   LandingPage    @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  tag           LandingPageTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([landingPageId, tagId])
+  @@index([landingPageId])
+  @@index([tagId])
+  @@map("landing_page_to_tags")
+}
+
+// Landing Page Model
+model LandingPage {
+  id               String              @id @default(cuid())
+
+  // Basic Content
+  title            String              @db.VarChar(200)
+  slug             String              @unique @db.VarChar(200)
+  excerpt          String?             @db.VarChar(500)
+  content          String              @db.Text // Rich text HTML from TipTap
+  featuredImage    String              // Required featured image URL
+  featuredImageAlt String              @db.VarChar(200)
+
+  // Organization
+  categoryId       String
+  category         LandingPageCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags             LandingPageToTag[]
+  sortOrder        Int                 @default(0)
+
+  // SEO Fields
+  metaTitle        String?             @db.VarChar(200)
+  metaDescription  String?             @db.VarChar(300)
+  metaKeywords     String[]            // Array of keywords
+
+  // Author
+  authorId         String
+  author           User                @relation("LandingPageAuthor", fields: [authorId], references: [id])
+
+  // Publishing
+  status           LandingPageStatus   @default(DRAFT)
+  publishedAt      DateTime?
+
+  // Analytics
+  viewCount        Int                 @default(0)
+  readingTimeMin   Int                 @default(0) // Auto-calculated
+
+  // Metadata
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  // Audit Relations
+  createdByUser    User?               @relation("LandingPageCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser    User?               @relation("LandingPageUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([sortOrder])
+  @@index([viewCount])
+  @@index([createdAt])
+  @@map("landing_pages")
 }
