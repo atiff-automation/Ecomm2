@@ -108,6 +108,19 @@ export const landingPageBaseSchema = z.object({
     .array(z.string().trim().min(1))
     .max(10, 'Maximum 10 keywords allowed')
     .default([]),
+
+  // Product Showcase (Phase 2)
+  featuredProductIds: z
+    .array(z.string().cuid('Invalid product ID'))
+    .max(
+      LANDING_PAGE_CONSTANTS.PRODUCT_SHOWCASE.MAX_FEATURED_PRODUCTS,
+      `Maximum ${LANDING_PAGE_CONSTANTS.PRODUCT_SHOWCASE.MAX_FEATURED_PRODUCTS} featured products allowed`
+    )
+    .default([]),
+
+  productShowcaseLayout: z
+    .enum(['GRID', 'CAROUSEL', 'FEATURED'])
+    .default('GRID'),
 });
 
 // Create landing page schema (used in forms and API)

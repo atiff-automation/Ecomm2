@@ -25,6 +25,7 @@ import SEOHead from '@/components/seo/SEOHead';
 import { ArticleContent } from '@/components/article/embeds/ArticleContent';
 import { ArticleSchema } from '@/components/seo/ArticleSchema';
 import { useLandingPageTracking } from '@/hooks/useLandingPageTracking';
+import { ProductShowcase } from '@/components/landing-pages/ProductShowcase';
 
 interface SingleLandingPageProps {
   params: { slug: string };
@@ -34,6 +35,7 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
   const router = useRouter();
   const [landingPage, setLandingPage] = useState<LandingPageWithRelations | null>(null);
   const [relatedLandingPages, setRelatedLandingPages] = useState<LandingPageWithRelations[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -61,6 +63,24 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
       const data = await response.json();
       setLandingPage(data.landingPage);
       setRelatedLandingPages(data.relatedLandingPages || []);
+
+      // Fetch featured products if any
+      if (data.landingPage.featuredProductIds && data.landingPage.featuredProductIds.length > 0) {
+        const productsResponse = await fetch(
+          `/api/admin/products/search?pageSize=50`
+        );
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          const featured = productsData.products.filter((p: any) =>
+            data.landingPage.featuredProductIds.includes(p.id)
+          );
+          // Maintain order from featuredProductIds
+          const orderedProducts = data.landingPage.featuredProductIds
+            .map((id: string) => featured.find((p: any) => p.id === id))
+            .filter(Boolean);
+          setFeaturedProducts(orderedProducts);
+        }
+      }
     } catch (error) {
       console.error('Error fetching landing page:', error);
       router.push('/landing');
@@ -171,7 +191,25 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
             content={landingPage.content}
             className="mb-8 md:mb-12"
           />
+        </div>
+      </article>
 
+      {/* Product Showcase */}
+      {featuredProducts.length > 0 && (
+        <ProductShowcase
+          products={featuredProducts}
+          layout={landingPage.productShowcaseLayout as 'GRID' | 'CAROUSEL' | 'FEATURED'}
+          onProductClick={(productId) =>
+            trackClick({
+              clickType: 'PRODUCT',
+              targetId: productId,
+            })
+          }
+        />
+      )}
+
+      <article className="py-8 md:py-12">
+        <div className="container mx-auto px-4 md:px-6 lg:px-16 max-w-4xl">
           {/* Tags */}
           {landingPage.tags.length > 0 && (
             <div className="mb-8 md:mb-12 pb-8 border-b">

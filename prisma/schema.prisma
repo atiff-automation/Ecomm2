@@ -1540,6 +1540,10 @@ model LandingPage {
   conversionCount  Int                 @default(0)  // Total purchases attributed
   conversionValue  Decimal             @default(0)  @db.Decimal(10, 2) // Total revenue
 
+  // Product Showcase (Phase 2)
+  featuredProductIds      String[]     @default([]) // Array of product IDs to showcase
+  productShowcaseLayout   String       @default("GRID") // GRID, CAROUSEL, FEATURED
+
   // Metadata
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt

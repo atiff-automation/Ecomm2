@@ -47,6 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ProductShowcaseSelector } from '@/components/admin/landing-pages/ProductShowcaseSelector';
 
 export interface LandingPageFormProps {
   mode: 'create' | 'edit';
@@ -68,6 +69,8 @@ const initialFormData: LandingPageFormData = {
   metaTitle: '',
   metaDescription: '',
   metaKeywords: [],
+  featuredProductIds: [],
+  productShowcaseLayout: 'GRID',
 };
 
 export function LandingPageForm({
@@ -131,6 +134,8 @@ export function LandingPageForm({
         metaTitle: landingPage.metaTitle || '',
         metaDescription: landingPage.metaDescription || '',
         metaKeywords: landingPage.metaKeywords || [],
+        featuredProductIds: landingPage.featuredProductIds || [],
+        productShowcaseLayout: landingPage.productShowcaseLayout || 'GRID',
       });
 
       // Set featured image state for ImageUpload component
@@ -547,6 +552,23 @@ export function LandingPageForm({
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Product Showcase */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Showcase</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ProductShowcaseSelector
+                selectedProductIds={form.watch('featuredProductIds') || []}
+                layout={form.watch('productShowcaseLayout') || 'GRID'}
+                onChange={(productIds, layout) => {
+                  form.setValue('featuredProductIds', productIds);
+                  form.setValue('productShowcaseLayout', layout);
+                }}
+              />
             </CardContent>
           </Card>
 

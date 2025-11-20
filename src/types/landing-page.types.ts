@@ -89,6 +89,8 @@ export interface LandingPageCreateInput {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string[];
+  featuredProductIds?: string[];
+  productShowcaseLayout?: 'GRID' | 'CAROUSEL' | 'FEATURED';
 }
 
 // Landing Page update input
@@ -105,6 +107,8 @@ export interface LandingPageUpdateInput {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string[];
+  featuredProductIds?: string[];
+  productShowcaseLayout?: 'GRID' | 'CAROUSEL' | 'FEATURED';
 }
 
 // Landing Page filter options
@@ -165,4 +169,6 @@ export interface LandingPageFormData {
   metaTitle: string;
   metaDescription: string;
   metaKeywords: string[];
+  featuredProductIds: string[];
+  productShowcaseLayout: 'GRID' | 'CAROUSEL' | 'FEATURED';
 }

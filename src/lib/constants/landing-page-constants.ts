@@ -102,6 +102,36 @@ export const LANDING_PAGE_CONSTANTS = {
       COMPACT_MODE: true, // Use compact layout in landing pages
     },
   },
+
+  // Product Showcase Configuration (Phase 2)
+  PRODUCT_SHOWCASE: {
+    MAX_FEATURED_PRODUCTS: 12, // Maximum products allowed in showcase
+    LAYOUTS: {
+      GRID: {
+        value: 'GRID',
+        label: 'Grid Layout',
+        description: 'Display products in a responsive grid',
+        cols: 3, // Default grid columns
+        icon: 'LayoutGrid',
+      },
+      CAROUSEL: {
+        value: 'CAROUSEL',
+        label: 'Carousel',
+        description: 'Scrollable carousel with autoplay',
+        autoplay: true,
+        interval: 5000, // 5 seconds
+        icon: 'ArrowRightCircle',
+      },
+      FEATURED: {
+        value: 'FEATURED',
+        label: 'Featured Hero',
+        description: 'One large hero product with smaller grid',
+        cols: 4, // Total slots (1 hero + 3-4 smaller)
+        icon: 'Star',
+      },
+    },
+    CARD_STYLE: 'compact', // Optimized for landing pages
+  },
 } as const;
 
 // Type helpers
