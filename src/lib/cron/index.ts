@@ -4,6 +4,7 @@
  */
 
 import { dailySummaryCron } from './daily-summary';
+import { landingPageSchedulerCron } from './landing-page-scheduler';
 
 // Declare global type to avoid TypeScript errors
 declare global {
@@ -24,6 +25,9 @@ export function initializeCronJobs(): void {
   // Start daily summary cron job
   dailySummaryCron.start();
 
+  // Start landing page scheduler cron job
+  landingPageSchedulerCron.start();
+
   global.__cronJobsInitialized = true;
   console.log('✅ All cron jobs initialized');
 }
@@ -36,6 +40,9 @@ export function stopCronJobs(): void {
 
   // Stop daily summary cron job
   dailySummaryCron.stop();
+
+  // Stop landing page scheduler cron job
+  landingPageSchedulerCron.stop();
 
   // Reset global flag
   global.__cronJobsInitialized = false;

@@ -136,6 +136,10 @@ export function LandingPageForm({
         metaKeywords: landingPage.metaKeywords || [],
         featuredProductIds: landingPage.featuredProductIds || [],
         productShowcaseLayout: landingPage.productShowcaseLayout || 'GRID',
+        scheduledPublishAt: landingPage.scheduledPublishAt ? new Date(landingPage.scheduledPublishAt) : undefined,
+        scheduledUnpublishAt: landingPage.scheduledUnpublishAt ? new Date(landingPage.scheduledUnpublishAt) : undefined,
+        campaignName: landingPage.campaignName || '',
+        isScheduled: landingPage.isScheduled || false,
       });
 
       // Set featured image state for ImageUpload component
@@ -212,6 +216,10 @@ export function LandingPageForm({
         ...data,
         readingTimeMin,
         publishedAt: data.status === 'PUBLISHED' ? (data.publishedAt || new Date()) : undefined,
+        isScheduled: data.status === 'SCHEDULED' || !!(data.scheduledUnpublishAt),
+        scheduledPublishAt: data.status === 'SCHEDULED' ? data.scheduledPublishAt : undefined,
+        scheduledUnpublishAt: data.scheduledUnpublishAt || undefined,
+        campaignName: data.campaignName || undefined,
       };
 
       if (onSubmit) {
@@ -397,6 +405,96 @@ export function LandingPageForm({
                     </FormItem>
                   )}
                 />
+
+              {/* Campaign Name (Conditional - shown when SCHEDULED) */}
+              {form.watch('status') === 'SCHEDULED' && (
+                <FormField
+                  control={form.control}
+                  name="campaignName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Spring Sale 2025"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Optional campaign identifier for tracking
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Scheduled Publish At (Conditional - shown when SCHEDULED) */}
+              {form.watch('status') === 'SCHEDULED' && (
+                <FormField
+                  control={form.control}
+                  name="scheduledPublishAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Scheduled Publish Date <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          value={
+                            field.value
+                              ? new Date(field.value).toISOString().slice(0, 16)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const date = e.target.value ? new Date(e.target.value) : undefined;
+                            field.onChange(date);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        When to automatically publish this landing page
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Scheduled Unpublish At (Conditional - shown when SCHEDULED or PUBLISHED) */}
+              {(form.watch('status') === 'SCHEDULED' || form.watch('status') === 'PUBLISHED') && (
+                <FormField
+                  control={form.control}
+                  name="scheduledUnpublishAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Scheduled Unpublish Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          value={
+                            field.value
+                              ? new Date(field.value).toISOString().slice(0, 16)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const date = e.target.value ? new Date(e.target.value) : undefined;
+                            field.onChange(date);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Optional: When to automatically unpublish this landing page
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Tags */}
               <FormField

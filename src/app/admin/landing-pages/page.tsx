@@ -40,6 +40,8 @@ import { toast } from 'sonner';
 import type { LandingPageWithRelations } from '@/types/landing-page.types';
 import { format } from 'date-fns';
 import { LANDING_PAGE_CONSTANTS } from '@/lib/constants/landing-page-constants';
+import { LandingPageStatusBadge } from '@/components/admin/landing-pages/LandingPageStatusBadge';
+import { ScheduleCountdown } from '@/components/admin/landing-pages/ScheduleCountdown';
 
 export default function AdminLandingPageListPage() {
   const router = useRouter();
@@ -175,6 +177,7 @@ export default function AdminLandingPageListPage() {
                 <SelectItem value="ALL">All Status</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="PUBLISHED">Published</SelectItem>
+                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -230,17 +233,14 @@ export default function AdminLandingPageListPage() {
                           </p>
                         </td>
                         <td className="p-3 text-center">
-                          {landingPage.status === 'PUBLISHED' ? (
-                            <Badge variant="default" className="bg-green-600">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Published
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Draft
-                            </Badge>
-                          )}
+                          <div className="flex flex-col items-center gap-1">
+                            <LandingPageStatusBadge status={landingPage.status} />
+                            <ScheduleCountdown
+                              status={landingPage.status}
+                              scheduledPublishAt={landingPage.scheduledPublishAt}
+                              scheduledUnpublishAt={landingPage.scheduledUnpublishAt}
+                            />
+                          </div>
                         </td>
                         <td className="p-3 hidden lg:table-cell text-sm">
                           {landingPage.author.firstName} {landingPage.author.lastName}
