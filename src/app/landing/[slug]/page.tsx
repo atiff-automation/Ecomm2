@@ -26,6 +26,8 @@ import { ArticleContent } from '@/components/article/embeds/ArticleContent';
 import { ArticleSchema } from '@/components/seo/ArticleSchema';
 import { useLandingPageTracking } from '@/hooks/useLandingPageTracking';
 import { ProductShowcase } from '@/components/landing-pages/ProductShowcase';
+import { LandingPageHead } from '@/components/landing-pages/LandingPageHead';
+import { CustomBodyScripts } from '@/components/landing-pages/CustomBodyScripts';
 
 interface SingleLandingPageProps {
   params: { slug: string };
@@ -136,12 +138,21 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
     title: landingPage.metaTitle || landingPage.title,
     description: landingPage.metaDescription || landingPage.excerpt || '',
     keywords: landingPage.metaKeywords || [],
-    ogImage: landingPage.featuredImage || undefined,
+    ogImage: landingPage.ogImageUrl || landingPage.featuredImage || undefined,
+    twitterImage: landingPage.twitterImageUrl || landingPage.ogImageUrl || landingPage.featuredImage || undefined,
+    canonicalUrl: landingPage.canonicalUrl || undefined,
+    noIndex: landingPage.noIndex || false,
   };
 
   return (
     <div>
       <SEOHead seo={seoData} />
+      <LandingPageHead
+        fbPixelId={landingPage.fbPixelId}
+        gaTrackingId={landingPage.gaTrackingId}
+        gtmContainerId={landingPage.gtmContainerId}
+        customScripts={landingPage.customScripts}
+      />
       <ArticleSchema
         title={landingPage.title}
         description={landingPage.excerpt}
@@ -344,6 +355,9 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
           </Link>
         </div>
       </section>
+
+      {/* Custom Body Scripts */}
+      <CustomBodyScripts customScripts={landingPage.customScripts} />
     </div>
   );
 }

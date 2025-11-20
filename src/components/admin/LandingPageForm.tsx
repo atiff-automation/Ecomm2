@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ProductShowcaseSelector } from '@/components/admin/landing-pages/ProductShowcaseSelector';
+import { AdvancedSEOForm } from '@/components/admin/landing-pages/AdvancedSEOForm';
 
 export interface LandingPageFormProps {
   mode: 'create' | 'edit';
@@ -140,6 +141,16 @@ export function LandingPageForm({
         scheduledUnpublishAt: landingPage.scheduledUnpublishAt ? new Date(landingPage.scheduledUnpublishAt) : undefined,
         campaignName: landingPage.campaignName || '',
         isScheduled: landingPage.isScheduled || false,
+        // Advanced SEO (Phase 2)
+        ogImageUrl: landingPage.ogImageUrl || '',
+        twitterImageUrl: landingPage.twitterImageUrl || '',
+        canonicalUrl: landingPage.canonicalUrl || '',
+        noIndex: landingPage.noIndex || false,
+        // Analytics & Tracking (Phase 2)
+        fbPixelId: landingPage.fbPixelId || '',
+        gaTrackingId: landingPage.gaTrackingId || '',
+        gtmContainerId: landingPage.gtmContainerId || '',
+        customScripts: landingPage.customScripts || { head: [], body: [] },
       });
 
       // Set featured image state for ImageUpload component
@@ -717,6 +728,9 @@ export function LandingPageForm({
               />
             </CardContent>
           </Card>
+
+          {/* Advanced SEO & Analytics */}
+          <AdvancedSEOForm form={form} />
 
           {/* Actions */}
           <Card>
