@@ -1524,6 +1524,18 @@ model LandingPage {
   metaDescription  String?             @db.VarChar(300)
   metaKeywords     String[]            // Array of keywords
 
+  // Advanced SEO (Phase 2)
+  ogImageUrl       String?             // Open Graph image for social sharing
+  twitterImageUrl  String?             // Twitter Card image (optional, falls back to ogImageUrl)
+  canonicalUrl     String?             // Canonical URL for SEO
+  noIndex          Boolean             @default(false) // Prevent search engine indexing
+
+  // Analytics & Tracking (Phase 2)
+  fbPixelId        String?             // Facebook Pixel ID
+  gaTrackingId     String?             // Google Analytics Tracking ID (e.g., UA-XXXXX-Y or G-XXXXXXX)
+  gtmContainerId   String?             // Google Tag Manager Container ID (e.g., GTM-XXXXXX)
+  customScripts    Json?               // Custom scripts array: {head: string[], body: string[]}
+
   // Author
   authorId         String
   author           User                @relation("LandingPageAuthor", fields: [authorId], references: [id])

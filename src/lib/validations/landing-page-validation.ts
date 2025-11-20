@@ -131,6 +131,54 @@ export const landingPageBaseSchema = z.object({
     .trim()
     .optional(),
   isScheduled: z.boolean().default(false),
+
+  // Advanced SEO (Phase 2)
+  ogImageUrl: z
+    .string()
+    .url('Must be a valid URL')
+    .optional()
+    .or(z.literal('')),
+
+  twitterImageUrl: z
+    .string()
+    .url('Must be a valid URL')
+    .optional()
+    .or(z.literal('')),
+
+  canonicalUrl: z
+    .string()
+    .url('Must be a valid URL')
+    .optional()
+    .or(z.literal('')),
+
+  noIndex: z.boolean().default(false),
+
+  // Analytics & Tracking (Phase 2)
+  fbPixelId: z
+    .string()
+    .regex(/^\d+$/, 'Facebook Pixel ID must be numeric')
+    .max(20, 'Pixel ID is too long')
+    .optional()
+    .or(z.literal('')),
+
+  gaTrackingId: z
+    .string()
+    .regex(/^(UA-\d{4,}-\d{1,}|G-[A-Z0-9]{10})$/, 'Invalid Google Analytics tracking ID format (UA-XXXXX-Y or G-XXXXXXXXXX)')
+    .optional()
+    .or(z.literal('')),
+
+  gtmContainerId: z
+    .string()
+    .regex(/^GTM-[A-Z0-9]{6,}$/, 'Invalid GTM Container ID format (GTM-XXXXXX)')
+    .optional()
+    .or(z.literal('')),
+
+  customScripts: z
+    .object({
+      head: z.array(z.string()).default([]),
+      body: z.array(z.string()).default([]),
+    })
+    .optional(),
 });
 
 // Create landing page schema (used in forms and API)

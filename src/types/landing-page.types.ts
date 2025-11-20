@@ -91,6 +91,19 @@ export interface LandingPageCreateInput {
   metaKeywords?: string[];
   featuredProductIds?: string[];
   productShowcaseLayout?: 'GRID' | 'CAROUSEL' | 'FEATURED';
+  // Advanced SEO (Phase 2)
+  ogImageUrl?: string;
+  twitterImageUrl?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+  // Analytics & Tracking (Phase 2)
+  fbPixelId?: string;
+  gaTrackingId?: string;
+  gtmContainerId?: string;
+  customScripts?: {
+    head: string[];
+    body: string[];
+  };
 }
 
 // Landing Page update input
@@ -109,6 +122,19 @@ export interface LandingPageUpdateInput {
   metaKeywords?: string[];
   featuredProductIds?: string[];
   productShowcaseLayout?: 'GRID' | 'CAROUSEL' | 'FEATURED';
+  // Advanced SEO (Phase 2)
+  ogImageUrl?: string;
+  twitterImageUrl?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+  // Analytics & Tracking (Phase 2)
+  fbPixelId?: string;
+  gaTrackingId?: string;
+  gtmContainerId?: string;
+  customScripts?: {
+    head: string[];
+    body: string[];
+  };
 }
 
 // Landing Page filter options
@@ -175,4 +201,17 @@ export interface LandingPageFormData {
   scheduledUnpublishAt?: Date;
   campaignName?: string;
   isScheduled?: boolean;
+  // Advanced SEO (Phase 2)
+  ogImageUrl?: string;
+  twitterImageUrl?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+  // Analytics & Tracking (Phase 2)
+  fbPixelId?: string;
+  gaTrackingId?: string;
+  gtmContainerId?: string;
+  customScripts?: {
+    head: string[];
+    body: string[];
+  };
 }
