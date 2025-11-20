@@ -18,6 +18,12 @@ export const LANDING_PAGE_CONSTANTS = {
       color: 'green',
       icon: 'Globe',
     },
+    SCHEDULED: {
+      value: 'SCHEDULED',
+      label: 'Scheduled',
+      color: 'blue',
+      icon: 'Clock',
+    },
   },
 
   // Validation limits

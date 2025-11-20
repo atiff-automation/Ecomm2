@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { LANDING_PAGE_CONSTANTS } from '@/lib/constants/landing-page-constants';
 
 // Status enum
-const landingPageStatusEnum = z.enum(['DRAFT', 'PUBLISHED']);
+const landingPageStatusEnum = z.enum(['DRAFT', 'PUBLISHED', 'SCHEDULED']);
 
 // Slug validation - URL-safe characters only
 const slugSchema = z
@@ -121,22 +121,59 @@ export const landingPageBaseSchema = z.object({
   productShowcaseLayout: z
     .enum(['GRID', 'CAROUSEL', 'FEATURED'])
     .default('GRID'),
+
+  // Campaign Scheduling (Phase 2)
+  scheduledPublishAt: z.coerce.date().optional(),
+  scheduledUnpublishAt: z.coerce.date().optional(),
+  campaignName: z
+    .string()
+    .max(100, 'Campaign name must not exceed 100 characters')
+    .trim()
+    .optional(),
+  isScheduled: z.boolean().default(false),
 });
 
 // Create landing page schema (used in forms and API)
-export const landingPageCreateSchema = landingPageBaseSchema.refine(
-  (data) => {
-    // If status is PUBLISHED, publishedAt is required
-    if (data.status === 'PUBLISHED' && !data.publishedAt) {
-      return false;
+export const landingPageCreateSchema = landingPageBaseSchema
+  .refine(
+    (data) => {
+      // If status is PUBLISHED, publishedAt is required
+      if (data.status === 'PUBLISHED' && !data.publishedAt) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Published date is required when status is Published',
+      path: ['publishedAt'],
     }
-    return true;
-  },
-  {
-    message: 'Published date is required when status is Published',
-    path: ['publishedAt'],
-  }
-);
+  )
+  .refine(
+    (data) => {
+      // If status is SCHEDULED, scheduledPublishAt is required
+      if (data.status === 'SCHEDULED' && !data.scheduledPublishAt) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Scheduled publish date is required when status is Scheduled',
+      path: ['scheduledPublishAt'],
+    }
+  )
+  .refine(
+    (data) => {
+      // If scheduledUnpublishAt is provided, it must be after scheduledPublishAt
+      if (data.scheduledPublishAt && data.scheduledUnpublishAt) {
+        return data.scheduledUnpublishAt > data.scheduledPublishAt;
+      }
+      return true;
+    },
+    {
+      message: 'Unpublish date must be after publish date',
+      path: ['scheduledUnpublishAt'],
+    }
+  );
 
 // Update landing page schema (all fields optional)
 export const landingPageUpdateSchema = landingPageBaseSchema.partial();

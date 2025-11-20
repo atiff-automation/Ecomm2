@@ -1462,6 +1462,7 @@ model Article {
 enum LandingPageStatus {
   DRAFT
   PUBLISHED
+  SCHEDULED
 }
 
 // Click Type Enum for Landing Page Tracking
@@ -1544,6 +1545,12 @@ model LandingPage {
   featuredProductIds      String[]     @default([]) // Array of product IDs to showcase
   productShowcaseLayout   String       @default("GRID") // GRID, CAROUSEL, FEATURED
 
+  // Campaign Scheduling (Phase 2)
+  scheduledPublishAt      DateTime?    // When to auto-publish
+  scheduledUnpublishAt    DateTime?    // When to auto-unpublish
+  campaignName            String?      // Campaign identifier
+  isScheduled             Boolean      @default(false) // Quick flag for scheduled pages
+
   // Metadata
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
@@ -1565,6 +1572,9 @@ model LandingPage {
   @@index([sortOrder])
   @@index([viewCount])
   @@index([createdAt])
+  @@index([isScheduled])
+  @@index([scheduledPublishAt])
+  @@index([scheduledUnpublishAt])
   @@map("landing_pages")
 }
 

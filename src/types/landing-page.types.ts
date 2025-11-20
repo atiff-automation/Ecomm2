@@ -171,4 +171,8 @@ export interface LandingPageFormData {
   metaKeywords: string[];
   featuredProductIds: string[];
   productShowcaseLayout: 'GRID' | 'CAROUSEL' | 'FEATURED';
+  scheduledPublishAt?: Date;
+  scheduledUnpublishAt?: Date;
+  campaignName?: string;
+  isScheduled?: boolean;
 }
