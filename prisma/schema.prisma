@@ -8,24 +8,24 @@ datasource db {
 }
 
 model User {
-  id                        String                      @id @default(cuid())
-  email                     String                      @unique
+  id                        String                   @id @default(cuid())
+  email                     String                   @unique
   password                  String
   firstName                 String
   lastName                  String
   phone                     String?
   dateOfBirth               DateTime?
-  nric                      String?                     @unique @db.VarChar(12)
-  role                      UserRole                    @default(CUSTOMER)
-  status                    UserStatus                  @default(PENDING_VERIFICATION)
+  nric                      String?                  @unique @db.VarChar(12)
+  role                      UserRole                 @default(CUSTOMER)
+  status                    UserStatus               @default(PENDING_VERIFICATION)
   emailVerified             DateTime?
-  isMember                  Boolean                     @default(false)
+  isMember                  Boolean                  @default(false)
   memberSince               DateTime?
-  membershipTotal           Decimal                     @default(0) @db.Decimal(10, 2)
-  createdAt                 DateTime                    @default(now())
-  updatedAt                 DateTime                    @updatedAt
+  membershipTotal           Decimal                  @default(0) @db.Decimal(10, 2)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
   lastLoginAt               DateTime?
-  passwordResetToken        String?                     @unique
+  passwordResetToken        String?                  @unique
   passwordResetTokenExpiry  DateTime?
   addresses                 Address[]
   auditLogs                 AuditLog[]
@@ -33,31 +33,33 @@ model User {
   complianceReports         ComplianceReport[]
   discountCodesCreated      DiscountCode[]
   discountUsage             DiscountUsage[]
-  heroSectionsCreated       HeroSection[]               @relation("HeroCreator")
+  heroSectionsCreated       HeroSection[]            @relation("HeroCreator")
   importExportJobs          ImportExportJob[]
-  mediaUploads              MediaUpload[]               @relation("MediaUploader")
+  mediaUploads              MediaUpload[]            @relation("MediaUploader")
   notificationPreferences   NotificationPreference[]
   orders                    Order[]
   pendingMembership         PendingMembership?
   recentlyViewed            RecentlyViewed[]
   reviews                   Review[]
-  siteCustomizationsCreated SiteCustomization[]         @relation("SiteCustomizationCreator")
-  themesCreated             SiteTheme[]                 @relation("ThemeCreator")
+  siteCustomizationsCreated SiteCustomization[]      @relation("SiteCustomizationCreator")
+  themesCreated             SiteTheme[]              @relation("ThemeCreator")
   telegramConfig            TelegramConfig?
   agentApplications         AgentApplication[]
   applicationReviews        AgentApplicationReview[]
-  faqsCreated               FAQ[]                       @relation("FAQCreatedBy")
-  faqsUpdated               FAQ[]                       @relation("FAQUpdatedBy")
-  faqCategoriesCreated      FAQCategory[]               @relation("FAQCategoryCreatedBy")
-  faqCategoriesUpdated      FAQCategory[]               @relation("FAQCategoryUpdatedBy")
-  articles                  Article[]                   @relation("ArticleAuthor")
-  articlesCreated           Article[]                   @relation("ArticleCreatedBy")
-  articlesUpdated           Article[]                   @relation("ArticleUpdatedBy")
-  articleCategoriesCreated  ArticleCategory[]           @relation("ArticleCategoryCreatedBy")
-  articleCategoriesUpdated  ArticleCategory[]           @relation("ArticleCategoryUpdatedBy")
-  landingPages                 LandingPage[]            @relation("LandingPageAuthor")
-  landingPagesCreated          LandingPage[]            @relation("LandingPageCreatedBy")
-  landingPagesUpdated          LandingPage[]            @relation("LandingPageUpdatedBy")
+  faqsCreated               FAQ[]                    @relation("FAQCreatedBy")
+  faqsUpdated               FAQ[]                    @relation("FAQUpdatedBy")
+  faqCategoriesCreated      FAQCategory[]            @relation("FAQCategoryCreatedBy")
+  faqCategoriesUpdated      FAQCategory[]            @relation("FAQCategoryUpdatedBy")
+  articles                  Article[]                @relation("ArticleAuthor")
+  articlesCreated           Article[]                @relation("ArticleCreatedBy")
+  articlesUpdated           Article[]                @relation("ArticleUpdatedBy")
+  articleCategoriesCreated  ArticleCategory[]        @relation("ArticleCategoryCreatedBy")
+  articleCategoriesUpdated  ArticleCategory[]        @relation("ArticleCategoryUpdatedBy")
+  landingPages              LandingPage[]            @relation("LandingPageAuthor")
+  landingPagesCreated       LandingPage[]            @relation("LandingPageCreatedBy")
+  landingPagesUpdated       LandingPage[]            @relation("LandingPageUpdatedBy")
+  clickPagesCreated         ClickPage[]              @relation("ClickPageCreatedBy")
+  clickPagesUpdated         ClickPage[]              @relation("ClickPageUpdatedBy")
 
   @@index([email])
   @@index([role])
@@ -247,20 +249,20 @@ model CartItem {
 }
 
 model Order {
-  id                       String             @id @default(cuid())
-  orderNumber              String             @unique
+  id                       String                 @id @default(cuid())
+  orderNumber              String                 @unique
   userId                   String?
   guestEmail               String?
   guestMembershipIntent    Json?
-  status                   OrderStatus        @default(PENDING)
-  paymentStatus            PaymentStatus      @default(PENDING)
-  subtotal                 Decimal            @db.Decimal(10, 2)
-  taxAmount                Decimal            @default(0) @db.Decimal(10, 2)
-  shippingCost             Decimal            @default(0) @db.Decimal(10, 2)
-  discountAmount           Decimal            @default(0) @db.Decimal(10, 2)
-  total                    Decimal            @db.Decimal(10, 2)
-  memberDiscount           Decimal            @default(0) @db.Decimal(10, 2)
-  wasEligibleForMembership Boolean            @default(false)
+  status                   OrderStatus            @default(PENDING)
+  paymentStatus            PaymentStatus          @default(PENDING)
+  subtotal                 Decimal                @db.Decimal(10, 2)
+  taxAmount                Decimal                @default(0) @db.Decimal(10, 2)
+  shippingCost             Decimal                @default(0) @db.Decimal(10, 2)
+  discountAmount           Decimal                @default(0) @db.Decimal(10, 2)
+  total                    Decimal                @db.Decimal(10, 2)
+  memberDiscount           Decimal                @default(0) @db.Decimal(10, 2)
+  wasEligibleForMembership Boolean                @default(false)
   shippingAddressId        String?
   billingAddressId         String?
   paymentMethod            String?
@@ -270,37 +272,37 @@ model Order {
   deliveredAt              DateTime?
   customerNotes            String?
   adminNotes               String?
-  createdAt                DateTime           @default(now())
-  updatedAt                DateTime           @updatedAt
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
   shippingPreferences      Json?
   toyyibpayBillCode        String?
   toyyibpayPaymentUrl      String?
-  airwayBillGenerated      Boolean            @default(false)
+  airwayBillGenerated      Boolean                @default(false)
   airwayBillGeneratedAt    DateTime?
   airwayBillUrl            String?
   trackingUrl              String?
-  easyparcelOrderNumber    String?            // EasyParcel order number (e.g., "EI-12345")
-  easyparcelPaymentStatus  String?            // Payment status (e.g., "Fully Paid")
-  easyparcelParcelNumber   String?            // Parcel number (e.g., "EP-PQKTE")
-  shippingCostCharged      Decimal?           @db.Decimal(10, 2) // Actual cost charged
+  easyparcelOrderNumber    String? // EasyParcel order number (e.g., "EI-12345")
+  easyparcelPaymentStatus  String? // Payment status (e.g., "Fully Paid")
+  easyparcelParcelNumber   String? // Parcel number (e.g., "EP-PQKTE")
+  shippingCostCharged      Decimal?               @db.Decimal(10, 2) // Actual cost charged
   selectedCourierServiceId String?
   courierName              String?
-  courierServiceType       String?            // 'parcel' or 'document'
-  courierServiceDetail     String?            // 'pickup', 'dropoff', 'dropoff or pickup'
-  selectedDropoffPointId   String?            // Dropoff point ID if applicable
+  courierServiceType       String? // 'parcel' or 'document'
+  courierServiceDetail     String? // 'pickup', 'dropoff', 'dropoff or pickup'
+  selectedDropoffPointId   String? // Dropoff point ID if applicable
   estimatedDelivery        String?
-  shippingWeight           Decimal?           @db.Decimal(8, 2)
-  scheduledPickupDate      DateTime?          @db.Date
-  overriddenByAdmin        Boolean            @default(false)
-  adminOverrideReason      String?            @db.Text
-  failedBookingAttempts    Int                @default(0)
-  lastBookingError         String?            @db.Text
-  autoStatusUpdate         Boolean            @default(true)
+  shippingWeight           Decimal?               @db.Decimal(8, 2)
+  scheduledPickupDate      DateTime?              @db.Date
+  overriddenByAdmin        Boolean                @default(false)
+  adminOverrideReason      String?                @db.Text
+  failedBookingAttempts    Int                    @default(0)
+  lastBookingError         String?                @db.Text
+  autoStatusUpdate         Boolean                @default(true)
   discountUsage            DiscountUsage[]
   orderItems               OrderItem[]
-  billingAddress           Address?           @relation("BillingAddress", fields: [billingAddressId], references: [id])
-  shippingAddress          Address?           @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  user                     User?              @relation(fields: [userId], references: [id])
+  billingAddress           Address?               @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress          Address?               @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  user                     User?                  @relation(fields: [userId], references: [id])
   pendingMembership        PendingMembership?
   shipment                 Shipment?
   landingPageConversion    LandingPageConversion?
@@ -323,9 +325,9 @@ model Shipment {
   courierId            String
   courierName          String
   serviceName          String
-  serviceType          String             // 'parcel' or 'document'
-  serviceDetail        String             // 'pickup', 'dropoff', 'dropoff or pickup'
-  selectedDropoffPoint Json?              // Dropoff point details if serviceDetail includes 'dropoff'
+  serviceType          String // 'parcel' or 'document'
+  serviceDetail        String // 'pickup', 'dropoff', 'dropoff or pickup'
+  selectedDropoffPoint Json? // Dropoff point details if serviceDetail includes 'dropoff'
   pickupAddress        Json
   deliveryAddress      Json
   parcelDetails        Json
@@ -419,7 +421,6 @@ model Review {
   @@index([isApproved])
   @@map("reviews")
 }
-
 
 model RecentlyViewed {
   id        String   @id @default(cuid())
@@ -619,7 +620,6 @@ model NotificationPreference {
   @@index([notificationType])
   @@map("notification_preferences")
 }
-
 
 model SiteTheme {
   id              String   @id @default(cuid())
@@ -906,7 +906,6 @@ model FailedNotification {
   @@map("failed_notifications")
 }
 
-
 enum UserRole {
   CUSTOMER
   STAFF
@@ -1084,31 +1083,31 @@ enum FAQStatus {
 
 // FAQ Category Model - Dynamic categories managed by admin
 model FAQCategory {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Category Name (Language-Neutral)
-  name        String   @unique
+  name String @unique
 
   // Additional Info
-  description String?  // Description for admin reference
-  icon        String?  // Icon name (e.g., "Info", "Package")
+  description String? // Description for admin reference
+  icon        String? // Icon name (e.g., "Info", "Package")
 
   // Display Order
-  sortOrder   Int      @default(0)
+  sortOrder Int @default(0)
 
   // Status
-  isActive    Boolean  @default(true)
+  isActive Boolean @default(true)
 
   // Metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   // Relations
-  faqs        FAQ[]
-  createdByUser User?  @relation("FAQCategoryCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?  @relation("FAQCategoryUpdatedBy", fields: [updatedBy], references: [id])
+  faqs          FAQ[]
+  createdByUser User? @relation("FAQCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("FAQCategoryUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([name])
   @@index([sortOrder])
@@ -1118,29 +1117,29 @@ model FAQCategory {
 
 // FAQ Model
 model FAQ {
-  id          String      @id @default(cuid())
+  id String @id @default(cuid())
 
   // Content
-  question    String      @db.VarChar(500)
-  answer      String      @db.Text
+  question String @db.VarChar(500)
+  answer   String @db.Text
 
   // Organization - Now uses dynamic category
-  categoryId  String
-  category    FAQCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  sortOrder   Int         @default(0)
+  categoryId String
+  category   FAQCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sortOrder  Int         @default(0)
 
   // Status
-  status      FAQStatus   @default(ACTIVE)
+  status FAQStatus @default(ACTIVE)
 
   // Metadata
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  createdBy   String?
-  updatedBy   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   // Audit
-  createdByUser User?     @relation("FAQCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?     @relation("FAQUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User? @relation("FAQCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("FAQUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([categoryId])
   @@index([status])
@@ -1151,53 +1150,53 @@ model FAQ {
 
 // Agent Application System Models
 model AgentApplication {
-  id                String                 @id @default(cuid())
-  userId            String?
-  email             String
-  status            AgentApplicationStatus @default(DRAFT)
+  id     String                 @id @default(cuid())
+  userId String?
+  email  String
+  status AgentApplicationStatus @default(DRAFT)
 
   // Step 1: Terms accepted
-  acceptTerms       Boolean                @default(false)
+  acceptTerms Boolean @default(false)
 
   // Step 2: Basic Information
-  fullName          String
-  icNumber          String
-  phoneNumber       String
-  address           String
-  age               Int
+  fullName    String
+  icNumber    String
+  phoneNumber String
+  address     String
+  age         Int
 
   // Business Experience
-  hasBusinessExp    Boolean
-  businessLocation  String?
-  hasTeamLeadExp    Boolean
-  isRegistered      Boolean
-  jenis             BusinessType
+  hasBusinessExp   Boolean
+  businessLocation String?
+  hasTeamLeadExp   Boolean
+  isRegistered     Boolean
+  jenis            BusinessType
 
   // Step 3: Social Media
-  instagramHandle   String?
-  facebookHandle    String?
-  tiktokHandle      String?
-  instagramLevel    SocialMediaLevel       @default(TIDAK_MAHIR)
-  facebookLevel     SocialMediaLevel       @default(TIDAK_MAHIR)
-  tiktokLevel       SocialMediaLevel       @default(TIDAK_MAHIR)
+  instagramHandle String?
+  facebookHandle  String?
+  tiktokHandle    String?
+  instagramLevel  SocialMediaLevel @default(TIDAK_MAHIR)
+  facebookLevel   SocialMediaLevel @default(TIDAK_MAHIR)
+  tiktokLevel     SocialMediaLevel @default(TIDAK_MAHIR)
 
   // Step 4: Additional Information
-  hasJrmExp         Boolean
-  jrmProducts       String?
-  reasonToJoin      String
-  expectations      String
+  hasJrmExp    Boolean
+  jrmProducts  String?
+  reasonToJoin String
+  expectations String
 
   // System Fields
-  submittedAt       DateTime?
-  reviewedAt        DateTime?
-  reviewedBy        String?
-  adminNotes        String?
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  adminNotes  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations
-  user              User?                  @relation(fields: [userId], references: [id])
-  reviews           AgentApplicationReview[]
+  user    User?                    @relation(fields: [userId], references: [id])
+  reviews AgentApplicationReview[]
 
   @@index([email])
   @@index([status])
@@ -1207,15 +1206,15 @@ model AgentApplication {
 }
 
 model AgentApplicationReview {
-  id             String              @id @default(cuid())
-  applicationId  String
-  reviewerId     String
-  decision       ApplicationDecision
-  notes          String?
-  createdAt      DateTime            @default(now())
+  id            String              @id @default(cuid())
+  applicationId String
+  reviewerId    String
+  decision      ApplicationDecision
+  notes         String?
+  createdAt     DateTime            @default(now())
 
-  application    AgentApplication    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  reviewer       User               @relation(fields: [reviewerId], references: [id])
+  application AgentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer    User             @relation(fields: [reviewerId], references: [id])
 
   @@map("agent_application_reviews")
 }
@@ -1336,31 +1335,31 @@ enum ArticleStatus {
 
 // Article Category Model - Dynamic categories managed by admin
 model ArticleCategory {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Category Name
-  name        String   @unique
-  slug        String   @unique
+  name        String  @unique
+  slug        String  @unique
   description String?
 
   // Display
-  icon        String?  // Icon name (e.g., "BookOpen", "Lightbulb")
-  color       String?  // Hex color for category badge
-  sortOrder   Int      @default(0)
+  icon      String? // Icon name (e.g., "BookOpen", "Lightbulb")
+  color     String? // Hex color for category badge
+  sortOrder Int     @default(0)
 
   // Status
-  isActive    Boolean  @default(true)
+  isActive Boolean @default(true)
 
   // Metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   // Relations
-  articles    Article[]
-  createdByUser User?  @relation("ArticleCategoryCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?  @relation("ArticleCategoryUpdatedBy", fields: [updatedBy], references: [id])
+  articles      Article[]
+  createdByUser User?     @relation("ArticleCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?     @relation("ArticleCategoryUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([slug])
   @@index([isActive])
@@ -1376,7 +1375,7 @@ model ArticleTag {
   createdAt DateTime @default(now())
 
   // Relations
-  articles  ArticleToTag[]
+  articles ArticleToTag[]
 
   @@index([slug])
   @@map("article_tags")
@@ -1389,8 +1388,8 @@ model ArticleToTag {
   tagId     String
   createdAt DateTime @default(now())
 
-  article   Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  tag       ArticleTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  article Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag     ArticleTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([articleId, tagId])
   @@index([articleId])
@@ -1400,48 +1399,48 @@ model ArticleToTag {
 
 // Article Model
 model Article {
-  id               String         @id @default(cuid())
+  id String @id @default(cuid())
 
   // Basic Content
-  title            String         @db.VarChar(200)
-  slug             String         @unique @db.VarChar(200)
-  excerpt          String?        @db.VarChar(500)
-  content          String         @db.Text // Rich text HTML from TipTap
-  featuredImage    String         // Required featured image URL
-  featuredImageAlt String         @db.VarChar(200)
+  title            String  @db.VarChar(200)
+  slug             String  @unique @db.VarChar(200)
+  excerpt          String? @db.VarChar(500)
+  content          String  @db.Text // Rich text HTML from TipTap
+  featuredImage    String // Required featured image URL
+  featuredImageAlt String  @db.VarChar(200)
 
   // Organization
-  categoryId       String
-  category         ArticleCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  tags             ArticleToTag[]
-  sortOrder        Int            @default(0)
+  categoryId String
+  category   ArticleCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags       ArticleToTag[]
+  sortOrder  Int             @default(0)
 
   // SEO Fields
-  metaTitle        String?        @db.VarChar(200)
-  metaDescription  String?        @db.VarChar(300)
-  metaKeywords     String[]       // Array of keywords
+  metaTitle       String?  @db.VarChar(200)
+  metaDescription String?  @db.VarChar(300)
+  metaKeywords    String[] // Array of keywords
 
   // Author
-  authorId         String
-  author           User           @relation("ArticleAuthor", fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation("ArticleAuthor", fields: [authorId], references: [id])
 
   // Publishing
-  status           ArticleStatus  @default(DRAFT)
-  publishedAt      DateTime?
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
 
   // Analytics
-  viewCount        Int            @default(0)
-  readingTimeMin   Int            @default(0) // Auto-calculated
+  viewCount      Int @default(0)
+  readingTimeMin Int @default(0) // Auto-calculated
 
   // Metadata
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  createdBy        String?
-  updatedBy        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   // Audit Relations
-  createdByUser    User?          @relation("ArticleCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser    User?          @relation("ArticleUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User? @relation("ArticleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ArticleUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([slug])
   @@index([status])
@@ -1465,11 +1464,18 @@ enum LandingPageStatus {
   SCHEDULED
 }
 
+// Click Page Status Enum
+enum ClickPageStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
 // Click Type Enum for Landing Page Tracking
 enum ClickType {
-  PRODUCT        // Product card click
-  CTA            // Call-to-action button
-  EXTERNAL_LINK  // External link click
+  PRODUCT // Product card click
+  CTA // Call-to-action button
+  EXTERNAL_LINK // External link click
 }
 
 // Landing Page Category Model - Dynamic categories managed by admin
@@ -1481,7 +1487,7 @@ model LandingPageTag {
   createdAt DateTime @default(now())
 
   // Relations
-  landingPages  LandingPageToTag[]
+  landingPages LandingPageToTag[]
 
   @@index([slug])
   @@map("landing_page_tags")
@@ -1494,8 +1500,8 @@ model LandingPageToTag {
   tagId         String
   createdAt     DateTime @default(now())
 
-  landingPage   LandingPage    @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  tag           LandingPageTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  landingPage LandingPage    @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  tag         LandingPageTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([landingPageId, tagId])
   @@index([landingPageId])
@@ -1505,77 +1511,77 @@ model LandingPageToTag {
 
 // Landing Page Model
 model LandingPage {
-  id               String              @id @default(cuid())
+  id String @id @default(cuid())
 
   // Basic Content
-  title            String              @db.VarChar(200)
-  slug             String              @unique @db.VarChar(200)
-  excerpt          String?             @db.VarChar(500)
-  content          String              @db.Text // Rich text HTML from TipTap
-  featuredImage    String              // Required featured image URL
-  featuredImageAlt String              @db.VarChar(200)
+  title            String  @db.VarChar(200)
+  slug             String  @unique @db.VarChar(200)
+  excerpt          String? @db.VarChar(500)
+  content          String  @db.Text // Rich text HTML from TipTap
+  featuredImage    String // Required featured image URL
+  featuredImageAlt String  @db.VarChar(200)
 
   // Organization
-  tags             LandingPageToTag[]
-  sortOrder        Int                 @default(0)
+  tags      LandingPageToTag[]
+  sortOrder Int                @default(0)
 
   // SEO Fields
-  metaTitle        String?             @db.VarChar(200)
-  metaDescription  String?             @db.VarChar(300)
-  metaKeywords     String[]            // Array of keywords
+  metaTitle       String?  @db.VarChar(200)
+  metaDescription String?  @db.VarChar(300)
+  metaKeywords    String[] // Array of keywords
 
   // Advanced SEO (Phase 2)
-  ogImageUrl       String?             // Open Graph image for social sharing
-  twitterImageUrl  String?             // Twitter Card image (optional, falls back to ogImageUrl)
-  canonicalUrl     String?             // Canonical URL for SEO
-  noIndex          Boolean             @default(false) // Prevent search engine indexing
+  ogImageUrl      String? // Open Graph image for social sharing
+  twitterImageUrl String? // Twitter Card image (optional, falls back to ogImageUrl)
+  canonicalUrl    String? // Canonical URL for SEO
+  noIndex         Boolean @default(false) // Prevent search engine indexing
 
   // Analytics & Tracking (Phase 2)
-  fbPixelId        String?             // Facebook Pixel ID
-  gaTrackingId     String?             // Google Analytics Tracking ID (e.g., UA-XXXXX-Y or G-XXXXXXX)
-  gtmContainerId   String?             // Google Tag Manager Container ID (e.g., GTM-XXXXXX)
-  customScripts    Json?               // Custom scripts array: {head: string[], body: string[]}
+  fbPixelId      String? // Facebook Pixel ID
+  gaTrackingId   String? // Google Analytics Tracking ID (e.g., UA-XXXXX-Y or G-XXXXXXX)
+  gtmContainerId String? // Google Tag Manager Container ID (e.g., GTM-XXXXXX)
+  customScripts  Json? // Custom scripts array: {head: string[], body: string[]}
 
   // Author
-  authorId         String
-  author           User                @relation("LandingPageAuthor", fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation("LandingPageAuthor", fields: [authorId], references: [id])
 
   // Publishing
-  status           LandingPageStatus   @default(DRAFT)
-  publishedAt      DateTime?
+  status      LandingPageStatus @default(DRAFT)
+  publishedAt DateTime?
 
   // Analytics
-  viewCount        Int                 @default(0)
-  readingTimeMin   Int                 @default(0) // Auto-calculated
+  viewCount      Int @default(0)
+  readingTimeMin Int @default(0) // Auto-calculated
 
   // Conversion Tracking (Phase 2)
-  clickCount       Int                 @default(0)  // Total clicks on CTAs/products
-  conversionCount  Int                 @default(0)  // Total purchases attributed
-  conversionValue  Decimal             @default(0)  @db.Decimal(10, 2) // Total revenue
+  clickCount      Int     @default(0) // Total clicks on CTAs/products
+  conversionCount Int     @default(0) // Total purchases attributed
+  conversionValue Decimal @default(0) @db.Decimal(10, 2) // Total revenue
 
   // Product Showcase (Phase 2)
-  featuredProductIds      String[]     @default([]) // Array of product IDs to showcase
-  productShowcaseLayout   String       @default("GRID") // GRID, CAROUSEL, FEATURED
+  featuredProductIds    String[] @default([]) // Array of product IDs to showcase
+  productShowcaseLayout String   @default("GRID") // GRID, CAROUSEL, FEATURED
 
   // Campaign Scheduling (Phase 2)
-  scheduledPublishAt      DateTime?    // When to auto-publish
-  scheduledUnpublishAt    DateTime?    // When to auto-unpublish
-  campaignName            String?      // Campaign identifier
-  isScheduled             Boolean      @default(false) // Quick flag for scheduled pages
+  scheduledPublishAt   DateTime? // When to auto-publish
+  scheduledUnpublishAt DateTime? // When to auto-unpublish
+  campaignName         String? // Campaign identifier
+  isScheduled          Boolean   @default(false) // Quick flag for scheduled pages
 
   // Metadata
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  createdBy        String?
-  updatedBy        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   // Audit Relations
-  createdByUser    User?               @relation("LandingPageCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser    User?               @relation("LandingPageUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User? @relation("LandingPageCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("LandingPageUpdatedBy", fields: [updatedBy], references: [id])
 
   // Phase 2 Relations
-  clicks           LandingPageClick[]
-  conversions      LandingPageConversion[]
+  clicks      LandingPageClick[]
+  conversions LandingPageConversion[]
 
   @@index([slug])
   @@index([status])
@@ -1592,19 +1598,19 @@ model LandingPage {
 
 // Landing Page Click Event (Phase 2)
 model LandingPageClick {
-  id            String       @id @default(cuid())
+  id            String    @id @default(cuid())
   landingPageId String
-  clickType     ClickType    // PRODUCT, CTA, EXTERNAL_LINK
-  targetUrl     String?      // What was clicked
-  targetId      String?      // Product ID if applicable
-  sessionId     String?      // Session tracking
-  userId        String?      // If logged in
-  utmSource     String?      // UTM tracking
+  clickType     ClickType // PRODUCT, CTA, EXTERNAL_LINK
+  targetUrl     String? // What was clicked
+  targetId      String? // Product ID if applicable
+  sessionId     String? // Session tracking
+  userId        String? // If logged in
+  utmSource     String? // UTM tracking
   utmMedium     String?
   utmCampaign   String?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime  @default(now())
 
-  landingPage   LandingPage  @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  landingPage LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
 
   @@index([landingPageId])
   @@index([clickType])
@@ -1615,22 +1621,143 @@ model LandingPageClick {
 
 // Landing Page Conversion Event (Phase 2)
 model LandingPageConversion {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   landingPageId String
-  orderId       String       @unique
-  orderValue    Decimal      @db.Decimal(10, 2)
+  orderId       String   @unique
+  orderValue    Decimal  @db.Decimal(10, 2)
   sessionId     String?
   userId        String?
   utmSource     String?
   utmMedium     String?
   utmCampaign   String?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime @default(now())
 
-  landingPage   LandingPage  @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  landingPage LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([landingPageId])
   @@index([orderId])
   @@index([createdAt])
   @@map("landing_page_conversions")
+}
+
+// ============================================================================
+// Click Page CMS Models
+// ============================================================================
+
+// Click Page Model - Block-based page builder for sales/promotion pages
+model ClickPage {
+  id String @id @default(cuid())
+
+  // Basic Content
+  title String @db.VarChar(200)
+  slug  String @unique @db.VarChar(200)
+
+  // Block-based Content (JSON array of blocks)
+  blocks Json @default("[]") // Array of block objects
+
+  // SEO Fields
+  metaTitle       String?  @db.VarChar(200)
+  metaDescription String?  @db.VarChar(300)
+  metaKeywords    String[] @default([])
+
+  // Advanced SEO
+  ogImageUrl      String?
+  twitterImageUrl String?
+  canonicalUrl    String?
+  noIndex         Boolean @default(false)
+
+  // Analytics & Tracking
+  fbPixelId      String?
+  gaTrackingId   String?
+  gtmContainerId String?
+  customScripts  Json? // {head: string[], body: string[]}
+
+  // Publishing
+  status      ClickPageStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  // Analytics
+  viewCount       Int     @default(0)
+  clickCount      Int     @default(0) // Total clicks on CTAs/products
+  conversionCount Int     @default(0) // Total purchases attributed
+  conversionRate  Decimal @default(0) @db.Decimal(5, 2) // Percentage
+
+  // Campaign Scheduling
+  scheduledPublishAt   DateTime?
+  scheduledUnpublishAt DateTime?
+  campaignName         String?   @db.VarChar(100)
+  campaignStartDate    DateTime?
+  campaignEndDate      DateTime?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Audit Relations
+  createdByUser User? @relation("ClickPageCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ClickPageUpdatedBy", fields: [updatedBy], references: [id])
+
+  // Relations
+  clicks      ClickPageClick[]
+  conversions ClickPageConversion[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([viewCount])
+  @@index([createdAt])
+  @@index([scheduledPublishAt])
+  @@index([scheduledUnpublishAt])
+  @@map("click_pages")
+}
+
+// Click Page Click Event
+model ClickPageClick {
+  id          String   @id @default(cuid())
+  clickPageId String
+  blockId     String? // Which block was clicked
+  blockType   String? // Block type that was clicked
+  targetUrl   String? // Where the click led
+  targetId    String? // Product ID if applicable
+  sessionId   String? // Session tracking
+  userId      String? // If logged in
+  utmSource   String? // UTM tracking
+  utmMedium   String?
+  utmCampaign String?
+  createdAt   DateTime @default(now())
+
+  clickPage ClickPage @relation(fields: [clickPageId], references: [id], onDelete: Cascade)
+
+  @@index([clickPageId])
+  @@index([blockId])
+  @@index([blockType])
+  @@index([targetId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("click_page_clicks")
+}
+
+// Click Page Conversion Event
+model ClickPageConversion {
+  id          String   @id @default(cuid())
+  clickPageId String
+  orderId     String   @unique
+  orderValue  Decimal  @db.Decimal(10, 2)
+  sessionId   String?
+  userId      String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  createdAt   DateTime @default(now())
+
+  clickPage ClickPage @relation(fields: [clickPageId], references: [id], onDelete: Cascade)
+
+  @@index([clickPageId])
+  @@index([orderId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("click_page_conversions")
 }
