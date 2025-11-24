@@ -5,7 +5,7 @@
  * Main drag-and-drop page builder interface
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -42,8 +42,10 @@ import type { Block, BlockType, ClickPageStatus } from '@/types/click-page.types
 import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
 import { generateClickPageSlug } from '@/lib/constants/click-page-constants';
+import { DEFAULT_DEVICE_MODE, DEFAULT_ZOOM, type DeviceMode } from '@/lib/constants/editor-constants';
 import { BlockPalette } from './BlockPalette';
-import { SortableBlock } from './SortableBlock';
+import { EditableBlockWrapper } from './EditableBlockWrapper';
+import { DevicePreview, DevicePreviewToolbar } from './DevicePreview';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
 import { GlobalThemeSettings } from '@/components/admin/click-pages/GlobalThemeSettings';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
@@ -124,6 +126,10 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  // Device preview state
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>(DEFAULT_DEVICE_MODE);
+  const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -134,6 +140,9 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
 
   // Get selected block
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null;
+
+  // Memoize block IDs for sortable context (performance optimization)
+  const blockIds = useMemo(() => blocks.map((b) => b.id), [blocks]);
 
   // Handle title change and auto-generate slug
   const handleTitleChange = (value: string) => {
@@ -323,7 +332,16 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         </aside>
 
         {/* Center - Canvas */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 flex flex-col min-h-[calc(100vh-60px)]">
+          {/* Device Preview Toolbar */}
+          <DevicePreviewToolbar
+            mode={deviceMode}
+            zoom={zoomLevel}
+            onModeChange={setDeviceMode}
+            onZoomChange={setZoomLevel}
+          />
+
+          {/* Canvas with Device Preview */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -331,10 +349,10 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={blocks.map((b) => b.id)}
+              items={blockIds}
               strategy={verticalListSortingStrategy}
             >
-              <div className="bg-white rounded-lg border min-h-[500px] p-4">
+              <DevicePreview mode={deviceMode} zoom={zoomLevel}>
                 {blocks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-96 text-gray-400">
                     <Layers className="w-12 h-12 mb-4" />
@@ -342,25 +360,29 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
                     <p className="text-sm">Add blocks from the left sidebar</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-8 p-4">
                     {blocks.map((block) => (
-                      <SortableBlock
+                      <EditableBlockWrapper
                         key={block.id}
                         block={block}
                         isSelected={selectedBlockId === block.id}
+                        themeSettings={themeSettings}
                         onSelect={() => setSelectedBlockId(block.id)}
                         onRemove={() => handleRemoveBlock(block.id)}
                         onDuplicate={() => handleDuplicateBlock(block.id)}
+                        onBlockClick={(blockId, blockType, targetUrl) => {
+                          console.log('Block clicked:', { blockId, blockType, targetUrl });
+                        }}
                       />
                     ))}
                   </div>
                 )}
-              </div>
+              </DevicePreview>
             </SortableContext>
             <DragOverlay>
               {activeId ? (
                 <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-4 opacity-80">
-                  {blocks.find((b) => b.id === activeId)?.type}
+                  {blocks.find((b) => b.id === activeId)?.type.replace(/_/g, ' ')}
                 </div>
               ) : null}
             </DragOverlay>
