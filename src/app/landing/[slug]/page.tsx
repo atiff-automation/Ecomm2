@@ -68,19 +68,21 @@ export default function SingleLandingPage({ params }: SingleLandingPageProps) {
 
       // Fetch featured products if any
       if (data.landingPage.featuredProductIds && data.landingPage.featuredProductIds.length > 0) {
+        const productIds = data.landingPage.featuredProductIds.join(',');
         const productsResponse = await fetch(
-          `/api/admin/products/search?pageSize=50`
+          `/api/public/products/by-ids?ids=${productIds}`
         );
         if (productsResponse.ok) {
           const productsData = await productsResponse.json();
-          const featured = productsData.products.filter((p: any) =>
-            data.landingPage.featuredProductIds.includes(p.id)
-          );
-          // Maintain order from featuredProductIds
-          const orderedProducts = data.landingPage.featuredProductIds
-            .map((id: string) => featured.find((p: any) => p.id === id))
-            .filter(Boolean);
-          setFeaturedProducts(orderedProducts);
+          // Transform API response to match ProductShowcase interface
+          const transformedProducts = (productsData.products || []).map((product: any) => ({
+            ...product,
+            // Transform single image string to images array
+            images: product.image
+              ? [{ url: product.image, altText: product.name, isPrimary: true }]
+              : [],
+          }));
+          setFeaturedProducts(transformedProducts);
         }
       }
     } catch (error) {

@@ -7,8 +7,250 @@ import { z } from 'zod';
 import { CLICK_PAGE_CONSTANTS } from '@/lib/constants/click-page-constants';
 
 // ============================================================================
+// Style Settings Schemas
+// ============================================================================
+
+/**
+ * Typography Settings Schema
+ */
+const typographySettingsSchema = z.object({
+  fontFamily: z.string().optional(),
+  fontSize: z.number().positive().optional(),
+  fontWeight: z.enum(['100', '200', '300', '400', '500', '600', '700', '800', '900']).optional(),
+  lineHeight: z.number().positive().optional(),
+  letterSpacing: z.number().optional(),
+  textTransform: z.enum(['none', 'uppercase', 'lowercase', 'capitalize']).optional(),
+  color: z.string().optional(),
+}).optional();
+
+/**
+ * Background Settings Schema
+ */
+const backgroundSettingsSchema = z.object({
+  type: z.enum(['none', 'solid', 'gradient', 'image', 'video']).optional(),
+  color: z.string().optional(),
+  gradient: z.object({
+    type: z.enum(['linear', 'radial']).optional(),
+    direction: z.enum([
+      'to right', 'to left', 'to top', 'to bottom',
+      'to top right', 'to bottom right', 'to top left', 'to bottom left'
+    ]).optional(),
+    colors: z.array(z.object({
+      color: z.string(),
+      position: z.number().min(0).max(100),
+    })).optional(),
+  }).optional(),
+  image: z.object({
+    url: z.string(),
+    alt: z.string().optional(),
+    position: z.string().optional(),
+    size: z.enum(['cover', 'contain', 'auto']).optional(),
+    repeat: z.enum(['no-repeat', 'repeat', 'repeat-x', 'repeat-y']).optional(),
+    attachment: z.enum(['scroll', 'fixed']).optional(),
+    overlay: z.object({
+      color: z.string(),
+      opacity: z.number().min(0).max(1),
+    }).optional(),
+  }).optional(),
+  video: z.object({
+    url: z.string(),
+    posterImage: z.string().optional(),
+    loop: z.boolean().optional(),
+    muted: z.boolean().optional(),
+    overlay: z.object({
+      color: z.string(),
+      opacity: z.number().min(0).max(1),
+    }).optional(),
+  }).optional(),
+}).optional();
+
+/**
+ * Spacing Settings Schema
+ */
+const spacingSettingsSchema = z.object({
+  padding: z.object({
+    top: z.number().min(0).optional(),
+    right: z.number().min(0).optional(),
+    bottom: z.number().min(0).optional(),
+    left: z.number().min(0).optional(),
+    locked: z.boolean().optional(),
+  }).optional(),
+  margin: z.object({
+    top: z.number().optional(),
+    right: z.number().optional(),
+    bottom: z.number().optional(),
+    left: z.number().optional(),
+    locked: z.boolean().optional(),
+  }).optional(),
+}).optional();
+
+/**
+ * Border Settings Schema
+ */
+const borderSettingsSchema = z.object({
+  width: z.object({
+    top: z.number().min(0).optional(),
+    right: z.number().min(0).optional(),
+    bottom: z.number().min(0).optional(),
+    left: z.number().min(0).optional(),
+    locked: z.boolean().optional(),
+  }).optional(),
+  style: z.enum(['none', 'solid', 'dashed', 'dotted', 'double']).optional(),
+  color: z.string().optional(),
+  radius: z.object({
+    topLeft: z.number().min(0).optional(),
+    topRight: z.number().min(0).optional(),
+    bottomRight: z.number().min(0).optional(),
+    bottomLeft: z.number().min(0).optional(),
+    locked: z.boolean().optional(),
+  }).optional(),
+}).optional();
+
+/**
+ * Effect Settings Schema
+ */
+const effectSettingsSchema = z.object({
+  boxShadow: z.object({
+    enabled: z.boolean().optional(),
+    offsetX: z.number().optional(),
+    offsetY: z.number().optional(),
+    blur: z.number().min(0).optional(),
+    spread: z.number().optional(),
+    color: z.string().optional(),
+    inset: z.boolean().optional(),
+  }).optional(),
+  textShadow: z.object({
+    enabled: z.boolean().optional(),
+    offsetX: z.number().optional(),
+    offsetY: z.number().optional(),
+    blur: z.number().min(0).optional(),
+    color: z.string().optional(),
+  }).optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  blur: z.number().min(0).optional(),
+}).optional();
+
+/**
+ * Hover Effects Schema
+ */
+const hoverEffectsSchema = z.object({
+  enabled: z.boolean().optional(),
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  borderColor: z.string().optional(),
+  scale: z.number().positive().optional(),
+  translateY: z.number().optional(),
+  boxShadow: z.object({
+    offsetX: z.number().optional(),
+    offsetY: z.number().optional(),
+    blur: z.number().min(0).optional(),
+    spread: z.number().optional(),
+    color: z.string().optional(),
+  }).optional(),
+  transition: z.object({
+    duration: z.number().positive().optional(),
+    easing: z.enum(['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out']).optional(),
+  }).optional(),
+}).optional();
+
+/**
+ * Responsive Settings Schema
+ */
+const responsiveSettingsSchema = z.object({
+  mobile: z.object({
+    hidden: z.boolean().optional(),
+    overrides: z.any().optional(),
+  }).optional(),
+  tablet: z.object({
+    hidden: z.boolean().optional(),
+    overrides: z.any().optional(),
+  }).optional(),
+  desktop: z.object({
+    hidden: z.boolean().optional(),
+    overrides: z.any().optional(),
+  }).optional(),
+}).optional();
+
+/**
+ * Animation Settings Schema
+ */
+const animationSettingsSchema = z.object({
+  enabled: z.boolean().optional(),
+  type: z.enum([
+    'none', 'fadeIn', 'fadeInUp', 'fadeInDown', 'fadeInLeft', 'fadeInRight',
+    'slideInUp', 'slideInDown', 'slideInLeft', 'slideInRight',
+    'zoomIn', 'bounce', 'pulse'
+  ]).optional(),
+  trigger: z.enum(['onLoad', 'onScroll', 'onHover']).optional(),
+  duration: z.number().positive().optional(),
+  delay: z.number().min(0).optional(),
+  easing: z.enum(['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out']).optional(),
+  repeat: z.boolean().optional(),
+  repeatCount: z.number().min(0).optional(),
+}).optional();
+
+/**
+ * Advanced Settings Schema
+ */
+const advancedSettingsSchema = z.object({
+  customCSS: z.string().optional(),
+  customClasses: z.array(z.string()).optional(),
+  zIndex: z.number().optional(),
+  display: z.enum(['block', 'flex', 'grid', 'inline', 'inline-block', 'none']).optional(),
+  position: z.enum(['static', 'relative', 'absolute', 'fixed', 'sticky']).optional(),
+  overflow: z.enum(['visible', 'hidden', 'scroll', 'auto']).optional(),
+}).optional();
+
+/**
+ * Complete Style Settings Schema
+ * Contains all styling capabilities for a block
+ */
+export const styleSettingsSchema = z.object({
+  typography: typographySettingsSchema,
+  background: backgroundSettingsSchema,
+  spacing: spacingSettingsSchema,
+  border: borderSettingsSchema,
+  effects: effectSettingsSchema,
+  hover: hoverEffectsSchema,
+  responsive: responsiveSettingsSchema,
+  animation: animationSettingsSchema,
+  advanced: advancedSettingsSchema,
+}).optional();
+
+// ============================================================================
 // Block-Specific Schemas
 // ============================================================================
+
+/**
+ * Image URL Schema - accepts full URLs or relative paths
+ * Used for all image URL fields that might receive uploads (relative paths like /uploads/...)
+ */
+const imageUrlSchema = z.preprocess(
+  (val) => (val === '' || val === null) ? undefined : val,
+  z.string().refine(
+    (val) => val === undefined || val.startsWith('/') || /^https?:\/\//.test(val),
+    { message: 'Must be a valid URL or relative path starting with /' }
+  ).optional()
+);
+
+/**
+ * Required Image URL Schema - for fields that require an image
+ */
+const requiredImageUrlSchema = z.preprocess(
+  (val) => (val === '' || val === null) ? undefined : val,
+  z.string().refine(
+    (val) => val === undefined || val.startsWith('/') || /^https?:\/\//.test(val),
+    { message: 'Must be a valid URL or relative path starting with /' }
+  )
+);
+
+/**
+ * Image URL with empty string support - accepts full URLs, relative paths, or empty string
+ */
+const imageUrlOrEmptySchema = z.string().refine(
+  (val) => val === '' || val.startsWith('/') || /^https?:\/\//.test(val),
+  { message: 'Must be a valid URL, relative path, or empty' }
+);
 
 /**
  * Hero Block Settings Schema
@@ -17,8 +259,8 @@ export const heroBlockSettingsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   subtitle: z.string().max(200).optional(),
   description: z.string().max(500).optional(),
-  backgroundImage: z.string().url().optional().or(z.literal('')),
-  backgroundVideo: z.string().url().optional().or(z.literal('')),
+  backgroundImage: imageUrlOrEmptySchema.optional(),
+  backgroundVideo: imageUrlOrEmptySchema.optional(),
   overlayOpacity: z.number().min(0).max(1),
   textAlignment: z.enum(['left', 'center', 'right']),
   ctaText: z.string().min(1, 'CTA text is required').max(100),
@@ -26,6 +268,7 @@ export const heroBlockSettingsSchema = z.object({
   showCountdown: z.boolean(),
   countdownEndDate: z.coerce.date().optional(),
   countdownLabel: z.string().max(100).optional(),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -35,6 +278,7 @@ export const textBlockSettingsSchema = z.object({
   content: z.string().min(1, 'Content is required'),
   textAlign: z.enum(['left', 'center', 'right', 'justify']),
   maxWidth: z.number().positive().optional(),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -47,19 +291,21 @@ export const ctaButtonBlockSettingsSchema = z.object({
   size: z.enum(['sm', 'default', 'lg']),
   alignment: z.enum(['left', 'center', 'right']),
   openInNewTab: z.boolean(),
+  styles: styleSettingsSchema,
 });
 
 /**
  * Image Block Settings Schema
  */
 export const imageBlockSettingsSchema = z.object({
-  url: z.string().url('Must be a valid URL').min(1, 'Image URL is required'),
-  altText: z.string().min(1, 'Alt text is required').max(200),
+  url: imageUrlOrEmptySchema, // Allow empty - can be configured later
+  altText: z.string().max(200).default(''), // Allow empty for initial creation
   caption: z.string().max(300).optional(),
-  link: z.string().url().optional().or(z.literal('')),
+  link: imageUrlOrEmptySchema.optional(),
   alignment: z.enum(['left', 'center', 'right']),
   width: z.enum(['full', 'large', 'medium', 'small']),
   rounded: z.boolean(),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -67,6 +313,7 @@ export const imageBlockSettingsSchema = z.object({
  */
 export const spacerBlockSettingsSchema = z.object({
   height: z.number().min(10).max(500),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -77,6 +324,7 @@ export const dividerBlockSettingsSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
   thickness: z.number().min(1).max(10),
   spacing: z.number().min(0).max(100),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -93,15 +341,17 @@ export const pricingTierSchema = z.object({
   ctaUrl: z.string().min(1, 'CTA URL is required'),
   highlighted: z.boolean(),
   badge: z.string().max(50).optional(),
+  imageUrl: imageUrlSchema,
 });
 
 /**
  * Pricing Table Block Settings Schema
  */
 export const pricingTableBlockSettingsSchema = z.object({
-  tiers: z.array(pricingTierSchema).min(1, 'At least one pricing tier is required').max(5),
+  tiers: z.array(pricingTierSchema).max(5), // Allow empty - can be configured later
   layout: z.enum(['horizontal', 'vertical']),
   showComparison: z.boolean(),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -112,7 +362,7 @@ export const testimonialItemSchema = z.object({
   quote: z.string().min(1, 'Quote is required').max(500),
   authorName: z.string().min(1, 'Author name is required').max(100),
   authorTitle: z.string().max(100).optional(),
-  authorImage: z.string().url().optional().or(z.literal('')),
+  authorImage: imageUrlSchema,
   rating: z.number().min(1).max(5).optional(),
 });
 
@@ -120,17 +370,18 @@ export const testimonialItemSchema = z.object({
  * Testimonial Block Settings Schema
  */
 export const testimonialBlockSettingsSchema = z.object({
-  testimonials: z.array(testimonialItemSchema).min(1, 'At least one testimonial is required').max(10),
+  testimonials: z.array(testimonialItemSchema).max(10), // Allow empty - can be configured later
   layout: z.enum(['single', 'carousel', 'grid']),
   showRatings: z.boolean(),
   showImages: z.boolean(),
+  styles: styleSettingsSchema,
 });
 
 /**
  * Countdown Timer Block Settings Schema
  */
 export const countdownTimerBlockSettingsSchema = z.object({
-  endDate: z.coerce.date().min(new Date(), 'End date must be in the future'),
+  endDate: z.coerce.date(), // Removed future date requirement - validation happens at publish time
   title: z.string().max(200).optional(),
   message: z.string().max(300).optional(),
   showDays: z.boolean(),
@@ -138,6 +389,7 @@ export const countdownTimerBlockSettingsSchema = z.object({
   showMinutes: z.boolean(),
   showSeconds: z.boolean(),
   expiredMessage: z.string().max(200).optional(),
+  styles: styleSettingsSchema,
 });
 
 /**
@@ -151,16 +403,20 @@ export const socialProofBlockSettingsSchema = z.object({
     icon: z.string().max(50).optional(),
   })).optional(),
   badges: z.array(z.object({
-    imageUrl: z.string().url(),
+    imageUrl: requiredImageUrlSchema,
     altText: z.string().min(1).max(200),
   })).optional(),
   reviews: z.object({
     totalReviews: z.number().min(0),
     averageRating: z.number().min(0).max(5),
     showStars: z.boolean(),
-    images: z.array(z.string().url()).max(10),
+    images: z.array(z.string().refine(
+      (val) => val.startsWith('/') || /^https?:\/\//.test(val),
+      { message: 'Must be a valid URL or relative path' }
+    )).max(10),
   }).optional(),
   layout: z.enum(['horizontal', 'vertical', 'grid']),
+  styles: styleSettingsSchema,
 });
 
 // ============================================================================
@@ -241,6 +497,45 @@ export const customScriptsSchema = z.object({
 }).optional();
 
 // ============================================================================
+// Theme Settings Schema
+// ============================================================================
+
+/**
+ * Brand Colors Schema
+ */
+export const brandColorsSchema = z.object({
+  primary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
+  secondary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
+  accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color'),
+  background: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  text: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  success: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  warning: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  error: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+});
+
+/**
+ * Global Fonts Schema
+ */
+export const globalFontsSchema = z.object({
+  heading: z.string().min(1, 'Heading font is required'),
+  body: z.string().min(1, 'Body font is required'),
+  monospace: z.string().optional(),
+});
+
+/**
+ * Theme Settings Schema - Page-level styling configuration
+ */
+export const themeSettingsSchema = z.object({
+  colors: brandColorsSchema,
+  fonts: globalFontsSchema,
+  defaultSpacing: z.object({
+    blockGap: z.number().min(0).max(200),
+    containerPadding: z.number().min(0).max(200),
+  }).optional(),
+}).optional();
+
+// ============================================================================
 // Click Page Create Schema
 // ============================================================================
 
@@ -297,6 +592,9 @@ export const clickPageCreateSchema = z.object({
     .optional(),
   campaignStartDate: z.coerce.date().optional(),
   campaignEndDate: z.coerce.date().optional(),
+
+  // Theme Settings
+  themeSettings: themeSettingsSchema,
 }).refine(
   (data) => {
     // If status is SCHEDULED, scheduledPublishAt must be provided
@@ -374,6 +672,9 @@ export const clickPageUpdateSchema = z.object({
     .optional(),
   campaignStartDate: z.coerce.date().optional(),
   campaignEndDate: z.coerce.date().optional(),
+
+  // Theme Settings
+  themeSettings: themeSettingsSchema,
 });
 
 // ============================================================================

@@ -40,11 +40,26 @@ export async function GET(
         publishedAt: true,
         readingTimeMin: true,
         viewCount: true,
+        // SEO metadata
         metaTitle: true,
         metaDescription: true,
         metaKeywords: true,
+        ogImageUrl: true,
+        twitterImageUrl: true,
+        canonicalUrl: true,
+        noIndex: true,
+        // Tracking & Analytics
+        fbPixelId: true,
+        gaTrackingId: true,
+        gtmContainerId: true,
+        customScripts: true,
+        // Product Showcase
+        featuredProductIds: true,
+        productShowcaseLayout: true,
+        // Timestamps
         createdAt: true,
         updatedAt: true,
+        // Relations
         tags: {
           select: {
             tag: {

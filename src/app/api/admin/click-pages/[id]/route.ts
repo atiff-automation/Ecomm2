@@ -187,6 +187,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
           campaignEndDate: validatedData.campaignEndDate,
         }),
 
+        // Theme Settings
+        ...(validatedData.themeSettings !== undefined && {
+          themeSettings: validatedData.themeSettings as never,
+        }),
+
         // Updater
         updatedBy: session.user.id,
       },

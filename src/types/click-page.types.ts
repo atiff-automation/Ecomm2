@@ -9,6 +9,7 @@ import {
   ClickPageClick,
   ClickPageConversion,
 } from '@prisma/client';
+import type { StyleSettings } from './click-page-styles.types';
 
 // ============================================================================
 // Base Types from Prisma
@@ -67,6 +68,7 @@ export interface HeroBlockSettings {
   showCountdown: boolean;
   countdownEndDate?: Date;
   countdownLabel?: string;
+  styles?: StyleSettings;
 }
 
 export interface HeroBlock extends BaseBlock {
@@ -81,6 +83,7 @@ export interface TextBlockSettings {
   content: string; // HTML from TipTap
   textAlign: 'left' | 'center' | 'right' | 'justify';
   maxWidth?: number; // Max width in pixels
+  styles?: StyleSettings;
 }
 
 export interface TextBlock extends BaseBlock {
@@ -98,6 +101,7 @@ export interface CTAButtonBlockSettings {
   size: 'sm' | 'default' | 'lg';
   alignment: 'left' | 'center' | 'right';
   openInNewTab: boolean;
+  styles?: StyleSettings;
 }
 
 export interface CTAButtonBlock extends BaseBlock {
@@ -116,6 +120,7 @@ export interface ImageBlockSettings {
   alignment: 'left' | 'center' | 'right';
   width: 'full' | 'large' | 'medium' | 'small';
   rounded: boolean;
+  styles?: StyleSettings;
 }
 
 export interface ImageBlock extends BaseBlock {
@@ -128,6 +133,7 @@ export interface ImageBlock extends BaseBlock {
  */
 export interface SpacerBlockSettings {
   height: number; // Height in pixels
+  styles?: StyleSettings;
 }
 
 export interface SpacerBlock extends BaseBlock {
@@ -143,6 +149,7 @@ export interface DividerBlockSettings {
   color: string; // Hex color
   thickness: number; // Thickness in pixels
   spacing: number; // Vertical spacing around divider
+  styles?: StyleSettings;
 }
 
 export interface DividerBlock extends BaseBlock {
@@ -164,12 +171,14 @@ export interface PricingTier {
   ctaUrl: string;
   highlighted: boolean;
   badge?: string; // e.g., "BEST VALUE"
+  imageUrl?: string; // Optional icon/image for the tier
 }
 
 export interface PricingTableBlockSettings {
   tiers: PricingTier[];
   layout: 'horizontal' | 'vertical';
   showComparison: boolean;
+  styles?: StyleSettings;
 }
 
 export interface PricingTableBlock extends BaseBlock {
@@ -194,6 +203,7 @@ export interface TestimonialBlockSettings {
   layout: 'single' | 'carousel' | 'grid';
   showRatings: boolean;
   showImages: boolean;
+  styles?: StyleSettings;
 }
 
 export interface TestimonialBlock extends BaseBlock {
@@ -213,6 +223,7 @@ export interface CountdownTimerBlockSettings {
   showMinutes: boolean;
   showSeconds: boolean;
   expiredMessage?: string;
+  styles?: StyleSettings;
 }
 
 export interface CountdownTimerBlock extends BaseBlock {
@@ -241,6 +252,7 @@ export interface SocialProofBlockSettings {
     images: string[]; // Review screenshots
   };
   layout: 'horizontal' | 'vertical' | 'grid';
+  styles?: StyleSettings;
 }
 
 export interface SocialProofBlock extends BaseBlock {

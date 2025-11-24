@@ -37,14 +37,14 @@ export const CLICK_PAGE_CONSTANTS = {
   // Validation Rules
   // ============================================================================
   VALIDATION: {
-    TITLE_MIN_LENGTH: 10,
+    TITLE_MIN_LENGTH: 3, // Reduced for draft flexibility
     TITLE_MAX_LENGTH: 200,
     SLUG_MAX_LENGTH: 200,
     META_TITLE_MAX_LENGTH: 200,
     META_DESCRIPTION_MAX_LENGTH: 300,
     CAMPAIGN_NAME_MAX_LENGTH: 100,
     MAX_BLOCKS: 50, // Maximum blocks per page
-    MIN_BLOCKS: 1, // Minimum blocks per page
+    MIN_BLOCKS: 0, // Allow empty drafts - blocks required only at publish time
   },
 
   // ============================================================================

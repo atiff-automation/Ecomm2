@@ -78,6 +78,7 @@ interface SortableImageProps {
   onRemove: () => void;
   disabled: boolean;
   formatFileSize: (bytes: number) => string;
+  isSingleImage?: boolean; // New prop to indicate single image mode
 }
 
 function SortableImage({
@@ -87,6 +88,7 @@ function SortableImage({
   onRemove,
   disabled,
   formatFileSize,
+  isSingleImage = false,
 }: SortableImageProps) {
   const {
     attributes,
@@ -138,23 +140,25 @@ function SortableImage({
         </div>
       ) : null}
 
-      {/* Drag Handle */}
-      <button
-        className={cn(
-          'absolute top-2 left-2 h-8 w-8 bg-white/90 hover:bg-white rounded',
-          DRAG_DROP_CONSTANTS.STYLES.DRAG_HANDLE_CURSOR,
-          'flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
-          'shadow-md z-10',
-          disabled && 'cursor-not-allowed opacity-30'
-        )}
-        {...attributes}
-        {...listeners}
-        aria-label={DRAG_DROP_CONSTANTS.ACCESSIBILITY.DRAG_HANDLE_LABEL}
-        disabled={disabled}
-        type="button"
-      >
-        <GripVertical className="h-4 w-4 text-gray-600" />
-      </button>
+      {/* Drag Handle - Hidden in single image mode */}
+      {!isSingleImage && (
+        <button
+          className={cn(
+            'absolute top-2 left-2 h-8 w-8 bg-white/90 hover:bg-white rounded',
+            DRAG_DROP_CONSTANTS.STYLES.DRAG_HANDLE_CURSOR,
+            'flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
+            'shadow-md z-10',
+            disabled && 'cursor-not-allowed opacity-30'
+          )}
+          {...attributes}
+          {...listeners}
+          aria-label={DRAG_DROP_CONSTANTS.ACCESSIBILITY.DRAG_HANDLE_LABEL}
+          disabled={disabled}
+          type="button"
+        >
+          <GripVertical className="h-4 w-4 text-gray-600" />
+        </button>
+      )}
 
       {/* Remove Button */}
       <Button
@@ -170,8 +174,8 @@ function SortableImage({
         <X className="h-3 w-3" />
       </Button>
 
-      {/* Primary Image Badge */}
-      {index === 0 && (
+      {/* Primary Image Badge - Hidden in single image mode */}
+      {index === 0 && !isSingleImage && (
         <div className="absolute bottom-2 left-2 z-10">
           <Badge variant="default" className="text-xs">
             {DRAG_DROP_CONSTANTS.LABELS.PRIMARY_IMAGE}
@@ -179,10 +183,12 @@ function SortableImage({
         </div>
       )}
 
-      {/* Success Indicator */}
-      <div className="absolute top-12 left-2 h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
-        <CheckCircle className="h-3 w-3 text-white" />
-      </div>
+      {/* Success Indicator - Hidden in single image mode */}
+      {!isSingleImage && (
+        <div className="absolute top-12 left-2 h-6 w-6 bg-green-500 rounded-full flex items-center justify-center">
+          <CheckCircle className="h-3 w-3 text-white" />
+        </div>
+      )}
     </div>
   );
 }
@@ -451,50 +457,55 @@ export default function ImageUpload({
     [images, currentOnChange]
   );
 
+  // Hide upload area when maxFiles is 1 and image is already uploaded
+  const shouldHideUploadArea = maxFiles === 1 && images.length >= 1;
+
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Upload Area */}
-      <div
-        className={cn(
-          'border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer',
-          dragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400',
-          disabled && 'cursor-not-allowed'
-        )}
-        style={{
-          opacity: disabled ? DRAG_DROP_CONSTANTS.STYLES.DRAGGING_OPACITY : 1,
-        }}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => !disabled && fileInputRef.current?.click()}
-      >
-        <div className="text-center">
-          {uploading ? (
-            <div className="space-y-2">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
-              <p className="text-sm text-gray-600">Uploading...</p>
-              <Progress
-                value={uploadProgress}
-                className="w-full max-w-xs mx-auto"
-              />
-            </div>
-          ) : (
-            <>
-              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm font-medium">
-                Drop images here or click to upload
-              </p>
-              <p className="text-xs text-gray-500">
-                Max {maxFiles} images, up to{' '}
-                {Math.round(maxSize / (1024 * 1024))}MB each
-              </p>
-              <p className="text-xs text-gray-500">JPEG, PNG, WebP supported</p>
-            </>
+      {/* Upload Area - Hidden when single file is uploaded */}
+      {!shouldHideUploadArea && (
+        <div
+          className={cn(
+            'border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer',
+            dragActive
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 hover:border-gray-400',
+            disabled && 'cursor-not-allowed'
           )}
+          style={{
+            opacity: disabled ? DRAG_DROP_CONSTANTS.STYLES.DRAGGING_OPACITY : 1,
+          }}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => !disabled && fileInputRef.current?.click()}
+        >
+          <div className="text-center">
+            {uploading ? (
+              <div className="space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
+                <p className="text-sm text-gray-600">Uploading...</p>
+                <Progress
+                  value={uploadProgress}
+                  className="w-full max-w-xs mx-auto"
+                />
+              </div>
+            ) : (
+              <>
+                <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                <p className="text-sm font-medium">
+                  Drop images here or click to upload
+                </p>
+                <p className="text-xs text-gray-500">
+                  Max {maxFiles} images, up to{' '}
+                  {Math.round(maxSize / (1024 * 1024))}MB each
+                </p>
+                <p className="text-xs text-gray-500">JPEG, PNG, WebP supported</p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <input
         ref={fileInputRef}
@@ -544,7 +555,13 @@ export default function ImageUpload({
             items={images.map((_, idx) => idx.toString())}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className={cn(
+              "grid gap-4",
+              // Single image layout - larger and centered
+              maxFiles === 1 ? "grid-cols-1 max-w-sm mx-auto" :
+              // Multiple images layout
+              "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+            )}>
               {images.map((image, index) => (
                 <SortableImage
                   key={index}
@@ -554,6 +571,7 @@ export default function ImageUpload({
                   onRemove={() => removeImage(index)}
                   disabled={disabled}
                   formatFileSize={formatFileSize}
+                  isSingleImage={maxFiles === 1}
                 />
               ))}
             </div>

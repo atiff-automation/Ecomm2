@@ -163,9 +163,9 @@ export class ContentTransformerService {
     const stockColorClass = isInStock ? 'text-green-600' : 'text-red-600';
 
     // Generate compact product card with correct pricing display
-    return `<div class="not-prose product-embed-wrapper my-6 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white" data-product-slug="${product.slug}">
-  <div class="flex gap-4">
-    <div class="flex-shrink-0 w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
+    return `<div class="not-prose product-embed-wrapper my-6 p-3 md:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white w-full" data-product-slug="${product.slug}" style="max-width: 100%; box-sizing: border-box;">
+  <div class="flex gap-2 sm:gap-3 w-full" style="max-width: 100%;">
+    <div class="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
       <img
         src="${product.featuredImage}"
         alt="${product.name}"
@@ -173,29 +173,31 @@ export class ContentTransformerService {
         loading="lazy"
       />
     </div>
-    <div class="flex-1 min-w-0">
-      <h4 class="font-semibold text-gray-900 text-base sm:text-lg mb-2 line-clamp-2">
-        ${product.name}
-      </h4>
-      <div class="mb-3">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-red-600 font-bold text-lg sm:text-xl">
-            RM ${displayPrice.toFixed(2)}
-          </span>
+    <div class="flex-1 min-w-0 flex flex-col justify-between">
+      <div>
+        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2 line-clamp-2">
+          ${product.name}
+        </h4>
+        <div class="mb-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-red-600 font-bold text-base sm:text-lg">
+              RM ${displayPrice.toFixed(2)}
+            </span>
+          </div>
+          ${hasMemberSavings ? `<div class="text-xs text-gray-700 font-medium mt-0.5">
+            Member: RM ${product.memberPrice.toFixed(2)}
+          </div>` : ''}
         </div>
-        ${hasMemberSavings ? `<div class="text-xs text-black font-medium mt-1">
-          Member price: RM ${product.memberPrice.toFixed(2)}
-        </div>` : ''}
       </div>
-      <div class="flex items-center gap-3 flex-wrap">
-        <span class="text-sm font-medium ${stockColorClass}">
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <span class="text-xs sm:text-sm font-medium ${stockColorClass}">
           ${stockText}
         </span>
         <a
           href="/products/${product.slug}"
           target="_blank"
           rel="noopener noreferrer"
-          class="product-embed-button inline-flex items-center px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md text-sm font-medium transition-colors"
+          class="product-embed-button inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white hover:bg-red-700 rounded-md text-xs sm:text-sm font-medium transition-colors"
         >
           View Product
         </a>

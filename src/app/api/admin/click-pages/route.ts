@@ -187,6 +187,9 @@ export async function POST(req: NextRequest) {
         campaignStartDate: validatedData.campaignStartDate,
         campaignEndDate: validatedData.campaignEndDate,
 
+        // Theme Settings
+        themeSettings: validatedData.themeSettings as never,
+
         // Creator
         createdBy: session.user.id,
       },

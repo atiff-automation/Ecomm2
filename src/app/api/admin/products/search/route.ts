@@ -73,15 +73,19 @@ export async function GET(request: Request) {
 
     // Filter by category
     if (searchQuery.categoryId) {
-      where.categoryId = searchQuery.categoryId;
+      where.categories = {
+        some: {
+          categoryId: searchQuery.categoryId,
+        },
+      };
     }
 
     // Filter by availability
     if (searchQuery.available === 'true') {
       where.status = 'ACTIVE';
-      where.stock = { gt: 0 };
+      where.stockQuantity = { gt: 0 };
     } else if (searchQuery.available === 'false') {
-      where.OR = [{ status: 'INACTIVE' }, { stock: { lte: 0 } }];
+      where.OR = [{ status: 'INACTIVE' }, { stockQuantity: { lte: 0 } }];
     }
 
     // Calculate pagination
@@ -96,16 +100,29 @@ export async function GET(request: Request) {
           id: true,
           name: true,
           slug: true,
-          price: true,
-          compareAtPrice: true,
-          images: true,
-          stock: true,
+          regularPrice: true,
+          memberPrice: true,
+          promotionalPrice: true,
+          stockQuantity: true,
           status: true,
-          category: {
+          categories: {
             select: {
-              id: true,
-              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
+            take: 1,
+          },
+          images: {
+            where: { isPrimary: true },
+            select: {
+              url: true,
+              altText: true,
+            },
+            take: 1,
           },
         },
         orderBy: [{ status: 'desc' }, { name: 'asc' }],
@@ -116,20 +133,27 @@ export async function GET(request: Request) {
     ]);
 
     // Format response
-    const formattedProducts = products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: Number(product.price),
-      compareAtPrice: product.compareAtPrice
-        ? Number(product.compareAtPrice)
-        : null,
-      image: product.images[0] || null,
-      stock: product.stock,
-      status: product.status,
-      category: product.category,
-      available: product.status === 'ACTIVE' && product.stock > 0,
-    }));
+    const formattedProducts = products.map((product) => {
+      // Calculate effective price (promotional > member > regular)
+      const effectivePrice = product.promotionalPrice
+        ? Number(product.promotionalPrice)
+        : Number(product.regularPrice);
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: effectivePrice,
+        compareAtPrice: product.promotionalPrice
+          ? Number(product.regularPrice)
+          : null,
+        image: product.images[0]?.url || null,
+        stock: product.stockQuantity,
+        status: product.status,
+        category: product.categories[0]?.category || null,
+        available: product.status === 'ACTIVE' && product.stockQuantity > 0,
+      };
+    });
 
     return NextResponse.json({
       products: formattedProducts,

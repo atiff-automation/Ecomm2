@@ -113,7 +113,7 @@ function ProductCompactCard({ product }: { product: ProductShowcaseProduct }) {
 
 function GridLayout({ products }: { products: ProductShowcaseProduct[] }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
         <ProductCompactCard key={product.id} product={product} />
       ))}
@@ -308,11 +308,11 @@ export function ProductShowcase({
   };
 
   return (
-    <section className="py-12">
-      <div className="container">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Featured Products</h2>
-          <p className="text-muted-foreground">
+    <section className="py-8 md:py-12 bg-gray-50">
+      <div className="container mx-auto px-4 md:px-6 lg:px-16">
+        <div className="mb-6 md:mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Featured Products</h2>
+          <p className="text-sm md:text-base text-gray-600">
             Discover our hand-picked selection
           </p>
         </div>

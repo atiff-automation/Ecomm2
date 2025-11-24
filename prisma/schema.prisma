@@ -1656,6 +1656,9 @@ model ClickPage {
   // Block-based Content (JSON array of blocks)
   blocks Json @default("[]") // Array of block objects
 
+  // Global Theme Settings (Phase 1 - Builder Enhancements)
+  themeSettings Json? // Global theme: {colors: {primary, secondary, accent}, fonts: {heading, body}}
+
   // SEO Fields
   metaTitle       String?  @db.VarChar(200)
   metaDescription String?  @db.VarChar(300)
