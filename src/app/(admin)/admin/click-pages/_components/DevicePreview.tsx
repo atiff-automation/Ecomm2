@@ -149,17 +149,26 @@ function DevicePreviewComponent({
   const deviceWidth = DEVICE_WIDTHS[mode];
   const scale = zoom / 100;
 
+  // Calculate the scaled width for proper spacing
+  const scaledWidth = deviceWidth * scale;
+
   return (
     <div className="flex-1 overflow-auto bg-gray-100 p-6">
-      {/* Centered preview container */}
-      <div className="flex justify-center items-start min-h-full">
+      {/* Centered preview container with proper spacing for scaled content */}
+      <div
+        className="flex justify-center items-start min-h-full mx-auto"
+        style={{
+          width: `${scaledWidth}px`,
+          maxWidth: '100%',
+        }}
+      >
         {/* Scaled viewport */}
         <div
-          className="origin-top"
+          className="origin-top-left"
           style={{
             width: `${deviceWidth}px`,
             transform: `scale(${scale})`,
-            transformOrigin: 'top center',
+            transformOrigin: 'top left',
           }}
         >
           {/* Device frame (optional subtle border) */}
