@@ -49,7 +49,7 @@ export const ZOOM_LEVELS = {
 } as const;
 
 /**
- * Available zoom options for dropdown
+ * Available zoom options for dropdown (basic levels)
  */
 export const ZOOM_OPTIONS = [
   { value: ZOOM_LEVELS.SMALL, label: '50%' },
@@ -57,6 +57,13 @@ export const ZOOM_OPTIONS = [
   { value: ZOOM_LEVELS.NORMAL, label: '100%' },
   { value: ZOOM_LEVELS.LARGE, label: '125%' },
   { value: ZOOM_LEVELS.XLARGE, label: '150%' },
+] as const;
+
+/**
+ * Granular zoom levels for smooth pinch-to-zoom (every 10%)
+ */
+export const GRANULAR_ZOOM_LEVELS = [
+  50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
 ] as const;
 
 /**

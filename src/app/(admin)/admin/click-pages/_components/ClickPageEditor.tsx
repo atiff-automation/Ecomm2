@@ -331,7 +331,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
       {/* Main Content - CSS Grid Layout with Fixed Sidebars */}
       <div className="grid grid-cols-[256px_1fr_320px] max-w-screen-2xl mx-auto">
         {/* Left Sidebar - Block Palette (Fixed Width) */}
-        <aside className="bg-white border-r p-4 min-h-[calc(100vh-60px)] sticky top-[60px]">
+        <aside className="bg-white border-r p-4 h-[calc(100vh-60px)] sticky top-[60px] overflow-y-auto">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Layers className="w-4 h-4" />
             Blocks
@@ -340,7 +340,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         </aside>
 
         {/* Center - Canvas (Flexible, Scrollable) */}
-        <main className="flex flex-col min-h-[calc(100vh-60px)] min-w-0">
+        <main className="flex flex-col min-w-0">
           {/* Device Preview Toolbar */}
           <DevicePreviewToolbar
             mode={deviceMode}
@@ -360,7 +360,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
               items={blockIds}
               strategy={verticalListSortingStrategy}
             >
-              <DevicePreview mode={deviceMode} zoom={zoomLevel}>
+              <DevicePreview mode={deviceMode} zoom={zoomLevel} onZoomChange={setZoomLevel}>
                 {blocks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-96 text-gray-400">
                     <Layers className="w-12 h-12 mb-4" />
@@ -398,7 +398,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         </main>
 
         {/* Right Sidebar - Settings (Fixed Width) */}
-        <aside className="bg-white border-l min-h-[calc(100vh-60px)] sticky top-[60px]">
+        <aside className="bg-white border-l h-[calc(100vh-60px)] sticky top-[60px] overflow-y-auto">
           <Tabs defaultValue="block" className="h-full">
             <TabsList className="w-full justify-start border-b rounded-none px-4">
               <TabsTrigger value="block" className="flex items-center gap-1">
