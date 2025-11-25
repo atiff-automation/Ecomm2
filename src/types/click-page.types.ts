@@ -37,7 +37,12 @@ export type BlockType =
   | 'PRICING_TABLE'
   | 'TESTIMONIAL'
   | 'COUNTDOWN_TIMER'
-  | 'SOCIAL_PROOF';
+  | 'SOCIAL_PROOF'
+  | 'VIDEO'
+  | 'FORM'
+  | 'IMAGE_GALLERY'
+  | 'EMBED'
+  | 'ACCORDION';
 
 /**
  * Base block interface - all blocks extend this
@@ -260,6 +265,146 @@ export interface SocialProofBlock extends BaseBlock {
   settings: SocialProofBlockSettings;
 }
 
+/**
+ * Video Block - Video/multimedia content
+ */
+export interface VideoBlockSettings {
+  videoType: 'youtube' | 'vimeo' | 'self-hosted';
+  youtubeId?: string;
+  vimeoId?: string;
+  selfHostedUrl?: string;
+  selfHostedFilename?: string; // Track uploaded video filename for deletion
+  thumbnailUrl?: string;
+  autoplay: boolean;
+  loop: boolean;
+  muted: boolean;
+  controls: boolean;
+  aspectRatio: '16:9' | '4:3' | '1:1' | '21:9';
+  caption?: string;
+  styles?: StyleSettings;
+}
+
+export interface VideoBlock extends BaseBlock {
+  type: 'VIDEO';
+  settings: VideoBlockSettings;
+}
+
+/**
+ * Form Block - Lead capture and contact forms
+ */
+export interface FormField {
+  id: string;
+  type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'checkbox' | 'radio';
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[]; // For select, radio
+  validation?: {
+    pattern?: string;
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+  };
+}
+
+export interface FormBlockSettings {
+  title?: string;
+  description?: string;
+  fields: FormField[];
+  submitButtonText: string;
+  submitButtonVariant: 'default' | 'outline' | 'ghost';
+  successMessage: string;
+  redirectUrl?: string;
+  webhookUrl?: string; // For form submissions
+  emailNotification?: {
+    enabled: boolean;
+    recipients: string[];
+    subject: string;
+  };
+  styles?: StyleSettings;
+}
+
+export interface FormBlock extends BaseBlock {
+  type: 'FORM';
+  settings: FormBlockSettings;
+}
+
+/**
+ * Image Gallery Block - Multiple images with carousel/grid layout
+ */
+export interface GalleryImage {
+  id: string;
+  url: string;
+  altText: string;
+  caption?: string;
+  link?: string;
+}
+
+export interface ImageGalleryBlockSettings {
+  images: GalleryImage[];
+  layout: 'carousel' | 'grid' | 'masonry';
+  columns: 2 | 3 | 4 | 5;
+  showCaptions: boolean;
+  showNavigation: boolean;
+  autoplay: boolean;
+  autoplayInterval: number; // in milliseconds
+  lightbox: boolean; // Click to enlarge
+  aspectRatio?: '16:9' | '4:3' | '1:1' | 'original';
+  styles?: StyleSettings;
+}
+
+export interface ImageGalleryBlock extends BaseBlock {
+  type: 'IMAGE_GALLERY';
+  settings: ImageGalleryBlockSettings;
+}
+
+/**
+ * Embed Block - Generic iframe embed for external content
+ */
+export interface EmbedBlockSettings {
+  embedType: 'iframe' | 'custom';
+  iframeUrl?: string;
+  embedCode?: string; // Custom HTML/script embed code
+  height: number;
+  width: 'full' | 'large' | 'medium' | 'small' | number;
+  allowFullscreen: boolean;
+  allowScripts: boolean;
+  title?: string;
+  caption?: string;
+  styles?: StyleSettings;
+}
+
+export interface EmbedBlock extends BaseBlock {
+  type: 'EMBED';
+  settings: EmbedBlockSettings;
+}
+
+/**
+ * Accordion Block - Collapsible FAQ/content sections
+ */
+export interface AccordionItem {
+  id: string;
+  title: string;
+  content: string; // HTML content
+  isOpenByDefault: boolean;
+  icon?: string; // Lucide icon name
+}
+
+export interface AccordionBlockSettings {
+  items: AccordionItem[];
+  allowMultipleOpen: boolean;
+  showIcons: boolean;
+  iconPosition: 'left' | 'right';
+  animationDuration: number; // in milliseconds
+  styles?: StyleSettings;
+}
+
+export interface AccordionBlock extends BaseBlock {
+  type: 'ACCORDION';
+  settings: AccordionBlockSettings;
+}
+
 // ============================================================================
 // Union Type - All Blocks
 // ============================================================================
@@ -277,7 +422,12 @@ export type Block =
   | PricingTableBlock
   | TestimonialBlock
   | CountdownTimerBlock
-  | SocialProofBlock;
+  | SocialProofBlock
+  | VideoBlock
+  | FormBlock
+  | ImageGalleryBlock
+  | EmbedBlock
+  | AccordionBlock;
 
 // ============================================================================
 // Click Page with Relations
