@@ -370,20 +370,22 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
                   </div>
                 ) : (
                   <div className="space-y-8 p-4">
-                    {blocks.map((block) => (
-                      <EditableBlockWrapper
-                        key={block.id}
-                        block={block}
-                        isSelected={selectedBlockId === block.id}
-                        themeSettings={themeSettings}
-                        onSelect={() => setSelectedBlockId(block.id)}
-                        onRemove={() => handleRemoveBlock(block.id)}
-                        onDuplicate={() => handleDuplicateBlock(block.id)}
-                        onBlockClick={(blockId, blockType, targetUrl) => {
-                          console.log('Block clicked:', { blockId, blockType, targetUrl });
-                        }}
-                      />
-                    ))}
+                    {[...blocks]
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((block) => (
+                        <EditableBlockWrapper
+                          key={block.id}
+                          block={block}
+                          isSelected={selectedBlockId === block.id}
+                          themeSettings={themeSettings}
+                          onSelect={() => setSelectedBlockId(block.id)}
+                          onRemove={() => handleRemoveBlock(block.id)}
+                          onDuplicate={() => handleDuplicateBlock(block.id)}
+                          onBlockClick={(blockId, blockType, targetUrl) => {
+                            console.log('Block clicked:', { blockId, blockType, targetUrl });
+                          }}
+                        />
+                      ))}
                   </div>
                 )}
               </DevicePreview>
