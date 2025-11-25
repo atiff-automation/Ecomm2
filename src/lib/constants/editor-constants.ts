@@ -16,6 +16,9 @@ export type DeviceMode = (typeof DEVICE_MODES)[keyof typeof DEVICE_MODES];
 
 /**
  * Device viewport widths (in pixels)
+ * Desktop: 1440px - Standard desktop width
+ * Tablet: 768px - Standard tablet breakpoint
+ * Mobile: 375px - iPhone standard width
  */
 export const DEVICE_WIDTHS = {
   [DEVICE_MODES.DESKTOP]: 1440,
@@ -50,6 +53,7 @@ export const ZOOM_LEVELS = {
  */
 export const ZOOM_OPTIONS = [
   { value: ZOOM_LEVELS.SMALL, label: '50%' },
+  { value: 67, label: '67%' },
   { value: ZOOM_LEVELS.MEDIUM, label: '75%' },
   { value: ZOOM_LEVELS.NORMAL, label: '100%' },
   { value: ZOOM_LEVELS.LARGE, label: '125%' },
@@ -57,9 +61,21 @@ export const ZOOM_OPTIONS = [
 ] as const;
 
 /**
- * Default zoom level
+ * Default zoom level (deprecated - use DEVICE_DEFAULT_ZOOM instead)
  */
 export const DEFAULT_ZOOM = ZOOM_LEVELS.NORMAL;
+
+/**
+ * Device-specific default zoom levels
+ * Desktop: 67% - Fits nicely with sidebars (1440px * 0.67 ≈ 965px visual)
+ * Tablet: 100% - Full size works well (768px)
+ * Mobile: 100% - Full size works well (375px)
+ */
+export const DEVICE_DEFAULT_ZOOM = {
+  [DEVICE_MODES.DESKTOP]: 67,
+  [DEVICE_MODES.TABLET]: ZOOM_LEVELS.NORMAL,
+  [DEVICE_MODES.MOBILE]: ZOOM_LEVELS.NORMAL,
+} as const;
 
 /**
  * Default device mode

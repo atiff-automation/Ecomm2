@@ -42,7 +42,7 @@ import type { Block, BlockType, ClickPageStatus } from '@/types/click-page.types
 import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
 import { generateClickPageSlug } from '@/lib/constants/click-page-constants';
-import { DEFAULT_DEVICE_MODE, DEFAULT_ZOOM, type DeviceMode } from '@/lib/constants/editor-constants';
+import { DEFAULT_DEVICE_MODE, DEVICE_DEFAULT_ZOOM, type DeviceMode } from '@/lib/constants/editor-constants';
 import { BlockPalette } from './BlockPalette';
 import { EditableBlockWrapper } from './EditableBlockWrapper';
 import { DevicePreview, DevicePreviewToolbar } from './DevicePreview';
@@ -128,7 +128,15 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
 
   // Device preview state
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(DEFAULT_DEVICE_MODE);
-  const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM);
+  const [zoomLevel, setZoomLevel] = useState<number>(DEVICE_DEFAULT_ZOOM[DEFAULT_DEVICE_MODE]);
+
+  /**
+   * Handle device mode change with automatic zoom adjustment
+   */
+  const handleDeviceModeChange = useCallback((mode: DeviceMode) => {
+    setDeviceMode(mode);
+    setZoomLevel(DEVICE_DEFAULT_ZOOM[mode]);
+  }, []);
 
   // DnD sensors
   const sensors = useSensors(
@@ -337,7 +345,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
           <DevicePreviewToolbar
             mode={deviceMode}
             zoom={zoomLevel}
-            onModeChange={setDeviceMode}
+            onModeChange={handleDeviceModeChange}
             onZoomChange={setZoomLevel}
           />
 
