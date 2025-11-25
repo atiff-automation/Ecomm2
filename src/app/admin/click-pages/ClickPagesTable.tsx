@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   BarChart3,
   Copy,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -226,6 +227,14 @@ export function ClickPagesTable() {
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(`/admin/click-pages/${page.id}/submissions`)
+                      }
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View Submissions
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => copyPublicUrl(page.slug)}>
                       <Copy className="w-4 h-4 mr-2" />

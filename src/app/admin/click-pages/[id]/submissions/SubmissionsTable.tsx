@@ -24,19 +24,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { generateSubmissionPreview } from '@/lib/utils/submission-preview';
 
 interface FormSubmission {
   id: string;
@@ -178,49 +170,41 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Submitted At</TableHead>
-              <TableHead>Block ID</TableHead>
-              <TableHead>Fields Submitted</TableHead>
-              <TableHead>IP Address</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-48">Submitted At</TableHead>
+              <TableHead>Preview</TableHead>
+              <TableHead className="w-20 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {submissions.map((submission) => (
-              <TableRow key={submission.id}>
+              <TableRow
+                key={submission.id}
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => setSelectedSubmission(submission)}
+              >
                 <TableCell className="font-medium">
                   {format(new Date(submission.createdAt), 'MMM dd, yyyy HH:mm')}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {submission.blockId.slice(0, 8)}...
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-muted-foreground">
-                    {Object.keys(submission.data).length} fields
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-muted-foreground font-mono">
-                    {submission.ipAddress || 'Unknown'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-900">
+                      {generateSubmissionPreview(submission.data)}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {Object.keys(submission.data).length}
+                    </Badge>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setSelectedSubmission(submission)}
-                      aria-label="View submission details"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setSubmissionToDelete(submission.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSubmissionToDelete(submission.id);
+                      }}
                       aria-label="Delete submission"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -279,25 +263,6 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
 
           {selectedSubmission && (
             <div className="space-y-4">
-              {/* Metadata */}
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Block ID:</span>
-                  <span className="text-sm font-mono">{selectedSubmission.blockId}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">IP Address:</span>
-                  <span className="text-sm font-mono">{selectedSubmission.ipAddress || 'Unknown'}</span>
-                </div>
-                {selectedSubmission.userAgent && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-gray-600">User Agent:</span>
-                    <span className="text-xs font-mono text-gray-500 break-all">
-                      {selectedSubmission.userAgent}
-                    </span>
-                  </div>
-                )}
-              </div>
 
               {/* Submission Data */}
               <div>
@@ -319,17 +284,24 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!submissionToDelete} onOpenChange={() => setSubmissionToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={!!submissionToDelete} onOpenChange={() => setSubmissionToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Submission?</DialogTitle>
+            <DialogDescription>
               This action cannot be undone. The submission data will be permanently deleted from the database.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setSubmissionToDelete(null)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
               disabled={deleting}
               className="bg-red-600 hover:bg-red-700"
@@ -342,10 +314,10 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
               ) : (
                 'Delete'
               )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
