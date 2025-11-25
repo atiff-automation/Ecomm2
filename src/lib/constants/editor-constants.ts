@@ -60,10 +60,10 @@ export const ZOOM_OPTIONS = [
 ] as const;
 
 /**
- * Granular zoom levels for smooth pinch-to-zoom (every 10%)
+ * Granular zoom levels for smooth pinch-to-zoom (every 5%)
  */
 export const GRANULAR_ZOOM_LEVELS = [
-  50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
+  50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150,
 ] as const;
 
 /**
@@ -73,12 +73,12 @@ export const DEFAULT_ZOOM = ZOOM_LEVELS.NORMAL;
 
 /**
  * Device-specific default zoom levels
- * Desktop: 50% - Ensures sidebars remain visible (1440px * 0.50 = 720px visual)
+ * Desktop: 75% - Balanced view with good readability (1440px * 0.75 = 1080px visual)
  * Tablet: 100% - Full size works well (768px)
  * Mobile: 100% - Full size works well (375px)
  */
 export const DEVICE_DEFAULT_ZOOM = {
-  [DEVICE_MODES.DESKTOP]: ZOOM_LEVELS.SMALL,
+  [DEVICE_MODES.DESKTOP]: ZOOM_LEVELS.MEDIUM,
   [DEVICE_MODES.TABLET]: ZOOM_LEVELS.NORMAL,
   [DEVICE_MODES.MOBILE]: ZOOM_LEVELS.NORMAL,
 } as const;

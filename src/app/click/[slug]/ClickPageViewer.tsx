@@ -160,6 +160,7 @@ export function ClickPageViewer({
         blocks={blocks}
         themeSettings={themeSettings}
         onBlockClick={handleBlockClick}
+        clickPageSlug={slug}
       />
     </main>
   );

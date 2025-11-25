@@ -18,6 +18,11 @@ import type {
   TestimonialBlock,
   CountdownTimerBlock,
   SocialProofBlock,
+  VideoBlock,
+  FormBlock,
+  ImageGalleryBlock,
+  EmbedBlock,
+  AccordionBlock,
 } from '@/types/click-page.types';
 import {
   CLICK_PAGE_CONSTANTS,
@@ -107,6 +112,46 @@ export const BLOCK_REGISTRY: BlockRegistryType = {
     icon: 'Award',
     category: 'social',
     defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.SOCIAL_PROOF,
+  },
+  VIDEO: {
+    type: 'VIDEO',
+    label: 'Video',
+    description: 'Embed YouTube, Vimeo, or self-hosted video',
+    icon: 'Video',
+    category: 'media',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.VIDEO,
+  },
+  FORM: {
+    type: 'FORM',
+    label: 'Form',
+    description: 'Lead capture and contact forms',
+    icon: 'FormInput',
+    category: 'cta',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.FORM,
+  },
+  IMAGE_GALLERY: {
+    type: 'IMAGE_GALLERY',
+    label: 'Image Gallery',
+    description: 'Carousel or grid of multiple images',
+    icon: 'Images',
+    category: 'media',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.IMAGE_GALLERY,
+  },
+  EMBED: {
+    type: 'EMBED',
+    label: 'Embed',
+    description: 'External content via iframe or custom code',
+    icon: 'Code2',
+    category: 'media',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.EMBED,
+  },
+  ACCORDION: {
+    type: 'ACCORDION',
+    label: 'Accordion',
+    description: 'Collapsible FAQ or content sections',
+    icon: 'ChevronDown',
+    category: 'content',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.ACCORDION,
   },
 };
 
@@ -229,6 +274,46 @@ export function createDefaultBlock(type: BlockType, sortOrder: number = 0): Bloc
         sortOrder,
         settings: definition.defaultSettings,
       } as SocialProofBlock;
+
+    case 'VIDEO':
+      return {
+        id,
+        type: 'VIDEO',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as VideoBlock;
+
+    case 'FORM':
+      return {
+        id,
+        type: 'FORM',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as FormBlock;
+
+    case 'IMAGE_GALLERY':
+      return {
+        id,
+        type: 'IMAGE_GALLERY',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as ImageGalleryBlock;
+
+    case 'EMBED':
+      return {
+        id,
+        type: 'EMBED',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as EmbedBlock;
+
+    case 'ACCORDION':
+      return {
+        id,
+        type: 'ACCORDION',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as AccordionBlock;
 
     default:
       // This should never happen due to TypeScript exhaustiveness checking

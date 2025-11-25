@@ -419,6 +419,132 @@ export const socialProofBlockSettingsSchema = z.object({
   styles: styleSettingsSchema,
 });
 
+/**
+ * Video Block Settings Schema
+ */
+export const videoBlockSettingsSchema = z.object({
+  videoType: z.enum(['youtube', 'vimeo', 'self-hosted']),
+  youtubeId: z.string().max(100).optional(),
+  vimeoId: z.string().max(100).optional(),
+  selfHostedUrl: imageUrlOrEmptySchema.optional(),
+  thumbnailUrl: imageUrlOrEmptySchema.optional(),
+  autoplay: z.boolean(),
+  loop: z.boolean(),
+  muted: z.boolean(),
+  controls: z.boolean(),
+  aspectRatio: z.enum(['16:9', '4:3', '1:1', '21:9']),
+  caption: z.string().max(300).optional(),
+  styles: styleSettingsSchema,
+});
+
+/**
+ * Form Field Schema
+ */
+export const formFieldSchema = z.object({
+  id: z.string().min(1),
+  type: z.enum(['text', 'email', 'phone', 'textarea', 'select', 'checkbox', 'radio']),
+  label: z.string().min(1, 'Field label is required').max(100),
+  placeholder: z.string().max(200).optional(),
+  required: z.boolean(),
+  options: z.array(z.string().max(200)).optional(),
+  validation: z.object({
+    pattern: z.string().optional(),
+    minLength: z.number().min(0).optional(),
+    maxLength: z.number().min(1).optional(),
+    min: z.number().optional(),
+    max: z.number().optional(),
+  }).optional(),
+});
+
+/**
+ * Form Block Settings Schema
+ */
+export const formBlockSettingsSchema = z.object({
+  title: z.string().max(200).optional(),
+  description: z.string().max(500).optional(),
+  fields: z.array(formFieldSchema).min(1, 'At least one field is required').max(20, 'Maximum 20 fields allowed'),
+  submitButtonText: z.string().min(1, 'Submit button text is required').max(50),
+  submitButtonVariant: z.enum(['default', 'outline', 'ghost']),
+  successMessage: z.string().min(1, 'Success message is required').max(300),
+  redirectUrl: z.string().url().optional().or(z.literal('')),
+  webhookUrl: z.string().url().optional().or(z.literal('')),
+  emailNotification: z.object({
+    enabled: z.boolean(),
+    recipients: z.array(z.string().email()).max(10, 'Maximum 10 recipients'),
+    subject: z.string().min(1).max(200),
+  }).optional(),
+  styles: styleSettingsSchema,
+});
+
+/**
+ * Gallery Image Schema
+ */
+export const galleryImageSchema = z.object({
+  id: z.string().min(1),
+  url: requiredImageUrlSchema,
+  altText: z.string().min(1, 'Alt text is required').max(200),
+  caption: z.string().max(300).optional(),
+  link: z.string().url().optional().or(z.literal('')),
+});
+
+/**
+ * Image Gallery Block Settings Schema
+ */
+export const imageGalleryBlockSettingsSchema = z.object({
+  images: z.array(galleryImageSchema).max(50, 'Maximum 50 images allowed'),
+  layout: z.enum(['carousel', 'grid', 'masonry']),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+  showCaptions: z.boolean(),
+  showNavigation: z.boolean(),
+  autoplay: z.boolean(),
+  autoplayInterval: z.number().min(1000).max(30000),
+  lightbox: z.boolean(),
+  aspectRatio: z.enum(['16:9', '4:3', '1:1', 'original']).optional(),
+  styles: styleSettingsSchema,
+});
+
+/**
+ * Embed Block Settings Schema
+ */
+export const embedBlockSettingsSchema = z.object({
+  embedType: z.enum(['iframe', 'custom']),
+  iframeUrl: z.string().url().optional().or(z.literal('')),
+  embedCode: z.string().max(5000).optional(),
+  height: z.number().min(100).max(2000),
+  width: z.union([
+    z.enum(['full', 'large', 'medium', 'small']),
+    z.number().min(100).max(2000)
+  ]),
+  allowFullscreen: z.boolean(),
+  allowScripts: z.boolean(),
+  title: z.string().max(200).optional(),
+  caption: z.string().max(300).optional(),
+  styles: styleSettingsSchema,
+});
+
+/**
+ * Accordion Item Schema
+ */
+export const accordionItemSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1, 'Title is required').max(200),
+  content: z.string().min(1, 'Content is required'),
+  isOpenByDefault: z.boolean(),
+  icon: z.string().max(50).optional(),
+});
+
+/**
+ * Accordion Block Settings Schema
+ */
+export const accordionBlockSettingsSchema = z.object({
+  items: z.array(accordionItemSchema).min(1, 'At least one item is required').max(20, 'Maximum 20 items allowed'),
+  allowMultipleOpen: z.boolean(),
+  showIcons: z.boolean(),
+  iconPosition: z.enum(['left', 'right']),
+  animationDuration: z.number().min(0).max(1000),
+  styles: styleSettingsSchema,
+});
+
 // ============================================================================
 // Base Block Schema
 // ============================================================================
@@ -436,6 +562,11 @@ export const baseBlockSchema = z.object({
     'TESTIMONIAL',
     'COUNTDOWN_TIMER',
     'SOCIAL_PROOF',
+    'VIDEO',
+    'FORM',
+    'IMAGE_GALLERY',
+    'EMBED',
+    'ACCORDION',
   ]),
   sortOrder: z.number().min(0),
 });
@@ -484,6 +615,26 @@ export const blockSchema = z.discriminatedUnion('type', [
   baseBlockSchema.extend({
     type: z.literal('SOCIAL_PROOF'),
     settings: socialProofBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('VIDEO'),
+    settings: videoBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('FORM'),
+    settings: formBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('IMAGE_GALLERY'),
+    settings: imageGalleryBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('EMBED'),
+    settings: embedBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('ACCORDION'),
+    settings: accordionBlockSettingsSchema,
   }),
 ]);
 
@@ -706,6 +857,15 @@ export const conversionEventSchema = z.object({
 });
 
 // ============================================================================
+// Form Submission Schema
+// ============================================================================
+
+export const formSubmissionSchema = z.object({
+  blockId: z.string().min(1, 'Block ID is required'),
+  data: z.record(z.string(), z.unknown()),
+});
+
+// ============================================================================
 // Filter Schema
 // ============================================================================
 
@@ -725,4 +885,5 @@ export type ClickPageCreateInput = z.infer<typeof clickPageCreateSchema>;
 export type ClickPageUpdateInput = z.infer<typeof clickPageUpdateSchema>;
 export type ClickEventInput = z.infer<typeof clickEventSchema>;
 export type ConversionEventInput = z.infer<typeof conversionEventSchema>;
+export type FormSubmissionInput = z.infer<typeof formSubmissionSchema>;
 export type ClickPageFilter = z.infer<typeof clickPageFilterSchema>;

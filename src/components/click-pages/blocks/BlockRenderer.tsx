@@ -25,17 +25,23 @@ import { PricingTableBlockComponent } from './PricingTableBlock';
 import { TestimonialBlockComponent } from './TestimonialBlock';
 import { CountdownTimerBlockComponent } from './CountdownTimerBlock';
 import { SocialProofBlockComponent } from './SocialProofBlock';
+import { VideoBlockComponent } from './VideoBlock';
+import { FormBlockComponent } from './FormBlock';
+import { ImageGalleryBlockComponent } from './ImageGalleryBlock';
+import { EmbedBlockComponent } from './EmbedBlock';
+import { AccordionBlockComponent } from './AccordionBlock';
 
 interface BlockRendererProps {
   blocks: Block[];
   themeSettings?: ThemeSettings;
   onBlockClick?: (blockId: string, blockType: string, targetUrl?: string) => void;
+  clickPageSlug?: string;
 }
 
 /**
  * Renders a list of blocks with theme styling
  */
-export function BlockRenderer({ blocks, themeSettings, onBlockClick }: BlockRendererProps) {
+export function BlockRenderer({ blocks, themeSettings, onBlockClick, clickPageSlug }: BlockRendererProps) {
   // Sort blocks by sortOrder
   const sortedBlocks = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -105,6 +111,7 @@ export function BlockRenderer({ blocks, themeSettings, onBlockClick }: BlockRend
             block={block}
             themeSettings={themeSettings}
             onBlockClick={onBlockClick}
+            clickPageSlug={clickPageSlug}
           />
         ))}
       </div>
@@ -125,12 +132,13 @@ interface BlockItemProps {
   block: Block;
   themeSettings?: ThemeSettings;
   onBlockClick?: (blockId: string, blockType: string, targetUrl?: string) => void;
+  clickPageSlug?: string;
 }
 
 /**
  * Renders a single block with applied styles
  */
-function BlockItem({ block, themeSettings, onBlockClick }: BlockItemProps) {
+function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug }: BlockItemProps) {
   const handleClick = (targetUrl?: string) => {
     onBlockClick?.(block.id, block.type, targetUrl);
   };
@@ -192,6 +200,16 @@ function BlockItem({ block, themeSettings, onBlockClick }: BlockItemProps) {
         return <CountdownTimerBlockComponent block={block} onCtaClick={handleClick} />;
       case 'SOCIAL_PROOF':
         return <SocialProofBlockComponent block={block} />;
+      case 'VIDEO':
+        return <VideoBlockComponent block={block} />;
+      case 'FORM':
+        return <FormBlockComponent block={block} clickPageSlug={clickPageSlug} />;
+      case 'IMAGE_GALLERY':
+        return <ImageGalleryBlockComponent block={block} />;
+      case 'EMBED':
+        return <EmbedBlockComponent block={block} />;
+      case 'ACCORDION':
+        return <AccordionBlockComponent block={block} />;
       default:
         console.warn(`Unknown block type: ${(block as Block).type}`);
         return null;

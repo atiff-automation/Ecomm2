@@ -14,3 +14,8 @@ export { PricingTableBlockComponent } from './PricingTableBlock';
 export { TestimonialBlockComponent } from './TestimonialBlock';
 export { CountdownTimerBlockComponent } from './CountdownTimerBlock';
 export { SocialProofBlockComponent } from './SocialProofBlock';
+export { VideoBlockComponent } from './VideoBlock';
+export { FormBlockComponent } from './FormBlock';
+export { ImageGalleryBlockComponent } from './ImageGalleryBlock';
+export { EmbedBlockComponent } from './EmbedBlock';
+export { AccordionBlockComponent } from './AccordionBlock';

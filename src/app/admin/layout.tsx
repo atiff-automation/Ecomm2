@@ -20,6 +20,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
 
+  // Hide sidebar for full-width editor pages (create/edit click pages)
+  const isFullWidthPage = React.useMemo(() => {
+    if (!pathname) return false;
+
+    const fullWidthRoutes = [
+      '/admin/click-pages/create',
+      '/admin/click-pages/',
+      '/admin/landing-pages/create',
+      '/admin/landing-pages/',
+    ];
+
+    return fullWidthRoutes.some(route => {
+      if (route.endsWith('/create')) {
+        return pathname === route;
+      }
+      // Match edit routes: /admin/click-pages/[id]/edit or /admin/landing-pages/[id]/edit
+      if (route.endsWith('/')) {
+        return new RegExp(`^${route.replace('/', '\\/')}[^/]+\\/edit$`).test(pathname);
+      }
+      return false;
+    });
+  }, [pathname]);
+
   // Handle redirects in useEffect to avoid setState during render
   React.useEffect(() => {
     if (status === 'loading') {
@@ -120,12 +143,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 md:w-56 lg:w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out flex flex-col ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
-      >
+      {/* Sidebar - Hidden for full-width editor pages */}
+      {!isFullWidthPage && (
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-64 md:w-56 lg:w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out flex flex-col ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0`}
+        >
         <div className="flex items-center justify-center h-20 px-6 border-b border-gray-200 relative">
           <DynamicAdminLogo />
           <button
@@ -169,10 +193,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </Button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Sidebar overlay for mobile/tablet */}
-      {sidebarOpen && (
+      {!isFullWidthPage && sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -180,18 +205,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       {/* Main content */}
-      <div className="md:pl-56 lg:pl-64">
+      <div className={isFullWidthPage ? '' : 'md:pl-56 lg:pl-64'}>
         {/* Top navigation */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
+        {!isFullWidthPage && (
+          <div className="bg-white shadow-sm border-b border-gray-200">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                {/* Mobile menu button */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
 
               {/* Right side */}
               <div className="flex items-center space-x-4">
@@ -214,7 +240,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Page content */}
         <main>{children}</main>

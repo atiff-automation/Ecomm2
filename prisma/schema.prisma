@@ -1706,6 +1706,7 @@ model ClickPage {
   // Relations
   clicks      ClickPageClick[]
   conversions ClickPageConversion[]
+  formSubmissions FormSubmission[]
 
   @@index([slug])
   @@index([status])
@@ -1763,4 +1764,22 @@ model ClickPageConversion {
   @@index([sessionId])
   @@index([createdAt])
   @@map("click_page_conversions")
+}
+
+// Form Submission Event - Store submitted form data from FORM blocks
+model FormSubmission {
+  id          String   @id @default(cuid())
+  clickPageId String
+  blockId     String // Which FORM block was submitted
+  data        Json // The submitted form data (field values)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  clickPage ClickPage @relation(fields: [clickPageId], references: [id], onDelete: Cascade)
+
+  @@index([clickPageId])
+  @@index([blockId])
+  @@index([createdAt])
+  @@map("form_submissions")
 }

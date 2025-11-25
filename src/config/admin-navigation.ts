@@ -13,6 +13,7 @@ import {
   HelpCircle,
   FileText,
   Rocket,
+  MousePointerClick,
   type LucideIcon,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
@@ -136,6 +137,15 @@ export const adminNavigation: NavigationItem[] = [
     icon: Rocket,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'Manage Marketing Landing Pages',
+  },
+
+  // 🖱️ Click Pages Section
+  {
+    label: 'Click Pages',
+    href: '/admin/click-pages',
+    icon: MousePointerClick,
+    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
+    description: 'Manage Click-Through Landing Pages',
   },
 
   // ❓ FAQ Section
