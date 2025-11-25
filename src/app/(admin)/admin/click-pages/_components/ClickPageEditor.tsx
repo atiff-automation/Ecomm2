@@ -328,10 +328,10 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex max-w-screen-2xl mx-auto">
-        {/* Left Sidebar - Block Palette */}
-        <aside className="w-64 bg-white border-r p-4 min-h-[calc(100vh-60px)] sticky top-[60px]">
+      {/* Main Content - CSS Grid Layout with Fixed Sidebars */}
+      <div className="grid grid-cols-[256px_1fr_320px] max-w-screen-2xl mx-auto">
+        {/* Left Sidebar - Block Palette (Fixed Width) */}
+        <aside className="bg-white border-r p-4 min-h-[calc(100vh-60px)] sticky top-[60px]">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Layers className="w-4 h-4" />
             Blocks
@@ -339,8 +339,8 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
           <BlockPalette onAddBlock={handleAddBlock} />
         </aside>
 
-        {/* Center - Canvas */}
-        <main className="flex-1 flex flex-col min-h-[calc(100vh-60px)]">
+        {/* Center - Canvas (Flexible, Scrollable) */}
+        <main className="flex flex-col min-h-[calc(100vh-60px)] min-w-0">
           {/* Device Preview Toolbar */}
           <DevicePreviewToolbar
             mode={deviceMode}
@@ -397,8 +397,8 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
           </DndContext>
         </main>
 
-        {/* Right Sidebar - Settings */}
-        <aside className="w-80 bg-white border-l min-h-[calc(100vh-60px)] sticky top-[60px]">
+        {/* Right Sidebar - Settings (Fixed Width) */}
+        <aside className="bg-white border-l min-h-[calc(100vh-60px)] sticky top-[60px]">
           <Tabs defaultValue="block" className="h-full">
             <TabsList className="w-full justify-start border-b rounded-none px-4">
               <TabsTrigger value="block" className="flex items-center gap-1">
