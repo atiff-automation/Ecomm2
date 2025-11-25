@@ -7,6 +7,7 @@
 
 import type { CTAButtonBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface CTAButtonBlockComponentProps {
   block: CTAButtonBlock;
@@ -48,17 +49,19 @@ export function CTAButtonBlockComponent({ block, onClick }: CTAButtonBlockCompon
 
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
-    <div className={cn('flex', ALIGNMENT_MAP[settings.alignment])}>
-      <button
-        onClick={handleClick}
-        className={cn(
-          'font-semibold rounded-lg transition-all duration-200 hover:scale-105',
-          SIZE_MAP[settings.size],
-          VARIANT_MAP[settings.variant]
-        )}
-      >
-        {settings.text}
-      </button>
+    <div className={cn('w-full', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.CTA_BUTTON))}>
+      <div className={cn('flex', ALIGNMENT_MAP[settings.alignment])}>
+        <button
+          onClick={handleClick}
+          className={cn(
+            'font-semibold rounded-lg transition-all duration-200 hover:scale-105',
+            SIZE_MAP[settings.size],
+            VARIANT_MAP[settings.variant]
+          )}
+        >
+          {settings.text}
+        </button>
+      </div>
     </div>
   );
 }

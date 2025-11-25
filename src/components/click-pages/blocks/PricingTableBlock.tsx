@@ -9,6 +9,7 @@
 import type { PricingTableBlock, PricingTier } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface PricingTableBlockComponentProps {
   block: PricingTableBlock;
@@ -23,7 +24,8 @@ export function PricingTableBlockComponent({ block, onCtaClick }: PricingTableBl
     <div style={{ color: 'inherit' }}>
       <div
         className={cn(
-          'gap-6 max-w-6xl mx-auto',
+          'gap-6',
+          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.PRICING_TABLE),
           settings.layout === 'horizontal'
             ? 'flex flex-col md:flex-row justify-center'
             : 'grid grid-cols-1',

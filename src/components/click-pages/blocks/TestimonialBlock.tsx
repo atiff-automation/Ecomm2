@@ -9,13 +9,14 @@ import type { TestimonialBlock, TestimonialItem } from '@/types/click-page.types
 import { cn } from '@/lib/utils';
 import { Star, Quote } from 'lucide-react';
 import Image from 'next/image';
+import { BLOCK_WIDTH_DEFAULTS, BLOCK_WIDTH_CLASSES, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface TestimonialBlockComponentProps {
   block: TestimonialBlock;
 }
 
 const LAYOUT_STYLES = {
-  single: 'grid-cols-1 max-w-2xl',
+  single: 'grid-cols-1',
   grid: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
   carousel: 'grid-cols-1', // Simplified for now
 };
@@ -28,7 +29,8 @@ export function TestimonialBlockComponent({ block }: TestimonialBlockComponentPr
     <div>
       <div
         className={cn(
-          'grid gap-6 mx-auto',
+          'grid gap-6',
+          getBlockWidthClasses(settings.layout === 'single' ? BLOCK_WIDTH_CLASSES.NARROW : BLOCK_WIDTH_DEFAULTS.TESTIMONIAL_GRID),
           LAYOUT_STYLES[settings.layout]
         )}
       >

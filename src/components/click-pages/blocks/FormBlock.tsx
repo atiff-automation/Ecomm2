@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface FormBlockComponentProps {
   block: FormBlock;
@@ -96,7 +97,7 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.FORM)}>
       {settings.title && (
         <h3 className="text-2xl font-bold mb-2">{settings.title}</h3>
       )}

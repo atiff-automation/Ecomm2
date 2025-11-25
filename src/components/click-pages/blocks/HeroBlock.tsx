@@ -7,6 +7,7 @@
 
 import type { HeroBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface HeroBlockComponentProps {
   block: HeroBlock;
@@ -57,7 +58,8 @@ export function HeroBlockComponent({ block, onCtaClick }: HeroBlockComponentProp
 
       <div
         className={cn(
-          'relative max-w-4xl mx-auto w-full z-10',
+          'relative w-full z-10',
+          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.HERO),
           ALIGNMENT_MAP[settings.textAlignment].split(' ')[0] // Apply text alignment
         )}
         style={{ color: settings.backgroundImage ? 'white' : 'inherit' }}

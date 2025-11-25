@@ -8,6 +8,7 @@
 
 import type { TextBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
+import { BLOCK_WIDTH_PX } from '@/lib/constants/click-page-blocks';
 
 interface TextBlockComponentProps {
   block: TextBlock;
@@ -31,7 +32,7 @@ export function TextBlockComponent({ block }: TextBlockComponentProps) {
     >
       <div
         className="mx-auto"
-        style={{ maxWidth: settings.maxWidth ? `${settings.maxWidth}px` : '800px' }}
+        style={{ maxWidth: settings.maxWidth ? `${settings.maxWidth}px` : `${BLOCK_WIDTH_PX.STANDARD}px` }}
       >
         <div
           className="prose prose-lg max-w-none [&_*]:!text-[inherit] prose-headings:!text-[inherit] prose-p:!text-[inherit] prose-strong:!text-[inherit] prose-a:!text-[inherit]"

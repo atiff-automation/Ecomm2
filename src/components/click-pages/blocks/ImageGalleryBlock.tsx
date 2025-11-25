@@ -12,6 +12,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface ImageGalleryBlockComponentProps {
   block: ImageGalleryBlock;
@@ -60,7 +61,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
     const currentImage = settings.images[currentIndex];
 
     return (
-      <div className="w-full max-w-4xl mx-auto">
+      <div className={cn('w-full', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL))}>
         <div className="relative group">
           <div className={cn(
             'relative w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800',

@@ -10,6 +10,7 @@ import type { AccordionBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface AccordionBlockComponentProps {
   block: AccordionBlock;
@@ -45,7 +46,7 @@ export function AccordionBlockComponent({ block }: AccordionBlockComponentProps)
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-2">
+    <div className={cn('w-full space-y-2', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.ACCORDION))}>
       {settings.items.map((item) => {
         const isOpen = openItems.has(item.id);
 

@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react';
 import type { VideoBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface VideoBlockComponentProps {
   block: VideoBlock;
@@ -102,7 +103,7 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
   }
 
   return (
-    <div className="w-full mx-auto">
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.VIDEO)}>
       {settings.caption && (
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 text-center">
           {settings.caption}

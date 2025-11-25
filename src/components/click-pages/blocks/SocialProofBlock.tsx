@@ -10,6 +10,7 @@ import type { SocialProofBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
 import { Star } from 'lucide-react';
 import Image from 'next/image';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface SocialProofBlockComponentProps {
   block: SocialProofBlock;
@@ -27,7 +28,7 @@ export function SocialProofBlockComponent({ block }: SocialProofBlockComponentPr
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
     <div style={{ color: 'inherit' }}>
-      <div className="max-w-4xl mx-auto">
+      <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.SOCIAL_PROOF)}>
         <div className={cn(LAYOUT_STYLES[settings.layout])}>
           {/* Stats */}
           {settings.type === 'stats' && settings.stats?.map((stat, index) => (

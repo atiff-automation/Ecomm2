@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react';
 import type { CountdownTimerBlock } from '@/types/click-page.types';
 import { cn } from '@/lib/utils';
+import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
 
 interface CountdownTimerBlockComponentProps {
   block: CountdownTimerBlock;
@@ -62,7 +63,7 @@ export function CountdownTimerBlockComponent({
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
     <div style={{ color: 'inherit' }}>
-      <div className="max-w-2xl mx-auto text-center">
+      <div className={cn('text-center', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.COUNTDOWN_TIMER))}>
         {settings.title && (
           <h2 className="text-2xl md:text-3xl font-bold mb-6" style={{ color: 'inherit' }}>
             {settings.title}
