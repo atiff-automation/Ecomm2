@@ -154,11 +154,11 @@ function DevicePreviewComponent({
 
   return (
     <div className="flex-1 overflow-auto bg-gray-100">
-      {/* Centered preview container with consistent padding */}
+      {/* Centered preview container with responsive padding */}
       <div
         className="flex justify-center items-start min-h-full"
         style={{
-          padding: '40px',
+          padding: mode === DEVICE_MODES.DESKTOP ? '40px 10px' : '40px',
         }}
       >
         {/* Scaled viewport */}
