@@ -29,6 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { generateSubmissionPreview } from '@/lib/utils/submission-preview';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface FormSubmission {
   id: string;
@@ -111,7 +112,7 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
 
     try {
       setDeleting(true);
-      const response = await fetch(`/api/admin/click-pages/${clickPageId}/submissions`, {
+      const response = await fetchWithCSRF(`/api/admin/click-pages/${clickPageId}/submissions`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ submissionIds: [submissionToDelete] }),

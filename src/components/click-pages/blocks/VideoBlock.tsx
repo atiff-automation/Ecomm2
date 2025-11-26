@@ -113,7 +113,8 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
       <div
         ref={containerRef}
         className={cn(
-          'w-full relative overflow-hidden rounded-lg bg-black',
+          'w-full relative overflow-hidden bg-black',
+          settings.rounded !== false && 'rounded-lg', // Default to true for backwards compatibility
           ASPECT_RATIO_MAP[settings.aspectRatio]
         )}
       >

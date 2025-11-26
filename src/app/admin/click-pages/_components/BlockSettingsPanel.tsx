@@ -612,7 +612,7 @@ function ImageSettings({
       <div className="flex items-center justify-between">
         <Label>Rounded Corners</Label>
         <Switch
-          checked={block.settings.rounded}
+          checked={block.settings.rounded ?? false}
           onCheckedChange={(v) => updateSettings({ rounded: v })}
         />
       </div>
@@ -1316,6 +1316,13 @@ function VideoSettings({
           accept="image/*"
         />
       </div>
+      <div className="flex items-center justify-between">
+        <Label>Rounded Corners</Label>
+        <Switch
+          checked={block.settings.rounded ?? true}
+          onCheckedChange={(v) => updateSettings({ rounded: v })}
+        />
+      </div>
     </div>
   );
 }
@@ -1786,6 +1793,13 @@ function ImageGallerySettings({
         <Switch
           checked={block.settings.lightbox}
           onCheckedChange={(v) => updateSettings({ lightbox: v })}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <Label>Rounded Corners</Label>
+        <Switch
+          checked={block.settings.rounded ?? true}
+          onCheckedChange={(v) => updateSettings({ rounded: v })}
         />
       </div>
 

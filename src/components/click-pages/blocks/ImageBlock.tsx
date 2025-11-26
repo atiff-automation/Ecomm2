@@ -37,6 +37,9 @@ export function ImageBlockComponent({ block, onClick }: ImageBlockComponentProps
     }
   };
 
+  // Handle undefined rounded property (for old blocks) - default to false for sharp corners
+  const isRounded = settings.rounded ?? false;
+
   const imageContent = (
     <div
       className={cn(
@@ -45,7 +48,7 @@ export function ImageBlockComponent({ block, onClick }: ImageBlockComponentProps
         ALIGNMENT_MAP[settings.alignment]
       )}
     >
-      <div className={cn('relative overflow-hidden', settings.rounded && 'rounded-lg')}>
+      <div className={cn('relative overflow-hidden', isRounded && 'rounded-lg')}>
         {settings.url ? (
           <Image
             src={settings.url}

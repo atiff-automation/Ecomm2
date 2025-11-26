@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { conversionEventSchema } from '@/lib/validation/click-page-schemas';
 import { calculateConversionRate } from '@/lib/constants/click-page-constants';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 interface RouteParams {
   params: { slug: string };
@@ -17,6 +18,10 @@ interface RouteParams {
  * Track a conversion event (purchase) for a click page
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(req);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { slug } = params;
 

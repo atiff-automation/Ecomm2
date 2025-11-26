@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { formSubmissionSchema } from '@/lib/validation/click-page-schemas';
 import { Block } from '@/types/click-page.types';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 interface RouteParams {
   params: { slug: string };
@@ -17,6 +18,10 @@ interface RouteParams {
  * Submit form data from a FORM block on a click page
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(req);
+  if (csrfCheck) return csrfCheck;
+
   try {
     const { slug } = params;
 

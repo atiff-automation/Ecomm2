@@ -43,6 +43,7 @@ import {
   migrateContainerPadding,
   calculateResponsivePadding,
 } from '@/lib/utils/click-page-padding';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 import type { Block, BlockType, ClickPageStatus } from '@/types/click-page.types';
 import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
@@ -304,7 +305,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         ? '/api/admin/click-pages'
         : `/api/admin/click-pages/${initialData?.id}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithCSRF(url, {
         method: mode === 'create' ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 interface RouteParams {
   params: { id: string };
@@ -113,6 +114,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  * Delete form submissions (accepts submissionIds in request body)
  */
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(req);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authenticate user
     const session = await getServerSession(authOptions);

@@ -37,6 +37,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { ClickPage } from '@prisma/client';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface ClickPageWithStats extends ClickPage {
   _count?: {
@@ -80,7 +81,7 @@ export function ClickPagesTable() {
 
     setIsDeleting(id);
     try {
-      const response = await fetch(`/api/admin/click-pages/${id}`, {
+      const response = await fetchWithCSRF(`/api/admin/click-pages/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete');

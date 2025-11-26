@@ -288,6 +288,7 @@ export interface VideoBlockSettings {
   controls: boolean;
   aspectRatio: '16:9' | '4:3' | '1:1' | '21:9';
   caption?: string;
+  rounded: boolean;
   fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
@@ -360,6 +361,7 @@ export interface ImageGalleryBlockSettings {
   autoplayInterval: number; // in milliseconds
   lightbox: boolean; // Click to enlarge
   aspectRatio?: '16:9' | '4:3' | '1:1' | 'original';
+  rounded: boolean;
   fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }

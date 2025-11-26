@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { clickEventSchema } from '@/lib/validation/click-page-schemas';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 interface RouteParams {
   params: { slug: string };
@@ -16,8 +17,12 @@ interface RouteParams {
  * Track a click event on a click page
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(req);
+  if (csrfCheck) return csrfCheck;
+
   try {
-    const { slug } = params;
+    const { slug} = params;
 
     // Find the click page
     const clickPage = await prisma.clickPage.findFirst({

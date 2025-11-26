@@ -14,6 +14,7 @@ import {
 } from '@/lib/validation/click-page-schemas';
 import { CLICK_PAGE_CONSTANTS } from '@/lib/constants/click-page-constants';
 import type { ClickPageStatus } from '@prisma/client';
+import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 /**
  * GET /api/admin/click-pages
@@ -131,6 +132,10 @@ export async function GET(req: NextRequest) {
  * Create a new click page
  */
 export async function POST(req: NextRequest) {
+  // CSRF Protection
+  const csrfCheck = await checkCSRF(req);
+  if (csrfCheck) return csrfCheck;
+
   try {
     // Authenticate user
     const session = await getServerSession(authOptions);

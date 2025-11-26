@@ -282,6 +282,7 @@ export const CLICK_PAGE_CONSTANTS = {
         muted: false,
         controls: true,
         aspectRatio: '16:9' as const,
+        rounded: true,
       },
       FORM: {
         fields: [],
@@ -298,6 +299,7 @@ export const CLICK_PAGE_CONSTANTS = {
         autoplay: false,
         autoplayInterval: 5000,
         lightbox: true,
+        rounded: true,
       },
       EMBED: {
         embedType: 'iframe' as const,

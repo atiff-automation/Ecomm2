@@ -64,7 +64,8 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
       <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL, settings.fullWidth)}>
         <div className="relative group">
           <div className={cn(
-            'relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800',
+            'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
+            settings.rounded !== false && 'rounded-lg', // Default to true for backwards compatibility
             settings.aspectRatio ? ASPECT_RATIO_MAP[settings.aspectRatio] : 'aspect-video'
           )}>
             <Image
@@ -112,7 +113,8 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
                 key={image.id}
                 onClick={() => setCurrentIndex(idx)}
                 className={cn(
-                  'flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all',
+                  'flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all',
+                  settings.rounded !== false && 'rounded-lg',
                   idx === currentIndex
                     ? 'border-blue-500'
                     : 'border-transparent opacity-60 hover:opacity-100'
@@ -138,7 +140,13 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
     <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_GRID, settings.fullWidth)}>
       <div className={cn('grid gap-4', COLUMN_MAP[settings.columns])}>
         {settings.images.map((image) => (
-        <div key={image.id} className="group relative overflow-hidden rounded-lg">
+        <div
+          key={image.id}
+          className={cn(
+            'group relative overflow-hidden',
+            settings.rounded !== false && 'rounded-lg'
+          )}
+        >
           <div className={cn(
             'relative w-full',
             settings.aspectRatio ? ASPECT_RATIO_MAP[settings.aspectRatio] : 'aspect-square'

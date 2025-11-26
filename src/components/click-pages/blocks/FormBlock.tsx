@@ -23,6 +23,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/click-page-blocks';
+import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
 
 interface FormBlockComponentProps {
   block: FormBlock;
@@ -47,8 +48,17 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
         throw new Error('Click page slug is required');
       }
 
+      // Custom validation for select and radio fields (Radix UI doesn't support required prop)
+      for (const field of settings.fields) {
+        if (field.required && (field.type === 'select' || field.type === 'radio')) {
+          if (!formData[field.id]) {
+            throw new Error(`${field.label} is required`);
+          }
+        }
+      }
+
       // Submit form data to API
-      const response = await fetch(`/api/public/click-pages/${clickPageSlug}/forms/submit`, {
+      const response = await fetchWithCSRF(`/api/public/click-pages/${clickPageSlug}/forms/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +172,7 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
             )}
 
             {field.type === 'select' && (
-              <Select onValueChange={(value) => handleFieldChange(field.id, value)} required={field.required}>
+              <Select onValueChange={(value) => handleFieldChange(field.id, value)}>
                 <SelectTrigger>
                   <SelectValue placeholder={field.placeholder || 'Select an option'} />
                 </SelectTrigger>
@@ -192,7 +202,6 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
             {field.type === 'radio' && (
               <RadioGroup
                 onValueChange={(value) => handleFieldChange(field.id, value)}
-                required={field.required}
               >
                 {field.options?.map((option) => (
                   <div key={option} className="flex items-center space-x-2">
