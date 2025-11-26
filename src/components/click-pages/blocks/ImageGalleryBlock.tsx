@@ -135,8 +135,9 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
 
   // Grid or Masonry layout
   return (
-    <div className={cn('grid gap-4', COLUMN_MAP[settings.columns])}>
-      {settings.images.map((image) => (
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_GRID, settings.fullWidth)}>
+      <div className={cn('grid gap-4', COLUMN_MAP[settings.columns])}>
+        {settings.images.map((image) => (
         <div key={image.id} className="group relative overflow-hidden rounded-lg">
           <div className={cn(
             'relative w-full',
@@ -167,7 +168,8 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
             </div>
           )}
         </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
