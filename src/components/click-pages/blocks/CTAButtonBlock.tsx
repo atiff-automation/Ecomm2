@@ -49,7 +49,7 @@ export function CTAButtonBlockComponent({ block, onClick }: CTAButtonBlockCompon
 
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
-    <div className={cn('w-full', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.CTA_BUTTON, settings.fullWidth))}>
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.CTA_BUTTON, settings.fullWidth)}>
       <div className={cn('flex', ALIGNMENT_MAP[settings.alignment])}>
         <button
           onClick={handleClick}

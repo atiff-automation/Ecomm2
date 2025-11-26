@@ -85,6 +85,7 @@ export function getBlockWidthClasses(widthClass: string, fullWidth?: boolean): s
     return widthClass;
   }
 
-  // All constrained widths should be centered
-  return `${widthClass} mx-auto`;
+  // All constrained widths need w-full to expand and max-w-* to limit
+  // Proper Tailwind pattern: w-full max-w-* mx-auto
+  return `w-full ${widthClass} mx-auto`;
 }
