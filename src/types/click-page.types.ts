@@ -73,6 +73,7 @@ export interface HeroBlockSettings {
   showCountdown: boolean;
   countdownEndDate?: Date;
   countdownLabel?: string;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -88,6 +89,7 @@ export interface TextBlockSettings {
   content: string; // HTML from TipTap
   textAlign: 'left' | 'center' | 'right' | 'justify';
   maxWidth?: number; // Max width in pixels
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -106,6 +108,7 @@ export interface CTAButtonBlockSettings {
   size: 'sm' | 'default' | 'lg';
   alignment: 'left' | 'center' | 'right';
   openInNewTab: boolean;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -183,6 +186,7 @@ export interface PricingTableBlockSettings {
   tiers: PricingTier[];
   layout: 'horizontal' | 'vertical';
   showComparison: boolean;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -208,6 +212,7 @@ export interface TestimonialBlockSettings {
   layout: 'single' | 'carousel' | 'grid';
   showRatings: boolean;
   showImages: boolean;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -228,6 +233,7 @@ export interface CountdownTimerBlockSettings {
   showMinutes: boolean;
   showSeconds: boolean;
   expiredMessage?: string;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -257,6 +263,7 @@ export interface SocialProofBlockSettings {
     images: string[]; // Review screenshots
   };
   layout: 'horizontal' | 'vertical' | 'grid';
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -281,6 +288,7 @@ export interface VideoBlockSettings {
   controls: boolean;
   aspectRatio: '16:9' | '4:3' | '1:1' | '21:9';
   caption?: string;
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -322,6 +330,7 @@ export interface FormBlockSettings {
     recipients: string[];
     subject: string;
   };
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -351,6 +360,7 @@ export interface ImageGalleryBlockSettings {
   autoplayInterval: number; // in milliseconds
   lightbox: boolean; // Click to enlarge
   aspectRatio?: '16:9' | '4:3' | '1:1' | 'original';
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 
@@ -397,6 +407,7 @@ export interface AccordionBlockSettings {
   showIcons: boolean;
   iconPosition: 'left' | 'right';
   animationDuration: number; // in milliseconds
+  fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
 

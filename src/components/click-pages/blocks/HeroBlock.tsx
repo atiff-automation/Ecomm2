@@ -59,7 +59,7 @@ export function HeroBlockComponent({ block, onCtaClick }: HeroBlockComponentProp
       <div
         className={cn(
           'relative w-full z-10',
-          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.HERO),
+          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.HERO, settings.fullWidth),
           ALIGNMENT_MAP[settings.textAlignment].split(' ')[0] // Apply text alignment
         )}
         style={{ color: settings.backgroundImage ? 'white' : 'inherit' }}

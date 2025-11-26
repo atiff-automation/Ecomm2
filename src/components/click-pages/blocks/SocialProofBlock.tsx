@@ -28,7 +28,7 @@ export function SocialProofBlockComponent({ block }: SocialProofBlockComponentPr
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
     <div style={{ color: 'inherit' }}>
-      <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.SOCIAL_PROOF)}>
+      <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.SOCIAL_PROOF, settings.fullWidth)}>
         <div className={cn(LAYOUT_STYLES[settings.layout])}>
           {/* Stats */}
           {settings.type === 'stats' && settings.stats?.map((stat, index) => (

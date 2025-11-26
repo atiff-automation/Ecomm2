@@ -103,7 +103,7 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
   }
 
   return (
-    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.VIDEO)}>
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.VIDEO, settings.fullWidth)}>
       {settings.caption && (
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 text-center">
           {settings.caption}

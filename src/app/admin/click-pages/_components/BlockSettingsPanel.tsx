@@ -150,6 +150,23 @@ export function BlockSettingsPanel({ block, onUpdate, brandColors = DEFAULT_BRAN
         {/* Style Tab - New styling controls */}
         <TabsContent value="style" className="flex-1 overflow-y-auto px-4 py-4 m-0">
           <div className="space-y-6">
+            {/* Width Settings */}
+            <div>
+              <h4 className="text-sm font-semibold mb-3">Width</h4>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Full Width</Label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Override default width and use full container width
+                  </p>
+                </div>
+                <Switch
+                  checked={(block.settings as { fullWidth?: boolean }).fullWidth || false}
+                  onCheckedChange={(v) => updateSettings({ fullWidth: v } as any)}
+                />
+              </div>
+            </div>
+
             {/* Typography */}
             <div>
               <h4 className="text-sm font-semibold mb-3">Typography</h4>

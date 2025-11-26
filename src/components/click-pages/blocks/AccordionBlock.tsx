@@ -46,7 +46,7 @@ export function AccordionBlockComponent({ block }: AccordionBlockComponentProps)
   }
 
   return (
-    <div className={cn('w-full space-y-2', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.ACCORDION))}>
+    <div className={cn('w-full space-y-2', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.ACCORDION, settings.fullWidth))}>
       {settings.items.map((item) => {
         const isOpen = openItems.has(item.id);
 

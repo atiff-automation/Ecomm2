@@ -71,9 +71,15 @@ export const BLOCK_WIDTH_DEFAULTS = {
 /**
  * Helper function to get width class with mx-auto centering
  * @param widthClass - The width class from BLOCK_WIDTH_CLASSES
+ * @param fullWidth - Optional override to force full width
  * @returns Combined width and centering classes
  */
-export function getBlockWidthClasses(widthClass: string): string {
+export function getBlockWidthClasses(widthClass: string, fullWidth?: boolean): string {
+  // If fullWidth override is enabled, use full width
+  if (fullWidth) {
+    return BLOCK_WIDTH_CLASSES.FULL;
+  }
+
   // Full width blocks don't need mx-auto
   if (widthClass === BLOCK_WIDTH_CLASSES.FULL) {
     return widthClass;

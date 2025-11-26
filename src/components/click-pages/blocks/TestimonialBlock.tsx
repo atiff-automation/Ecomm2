@@ -30,7 +30,7 @@ export function TestimonialBlockComponent({ block }: TestimonialBlockComponentPr
       <div
         className={cn(
           'grid gap-6',
-          getBlockWidthClasses(settings.layout === 'single' ? BLOCK_WIDTH_CLASSES.NARROW : BLOCK_WIDTH_DEFAULTS.TESTIMONIAL_GRID),
+          getBlockWidthClasses(settings.layout === 'single' ? BLOCK_WIDTH_CLASSES.NARROW : BLOCK_WIDTH_DEFAULTS.TESTIMONIAL_GRID, settings.fullWidth),
           LAYOUT_STYLES[settings.layout]
         )}
       >

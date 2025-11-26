@@ -63,7 +63,7 @@ export function CountdownTimerBlockComponent({
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
     <div style={{ color: 'inherit' }}>
-      <div className={cn('text-center', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.COUNTDOWN_TIMER))}>
+      <div className={cn('text-center', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.COUNTDOWN_TIMER, settings.fullWidth))}>
         {settings.title && (
           <h2 className="text-2xl md:text-3xl font-bold mb-6" style={{ color: 'inherit' }}>
             {settings.title}

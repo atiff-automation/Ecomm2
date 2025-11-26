@@ -97,7 +97,7 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
   }
 
   return (
-    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.FORM)}>
+    <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.FORM, settings.fullWidth)}>
       {settings.title && (
         <h3 className="text-2xl font-bold mb-2">{settings.title}</h3>
       )}

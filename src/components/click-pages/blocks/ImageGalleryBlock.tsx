@@ -61,7 +61,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
     const currentImage = settings.images[currentIndex];
 
     return (
-      <div className={cn('w-full', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL))}>
+      <div className={cn('w-full', getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL, settings.fullWidth))}>
         <div className="relative group">
           <div className={cn(
             'relative w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800',

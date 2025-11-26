@@ -25,7 +25,7 @@ export function PricingTableBlockComponent({ block, onCtaClick }: PricingTableBl
       <div
         className={cn(
           'gap-6',
-          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.PRICING_TABLE),
+          getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.PRICING_TABLE, settings.fullWidth),
           settings.layout === 'horizontal'
             ? 'flex flex-col md:flex-row justify-center'
             : 'grid grid-cols-1',
