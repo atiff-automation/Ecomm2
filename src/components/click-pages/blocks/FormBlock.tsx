@@ -88,10 +88,12 @@ export function FormBlockComponent({ block, clickPageSlug }: FormBlockComponentP
 
   if (isSubmitted) {
     return (
-      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
-        <p className="text-green-800 dark:text-green-200 font-medium">
-          {settings.successMessage}
-        </p>
+      <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.FORM, settings.fullWidth)}>
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+          <p className="text-green-800 dark:text-green-200 font-medium">
+            {settings.successMessage}
+          </p>
+        </div>
       </div>
     );
   }
