@@ -38,7 +38,11 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { containerPaddingToStyle, migrateContainerPadding } from '@/lib/utils/click-page-padding';
+import {
+  containerPaddingToStyle,
+  migrateContainerPadding,
+  calculateResponsivePadding,
+} from '@/lib/utils/click-page-padding';
 import type { Block, BlockType, ClickPageStatus } from '@/types/click-page.types';
 import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
@@ -158,6 +162,50 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
 
   // Memoize block IDs for sortable context (performance optimization)
   const blockIds = useMemo(() => blocks.map((b) => b.id), [blocks]);
+
+  // Calculate responsive container padding based on device mode
+  // Auto-scales padding for tablet and mobile following industry best practices
+  const containerPaddingStyle = useMemo(() => {
+    if (!themeSettings.defaultSpacing?.containerPadding) {
+      console.log('[ClickPageEditor] No containerPadding in theme settings, using default');
+      return containerPaddingToStyle(migrateContainerPadding(undefined));
+    }
+
+    console.log('[ClickPageEditor] Raw containerPadding from themeSettings:', themeSettings.defaultSpacing.containerPadding);
+
+    // Migrate old format to new format for backward compatibility
+    const paddingConfig = migrateContainerPadding(themeSettings.defaultSpacing.containerPadding);
+    console.log('[ClickPageEditor] After migration, paddingConfig:', paddingConfig);
+    console.log('[ClickPageEditor] Current deviceMode:', deviceMode);
+
+    // For editor: Calculate padding based on device mode (not media queries)
+    // Media queries don't work in fixed-width containers
+    if (deviceMode === 'mobile') {
+      const mobilePadding = {
+        linked: paddingConfig.linked,
+        top: calculateResponsivePadding(paddingConfig.top, 'mobile'),
+        right: calculateResponsivePadding(paddingConfig.right, 'mobile'),
+        bottom: calculateResponsivePadding(paddingConfig.bottom, 'mobile'),
+        left: calculateResponsivePadding(paddingConfig.left, 'mobile'),
+      };
+      console.log('[ClickPageEditor] MOBILE padding:', mobilePadding);
+      return containerPaddingToStyle(mobilePadding);
+    } else if (deviceMode === 'tablet') {
+      const tabletPadding = {
+        linked: paddingConfig.linked,
+        top: calculateResponsivePadding(paddingConfig.top, 'tablet'),
+        right: calculateResponsivePadding(paddingConfig.right, 'tablet'),
+        bottom: calculateResponsivePadding(paddingConfig.bottom, 'tablet'),
+        left: calculateResponsivePadding(paddingConfig.left, 'tablet'),
+      };
+      console.log('[ClickPageEditor] TABLET padding:', tabletPadding);
+      return containerPaddingToStyle(tabletPadding);
+    } else {
+      // Desktop: Use original values
+      console.log('[ClickPageEditor] DESKTOP padding (original):', paddingConfig);
+      return containerPaddingToStyle(paddingConfig);
+    }
+  }, [themeSettings, deviceMode]);
 
   // Handle title change and auto-generate slug
   const handleTitleChange = (value: string) => {
@@ -380,9 +428,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
                     className="flex flex-col"
                     style={{
                       gap: `${themeSettings.defaultSpacing?.blockGap ?? 32}px`,
-                      ...containerPaddingToStyle(
-                        migrateContainerPadding(themeSettings.defaultSpacing?.containerPadding)
-                      ),
+                      ...containerPaddingStyle,
                     }}
                   >
                     {[...blocks]

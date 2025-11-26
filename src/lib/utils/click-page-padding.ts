@@ -5,6 +5,7 @@
  */
 
 import type { ContainerPadding } from '@/types/click-page-styles.types';
+import { RESPONSIVE_BREAKPOINTS } from '@/lib/constants/click-page-style-constants';
 
 /**
  * Convert ContainerPadding object to CSS padding string
@@ -146,4 +147,95 @@ export function togglePaddingLinked(padding: ContainerPadding): ContainerPadding
     ...padding,
     linked: false,
   };
+}
+
+/**
+ * Responsive padding calculation constants
+ * Based on industry standards (Elementor, Unbounce, ClickFunnels)
+ */
+const RESPONSIVE_PADDING_CONFIG = {
+  // Tablet scaling: 40% of desktop value
+  tablet: {
+    scaleFactor: 0.4,
+    minPadding: 24, // Minimum padding for tablet (px)
+  },
+  // Mobile scaling: Use safe minimum values
+  mobile: {
+    scaleFactor: 0.15, // 15% of desktop (rarely used, minimum takes precedence)
+    minPadding: 16, // Minimum padding for mobile (px)
+    maxPadding: 24, // Maximum padding for mobile sides (px)
+  },
+} as const;
+
+/**
+ * Calculate responsive padding value for a specific breakpoint
+ * Follows industry best practice: smart auto-scaling with safety thresholds
+ *
+ * @param desktopValue - Original desktop padding value in pixels
+ * @param breakpoint - Target device breakpoint
+ * @returns Calculated responsive padding value
+ */
+export function calculateResponsivePadding(
+  desktopValue: number,
+  breakpoint: 'tablet' | 'mobile'
+): number {
+  const config = RESPONSIVE_PADDING_CONFIG[breakpoint];
+  const scaledValue = Math.round(desktopValue * config.scaleFactor);
+
+  // Ensure value is within safe range
+  const safeValue = Math.max(scaledValue, config.minPadding);
+
+  // For mobile, also enforce maximum to prevent excessive padding
+  if (breakpoint === 'mobile') {
+    return Math.min(safeValue, config.maxPadding);
+  }
+
+  return safeValue;
+}
+
+/**
+ * Generate responsive CSS for container padding
+ * Creates media queries for tablet and mobile with auto-scaled values
+ *
+ * @param padding - ContainerPadding configuration (desktop values)
+ * @param containerClass - CSS class selector for the container
+ * @returns CSS string with media queries for responsive padding
+ */
+export function generateResponsiveContainerPaddingCSS(
+  padding: ContainerPadding,
+  containerClass: string = '.click-page-blocks'
+): string {
+  // Calculate tablet padding values
+  const tabletTop = calculateResponsivePadding(padding.top, 'tablet');
+  const tabletRight = calculateResponsivePadding(padding.right, 'tablet');
+  const tabletBottom = calculateResponsivePadding(padding.bottom, 'tablet');
+  const tabletLeft = calculateResponsivePadding(padding.left, 'tablet');
+
+  // Calculate mobile padding values
+  const mobileTop = calculateResponsivePadding(padding.top, 'mobile');
+  const mobileRight = calculateResponsivePadding(padding.right, 'mobile');
+  const mobileBottom = calculateResponsivePadding(padding.bottom, 'mobile');
+  const mobileLeft = calculateResponsivePadding(padding.left, 'mobile');
+
+  return `
+    /* Tablet Responsive Padding (${RESPONSIVE_BREAKPOINTS.TABLET.minWidth}px - ${RESPONSIVE_BREAKPOINTS.TABLET.maxWidth}px) */
+    @media (max-width: ${RESPONSIVE_BREAKPOINTS.TABLET.maxWidth}px) {
+      ${containerClass} {
+        padding-top: ${tabletTop}px !important;
+        padding-right: ${tabletRight}px !important;
+        padding-bottom: ${tabletBottom}px !important;
+        padding-left: ${tabletLeft}px !important;
+      }
+    }
+
+    /* Mobile Responsive Padding (< ${RESPONSIVE_BREAKPOINTS.MOBILE.maxWidth + 1}px) */
+    ${RESPONSIVE_BREAKPOINTS.MOBILE.mediaQuery} {
+      ${containerClass} {
+        padding-top: ${mobileTop}px !important;
+        padding-right: ${mobileRight}px !important;
+        padding-bottom: ${mobileBottom}px !important;
+        padding-left: ${mobileLeft}px !important;
+      }
+    }
+  `.trim();
 }

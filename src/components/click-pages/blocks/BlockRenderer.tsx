@@ -14,7 +14,11 @@ import {
   generateResponsiveCSS,
   ANIMATION_KEYFRAMES,
 } from '@/lib/utils/click-page-style-transformer';
-import { containerPaddingToStyle, migrateContainerPadding } from '@/lib/utils/click-page-padding';
+import {
+  containerPaddingToStyle,
+  migrateContainerPadding,
+  generateResponsiveContainerPaddingCSS
+} from '@/lib/utils/click-page-padding';
 import { useGoogleFonts, getThemeFonts } from '@/hooks/useGoogleFonts';
 import { HeroBlockComponent } from './HeroBlock';
 import { TextBlockComponent } from './TextBlock';
@@ -66,6 +70,18 @@ export function BlockRenderer({ blocks, themeSettings, onBlockClick, clickPageSl
       .join('\n');
   }, [sortedBlocks]);
 
+  // Generate responsive container padding CSS
+  // Auto-scales padding for tablet and mobile following industry best practices
+  const responsiveContainerPaddingCSS = useMemo(() => {
+    if (!themeSettings?.defaultSpacing?.containerPadding) return '';
+
+    // Migrate old format to new format for backward compatibility
+    const paddingConfig = migrateContainerPadding(themeSettings.defaultSpacing.containerPadding);
+
+    // Generate responsive media queries with auto-scaled padding values
+    return generateResponsiveContainerPaddingCSS(paddingConfig);
+  }, [themeSettings]);
+
   // Calculate container styles from theme
   const containerStyle = useMemo(() => {
     if (!themeSettings?.defaultSpacing) return {};
@@ -105,6 +121,11 @@ export function BlockRenderer({ blocks, themeSettings, onBlockClick, clickPageSl
       {/* Responsive CSS for blocks */}
       {responsiveCSS && (
         <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
+      )}
+
+      {/* Responsive container padding CSS (auto-scales for tablet/mobile) */}
+      {responsiveContainerPaddingCSS && (
+        <style dangerouslySetInnerHTML={{ __html: responsiveContainerPaddingCSS }} />
       )}
 
       <div
