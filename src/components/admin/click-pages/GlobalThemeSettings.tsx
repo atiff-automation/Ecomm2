@@ -21,7 +21,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Palette, Type, Settings } from 'lucide-react';
+import { ChevronDown, ChevronUp, Palette, Type, Settings, Link2, Unlink } from 'lucide-react';
 import { ColorPicker } from './ColorPicker';
 import {
   GOOGLE_FONTS,
@@ -29,7 +29,8 @@ import {
   DEFAULT_GLOBAL_FONTS,
   COLOR_THEME_PRESETS,
 } from '@/lib/constants/click-page-style-constants';
-import type { ThemeSettings, BrandColors, GlobalFonts } from '@/types/click-page-styles.types';
+import type { ThemeSettings, BrandColors, GlobalFonts, ContainerPadding } from '@/types/click-page-styles.types';
+import { migrateContainerPadding, togglePaddingLinked, updateContainerPadding } from '@/lib/utils/click-page-padding';
 
 interface GlobalThemeSettingsProps {
   value: ThemeSettings;
@@ -45,7 +46,13 @@ const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   fonts: DEFAULT_GLOBAL_FONTS,
   defaultSpacing: {
     blockGap: 32,
-    containerPadding: 24,
+    containerPadding: {
+      linked: true,
+      top: 24,
+      right: 24,
+      bottom: 24,
+      left: 24,
+    },
   },
 };
 
@@ -82,10 +89,23 @@ export function GlobalThemeSettings({
    * Update spacing
    */
   const updateSpacing = (updates: Partial<NonNullable<ThemeSettings['defaultSpacing']>>) => {
-    const currentSpacing = value.defaultSpacing || { blockGap: 32, containerPadding: 24 };
+    const currentSpacing = value.defaultSpacing || {
+      blockGap: 32,
+      containerPadding: { linked: true, top: 24, right: 24, bottom: 24, left: 24 },
+    };
+
+    // Ensure containerPadding is migrated to new format
+    const migratedPadding = typeof currentSpacing.containerPadding === 'number'
+      ? migrateContainerPadding(currentSpacing.containerPadding)
+      : currentSpacing.containerPadding;
+
     onChange({
       ...value,
-      defaultSpacing: { ...currentSpacing, ...updates },
+      defaultSpacing: {
+        ...currentSpacing,
+        containerPadding: migratedPadding,
+        ...updates,
+      },
     });
   };
 
@@ -322,18 +342,123 @@ export function GlobalThemeSettings({
 
           {/* Container Padding */}
           <div>
-            <Label className="text-xs text-gray-500">Container Padding (px)</Label>
-            <Input
-              type="number"
-              value={value.defaultSpacing?.containerPadding ?? 24}
-              onChange={(e) => updateSpacing({ containerPadding: Number(e.target.value) })}
-              min={0}
-              max={100}
-              step={4}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Default horizontal padding for the page container
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-gray-500">Container Padding (px)</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2"
+                onClick={() => {
+                  const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                  updateSpacing({ containerPadding: togglePaddingLinked(currentPadding) });
+                }}
+              >
+                {value.defaultSpacing?.containerPadding && typeof value.defaultSpacing.containerPadding !== 'number' && value.defaultSpacing.containerPadding.linked ? (
+                  <>
+                    <Link2 className="w-3 h-3 mr-1" />
+                    <span className="text-xs">Linked</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlink className="w-3 h-3 mr-1" />
+                    <span className="text-xs">Unlinked</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {value.defaultSpacing?.containerPadding && typeof value.defaultSpacing.containerPadding !== 'number' && value.defaultSpacing.containerPadding.linked ? (
+              // Linked mode - single input
+              <Input
+                type="number"
+                value={value.defaultSpacing.containerPadding.top}
+                onChange={(e) => {
+                  const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                  updateSpacing({
+                    containerPadding: updateContainerPadding(currentPadding, 'all', Number(e.target.value))
+                  });
+                }}
+                min={0}
+                max={200}
+                step={4}
+                className="mt-1"
+              />
+            ) : (
+              // Unlinked mode - four inputs
+              <div className="grid grid-cols-4 gap-2 mt-1">
+                <div>
+                  <Label className="text-xs text-gray-400">Top</Label>
+                  <Input
+                    type="number"
+                    value={migrateContainerPadding(value.defaultSpacing?.containerPadding).top}
+                    onChange={(e) => {
+                      const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                      updateSpacing({
+                        containerPadding: updateContainerPadding(currentPadding, 'top', Number(e.target.value))
+                      });
+                    }}
+                    min={0}
+                    max={200}
+                    step={4}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400">Right</Label>
+                  <Input
+                    type="number"
+                    value={migrateContainerPadding(value.defaultSpacing?.containerPadding).right}
+                    onChange={(e) => {
+                      const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                      updateSpacing({
+                        containerPadding: updateContainerPadding(currentPadding, 'right', Number(e.target.value))
+                      });
+                    }}
+                    min={0}
+                    max={200}
+                    step={4}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400">Bottom</Label>
+                  <Input
+                    type="number"
+                    value={migrateContainerPadding(value.defaultSpacing?.containerPadding).bottom}
+                    onChange={(e) => {
+                      const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                      updateSpacing({
+                        containerPadding: updateContainerPadding(currentPadding, 'bottom', Number(e.target.value))
+                      });
+                    }}
+                    min={0}
+                    max={200}
+                    step={4}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-400">Left</Label>
+                  <Input
+                    type="number"
+                    value={migrateContainerPadding(value.defaultSpacing?.containerPadding).left}
+                    onChange={(e) => {
+                      const currentPadding = migrateContainerPadding(value.defaultSpacing?.containerPadding);
+                      updateSpacing({
+                        containerPadding: updateContainerPadding(currentPadding, 'left', Number(e.target.value))
+                      });
+                    }}
+                    min={0}
+                    max={200}
+                    step={4}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-400 mt-2">
+              Padding around the page container on all sides
             </p>
           </div>
         </CollapsibleContent>

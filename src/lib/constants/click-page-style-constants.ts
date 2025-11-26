@@ -252,7 +252,13 @@ export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   fonts: DEFAULT_GLOBAL_FONTS,
   defaultSpacing: {
     blockGap: 32, // 32px gap between blocks
-    containerPadding: 24, // 24px container padding
+    containerPadding: {
+      linked: true,
+      top: 24,
+      right: 24,
+      bottom: 24,
+      left: 24,
+    },
   },
 };
 

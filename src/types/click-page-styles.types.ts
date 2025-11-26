@@ -363,12 +363,24 @@ export interface GlobalFonts {
  * Global Theme Settings
  * Stored at ClickPage level in themeSettings JSON field
  */
+/**
+ * Container Padding Configuration
+ * Supports linked (uniform) or unlinked (per-side) padding
+ */
+export interface ContainerPadding {
+  linked: boolean;
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface ThemeSettings {
   colors: BrandColors;
   fonts: GlobalFonts;
   defaultSpacing?: {
     blockGap: number; // Default gap between blocks
-    containerPadding: number; // Default container padding
+    containerPadding: ContainerPadding; // Per-side container padding with link toggle
   };
 }
 

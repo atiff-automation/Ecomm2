@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EDITOR_COLORS, EDITOR_ANIMATIONS } from '@/lib/constants/editor-constants';
 import type { EditableBlockWrapperProps } from '@/types/editor.types';
-import { BlockRenderer } from '@/components/click-pages/blocks/BlockRenderer';
+import { BlockItem } from '@/components/click-pages/blocks';
 
 /**
  * EditableBlockWrapper Component
@@ -143,7 +143,7 @@ function EditableBlockWrapperComponent({
         </div>
       </div>
 
-      {/* Block Content - Actual BlockRenderer */}
+      {/* Block Content - Uses BlockItem directly (no container padding) */}
       <div
         className={cn(
           'editable-block-wrapper-content',
@@ -151,8 +151,8 @@ function EditableBlockWrapperComponent({
           isSelected && 'bg-blue-50/30'
         )}
       >
-        <BlockRenderer
-          blocks={[block]}
+        <BlockItem
+          block={block}
           themeSettings={themeSettings}
           onBlockClick={onBlockClick}
         />

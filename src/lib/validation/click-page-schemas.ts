@@ -677,12 +677,24 @@ export const globalFontsSchema = z.object({
 /**
  * Theme Settings Schema - Page-level styling configuration
  */
+/**
+ * Container Padding Schema
+ * Validates per-side padding with link toggle
+ */
+export const containerPaddingSchema = z.object({
+  linked: z.boolean(),
+  top: z.number().min(0).max(200),
+  right: z.number().min(0).max(200),
+  bottom: z.number().min(0).max(200),
+  left: z.number().min(0).max(200),
+});
+
 export const themeSettingsSchema = z.object({
   colors: brandColorsSchema,
   fonts: globalFontsSchema,
   defaultSpacing: z.object({
     blockGap: z.number().min(0).max(200),
-    containerPadding: z.number().min(0).max(200),
+    containerPadding: containerPaddingSchema,
   }).optional(),
 }).optional();
 

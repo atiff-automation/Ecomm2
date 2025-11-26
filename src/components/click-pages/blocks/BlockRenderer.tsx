@@ -14,6 +14,7 @@ import {
   generateResponsiveCSS,
   ANIMATION_KEYFRAMES,
 } from '@/lib/utils/click-page-style-transformer';
+import { containerPaddingToStyle, migrateContainerPadding } from '@/lib/utils/click-page-padding';
 import { useGoogleFonts, getThemeFonts } from '@/hooks/useGoogleFonts';
 import { HeroBlockComponent } from './HeroBlock';
 import { TextBlockComponent } from './TextBlock';
@@ -68,9 +69,14 @@ export function BlockRenderer({ blocks, themeSettings, onBlockClick, clickPageSl
   // Calculate container styles from theme
   const containerStyle = useMemo(() => {
     if (!themeSettings?.defaultSpacing) return {};
+
+    // Migrate old containerPadding format to new format for backward compatibility
+    const paddingConfig = migrateContainerPadding(themeSettings.defaultSpacing.containerPadding);
+    const paddingStyle = containerPaddingToStyle(paddingConfig);
+
     return {
       gap: `${themeSettings.defaultSpacing.blockGap}px`,
-      padding: `${themeSettings.defaultSpacing.containerPadding}px`,
+      ...paddingStyle,
     };
   }, [themeSettings]);
 
@@ -128,7 +134,7 @@ type BlockWithStyles = Block & {
   };
 };
 
-interface BlockItemProps {
+export interface BlockItemProps {
   block: Block;
   themeSettings?: ThemeSettings;
   onBlockClick?: (blockId: string, blockType: string, targetUrl?: string) => void;
@@ -137,8 +143,9 @@ interface BlockItemProps {
 
 /**
  * Renders a single block with applied styles
+ * Exported for use in editor (EditableBlockWrapper)
  */
-function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug }: BlockItemProps) {
+export function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug }: BlockItemProps) {
   const handleClick = (targetUrl?: string) => {
     onBlockClick?.(block.id, block.type, targetUrl);
   };

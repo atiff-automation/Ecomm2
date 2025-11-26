@@ -3,7 +3,7 @@
  * Export all block components for public page rendering
  */
 
-export { BlockRenderer } from './BlockRenderer';
+export { BlockRenderer, BlockItem, type BlockItemProps } from './BlockRenderer';
 export { HeroBlockComponent } from './HeroBlock';
 export { TextBlockComponent } from './TextBlock';
 export { CTAButtonBlockComponent } from './CTAButtonBlock';

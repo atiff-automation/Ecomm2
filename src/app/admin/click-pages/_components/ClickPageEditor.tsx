@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { containerPaddingToStyle, migrateContainerPadding } from '@/lib/utils/click-page-padding';
 import type { Block, BlockType, ClickPageStatus } from '@/types/click-page.types';
 import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
@@ -93,7 +94,13 @@ const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   },
   defaultSpacing: {
     blockGap: 32,
-    containerPadding: 24,
+    containerPadding: {
+      linked: true,
+      top: 24,
+      right: 24,
+      bottom: 24,
+      left: 24,
+    },
   },
 };
 
@@ -369,7 +376,15 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
                     <p className="text-sm">Add blocks from the left sidebar</p>
                   </div>
                 ) : (
-                  <div className="space-y-8 p-4">
+                  <div
+                    className="flex flex-col"
+                    style={{
+                      gap: `${themeSettings.defaultSpacing?.blockGap ?? 32}px`,
+                      ...containerPaddingToStyle(
+                        migrateContainerPadding(themeSettings.defaultSpacing?.containerPadding)
+                      ),
+                    }}
+                  >
                     {[...blocks]
                       .sort((a, b) => a.sortOrder - b.sortOrder)
                       .map((block) => (
