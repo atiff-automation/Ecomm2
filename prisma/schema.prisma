@@ -55,9 +55,6 @@ model User {
   articlesUpdated           Article[]                @relation("ArticleUpdatedBy")
   articleCategoriesCreated  ArticleCategory[]        @relation("ArticleCategoryCreatedBy")
   articleCategoriesUpdated  ArticleCategory[]        @relation("ArticleCategoryUpdatedBy")
-  landingPages              LandingPage[]            @relation("LandingPageAuthor")
-  landingPagesCreated       LandingPage[]            @relation("LandingPageCreatedBy")
-  landingPagesUpdated       LandingPage[]            @relation("LandingPageUpdatedBy")
   clickPagesCreated         ClickPage[]              @relation("ClickPageCreatedBy")
   clickPagesUpdated         ClickPage[]              @relation("ClickPageUpdatedBy")
 
@@ -305,7 +302,6 @@ model Order {
   user                     User?                  @relation(fields: [userId], references: [id])
   pendingMembership        PendingMembership?
   shipment                 Shipment?
-  landingPageConversion    LandingPageConversion?
 
   @@index([userId])
   @@index([status])
@@ -1457,188 +1453,11 @@ model Article {
 // Landing Page CMS Models
 // ============================================================================
 
-// Landing Page Status Enum
-enum LandingPageStatus {
-  DRAFT
-  PUBLISHED
-  SCHEDULED
-}
-
 // Click Page Status Enum
 enum ClickPageStatus {
   DRAFT
   PUBLISHED
   SCHEDULED
-}
-
-// Click Type Enum for Landing Page Tracking
-enum ClickType {
-  PRODUCT // Product card click
-  CTA // Call-to-action button
-  EXTERNAL_LINK // External link click
-}
-
-// Landing Page Category Model - Dynamic categories managed by admin
-// Landing Page Tag Model - Free-form tags for taxonomy
-model LandingPageTag {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  createdAt DateTime @default(now())
-
-  // Relations
-  landingPages LandingPageToTag[]
-
-  @@index([slug])
-  @@map("landing_page_tags")
-}
-
-// Landing Page to Tag Junction Table (Many-to-Many)
-model LandingPageToTag {
-  id            String   @id @default(cuid())
-  landingPageId String
-  tagId         String
-  createdAt     DateTime @default(now())
-
-  landingPage LandingPage    @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  tag         LandingPageTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@unique([landingPageId, tagId])
-  @@index([landingPageId])
-  @@index([tagId])
-  @@map("landing_page_to_tags")
-}
-
-// Landing Page Model
-model LandingPage {
-  id String @id @default(cuid())
-
-  // Basic Content
-  title            String  @db.VarChar(200)
-  slug             String  @unique @db.VarChar(200)
-  excerpt          String? @db.VarChar(500)
-  content          String  @db.Text // Rich text HTML from TipTap
-  featuredImage    String // Required featured image URL
-  featuredImageAlt String  @db.VarChar(200)
-
-  // Organization
-  tags      LandingPageToTag[]
-  sortOrder Int                @default(0)
-
-  // SEO Fields
-  metaTitle       String?  @db.VarChar(200)
-  metaDescription String?  @db.VarChar(300)
-  metaKeywords    String[] // Array of keywords
-
-  // Advanced SEO (Phase 2)
-  ogImageUrl      String? // Open Graph image for social sharing
-  twitterImageUrl String? // Twitter Card image (optional, falls back to ogImageUrl)
-  canonicalUrl    String? // Canonical URL for SEO
-  noIndex         Boolean @default(false) // Prevent search engine indexing
-
-  // Analytics & Tracking (Phase 2)
-  fbPixelId      String? // Facebook Pixel ID
-  gaTrackingId   String? // Google Analytics Tracking ID (e.g., UA-XXXXX-Y or G-XXXXXXX)
-  gtmContainerId String? // Google Tag Manager Container ID (e.g., GTM-XXXXXX)
-  customScripts  Json? // Custom scripts array: {head: string[], body: string[]}
-
-  // Author
-  authorId String
-  author   User   @relation("LandingPageAuthor", fields: [authorId], references: [id])
-
-  // Publishing
-  status      LandingPageStatus @default(DRAFT)
-  publishedAt DateTime?
-
-  // Analytics
-  viewCount      Int @default(0)
-  readingTimeMin Int @default(0) // Auto-calculated
-
-  // Conversion Tracking (Phase 2)
-  clickCount      Int     @default(0) // Total clicks on CTAs/products
-  conversionCount Int     @default(0) // Total purchases attributed
-  conversionValue Decimal @default(0) @db.Decimal(10, 2) // Total revenue
-
-  // Product Showcase (Phase 2)
-  featuredProductIds    String[] @default([]) // Array of product IDs to showcase
-  productShowcaseLayout String   @default("GRID") // GRID, CAROUSEL, FEATURED
-
-  // Campaign Scheduling (Phase 2)
-  scheduledPublishAt   DateTime? // When to auto-publish
-  scheduledUnpublishAt DateTime? // When to auto-unpublish
-  campaignName         String? // Campaign identifier
-  isScheduled          Boolean   @default(false) // Quick flag for scheduled pages
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
-
-  // Audit Relations
-  createdByUser User? @relation("LandingPageCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User? @relation("LandingPageUpdatedBy", fields: [updatedBy], references: [id])
-
-  // Phase 2 Relations
-  clicks      LandingPageClick[]
-  conversions LandingPageConversion[]
-
-  @@index([slug])
-  @@index([status])
-  @@index([publishedAt])
-  @@index([authorId])
-  @@index([sortOrder])
-  @@index([viewCount])
-  @@index([createdAt])
-  @@index([isScheduled])
-  @@index([scheduledPublishAt])
-  @@index([scheduledUnpublishAt])
-  @@map("landing_pages")
-}
-
-// Landing Page Click Event (Phase 2)
-model LandingPageClick {
-  id            String    @id @default(cuid())
-  landingPageId String
-  clickType     ClickType // PRODUCT, CTA, EXTERNAL_LINK
-  targetUrl     String? // What was clicked
-  targetId      String? // Product ID if applicable
-  sessionId     String? // Session tracking
-  userId        String? // If logged in
-  utmSource     String? // UTM tracking
-  utmMedium     String?
-  utmCampaign   String?
-  createdAt     DateTime  @default(now())
-
-  landingPage LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-
-  @@index([landingPageId])
-  @@index([clickType])
-  @@index([targetId])
-  @@index([createdAt])
-  @@map("landing_page_clicks")
-}
-
-// Landing Page Conversion Event (Phase 2)
-model LandingPageConversion {
-  id            String   @id @default(cuid())
-  landingPageId String
-  orderId       String   @unique
-  orderValue    Decimal  @db.Decimal(10, 2)
-  sessionId     String?
-  userId        String?
-  utmSource     String?
-  utmMedium     String?
-  utmCampaign   String?
-  createdAt     DateTime @default(now())
-
-  landingPage LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([landingPageId])
-  @@index([orderId])
-  @@index([createdAt])
-  @@map("landing_page_conversions")
 }
 
 // ============================================================================
