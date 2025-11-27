@@ -457,6 +457,9 @@ export const DEFAULT_STYLE_SETTINGS = {
     textTransform: 'none' as const,
     color: '#1F2937',
   },
+  background: {
+    type: 'none' as const,
+  },
   spacing: {
     padding: {
       top: 16,

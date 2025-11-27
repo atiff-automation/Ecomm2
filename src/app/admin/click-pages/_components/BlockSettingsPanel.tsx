@@ -24,6 +24,7 @@ import { X, Plus } from 'lucide-react';
 import { CLICK_PAGE_CONSTANTS } from '@/lib/constants/click-page-constants';
 import { DEFAULT_STYLE_SETTINGS, DEFAULT_BRAND_COLORS } from '@/lib/constants/click-page-style-constants';
 import { TypographyControls } from '@/components/admin/click-pages/TypographyControls';
+import { BackgroundControls } from '@/components/admin/click-pages/BackgroundControls';
 import { SpacingControls } from '@/components/admin/click-pages/SpacingControls';
 import { BorderControls } from '@/components/admin/click-pages/BorderControls';
 import { EffectControls } from '@/components/admin/click-pages/EffectControls';
@@ -173,6 +174,16 @@ export function BlockSettingsPanel({ block, onUpdate, brandColors = DEFAULT_BRAN
               <TypographyControls
                 value={currentStyles.typography || DEFAULT_STYLE_SETTINGS.typography}
                 onChange={(typography) => updateStyles({ typography })}
+                brandColors={brandColors}
+              />
+            </div>
+
+            {/* Background */}
+            <div>
+              <h4 className="text-sm font-semibold mb-3">Background</h4>
+              <BackgroundControls
+                value={currentStyles.background || DEFAULT_STYLE_SETTINGS.background}
+                onChange={(background) => updateStyles({ background })}
                 brandColors={brandColors}
               />
             </div>

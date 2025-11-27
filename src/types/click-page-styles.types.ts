@@ -113,6 +113,7 @@ export interface ColorValue {
 export interface BackgroundSettings {
   type: BackgroundType;
   color?: string; // For solid background
+  opacity?: number; // 0-1, applies to solid color backgrounds
   gradient?: {
     type: 'linear' | 'radial';
     direction: GradientDirection; // For linear

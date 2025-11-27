@@ -9,6 +9,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkCSRF } from '@/lib/middleware/with-csrf';
+import {
+  buildFieldLabelMap,
+  enhanceSubmissionData,
+  type EnhancedSubmissionField,
+} from '@/lib/utils/submission-enhancer';
+import type { Block } from '@/types/click-page.types';
 
 interface RouteParams {
   params: { id: string };
@@ -28,10 +34,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const { id } = params;
 
-    // Check if click page exists
+    // Check if click page exists and fetch blocks for field label mapping
     const clickPage = await prisma.clickPage.findUnique({
       where: { id },
-      select: { id: true, title: true },
+      select: { id: true, title: true, blocks: true },
     });
 
     if (!clickPage) {
@@ -40,6 +46,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    // Build field label mapping from blocks
+    const blocks = clickPage.blocks as Block[];
+    const fieldLabelMap = buildFieldLabelMap(blocks);
 
     // Parse query parameters
     const searchParams = req.nextUrl.searchParams;
@@ -85,8 +95,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
+    // Enhance submissions with field labels
+    const enhancedSubmissions = submissions.map((submission) => ({
+      ...submission,
+      enhancedData: enhanceSubmissionData(
+        submission.data as Record<string, unknown>,
+        fieldLabelMap
+      ),
+    }));
+
     return NextResponse.json({
-      submissions,
+      submissions: enhancedSubmissions,
       pagination: {
         page,
         pageSize,

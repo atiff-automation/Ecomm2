@@ -6,6 +6,7 @@
 import type {
   StyleSettings,
   TypographySettings,
+  BackgroundSettings,
   SpacingSettings,
   BorderSettings,
   EffectSettings,
@@ -33,6 +34,91 @@ export function transformTypography(typography: TypographySettings): CSSProperti
     textTransform: typography.textTransform,
     color: typography.color,
   };
+}
+
+/**
+ * Transform background settings to CSS
+ */
+export function transformBackground(background: BackgroundSettings): CSSProperties {
+  const css: CSSProperties = {};
+
+  switch (background.type) {
+    case 'none':
+      break;
+
+    case 'solid':
+      if (background.color) {
+        // Apply opacity if specified
+        if (background.opacity !== undefined && background.opacity < 1) {
+          // Convert hex to RGBA if needed
+          const color = background.color;
+          if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            css.backgroundColor = `rgba(${r}, ${g}, ${b}, ${background.opacity})`;
+          } else {
+            // If already in rgb/rgba format, use as-is or modify
+            css.backgroundColor = color;
+          }
+        } else {
+          css.backgroundColor = background.color;
+        }
+      }
+      break;
+
+    case 'gradient':
+      if (background.gradient) {
+        const { type, direction, colors } = background.gradient;
+        const colorStops = colors
+          .map(({ color, position }) => `${color} ${position}%`)
+          .join(', ');
+
+        if (type === 'linear') {
+          css.backgroundImage = `linear-gradient(${direction}, ${colorStops})`;
+        } else {
+          css.backgroundImage = `radial-gradient(circle, ${colorStops})`;
+        }
+      }
+      break;
+
+    case 'image':
+      if (background.image) {
+        const { url, position, size, repeat, attachment, overlay } = background.image;
+
+        // Background image
+        css.backgroundImage = `url(${url})`;
+        css.backgroundPosition = position || 'center';
+        css.backgroundSize = size || 'cover';
+        css.backgroundRepeat = repeat || 'no-repeat';
+
+        if (attachment) {
+          css.backgroundAttachment = attachment;
+        }
+
+        // Overlay using pseudo-element approach
+        // Note: This requires the block wrapper to support ::before or ::after
+        // For now, we'll use a simpler approach with linear-gradient overlay
+        if (overlay) {
+          const overlayColor = overlay.color;
+          const overlayOpacity = overlay.opacity;
+          // Convert hex to rgba if needed
+          const rgbaOverlay = overlayColor.startsWith('#')
+            ? `${overlayColor}${Math.round(overlayOpacity * 255).toString(16).padStart(2, '0')}`
+            : overlayColor;
+
+          css.backgroundImage = `linear-gradient(${rgbaOverlay}, ${rgbaOverlay}), url(${url})`;
+        }
+      }
+      break;
+
+    case 'video':
+      // Video backgrounds are handled separately in the component layer
+      // as they require <video> element, not CSS background
+      break;
+  }
+
+  return css;
 }
 
 /**
@@ -206,6 +292,11 @@ export function transformStyleSettings(styles: StyleSettings | undefined): {
   // Typography
   if (styles.typography) {
     css = { ...css, ...transformTypography(styles.typography) };
+  }
+
+  // Background
+  if (styles.background) {
+    css = { ...css, ...transformBackground(styles.background) };
   }
 
   // Spacing

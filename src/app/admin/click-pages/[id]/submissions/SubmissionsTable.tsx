@@ -30,11 +30,13 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { generateSubmissionPreview } from '@/lib/utils/submission-preview';
 import { fetchWithCSRF } from '@/lib/utils/fetch-with-csrf';
+import { formatFieldValue, type EnhancedSubmissionField } from '@/lib/utils/submission-enhancer';
 
 interface FormSubmission {
   id: string;
   blockId: string;
   data: Record<string, unknown>;
+  enhancedData: EnhancedSubmissionField[];
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: string;
@@ -138,15 +140,6 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
     const newParams = new URLSearchParams(params?.toString() || '');
     newParams.set('page', newPage.toString());
     router.push(`?${newParams.toString()}`);
-  }
-
-  // Format submission data for display
-  function formatValue(value: unknown): string {
-    if (value === null || value === undefined) return 'N/A';
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    if (Array.isArray(value)) return value.join(', ');
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
   }
 
   if (loading) {
@@ -258,7 +251,7 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
           <DialogHeader>
             <DialogTitle>Submission Details</DialogTitle>
             <DialogDescription>
-              Submitted on {selectedSubmission && format(new Date(selectedSubmission.createdAt), 'MMMM dd, yyyy at HH:mm:ss')}
+              Submitted on {selectedSubmission && format(new Date(selectedSubmission.createdAt), 'MMM dd, yyyy')} at {selectedSubmission && format(new Date(selectedSubmission.createdAt), 'h:mm a')}
             </DialogDescription>
           </DialogHeader>
 
@@ -269,12 +262,12 @@ export function SubmissionsTable({ clickPageId, searchParams }: SubmissionsTable
               <div>
                 <h4 className="font-medium mb-3">Form Data:</h4>
                 <div className="space-y-3">
-                  {Object.entries(selectedSubmission.data).map(([key, value]) => (
-                    <div key={key} className="border-l-2 border-blue-500 pl-4 py-2">
+                  {selectedSubmission.enhancedData.map((field) => (
+                    <div key={field.fieldId} className="border-l-2 border-blue-500 pl-4 py-2">
                       <div className="text-sm font-medium text-gray-700 mb-1">
-                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
+                        {field.label}
                       </div>
-                      <div className="text-sm text-gray-900">{formatValue(value)}</div>
+                      <div className="text-sm text-gray-900">{formatFieldValue(field.value)}</div>
                     </div>
                   ))}
                 </div>
