@@ -12,7 +12,6 @@ import {
   BarChart3,
   HelpCircle,
   FileText,
-  Rocket,
   MousePointerClick,
   type LucideIcon,
 } from 'lucide-react';
@@ -128,15 +127,6 @@ export const adminNavigation: NavigationItem[] = [
     icon: FileText,
     roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
     description: 'Manage Blog Articles & Content',
-  },
-
-  // 🚀 Landing Pages Section
-  {
-    label: 'Landing Pages',
-    href: '/admin/landing-pages',
-    icon: Rocket,
-    roles: [UserRole.SUPERADMIN, UserRole.ADMIN],
-    description: 'Manage Marketing Landing Pages',
   },
 
   // 🖱️ Click Pages Section

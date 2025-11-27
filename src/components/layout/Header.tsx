@@ -101,7 +101,6 @@ export function Header() {
   // Main navigation items - spread across header for balance
   const mainNavItems: NavigationItem[] = [
     { href: '/products', label: 'Products' },
-    { href: '/landing', label: 'Landing Pages' },
     { href: '/article', label: 'Articles' },
     { href: '/faq', label: 'FAQ' },
     { href: '/track-order', label: 'Track Order' },
