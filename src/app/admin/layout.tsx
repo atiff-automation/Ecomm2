@@ -27,15 +27,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const fullWidthRoutes = [
       '/admin/click-pages/create',
       '/admin/click-pages/',
-      '/admin/landing-pages/create',
-      '/admin/landing-pages/',
     ];
 
     return fullWidthRoutes.some(route => {
       if (route.endsWith('/create')) {
         return pathname === route;
       }
-      // Match edit routes: /admin/click-pages/[id]/edit or /admin/landing-pages/[id]/edit
+      // Match edit routes: /admin/click-pages/[id]/edit
       if (route.endsWith('/')) {
         return new RegExp(`^${route.replace('/', '\\/')}[^/]+\\/edit$`).test(pathname);
       }
