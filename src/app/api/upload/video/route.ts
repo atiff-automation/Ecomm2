@@ -13,7 +13,12 @@ import { writeFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'videos');
+// Use Railway Volume in production, local filesystem in development
+const isProduction = process.env.NODE_ENV === 'production';
+const UPLOAD_DIR = isProduction
+  ? join('/data', 'uploads', 'videos')
+  : join(process.cwd(), 'public', 'uploads', 'videos');
+
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 const ALLOWED_VIDEO_TYPES = [
   'video/mp4',
@@ -86,8 +91,10 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await writeFile(filepath, buffer);
 
-    // Generate public URL
-    const url = `/uploads/videos/${filename}`;
+    // Generate public URL - use API route in production, static path in development
+    const url = isProduction
+      ? `/api/media/videos/${filename}`
+      : `/uploads/videos/${filename}`;
 
     return NextResponse.json({
       message: 'Video uploaded successfully',
