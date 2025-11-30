@@ -2,6 +2,19 @@
  * Click Page Padding Utilities
  * Helper functions for container padding conversion and CSS generation
  * Single Source of Truth for padding-related operations
+ *
+ * KEY BEHAVIORS:
+ * ===============
+ * 1. EXPLICIT ZERO RESPECT: When padding is set to 0px on desktop, it remains 0px
+ *    on tablet and mobile. This allows users to create edge-to-edge layouts without
+ *    minimum padding constraints.
+ *
+ * 2. SMART SCALING FOR NON-ZERO: When padding is non-zero on desktop, intelligent
+ *    responsive scaling is applied with safety minimums (tablet: 24px, mobile: 16px)
+ *    to prevent overly tight layouts on smaller screens.
+ *
+ * 3. SINGLE SOURCE OF TRUTH: All padding calculations flow through
+ *    calculateResponsivePadding() which ensures consistent behavior across the app.
  */
 
 import type { ContainerPadding } from '@/types/click-page-styles.types';
@@ -152,18 +165,21 @@ export function togglePaddingLinked(padding: ContainerPadding): ContainerPadding
 /**
  * Responsive padding calculation constants
  * Based on industry standards (Elementor, Unbounce, ClickFunnels)
+ *
+ * NOTE: These minimums only apply to NON-ZERO values.
+ * Explicit zero values (0px) are always respected to allow edge-to-edge layouts.
  */
 const RESPONSIVE_PADDING_CONFIG = {
   // Tablet scaling: 40% of desktop value
   tablet: {
     scaleFactor: 0.4,
-    minPadding: 24, // Minimum padding for tablet (px)
+    minPadding: 24, // Minimum padding for tablet (px) - only for non-zero values
   },
   // Mobile scaling: Use safe minimum values
   mobile: {
     scaleFactor: 0.15, // 15% of desktop (rarely used, minimum takes precedence)
-    minPadding: 16, // Minimum padding for mobile (px)
-    maxPadding: 24, // Maximum padding for mobile sides (px)
+    minPadding: 16, // Minimum padding for mobile (px) - only for non-zero values
+    maxPadding: 24, // Maximum padding for mobile sides (px) - only for non-zero values
   },
 } as const;
 
@@ -171,22 +187,43 @@ const RESPONSIVE_PADDING_CONFIG = {
  * Calculate responsive padding value for a specific breakpoint
  * Follows industry best practice: smart auto-scaling with safety thresholds
  *
+ * IMPORTANT: Respects explicit zero values (0px = 0px on all breakpoints)
+ * This allows users to create edge-to-edge layouts when intentionally desired,
+ * while maintaining smart minimums for non-zero values to prevent overly tight layouts.
+ *
  * @param desktopValue - Original desktop padding value in pixels
  * @param breakpoint - Target device breakpoint
  * @returns Calculated responsive padding value
+ *
+ * @example
+ * // Explicit zero is respected
+ * calculateResponsivePadding(0, 'mobile') // Returns 0
+ *
+ * @example
+ * // Non-zero values use smart scaling with minimums
+ * calculateResponsivePadding(32, 'mobile') // Returns 16 (minimum enforced)
+ * calculateResponsivePadding(100, 'mobile') // Returns 24 (maximum enforced)
  */
 export function calculateResponsivePadding(
   desktopValue: number,
   breakpoint: 'tablet' | 'mobile'
 ): number {
+  // EXPLICIT ZERO HANDLING: Respect user's intent for edge-to-edge layouts
+  // When user explicitly sets 0px, return 0px on all breakpoints
+  // This enables flush layouts without minimum padding constraints
+  if (desktopValue === 0) {
+    return 0;
+  }
+
+  // SMART SCALING: For non-zero values, apply intelligent responsive behavior
   const config = RESPONSIVE_PADDING_CONFIG[breakpoint];
   const scaledValue = Math.round(desktopValue * config.scaleFactor);
 
-  // Ensure value is within safe range
+  // Ensure value is within safe range (prevents overly tight layouts)
   const safeValue = Math.max(scaledValue, config.minPadding);
 
   // For mobile, also enforce maximum to prevent excessive padding
-  if (breakpoint === 'mobile') {
+  if (breakpoint === 'mobile' && 'maxPadding' in config) {
     return Math.min(safeValue, config.maxPadding);
   }
 
@@ -197,9 +234,25 @@ export function calculateResponsivePadding(
  * Generate responsive CSS for container padding
  * Creates media queries for tablet and mobile with auto-scaled values
  *
+ * BEHAVIOR:
+ * - Explicit 0px values: Rendered as 0px on all breakpoints (respects user intent)
+ * - Non-zero values: Smart scaling with minimums applied (prevents overly tight layouts)
+ *
  * @param padding - ContainerPadding configuration (desktop values)
  * @param containerClass - CSS class selector for the container
  * @returns CSS string with media queries for responsive padding
+ *
+ * @example
+ * // With 0px left/right padding (edge-to-edge layout)
+ * const padding = { top: 24, right: 0, bottom: 24, left: 0, linked: false };
+ * // Tablet: padding: 24px 0px 24px 0px
+ * // Mobile: padding: 16px 0px 16px 0px
+ *
+ * @example
+ * // With non-zero padding (smart minimums applied)
+ * const padding = { top: 48, right: 48, bottom: 48, left: 48, linked: true };
+ * // Tablet: padding: 24px 24px 24px 24px (minimum enforced)
+ * // Mobile: padding: 16px 16px 16px 16px (minimum enforced)
  */
 export function generateResponsiveContainerPaddingCSS(
   padding: ContainerPadding,
