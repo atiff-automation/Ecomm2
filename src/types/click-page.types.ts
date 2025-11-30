@@ -128,6 +128,7 @@ export interface ImageBlockSettings {
   alignment: 'left' | 'center' | 'right';
   width: 'full' | 'large' | 'medium' | 'small';
   rounded: boolean;
+  fullWidth?: boolean; // Override default width tier (from Style tab)
   styles?: StyleSettings;
 }
 

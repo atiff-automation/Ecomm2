@@ -83,17 +83,19 @@ case $choice in
             echo -e "${RED}This would destroy all production data!${NC}"
             exit 1
         fi
-        
+
         echo -e "${RED}⚠️  WARNING: This will DESTROY ALL DATA${NC}"
         echo -e "${RED}Only use this in development environment${NC}"
+        echo -e "${YELLOW}This uses 'prisma migrate reset' - proper migration-based reset${NC}"
         read -p "Type 'DESTROY_DATA' to confirm: " confirm
-        
+
         if [[ "$confirm" == "DESTROY_DATA" ]]; then
             echo -e "${YELLOW}📦 Creating backup before reset...${NC}"
             create_backup
-            echo -e "${RED}💥 Resetting database...${NC}"
-            npx prisma db push --force-reset
-            echo -e "${YELLOW}⚠️  All data has been destroyed and schema reset${NC}"
+            echo -e "${RED}💥 Resetting database with migration history...${NC}"
+            npx prisma migrate reset --force
+            echo -e "${YELLOW}⚠️  Database reset complete with clean migration history${NC}"
+            echo -e "${GREEN}✅ All migrations re-applied from scratch${NC}"
         else
             echo -e "${GREEN}✅ Reset cancelled${NC}"
         fi

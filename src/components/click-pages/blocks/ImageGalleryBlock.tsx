@@ -59,23 +59,38 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
   // Carousel layout
   if (settings.layout === 'carousel') {
     const currentImage = settings.images[currentIndex];
+    const useFlexibleHeight = !settings.aspectRatio || settings.aspectRatio === 'original';
 
     return (
       <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL, settings.fullWidth)}>
         <div className="relative group">
-          <div className={cn(
-            'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
-            settings.rounded !== false && 'rounded-lg', // Default to true for backwards compatibility
-            settings.aspectRatio ? ASPECT_RATIO_MAP[settings.aspectRatio] : 'aspect-video'
-          )}>
-            <Image
-              src={currentImage.url}
-              alt={currentImage.altText}
-              fill
-              className="object-cover"
-              priority={currentIndex === 0}
-            />
-          </div>
+          {useFlexibleHeight ? (
+            <div className={cn(
+              'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
+              settings.rounded !== false && 'rounded-lg'
+            )}>
+              <img
+                src={currentImage.url}
+                alt={currentImage.altText}
+                className="w-full h-auto"
+                loading={currentIndex === 0 ? 'eager' : 'lazy'}
+              />
+            </div>
+          ) : (
+            <div className={cn(
+              'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
+              settings.rounded !== false && 'rounded-lg',
+              ASPECT_RATIO_MAP[settings.aspectRatio]
+            )}>
+              <Image
+                src={currentImage.url}
+                alt={currentImage.altText}
+                fill
+                className="object-cover"
+                priority={currentIndex === 0}
+              />
+            </div>
+          )}
 
           {settings.showNavigation && settings.images.length > 1 && (
             <>
@@ -136,6 +151,8 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
   }
 
   // Grid or Masonry layout
+  const useFlexibleHeight = !settings.aspectRatio || settings.aspectRatio === 'original';
+
   return (
     <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_GRID, settings.fullWidth)}>
       <div className={cn('grid gap-4', COLUMN_MAP[settings.columns])}>
@@ -147,28 +164,50 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
             settings.rounded !== false && 'rounded-lg'
           )}
         >
-          <div className={cn(
-            'relative w-full',
-            settings.aspectRatio ? ASPECT_RATIO_MAP[settings.aspectRatio] : 'aspect-square'
-          )}>
-            {image.link ? (
-              <a href={image.link} target="_blank" rel="noopener noreferrer">
+          {useFlexibleHeight ? (
+            <>
+              {image.link ? (
+                <a href={image.link} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={image.url}
+                    alt={image.altText}
+                    className="w-full h-auto transition-transform group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </a>
+              ) : (
+                <img
+                  src={image.url}
+                  alt={image.altText}
+                  className="w-full h-auto transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
+              )}
+            </>
+          ) : (
+            <div className={cn(
+              'relative w-full',
+              ASPECT_RATIO_MAP[settings.aspectRatio]
+            )}>
+              {image.link ? (
+                <a href={image.link} target="_blank" rel="noopener noreferrer">
+                  <Image
+                    src={image.url}
+                    alt={image.altText}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105"
+                  />
+                </a>
+              ) : (
                 <Image
                   src={image.url}
                   alt={image.altText}
                   fill
                   className="object-cover transition-transform group-hover:scale-105"
                 />
-              </a>
-            ) : (
-              <Image
-                src={image.url}
-                alt={image.altText}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-              />
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {settings.showCaptions && image.caption && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-3 opacity-0 group-hover:opacity-100 transition-opacity">
