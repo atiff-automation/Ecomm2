@@ -24,6 +24,9 @@ const ALIGNMENT_MAP = {
 export function TextBlockComponent({ block }: TextBlockComponentProps) {
   const { settings } = block;
 
+  // Handle undefined property for backwards compatibility and hydration consistency
+  const fullWidth = settings.fullWidth ?? false;
+
   // Note: Padding/margin are applied by BlockRenderer wrapper via settings.styles.spacing
   return (
     <div
@@ -31,8 +34,8 @@ export function TextBlockComponent({ block }: TextBlockComponentProps) {
       style={{ color: 'inherit' }}
     >
       <div
-        className={cn(!settings.fullWidth && 'mx-auto')}
-        style={{ maxWidth: settings.fullWidth ? '100%' : (settings.maxWidth ? `${settings.maxWidth}px` : `${BLOCK_WIDTH_PX.STANDARD}px`) }}
+        className={cn(!fullWidth && 'mx-auto')}
+        style={{ maxWidth: fullWidth ? '100%' : (settings.maxWidth ? `${settings.maxWidth}px` : `${BLOCK_WIDTH_PX.STANDARD}px`) }}
       >
         <div
           className="prose prose-lg max-w-none [&_*]:!text-[inherit] prose-headings:!text-[inherit] prose-p:!text-[inherit] prose-strong:!text-[inherit] prose-a:!text-[inherit]"
