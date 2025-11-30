@@ -36,6 +36,10 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
   const { settings } = block;
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Handle undefined properties for backwards compatibility and hydration consistency
+  const isRounded = settings.rounded ?? false;
+  const aspectRatio = settings.aspectRatio ?? '1:1';
+
   if (!settings.images || settings.images.length === 0) {
     return (
       <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
@@ -59,7 +63,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
   // Carousel layout
   if (settings.layout === 'carousel') {
     const currentImage = settings.images[currentIndex];
-    const useFlexibleHeight = !settings.aspectRatio || settings.aspectRatio === 'original';
+    const useFlexibleHeight = aspectRatio === 'original';
 
     return (
       <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_CAROUSEL, settings.fullWidth)}>
@@ -67,7 +71,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           {useFlexibleHeight ? (
             <div className={cn(
               'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
-              settings.rounded === true && 'rounded-lg'
+              isRounded && 'rounded-lg'
             )}>
               <img
                 src={currentImage.url}
@@ -79,8 +83,8 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           ) : (
             <div className={cn(
               'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
-              settings.rounded === true && 'rounded-lg',
-              ASPECT_RATIO_MAP[settings.aspectRatio]
+              isRounded && 'rounded-lg',
+              ASPECT_RATIO_MAP[aspectRatio]
             )}>
               <Image
                 src={currentImage.url}
@@ -129,7 +133,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
                 onClick={() => setCurrentIndex(idx)}
                 className={cn(
                   'flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all',
-                  settings.rounded === true && 'rounded-lg',
+                  isRounded && 'rounded-lg',
                   idx === currentIndex
                     ? 'border-blue-500'
                     : 'border-transparent opacity-60 hover:opacity-100'
@@ -151,7 +155,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
   }
 
   // Grid or Masonry layout
-  const useFlexibleHeight = !settings.aspectRatio || settings.aspectRatio === 'original';
+  const useFlexibleHeight = aspectRatio === 'original';
 
   return (
     <div className={getBlockWidthClasses(BLOCK_WIDTH_DEFAULTS.IMAGE_GALLERY_GRID, settings.fullWidth)}>
@@ -161,7 +165,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           key={image.id}
           className={cn(
             'group relative overflow-hidden',
-            settings.rounded === true && 'rounded-lg'
+            isRounded && 'rounded-lg'
           )}
         >
           {useFlexibleHeight ? (
@@ -187,7 +191,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           ) : (
             <div className={cn(
               'relative w-full',
-              ASPECT_RATIO_MAP[settings.aspectRatio]
+              ASPECT_RATIO_MAP[aspectRatio]
             )}>
               {image.link ? (
                 <a href={image.link} target="_blank" rel="noopener noreferrer">

@@ -29,6 +29,10 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Handle undefined properties for backwards compatibility and hydration consistency
+  const isRounded = settings.rounded ?? false;
+  const aspectRatio = settings.aspectRatio ?? '16:9';
+
   const getVideoEmbedUrl = (): string | null => {
     switch (settings.videoType) {
       case 'youtube':
@@ -115,10 +119,10 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
         ref={containerRef}
         className={cn(
           'w-full relative overflow-hidden bg-black',
-          settings.rounded === true && 'rounded-lg', // Only apply rounded if explicitly set to true
-          settings.aspectRatio === 'auto'
+          isRounded && 'rounded-lg',
+          aspectRatio === 'auto'
             ? '' // No aspect ratio constraint - video uses natural dimensions
-            : ASPECT_RATIO_MAP[settings.aspectRatio]
+            : ASPECT_RATIO_MAP[aspectRatio]
         )}
       >
         {settings.videoType === 'self-hosted' ? (
@@ -132,7 +136,7 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
             playsInline // Required for iOS autoplay
             preload="metadata"
             className={
-              settings.aspectRatio === 'auto'
+              aspectRatio === 'auto'
                 ? 'w-full h-auto' // Natural dimensions for auto aspect ratio
                 : 'absolute inset-0 w-full h-full object-contain'
             }
@@ -146,7 +150,7 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className={
-              settings.aspectRatio === 'auto'
+              aspectRatio === 'auto'
                 ? 'w-full h-auto min-h-[300px]' // Natural dimensions with minimum height
                 : 'absolute inset-0 w-full h-full'
             }
