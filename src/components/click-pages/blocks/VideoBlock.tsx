@@ -115,7 +115,7 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
         ref={containerRef}
         className={cn(
           'w-full relative overflow-hidden bg-black',
-          settings.rounded !== false && 'rounded-lg', // Default to true for backwards compatibility
+          settings.rounded === true && 'rounded-lg', // Only apply rounded if explicitly set to true
           settings.aspectRatio === 'auto'
             ? '' // No aspect ratio constraint - video uses natural dimensions
             : ASPECT_RATIO_MAP[settings.aspectRatio]

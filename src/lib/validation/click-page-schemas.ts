@@ -304,7 +304,7 @@ export const imageBlockSettingsSchema = z.object({
   link: imageUrlOrEmptySchema.optional(),
   alignment: z.enum(['left', 'center', 'right']),
   width: z.enum(['full', 'large', 'medium', 'small']),
-  rounded: z.boolean(),
+  rounded: z.boolean().optional().default(false),
   styles: styleSettingsSchema,
 });
 
@@ -435,7 +435,7 @@ export const videoBlockSettingsSchema = z.object({
   controls: z.boolean(),
   aspectRatio: z.enum(['16:9', '4:3', '1:1', '21:9', 'auto']),
   caption: z.string().max(300).optional(),
-  rounded: z.boolean(),
+  rounded: z.boolean().optional().default(false),
   styles: styleSettingsSchema,
 });
 
@@ -502,6 +502,7 @@ export const imageGalleryBlockSettingsSchema = z.object({
   autoplayInterval: z.number().min(1000).max(30000),
   lightbox: z.boolean(),
   aspectRatio: z.enum(['16:9', '4:3', '1:1', 'original']).optional(),
+  rounded: z.boolean().optional().default(false),
   styles: styleSettingsSchema,
 });
 

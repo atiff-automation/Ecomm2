@@ -67,7 +67,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           {useFlexibleHeight ? (
             <div className={cn(
               'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
-              settings.rounded !== false && 'rounded-lg'
+              settings.rounded === true && 'rounded-lg'
             )}>
               <img
                 src={currentImage.url}
@@ -79,7 +79,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           ) : (
             <div className={cn(
               'relative overflow-hidden bg-gray-100 dark:bg-gray-800',
-              settings.rounded !== false && 'rounded-lg',
+              settings.rounded === true && 'rounded-lg',
               ASPECT_RATIO_MAP[settings.aspectRatio]
             )}>
               <Image
@@ -129,7 +129,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
                 onClick={() => setCurrentIndex(idx)}
                 className={cn(
                   'flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all',
-                  settings.rounded !== false && 'rounded-lg',
+                  settings.rounded === true && 'rounded-lg',
                   idx === currentIndex
                     ? 'border-blue-500'
                     : 'border-transparent opacity-60 hover:opacity-100'
@@ -161,7 +161,7 @@ export function ImageGalleryBlockComponent({ block }: ImageGalleryBlockComponent
           key={image.id}
           className={cn(
             'group relative overflow-hidden',
-            settings.rounded !== false && 'rounded-lg'
+            settings.rounded === true && 'rounded-lg'
           )}
         >
           {useFlexibleHeight ? (

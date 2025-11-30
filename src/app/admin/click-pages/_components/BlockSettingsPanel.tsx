@@ -1352,6 +1352,7 @@ function FormSettings({
   updateSettings: (updates: Partial<typeof block.settings>) => void;
 }) {
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [fieldOptionsInput, setFieldOptionsInput] = useState<Record<string, string>>({});
 
   const addField = () => {
     const newField = {
@@ -1522,12 +1523,19 @@ function FormSettings({
                   <div>
                     <Label className="text-xs">Options (comma-separated)</Label>
                     <Input
-                      value={field.options?.join(', ') || ''}
+                      value={fieldOptionsInput[field.id] ?? field.options?.join(', ') ?? ''}
                       onChange={(e) =>
+                        setFieldOptionsInput({ ...fieldOptionsInput, [field.id]: e.target.value })
+                      }
+                      onBlur={(e) => {
                         updateField(field.id, {
                           options: e.target.value.split(',').map((opt) => opt.trim()).filter(Boolean),
-                        })
-                      }
+                        });
+                        // Clear local state after saving
+                        const updated = { ...fieldOptionsInput };
+                        delete updated[field.id];
+                        setFieldOptionsInput(updated);
+                      }}
                       placeholder="Option 1, Option 2, Option 3"
                     />
                   </div>

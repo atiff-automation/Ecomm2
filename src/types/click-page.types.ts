@@ -127,7 +127,7 @@ export interface ImageBlockSettings {
   link?: string;
   alignment: 'left' | 'center' | 'right';
   width: 'full' | 'large' | 'medium' | 'small';
-  rounded: boolean;
+  rounded?: boolean;
   fullWidth?: boolean; // Override default width tier (from Style tab)
   styles?: StyleSettings;
 }
@@ -289,7 +289,7 @@ export interface VideoBlockSettings {
   controls: boolean;
   aspectRatio: '16:9' | '4:3' | '1:1' | '21:9' | 'auto';
   caption?: string;
-  rounded: boolean;
+  rounded?: boolean;
   fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
@@ -362,7 +362,7 @@ export interface ImageGalleryBlockSettings {
   autoplayInterval: number; // in milliseconds
   lightbox: boolean; // Click to enlarge
   aspectRatio?: '16:9' | '4:3' | '1:1' | 'original';
-  rounded: boolean;
+  rounded?: boolean;
   fullWidth?: boolean; // Override default width tier
   styles?: StyleSettings;
 }
