@@ -21,6 +21,7 @@ const ASPECT_RATIO_MAP = {
   '4:3': 'aspect-[4/3]',
   '1:1': 'aspect-square',
   '21:9': 'aspect-[21/9]',
+  'auto': null, // Natural video dimensions - no aspect ratio constraint
 };
 
 export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
@@ -115,7 +116,9 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
         className={cn(
           'w-full relative overflow-hidden bg-black',
           settings.rounded !== false && 'rounded-lg', // Default to true for backwards compatibility
-          ASPECT_RATIO_MAP[settings.aspectRatio]
+          settings.aspectRatio === 'auto'
+            ? '' // No aspect ratio constraint - video uses natural dimensions
+            : ASPECT_RATIO_MAP[settings.aspectRatio]
         )}
       >
         {settings.videoType === 'self-hosted' ? (
@@ -128,7 +131,11 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
             muted={settings.muted || settings.autoplay} // Must be muted for autoplay to work
             playsInline // Required for iOS autoplay
             preload="metadata"
-            className="absolute inset-0 w-full h-full object-contain"
+            className={
+              settings.aspectRatio === 'auto'
+                ? 'w-full h-auto' // Natural dimensions for auto aspect ratio
+                : 'absolute inset-0 w-full h-full object-contain'
+            }
           >
             Your browser does not support the video tag.
           </video>
@@ -138,7 +145,11 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
             title={settings.caption || 'Video embed'}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            className="absolute inset-0 w-full h-full"
+            className={
+              settings.aspectRatio === 'auto'
+                ? 'w-full h-auto min-h-[300px]' // Natural dimensions with minimum height
+                : 'absolute inset-0 w-full h-full'
+            }
           />
         )}
       </div>

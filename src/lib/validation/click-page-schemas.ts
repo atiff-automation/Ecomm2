@@ -427,13 +427,15 @@ export const videoBlockSettingsSchema = z.object({
   youtubeId: z.string().max(100).optional(),
   vimeoId: z.string().max(100).optional(),
   selfHostedUrl: imageUrlOrEmptySchema.optional(),
+  selfHostedFilename: z.string().optional(),
   thumbnailUrl: imageUrlOrEmptySchema.optional(),
   autoplay: z.boolean(),
   loop: z.boolean(),
   muted: z.boolean(),
   controls: z.boolean(),
-  aspectRatio: z.enum(['16:9', '4:3', '1:1', '21:9']),
+  aspectRatio: z.enum(['16:9', '4:3', '1:1', '21:9', 'auto']),
   caption: z.string().max(300).optional(),
+  rounded: z.boolean(),
   styles: styleSettingsSchema,
 });
 

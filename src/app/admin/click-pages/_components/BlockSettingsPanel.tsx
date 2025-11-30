@@ -1258,7 +1258,7 @@ function VideoSettings({
         <Label>Aspect Ratio</Label>
         <Select
           value={block.settings.aspectRatio}
-          onValueChange={(v) => updateSettings({ aspectRatio: v as '16:9' | '4:3' | '1:1' | '21:9' })}
+          onValueChange={(v) => updateSettings({ aspectRatio: v as '16:9' | '4:3' | '1:1' | '21:9' | 'auto' })}
         >
           <SelectTrigger>
             <SelectValue />
@@ -1268,8 +1268,14 @@ function VideoSettings({
             <SelectItem value="4:3">4:3 (Standard)</SelectItem>
             <SelectItem value="1:1">1:1 (Square)</SelectItem>
             <SelectItem value="21:9">21:9 (Ultrawide)</SelectItem>
+            <SelectItem value="auto">Auto (Original dimensions)</SelectItem>
           </SelectContent>
         </Select>
+        {block.settings.aspectRatio === 'auto' && (
+          <p className="text-xs text-gray-500 mt-1">
+            Video will display at its natural aspect ratio with full width. Perfect for portrait videos on mobile.
+          </p>
+        )}
       </div>
       <div>
         <div className="flex items-center justify-between">

@@ -287,7 +287,7 @@ export interface VideoBlockSettings {
   loop: boolean;
   muted: boolean;
   controls: boolean;
-  aspectRatio: '16:9' | '4:3' | '1:1' | '21:9';
+  aspectRatio: '16:9' | '4:3' | '1:1' | '21:9' | 'auto';
   caption?: string;
   rounded: boolean;
   fullWidth?: boolean; // Override default width tier
