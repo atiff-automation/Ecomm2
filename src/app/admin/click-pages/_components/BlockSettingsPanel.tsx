@@ -1336,7 +1336,7 @@ function VideoSettings({
       <div className="flex items-center justify-between">
         <Label>Rounded Corners</Label>
         <Switch
-          checked={block.settings.rounded ?? true}
+          checked={block.settings.rounded ?? false}
           onCheckedChange={(v) => updateSettings({ rounded: v })}
         />
       </div>
@@ -1823,7 +1823,7 @@ function ImageGallerySettings({
       <div className="flex items-center justify-between">
         <Label>Rounded Corners</Label>
         <Switch
-          checked={block.settings.rounded ?? true}
+          checked={block.settings.rounded ?? false}
           onCheckedChange={(v) => updateSettings({ rounded: v })}
         />
       </div>
