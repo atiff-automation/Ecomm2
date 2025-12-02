@@ -155,6 +155,7 @@ function EditableBlockWrapperComponent({
           block={block}
           themeSettings={themeSettings}
           onBlockClick={onBlockClick}
+          isEditorMode={true}
         />
       </div>
 

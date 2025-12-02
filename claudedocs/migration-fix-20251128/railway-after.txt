@@ -1,0 +1,7 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "railway", schema "public" at "yamabiko.proxy.rlwy.net:46096"
+
+23 migrations found in prisma/migrations
+
+Database schema is up to date!

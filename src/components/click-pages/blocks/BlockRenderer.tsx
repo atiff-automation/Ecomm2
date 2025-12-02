@@ -160,13 +160,14 @@ export interface BlockItemProps {
   themeSettings?: ThemeSettings;
   onBlockClick?: (blockId: string, blockType: string, targetUrl?: string) => void;
   clickPageSlug?: string;
+  isEditorMode?: boolean;
 }
 
 /**
  * Renders a single block with applied styles
  * Exported for use in editor (EditableBlockWrapper)
  */
-export function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug }: BlockItemProps) {
+export function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug, isEditorMode = false }: BlockItemProps) {
   const handleClick = (targetUrl?: string) => {
     onBlockClick?.(block.id, block.type, targetUrl);
   };
@@ -229,7 +230,7 @@ export function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug }:
       case 'SOCIAL_PROOF':
         return <SocialProofBlockComponent block={block} />;
       case 'VIDEO':
-        return <VideoBlockComponent block={block} />;
+        return <VideoBlockComponent block={block} isEditorMode={isEditorMode} />;
       case 'FORM':
         return <FormBlockComponent block={block} clickPageSlug={clickPageSlug} />;
       case 'IMAGE_GALLERY':

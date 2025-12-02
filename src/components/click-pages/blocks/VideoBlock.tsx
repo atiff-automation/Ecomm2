@@ -14,6 +14,7 @@ import { BLOCK_WIDTH_DEFAULTS, getBlockWidthClasses } from '@/lib/constants/clic
 
 interface VideoBlockComponentProps {
   block: VideoBlock;
+  isEditorMode?: boolean;
 }
 
 const ASPECT_RATIO_MAP = {
@@ -24,7 +25,7 @@ const ASPECT_RATIO_MAP = {
   'auto': null, // Natural video dimensions - no aspect ratio constraint
 };
 
-export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
+export function VideoBlockComponent({ block, isEditorMode = false }: VideoBlockComponentProps) {
   const { settings } = block;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,17 +145,26 @@ export function VideoBlockComponent({ block }: VideoBlockComponentProps) {
             Your browser does not support the video tag.
           </video>
         ) : (
-          <iframe
-            src={embedUrl}
-            title={settings.caption || 'Video embed'}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className={
-              aspectRatio === 'auto'
-                ? 'w-full h-auto min-h-[300px]' // Natural dimensions with minimum height
-                : 'absolute inset-0 w-full h-full'
-            }
-          />
+          <>
+            <iframe
+              src={embedUrl}
+              title={settings.caption || 'Video embed'}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className={
+                aspectRatio === 'auto'
+                  ? 'w-full h-auto min-h-[300px]' // Natural dimensions with minimum height
+                  : 'absolute inset-0 w-full h-full'
+              }
+            />
+            {/* Transparent overlay in editor mode to capture clicks and enable block selection */}
+            {isEditorMode && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                aria-label="Click to select video block"
+              />
+            )}
+          </>
         )}
       </div>
     </div>
