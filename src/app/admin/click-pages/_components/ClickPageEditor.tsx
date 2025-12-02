@@ -119,6 +119,19 @@ const DEFAULT_THEME_SETTINGS: ThemeSettings = {
 };
 
 export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
+  // IMMEDIATE DEBUG - Logs before any state initialization
+  if (typeof window !== 'undefined' && localStorage.getItem('DEBUG_BLOCKS') === 'true') {
+    console.log('%c🔍 ClickPageEditor Render - IMMEDIATE', 'background: #4F46E5; color: white; padding: 4px 8px; font-weight: bold;');
+    console.log('Initial blocks:', initialData?.blocks?.length || 0);
+    if (initialData?.blocks) {
+      const mediaBlocks = initialData.blocks.filter((b: any) => ['IMAGE', 'VIDEO', 'IMAGE_GALLERY'].includes(b.type));
+      console.log('Media blocks:', mediaBlocks.length);
+      mediaBlocks.forEach((b: any, i: number) => {
+        console.log(`  ${i + 1}. ${b.type} - rounded:`, b.settings.rounded, `(type: ${typeof b.settings.rounded})`);
+      });
+    }
+  }
+
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
 
