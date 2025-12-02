@@ -5,7 +5,7 @@
  * Main drag-and-drop page builder interface
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -49,6 +49,15 @@ import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
 import { generateClickPageSlug } from '@/lib/constants/click-page-constants';
 import { DEFAULT_DEVICE_MODE, DEVICE_DEFAULT_ZOOM, type DeviceMode } from '@/lib/constants/editor-constants';
+import {
+  debugInit,
+  debugBlockCreation,
+  debugBlockUpdate,
+  debugBlockState,
+  debugHydrationCheck,
+  debugSaveOperation,
+  debugError,
+} from '@/lib/utils/block-debug';
 import { BlockPalette } from './BlockPalette';
 import { EditableBlockWrapper } from './EditableBlockWrapper';
 import { DevicePreview, DevicePreviewToolbar } from './DevicePreview';
@@ -142,6 +151,19 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(DEFAULT_DEVICE_MODE);
   const [zoomLevel, setZoomLevel] = useState<number>(DEVICE_DEFAULT_ZOOM[DEFAULT_DEVICE_MODE]);
 
+  // Debug initialization and hydration check
+  useEffect(() => {
+    debugInit();
+    debugHydrationCheck(blocks);
+  }, []); // Run once on mount
+
+  // Debug blocks state changes
+  useEffect(() => {
+    if (blocks.length > 0) {
+      debugHydrationCheck(blocks);
+    }
+  }, [blocks]);
+
   /**
    * Handle device mode change with automatic zoom adjustment
    */
@@ -220,14 +242,23 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   // Add new block
   const handleAddBlock = useCallback((type: BlockType) => {
     const newBlock = createDefaultBlock(type, blocks.length);
-    setBlocks((prev) => [...prev, newBlock]);
+    debugBlockCreation(type, newBlock);
+    setBlocks((prev) => {
+      const next = [...prev, newBlock];
+      debugBlockState('Add block', prev, next);
+      return next;
+    });
     setSelectedBlockId(newBlock.id);
     toast.success(`${type} block added`);
   }, [blocks.length]);
 
   // Remove block
   const handleRemoveBlock = useCallback((blockId: string) => {
-    setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+    setBlocks((prev) => {
+      const next = prev.filter((b) => b.id !== blockId);
+      debugBlockState('Remove block', prev, next);
+      return next;
+    });
     if (selectedBlockId === blockId) {
       setSelectedBlockId(null);
     }
@@ -251,9 +282,12 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
 
   // Update block settings
   const handleUpdateBlock = useCallback((blockId: string, updates: Partial<Block>) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === blockId ? ({ ...b, ...updates } as Block) : b))
-    );
+    debugBlockUpdate(blockId, updates);
+    setBlocks((prev) => {
+      const next = prev.map((b) => (b.id === blockId ? ({ ...b, ...updates } as Block) : b));
+      debugBlockState('Update block', prev, next);
+      return next;
+    });
   }, []);
 
   // Handle drag start
@@ -301,6 +335,8 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         themeSettings,
       };
 
+      debugSaveOperation(blocks, payload);
+
       const url = mode === 'create'
         ? '/api/admin/click-pages'
         : `/api/admin/click-pages/${initialData?.id}`;
@@ -324,6 +360,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
       }
     } catch (error) {
       console.error('Error saving click page:', error);
+      debugError(error as Error, 'handleSave');
       toast.error(error instanceof Error ? error.message : 'Failed to save click page');
     } finally {
       setIsSaving(false);
