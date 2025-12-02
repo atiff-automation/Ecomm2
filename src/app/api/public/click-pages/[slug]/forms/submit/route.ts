@@ -38,6 +38,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
       select: {
         id: true,
+        title: true,
+        slug: true,
         blocks: true,
         scheduledUnpublishAt: true,
       },
@@ -120,7 +122,28 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         });
     }
 
-    // 8. Return success response
+    // 8. Send Telegram notification (fire and forget)
+    import('@/lib/telegram/simplified-telegram-service')
+      .then(({ simplifiedTelegramService }) => {
+        return simplifiedTelegramService.sendFormSubmissionNotification({
+          id: submission.id,
+          clickPageId: clickPage.id,
+          blockId: submission.blockId,
+          data: submission.data as Record<string, unknown>,
+          ipAddress: submission.ipAddress,
+          userAgent: submission.userAgent,
+          createdAt: submission.createdAt,
+        }, {
+          id: clickPage.id,
+          title: clickPage.title,
+          slug: clickPage.slug,
+        }, formBlock as any);
+      })
+      .catch((error) => {
+        console.error('Error sending Telegram notification:', error);
+      });
+
+    // 9. Return success response
     return NextResponse.json({
       success: true,
       message: formBlock.settings.successMessage || 'Form submitted successfully',

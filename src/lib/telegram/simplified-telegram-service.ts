@@ -248,6 +248,17 @@ export class SimplifiedTelegramService {
     );
   }
 
+  async isFormSubmissionsChannelConfigured(): Promise<boolean> {
+    if (!this.configLoaded) {
+      await this.loadConfiguration();
+    }
+    return !!(
+      this.config?.botToken &&
+      this.config?.formSubmissionsChatId &&
+      this.config?.formSubmissionsEnabled
+    );
+  }
+
   /**
    * CENTRALIZED: Reload configuration when admin updates settings
    */
@@ -701,6 +712,70 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
   }
 
   /**
+   * CENTRALIZED: Send form submission notification
+   * FOLLOWS @CLAUDE.md: DRY - uses TelegramFormFormatter for message formatting
+   * NOTE: Uses fire-and-forget pattern, gracefully degrades on errors
+   */
+  async sendFormSubmissionNotification(
+    submission: import('@/types/telegram.types').FormSubmissionData,
+    clickPage: import('@/types/telegram.types').ClickPageData,
+    formBlock: import('@/types/telegram.types').FormBlockData
+  ): Promise<void> {
+    const startTime = Date.now();
+
+    try {
+      // Check if form submissions channel is enabled
+      if (!(await this.isFormSubmissionsChannelConfigured())) {
+        console.log('Form submissions Telegram notifications are disabled');
+        return;
+      }
+
+      // Import formatter dynamically to avoid circular dependencies
+      const { TelegramFormFormatter } = await import(
+        '@/lib/utils/telegram-form-formatter'
+      );
+
+      // Format message
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const message = TelegramFormFormatter.formatFormSubmissionForTelegram(
+        submission,
+        clickPage,
+        formBlock,
+        baseUrl
+      );
+
+      // Validate message length
+      const { valid, length } = TelegramFormFormatter.validateMessageLength(message);
+      if (!valid) {
+        console.error(
+          `Telegram message too long: ${length} characters (max 4096)`
+        );
+        return;
+      }
+
+      // Send via Telegram API
+      await this.sendMessage({
+        chat_id: this.config!.formSubmissionsChatId!,
+        text: message,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      });
+
+      const duration = Date.now() - startTime;
+      console.log(
+        `📨 Form submission notification sent successfully (${duration}ms)`
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(
+        `Failed to send form submission notification (${duration}ms):`,
+        error
+      );
+      // Graceful degradation - don't throw errors
+    }
+  }
+
+  /**
    * DRY: Same test connection logic
    */
   async testConnection(): Promise<{ success: boolean; message: string }> {
@@ -873,6 +948,24 @@ export const simplifiedTelegramService = {
   ) {
     const instance = await this.getInstance();
     return instance.sendSystemAlertNotification(...args);
+  },
+
+  async sendFormSubmissionNotification(
+    ...args: Parameters<
+      SimplifiedTelegramService['sendFormSubmissionNotification']
+    >
+  ) {
+    const instance = await this.getInstance();
+    return instance.sendFormSubmissionNotification(...args);
+  },
+
+  async isFormSubmissionsChannelConfigured(
+    ...args: Parameters<
+      SimplifiedTelegramService['isFormSubmissionsChannelConfigured']
+    >
+  ) {
+    const instance = await this.getInstance();
+    return instance.isFormSubmissionsChannelConfigured(...args);
   },
 
   async reloadConfiguration(

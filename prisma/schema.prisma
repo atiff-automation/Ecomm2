@@ -762,16 +762,19 @@ model AdminTelegramConfig {
   updatedBy             String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
-  chatManagementChatId  String?
-  chatManagementEnabled Boolean  @default(true)
-  systemAlertsChatId    String?
-  systemAlertsEnabled   Boolean  @default(true)
+  chatManagementChatId    String?
+  chatManagementEnabled   Boolean  @default(true)
+  systemAlertsChatId      String?
+  systemAlertsEnabled     Boolean  @default(true)
+  formSubmissionsChatId   String?
+  formSubmissionsEnabled  Boolean  @default(false)
 
   @@index([isActive])
   @@index([ordersEnabled])
   @@index([inventoryEnabled])
   @@index([chatManagementEnabled])
   @@index([systemAlertsEnabled])
+  @@index([formSubmissionsEnabled])
   @@map("admin_telegram_config")
 }
 
