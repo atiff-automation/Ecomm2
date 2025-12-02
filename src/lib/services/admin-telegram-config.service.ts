@@ -13,10 +13,12 @@ export interface AdminTelegramConfigData {
   inventoryChatId?: string;
   chatManagementChatId?: string;
   systemAlertsChatId?: string;
+  formSubmissionsChatId?: string;
   ordersEnabled?: boolean;
   inventoryEnabled?: boolean;
   chatManagementEnabled?: boolean;
   systemAlertsEnabled?: boolean;
+  formSubmissionsEnabled?: boolean;
   dailySummaryEnabled?: boolean;
   timezone?: string;
 }
@@ -64,10 +66,12 @@ export class AdminTelegramConfigService {
               inventoryChatId: data.inventoryChatId,
               chatManagementChatId: data.chatManagementChatId,
               systemAlertsChatId: data.systemAlertsChatId,
+              formSubmissionsChatId: data.formSubmissionsChatId,
               ordersEnabled: data.ordersEnabled ?? true,
               inventoryEnabled: data.inventoryEnabled ?? true,
               chatManagementEnabled: data.chatManagementEnabled ?? true,
               systemAlertsEnabled: data.systemAlertsEnabled ?? true,
+              formSubmissionsEnabled: data.formSubmissionsEnabled ?? false,
               dailySummaryEnabled: data.dailySummaryEnabled ?? true,
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               updatedBy: null,
@@ -83,10 +87,12 @@ export class AdminTelegramConfigService {
               inventoryChatId: data.inventoryChatId,
               chatManagementChatId: data.chatManagementChatId,
               systemAlertsChatId: data.systemAlertsChatId,
+              formSubmissionsChatId: data.formSubmissionsChatId,
               ordersEnabled: data.ordersEnabled ?? true,
               inventoryEnabled: data.inventoryEnabled ?? true,
               chatManagementEnabled: data.chatManagementEnabled ?? true,
               systemAlertsEnabled: data.systemAlertsEnabled ?? true,
+              formSubmissionsEnabled: data.formSubmissionsEnabled ?? false,
               dailySummaryEnabled: data.dailySummaryEnabled ?? true,
               timezone: data.timezone ?? 'Asia/Kuala_Lumpur',
               isActive: true,
@@ -249,6 +255,27 @@ export class AdminTelegramConfigService {
         }
       }
 
+      // Test form submissions chat ID if provided
+      if (config.formSubmissionsChatId) {
+        const formSubmissionsTestResponse = await fetch(
+          `https://api.telegram.org/bot${config.botToken}/getChat`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: config.formSubmissionsChatId }),
+            signal: AbortSignal.timeout(10000),
+          }
+        );
+
+        if (!formSubmissionsTestResponse.ok) {
+          return {
+            success: false,
+            message:
+              'Invalid form submissions chat ID - bot cannot access this group',
+          };
+        }
+      }
+
       return {
         success: true,
         message: 'Configuration validated successfully',
@@ -324,6 +351,19 @@ export class AdminTelegramConfigService {
         config?.botToken &&
         config?.systemAlertsChatId &&
         config?.systemAlertsEnabled
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
+  static async isFormSubmissionsEnabled(): Promise<boolean> {
+    try {
+      const config = await this.getActiveConfig();
+      return !!(
+        config?.botToken &&
+        config?.formSubmissionsChatId &&
+        config?.formSubmissionsEnabled
       );
     } catch (error) {
       return false;

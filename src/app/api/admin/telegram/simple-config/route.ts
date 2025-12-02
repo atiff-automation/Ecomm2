@@ -51,10 +51,12 @@ export async function GET(request: NextRequest) {
         inventoryChatId: config.inventoryChatId,
         chatManagementChatId: config.chatManagementChatId,
         systemAlertsChatId: config.systemAlertsChatId,
+        formSubmissionsChatId: config.formSubmissionsChatId,
         ordersEnabled: config.ordersEnabled,
         inventoryEnabled: config.inventoryEnabled,
         chatManagementEnabled: config.chatManagementEnabled,
         systemAlertsEnabled: config.systemAlertsEnabled,
+        formSubmissionsEnabled: config.formSubmissionsEnabled,
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
@@ -98,10 +100,12 @@ export async function POST(request: NextRequest) {
       inventoryChatId,
       chatManagementChatId,
       systemAlertsChatId,
+      formSubmissionsChatId,
       ordersEnabled = true,
       inventoryEnabled = true,
       chatManagementEnabled = true,
       systemAlertsEnabled = true,
+      formSubmissionsEnabled = false,
       dailySummaryEnabled = true,
       timezone = 'Asia/Kuala_Lumpur',
     } = body;
@@ -129,10 +133,12 @@ export async function POST(request: NextRequest) {
         inventoryChatId: inventoryChatId?.trim() || undefined,
         chatManagementChatId: chatManagementChatId?.trim() || undefined,
         systemAlertsChatId: systemAlertsChatId?.trim() || undefined,
+        formSubmissionsChatId: formSubmissionsChatId?.trim() || undefined,
         ordersEnabled,
         inventoryEnabled,
         chatManagementEnabled,
         systemAlertsEnabled,
+        formSubmissionsEnabled,
         dailySummaryEnabled,
         timezone,
       },
@@ -148,10 +154,12 @@ export async function POST(request: NextRequest) {
         inventoryChatId: config.inventoryChatId,
         chatManagementChatId: config.chatManagementChatId,
         systemAlertsChatId: config.systemAlertsChatId,
+        formSubmissionsChatId: config.formSubmissionsChatId,
         ordersEnabled: config.ordersEnabled,
         inventoryEnabled: config.inventoryEnabled,
         chatManagementEnabled: config.chatManagementEnabled,
         systemAlertsEnabled: config.systemAlertsEnabled,
+        formSubmissionsEnabled: config.formSubmissionsEnabled,
         dailySummaryEnabled: config.dailySummaryEnabled,
         timezone: config.timezone,
         createdAt: config.createdAt,
@@ -193,6 +201,7 @@ export async function PUT(request: NextRequest) {
       inventoryChatId,
       chatManagementChatId,
       systemAlertsChatId,
+      formSubmissionsChatId,
     } = body;
 
     // Check if configuration already exists to use saved bot token
@@ -220,6 +229,7 @@ export async function PUT(request: NextRequest) {
       inventoryChatId: inventoryChatId?.trim(),
       chatManagementChatId: chatManagementChatId?.trim(),
       systemAlertsChatId: systemAlertsChatId?.trim(),
+      formSubmissionsChatId: formSubmissionsChatId?.trim(),
     });
 
     return NextResponse.json(testResult);

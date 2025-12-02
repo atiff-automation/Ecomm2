@@ -39,10 +39,12 @@ interface AdminTelegramConfig {
   inventoryChatId?: string;
   chatManagementChatId?: string;
   systemAlertsChatId?: string;
+  formSubmissionsChatId?: string;
   ordersEnabled: boolean;
   inventoryEnabled: boolean;
   chatManagementEnabled: boolean;
   systemAlertsEnabled: boolean;
+  formSubmissionsEnabled: boolean;
   dailySummaryEnabled: boolean;
   timezone: string;
   createdAt?: string;
@@ -66,10 +68,12 @@ export function SimpleTelegramConfig({
     inventoryChatId: '',
     chatManagementChatId: '',
     systemAlertsChatId: '',
+    formSubmissionsChatId: '',
     ordersEnabled: true,
     inventoryEnabled: true,
     chatManagementEnabled: true,
     systemAlertsEnabled: true,
+    formSubmissionsEnabled: false,
     dailySummaryEnabled: true,
     timezone: 'Asia/Kuala_Lumpur',
   });
@@ -159,6 +163,7 @@ export function SimpleTelegramConfig({
           inventoryChatId: config.inventoryChatId?.trim(),
           chatManagementChatId: config.chatManagementChatId?.trim(),
           systemAlertsChatId: config.systemAlertsChatId?.trim(),
+          formSubmissionsChatId: config.formSubmissionsChatId?.trim(),
         }),
       });
 
@@ -202,10 +207,12 @@ export function SimpleTelegramConfig({
           inventoryChatId: config.inventoryChatId?.trim(),
           chatManagementChatId: config.chatManagementChatId?.trim(),
           systemAlertsChatId: config.systemAlertsChatId?.trim(),
+          formSubmissionsChatId: config.formSubmissionsChatId?.trim(),
           ordersEnabled: config.ordersEnabled,
           inventoryEnabled: config.inventoryEnabled,
           chatManagementEnabled: config.chatManagementEnabled,
           systemAlertsEnabled: config.systemAlertsEnabled,
+          formSubmissionsEnabled: config.formSubmissionsEnabled,
           dailySummaryEnabled: config.dailySummaryEnabled,
           timezone: config.timezone,
         }),
@@ -282,10 +289,12 @@ export function SimpleTelegramConfig({
             inventoryChatId: '',
             chatManagementChatId: '',
             systemAlertsChatId: '',
+            formSubmissionsChatId: '',
             ordersEnabled: true,
             inventoryEnabled: true,
             chatManagementEnabled: true,
             systemAlertsEnabled: true,
+            formSubmissionsEnabled: false,
             dailySummaryEnabled: true,
             timezone: 'Asia/Kuala_Lumpur',
           });
@@ -327,7 +336,7 @@ export function SimpleTelegramConfig({
    * DRY: Test notifications
    */
   const testNotification = async (
-    type: 'orders' | 'inventory' | 'chat-management' | 'system-alerts'
+    type: 'orders' | 'inventory' | 'chat-management' | 'system-alerts' | 'form-submissions'
   ) => {
     if (!isConfigured) {
       toast.error('Please save your configuration first');
@@ -340,6 +349,7 @@ export function SimpleTelegramConfig({
         inventory: 'simple-test-inventory',
         'chat-management': 'simple-test-chat-management',
         'system-alerts': 'simple-test-system-alerts',
+        'form-submissions': 'simple-test-form-submissions',
       };
 
       const typeMap = {
@@ -347,6 +357,7 @@ export function SimpleTelegramConfig({
         inventory: 'Inventory',
         'chat-management': 'Chat Management',
         'system-alerts': 'System Alerts',
+        'form-submissions': 'Form Submissions',
       };
 
       const endpoint = endpointMap[type];
@@ -607,6 +618,47 @@ export function SimpleTelegramConfig({
                 >
                   <TestTube2 className="w-4 h-4 mr-2" />
                   Send Test Alert
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Form Submissions Channel */}
+          <div className="p-4 border rounded-lg bg-green-50 border-green-200">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageCircle className="w-5 h-5 text-green-600" />
+              <h4 className="font-medium text-green-900">Form Submissions</h4>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="formSubmissionsChatId">
+                  Form Submissions Group Chat ID
+                </Label>
+                <Input
+                  id="formSubmissionsChatId"
+                  value={config.formSubmissionsChatId || ''}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      formSubmissionsChatId: e.target.value,
+                    }))
+                  }
+                  placeholder="-1001234567890 (optional)"
+                  className="mt-1 border-green-300 focus:border-white focus:ring-green-200"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Click page form submissions from customers and leads
+                </p>
+              </div>
+              {isConfigured && config.formSubmissionsChatId && (
+                <Button
+                  onClick={() => testNotification('form-submissions')}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-700 border-green-300 hover:bg-green-100"
+                >
+                  <TestTube2 className="w-4 h-4 mr-2" />
+                  Send Test Notification
                 </Button>
               )}
             </div>
