@@ -49,15 +49,6 @@ import type { ThemeSettings } from '@/types/click-page-styles.types';
 import { createDefaultBlock, reorderBlocks } from '@/lib/utils/block-registry';
 import { generateClickPageSlug } from '@/lib/constants/click-page-constants';
 import { DEFAULT_DEVICE_MODE, DEVICE_DEFAULT_ZOOM, type DeviceMode } from '@/lib/constants/editor-constants';
-import {
-  debugInit,
-  debugBlockCreation,
-  debugBlockUpdate,
-  debugBlockState,
-  debugHydrationCheck,
-  debugSaveOperation,
-  debugError,
-} from '@/lib/utils/block-debug';
 import { BlockPalette } from './BlockPalette';
 import { EditableBlockWrapper } from './EditableBlockWrapper';
 import { DevicePreview, DevicePreviewToolbar } from './DevicePreview';
@@ -119,18 +110,6 @@ const DEFAULT_THEME_SETTINGS: ThemeSettings = {
 };
 
 export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
-  // IMMEDIATE DEBUG - Logs before any state initialization
-  if (typeof window !== 'undefined' && localStorage.getItem('DEBUG_BLOCKS') === 'true') {
-    console.log('%c🔍 ClickPageEditor Render - IMMEDIATE', 'background: #4F46E5; color: white; padding: 4px 8px; font-weight: bold;');
-    console.log('Initial blocks:', initialData?.blocks?.length || 0);
-    if (initialData?.blocks) {
-      const mediaBlocks = initialData.blocks.filter((b: any) => ['IMAGE', 'VIDEO', 'IMAGE_GALLERY'].includes(b.type));
-      console.log('Media blocks:', mediaBlocks.length);
-      mediaBlocks.forEach((b: any, i: number) => {
-        console.log(`  ${i + 1}. ${b.type} - rounded:`, b.settings.rounded, `(type: ${typeof b.settings.rounded})`);
-      });
-    }
-  }
 
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -163,19 +142,6 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   // Device preview state
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(DEFAULT_DEVICE_MODE);
   const [zoomLevel, setZoomLevel] = useState<number>(DEVICE_DEFAULT_ZOOM[DEFAULT_DEVICE_MODE]);
-
-  // Debug initialization and hydration check
-  useEffect(() => {
-    debugInit();
-    debugHydrationCheck(blocks);
-  }, []); // Run once on mount
-
-  // Debug blocks state changes
-  useEffect(() => {
-    if (blocks.length > 0) {
-      debugHydrationCheck(blocks);
-    }
-  }, [blocks]);
 
   /**
    * Handle device mode change with automatic zoom adjustment
@@ -255,23 +221,14 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   // Add new block
   const handleAddBlock = useCallback((type: BlockType) => {
     const newBlock = createDefaultBlock(type, blocks.length);
-    debugBlockCreation(type, newBlock);
-    setBlocks((prev) => {
-      const next = [...prev, newBlock];
-      debugBlockState('Add block', prev, next);
-      return next;
-    });
+    setBlocks((prev) => [...prev, newBlock]);
     setSelectedBlockId(newBlock.id);
     toast.success(`${type} block added`);
   }, [blocks.length]);
 
   // Remove block
   const handleRemoveBlock = useCallback((blockId: string) => {
-    setBlocks((prev) => {
-      const next = prev.filter((b) => b.id !== blockId);
-      debugBlockState('Remove block', prev, next);
-      return next;
-    });
+    setBlocks((prev) => prev.filter((b) => b.id !== blockId));
     if (selectedBlockId === blockId) {
       setSelectedBlockId(null);
     }
@@ -295,12 +252,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
 
   // Update block settings
   const handleUpdateBlock = useCallback((blockId: string, updates: Partial<Block>) => {
-    debugBlockUpdate(blockId, updates);
-    setBlocks((prev) => {
-      const next = prev.map((b) => (b.id === blockId ? ({ ...b, ...updates } as Block) : b));
-      debugBlockState('Update block', prev, next);
-      return next;
-    });
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? ({ ...b, ...updates } as Block) : b)));
   }, []);
 
   // Handle drag start
@@ -348,8 +300,6 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
         themeSettings,
       };
 
-      debugSaveOperation(blocks, payload);
-
       const url = mode === 'create'
         ? '/api/admin/click-pages'
         : `/api/admin/click-pages/${initialData?.id}`;
@@ -373,7 +323,6 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
       }
     } catch (error) {
       console.error('Error saving click page:', error);
-      debugError(error as Error, 'handleSave');
       toast.error(error instanceof Error ? error.message : 'Failed to save click page');
     } finally {
       setIsSaving(false);
