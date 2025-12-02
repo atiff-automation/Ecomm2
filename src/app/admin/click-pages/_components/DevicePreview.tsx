@@ -251,10 +251,11 @@ function DevicePreviewComponent({
           {/* Device frame (optional subtle border) */}
           <div
             className={cn(
-              'bg-white rounded-lg shadow-lg overflow-hidden',
+              'bg-white shadow-lg overflow-hidden',
               'transition-all duration-300',
               mode === DEVICE_MODES.MOBILE && 'rounded-3xl',
-              mode === DEVICE_MODES.TABLET && 'rounded-2xl'
+              mode === DEVICE_MODES.TABLET && 'rounded-2xl',
+              mode === DEVICE_MODES.DESKTOP && 'rounded-sm'
             )}
           >
             {children}

@@ -147,7 +147,7 @@ function EditableBlockWrapperComponent({
       <div
         className={cn(
           'editable-block-wrapper-content',
-          'relative rounded-lg overflow-hidden',
+          'relative overflow-hidden',
           isSelected && 'bg-blue-50/30'
         )}
       >
