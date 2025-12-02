@@ -528,6 +528,7 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
             <TabsContent value="block" className="p-4 m-0">
               {selectedBlock ? (
                 <BlockSettingsPanel
+                  key={selectedBlock.id}
                   block={selectedBlock}
                   onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
                 />
