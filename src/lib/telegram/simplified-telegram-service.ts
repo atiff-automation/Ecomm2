@@ -720,16 +720,14 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
     submission: import('@/types/telegram.types').FormSubmissionData,
     clickPage: import('@/types/telegram.types').ClickPageData,
     formBlock: import('@/types/telegram.types').FormBlockData
-  ): Promise<void> {
-    const startTime = Date.now();
+  ): Promise<boolean> {
+    // Check if form submissions channel is enabled
+    if (!(await this.isFormSubmissionsChannelConfigured())) {
+      console.log('Form submissions Telegram notifications are disabled');
+      return false;
+    }
 
     try {
-      // Check if form submissions channel is enabled
-      if (!(await this.isFormSubmissionsChannelConfigured())) {
-        console.log('Form submissions Telegram notifications are disabled');
-        return;
-      }
-
       // Import formatter dynamically to avoid circular dependencies
       const { TelegramFormFormatter } = await import(
         '@/lib/utils/telegram-form-formatter'
@@ -750,28 +748,22 @@ Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}
         console.error(
           `Telegram message too long: ${length} characters (max 4096)`
         );
-        return;
+        return false;
       }
 
       // Send via Telegram API
-      await this.sendMessage({
+      return await this.sendMessage({
         chat_id: this.config!.formSubmissionsChatId!,
         text: message,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
       });
-
-      const duration = Date.now() - startTime;
-      console.log(
-        `📨 Form submission notification sent successfully (${duration}ms)`
-      );
     } catch (error) {
-      const duration = Date.now() - startTime;
       console.error(
-        `Failed to send form submission notification (${duration}ms):`,
+        'Failed to send form submission notification:',
         error
       );
-      // Graceful degradation - don't throw errors
+      return false;
     }
   }
 
