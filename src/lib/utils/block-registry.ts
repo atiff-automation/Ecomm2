@@ -23,6 +23,7 @@ import type {
   ImageGalleryBlock,
   EmbedBlock,
   AccordionBlock,
+  ProductCardBlock,
 } from '@/types/click-page.types';
 import {
   CLICK_PAGE_CONSTANTS,
@@ -152,6 +153,14 @@ export const BLOCK_REGISTRY: BlockRegistryType = {
     icon: 'ChevronDown',
     category: 'content',
     defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.ACCORDION,
+  },
+  PRODUCT_CARD: {
+    type: 'PRODUCT_CARD',
+    label: 'Product Card',
+    description: 'Display individual product with pricing and CTA',
+    icon: 'ShoppingBag',
+    category: 'cta',
+    defaultSettings: CLICK_PAGE_CONSTANTS.BLOCKS.DEFAULT_SETTINGS.PRODUCT_CARD,
   },
 };
 
@@ -314,6 +323,14 @@ export function createDefaultBlock(type: BlockType, sortOrder: number = 0): Bloc
         sortOrder,
         settings: definition.defaultSettings,
       } as AccordionBlock;
+
+    case 'PRODUCT_CARD':
+      return {
+        id,
+        type: 'PRODUCT_CARD',
+        sortOrder,
+        settings: definition.defaultSettings,
+      } as ProductCardBlock;
 
     default:
       // This should never happen due to TypeScript exhaustiveness checking
