@@ -30,6 +30,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // SINGLE SOURCE OF TRUTH: Check if form submissions channel is configured
+    const isConfigured =
+      await simplifiedTelegramService.isFormSubmissionsChannelConfigured();
+
+    if (!isConfigured) {
+      return NextResponse.json({
+        success: false,
+        message: 'Form submissions channel not configured',
+      });
+    }
+
     // NO HARDCODE: Dynamic test data with Malaysian context
     const now = new Date();
     const mockSubmissionData = {
