@@ -19,3 +19,4 @@ export { FormBlockComponent } from './FormBlock';
 export { ImageGalleryBlockComponent } from './ImageGalleryBlock';
 export { EmbedBlockComponent } from './EmbedBlock';
 export { AccordionBlockComponent } from './AccordionBlock';
+export { ProductCardBlockComponent } from './ProductCardBlock';

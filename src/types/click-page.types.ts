@@ -42,7 +42,8 @@ export type BlockType =
   | 'FORM'
   | 'IMAGE_GALLERY'
   | 'EMBED'
-  | 'ACCORDION';
+  | 'ACCORDION'
+  | 'PRODUCT_CARD';
 
 /**
  * Base block interface - all blocks extend this
@@ -419,6 +420,35 @@ export interface AccordionBlock extends BaseBlock {
   settings: AccordionBlockSettings;
 }
 
+/**
+ * Product Card Block - Display product with pricing and CTA
+ */
+export interface ProductCardBlockSettings {
+  // Product Selection
+  productId: string; // Required - Product ID from database
+  productSlug?: string; // Optional - For reference/debugging
+
+  // Display Options
+  layout: 'compact' | 'standard' | 'detailed';
+  showMemberPrice: boolean;
+  showStock: boolean;
+  showDescription: boolean;
+  showRating: boolean;
+
+  // CTA Customization
+  ctaText?: string; // Override default "Add to Cart"
+  ctaAction: 'view' | 'cart'; // Navigate to product page or add to cart
+
+  // Style & Layout
+  fullWidth?: boolean; // Override default width tier
+  styles?: StyleSettings; // Advanced styling from Style tab
+}
+
+export interface ProductCardBlock extends BaseBlock {
+  type: 'PRODUCT_CARD';
+  settings: ProductCardBlockSettings;
+}
+
 // ============================================================================
 // Union Type - All Blocks
 // ============================================================================
@@ -441,7 +471,8 @@ export type Block =
   | FormBlock
   | ImageGalleryBlock
   | EmbedBlock
-  | AccordionBlock;
+  | AccordionBlock
+  | ProductCardBlock;
 
 // ============================================================================
 // Click Page with Relations
