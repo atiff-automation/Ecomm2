@@ -130,26 +130,54 @@ export function GlobalThemeSettings({
         </p>
       </div>
 
-      {/* Color Theme Presets */}
-      <div className="space-y-2">
-        <Label className="text-xs font-medium">Quick Color Presets</Label>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(COLOR_THEME_PRESETS).map(([key, preset]) => (
-            <Button
-              key={key}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => applyColorPreset(key as keyof typeof COLOR_THEME_PRESETS)}
-              className="text-xs h-8"
-            >
-              <div
-                className="w-3 h-3 rounded-full mr-1"
-                style={{ backgroundColor: preset.colors.primary }}
-              />
-              {preset.name}
-            </Button>
-          ))}
+      {/* Theme Preview */}
+      <div className="border rounded-lg p-4">
+        <Label className="text-xs text-gray-500 mb-2 block">Theme Preview</Label>
+        <div className="flex gap-2 mb-3">
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.primary }}
+            title="Primary"
+          />
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.secondary }}
+            title="Secondary"
+          />
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.accent }}
+            title="Accent"
+          />
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.success }}
+            title="Success"
+          />
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.warning }}
+            title="Warning"
+          />
+          <div
+            className="w-8 h-8 rounded"
+            style={{ backgroundColor: value.colors.error }}
+            title="Error"
+          />
+        </div>
+        <div>
+          <p
+            className="text-lg font-bold"
+            style={{ fontFamily: value.fonts.heading }}
+          >
+            Heading Font: {value.fonts.heading}
+          </p>
+          <p
+            className="text-sm"
+            style={{ fontFamily: value.fonts.body }}
+          >
+            Body Font: {value.fonts.body}
+          </p>
         </div>
       </div>
 
@@ -172,6 +200,29 @@ export function GlobalThemeSettings({
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
+          {/* Quick Color Presets */}
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Quick Color Presets</Label>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(COLOR_THEME_PRESETS).map(([key, preset]) => (
+                <Button
+                  key={key}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyColorPreset(key as keyof typeof COLOR_THEME_PRESETS)}
+                  className="text-xs h-8"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full mr-1"
+                    style={{ backgroundColor: preset.colors.primary }}
+                  />
+                  {preset.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Primary Colors */}
           <div className="grid grid-cols-3 gap-3">
             <ColorPicker
@@ -463,57 +514,6 @@ export function GlobalThemeSettings({
           </div>
         </CollapsibleContent>
       </Collapsible>
-
-      {/* Preview */}
-      <div className="border rounded-lg p-4 mt-4">
-        <Label className="text-xs text-gray-500 mb-2 block">Color Preview</Label>
-        <div className="flex gap-2">
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.primary }}
-            title="Primary"
-          />
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.secondary }}
-            title="Secondary"
-          />
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.accent }}
-            title="Accent"
-          />
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.success }}
-            title="Success"
-          />
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.warning }}
-            title="Warning"
-          />
-          <div
-            className="w-8 h-8 rounded"
-            style={{ backgroundColor: value.colors.error }}
-            title="Error"
-          />
-        </div>
-        <div className="mt-3">
-          <p
-            className="text-lg font-bold"
-            style={{ fontFamily: value.fonts.heading }}
-          >
-            Heading Font: {value.fonts.heading}
-          </p>
-          <p
-            className="text-sm"
-            style={{ fontFamily: value.fonts.body }}
-          >
-            Body Font: {value.fonts.body}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

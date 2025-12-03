@@ -24,7 +24,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { ArrowLeft, Save, Eye, Settings, Layers } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Settings, Layers, FileText, Search, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import {
   containerPaddingToStyle,
@@ -142,6 +147,11 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
   // Device preview state
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(DEFAULT_DEVICE_MODE);
   const [zoomLevel, setZoomLevel] = useState<number>(DEVICE_DEFAULT_ZOOM[DEFAULT_DEVICE_MODE]);
+
+  // Page settings collapsible state
+  const [basicSettingsOpen, setBasicSettingsOpen] = useState(true);
+  const [seoOpen, setSeoOpen] = useState(false);
+  const [trackingOpen, setTrackingOpen] = useState(false);
 
   /**
    * Handle device mode change with automatic zoom adjustment
@@ -500,77 +510,142 @@ export function ClickPageEditor({ mode, initialData }: ClickPageEditorProps) {
                 <h3 className="font-semibold text-sm mb-4">Page Settings</h3>
               </div>
 
-              <div>
-                <Label>Slug</Label>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="page-slug"
-                  disabled={mode === 'create'}
-                  className={mode === 'create' ? 'cursor-not-allowed opacity-70' : ''}
-                />
-                {mode === 'create' && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Auto-generated from title
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label>Meta Title</Label>
-                <Input
-                  value={metaTitle}
-                  onChange={(e) => setMetaTitle(e.target.value)}
-                  placeholder="SEO Title"
-                />
-              </div>
-              <div>
-                <Label>Meta Description</Label>
-                <Input
-                  value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
-                  placeholder="SEO Description"
-                />
-              </div>
-              <div>
-                <Label>OG Image (Social Media Preview)</Label>
-                <ImageUpload
-                  value={ogImageUrl ? [{ url: ogImageUrl }] : []}
-                  onChange={(images: UploadedImage[]) => {
-                    const url = images[0]?.url || '';
-                    setOgImageUrl(url);
-                  }}
-                  maxFiles={1}
-                  maxSize={5 * 1024 * 1024}
-                  accept="image/*"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Recommended: 1200x630px for optimal social media display
-                </p>
-              </div>
-              <div>
-                <Label>Campaign Name</Label>
-                <Input
-                  value={campaignName}
-                  onChange={(e) => setCampaignName(e.target.value)}
-                  placeholder="e.g. Summer Sale 2025"
-                />
-              </div>
-              <div>
-                <Label>Facebook Pixel ID</Label>
-                <Input
-                  value={fbPixelId}
-                  onChange={(e) => setFbPixelId(e.target.value)}
-                  placeholder="Pixel ID"
-                />
-              </div>
-              <div>
-                <Label>Google Analytics ID</Label>
-                <Input
-                  value={gaTrackingId}
-                  onChange={(e) => setGaTrackingId(e.target.value)}
-                  placeholder="GA-XXXXXXX"
-                />
-              </div>
+              {/* Basic Settings */}
+              <Collapsible open={basicSettingsOpen} onOpenChange={setBasicSettingsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center justify-between w-full p-2 h-auto"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      <span className="font-medium text-sm">Basic Settings</span>
+                    </div>
+                    {basicSettingsOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-2">
+                  <div>
+                    <Label>Slug</Label>
+                    <Input
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="page-slug"
+                      disabled={mode === 'create'}
+                      className={mode === 'create' ? 'cursor-not-allowed opacity-70' : ''}
+                    />
+                    {mode === 'create' && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Auto-generated from title
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Campaign Name</Label>
+                    <Input
+                      value={campaignName}
+                      onChange={(e) => setCampaignName(e.target.value)}
+                      placeholder="e.g. Summer Sale 2025"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* SEO & Social */}
+              <Collapsible open={seoOpen} onOpenChange={setSeoOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center justify-between w-full p-2 h-auto"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Search className="w-4 h-4" />
+                      <span className="font-medium text-sm">SEO & Social</span>
+                    </div>
+                    {seoOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-2">
+                  <div>
+                    <Label>Meta Title</Label>
+                    <Input
+                      value={metaTitle}
+                      onChange={(e) => setMetaTitle(e.target.value)}
+                      placeholder="SEO Title"
+                    />
+                  </div>
+                  <div>
+                    <Label>Meta Description</Label>
+                    <Input
+                      value={metaDescription}
+                      onChange={(e) => setMetaDescription(e.target.value)}
+                      placeholder="SEO Description"
+                    />
+                  </div>
+                  <div>
+                    <Label>OG Image (Social Media Preview)</Label>
+                    <ImageUpload
+                      value={ogImageUrl ? [{ url: ogImageUrl }] : []}
+                      onChange={(images: UploadedImage[]) => {
+                        const url = images[0]?.url || '';
+                        setOgImageUrl(url);
+                      }}
+                      maxFiles={1}
+                      maxSize={5 * 1024 * 1024}
+                      accept="image/*"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Recommended: 1200x630px for optimal social media display
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Tracking & Analytics */}
+              <Collapsible open={trackingOpen} onOpenChange={setTrackingOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center justify-between w-full p-2 h-auto"
+                  >
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      <span className="font-medium text-sm">Tracking & Analytics</span>
+                    </div>
+                    {trackingOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-2">
+                  <div>
+                    <Label>Facebook Pixel ID</Label>
+                    <Input
+                      value={fbPixelId}
+                      onChange={(e) => setFbPixelId(e.target.value)}
+                      placeholder="Pixel ID"
+                    />
+                  </div>
+                  <div>
+                    <Label>Google Analytics ID</Label>
+                    <Input
+                      value={gaTrackingId}
+                      onChange={(e) => setGaTrackingId(e.target.value)}
+                      placeholder="GA-XXXXXXX"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </TabsContent>
           </Tabs>
         </aside>
