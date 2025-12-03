@@ -3,6 +3,7 @@
 /**
  * Block Renderer - Renders blocks based on their type
  * Main entry point for rendering click page blocks with style transformation
+ * @version 1.0.1 - Product Card Block support added
  */
 
 import { useMemo } from 'react';
