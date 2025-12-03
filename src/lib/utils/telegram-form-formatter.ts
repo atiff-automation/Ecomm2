@@ -57,9 +57,7 @@ export class TelegramFormFormatter {
 ━━━━━━━━━━━━━━━━
 ${fieldsHTML}
 
-🔗 <a href="${adminLink}">View Details in Admin Panel</a>
-
-${submission.ipAddress ? `IP: ${submission.ipAddress}` : ''}${submission.ipAddress && submission.userAgent ? '\n' : ''}${submission.userAgent ? `User Agent: ${this.truncateValue(submission.userAgent, 50)}` : ''}`;
+🔗 <a href="${adminLink}">View Details in Admin Panel</a>`;
 
     return message.trim();
   }
