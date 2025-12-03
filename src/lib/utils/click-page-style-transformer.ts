@@ -289,44 +289,42 @@ export function transformStyleSettings(styles: StyleSettings | undefined): {
   let customClasses: string[] = [];
   let animation: CSSProperties = {};
 
-  // Typography
-  if (styles.typography) {
-    css = { ...css, ...transformTypography(styles.typography) };
-  }
+  // Import defaults for fallback
+  const { DEFAULT_STYLE_SETTINGS } = require('@/lib/constants/click-page-style-constants');
 
-  // Background
-  if (styles.background) {
-    css = { ...css, ...transformBackground(styles.background) };
-  }
+  // Typography - apply defaults if not specified
+  const typography = styles.typography || DEFAULT_STYLE_SETTINGS.typography;
+  css = { ...css, ...transformTypography(typography) };
 
-  // Spacing
-  if (styles.spacing) {
-    css = { ...css, ...transformSpacing(styles.spacing) };
-  }
+  // Background - apply defaults if not specified
+  const background = styles.background || DEFAULT_STYLE_SETTINGS.background;
+  css = { ...css, ...transformBackground(background) };
 
-  // Border
-  if (styles.border) {
-    css = { ...css, ...transformBorder(styles.border) };
-  }
+  // Spacing - apply defaults if not specified (CRITICAL FIX)
+  const spacing = styles.spacing || DEFAULT_STYLE_SETTINGS.spacing;
+  css = { ...css, ...transformSpacing(spacing) };
 
-  // Effects
-  if (styles.effects) {
-    css = { ...css, ...transformEffects(styles.effects) };
-  }
+  // Border - apply defaults if not specified
+  const border = styles.border || DEFAULT_STYLE_SETTINGS.border;
+  css = { ...css, ...transformBorder(border) };
 
-  // Hover effects
+  // Effects - apply defaults if not specified
+  const effects = styles.effects || DEFAULT_STYLE_SETTINGS.effects;
+  css = { ...css, ...transformEffects(effects) };
+
+  // Hover effects - only apply if explicitly enabled
   if (styles.hover) {
     const { base, hover } = transformHoverEffects(styles.hover);
     css = { ...css, ...base };
     hoverCss = hover;
   }
 
-  // Animation
+  // Animation - only apply if explicitly enabled
   if (styles.animation) {
     animation = transformAnimation(styles.animation);
   }
 
-  // Advanced
+  // Advanced - only apply if specified
   if (styles.advanced) {
     css = { ...css, ...transformAdvanced(styles.advanced) };
     customCSS = styles.advanced.customCSS || '';
