@@ -99,21 +99,31 @@ export async function POST(request: NextRequest) {
     };
 
     // DRY: Use simplified service
-    await simplifiedTelegramService.sendFormSubmissionNotification(
+    const success = await simplifiedTelegramService.sendFormSubmissionNotification(
       mockSubmissionData,
       mockClickPage,
       mockFormBlock
     );
 
-    return NextResponse.json({
-      success: true,
-      message: 'Test form submission notification sent successfully!',
-      data: {
-        submission: mockSubmissionData,
-        page: mockClickPage,
-        form: mockFormBlock.settings.title,
-      },
-    });
+    if (success) {
+      return NextResponse.json({
+        success: true,
+        message: 'Test form submission notification sent successfully!',
+        data: {
+          submission: mockSubmissionData,
+          page: mockClickPage,
+          form: mockFormBlock.settings.title,
+        },
+      });
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Failed to send test form submission notification',
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Error sending test form submission notification:', error);
     return NextResponse.json(
