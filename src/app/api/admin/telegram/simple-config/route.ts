@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       inventoryEnabled = true,
       chatManagementEnabled = true,
       systemAlertsEnabled = true,
-      formSubmissionsEnabled = false,
+      formSubmissionsEnabled = true,
       dailySummaryEnabled = true,
       timezone = 'Asia/Kuala_Lumpur',
     } = body;

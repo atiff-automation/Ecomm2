@@ -73,7 +73,7 @@ export function SimpleTelegramConfig({
     inventoryEnabled: true,
     chatManagementEnabled: true,
     systemAlertsEnabled: true,
-    formSubmissionsEnabled: false,
+    formSubmissionsEnabled: true,
     dailySummaryEnabled: true,
     timezone: 'Asia/Kuala_Lumpur',
   });
@@ -294,7 +294,7 @@ export function SimpleTelegramConfig({
             inventoryEnabled: true,
             chatManagementEnabled: true,
             systemAlertsEnabled: true,
-            formSubmissionsEnabled: false,
+            formSubmissionsEnabled: true,
             dailySummaryEnabled: true,
             timezone: 'Asia/Kuala_Lumpur',
           });

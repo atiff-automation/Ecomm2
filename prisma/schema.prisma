@@ -767,7 +767,7 @@ model AdminTelegramConfig {
   systemAlertsChatId      String?
   systemAlertsEnabled     Boolean  @default(true)
   formSubmissionsChatId   String?
-  formSubmissionsEnabled  Boolean  @default(false)
+  formSubmissionsEnabled  Boolean  @default(true)
 
   @@index([isActive])
   @@index([ordersEnabled])
