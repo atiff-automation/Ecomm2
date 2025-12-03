@@ -210,6 +210,13 @@ export const CLICK_PAGE_CONSTANTS = {
         icon: 'ChevronDown',
         category: 'content',
       },
+      PRODUCT_CARD: {
+        type: 'PRODUCT_CARD' as BlockType,
+        label: 'Product Card',
+        description: 'Display a product with pricing and call-to-action',
+        icon: 'ShoppingBag',
+        category: 'cta',
+      },
     },
 
     // Default Settings for Each Block Type
@@ -314,6 +321,16 @@ export const CLICK_PAGE_CONSTANTS = {
         showIcons: true,
         iconPosition: 'right' as const,
         animationDuration: 300,
+      },
+      PRODUCT_CARD: {
+        productId: '', // Empty - user must select
+        layout: 'standard' as const,
+        showMemberPrice: true,
+        showStock: true,
+        showDescription: true,
+        showRating: true,
+        ctaAction: 'view' as const,
+        fullWidth: false,
       },
     },
   },

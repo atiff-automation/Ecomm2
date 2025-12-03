@@ -35,6 +35,7 @@ import { FormBlockComponent } from './FormBlock';
 import { ImageGalleryBlockComponent } from './ImageGalleryBlock';
 import { EmbedBlockComponent } from './EmbedBlock';
 import { AccordionBlockComponent } from './AccordionBlock';
+import { ProductCardBlockComponent } from './ProductCardBlock';
 
 interface BlockRendererProps {
   blocks: Block[];
@@ -239,6 +240,16 @@ export function BlockItem({ block, themeSettings, onBlockClick, clickPageSlug, i
         return <EmbedBlockComponent block={block} />;
       case 'ACCORDION':
         return <AccordionBlockComponent block={block} />;
+      case 'PRODUCT_CARD':
+        return (
+          <ProductCardBlockComponent
+            block={block}
+            onProductClick={(productId, productSlug) => {
+              // Track product click with product slug as target URL
+              onBlockClick?.(block.id, block.type, `/products/${productSlug}`);
+            }}
+          />
+        );
       default:
         console.warn(`Unknown block type: ${(block as Block).type}`);
         return null;

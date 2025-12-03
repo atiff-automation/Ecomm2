@@ -557,6 +557,23 @@ export const accordionBlockSettingsSchema = z.object({
   styles: styleSettingsSchema,
 });
 
+/**
+ * Product Card Block Settings Schema
+ */
+export const productCardBlockSettingsSchema = z.object({
+  productId: z.string().min(1, 'Product is required'),
+  productSlug: z.string().optional(),
+  layout: z.enum(['compact', 'standard', 'detailed']),
+  showMemberPrice: z.boolean(),
+  showStock: z.boolean(),
+  showDescription: z.boolean(),
+  showRating: z.boolean(),
+  ctaText: z.string().max(50).optional(),
+  ctaAction: z.enum(['view', 'cart']),
+  fullWidth: z.boolean().optional(),
+  styles: styleSettingsSchema.optional(),
+});
+
 // ============================================================================
 // Base Block Schema
 // ============================================================================
@@ -579,6 +596,7 @@ export const baseBlockSchema = z.object({
     'IMAGE_GALLERY',
     'EMBED',
     'ACCORDION',
+    'PRODUCT_CARD',
   ]),
   sortOrder: z.number().min(0),
 });
@@ -647,6 +665,10 @@ export const blockSchema = z.discriminatedUnion('type', [
   baseBlockSchema.extend({
     type: z.literal('ACCORDION'),
     settings: accordionBlockSettingsSchema,
+  }),
+  baseBlockSchema.extend({
+    type: z.literal('PRODUCT_CARD'),
+    settings: productCardBlockSettingsSchema,
   }),
 ]);
 

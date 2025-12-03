@@ -35,6 +35,7 @@ import { ResponsiveControls } from '@/components/admin/click-pages/ResponsiveCon
 import TipTapEditor from '@/components/admin/TipTapEditor';
 import ImageUpload, { type UploadedImage } from '@/components/ui/image-upload';
 import VideoUpload, { type UploadedVideo } from '@/components/ui/video-upload';
+import { ProductSelector } from '@/components/admin/ProductSelector';
 import type { Block } from '@/types/click-page.types';
 import type { StyleSettings } from '@/types/click-page-styles.types';
 
@@ -144,6 +145,9 @@ export function BlockSettingsPanel({ block, onUpdate, brandColors = DEFAULT_BRAN
             )}
             {block.type === 'ACCORDION' && (
               <AccordionSettings block={block} updateSettings={updateSettings} />
+            )}
+            {block.type === 'PRODUCT_CARD' && (
+              <ProductCardSettings block={block} updateSettings={updateSettings} />
             )}
           </div>
         </TabsContent>
@@ -2094,6 +2098,130 @@ function AccordionSettings({
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Product Card Block Settings
+ * Settings for displaying a product card with pricing and CTA
+ */
+function ProductCardSettings({
+  block,
+  updateSettings,
+}: {
+  block: Extract<Block, { type: 'PRODUCT_CARD' }>;
+  updateSettings: (updates: Partial<typeof block.settings>) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Product Selection */}
+      <div>
+        <ProductSelector
+          value={block.settings.productId}
+          onSelect={(productId, productSlug, productName) => {
+            updateSettings({
+              productId,
+              productSlug,
+            });
+          }}
+          error={!block.settings.productId ? 'Product is required' : undefined}
+        />
+      </div>
+
+      {/* Layout */}
+      <div>
+        <Label>Layout Style</Label>
+        <Select
+          value={block.settings.layout}
+          onValueChange={(v) => updateSettings({ layout: v as 'compact' | 'standard' | 'detailed' })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="compact">Compact - Minimal space, essential info only</SelectItem>
+            <SelectItem value="standard">Standard - Balanced layout with details</SelectItem>
+            <SelectItem value="detailed">Detailed - Full information display</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Display Options */}
+      <div className="space-y-3 pt-2 border-t">
+        <Label className="text-sm font-semibold">Display Options</Label>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-normal">Show Member Price</Label>
+          <Switch
+            checked={block.settings.showMemberPrice}
+            onCheckedChange={(v) => updateSettings({ showMemberPrice: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-normal">Show Stock Status</Label>
+          <Switch
+            checked={block.settings.showStock}
+            onCheckedChange={(v) => updateSettings({ showStock: v })}
+          />
+        </div>
+
+        {block.settings.layout !== 'compact' && (
+          <>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-normal">Show Description</Label>
+              <Switch
+                checked={block.settings.showDescription}
+                onCheckedChange={(v) => updateSettings({ showDescription: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-normal">Show Rating</Label>
+              <Switch
+                checked={block.settings.showRating}
+                onCheckedChange={(v) => updateSettings({ showRating: v })}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* CTA Settings */}
+      <div className="space-y-3 pt-2 border-t">
+        <Label className="text-sm font-semibold">Call to Action</Label>
+
+        <div>
+          <Label className="text-sm font-normal">CTA Action</Label>
+          <Select
+            value={block.settings.ctaAction}
+            onValueChange={(v) => updateSettings({ ctaAction: v as 'view' | 'cart' })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="view">View Product - Navigate to product page</SelectItem>
+              <SelectItem value="cart">Add to Cart - Direct add to cart action</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="text-sm font-normal">Custom CTA Text (Optional)</Label>
+          <Input
+            type="text"
+            placeholder="Leave empty for default text"
+            value={block.settings.ctaText || ''}
+            onChange={(e) => updateSettings({ ctaText: e.target.value || undefined })}
+            maxLength={50}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Default: &quot;{block.settings.ctaAction === 'view' ? 'View Product' : 'Add to Cart'}&quot;
+          </p>
+        </div>
       </div>
     </div>
   );
