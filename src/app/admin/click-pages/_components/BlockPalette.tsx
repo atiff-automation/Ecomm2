@@ -21,6 +21,7 @@ import {
   Images,
   Code2,
   ChevronDown,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CLICK_PAGE_CONSTANTS } from '@/lib/constants/click-page-constants';
@@ -47,6 +48,7 @@ const BLOCK_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Images,
   Code2,
   ChevronDown,
+  ShoppingBag,
 };
 
 // Organize blocks by category
@@ -54,7 +56,7 @@ const BLOCK_CATEGORIES = [
   {
     key: 'cta',
     label: 'Call to Action',
-    blocks: ['HERO', 'CTA_BUTTON', 'PRICING_TABLE', 'COUNTDOWN_TIMER', 'FORM'] as BlockType[],
+    blocks: ['HERO', 'CTA_BUTTON', 'PRODUCT_CARD', 'PRICING_TABLE', 'COUNTDOWN_TIMER', 'FORM'] as BlockType[],
   },
   {
     key: 'content',
