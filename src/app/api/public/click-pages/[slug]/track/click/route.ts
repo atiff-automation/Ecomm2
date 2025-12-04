@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { clickEventSchema } from '@/lib/validation/click-page-schemas';
-import { checkCSRF } from '@/lib/middleware/with-csrf';
 
 interface RouteParams {
   params: { slug: string };
@@ -15,14 +14,17 @@ interface RouteParams {
 /**
  * POST /api/public/click-pages/[slug]/track/click
  * Track a click event on a click page
+ *
+ * NOTE: CSRF protection is NOT required for this public analytics endpoint.
+ * This endpoint:
+ * - Accepts anonymous visitor tracking
+ * - Does not modify user-sensitive data
+ * - Only logs click analytics for measurement
+ * - Must be accessible without authentication or CSRF tokens
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  // CSRF Protection
-  const csrfCheck = await checkCSRF(req);
-  if (csrfCheck) return csrfCheck;
-
   try {
-    const { slug} = params;
+    const { slug } = params;
 
     // Find the click page
     const clickPage = await prisma.clickPage.findFirst({
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         where: { id: clickPage.id },
         data: { clickCount: { increment: 1 } },
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Error incrementing click count:', error);
       });
 

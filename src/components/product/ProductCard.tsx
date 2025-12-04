@@ -298,7 +298,7 @@ export function ProductCard({
               )}
 
               {/* Stock Status Badge - Conditional on showStock */}
-              {showStock && config.showExtended && (
+              {showStock && (
                 <Badge variant="outline" className="text-xs w-fit">
                   {product.stockQuantity > 0
                     ? `${product.stockQuantity} in stock`
