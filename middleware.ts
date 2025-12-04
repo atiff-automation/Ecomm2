@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { addSecurityHeaders } from '@/lib/security/headers';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,15 +19,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  const protectedPaths = [
-    '/admin',
-    '/api/admin',
-  ];
+  const protectedPaths = ['/admin', '/api/admin'];
 
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  const isProtectedPath = protectedPaths.some(path =>
+    pathname.startsWith(path)
+  );
+
+  // Apply security headers to Click Pages (public pages with tracking scripts)
+  const isClickPage = pathname.startsWith('/click/');
 
   if (!isProtectedPath) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+
+    // Add security headers to Click Pages to allow tracking scripts
+    if (isClickPage) {
+      return addSecurityHeaders(response);
+    }
+
+    return response;
   }
 
   try {
@@ -45,7 +55,6 @@ export async function middleware(request: NextRequest) {
     // JWT is valid and user was validated in NextAuth JWT callback
     // Trust the JWT - proceed with request
     return NextResponse.next();
-
   } catch (error) {
     console.error('[MIDDLEWARE] Token validation error:', error);
     return NextResponse.next();

@@ -10,15 +10,18 @@ import { NextResponse } from 'next/server';
  */
 export function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy
+  // Allows tracking scripts for Click Pages analytics (Facebook Pixel, Google Analytics, GTM)
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline/eval
+      // Allow tracking scripts: Next.js, Facebook Pixel, Google Analytics, GTM
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://www.googletagmanager.com https://www.google-analytics.com",
       "style-src 'self' 'unsafe-inline'", // Required for styled-components
-      "img-src 'self' data: https:",
+      "img-src 'self' data: https:", // Allow all HTTPS images (includes tracking pixels)
       "font-src 'self' data:",
-      "connect-src 'self' https:",
+      // Allow connections to tracking services
+      "connect-src 'self' https: https://www.facebook.com https://www.google-analytics.com https://analytics.google.com",
       "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
