@@ -40,8 +40,13 @@ interface ProductCardProps {
   };
   onAddToCart?: (productId: string) => Promise<void>;
   size?: 'sm' | 'md' | 'lg';
+  layout?: 'compact' | 'standard' | 'detailed'; // Click Pages layout control
   showDescription?: boolean;
   showRating?: boolean;
+  showMemberPrice?: boolean; // Control member price visibility
+  showStock?: boolean; // Control stock status visibility
+  ctaAction?: 'view' | 'cart'; // CTA button action
+  ctaText?: string; // Custom CTA text
   className?: string;
 }
 
@@ -49,10 +54,17 @@ export function ProductCard({
   product,
   onAddToCart,
   size = 'md',
-  showDescription = true,
+  layout, // Optional: overrides size if provided
+  showDescription: _showDescription = true, // Reserved for future use
   showRating = true,
+  showMemberPrice = true,
+  showStock = false,
+  ctaAction = 'cart',
+  ctaText,
   className = '',
 }: ProductCardProps) {
+  // Acknowledge unused param for backward compatibility
+  void _showDescription;
   // Get all pricing data from centralized service
   const pricing = usePricing(product);
 
@@ -77,24 +89,62 @@ export function ProductCard({
     return <div className="hidden" />;
   }
 
+  // Compute effective layout (layout prop overrides size prop)
+  const effectiveLayout =
+    layout ||
+    (size === 'sm' ? 'compact' : size === 'lg' ? 'detailed' : 'standard');
+
+  // Layout-based styling configuration
+  const layoutConfig = {
+    compact: {
+      imageAspect: 'aspect-[3/4]',
+      cardPadding: 'p-2',
+      nameSize: 'text-xs sm:text-sm',
+      nameLines: 'line-clamp-2',
+      priceSize: 'text-sm',
+      buttonSize: 'h-8 text-xs',
+      showExtended: false,
+    },
+    standard: {
+      imageAspect: 'aspect-[4/5]',
+      cardPadding: 'p-2 sm:p-3',
+      nameSize: 'text-[14px] sm:text-[14px]',
+      nameLines: 'line-clamp-2',
+      priceSize: 'text-base',
+      buttonSize: 'h-10 sm:h-10',
+      showExtended: true,
+    },
+    detailed: {
+      imageAspect: 'aspect-[3/4]',
+      cardPadding: 'p-3 sm:p-4',
+      nameSize: 'text-base sm:text-lg',
+      nameLines: 'line-clamp-3',
+      priceSize: 'text-lg',
+      buttonSize: 'h-12',
+      showExtended: true,
+    },
+  };
+
+  const config = layoutConfig[effectiveLayout];
+
   const handleAddToCart = async () => {
     if (onAddToCart) {
       await onAddToCart(product.id);
     }
   };
 
-  const sizeClasses = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
-  };
+  // Determine CTA button text
+  const buttonText =
+    ctaText || (ctaAction === 'view' ? 'View Product' : 'Add to Cart');
 
   return (
     <Link href={`/products/${product.slug}`}>
       <Card
         className={`group hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full flex flex-col ${className}`}
       >
-        <div className="relative aspect-[4/5] overflow-hidden rounded-t-lg">
+        <div
+          className={`relative ${config.imageAspect} overflow-hidden rounded-t-lg`}
+        >
           {primaryImage ? (
             <Image
               src={primaryImage.url}
@@ -122,51 +172,52 @@ export function ProductCard({
           </div>
         </div>
 
-        <CardContent className="p-2 sm:p-3 flex-1 flex flex-col">
+        <CardContent className={`${config.cardPadding} flex-1 flex flex-col`}>
           <div className="flex flex-col h-full">
             {/* Top Section - Name, Rating */}
             <div className="flex-1 space-y-1.5 mb-1">
               {/* Product Name - Shopee style mobile sizing */}
               <h3
-                className={`font-medium line-clamp-2 hover:text-primary transition-colors text-[14px] sm:text-[14px] leading-tight min-h-[2.5rem]`}
+                className={`font-medium ${config.nameLines} hover:text-primary transition-colors ${config.nameSize} leading-tight min-h-[2.5rem]`}
                 title={product.name}
               >
                 {product.name}
               </h3>
 
-              {/* Rating */}
-              {showRating && product.averageRating > 0 && (
-                <div className="flex items-center gap-1">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <Star
-                        key={star}
-                        className={`w-3 h-3 ${
-                          star <= product.averageRating
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
+              {/* Rating - Only show if enabled AND layout supports it */}
+              {config.showExtended &&
+                showRating &&
+                product.averageRating > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star
+                          key={star}
+                          className={`w-3 h-3 ${
+                            star <= product.averageRating
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      ({product.reviewCount})
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    ({product.reviewCount})
-                  </span>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Bottom Section - Price and Button - Reduced gap on mobile */}
             <div className="space-y-2 sm:space-y-2.5">
-              {/* Centralized Pricing Display - Shopee style with smaller RM on mobile */}
+              {/* Centralized Pricing Display - Layout-responsive sizing */}
               <div className="space-y-1" aria-label={pricing.priceDescription}>
                 <div className="flex items-center gap-2">
-                  {/* All prices RED globally - responsive font size only */}
-                  <span className="text-red-600">
-                    <span className="text-[14px] md:text-[16px] font-normal">RM</span>
-                    <span className="text-lg md:text-xl font-normal md:font-bold">
-                      {pricing.formattedPrice.replace('RM', '').trim()}
-                    </span>
+                  {/* All prices RED globally - layout-based sizing */}
+                  <span
+                    className={`text-red-600 font-bold ${config.priceSize}`}
+                  >
+                    RM {pricing.formattedPrice.replace('RM', '').trim()}
                   </span>
                   {pricing.priceType === 'early-access' && (
                     <Badge
@@ -178,7 +229,9 @@ export function ProductCard({
                   )}
                   {pricing.priceType === 'member' && (
                     <>
-                      <span className="text-xs font-normal text-black md:hidden">Member Price</span>
+                      <span className="text-xs font-normal text-black md:hidden">
+                        Member Price
+                      </span>
                       <Badge
                         variant="outline"
                         className="hidden md:inline-flex text-xs border-black text-black"
@@ -201,8 +254,8 @@ export function ProductCard({
                   </div>
                 )}
 
-                {/* Show member price preview for non-members - Black globally */}
-                {pricing.showMemberPreview && (
+                {/* Show member price preview for non-members - Conditional on showMemberPrice */}
+                {showMemberPrice && pricing.showMemberPreview && (
                   <div className="text-xs text-black font-medium">
                     {pricing.memberPreviewText}
                   </div>
@@ -244,18 +297,30 @@ export function ProductCard({
                 </div>
               )}
 
-              {/* Add to Cart Button */}
+              {/* Stock Status Badge - Conditional on showStock */}
+              {showStock && config.showExtended && (
+                <Badge variant="outline" className="text-xs w-fit">
+                  {product.stockQuantity > 0
+                    ? `${product.stockQuantity} in stock`
+                    : 'Out of stock'}
+                </Badge>
+              )}
+
+              {/* CTA Button - Configurable action and text */}
               <Button
-                className="w-full h-11 sm:h-10"
+                className={`w-full ${config.buttonSize}`}
                 disabled={product.stockQuantity === 0}
                 onClick={async e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  await handleAddToCart();
+                  if (ctaAction === 'cart') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleAddToCart();
+                  }
+                  // For 'view' action, let the Link handle navigation
                 }}
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                {product.stockQuantity === 0 ? 'Out of Stock' : buttonText}
               </Button>
             </div>
           </div>

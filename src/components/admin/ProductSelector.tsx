@@ -19,7 +19,7 @@ import {
   X,
   Package,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +35,11 @@ interface Product {
 
 interface ProductSelectorProps {
   value?: string; // Selected product ID
-  onSelect: (productId: string, productSlug: string, productName: string) => void;
+  onSelect: (
+    productId: string,
+    productSlug: string,
+    productName: string
+  ) => void;
   className?: string;
   label?: string;
   placeholder?: string;
@@ -67,7 +71,9 @@ export function ProductSelector({
         setLoading(true);
         setFetchError(null);
 
-        const response = await fetch('/api/admin/products?pageSize=100&status=ACTIVE');
+        const response = await fetch(
+          '/api/admin/products?limit=100&status=ACTIVE'
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch products');
@@ -86,7 +92,9 @@ export function ProductSelector({
         }
       } catch (err) {
         console.error('Error fetching products:', err);
-        setFetchError(err instanceof Error ? err.message : 'Failed to load products');
+        setFetchError(
+          err instanceof Error ? err.message : 'Failed to load products'
+        );
       } finally {
         setLoading(false);
       }
@@ -103,7 +111,7 @@ export function ProductSelector({
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = products.filter((product) => {
+    const filtered = products.filter(product => {
       return (
         product.name.toLowerCase().includes(query) ||
         product.sku.toLowerCase().includes(query) ||
@@ -117,7 +125,10 @@ export function ProductSelector({
   // Handle click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -128,6 +139,8 @@ export function ProductSelector({
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
+
+    return undefined;
   }, [isOpen]);
 
   // Handle product selection
@@ -169,9 +182,12 @@ export function ProductSelector({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{selectedProduct.name}</p>
+                <p className="text-sm font-medium truncate">
+                  {selectedProduct.name}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  SKU: {selectedProduct.sku} • {formatPrice(selectedProduct.regularPrice)}
+                  SKU: {selectedProduct.sku} •{' '}
+                  {formatPrice(selectedProduct.regularPrice)}
                 </p>
               </div>
             </div>
@@ -203,7 +219,7 @@ export function ProductSelector({
               type="text"
               placeholder={placeholder}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setIsOpen(true)}
               className={cn(
                 'pl-9',
@@ -229,12 +245,14 @@ export function ProductSelector({
               </Alert>
             ) : filteredProducts.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {searchQuery ? 'No products found matching your search' : 'No active products available'}
+                {searchQuery
+                  ? 'No products found matching your search'
+                  : 'No active products available'}
               </div>
             ) : (
               <ScrollArea className="h-[300px]">
                 <div className="p-1">
-                  {filteredProducts.map((product) => (
+                  {filteredProducts.map(product => (
                     <button
                       key={product.id}
                       type="button"
@@ -247,9 +265,13 @@ export function ProductSelector({
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{product.name}</p>
+                          <p className="text-sm font-medium truncate">
+                            {product.name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            SKU: {product.sku} • {formatPrice(product.regularPrice)} • Stock: {product.stockQuantity}
+                            SKU: {product.sku} •{' '}
+                            {formatPrice(product.regularPrice)} • Stock:{' '}
+                            {product.stockQuantity}
                           </p>
                         </div>
                       </div>
@@ -266,9 +288,7 @@ export function ProductSelector({
       </div>
 
       {/* Error Message */}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Helper Text */}
       {!error && !selectedProduct && (

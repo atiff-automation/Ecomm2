@@ -16,6 +16,27 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
+// Extended product type that matches what ProductCard expects
+type ProductCardData = ProductPricingData & {
+  name: string;
+  slug: string;
+  shortDescription?: string;
+  metaTitle?: string;
+  averageRating: number;
+  reviewCount: number;
+  categories: Array<{
+    category: {
+      name: string;
+      slug: string;
+    };
+  }>;
+  images: Array<{
+    url: string;
+    altText?: string;
+    isPrimary: boolean;
+  }>;
+};
+
 interface ProductCardBlockProps {
   block: ProductCardBlockType;
   onProductClick?: (productId: string, productSlug: string) => void;
@@ -23,9 +44,9 @@ interface ProductCardBlockProps {
 
 export function ProductCardBlockComponent({
   block,
-  onProductClick
+  onProductClick,
 }: ProductCardBlockProps) {
-  const [product, setProduct] = useState<ProductPricingData | null>(null);
+  const [product, setProduct] = useState<ProductCardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +64,9 @@ export function ProductCardBlockComponent({
           return;
         }
 
-        const response = await fetch(`/api/public/products/${settings.productId}`);
+        const response = await fetch(
+          `/api/public/products/${settings.productId}`
+        );
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -93,10 +116,6 @@ export function ProductCardBlockComponent({
     );
   }
 
-  // Determine display options based on layout
-  const showDescription = settings.layout !== 'compact' && settings.showDescription;
-  const showRating = settings.layout !== 'compact' && settings.showRating;
-
   // Container width class based on layout
   const widthClass = settings.fullWidth
     ? 'w-full'
@@ -108,9 +127,13 @@ export function ProductCardBlockComponent({
     <div className={widthClass} onClick={handleProductClick}>
       <ProductCard
         product={product}
-        size={settings.layout === 'compact' ? 'sm' : 'md'}
-        showDescription={showDescription}
-        showRating={showRating}
+        layout={settings.layout}
+        showDescription={settings.showDescription}
+        showRating={settings.showRating}
+        showMemberPrice={settings.showMemberPrice}
+        showStock={settings.showStock}
+        ctaAction={settings.ctaAction}
+        ctaText={settings.ctaText}
         className="h-full"
       />
     </div>
