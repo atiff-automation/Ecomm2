@@ -7,8 +7,9 @@ import {
 
 /**
  * Security headers
+ * @param pathname - Request pathname to determine CSP policy
  */
-function setSecurityHeaders(response: NextResponse): void {
+function setSecurityHeaders(response: NextResponse, pathname: string): void {
   // XSS Protection
   response.headers.set('X-XSS-Protection', '1; mode=block');
 
@@ -21,16 +22,26 @@ function setSecurityHeaders(response: NextResponse): void {
   // Referrer Policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Content Security Policy
+  // Content Security Policy - different policy for Click Pages
+  const isClickPage = pathname.startsWith('/click/');
+
+  const scriptSrc = isClickPage
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://www.googletagmanager.com https://www.google-analytics.com"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
+  const connectSrc = isClickPage
+    ? "connect-src 'self' https: https://www.facebook.com https://www.google-analytics.com https://analytics.google.com"
+    : "connect-src 'self' https:";
+
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https:",
+      connectSrc,
       "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
       "frame-ancestors 'none'",
     ].join('; ')
@@ -167,7 +178,7 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Set security headers for all responses
-  setSecurityHeaders(response);
+  setSecurityHeaders(response, pathname);
 
   // Protected UI routes (non-API)
   const protectedUIRoutes = ['/admin', '/superadmin', '/member'];
