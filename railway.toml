@@ -12,6 +12,7 @@ DATABASE_POOLING = "true"
 PRISMA_SKIP_POSTINSTALL_GENERATE = "false"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+NODE_OPTIONS = "--max-old-space-size=512"
 
 [environments.production]
 variables = { NODE_ENV = "production" }

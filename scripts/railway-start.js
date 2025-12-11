@@ -48,6 +48,12 @@ async function waitForDatabaseURL(maxAttempts = 10, delayMs = 1000) {
 process.env.PORT = process.env.PORT || '8080';
 process.env.HOSTNAME = '0.0.0.0';
 
+// Set Node.js memory allocation (512MB heap for Railway free tier)
+// This prevents the catastrophic 4MB heap issue
+if (!process.env.NODE_OPTIONS) {
+  process.env.NODE_OPTIONS = '--max-old-space-size=512';
+}
+
 async function runCommand(command, args, description) {
   console.log(`🔧 ${description}`);
 
@@ -245,7 +251,7 @@ async function startApplication() {
       runBackgroundCommand('npm', ['run', 'db:seed:essential'], 'Essential data seeding');
     }, 5000); // Wait 5 seconds for server to fully start
 
-    // Memory monitoring (every 10 minutes)
+    // Memory monitoring (every 5 minutes for better visibility)
     const memoryCheckInterval = setInterval(() => {
       const mem = process.memoryUsage();
       const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
@@ -258,12 +264,19 @@ async function startApplication() {
       );
 
       // Warn if memory usage is high
-      if (heapPercent > 80) {
+      if (heapPercent > 85) {
         console.warn(
           `⚠️  HIGH MEMORY USAGE: ${heapPercent}% - Consider investigating memory leaks`
         );
       }
-    }, 10 * 60 * 1000); // Every 10 minutes
+
+      // Critical warning if heap is abnormally low
+      if (heapTotalMB < 100) {
+        console.error(
+          `🚨 CRITICAL: Heap allocation too low (${heapTotalMB}MB)! Check NODE_OPTIONS setting.`
+        );
+      }
+    }, 5 * 60 * 1000); // Every 5 minutes
 
     // Handle graceful shutdown
     process.on('SIGTERM', () => {

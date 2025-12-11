@@ -22,6 +22,10 @@ const nextConfig = {
     serverComponentsExternalPackages: [
       '@prisma/client',
       'pdfkit', // Prevent bundling PDFKit to allow access to font data files
+      'sharp', // Image processing - external to reduce bundle size
+      'puppeteer', // Should never be in production but exclude anyway
+      'puppeteer-core',
+      '@playwright/test',
       '@opentelemetry/api',
       '@opentelemetry/sdk-node',
       '@opentelemetry/auto-instrumentations-node'
