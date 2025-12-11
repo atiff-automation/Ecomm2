@@ -19,6 +19,8 @@ interface ThrottleState {
  */
 export class Throttler {
   private state: Map<string, ThrottleState> = new Map();
+  private readonly MAX_FEATURES = 100; // Prevent unbounded memory growth
+  private readonly MAX_QUEUE_SIZE = 1000; // Limit queue size per feature
 
   /**
    * Check if a call can proceed - Systematic rate limiting
@@ -59,6 +61,13 @@ export class Throttler {
    */
   addToBatch(feature: string, item: any): void {
     const state = this.getOrCreateState(feature);
+
+    // Prevent queue from growing unbounded (memory leak protection)
+    if (state.queue.length >= this.MAX_QUEUE_SIZE) {
+      console.warn(`⚠️ Throttler queue for ${feature} at max size, dropping oldest items`);
+      state.queue = state.queue.slice(-this.MAX_QUEUE_SIZE + 100); // Keep last 900 items
+    }
+
     state.queue.push({
       ...item,
       timestamp: Date.now(),
@@ -154,6 +163,13 @@ export class Throttler {
   private getOrCreateState(feature: string): ThrottleState {
     let state = this.state.get(feature);
     if (!state) {
+      // Prevent unbounded Map growth (memory leak protection)
+      if (this.state.size >= this.MAX_FEATURES) {
+        console.warn(`⚠️ Throttler max features reached (${this.MAX_FEATURES}), removing oldest`);
+        const firstKey = this.state.keys().next().value;
+        this.state.delete(firstKey);
+      }
+
       state = {
         callCount: 0,
         lastReset: Date.now(),

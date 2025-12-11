@@ -26,6 +26,7 @@ interface CircuitBreakerState {
  */
 export class CircuitBreaker {
   private circuits: Map<string, CircuitBreakerState> = new Map();
+  private readonly MAX_CIRCUITS = 100; // Prevent unbounded memory growth
 
   /**
    * Check if circuit allows calls - Systematic protection
@@ -258,6 +259,13 @@ export class CircuitBreaker {
   private getOrCreateCircuit(feature: string): CircuitBreakerState {
     let circuit = this.circuits.get(feature);
     if (!circuit) {
+      // Prevent unbounded Map growth (memory leak protection)
+      if (this.circuits.size >= this.MAX_CIRCUITS) {
+        console.warn(`⚠️ Circuit breaker max circuits reached (${this.MAX_CIRCUITS}), removing oldest`);
+        const firstKey = this.circuits.keys().next().value;
+        this.circuits.delete(firstKey);
+      }
+
       circuit = {
         state: CircuitState.CLOSED,
         failureCount: 0,

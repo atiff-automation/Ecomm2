@@ -397,3 +397,18 @@ export class CacheManager {
 
 // Export singleton instance
 export const cacheManager = CacheManager.getInstance();
+
+// CRITICAL: Cleanup interval on process termination to prevent memory leaks
+if (typeof process !== 'undefined') {
+  process.on('beforeExit', () => {
+    cacheManager.destroy();
+  });
+
+  process.on('SIGTERM', () => {
+    cacheManager.destroy();
+  });
+
+  process.on('SIGINT', () => {
+    cacheManager.destroy();
+  });
+}
