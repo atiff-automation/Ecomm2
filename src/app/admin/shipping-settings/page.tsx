@@ -23,6 +23,7 @@ import {
   useShippingInit,
   useShippingBalance,
   useAvailableCouriers,
+  useSaveShippingSettings,
 } from '@/lib/hooks/use-shipping-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +68,49 @@ const shippingSettingsSchema = ShippingSettingsValidationSchema;
 
 type FormData = ShippingSettingsFormData;
 
+/**
+ * Helper: Extract only form fields from server ShippingSettings response
+ * Excludes timestamps (createdAt, updatedAt) which are not part of the form
+ * Following CLAUDE.md: Single Source of Truth - server data is authoritative
+ *
+ * IMPORTANT: Only includes defined values to prevent React Hook Form from
+ * converting undefined to empty strings, which breaks Select components
+ */
+function extractFormFields(settings: Record<string, unknown>): Record<string, unknown> {
+  console.log('[extractFormFields] INPUT:', settings);
+  console.log('[extractFormFields] environment:', settings.environment, typeof settings.environment);
+  console.log('[extractFormFields] courierSelectionMode:', settings.courierSelectionMode, typeof settings.courierSelectionMode);
+
+  const formData: Record<string, unknown> = {
+    apiKey: settings.apiKey,
+    environment: settings.environment,
+    courierSelectionMode: settings.courierSelectionMode,
+    freeShippingEnabled: settings.freeShippingEnabled,
+    autoUpdateOrderStatus: settings.autoUpdateOrderStatus,
+    whatsappNotificationsEnabled: settings.whatsappNotificationsEnabled,
+  };
+
+  // Only include optional fields if they have actual values (not undefined)
+  if (settings.selectedCouriers !== undefined) {
+    formData.selectedCouriers = settings.selectedCouriers;
+  }
+  if (settings.priorityCouriers !== undefined) {
+    formData.priorityCouriers = settings.priorityCouriers;
+  }
+  if (settings.freeShippingThreshold !== undefined) {
+    formData.freeShippingThreshold = settings.freeShippingThreshold;
+  }
+  if (settings.freeShippingEligibleStates !== undefined) {
+    formData.freeShippingEligibleStates = settings.freeShippingEligibleStates;
+  }
+
+  console.log('[extractFormFields] OUTPUT:', formData);
+  console.log('[extractFormFields] OUTPUT environment:', formData.environment);
+  console.log('[extractFormFields] OUTPUT courierSelectionMode:', formData.courierSelectionMode);
+
+  return formData;
+}
+
 interface PickupAddress {
   businessName: string;
   phone: string;
@@ -96,6 +140,13 @@ interface Courier {
 export default function ShippingSettingsPage() {
   const { data: session } = useSession();
 
+  // Debug: Component lifecycle
+  useEffect(() => {
+    console.log('=== COMPONENT MOUNTED ===');
+    console.log('[Constants] COURIER_SELECTION_STRATEGIES:', COURIER_SELECTION_STRATEGIES);
+    return () => console.log('=== COMPONENT UNMOUNTED ===');
+  }, []);
+
   // Phase 3 & 4: React Query integration with combined init endpoint
   const {
     data: initData,
@@ -104,7 +155,23 @@ export default function ShippingSettingsPage() {
     refetch: refetchInit,
   } = useShippingInit();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Debug: Track init data changes
+  useEffect(() => {
+    console.log('[useShippingInit] Data changed:', {
+      success: initData?.success,
+      hasData: !!initData?.data,
+      hasSettings: !!initData?.data?.settings,
+      isLoading: isLoadingInit,
+      hasError: !!initError,
+    });
+  }, [initData, isLoadingInit, initError]);
+
+  // Phase 5: React Query mutation for saving settings (with automatic cache invalidation)
+  const saveSettingsMutation = useSaveShippingSettings();
+
+  // Track if form has been initialized to prevent duplicate resets
+  const formInitializedRef = React.useRef(false);
+
   const [isTesting, setIsTesting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
@@ -151,6 +218,16 @@ export default function ShippingSettingsPage() {
 
   const watchedValues = watch();
 
+  // Debug: Log watched values to track Select component updates
+  useEffect(() => {
+    console.log('[watchedValues] Current form state:', {
+      environment: watchedValues.environment,
+      courierSelectionMode: watchedValues.courierSelectionMode,
+      environmentType: typeof watchedValues.environment,
+      courierType: typeof watchedValues.courierSelectionMode,
+    });
+  }, [watchedValues.environment, watchedValues.courierSelectionMode]);
+
   // Watch free shipping state for conditional UI rendering
   const freeShippingEnabled = watch('freeShippingEnabled');
   const freeShippingEligibleStates = watch('freeShippingEligibleStates') || [];
@@ -194,15 +271,41 @@ export default function ShippingSettingsPage() {
         configured,
       } = initData.data;
 
-      // Handle settings
-      if (settings) {
-        reset(settings);
+      // Handle settings - only reset form once on initial load
+      if (settings && !formInitializedRef.current) {
+        console.log('=== FORM INITIALIZATION START ===');
+        console.log('[Init] Server settings:', settings);
+        console.log('[Init] Server environment:', settings.environment);
+        console.log('[Init] Server courierSelectionMode:', settings.courierSelectionMode);
+
+        // Extract only form fields (exclude timestamps) using helper
+        const formData = extractFormFields(settings as Record<string, unknown>);
+
+        console.log('[Init] About to call reset() with:', formData);
+
+        // Reset form with clean form data (no timestamps)
+        reset(formData);
+
+        console.log('[Init] reset() called, checking form state...');
+
+        // Check what the form state is immediately after reset
+        setTimeout(() => {
+          const currentValues = watch();
+          console.log('[Init] Form state after reset:', currentValues);
+          console.log('[Init] environment after reset:', currentValues.environment);
+          console.log('[Init] courierSelectionMode after reset:', currentValues.courierSelectionMode);
+        }, 0);
+
+        // Mark form as initialized
+        formInitializedRef.current = true;
 
         // Phase 1: Store API config for conditional refetch
         setPreviousApiConfig({
           apiKey: settings.apiKey,
           environment: settings.environment,
         });
+
+        console.log('=== FORM INITIALIZATION COMPLETE ===');
       }
 
       // Handle pickup address
@@ -327,8 +430,15 @@ export default function ShippingSettingsPage() {
     }
   }, [watchedValues.courierSelectionMode, connectionStatus]);
 
+  /**
+   * Form submission handler using React Query mutation
+   *
+   * Following CLAUDE.md standards:
+   * - Single Source of Truth: Mutation hook handles ALL save logic
+   * - DRY: Cache invalidation centralized in useSaveShippingSettings
+   * - Type Safety: Proper error handling and type checking
+   */
   const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
     try {
       // Clear unused courier selection data based on selected strategy
       const cleanedData = { ...data };
@@ -345,18 +455,26 @@ export default function ShippingSettingsPage() {
         delete cleanedData.priorityCouriers;
       }
 
-      const response = await fetchWithCSRF('/api/admin/shipping/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanedData),
-      });
-
-      const result = await response.json();
+      // Use mutation hook (Single Source of Truth for save operations)
+      const result = await saveSettingsMutation.mutateAsync(cleanedData);
 
       if (result.success) {
         toast.success('Shipping settings saved successfully');
-        // Reset form with cleaned data (without unused fields)
-        reset(cleanedData);
+
+        // Reset form with server response data (authoritative source)
+        // Server is the Single Source of Truth - use its response, not local data
+        if (result.data) {
+          // Extract only form fields from server response (exclude timestamps) using helper
+          const formData = extractFormFields(result.data as Record<string, unknown>);
+
+          console.log('[Debug] Resetting form after save');
+          reset(formData);
+
+          // Reset initialization flag so form can be re-initialized from cache
+          formInitializedRef.current = true;
+        }
+
+        // Note: Cache invalidation happens automatically via mutation hook
 
         // Phase 1 Optimization: Only refetch balance if API credentials changed
         const apiConfigChanged =
@@ -391,10 +509,10 @@ export default function ShippingSettingsPage() {
         }
       }
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save settings');
-    } finally {
-      setIsSubmitting(false);
+      console.error('[Save] Shipping settings error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save settings';
+      toast.error(errorMessage);
     }
   };
 
@@ -461,6 +579,9 @@ export default function ShippingSettingsPage() {
         setBalance(null);
         setPreviousApiConfig(null); // Phase 1: Clear stored config
         setConnectionStatus('not-configured');
+
+        // Reset form initialization flag
+        formInitializedRef.current = false;
 
         // Phase 3: Use React Query refetch
         await refetchInit();
@@ -648,14 +769,25 @@ export default function ShippingSettingsPage() {
               <Label htmlFor="environment">Environment *</Label>
               <Select
                 value={watchedValues.environment}
-                onValueChange={value =>
-                  setValue('environment', value as 'sandbox' | 'production', {
-                    shouldDirty: true,
-                  })
-                }
+                onValueChange={value => {
+                  console.log('[Select Environment] onChange called with:', value);
+                  // Only update if value is valid (prevent empty string overwrites on mount)
+                  if (value === 'sandbox' || value === 'production') {
+                    setValue('environment', value, {
+                      shouldDirty: true,
+                    });
+                  } else {
+                    console.warn('[Select Environment] Ignored invalid value:', value);
+                  }
+                }}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger
+                  onClick={() => {
+                    console.log('[Select Environment] Current value:', watchedValues.environment);
+                    console.log('[Select Environment] Type:', typeof watchedValues.environment);
+                  }}
+                >
+                  <SelectValue placeholder="Select environment" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
@@ -862,12 +994,27 @@ export default function ShippingSettingsPage() {
               </Label>
               <Select
                 value={watchedValues.courierSelectionMode}
-                onValueChange={value =>
-                  setValue('courierSelectionMode', value, { shouldDirty: true })
-                }
+                onValueChange={value => {
+                  console.log('[Select Courier] onChange called with:', value);
+                  // Only update if value is valid (prevent empty string overwrites on mount)
+                  const validValues = ['cheapest', 'all', 'selected', 'priority'];
+                  if (validValues.includes(value)) {
+                    setValue('courierSelectionMode', value as 'cheapest' | 'all' | 'selected' | 'priority', {
+                      shouldDirty: true
+                    });
+                  } else {
+                    console.warn('[Select Courier] Ignored invalid value:', value);
+                  }
+                }}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger
+                  onClick={() => {
+                    console.log('[Select Courier] Current value:', watchedValues.courierSelectionMode);
+                    console.log('[Select Courier] Type:', typeof watchedValues.courierSelectionMode);
+                    console.log('[Select Courier] Constants:', COURIER_SELECTION_STRATEGIES);
+                  }}
+                >
+                  <SelectValue placeholder="Select courier selection strategy" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={COURIER_SELECTION_STRATEGIES.CHEAPEST}>
@@ -1590,9 +1737,13 @@ export default function ShippingSettingsPage() {
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={isSubmitting || !isDirty || !pickupValidation.isValid}
+              disabled={
+                saveSettingsMutation.isPending ||
+                !isDirty ||
+                !pickupValidation.isValid
+              }
             >
-              {isSubmitting ? 'Saving...' : 'Save Settings'}
+              {saveSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
             </Button>
             {isDirty && (
               <Button type="button" variant="outline" onClick={() => reset()}>

@@ -2,11 +2,13 @@
  * React Query hooks for shipping data with smart caching
  * Phase 3: Smart Caching with React Query
  * Phase 4: Combined init endpoint integration
+ * Phase 5: Centralized mutation with cache invalidation
  *
  * @module lib/hooks/use-shipping-data
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ShippingSettingsFormData } from '@/lib/shipping/validation';
 
 // Generic fetcher for all endpoints
 const fetcher = async (url: string) => {
@@ -59,28 +61,75 @@ export function useAvailableCouriers(enabled = true) {
   });
 }
 
-// Mutation hook for saving settings with optimistic updates
+/**
+ * API Response type for save settings endpoint
+ */
+interface SaveSettingsResponse {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+  message?: string;
+  details?: {
+    errors: string[];
+    warnings?: string[];
+  };
+}
+
+/**
+ * Mutation hook for saving shipping settings
+ *
+ * Features:
+ * - Type-safe mutation with ShippingSettingsFormData
+ * - Automatic cache invalidation for BOTH admin and public caches
+ * - CSRF protection via fetchWithCSRF utility
+ *
+ * Cache Invalidation Strategy:
+ * - ['shipping', 'init'] - Admin shipping settings page
+ * - ['shipping', 'settings'] - Public free shipping display (product pages)
+ *
+ * @returns React Query mutation object with mutate/mutateAsync methods
+ *
+ * @example
+ * const saveSettings = useSaveShippingSettings();
+ * await saveSettings.mutateAsync(formData);
+ */
 export function useSaveShippingSettings() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch('/api/admin/shipping/settings', {
+  return useMutation<SaveSettingsResponse, Error, ShippingSettingsFormData>({
+    mutationFn: async (data: ShippingSettingsFormData) => {
+      // Import fetchWithCSRF dynamically to avoid circular dependencies
+      const { fetchWithCSRF } = await import('@/lib/utils/fetch-with-csrf');
+
+      const response = await fetchWithCSRF('/api/admin/shipping/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
+      const result: SaveSettingsResponse = await response.json();
+
+      // Throw on non-ok response for proper error handling
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to save settings');
+        throw new Error(result.message || 'Failed to save settings');
       }
 
-      return response.json();
+      return result;
     },
     onSuccess: () => {
-      // Invalidate and refetch init data after successful save
+      // CRITICAL: Invalidate ALL shipping-related caches to ensure consistency
+      // This ensures both admin pages and public product pages get fresh data
+
+      // 1. Admin shipping settings page cache
       queryClient.invalidateQueries({ queryKey: ['shipping', 'init'] });
+
+      // 2. Public free shipping display cache (product pages)
+      queryClient.invalidateQueries({ queryKey: ['shipping', 'settings'] });
+
+      console.log('[Cache] Invalidated shipping caches: init + settings');
+    },
+    onError: (error) => {
+      console.error('[Mutation] Save shipping settings failed:', error);
     },
   });
 }
